@@ -56,8 +56,8 @@ func durationSecs(conv Conversation, rec *Recording) int {
 		return rec.DurationMillis / 1000
 	}
 
-	if conv.LastMessageAt.After(conv.CreatedAt) {
-		return int(conv.LastMessageAt.Sub(conv.CreatedAt).Seconds())
+	if conv.LastMessageAt.Time.After(conv.CreatedAt.Time) {
+		return int(conv.LastMessageAt.Time.Sub(conv.CreatedAt.Time).Seconds())
 	}
 
 	return 0

@@ -15,6 +15,10 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
+func ft(unix int64) FlexTime {
+	return FlexTime{Time: time.Unix(unix, 0).UTC()}
+}
+
 func testServer(t *testing.T, handler http.HandlerFunc) (*Client, *httptest.Server) {
 	t.Helper()
 
@@ -58,12 +62,12 @@ func TestListConversationsPaginatesAndFilters(t *testing.T) {
 		data := []Conversation{}
 		if page == 1 {
 			data = []Conversation{
-				{ID: "conv-1", CreatedAt: time.Unix(1000, 0).UTC(), Metadata: map[string]string{"assistant_id": "assistant-x"}},
-				{ID: "conv-2", CreatedAt: time.Unix(2000, 0).UTC()},
+				{ID: "conv-1", CreatedAt: ft(1000), Metadata: map[string]any{"assistant_id": "assistant-x"}},
+				{ID: "conv-2", CreatedAt: ft(2000)},
 			}
 		} else if page == 2 {
 			data = []Conversation{
-				{ID: "conv-3", CreatedAt: time.Unix(3000, 0).UTC()},
+				{ID: "conv-3", CreatedAt: ft(3000)},
 			}
 		}
 
@@ -182,7 +186,7 @@ func TestRecordingFetchShape(t *testing.T) {
 		t.Fatalf("download_urls.mp3 wrong: %+v", rec.DownloadURLs)
 	}
 
-	if !rec.RecordingEndedAt.After(rec.RecordingStartedAt) {
+	if !rec.RecordingEndedAt.Time.After(rec.RecordingStartedAt.Time) {
 		t.Fatalf("recording timestamps wrong: %v -> %v", rec.RecordingStartedAt, rec.RecordingEndedAt)
 	}
 }
@@ -263,9 +267,9 @@ const eggsConversationJSON = `{
 
 func eggsMessages() []Message {
 	return []Message{
-		{Role: "user", Text: "  Woolly, did you take my eggs?  ", CreatedAt: time.Unix(10, 0).UTC()},
+		{Role: "user", Text: "  Woolly, did you take my eggs?  ", CreatedAt: ft(10)},
 		{Role: "tool", Text: ""},
-		{Role: "assistant", Text: "[angry] I did NOT take your eggs! [angry]", CreatedAt: time.Unix(20, 0).UTC()},
+		{Role: "assistant", Text: "[angry] I did NOT take your eggs! [angry]", CreatedAt: ft(20)},
 	}
 }
 
@@ -330,9 +334,9 @@ func TestMapConversationEggsFixture(t *testing.T) {
 func TestMapConversationFallbacks(t *testing.T) {
 	conv := Conversation{
 		ID:            "conv-2",
-		CreatedAt:     time.Unix(0, 0).UTC(),
-		LastMessageAt: time.Unix(95, 0).UTC(),
-		Metadata:      map[string]string{"telnyx_agent_target": "+17287289311"},
+		CreatedAt:     ft(0),
+		LastMessageAt: ft(95),
+		Metadata:      map[string]any{"telnyx_agent_target": "+17287289311"},
 	}
 
 	obs, err := MapConversation(conv, nil, nil, MapOptions{Direction: calls.DirectionInbound})
@@ -354,7 +358,7 @@ func TestMapConversationFallbacks(t *testing.T) {
 }
 
 func TestMapConversationTruncatesExcerptByRunes(t *testing.T) {
-	conv := Conversation{ID: "conv-3", CreatedAt: time.Unix(0, 0).UTC(), Metadata: map[string]string{"assistant_id": "a1", "telnyx_end_user_target": "+14084757593"}}
+	conv := Conversation{ID: "conv-3", CreatedAt: ft(0), Metadata: map[string]any{"assistant_id": "a1", "telnyx_end_user_target": "+14084757593"}}
 	msgs := []Message{{Role: "assistant", Text: "äöü" + strings.Repeat("x", 30)}}
 
 	obs, err := MapConversation(conv, msgs, nil, MapOptions{Direction: calls.DirectionOutbound, ExcerptMax: 5})
@@ -368,11 +372,26 @@ func TestMapConversationTruncatesExcerptByRunes(t *testing.T) {
 }
 
 func TestMapConversationRejectsParticipantlessConv(t *testing.T) {
-	conv := Conversation{ID: "conv-4", CreatedAt: time.Unix(0, 0).UTC()}
+	conv := Conversation{ID: "conv-4", CreatedAt: ft(0)}
 
 	_, err := MapConversation(conv, nil, nil, MapOptions{Direction: calls.DirectionOutbound})
 	if err == nil {
 		t.Fatal("both participants missing must reject")
+	}
+}
+
+func TestFlexTimeAcceptsOffsetlessTimestamps(t *testing.T) {
+	var c Conversation
+	if err := json.Unmarshal([]byte(`{"id":"c1","created_at":"2026-10-09T19:51:35","last_message_at":"2026-10-09T19:52:00.123456Z"}`), &c); err != nil {
+		t.Fatal(err)
+	}
+
+	if c.CreatedAt.UTC().Format(time.RFC3339) != "2026-10-09T19:51:35Z" {
+		t.Fatalf("offset-less timestamp wrong: %v", c.CreatedAt.Time)
+	}
+
+	if c.LastMessageAt.UTC().Format(time.RFC3339Nano) != "2026-10-09T19:52:00.123456Z" {
+		t.Fatalf("fractional timestamp wrong: %v", c.LastMessageAt.Time)
 	}
 }
 
