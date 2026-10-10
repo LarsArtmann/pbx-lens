@@ -47,6 +47,7 @@ func ViewFrom(o Observation) CallView {
 
 func Projection() ([]system.ProjectionDeclaration, *projectionadapter.TypeDecoder) {
 	query := metaengine.Query[callLookup, CallView](Collection,
+		metaengine.Volume(100_000),
 		metaengine.OnRecordTyped(
 			string(EventObserved),
 			projectionadapter.EventWithID[CallObserved]{},

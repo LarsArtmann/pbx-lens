@@ -28,17 +28,15 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 		},
 	}
 
-	domain := system.DomainConfig{
+		domain := system.DomainConfig{
 		Events: []event.Type{calls.EventObserved},
 		Commands: func(sys *system.System) {
-			if err := system.RegisterDecider(sys, calls.StreamType, decider.Decider[calls.CallState]{
+			must(system.RegisterDecider(sys, calls.StreamType, decider.Decider[calls.CallState]{
 				Initial: calls.CallState{},
 				Apply:   calls.Apply,
-			}); err != nil {
-				panic(err)
-			}
+			}))
 
-			if err := system.RegisterCommand[calls.RecordCallCmd, calls.CallState](sys, calls.CommandRecord,
+			must(system.RegisterCommand[calls.RecordCallCmd, calls.CallState](sys, calls.CommandRecord,
 				func(cmdCtx context.Context, cmd calls.RecordCallCmd) system.Op[calls.CallState] {
 					return system.Execute(
 						cmdCtx,
@@ -46,13 +44,17 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 						calls.StreamType,
 						calls.Record(cmd.Observation, cmd.StreamID()),
 					)
-				}); err != nil {
-				panic(err)
-			}
+				}))
 		},
 		Projections:           projection,
 		ProjectionTypeDecoder: typeDecoder,
 	}
 
 	return system.New(ctx, domain, deployment)
+}
+
+func must(err error) {
+	if err != nil {
+		panic(err)
+	}
 }

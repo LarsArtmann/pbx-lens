@@ -179,19 +179,23 @@ type CallState struct {
 }
 
 func Apply(s CallState, evt event.Event) (CallState, error) {
-	if evt.Type() != EventObserved {
+	switch evt.Type() {
+	case EventObserved:
+		p, err := event.DecodePayloadAuto[CallObserved](evt)
+		if err != nil {
+			return s, err
+		}
+
+		s.Observed = true
+		s.ContentHash = p.ContentHash()
+
 		return s, nil
+	default:
+		return s, errorfamily.NewCorruption(
+			"call.fold.unknown_event",
+			fmt.Sprintf("call stream received unknown event type %q", evt.Type()),
+		)
 	}
-
-	p, err := event.DecodePayloadAuto[CallObserved](evt)
-	if err != nil {
-		return s, err
-	}
-
-	s.Observed = true
-	s.ContentHash = p.ContentHash()
-
-	return s, nil
 }
 
 func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState] {

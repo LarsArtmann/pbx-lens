@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"time"
 
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/pbx-lens/internal/app"
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -52,11 +52,11 @@ func ingestCDR(args []string) {
 	_ = fs.Parse(args)
 
 	if *db == "" {
-		fatal(errors.New("ingest-cdr needs -db <dsn>"))
+		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-cdr needs -db <dsn>"))
 	}
 
 	if fs.NArg() != 1 {
-		fatal(errors.New("ingest-cdr needs exactly one Master.csv path"))
+		fatal(errorfamily.NewRejection("lens.cli.bad_args", "ingest-cdr needs exactly one Master.csv path"))
 	}
 
 	f, err := os.Open(fs.Arg(0))
@@ -112,7 +112,7 @@ func ingestTelnyx(args []string) {
 	_ = fs.Parse(args)
 
 	if *db == "" {
-		fatal(errors.New("ingest-telnyx needs -db <dsn>"))
+		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-telnyx needs -db <dsn>"))
 	}
 
 	key, err := resolveKey(*keyFile)
@@ -127,7 +127,7 @@ func ingestTelnyx(args []string) {
 
 	dir := calls.Direction(*direction)
 	if !dir.Valid() {
-		fatal(fmt.Errorf("invalid -direction %q: must be outbound or inbound", *direction))
+		fatal(errorfamily.NewRejection("lens.cli.bad_direction", fmt.Sprintf("invalid -direction %q: must be outbound or inbound", *direction)))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -211,7 +211,7 @@ func resolveKey(keyFile string) (string, error) {
 
 		key := strings.TrimSpace(string(raw))
 		if key == "" {
-			return "", fmt.Errorf("key file is empty: %s", keyFile)
+			return "", errorfamily.NewRejection("lens.cli.empty_key_file", fmt.Sprintf("key file is empty: %s", keyFile))
 		}
 
 		return key, nil
@@ -219,7 +219,7 @@ func resolveKey(keyFile string) (string, error) {
 
 	key := strings.TrimSpace(os.Getenv("TELNYX_API_KEY"))
 	if key == "" {
-		return "", errors.New("no API key: pass -key-file or set TELNYX_API_KEY")
+		return "", errorfamily.NewRejection("lens.cli.no_api_key", "no API key: pass -key-file or set TELNYX_API_KEY")
 	}
 
 	return key, nil
@@ -232,7 +232,7 @@ func parseSince(s string) (time.Time, error) {
 
 	d, err := time.ParseDuration(s)
 	if err != nil {
-		return time.Time{}, fmt.Errorf("-since must be a duration (48h) or RFC3339 timestamp, got %q", s)
+		return time.Time{}, errorfamily.NewRejection("lens.cli.bad_since", fmt.Sprintf("-since must be a duration (48h) or RFC3339 timestamp, got %q", s))
 	}
 
 	return time.Now().UTC().Add(-d), nil
@@ -304,7 +304,7 @@ func smoke(args []string) {
 		}
 
 		if time.Now().After(deadline) {
-			fatal(errors.New("projection did not converge within 5s"))
+			fatal(errorfamily.NewTransient("lens.cli.projection_timeout", "projection did not converge within 5s"))
 		}
 
 		time.Sleep(20 * time.Millisecond)

@@ -129,7 +129,7 @@ func TestRecordMutatedObservationConflicts(t *testing.T) {
 	}
 }
 
-func TestApplyIgnoresForeignEvents(t *testing.T) {
+func TestApplyRejectsForeignEvents(t *testing.T) {
 	sid := mustSID(t, validObservation())
 
 	evt, err := event.New("call.deleted", sid, StreamType, 1, struct{}{})
@@ -138,8 +138,12 @@ func TestApplyIgnoresForeignEvents(t *testing.T) {
 	}
 
 	state, err := Apply(CallState{}, evt)
-	if err != nil {
-		t.Fatal(err)
+	if err == nil {
+		t.Fatal("foreign event must corrupt-fail, not silently ignore")
+	}
+
+	if !strings.Contains(err.Error(), "call.fold.unknown_event") {
+		t.Fatalf("corruption code missing from %q", err)
 	}
 
 	if state.Observed {
