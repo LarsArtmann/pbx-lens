@@ -47,7 +47,6 @@ Raw ideas:
 - webphone gets a read-only deep link into a call view — never a data
   dependency
 - UI auth reusing the operator htpasswd pattern
-- Export API for anything that wants call history without touching sources
 
 ### 4. Trust and safety (plan phase 4)
 

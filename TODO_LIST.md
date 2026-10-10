@@ -56,6 +56,8 @@
 | T13 fetch + store Telnyx conversation insights per AI call (M35)                              | 🔴 `TODO` | Low    | 60min  | No insights code; plan T13                                |
 | T15 cost column via Detail Records poller (lag-tolerant, nullable) (M39-M40)                  | 🔴 `TODO` | Low    | 60min  | No cost code; plan T15                                    |
 | Verify at source level + file upstream: cqrs-lint C009 exemption excludes bare `must` (len 4) | 🔴 `TODO` | Low    | 30min  | go-cqrs-lite `c009.go` `len(name) > 4` guard; report §b.3 |
+| Export API: JSONL/CSV dump of the index (graduated from ROADMAP; plan D5)                     | 🔴 `TODO` | Low    | 60min  | No export code; plan 2026-10-11_00-09 (docs/planning/)    |
+| README install line: drop the `go install @latest` apology comment until a tag exists         | 🔴 `TODO` | Low    | 5min   | `README.md` Installation; session finding 2026-10-10      |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
      per docs-health harvest-guide: the ledger records the pass, it is not a
