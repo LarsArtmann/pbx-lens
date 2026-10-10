@@ -64,16 +64,16 @@ Every label answers ONE question: does working code exist — and if not, why no
 
 ## Operations
 
-| Feature                                    | Status                | Evidence                                 | Notes                                         |
-| ------------------------------------------ | --------------------- | ---------------------------------------- | --------------------------------------------- |
-| Nix flake package build                    | 🔴 `BROKEN`           | `nix build` rc=0 but `result/` empty; `nix run . -- version` fails | Exits 0 shipping no binary; found by artifact-level check 2026-10-10, see TODO_LIST |
-| Autonomous pollers on timers               | ⚪ `PLANNED`          | no code                                  | Plan T12; today ingest is CLI-invoked only    |
-| Freshness self-check (stale UI banner)     | ⚪ `PLANNED`          | no code                                  | Plan T12                                      |
-| systemd unit / NixOS deploy module         | ⚪ `PLANNED`          | no code                                  | Plan T7; module lands in the sibling repo     |
-| Index DB in nightly backup staging         | ⚪ `PLANNED`          | no code                                  | Plan T14                                      |
-| Cost column (Detail Records poller)        | ⚪ `PLANNED`          | no code                                  | Plan T15                                      |
-| AI insight summaries per call              | ⚪ `PLANNED`          | no code                                  | Plan T13                                      |
-| Retention / PII purge job                  | ⚪ `PLANNED`          | no code                                  | Plan T23                                      |
-| UI auth (operator htpasswd reuse)          | ⚪ `PLANNED`          | no code                                  | Plan T24                                      |
-| Quality dashboards (volume, AI share, MOS) | ⚪ `PLANNED`          | no code                                  | Plan T25                                      |
-| CI lane (GitHub Actions)                   | ⚪ `PLANNED`          | only `dependabot.yml` in `.github/`      | Open decision: Actions lane vs buildflow-only |
+| Feature                                    | Status       | Evidence                                                           | Notes                                                                               |
+| ------------------------------------------ | ------------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Nix flake package build                    | 🔴 `BROKEN`  | `nix build` rc=0 but `result/` empty; `nix run . -- version` fails | Exits 0 shipping no binary; found by artifact-level check 2026-10-10, see TODO_LIST |
+| Autonomous pollers on timers               | ⚪ `PLANNED` | no code                                                            | Plan T12; today ingest is CLI-invoked only                                          |
+| Freshness self-check (stale UI banner)     | ⚪ `PLANNED` | no code                                                            | Plan T12                                                                            |
+| systemd unit / NixOS deploy module         | ⚪ `PLANNED` | no code                                                            | Plan T7; module lands in the sibling repo                                           |
+| Index DB in nightly backup staging         | ⚪ `PLANNED` | no code                                                            | Plan T14                                                                            |
+| Cost column (Detail Records poller)        | ⚪ `PLANNED` | no code                                                            | Plan T15                                                                            |
+| AI insight summaries per call              | ⚪ `PLANNED` | no code                                                            | Plan T13                                                                            |
+| Retention / PII purge job                  | ⚪ `PLANNED` | no code                                                            | Plan T23                                                                            |
+| UI auth (operator htpasswd reuse)          | ⚪ `PLANNED` | no code                                                            | Plan T24                                                                            |
+| Quality dashboards (volume, AI share, MOS) | ⚪ `PLANNED` | no code                                                            | Plan T25                                                                            |
+| CI lane (GitHub Actions)                   | ⚪ `PLANNED` | only `dependabot.yml` in `.github/`                                | Open decision: Actions lane vs buildflow-only                                       |
