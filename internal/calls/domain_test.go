@@ -131,7 +131,7 @@ func TestApplyIgnoresForeignEvents(t *testing.T) {
 }
 
 func TestE164(t *testing.T) {
-	if !(E164("+17287289311")).Valid() {
+	if !E164("+17287289311").Valid() {
 		t.Fatal("+17287289311 must be valid")
 	}
 	for _, bad := range []E164{"", "17287289311", "+17287", "+abc12345"} {

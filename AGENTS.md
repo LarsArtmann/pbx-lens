@@ -11,10 +11,10 @@ webphone later gets a read-only deep link, never a data dependency.
 ## Stack decisions
 
 - **Modules:** `go-cqrs-lite` `system/v4` + `metaengine/v4` + projectionadapter
-  + sqliteengine (blank import registers the "sqlite" driver), pinned to the
-  vetted set from go-cqrs-lite `example/getting-started/go.mod` (system
-  v4.11.0, metaengine v4.17.0, event v4.13.1, ...). ADR-0123: system.New is
-  the only composition root; never hand-wire event/command/decider/storage.
+  - sqliteengine (blank import registers the "sqlite" driver), pinned to the
+    vetted set from go-cqrs-lite `example/getting-started/go.mod` (system
+    v4.11.0, metaengine v4.17.0, event v4.13.1, ...). ADR-0123: system.New is
+    the only composition root; never hand-wire event/command/decider/storage.
 - **Engines:** sqlite (`EngineConfig{Driver: "sqlite", DSN}`) via pure-Go
   modernc.org/sqlite, memory for tests; `app.New(ctx, dsn)` with dsn == ""
   selecting memory is the one deploy knob.
