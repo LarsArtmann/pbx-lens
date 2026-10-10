@@ -12,19 +12,22 @@ webphone later gets a read-only deep link, never a data dependency.
 
 - **Modules:** `go-cqrs-lite` `system/v4` + `metaengine/v4` + projectionadapter
   - sqliteengine (blank import registers the "sqlite" driver), pinned to the
-    vetted set from go-cqrs-lite `example/getting-started/go.mod` (system
-    v4.11.0, metaengine v4.17.0, event v4.13.1, ...). ADR-0123: system.New is
+    vetted set from go-cqrs-lite `example/getting-started/go.mod` (exact
+    versions live in go.mod — never re-enumerate them here). ADR-0123: system.New is
     the only composition root; never hand-wire event/command/decider/storage.
 - **Engines:** sqlite (`EngineConfig{Driver: "sqlite", DSN}`) via pure-Go
   modernc.org/sqlite, memory for tests; `app.New(ctx, dsn)` with dsn == ""
   selecting memory is the one deploy knob.
 - **Language level:** go 1.27 + `GOEXPERIMENT=jsonv2` (fleet house style, see
-  go-output's flake). encoding/json/v2 is the JSON API once T4 needs it.
+  go-output's flake). Nothing imports encoding/json/v2 yet (plain
+  `go test ./...` passes without the env var); it becomes load-bearing when a
+  surface needs it.
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family ONLY. No testify
   (banned; stdlib table-driven tests), no cobra, no ORM.
 - **Flake:** go-standard flakeModule from go-nix-helpers (copy of go-output's
-  pattern); `vendorHash.nix` starts as the fake hash — first `nix build` then
-  `buildflow -s nix-hash-fix --fix` lands the real one.
+  pattern); `vendorHash.nix` carries the landed vendor hash. If a go.mod/
+  go.sum change breaks the nix build, repair with
+  `buildflow -s nix-hash-fix --fix` — never paste hashes by hand.
 
 ## Domain
 
@@ -32,7 +35,8 @@ webphone later gets a read-only deep link, never a data dependency.
   freeswitch-cdr | telnyx-conversation | webhook-log | agent-transcript.
   `Direction`: inbound | outbound. Numbers are stored raw as observed (real
   CDRs carry unknown/empty parties); `E164` + `ParticipantHash` exist for the
-  PII policy (TODO T23) and are NOT enforced on stored fields yet.
+  planned PII policy (see TODO_LIST.md) and are NOT enforced on stored fields
+  yet.
 - Stream id = `<kind>:<native-id>` — deterministic, so re-ingest is the same
   stream and `call.record` is idempotent (same ContentHash replays to zero
   events; a different hash on a live stream is a conflict — CDR rows are
@@ -46,19 +50,19 @@ webphone later gets a read-only deep link, never a data dependency.
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
 buildflow --build-mode dev            # the quality gate (lint+format+test)
-nix build                             # needs vendorHash.nix landed first
+nix build                             # needs a current vendorHash.nix
 ./scripts/...                         # (none yet)
 ```
 
 ## Gotchas (paid for)
 
-- **metaengine fold selection (2026-10-10):** for a full-recompute view ship
+- **metaengine fold selection:** for a full-recompute view ship
   ONLY the 2-arg create fold (`OnRecordTyped` returning `(key, view)`).
   Pairing it with a 3-arg update fold lets metaengine route the FIRST event
   through the update fold with a zero `prev`, storing a zero view. Two-fold
   patterns exist for INCREMENTAL folds (`prev.Field += ...`), not recompute.
-- **The coeffect gate's consumed set ignores `system.RawQuery`** (v4.11.0
-  projection_builder passthrough): declaring `DomainConfig.Events` with a
+- **The coeffect gate's consumed set ignores `system.RawQuery`**
+  (projection_builder passthrough): declaring `DomainConfig.Events` with a
   RawQuery projection logs an advisory "unconsumed event type" WARN at boot.
   Harmless; keep the declaration (the hard-error direction still guards
   deciders). The fluent `Evolve` + explicit-fold path feeds the gate but
@@ -68,9 +72,8 @@ nix build                             # needs vendorHash.nix landed first
 - **`errorfamily.NewRejection/NewConflict` take exactly (code, message)** —
   no format args; wrap with fmt.Sprintf. StreamID is a struct (cbid), not a
   string: use .String() / id.ParseStreamID, never a cast.
-- **Telnyx live-API truths, each paid for in the 2026-10-10 ingest-telnyx
-  probe** (unit fixtures alone missed all three; the GET-only live probe
-  caught them within minutes):
+- **Telnyx live-API truths (verified against the live API 2026-10-10; unit
+  fixtures alone missed all three — re-verify this cluster quarterly):
   1. Conversations filters are FIELD-AS-PARAM (`last_message_at=gte.TS`,
      `metadata->assistant_id=eq.x`) — NOT a `filter=` wrapper; the endpoint
      400s (10015) listing its available params when you guess wrong.
@@ -100,7 +103,7 @@ nix build                             # needs vendorHash.nix landed first
   (`RecordingByCallControl`) — the recordings list filter's supported keys
   are undocumented, so no server-side filter is trusted.
 
-## cqrs-lint findings policy (2026-10-10 full pass: 0 errors, deliberate non-fixes documented)
+## cqrs-lint findings policy (0 errors; every surviving warning/info below is a documented decision)
 
 Run: `go build -o /tmp/cqrs-lint ~/projects/go-cqrs-lite/cmd/cqrs-lint` then
 `/tmp/cqrs-lint .` (the `./...` pattern crashes the package loader — use
