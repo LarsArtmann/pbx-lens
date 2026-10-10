@@ -99,3 +99,43 @@ nix build                             # needs vendorHash.nix landed first
   ingest-telnyx lists recent recordings and matches in-process
   (`RecordingByCallControl`) — the recordings list filter's supported keys
   are undocumented, so no server-side filter is trusted.
+
+## cqrs-lint findings policy (2026-10-10 full pass: 0 errors, deliberate non-fixes documented)
+
+Run: `go build -o /tmp/cqrs-lint ~/projects/go-cqrs-lite/cmd/cqrs-lint` then
+`/tmp/cqrs-lint .` (the `./...` pattern crashes the package loader — use
+`.`). Gate: ERROR severity fails; warnings/infos below are each a DECISION.
+
+- **C003 (ERROR, fixed)**: the fold is TOTAL — unknown event types on a
+  Call stream return `errorfamily.NewCorruption("call.fold.unknown_event")`
+  instead of silently ignoring (the original `if evt.Type() != X` shape was
+  the bug class the rule exists for). `decider.StrictApply` was considered
+  and REJECTED: it wraps with a family-less `fmt.Errorf`, losing the
+  Corruption classification this repo's error doctrine requires.
+- **C009 (fixed via `mustRegister`)**: the panic-in-production rule exempts
+  functions named `must*`/`Must*` with `len(name) > 4` — a helper literally
+  named `must` is NOT exempt. The composition root uses `mustRegister`.
+- **E005 (false positive)**: "RecordCallCmd has no registered handler" —
+  the handler IS registered, in `internal/app` via
+  `system.RegisterCommand` (ADR-0123 composition root); the lint analyzes
+  one package at a time and cannot see the wiring. Non-fix.
+- **E003 (deliberate flat domain, OWNER QUESTION OPEN)**: `internal/calls`
+  mixes command/event/fold by design — the domain is one aggregate
+  (Observation) with one projection; a split today would be ceremony, not
+  boundary. Revisit when a second aggregate or T9 (agent transcripts) lands;
+  the split-vs-policy decision stays open pending the owner's answer.
+- **F007 (superseded by domain-level idempotency)**: the middleware rule
+  wants `middleware.CommandIdempotency` with a durable claim store. This
+  app's idempotency is STRONGER at the domain layer: ContentHash replay
+  emits zero events (tested), and handlers have no side effects beyond the
+  deduplicating append — a claim store would be redundant state. Non-fix;
+  revisit only if a handler grows an external side effect.
+- **F005 (expected at v1)**: schema version 1 has no historical payloads to
+  upcast. Adding an upcaster is mandatory work at v2, not now.
+- **C013 (deliberate)**: `CallView.StartedAt time.Time` — the view is
+  serialized as JSON (not CBOR epoch) and `ViewFrom` forces `.UTC()`, so no
+  timezone is lost in the sqlite round-trip.
+- **P006 (deliberate)**: the smoke command polls `reader.Get` with a 20 ms
+  sleep under a 5 s context deadline — a one-shot CLI convergence wait, no
+  hot path. `Watcher.Watch` is change-only (no current-value replay), so
+  switching would trade a bounded poll for a subscribe race.

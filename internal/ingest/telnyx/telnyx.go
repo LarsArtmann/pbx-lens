@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -145,9 +146,7 @@ func fetchAll[T any](ctx context.Context, c *Client, path string, base url.Value
 
 	for page := 1; page <= maxPages; page++ {
 		q := url.Values{}
-		for k, v := range base {
-			q[k] = v
-		}
+		maps.Copy(q, base)
 
 		q.Set("page[size]", strconv.Itoa(c.PageSize))
 		q.Set("page[number]", strconv.Itoa(page))

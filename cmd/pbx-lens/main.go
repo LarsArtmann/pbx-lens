@@ -6,15 +6,15 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
-	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/app"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
-	"strings"
 )
 
 func main() {
@@ -41,7 +41,7 @@ func main() {
 func usage() {
 	fmt.Fprintln(
 		os.Stderr,
-		"usage: pbx-lens version | pbx-lens smoke [-db path] | pbx-lens ingest-cdr -db <dsn> <Master.csv> |" +
+		"usage: pbx-lens version | pbx-lens smoke [-db path] | pbx-lens ingest-cdr -db <dsn> <Master.csv> |"+
 			" pbx-lens ingest-telnyx -db <dsn> [-key-file path] [-since 48h] [-direction outbound] [-limit N]",
 	)
 }
@@ -107,7 +107,11 @@ func ingestTelnyx(args []string) {
 	db := fs.String("db", "", "sqlite DSN (required)")
 	keyFile := fs.String("key-file", "", "Telnyx API key file (default: $TELNYX_API_KEY)")
 	since := fs.String("since", "48h", "look-back window: Go duration or RFC3339 timestamp")
-	direction := fs.String("direction", "outbound", "conversation direction (Telnyx metadata exposes none): outbound|inbound")
+	direction := fs.String(
+		"direction",
+		"outbound",
+		"conversation direction (Telnyx metadata exposes none): outbound|inbound",
+	)
 	limit := fs.Int("limit", 0, "max conversations to fetch (0 = all)")
 	_ = fs.Parse(args)
 
@@ -127,7 +131,12 @@ func ingestTelnyx(args []string) {
 
 	dir := calls.Direction(*direction)
 	if !dir.Valid() {
-		fatal(errorfamily.NewRejection("lens.cli.bad_direction", fmt.Sprintf("invalid -direction %q: must be outbound or inbound", *direction)))
+		fatal(
+			errorfamily.NewRejection(
+				"lens.cli.bad_direction",
+				fmt.Sprintf("invalid -direction %q: must be outbound or inbound", *direction),
+			),
+		)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
@@ -157,6 +166,7 @@ func ingestTelnyx(args []string) {
 	}
 
 	ingested := 0
+
 	var rejected []string
 
 	for _, conv := range convs {
@@ -211,7 +221,10 @@ func resolveKey(keyFile string) (string, error) {
 
 		key := strings.TrimSpace(string(raw))
 		if key == "" {
-			return "", errorfamily.NewRejection("lens.cli.empty_key_file", fmt.Sprintf("key file is empty: %s", keyFile))
+			return "", errorfamily.NewRejection(
+				"lens.cli.empty_key_file",
+				"key file is empty: "+keyFile,
+			)
 		}
 
 		return key, nil
@@ -232,7 +245,10 @@ func parseSince(s string) (time.Time, error) {
 
 	d, err := time.ParseDuration(s)
 	if err != nil {
-		return time.Time{}, errorfamily.NewRejection("lens.cli.bad_since", fmt.Sprintf("-since must be a duration (48h) or RFC3339 timestamp, got %q", s))
+		return time.Time{}, errorfamily.NewRejection(
+			"lens.cli.bad_since",
+			fmt.Sprintf("-since must be a duration (48h) or RFC3339 timestamp, got %q", s),
+		)
 	}
 
 	return time.Now().UTC().Add(-d), nil

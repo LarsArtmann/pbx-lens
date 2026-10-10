@@ -42,8 +42,10 @@ func writeJSON(t *testing.T, w http.ResponseWriter, v any) {
 }
 
 func TestListConversationsPaginatesAndFilters(t *testing.T) {
-	var gotAuth, gotFilter bool
-	var gotPages []string
+	var (
+		gotAuth, gotFilter bool
+		gotPages           []string
+	)
 
 	c, _ := testServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer test-key" {
@@ -60,12 +62,13 @@ func TestListConversationsPaginatesAndFilters(t *testing.T) {
 		}
 
 		data := []Conversation{}
-		if page == 1 {
+		switch page {
+		case 1:
 			data = []Conversation{
 				{ID: "conv-1", CreatedAt: ft(1000), Metadata: map[string]any{"assistant_id": "assistant-x"}},
 				{ID: "conv-2", CreatedAt: ft(2000)},
 			}
-		} else if page == 2 {
+		case 2:
 			data = []Conversation{
 				{ID: "conv-3", CreatedAt: ft(3000)},
 			}
@@ -75,6 +78,7 @@ func TestListConversationsPaginatesAndFilters(t *testing.T) {
 	})
 
 	since := time.Unix(900, 0).UTC()
+
 	convs, err := c.ListConversations(context.Background(), ListOptions{Since: since})
 	if err != nil {
 		t.Fatal(err)
@@ -125,7 +129,12 @@ func TestMessagesDecodesNullTextAsEmpty(t *testing.T) {
 		}
 
 		writeJSON(t, w, map[string]any{"data": []map[string]any{
-			{"role": "assistant", "text": "You WANT eggs?!", "created_at": "2026-10-09T19:50:12Z", "sent_at": "2026-10-09T19:50:13Z"},
+			{
+				"role":       "assistant",
+				"text":       "You WANT eggs?!",
+				"created_at": "2026-10-09T19:50:12Z",
+				"sent_at":    "2026-10-09T19:50:13Z",
+			},
 			{"role": "tool", "text": nil, "created_at": "2026-10-09T19:50:14Z"},
 		}})
 	})
@@ -159,17 +168,20 @@ func TestRecordingFetchShape(t *testing.T) {
 		}
 
 		writeJSON(t, w, map[string]any{"data": map[string]any{
-			"id":                "rec-1",
-			"call_control_id":   "v3:abc:def",
-			"channels":          "dual",
-			"duration_millis":   26000,
-			"recording_urls":    nil,
-			"download_urls":     map[string]string{"mp3": "https://cdn.example/mp3", "wav": "https://cdn.example/wav"},
+			"id":              "rec-1",
+			"call_control_id": "v3:abc:def",
+			"channels":        "dual",
+			"duration_millis": 26000,
+			"recording_urls":  nil,
+			"download_urls": map[string]string{
+				"mp3": "https://cdn.example/mp3",
+				"wav": "https://cdn.example/wav",
+			},
 			"recording_started_at": "2026-10-09T19:50:10Z",
 			"recording_ended_at":   "2026-10-09T19:50:36Z",
-			"from":              "+17287289311",
-			"to":                "+14084757593",
-			"status":            "completed",
+			"from":                 "+17287289311",
+			"to":                   "+14084757593",
+			"status":               "completed",
 		}})
 	})
 
@@ -186,7 +198,7 @@ func TestRecordingFetchShape(t *testing.T) {
 		t.Fatalf("download_urls.mp3 wrong: %+v", rec.DownloadURLs)
 	}
 
-	if !rec.RecordingEndedAt.Time.After(rec.RecordingStartedAt.Time) {
+	if !rec.RecordingEndedAt.After(rec.RecordingStartedAt.Time) {
 		t.Fatalf("recording timestamps wrong: %v -> %v", rec.RecordingStartedAt, rec.RecordingEndedAt)
 	}
 }
@@ -210,8 +222,8 @@ func TestHTTPErrorFamilies(t *testing.T) {
 			t.Fatalf("status %d: want error", tc.status)
 		}
 
-		var ef *errorfamily.Error
-		if !errors.As(err, &ef) {
+		ef, ok := errors.AsType[*errorfamily.Error](err)
+		if !ok {
 			t.Fatalf("status %d: not an errorfamily error: %v", tc.status, err)
 		}
 
@@ -274,7 +286,11 @@ func eggsMessages() []Message {
 }
 
 func eggsRecording() Recording {
-	return Recording{ID: "c8daa4ef-020c-49c5-8a35-888b41e33900", CallControlID: "v3:eggcall:leg1", DurationMillis: 26000}
+	return Recording{
+		ID:             "c8daa4ef-020c-49c5-8a35-888b41e33900",
+		CallControlID:  "v3:eggcall:leg1",
+		DurationMillis: 26000,
+	}
 }
 
 func TestMapConversationEggsFixture(t *testing.T) {
@@ -358,7 +374,11 @@ func TestMapConversationFallbacks(t *testing.T) {
 }
 
 func TestMapConversationTruncatesExcerptByRunes(t *testing.T) {
-	conv := Conversation{ID: "conv-3", CreatedAt: ft(0), Metadata: map[string]any{"assistant_id": "a1", "telnyx_end_user_target": "+14084757593"}}
+	conv := Conversation{
+		ID:        "conv-3",
+		CreatedAt: ft(0),
+		Metadata:  map[string]any{"assistant_id": "a1", "telnyx_end_user_target": "+14084757593"},
+	}
 	msgs := []Message{{Role: "assistant", Text: "äöü" + strings.Repeat("x", 30)}}
 
 	obs, err := MapConversation(conv, msgs, nil, MapOptions{Direction: calls.DirectionOutbound, ExcerptMax: 5})
@@ -382,7 +402,10 @@ func TestMapConversationRejectsParticipantlessConv(t *testing.T) {
 
 func TestFlexTimeAcceptsOffsetlessTimestamps(t *testing.T) {
 	var c Conversation
-	if err := json.Unmarshal([]byte(`{"id":"c1","created_at":"2026-10-09T19:51:35","last_message_at":"2026-10-09T19:52:00.123456Z"}`), &c); err != nil {
+	if err := json.Unmarshal(
+		[]byte(`{"id":"c1","created_at":"2026-10-09T19:51:35","last_message_at":"2026-10-09T19:52:00.123456Z"}`),
+		&c,
+	); err != nil {
 		t.Fatal(err)
 	}
 
