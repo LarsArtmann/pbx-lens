@@ -47,7 +47,7 @@ func TestListConversationsPaginatesAndFilters(t *testing.T) {
 		}
 
 		gotAuth = true
-		gotFilter = gotFilter || strings.Contains(r.URL.RawQuery, "last_message_at.gte.")
+		gotFilter = gotFilter || strings.Contains(r.URL.RawQuery, "last_message_at=gte.")
 		gotPages = append(gotPages, r.URL.Query().Get("page[number]"))
 
 		page, err := strconv.Atoi(r.URL.Query().Get("page[number]"))
@@ -112,6 +112,12 @@ func TestMessagesDecodesNullTextAsEmpty(t *testing.T) {
 	c, _ := testServer(t, func(w http.ResponseWriter, r *http.Request) {
 		if !strings.HasSuffix(r.URL.Path, "/ai/conversations/conv-9/messages") {
 			t.Fatalf("path: %s", r.URL.Path)
+		}
+
+		if r.URL.Query().Get("page[number]") != "1" {
+			writeJSON(t, w, map[string]any{"data": []map[string]any{}})
+
+			return
 		}
 
 		writeJSON(t, w, map[string]any{"data": []map[string]any{
@@ -250,7 +256,8 @@ const eggsConversationJSON = `{
     "call_control_id": "v3:eggcall:leg1",
     "telnyx_agent_target": "+17287289311",
     "telnyx_end_user_target": "+14084757593",
-    "telnyx_conversation_channel": "phone_call"
+    "telnyx_conversation_channel": "phone_call",
+    "called_tools": []
   }
 }`
 
@@ -325,6 +332,7 @@ func TestMapConversationFallbacks(t *testing.T) {
 		ID:            "conv-2",
 		CreatedAt:     time.Unix(0, 0).UTC(),
 		LastMessageAt: time.Unix(95, 0).UTC(),
+		Metadata:      map[string]string{"telnyx_agent_target": "+17287289311"},
 	}
 
 	obs, err := MapConversation(conv, nil, nil, MapOptions{Direction: calls.DirectionInbound})
@@ -346,7 +354,7 @@ func TestMapConversationFallbacks(t *testing.T) {
 }
 
 func TestMapConversationTruncatesExcerptByRunes(t *testing.T) {
-	conv := Conversation{ID: "conv-3", CreatedAt: time.Unix(0, 0).UTC(), Metadata: map[string]string{"assistant_id": "a1"}}
+	conv := Conversation{ID: "conv-3", CreatedAt: time.Unix(0, 0).UTC(), Metadata: map[string]string{"assistant_id": "a1", "telnyx_end_user_target": "+14084757593"}}
 	msgs := []Message{{Role: "assistant", Text: "äöü" + strings.Repeat("x", 30)}}
 
 	obs, err := MapConversation(conv, msgs, nil, MapOptions{Direction: calls.DirectionOutbound, ExcerptMax: 5})

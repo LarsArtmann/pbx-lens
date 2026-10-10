@@ -28,9 +28,9 @@ func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts Map
 		Direction:         opts.Direction,
 		StartedAt:         conv.CreatedAt.UTC(),
 		DurationSecs:      durationSecs(conv, rec),
-		FromNumber:        conv.Metadata["telnyx_agent_target"],
-		ToNumber:          conv.Metadata["telnyx_end_user_target"],
-		IsAI:              conv.Metadata["assistant_id"] != "",
+		FromNumber:        conv.MetadataString("telnyx_agent_target"),
+		ToNumber:          conv.MetadataString("telnyx_end_user_target"),
+		IsAI:              conv.MetadataString("assistant_id") != "",
 		TranscriptExcerpt: excerpt(msgs, opts.ExcerptMax),
 	}
 

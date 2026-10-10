@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
@@ -41,19 +42,46 @@ type ListOptions struct {
 	Limit int
 }
 
+type FlexTime struct {
+	time.Time
+}
+
+func (t *FlexTime) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	if s == "null" || s == "" {
+		return nil
+	}
+
+	for _, layout := range []string{time.RFC3339Nano, "2006-01-02T15:04:05"} {
+		if pt, err := time.Parse(layout, s); err == nil {
+			t.Time = pt
+
+			return nil
+		}
+	}
+
+	return fmt.Errorf("unparseable timestamp %q", s)
+}
+
 type Conversation struct {
-	ID            string            `json:"id"`
-	CreatedAt     time.Time         `json:"created_at"`
-	LastMessageAt time.Time         `json:"last_message_at"`
-	Name          string            `json:"name"`
-	Metadata      map[string]string `json:"metadata"`
+	ID            string         `json:"id"`
+	CreatedAt     FlexTime       `json:"created_at"`
+	LastMessageAt FlexTime       `json:"last_message_at"`
+	Name          string         `json:"name"`
+	Metadata      map[string]any `json:"metadata"`
+}
+
+func (c Conversation) MetadataString(key string) string {
+	s, _ := c.Metadata[key].(string)
+
+	return s
 }
 
 type Message struct {
-	Role      string    `json:"role"`
-	Text      string    `json:"text"`
-	CreatedAt time.Time `json:"created_at"`
-	SentAt    time.Time `json:"sent_at"`
+	Role      string   `json:"role"`
+	Text      string   `json:"text"`
+	CreatedAt FlexTime `json:"created_at"`
+	SentAt    FlexTime `json:"sent_at"`
 }
 
 type DownloadURLs struct {
@@ -65,11 +93,11 @@ type Recording struct {
 	ID                 string       `json:"id"`
 	CallControlID      string       `json:"call_control_id"`
 	Channels           string       `json:"channels"`
-	CreatedAt          time.Time    `json:"created_at"`
+	CreatedAt          FlexTime     `json:"created_at"`
 	DownloadURLs       DownloadURLs `json:"download_urls"`
 	DurationMillis     int          `json:"duration_millis"`
-	RecordingStartedAt time.Time    `json:"recording_started_at"`
-	RecordingEndedAt   time.Time    `json:"recording_ended_at"`
+	RecordingStartedAt FlexTime     `json:"recording_started_at"`
+	RecordingEndedAt   FlexTime     `json:"recording_ended_at"`
 	From               string       `json:"from"`
 	To                 string       `json:"to"`
 	Status             string       `json:"status"`
@@ -78,7 +106,7 @@ type Recording struct {
 func (c *Client) ListConversations(ctx context.Context, opts ListOptions) ([]Conversation, error) {
 	q := url.Values{}
 	if !opts.Since.IsZero() {
-		q.Set("filter", "last_message_at.gte."+opts.Since.UTC().Format(time.RFC3339))
+		q.Set("last_message_at", "gte."+opts.Since.UTC().Format(time.RFC3339))
 	}
 
 	return fetchAll[Conversation](ctx, c, "/ai/conversations", q, opts.Limit)
