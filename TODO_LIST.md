@@ -8,9 +8,11 @@
 > Long-term vision and unrefined ideas live in ROADMAP.md; shipped features in
 > FEATURES.md. Items are ranked by impact. Status is verified, not assumed.
 >
-> Canonical backlog for pbx-lens work. Supersedes the interim rows harvested
-> into `pbx-artmann/TODO_LIST.md` §30 (2026-10-10); owner-gated questions from
-> the same report live in ROADMAP.md "Open questions".
+> Canonical backlog for pbx-lens work. Supersedes the pbx-lens rows of the
+> interim block harvested into `pbx-artmann/TODO_LIST.md` §30 (2026-10-10);
+> owner-gated questions from the same report live in ROADMAP.md "Open
+> questions". Harvest ledger for that pass:
+> `docs/status/2026-10-10_23-56_docs-health-audit-first-doc-set.md`.
 
 ## Status legend
 
@@ -29,7 +31,8 @@
 | T6 list page: one table, all calls, AI badge, excerpt, direction/date filters (M18-M20) — completes the 51% slice                                       | 🔴 `TODO` | High   | 90min  | No `serve` command: `cmd/pbx-lens/main.go:26`; plan T6                                                                      |
 | T5 webhook JSONL tailer + ingest command (M15-M17); extract FlexTime into a shared internal wire package when the second consumer lands                 | 🔴 `TODO` | High   | 45min  | `webhook-log` enum only: `internal/calls/domain.go:30`; plan T5                                                             |
 | T12 poller timers + freshness self-check with stale-index UI banner (M33-M34) — makes the index autonomous                                              | 🔴 `TODO` | High   | 45min  | No timer/scheduler code anywhere; ingest is CLI-invoked only; plan T12                                                      |
-| httptest end-to-end test for the ingest-telnyx command loop (wiring test; the pieces are tested, the loop is not)                                       | 🔴 `TODO` | High   | 30min  | `cmd/pbx-lens/main.go:172-206` has no test; report 2026-10-10_06-57 §e.8                                                    |
+| Fix the nix package: `nix build` exits 0 but ships an EMPTY result (no `bin/pbx-lens`; `nix run . -- version` fails) — go-standard flakeModule not wired to the `cmd/pbx-lens` binary | 🔴 `TODO` | High   | 30-60min | Reproduced this session: `result/` empty, `nix run` errors; `flake.nix` sets `mainProgram = "pbx-lens"` |
+| httptest end-to-end test for the ingest-telnyx command loop (wiring test; the pieces are tested, the loop is not)                  | 🔴 `TODO`    | High   | 30min  | `cmd/pbx-lens/main.go:172-206` has no test; report 2026-10-10_06-57 §e.8 |
 
 ## Medium impact
 
@@ -54,22 +57,6 @@
 | T15 cost column via Detail Records poller (lag-tolerant, nullable) (M39-M40)                  | 🔴 `TODO` | Low    | 60min  | No cost code; plan T15                                    |
 | Verify at source level + file upstream: cqrs-lint C009 exemption excludes bare `must` (len 4) | 🔴 `TODO` | Low    | 30min  | go-cqrs-lite `c009.go` `len(name) > 4` guard; report §b.3 |
 
-<!-- Harvest ledger (2026-10-10 audit pass):
-  - report 06-57 §f.1 excerpt ordering      → row 1 (new)
-  - §f.2 T6 list page                       → row 2 (new)
-  - §f.3 T5 webhook                         → row 3 (new; §f.30 FlexTime-DRY folded in)
-  - §f.4 smoke fake number                  → Medium row (new)
-  - §f.5 httptest e2e                       → row 5 (new)
-  - §f.6 resolveKey/parseSince              → Medium row (new)
-  - §f.7 T16 repo docs                      → done in this pass (FEATURES/ROADMAP/DOMAIN_LANGUAGE/README built) → CHANGELOG
-  - §f.8 cqrs-lint into flake               → Medium row (new)
-  - §f.9 C009 upstream                      → Low row (new)
-  - §f.10 T12 timers                        → High row (new)
-  - §f.11 T7, §f.12 T8, §f.13 T10, §f.14 T9, §f.15 T11, §f.16 T13, §f.17 T14, §f.18 T15 → rows (new)
-  - §f.19 CI story                          → Medium row (new)
-  - §f.20 Woolly batch, §f.23 gemini key, §f.26 IPv6, §f.27 firewall → declined for this repo (pbx-artmann/deployment lane, not pbx-lens)
-  - §f.21 visibility, §f.22 E003 split      → ROADMAP "Open questions" (owner decisions, not tasks)
-  - §f.24 T20, §f.25 T21                    → declined (work lives in sibling repos; plan wording)
-  - §f.28 retracted-in-report               → dropped (author retracted)
-  - §f.29 docs-freshness upstream tooling   → declined (crush-config lane, not this repo)
--->
+<!-- Harvest ledger for this list lives in the pass report (docs/status/),
+     per docs-health harvest-guide: the ledger records the pass, it is not a
+     backlog. -->

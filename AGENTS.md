@@ -50,7 +50,8 @@ webphone later gets a read-only deep link, never a data dependency.
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
 buildflow --build-mode dev            # the quality gate (lint+format+test)
-nix build                             # needs a current vendorHash.nix
+nix build                             # BROKEN: exits 0 but ships an empty
+                                      # result (no bin/pbx-lens) — see TODO_LIST
 ./scripts/...                         # (none yet)
 ```
 

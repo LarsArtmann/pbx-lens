@@ -18,7 +18,7 @@ BuildFlow — run the gate, not the individual tools:
 ```console
 GOEXPERIMENT=jsonv2 go test ./...   # quick loop while coding
 buildflow --build-mode dev          # the quality gate (lint + format + test)
-nix build                           # package build (needs a current vendorHash.nix)
+nix build                           # package build — BROKEN (empty result), see TODO_LIST.md
 ```
 
 If a step fails, `buildflow --fix` runs detect → repair → verify; drill into

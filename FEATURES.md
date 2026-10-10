@@ -66,7 +66,7 @@ Every label answers ONE question: does working code exist — and if not, why no
 
 | Feature                                    | Status                | Evidence                                 | Notes                                         |
 | ------------------------------------------ | --------------------- | ---------------------------------------- | --------------------------------------------- |
-| Nix flake package build                    | 🟢 `FULLY_FUNCTIONAL` | `flake.nix`; `nix build` rc=0 this audit | vendorHash landed                             |
+| Nix flake package build                    | 🔴 `BROKEN`           | `nix build` rc=0 but `result/` empty; `nix run . -- version` fails | Exits 0 shipping no binary; found by artifact-level check 2026-10-10, see TODO_LIST |
 | Autonomous pollers on timers               | ⚪ `PLANNED`          | no code                                  | Plan T12; today ingest is CLI-invoked only    |
 | Freshness self-check (stale UI banner)     | ⚪ `PLANNED`          | no code                                  | Plan T12                                      |
 | systemd unit / NixOS deploy module         | ⚪ `PLANNED`          | no code                                  | Plan T7; module lands in the sibling repo     |
