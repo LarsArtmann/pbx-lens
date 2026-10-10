@@ -68,3 +68,34 @@ nix build                             # needs vendorHash.nix landed first
 - **`errorfamily.NewRejection/NewConflict` take exactly (code, message)** —
   no format args; wrap with fmt.Sprintf. StreamID is a struct (cbid), not a
   string: use .String() / id.ParseStreamID, never a cast.
+- **Telnyx live-API truths, each paid for in the 2026-10-10 ingest-telnyx
+  probe** (unit fixtures alone missed all three; the GET-only live probe
+  caught them within minutes):
+  1. Conversations filters are FIELD-AS-PARAM (`last_message_at=gte.TS`,
+     `metadata->assistant_id=eq.x`) — NOT a `filter=` wrapper; the endpoint
+     400s (10015) listing its available params when you guess wrong.
+  2. Conversation metadata values are NOT all strings (`called_tools` is an
+     array despite the docs typing metadata.* as string) — decode as
+     `map[string]any` and read through `Conversation.MetadataString`.
+  3. Timestamps are precision-UNSTABLE across responses (the same
+     conversation served nanoseconds then microseconds minutes apart) and
+     recordings carry OFFSET-LESS stamps (`2026-10-09T19:51:35`). Wire DTOs
+     decode through `FlexTime` (RFC3339Nano, then bare
+     `2006-01-02T15:04:05`, UTC); the MAPPER truncates to whole seconds
+     before building the Observation — sub-second noise must never reach
+     `ContentHash`, or every re-poll rejects the stream as `call.record.
+     mutated`. Regression test:
+     `TestMapConversationTimestampPrecisionStable`.
+- **`FlexTime` promotes time.Time methods on the RECEIVER only** —
+  `conv.CreatedAt.UTC()` compiles, but `last.After(first)` does NOT accept a
+  FlexTime argument; write `.Time.After(x.Time)` explicitly.
+- **The conversation→Observation direction is caller-declared** (MapOptions.
+  Direction, CLI `-direction`): Telnyx conversation metadata exposes no
+  direction field (docs read 2026-10-10), so this deployment's assistant
+  calls default to outbound. Revisit when inbound AI calls land (the DID
+  interception path).
+- **Recording correlation is client-side**: conversations carry
+  `call_control_id` in metadata, recordings carry the same field, so
+  ingest-telnyx lists recent recordings and matches in-process
+  (`RecordingByCallControl`) — the recordings list filter's supported keys
+  are undocumented, so no server-side filter is trusted.

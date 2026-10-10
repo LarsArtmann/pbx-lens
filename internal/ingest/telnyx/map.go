@@ -2,6 +2,7 @@ package telnyx
 
 import (
 	"strings"
+	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
@@ -26,7 +27,7 @@ func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts Map
 		NativeID:          calls.NativeID(conv.ID),
 		Kind:              calls.SourceTelnyxConversation,
 		Direction:         opts.Direction,
-		StartedAt:         conv.CreatedAt.UTC(),
+		StartedAt:         conv.CreatedAt.Truncate(time.Second).UTC(),
 		DurationSecs:      durationSecs(conv, rec),
 		FromNumber:        conv.MetadataString("telnyx_agent_target"),
 		ToNumber:          conv.MetadataString("telnyx_end_user_target"),
@@ -56,8 +57,11 @@ func durationSecs(conv Conversation, rec *Recording) int {
 		return rec.DurationMillis / 1000
 	}
 
-	if conv.LastMessageAt.Time.After(conv.CreatedAt.Time) {
-		return int(conv.LastMessageAt.Time.Sub(conv.CreatedAt.Time).Seconds())
+	start := conv.CreatedAt.Truncate(time.Second)
+	last := conv.LastMessageAt.Truncate(time.Second)
+
+	if last.After(start) {
+		return int(last.Sub(start).Seconds())
 	}
 
 	return 0

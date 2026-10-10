@@ -395,6 +395,42 @@ func TestFlexTimeAcceptsOffsetlessTimestamps(t *testing.T) {
 	}
 }
 
+func TestMapConversationTimestampPrecisionStable(t *testing.T) {
+	nanos := `{"id":"conv-p","created_at":"2026-10-09T19:50:27.401017904Z","last_message_at":"2026-10-09T19:50:59.888888888Z","metadata":{"assistant_id":"a1","telnyx_agent_target":"+17287289311"}}`
+	micros := `{"id":"conv-p","created_at":"2026-10-09T19:50:27.401018Z","last_message_at":"2026-10-09T19:50:59.888889Z","metadata":{"assistant_id":"a1","telnyx_agent_target":"+17287289311"}}`
+
+	var a, b Conversation
+	if err := json.Unmarshal([]byte(nanos), &a); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := json.Unmarshal([]byte(micros), &b); err != nil {
+		t.Fatal(err)
+	}
+
+	obsA, err := MapConversation(a, nil, nil, MapOptions{Direction: calls.DirectionOutbound})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	obsB, err := MapConversation(b, nil, nil, MapOptions{Direction: calls.DirectionOutbound})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if obsA.ContentHash() != obsB.ContentHash() {
+		t.Fatalf("timestamp precision leaked into the content hash: %s vs %s", obsA.ContentHash(), obsB.ContentHash())
+	}
+
+	if obsA.StartedAt.Format(time.RFC3339) != "2026-10-09T19:50:27Z" {
+		t.Fatalf("started_at must truncate to seconds: %v", obsA.StartedAt)
+	}
+
+	if obsA.DurationSecs != 32 {
+		t.Fatalf("fallback duration must use truncated timestamps: %d", obsA.DurationSecs)
+	}
+}
+
 func TestRecordingByCallControl(t *testing.T) {
 	recs := []Recording{
 		{ID: "rec-a", CallControlID: "v3:one"},
