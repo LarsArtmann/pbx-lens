@@ -144,7 +144,7 @@ func observation(shape map[string]string) (calls.Observation, error) {
 	billsec := max(atoi(shape["billsec"]), 0)
 
 	obs := calls.Observation{
-		NativeID:     shape["uuid"],
+		NativeID:     calls.NativeID(shape["uuid"]),
 		Kind:         calls.SourceFreeSwitchCDR,
 		Direction:    direction(shape["context"]),
 		StartedAt:    started.UTC(),
