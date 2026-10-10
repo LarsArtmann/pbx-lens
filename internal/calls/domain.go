@@ -18,8 +18,9 @@ import (
 const (
 	EventObserved = event.Type("call.observed")
 	CommandRecord = command.Type("call.record")
-	StreamType    = id.StreamType("Call")
 )
+
+const StreamType = "Call"
 
 type SourceKind string
 
@@ -86,10 +87,10 @@ func (o Observation) Validate() error {
 		return errorfamily.NewRejection("call.record.empty_native_id", "observation needs the source's native id")
 	}
 	if !o.Kind.Valid() {
-		return errorfamily.NewRejection("call.record.unknown_source_kind", "source kind %q is not one of the four index sources", o.Kind)
+		return errorfamily.NewRejection("call.record.unknown_source_kind", fmt.Sprintf("source kind %q is not one of the four index sources", o.Kind))
 	}
 	if !o.Direction.Valid() {
-		return errorfamily.NewRejection("call.record.unknown_direction", "direction %q must be inbound or outbound", o.Direction)
+		return errorfamily.NewRejection("call.record.unknown_direction", fmt.Sprintf("direction %q must be inbound or outbound", o.Direction))
 	}
 	if o.StartedAt.IsZero() {
 		return errorfamily.NewRejection("call.record.zero_started_at", "observation needs a non-zero StartedAt")
@@ -113,7 +114,7 @@ func (o Observation) ContentHash() string {
 
 func (o Observation) StreamID() (id.StreamID, error) {
 	if o.NativeID == "" || !o.Kind.Valid() {
-		return "", errorfamily.NewRejection("call.record.stream_id_unbuildable", "stream id needs a valid kind and native id")
+		return id.StreamID{}, errorfamily.NewRejection("call.record.stream_id_unbuildable", "stream id needs a valid kind and native id")
 	}
 	return id.ParseStreamID(string(o.Kind) + ":" + o.NativeID)
 }
@@ -170,7 +171,7 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 			if s.ContentHash == obs.ContentHash() {
 				return nil, nil
 			}
-			return nil, errorfamily.NewConflict("call.record.mutated", "stream %s already holds a different observation", streamID)
+			return nil, errorfamily.NewConflict("call.record.mutated", fmt.Sprintf("stream %s already holds a different observation", streamID))
 		}
 		evt, err := event.New(EventObserved, streamID, StreamType, v.Increment(), CallObserved{Observation: obs})
 		if err != nil {

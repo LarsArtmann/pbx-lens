@@ -1,6 +1,7 @@
 package calls
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -49,7 +50,7 @@ func TestValidate(t *testing.T) {
 				}
 				return
 			}
-			if err == nil || err.Error()[:len(tc.wantErr)] != tc.wantErr {
+			if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
 				t.Fatalf("want rejection %q, got %v", tc.wantErr, err)
 			}
 		})
@@ -62,8 +63,11 @@ func TestStreamIDShape(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := string(sid), "telnyx-conversation:conv-1234"; got != want {
-		t.Fatalf("stream id = %q, want %q", got, want)
+	if got := sid.String(); !strings.Contains(got, "telnyx-conversation:conv-1234") {
+		t.Fatalf("stream id = %q, want it to carry kind:native", got)
+	}
+	if back, err := id.ParseStreamID(sid.String()); err != nil || back != sid {
+		t.Fatalf("round-trip law broken: %v -> %v (%v)", sid, back, err)
 	}
 }
 
@@ -106,8 +110,8 @@ func TestRecordMutatedObservationConflicts(t *testing.T) {
 	if err == nil {
 		t.Fatal("mutated observation must conflict")
 	}
-	if got := err.Error()[:len("call.record.mutated")]; got != "call.record.mutated" {
-		t.Fatalf("conflict code = %q", got)
+	if got := err.Error(); !strings.Contains(got, "call.record.mutated") {
+		t.Fatalf("conflict code missing from %q", got)
 	}
 }
 
