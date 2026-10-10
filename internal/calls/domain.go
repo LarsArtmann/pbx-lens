@@ -211,7 +211,14 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 			)
 		}
 
-		evt, err := event.New(EventObserved, streamID, StreamType, v.Increment(), CallObserved{Observation: obs}, event.WithSchemaVersion(1))
+		evt, err := event.New(
+			EventObserved,
+			streamID,
+			StreamType,
+			v.Increment(),
+			CallObserved{Observation: obs},
+			event.WithSchemaVersion(1),
+		)
 		if err != nil {
 			return nil, err
 		}
