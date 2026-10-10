@@ -54,13 +54,6 @@ func Projection() ([]system.ProjectionDeclaration, *projectionadapter.TypeDecode
 				return e.ID, ViewFrom(e.Payload.Observation)
 			},
 		),
-		metaengine.OnRecordTyped(
-			string(EventObserved),
-			projectionadapter.EventWithID[CallObserved]{},
-			func(_ record.Record, e projectionadapter.EventWithID[CallObserved], prev CallView) CallView {
-				return prev
-			},
-		),
 	)
 
 	decoder := projectionadapter.NewTypeDecoder(

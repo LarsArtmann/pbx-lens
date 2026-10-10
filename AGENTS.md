@@ -49,3 +49,22 @@ buildflow --build-mode dev            # the quality gate (lint+format+test)
 nix build                             # needs vendorHash.nix landed first
 ./scripts/...                         # (none yet)
 ```
+
+## Gotchas (paid for)
+
+- **metaengine fold selection (2026-10-10):** for a full-recompute view ship
+  ONLY the 2-arg create fold (`OnRecordTyped` returning `(key, view)`).
+  Pairing it with a 3-arg update fold lets metaengine route the FIRST event
+  through the update fold with a zero `prev`, storing a zero view. Two-fold
+  patterns exist for INCREMENTAL folds (`prev.Field += ...`), not recompute.
+- **The coeffect gate's consumed set ignores `system.RawQuery`** (v4.11.0
+  projection_builder passthrough): declaring `DomainConfig.Events` with a
+  RawQuery projection logs an advisory "unconsumed event type" WARN at boot.
+  Harmless; keep the declaration (the hard-error direction still guards
+  deciders). The fluent `Evolve` + explicit-fold path feeds the gate but
+  generates ONLY an update fold and keys by the view's `ID` field, which the
+  closure cannot populate from the stream id — it panicked in poisoned-
+  collection here. Revisit only if the library grows an explicit-create fold.
+- **`errorfamily.NewRejection/NewConflict` take exactly (code, message)** —
+  no format args; wrap with fmt.Sprintf. StreamID is a struct (cbid), not a
+  string: use .String() / id.ParseStreamID, never a cast.
