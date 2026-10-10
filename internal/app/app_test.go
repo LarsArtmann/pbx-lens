@@ -3,7 +3,6 @@ package app_test
 import (
 	"context"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -81,11 +80,11 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 	if view.Kind != calls.SourceTelnyxConversation || view.Direction != calls.DirectionOutbound {
 		t.Fatalf("view kind/direction wrong: %+v", view)
 	}
-	if !view.IsAI || view.DurationSecs != 26 {
+	if !view.IsAI || view.DurationSecs != 26 || view.NativeID != "conv-e2e-1" {
 		t.Fatalf("view fields wrong: %+v", view)
 	}
-	if !strings.Contains(view.ID, "conv-e2e-1") {
-		t.Fatalf("view ID %q does not carry the native id", view.ID)
+	if view.ContentHash != sampleObservation().ContentHash() {
+		t.Fatalf("view content hash mismatch: %q", view.ContentHash)
 	}
 	if err := sys.Close(); err != nil {
 		t.Fatal(err)
