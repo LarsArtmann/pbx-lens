@@ -62,6 +62,7 @@ func TestListConversationsPaginatesAndFilters(t *testing.T) {
 		}
 
 		data := []Conversation{}
+
 		switch page {
 		case 1:
 			data = []Conversation{
