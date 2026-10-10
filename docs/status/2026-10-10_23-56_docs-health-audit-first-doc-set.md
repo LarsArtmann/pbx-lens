@@ -65,6 +65,15 @@ FEATURES/TODO_LIST/AGENTS/CONTRIBUTING.
 4. **pbx-artmann §30 handoff flagged, not executed.** pbx-lens TODO_LIST now
    supersedes the pbx-lens ROWS of §30, but the strike-through edit lives in
    the other repo (needs owner OK — question g.1).
+5. **Gate status at session close: RED on an environment hang, green on the
+   docs.** Gates 1-2 (23:38/23:41) rc=0 with the new docs in place. Gates 3-5
+   (00:02-00:04) rc=69 — every failure the same class: buildflow-spawned `go`
+   processes dying "hung at or right after spawn" (go-fix at 34s,
+   go-mod-update's verification build at 98s) while `go version`/`go test`
+   run fine standalone and 18/60 steps succeeded. Intermittent, not
+   repo-caused; re-run `buildflow --build-mode dev` when spawns behave.
+   dprint reformatted the new docs cleanly; the markdown link scan passed
+   over all 14 files including this report.
 
 ## c) NOT STARTED
 
@@ -87,10 +96,14 @@ FEATURES/TODO_LIST/AGENTS/CONTRIBUTING.
    a green build is a running artifact, not an exit code.
 2. **First gate run had the same masking bug** (`buildflow | tail; echo $?`).
    Caught and re-run properly before any conclusion rested on it.
-3. **A dependency update landed through me, unreviewed.** The first gate run
-   executed go-mod-tidy/update and nix-flake-update; the daemon committed a
-   flake.lock bump + a telnyx_test.go change. I read the commit STAT, never
-   the DIFFS. "The daemon commits" is not a review; I triggered it.
+3. **A dependency update landed through me, unreviewed — and left drift.**
+   The first gate run executed go-mod-tidy/update and nix-flake-update; the
+   daemon committed a flake.lock bump + a telnyx_test.go change. I read the
+   commit STAT, never the DIFFS. Worse: the go.sum churn left `vendorHash.nix`
+   STALE (preflight warns it now; `nix build` would hash-mismatch even without
+   the empty-package bug), and the repair (`buildflow -s nix-hash-fix --fix`)
+   could not complete because later gate runs hit the spawn hang. "The daemon
+   commits" is not a review; I triggered it.
 4. **Harvest ledger initially lived in TODO_LIST.md** — the harvest-guide
    explicitly forbids this ("lives in the pass report, NOT in TODO_LIST").
    Fixed this turn; the ledger is at the bottom of this report.
@@ -139,7 +152,7 @@ FEATURES/TODO_LIST/AGENTS/CONTRIBUTING.
 | 10 | T9 agent transcript join (M26-M28); revisit E003 split when it lands                                  | Med    | 60min    | Feature        |
 | 11 | resolveKey/parseSince out of main.go into a tested package                                            | Med    | 30min    | Quality        |
 | 12 | cqrs-lint as flake devShell tool/app (kill the /tmp binary)                                           | Med    | 15min    | Quality        |
-| 13 | Review the daemon-landed flake.lock + telnyx_test.go diffs from this session                          | Med    | 10min    | Hygiene        |
+| 13 | Review the daemon-landed flake.lock + telnyx_test.go diffs, repair the stale vendorHash (`buildflow -s nix-hash-fix --fix`), re-run the gate (hang permitting) | Med    | 20min    | Hygiene        |
 | 14 | T7 systemd unit + NixOS module draft for the sibling (M21-M22)                                        | Med    | 60min    | Feature        |
 | 15 | T14 index DB into nightly backup staging                                                              | Med    | 30min    | Feature        |
 | 16 | CI story decision + wiring (no .github/workflows today)                                               | Med    | 30min    | Quality        |
