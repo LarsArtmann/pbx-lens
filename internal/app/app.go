@@ -13,8 +13,6 @@ import (
 const primaryEngine = "primary"
 
 func New(ctx context.Context, dsn string) (*system.System, error) {
-	projection, typeDecoder := calls.Projection()
-
 	engine := system.EngineConfig{Driver: "memory"}
 	if dsn != "" {
 		engine = system.EngineConfig{Driver: "sqlite", DSN: dsn}
@@ -29,7 +27,11 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 	}
 
 	domain := system.DomainConfig{
-		Events: []event.Type{calls.EventObserved},
+		Events:     []event.Type{calls.EventObserved},
+		Evolutions: []system.EvolutionSpec{calls.Evolution()},
+		Projections: []system.ProjectionDeclaration{
+			system.Lookup[calls.CallView](calls.Collection).Done(),
+		},
 		Commands: func(sys *system.System) {
 			if err := system.RegisterDecider(sys, calls.StreamType, decider.Decider[calls.CallState]{
 				Initial: calls.CallState{},
@@ -44,8 +46,6 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 				panic(err)
 			}
 		},
-		Projections:           projection,
-		ProjectionTypeDecoder: typeDecoder,
 	}
 
 	return system.New(ctx, domain, deployment)
