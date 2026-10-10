@@ -14,7 +14,7 @@ const Collection = "call_views"
 type callLookup struct{}
 
 type CallView struct {
-	NativeID          string     `json:"native_id"`
+	NativeID          NativeID   `json:"native_id"`
 	Kind              SourceKind `json:"kind"`
 	Direction         Direction  `json:"direction"`
 	StartedAt         time.Time  `json:"started_at"`
@@ -33,7 +33,7 @@ func ViewFrom(o Observation) CallView {
 		NativeID:          o.NativeID,
 		Kind:              o.Kind,
 		Direction:         o.Direction,
-		StartedAt:         o.StartedAt,
+		StartedAt:         o.StartedAt.UTC(),
 		DurationSecs:      o.DurationSecs,
 		FromNumber:        o.FromNumber,
 		ToNumber:          o.ToNumber,

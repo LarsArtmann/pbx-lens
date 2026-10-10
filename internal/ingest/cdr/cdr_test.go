@@ -18,6 +18,7 @@ func TestParseDefaultTemplate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(res.Observations) != 2 || res.Skipped != 0 {
 		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
 	}
@@ -26,12 +27,15 @@ func TestParseDefaultTemplate(t *testing.T) {
 	if in.NativeID != "f0e1d2c3-1111-4aaa-9aaa-000000000001" || in.Direction != calls.DirectionInbound {
 		t.Fatalf("inbound row wrong: %+v", in)
 	}
+
 	if in.FromNumber != "17287289311" || in.ToNumber != "2000" || in.HangupCause != "NORMAL_CLEARING" {
 		t.Fatalf("participants wrong: %+v", in)
 	}
+
 	if in.StartedAt.UTC().Format(stampLayout) != "2026-10-09 19:51:25" {
 		t.Fatalf("stamp wrong: %v", in.StartedAt)
 	}
+
 	if in.DurationSecs != 25 {
 		t.Fatalf("billsec wrong: %d", in.DurationSecs)
 	}
@@ -40,6 +44,7 @@ func TestParseDefaultTemplate(t *testing.T) {
 	if out.Direction != calls.DirectionOutbound {
 		t.Fatalf("default context must be outbound: %+v", out)
 	}
+
 	if out.Kind != calls.SourceFreeSwitchCDR {
 		t.Fatalf("kind wrong: %+v", out)
 	}
@@ -50,13 +55,16 @@ func TestParseFallbackTemplateWithQuirks(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(res.Observations) != 1 || res.Skipped != 0 {
 		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
 	}
+
 	obs := res.Observations[0]
 	if obs.NativeID != "cccc4444-5555-4ccc-8ccc-000000000003" {
 		t.Fatalf("uuid column wrong: %+v", obs)
 	}
+
 	if obs.DurationSecs != 9 || obs.Direction != calls.DirectionOutbound {
 		t.Fatalf("mapped fields wrong: %+v", obs)
 	}
@@ -64,13 +72,16 @@ func TestParseFallbackTemplateWithQuirks(t *testing.T) {
 
 func TestParseSkipsMalformedRows(t *testing.T) {
 	input := "not,enough,fields\n" + fixture13 + `"2026-13-99 99:99:99",x`
+
 	res, err := Parse(strings.NewReader(input))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(res.Observations) != 2 {
 		t.Fatalf("want 2 good rows, got %d", len(res.Observations))
 	}
+
 	if res.Skipped != 2 {
 		t.Fatalf("want 2 skipped, got %d", res.Skipped)
 	}
@@ -81,19 +92,23 @@ func TestParseStreamIDsDeterministic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	b, err := Parse(strings.NewReader(fixture13))
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	for i := range a.Observations {
 		sa, err := a.Observations[i].StreamID()
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		sb, err := b.Observations[i].StreamID()
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		if sa != sb {
 			t.Fatalf("re-parse changed stream id: %s vs %s", sa, sb)
 		}

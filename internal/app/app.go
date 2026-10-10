@@ -37,9 +37,15 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 			}); err != nil {
 				panic(err)
 			}
+
 			if err := system.RegisterCommand[calls.RecordCallCmd, calls.CallState](sys, calls.CommandRecord,
 				func(cmdCtx context.Context, cmd calls.RecordCallCmd) system.Op[calls.CallState] {
-					return system.Execute(cmdCtx, cmd.StreamID(), calls.StreamType, calls.Record(cmd.Observation, cmd.StreamID()))
+					return system.Execute(
+						cmdCtx,
+						cmd.StreamID(),
+						calls.StreamType,
+						calls.Record(cmd.Observation, cmd.StreamID()),
+					)
 				}); err != nil {
 				panic(err)
 			}
