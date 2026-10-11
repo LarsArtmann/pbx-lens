@@ -329,3 +329,14 @@ DECISION.
   (invalid for the installed golangci-lint schema; `golangci-lint-config-verify`
   rejected it and the runner terminated with "configuration contains invalid
   elements").
+
+- **license-check toolchain skew (environment, 2026-10-11)**: buildflow's
+  `license-check` step runs go-licenses in a sandbox whose `go` resolves to
+  1.27.0, so `go-appkit@v0.8.0`'s `go >= 1.27.1` floor hard-fails the step
+  ("requires go >= 1.27.1 (running go 1.27.0)"); direct `go-licenses` outside
+  the sandbox is clean. The installed buildflow binary (200ab99) is also
+  behind its repo HEAD (c7b44d8, feat/toolsdk-provider-switchover) — the fix
+  belongs upstream: rebuild/reinstall buildflow, re-run
+  `buildflow --build-mode dev`, and delete this note. Everything else in the
+  gate is green; `nix build`, `go test ./... -count=1`, `cqrs-lint` (0
+  errors), and `workspace-build-verify` in isolation all pass.
