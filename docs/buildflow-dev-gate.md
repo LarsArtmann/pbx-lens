@@ -60,3 +60,24 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   was rebuilt (now 8b8269c) and `buildflow -s license-check` is green
   (13.6s, 1/1). Remaining delta: binary still behind BuildFlow HEAD — a
   per-run advisory warning, not a gate factor.
+- **dprint-format: markdown tables must be dprint-padded (PAID FOR,
+  2026-10-11 23:24)**: a TODO_LIST table whose cells were padded to a
+  narrower width than its longest row failed `dprint-format` (exit 20) and
+  BLOCKED 7 downstream steps (the gate DAG stops at the first failure —
+  nix-build never ran). Fix: `nix develop -c dprint fmt <file>` (dprint
+  re-pads every row to the widest cell; content byte-identical, only
+  whitespace). Hand-maintained table padding is the failure class — run
+  dprint fmt after any manual table edit, don't eyeball it.
+- **go-generate transient "updates to go.mod needed" (2026-10-11 23:27)**:
+  one full-gate run failed `go-generate` with `go: updates to go.mod
+  needed; to update it: go mod tidy` while `go build` and `go mod tidy`
+  were simultaneously clean; a standalone step rerun and the next full
+  gate both passed with zero changes. GOMODCACHE is the SHARED
+  `/mnt/buildcache/go-mod` mount — under concurrent sessions the first
+  suspect is a cache race, not the module. Rerun the step before
+  diagnosing; only treat it as real if `go mod tidy` shows a diff.
+- **Gate closed green (2026-10-11 23:30)**: full
+  `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode
+  dev` = 73 success, 0 failed, 0 skipped; nix-build ✔ (737 ms, FOD cached
+  via the vendor-hash verification build). All remaining findings are the
+  documented advisories above.
