@@ -11,6 +11,13 @@ const fixture13 = `"John Doe","17287289311","2000","public","2026-10-09 19:51:25
 "","1000","+17287289311","default","2026-10-09 20:20:00","2026-10-09 20:20:02","2026-10-09 20:20:28","28","26","NORMAL_CLEARING","aaaa2222-3333-4bbb-8bbb-000000000002","","artmann"
 `
 
+// fixture13MOS is the default template with mod_cdr_csv's extra
+// rtp_audio_in_mos column appended.
+const fixture13MOS = `"John Doe","17287289311","2000","public","2026-10-09 19:51:25","2026-10-09 19:51:26","2026-10-09 19:51:51","26","25","NORMAL_CLEARING","f0e1d2c3-1111-4aaa-9aaa-000000000001","b0a9-2222","","4.4"` + "\n"
+
+// fixture13MOSGarbage has an appended extra column that is not a MOS value.
+const fixture13MOSGarbage = `"John Doe","17287289311","2000","public","2026-10-09 19:51:25","2026-10-09 19:51:26","2026-10-09 19:51:51","26","25","NORMAL_CLEARING","f0e1d2c3-1111-4aaa-9aaa-000000000001","b0a9-2222","","not-a-mos"` + "\n"
+
 const fixture18 = `"","+14084757593","2000","default","Lars","SOFTA","SOFTB","bridge","park","2026-10-09 21:00:00","2026-10-09 21:00:01","2026-10-09 21:00:10","10","9","NORMAL_CLEARING","2","cccc4444-5555-4ccc-8ccc-000000000003","";` + "\n"
 
 func TestParseDefaultTemplate(t *testing.T) {
