@@ -302,6 +302,11 @@ DECISION.
   `system.RegisterCommand` (ADR-0123 composition root); the lint analyzes
   one package at a time and cannot see the wiring. Non-fix. Same class
   covers the 2026-10-11 `EnrichCallCmd` warning.
+- **E014 (false positive, same package-blindness class)**: "uses
+  projectionhost but has no projection drain/sync/flush call" — the drain
+  lives in `internal/cli.DrainProjections` and EVERY dispatcher (one-shot
+  commands, serve startup, poller passes) calls it explicitly; the lint
+  sees `internal/calls` alone. Non-fix.
 - **P-class Close() ignored in `cli.OpenSystem` cleanup (deliberate)**:
   one-shot CLI processes close the system at exit; a close error there has
   no recovery path and the event log is already durable. The serve process

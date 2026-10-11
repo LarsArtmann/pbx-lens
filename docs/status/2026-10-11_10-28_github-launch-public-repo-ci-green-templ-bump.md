@@ -12,13 +12,13 @@
 
 ## Commits this session (all pushed, all CI-green)
 
-| SHA | What |
-| --- | --- |
-| `58ee394` | (auto-commit daemon) my go.mod/go.sum/dashboard.go mid-session edits — **pushed by me, inspected only after the push** (see §d) |
-| `20fdfc9` | Make CI runnable: templ codegen via go.mod tool directive + golangci-lint v2.12→v2.14 |
-| `98b47ee` | Document the public GitHub launch and green CI lane (SECURITY/ROADMAP/FEATURES/AGENTS) |
-| `40e1a49` | Bump a-h/templ to v0.3.1070 manually; dependabot mangles this go.mod |
-| (pre-session) `93b86ba`, `05b6a91` | daemon commits; `05b6a91` carried the other session's MOS tests + 09:39 report, which I gate-tested and pushed |
+| SHA                                | What                                                                                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `58ee394`                          | (auto-commit daemon) my go.mod/go.sum/dashboard.go mid-session edits — **pushed by me, inspected only after the push** (see §d) |
+| `20fdfc9`                          | Make CI runnable: templ codegen via go.mod tool directive + golangci-lint v2.12→v2.14                                           |
+| `98b47ee`                          | Document the public GitHub launch and green CI lane (SECURITY/ROADMAP/FEATURES/AGENTS)                                          |
+| `40e1a49`                          | Bump a-h/templ to v0.3.1070 manually; dependabot mangles this go.mod                                                            |
+| (pre-session) `93b86ba`, `05b6a91` | daemon commits; `05b6a91` carried the other session's MOS tests + 09:39 report, which I gate-tested and pushed                  |
 
 ---
 
@@ -173,6 +173,7 @@
 ## f) NEXT (≤50, impact-ordered)
 
 **Nix/toolchain integrity (this session's likely breakage)**
+
 1. Repair vendorHash: `buildflow -s nix-hash-fix --fix` (or `nix run
    .#update-vendor-hash`), then `nix build -o result` + run the real binary. [S, High]
 2. Re-run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev`; expect exactly one
@@ -187,44 +188,44 @@
 
 **CI completeness (parity with local gate)**
 7. Add cqrs-lint lane to CI (0-error gate; `go build`/`goinstall` the cmd, `.` not
-   `./...` — the loader crash is documented). [M, Med]
+`./...` — the loader crash is documented). [M, Med]
 8. Add govulncheck version pin (currently `@latest` — unreproducible). [S, Low]
 9. Decide dependabot `ignore` for `a-h/templ` (else weekly broken PRs) — owner call.
-   [S, Med, OWNER]
+[S, Med, OWNER]
 10. File the verified Dependabot multi-module-requires-deletion bug upstream (needs
-    minimal repro; verify-before-filing + github-voice) — owner permission. [M, Med]
+minimal repro; verify-before-filing + github-voice) — owner permission. [M, Med]
 11. Confirm what the `DontMergeMeYet` check is (parallel-session workflow?) and whether
-    CodeRabbit/GitGuardian integrations are wanted. [S, Low]
+CodeRabbit/GitGuardian integrations are wanted. [S, Low]
 12. ubuntu-latest → Ubuntu 26 migration (Oct 19): re-verify CI after runner flip.
-    [S, Med, dated]
+[S, Med, dated]
 13. Merge any open github-actions-ecosystem Dependabot PRs (group: actions). [S, Low]
 14. Check for other open Dependabot PRs (gomod minor-and-patch group) and triage with
-    the manual-bump path. [S, Med]
+the manual-bump path. [S, Med]
 15. golangci-lint: keep pin ≥ Go-of-the-binary rule — add a CI comment/test that fails
-    loudly when the pin lags the module's language level. [S, Low]
+loudly when the pin lags the module's language level. [S, Low]
 
 **Release engineering**
 16. Tag `v0.1.0` once nix build verified (go-release skill; CHANGELOG exists). [S, Med]
 17. Decide branch strategy for releases (none exist; single `main` per SECURITY.md).
-    [S, Low]
+[S, Low]
 18. CI release lane (binary assets via GoReleaser or nix bundle) — only if installs
-    beyond `go install`/nix are wanted. [M, Low, OWNER]
+beyond `go install`/nix are wanted. [M, Low, OWNER]
 
 **Public presence**
 19. CI badge + license section audit in README (application badge set per skill). [S, Low]
 20. Social-preview image via the website-launch skill's generator; upload manually.
-    [S, Low]
+[S, Low]
 21. Screenshot/demo of `/dashboard` for README (needs auth-safe fixture DB). [M, Low]
 
 **Docs health**
 22. Annotate 04:58/04:59/05:21/06:29/09:35/09:39 reports as superseded; mark Q1
-    answered-in-place. [S, Low]
+answered-in-place. [S, Low]
 23. Harvest §b/§e items above into TODO_LIST rows (vendorHash fix, cqrs-lint-in-CI,
-    dependabot decision, branch protection). [S, Med]
+dependabot decision, branch protection). [S, Med]
 24. AGENTS.md: note the `DontMergeMeYet`/integrations provenance once identified (11).
-    [S, Low]
+[S, Low]
 25. Record "inspect-before-push on daemon repos" + "pipefail your verification" in
-    crush-config `references/lessons.md` (cross-project, by commit). [S, Med]
+crush-config `references/lessons.md` (cross-project, by commit). [S, Med]
 
 **Carried product work (unchanged priority, listed for completeness)**
 26. Q2: dashboard timezone decision (UTC vs Europe/Berlin) — third ask. [S, High, OWNER]
@@ -243,7 +244,7 @@
 39. FTS prefix queries or search hint. [S, Low]
 40. C009 upstream filing. [M, Low]
 41. SegmentBar/ProgressBar/utils-format swaps when templ-components > v1.21.0
-    publishes. [S, Low, gated]
+publishes. [S, Low, gated]
 42. Dashboard date-range picker (M20.1) or deliberate strike. [M, Low, OWNER]
 43. Duration histogram (M20.2) or deliberate strike. [M, Low]
 44. Sparkline AriaLabel. [S, Low]
@@ -270,5 +271,5 @@
 
 ---
 
-*Supersedes nothing; complements `2026-10-11_09-35_session-frontend-completion-dashboard-systemd-docs.md`
-(the Q1 it carried is now ANSWERED — repo public, pushed, CI green).*
+_Supersedes nothing; complements `2026-10-11_09-35_session-frontend-completion-dashboard-systemd-docs.md`
+(the Q1 it carried is now ANSWERED — repo public, pushed, CI green)._

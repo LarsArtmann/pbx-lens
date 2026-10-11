@@ -25,20 +25,20 @@
 
 ## Medium impact
 
-| Task                                                                                     | Status              | Impact | Effort | Evidence                                                                                        |
-| ---------------------------------------------------------------------------------------- | ------------------- | ------ | ------ | ----------------------------------------------------------------------------------------------- |
-| Retention/PII purge (T23): retention command + PII mode; `E164`/`ParticipantHash` become load-bearing | 🟡 `IN_PROGRESS` | Med | 90min | `internal/retention/` package + `purge` command landed (max-age, dry-run); PII mode + ingest-side cutoff still open |
+| Task                                                                                                  | Status           | Impact | Effort | Evidence                                                                                                            |
+| ----------------------------------------------------------------------------------------------------- | ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| Retention/PII purge (T23): retention command + PII mode; `E164`/`ParticipantHash` become load-bearing | 🟡 `IN_PROGRESS` | Med    | 90min  | `internal/retention/` package + `purge` command landed (max-age, dry-run); PII mode + ingest-side cutoff still open |
 
 ## Low impact
 
-| Task                                                                                                                             | Status        | Impact | Effort | Evidence                                                                                            |
-| -------------------------------------------------------------------------------------------------------------------------------- | ------------- | ------ | ------ | --------------------------------------------------------------------------------------------------- |
-| Hand `deploy/nixos/module-draft.nix` to nix-international-telephony as `services.pbx-lens` (T7 half 2)                           | 🔴 `TODO`     | Low    | 30min  | draft shipped here 2026-10-11 (now incl. `backup.*` options); sibling repo owns the module          |
-| Swap the hand-rolled AI/human proportion bar for `display.SegmentBar` when templ-components publishes it                         | 🔵 `BLOCKED`  | Low    | 10min  | `internal/web/dashboard.templ` `aiHumanCard`; SegmentBar exists unreleased upstream, not in v1.21.0 |
-| Verify at source level + file upstream: cqrs-lint C009 exemption excludes bare `must` (len 4)                                    | 🔴 `TODO`     | Low    | 30min  | go-cqrs-lite `c009.go` `len(name) > 4` guard; report §b.3                                           |
-| Upstream filings (D6): sqliteengine time binding, memory-engine field-name resolution, treefmt templ go pin                      | 🔴 `TODO`     | Low    | 60min  | all three verified in-repo with repros; AGENTS.md gotchas document them                             |
-| Rebuild/reinstall the BuildFlow binary (200ab99 → HEAD) so license-check's sandbox go meets the 1.27.1 floor; then drop the AGENTS.md license-check note | 🔴 `TODO` | Low | 15min | the dev gate's only red step; direct `go-licenses` is clean (AGENTS.md license-check note)          |
-| Live-verify the Telnyx Detail Records + insights DTOs against the real API (shapes decoded tolerantly; call-control record not in the public spec) | 🔴 `TODO` | Low | 30min | `internal/ingest/telnyx/telnyx.go` `DetailRecord` aliases; AGENTS.md quarterly re-verify cluster    |
+| Task                                                                                                                                                     | Status       | Impact | Effort | Evidence                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ | ------ | --------------------------------------------------------------------------------------------------- |
+| Hand `deploy/nixos/module-draft.nix` to nix-international-telephony as `services.pbx-lens` (T7 half 2)                                                   | 🔴 `TODO`    | Low    | 30min  | draft shipped here 2026-10-11 (now incl. `backup.*` options); sibling repo owns the module          |
+| Swap the hand-rolled AI/human proportion bar for `display.SegmentBar` when templ-components publishes it                                                 | 🔵 `BLOCKED` | Low    | 10min  | `internal/web/dashboard.templ` `aiHumanCard`; SegmentBar exists unreleased upstream, not in v1.21.0 |
+| Verify at source level + file upstream: cqrs-lint C009 exemption excludes bare `must` (len 4)                                                            | 🔴 `TODO`    | Low    | 30min  | go-cqrs-lite `c009.go` `len(name) > 4` guard; report §b.3                                           |
+| Upstream filings (D6): sqliteengine time binding, memory-engine field-name resolution, treefmt templ go pin                                              | 🔴 `TODO`    | Low    | 60min  | all three verified in-repo with repros; AGENTS.md gotchas document them                             |
+| Rebuild/reinstall the BuildFlow binary (200ab99 → HEAD) so license-check's sandbox go meets the 1.27.1 floor; then drop the AGENTS.md license-check note | 🔴 `TODO`    | Low    | 15min  | the dev gate's only red step; direct `go-licenses` is clean (AGENTS.md license-check note)          |
+| Live-verify the Telnyx Detail Records + insights DTOs against the real API (shapes decoded tolerantly; call-control record not in the public spec)       | 🔴 `TODO`    | Low    | 30min  | `internal/ingest/telnyx/telnyx.go` `DetailRecord` aliases; AGENTS.md quarterly re-verify cluster    |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
      per docs-health harvest-guide: the ledger records the pass, it is not a
