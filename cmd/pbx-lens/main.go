@@ -466,7 +466,8 @@ func serve(args []string) {
 	recordingsDir := fs.String(
 		"recordings-dir",
 		"/var/lib/telephony/recordings",
-		"local FreeSWITCH recordings directory (stems tried: indexed ref, {uuid}_{dest}.wav, bare uuid; empty = local playback disabled)",
+		"local FreeSWITCH recordings directory (stems tried: indexed ref, "+
+			"{uuid}_{dest}.wav, bare uuid; empty = local playback disabled)",
 	)
 	htpasswdPath := fs.String(
 		"htpasswd",

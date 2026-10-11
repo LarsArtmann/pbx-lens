@@ -261,12 +261,14 @@ type failingWriter struct {
 	writes int
 }
 
+var errClientVanished = errors.New("client vanished")
+
 func (f *failingWriter) Header() http.Header { return f.header }
 
 func (f *failingWriter) Write(p []byte) (int, error) {
 	f.writes++
 
-	return 0, errors.New("client vanished")
+	return 0, errClientVanished
 }
 
 func (f *failingWriter) WriteHeader(int) {}
