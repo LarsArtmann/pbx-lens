@@ -11,6 +11,7 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
 //go:embed static
@@ -20,12 +21,27 @@ var staticFS embed.FS
 // is older than this, the list page shows the staleness banner.
 const staleAfter = 6 * time.Hour
 
+// Options bundles the web server's data sources beyond the read model.
+type Options struct {
+	Recordings RecordingOptions
+
+	// Search answers FTS content queries (search.Index). Nil disables
+	// /search with an explanatory 503.
+	Search Searcher
+}
+
+// Searcher is the content-query surface the web UI needs.
+type Searcher interface {
+	Query(ctx context.Context, query string, limit int) ([]search.Hit, error)
+}
+
 // Register mounts every pbx-lens route on mux. The handler surface is
 // strictly read-only over the read model.
-func Register(mux *http.ServeMux, sys *system.System, recordings RecordingOptions) {
-	web := &server{sys: sys, recordings: recordings}
+func Register(mux *http.ServeMux, sys *system.System, opts Options) {
+	web := &server{sys: sys, recordings: opts.Recordings, search: opts.Search}
 
 	mux.HandleFunc("GET /{$}", web.list)
+	mux.HandleFunc("GET /search", web.searchPage)
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
 	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
 	mux.HandleFunc("GET /app.css", serveStyles)
@@ -34,6 +50,7 @@ func Register(mux *http.ServeMux, sys *system.System, recordings RecordingOption
 type server struct {
 	sys        *system.System
 	recordings RecordingOptions
+	search     Searcher
 }
 
 func (s *server) list(w http.ResponseWriter, r *http.Request) {

@@ -1,0 +1,74 @@
+package web
+
+import (
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/feedback"
+	"github.com/larsartmann/pbx-lens/internal/search"
+)
+
+// searchRoute is the content-search page: one input, ranked hits with the
+// matched terms highlighted, every hit deep-linked to its call page.
+templ searchRoute(query string, hits []search.Hit, errMessage string) {
+	@shell("Search — pbx-lens", "/search") {
+		@display.PageHeader(display.PageHeaderProps{
+			Title:    "Search",
+			Subtitle: "Find any conversation by content",
+		})
+		<form method="get" action="/search" class="mb-6 flex max-w-xl gap-2">
+			<input
+				type="search"
+				name="q"
+				value={ query }
+				placeholder="e.g. woolly invoice"
+				aria-label="Search transcripts"
+				class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
+			/>
+			<button
+				type="submit"
+				class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+			>
+				Search
+			</button>
+		</form>
+		if errMessage != "" {
+			@feedback.Alert(feedback.AlertProps{
+				Type:    feedback.FeedbackWarning,
+				Title:   "Search failed",
+				Message: errMessage,
+			})
+		}
+		if query != "" {
+			if len(hits) == 0 {
+				@display.EmptyState(display.EmptyStateProps{
+					Title:       "No matches",
+					Description: "Nothing in the index matches these terms. Check spelling, or run an ingest command — only indexed calls are searchable.",
+				})
+			} else {
+				@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(hits)})
+				<div class="space-y-3">
+					for _, hit := range hits {
+						<a
+							href={ hitHref(hit) }
+							class="block rounded-lg border border-gray-200 p-4 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-900"
+						>
+							<div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+								<time datetime={ hit.Started.Format("2006-01-02T15:04:05") }>{ hit.Started.Local().Format("Jan 2, 2006 15:04") }</time>
+								@display.Badge(display.BadgeProps{Text: hit.Kind, Type: display.BadgeNeutral, Pill: true})
+								<span class="font-mono">{ hit.NativeID }</span>
+							</div>
+							<p class="mt-2 text-sm leading-relaxed">
+								for _, part := range hit.Parts {
+									if part.Highlight {
+										<mark class="rounded bg-amber-200 px-0.5 text-gray-900 dark:bg-amber-900/40 dark:text-amber-200">{ part.Text }</mark>
+									} else {
+										{ part.Text }
+									}
+								}
+							</p>
+						</a>
+					}
+				</div>
+			}
+		}
+	}
+}

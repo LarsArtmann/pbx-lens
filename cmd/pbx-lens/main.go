@@ -415,7 +415,7 @@ func serve(args []string) {
 		recordings.Telnyx = telnyx.NewClient(key, "")
 	}
 
-	web.Register(svc.Mux, sys, recordings)
+	web.Register(svc.Mux, sys, web.Options{Recordings: recordings})
 
 	// The serve lifetime is signal-owned (Run handles SIGINT/SIGTERM) — no
 	// timeout context here, or the server would die with it.

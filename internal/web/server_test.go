@@ -32,7 +32,7 @@ func webObservation(nativeID string, started time.Time) calls.Observation {
 func newTestServer(t *testing.T, observations ...calls.Observation) *http.ServeMux {
 	t.Helper()
 
-	return newTestServerWith(t, RecordingOptions{}, observations...)
+	return newTestServerWith(t, Options{}, observations...)
 }
 
 func getBody(t *testing.T, mux *http.ServeMux, path string) (int, string) {

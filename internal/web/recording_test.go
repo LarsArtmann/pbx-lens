@@ -82,8 +82,8 @@ func TestRecordingProxyStreamsTelnyxWav(t *testing.T) {
 	state := &fakeTelnyxState{}
 	api := fakeTelnyx(t, state)
 
-	mux := newTestServerWith(t, RecordingOptions{
-		Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2"),
+	mux := newTestServerWith(t, Options{
+		Recordings: RecordingOptions{Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2")},
 	}, telnyxRecordingObservation())
 
 	status, body, header := getWithHeaders(t, mux, "/calls/telnyx-conversation/conv-rec/recording")
@@ -129,8 +129,8 @@ func TestRecordingProxyPassesRangeThrough(t *testing.T) {
 	state := &fakeTelnyxState{}
 	api := fakeTelnyx(t, state)
 
-	mux := newTestServerWith(t, RecordingOptions{
-		Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2"),
+	mux := newTestServerWith(t, Options{
+		Recordings: RecordingOptions{Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2")},
 	}, telnyxRecordingObservation())
 
 	recorder := httptest.NewRecorder()
@@ -206,7 +206,7 @@ func TestRecordingLocalServesFileWithRange(t *testing.T) {
 		t.Fatalf("write fixture: %v", err)
 	}
 
-	mux := newTestServerWith(t, RecordingOptions{RecordingsDir: dir}, observation)
+	mux := newTestServerWith(t, Options{Recordings: RecordingOptions{RecordingsDir: dir}}, observation)
 
 	status, body, _ := getWithHeaders(t, mux, "/calls/freeswitch-cdr/uuid-1/recording")
 	if status != http.StatusOK {
@@ -237,7 +237,7 @@ func TestRecordingLocalMissingFileIs404(t *testing.T) {
 		ToNumber:     "+15555550123",
 	}
 
-	mux := newTestServerWith(t, RecordingOptions{RecordingsDir: t.TempDir()}, observation)
+	mux := newTestServerWith(t, Options{Recordings: RecordingOptions{RecordingsDir: t.TempDir()}}, observation)
 
 	status, _, _ := getWithHeaders(t, mux, "/calls/freeswitch-cdr/uuid-2/recording")
 	if status != http.StatusNotFound {
@@ -245,8 +245,8 @@ func TestRecordingLocalMissingFileIs404(t *testing.T) {
 	}
 }
 
-// newTestServerWith is newTestServer with explicit recording options.
-func newTestServerWith(t *testing.T, recordings RecordingOptions, observations ...calls.Observation) *http.ServeMux {
+// newTestServerWith is newTestServer with explicit options.
+func newTestServerWith(t *testing.T, opts Options, observations ...calls.Observation) *http.ServeMux {
 	t.Helper()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -270,7 +270,7 @@ func newTestServerWith(t *testing.T, recordings RecordingOptions, observations .
 	}
 
 	mux := http.NewServeMux()
-	Register(mux, sys, recordings)
+	Register(mux, sys, opts)
 
 	return mux
 }
