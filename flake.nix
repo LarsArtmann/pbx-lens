@@ -43,6 +43,18 @@
         # root directory, which holds no Go package — the build then
         # "succeeds" with an empty result and no bin/pbx-lens.
         subPackages = [ "./cmd/pbx-lens" ];
+        # UI codegen: *_templ.go and static/styles.css are build artifacts
+        # (gitignored) regenerated inside the package build — templ via the
+        # module's preBuild policy, tailwind via our preBuild hook below.
+        enableTempl = true;
+        templGenerationPolicy = "preBuild";
+        extraBuildAttrs = pkgs: {
+          nativeBuildInputs = [ pkgs.tailwindcss_4 ];
+          preBuild = ''
+            templ generate ./internal/web/
+            tailwindcss -i internal/web/static/app.css -o internal/web/static/styles.css --minify
+          '';
+        };
         # BuildFlow owns Go formatting in this repo (oxfmt); treefmt Go
         # formatters would be a second source of truth. Nix files stay with
         # treefmt (go-output's pattern: nixfmt + deadnix + statix only).
@@ -114,7 +126,7 @@
               packages =
                 builtins.attrValues {
                   inherit go;
-                  inherit (pkgs) golangci-lint gopls govulncheck;
+                  inherit (pkgs) golangci-lint gopls govulncheck templ tailwindcss_4;
                 }
                 ++ [
                   cqrs-lint

@@ -22,16 +22,39 @@ webphone later gets a read-only deep link, never a data dependency.
   go-output's flake). Nothing imports encoding/json/v2 yet (plain
   `go test ./...` passes without the env var); it becomes load-bearing when a
   surface needs it.
-- **Dependencies:** stdlib + go-cqrs-lite + go-error-family ONLY. No testify
-  (banned; stdlib table-driven tests), no cobra, no ORM.
+- **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
+  (below). No testify (banned; stdlib table-driven tests), no cobra, no ORM.
+- **UI trio (2026-10-11, F3/F4):** `go-appkit` v0.8.0 (HTTP service shell:
+  `NewService(ServiceConfig{Addr})` → `svc.Mux *http.ServeMux`, `svc.Run(ctx)`
+  owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.21.0 (display/
+  forms/feedback/layout/navigation components), `a-h/templ` v0.3.1020 (codegen).
+  Stay on the PUBLISHED templ-components version — no local replace (breaks
+  hermetic nix); hand-roll missing thin pieces instead.
+- **templ-components v1.21.0 adoption map** (skill's consumer tip; the skill
+  docs drift ahead of the pinned tag — this table is the truth for THIS repo):
+
+  | Component | Status | Note |
+  | --- | --- | --- |
+  | layout.Base/DefaultPageProps | used | `.Title` set; CSSPath defaults to /app.css |
+  | navigation.SimpleNav + ThemeToggle | used | |
+  | display.Table/TableRow.Href/TableCell | used | row-click JS included |
+  | display.Badge, PageHeader, EmptyState, ListNote, RelativeTime, Card, DefinitionList, Button | used | DefinitionList takes `Items []DefinitionItem{Term, Detail, DetailComponent}` — NOT children |
+  | forms.Select/DatePicker | used | selected-ness is per `SelectOption.Selected`, no props-level Selected |
+  | feedback.Alert | used | staleness banner |
+  | FilterBar / SegmentedControl / utils/format / errorpage | ABSENT in v1.21.0 | hand-rolled equivalents; do not import |
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's pattern,
   adopted 2026-10-11): `subPackages = ["./cmd/pbx-lens"]` wires the package to
   the real binary (the module default `["."]` built the package-less root and
   shipped an empty result); treefmt runs nixfmt + deadnix + statix only —
   `enableGofumpt`/`enableGoimports` are OFF because BuildFlow owns Go
   formatting (go-output's house split). The devShell (mkShellNoCC) carries
-  go/golangci-lint/gopls/govulncheck/cqrs-lint with GOTOOLCHAIN=local +
-  GOEXPERIMENT=jsonv2. `vendorHash.nix` carries the landed vendor hash; repair
+  go/golangci-lint/gopls/govulncheck/templ/tailwindcss_4/cqrs-lint with
+  GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2. UI codegen is a package preBuild:
+  `templGenerationPolicy = "preBuild"` + a preBuild hook running
+  `templ generate ./internal/web/` and `tailwindcss -i internal/web/static/
+  app.css -o internal/web/static/styles.css --minify` — `*_templ.go` and
+  `styles.css` are gitignored build artifacts, regenerated inside nix.
+  `vendorHash.nix` carries the landed vendor hash; repair
   a go.mod/go.sum break with `buildflow -s nix-hash-fix --fix` or
   `nix run .#update-vendor-hash` — never paste hashes by hand.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's pattern,
