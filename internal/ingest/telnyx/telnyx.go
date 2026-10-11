@@ -16,10 +16,11 @@ import (
 )
 
 const (
-	DefaultBase   = "https://api.telnyx.com/v2"
-	maxPages      = 500
-	maxErrorBytes = 300
-	maxBodyBytes  = 8 << 20
+	DefaultBase       = "https://api.telnyx.com/v2"
+	defaultPageSize   = 100
+	maxPages          = 500
+	maxErrorBytes     = 300
+	maxBodyBytes      = 8 << 20
 )
 
 type Client struct {
@@ -35,7 +36,7 @@ func NewClient(apiKey, baseURL string) *Client {
 		base = DefaultBase
 	}
 
-	return &Client{base: base, apiKey: apiKey, http: http.DefaultClient, PageSize: 100}
+	return &Client{base: base, apiKey: apiKey, http: http.DefaultClient, PageSize: defaultPageSize}
 }
 
 type ListOptions struct {
@@ -120,27 +121,27 @@ func (c *Client) ListRecordings(ctx context.Context, limit int) ([]Recording, er
 	return fetchAll[Recording](ctx, c, "/recordings", url.Values{}, limit)
 }
 
-func fetchAll[T any](ctx context.Context, c *Client, path string, base url.Values, limit int) ([]T, error) {
+func fetchAll[T any](ctx context.Context, client *Client, path string, base url.Values, limit int) ([]T, error) {
 	var all []T
 
 	for page := 1; page <= maxPages; page++ {
 		q := url.Values{}
 		maps.Copy(q, base)
 
-		q.Set("page[size]", strconv.Itoa(c.PageSize))
+		q.Set("page[size]", strconv.Itoa(client.PageSize))
 		q.Set("page[number]", strconv.Itoa(page))
 
 		var pg struct {
 			Data []T `json:"data"`
 		}
 
-		if err := c.get(ctx, path, q, &pg); err != nil {
+		if err := client.get(ctx, path, q, &pg); err != nil {
 			return nil, err
 		}
 
 		all = append(all, pg.Data...)
 
-		if len(pg.Data) < c.PageSize {
+		if len(pg.Data) < client.PageSize {
 			break
 		}
 
@@ -172,7 +173,7 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 	if err != nil {
 		return errorfamily.NewTransient("telnyx.request_failed", fmt.Sprintf("GET %s: %v", path, err))
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, maxBodyBytes))
 	if err != nil {
@@ -181,7 +182,7 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 
 	if resp.StatusCode != http.StatusOK {
 		family := errorfamily.Rejection
-		if resp.StatusCode >= 500 {
+		if resp.StatusCode >= http.StatusInternalServerError {
 			family = errorfamily.Transient
 		}
 
@@ -198,10 +199,10 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 	return nil
 }
 
-func truncate(s string, max int) string {
+func truncate(s string, maxRunes int) string {
 	r := []rune(s)
-	if len(r) > max {
-		return string(r[:max])
+	if len(r) > maxRunes {
+		return string(r[:maxRunes])
 	}
 
 	return s

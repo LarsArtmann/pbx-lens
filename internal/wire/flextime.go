@@ -4,10 +4,15 @@
 package wire
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
 )
+
+// ErrUnparseableTimestamp wraps every FlexTime decode failure so callers can
+// match the cause while the message still carries the offending literal.
+var ErrUnparseableTimestamp = errors.New("unparseable timestamp")
 
 // FlexTime decodes timestamps that arrive in multiple layouts from the same
 // API. Telnyx serves the same conversation with nanosecond precision in one
@@ -36,5 +41,5 @@ func (t *FlexTime) UnmarshalJSON(b []byte) error {
 		}
 	}
 
-	return fmt.Errorf("unparseable timestamp %q", s)
+	return fmt.Errorf("%w %q", ErrUnparseableTimestamp, s)
 }

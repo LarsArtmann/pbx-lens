@@ -76,9 +76,12 @@
               owner = "LarsArtmann";
               repo = "go-cqrs-lite";
               rev = "afaffa19105b2422ef0722f156bca6d92169c529";
-              hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+              hash = "sha256-2NQB4h2XHgFEnmCRDu/6TZfziINXcgUyXncKg8gLXVY=";
             };
             sourceRoot = "source/cmd/cqrs-lint";
+            # The monorepo root carries a go.work; without this, `go mod
+            # vendor` in the modules FOD runs in workspace mode and dies.
+            env.GOWORK = "off";
             vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
           };
         in

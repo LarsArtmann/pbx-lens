@@ -87,7 +87,7 @@ type NativeID string
 type TranscriptTurn struct {
 	Role string    `json:"role"`
 	Text string    `json:"text"`
-	At   time.Time `json:"at,omitempty"`
+	At   time.Time `json:"at,omitzero"`
 }
 
 type Observation struct {
@@ -144,7 +144,7 @@ func (o Observation) Validate() error {
 
 func (o Observation) ContentHash() string {
 	h := sha256.New()
-	fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s\n%s",
+	_, _ = fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s\n%s",
 		o.NativeID, o.Kind, o.Direction, o.StartedAt.UTC().UnixNano(), o.DurationSecs,
 		o.FromNumber, o.ToNumber, o.HangupCause, o.IsAI, o.TranscriptExcerpt,
 		transcriptHash(o.Transcript), o.RecordingRef)
@@ -158,8 +158,8 @@ func transcriptHash(turns []TranscriptTurn) string {
 	}
 
 	h := sha256.New()
-	for _, t := range turns {
-		fmt.Fprintf(h, "%s\x00%s\x00%d\x00", t.Role, t.Text, t.At.UTC().Unix())
+	for _, turn := range turns {
+		_, _ = fmt.Fprintf(h, "%s\x00%s\x00%d\x00", turn.Role, turn.Text, turn.At.UTC().Unix())
 	}
 
 	return hex.EncodeToString(h.Sum(nil))
@@ -216,7 +216,7 @@ func (e Enrichment) Hash() string {
 	}
 
 	h := sha256.New()
-	fmt.Fprintf(h, "%d\n%s\n%s", e.CostMicros, e.CostCurrency, e.InsightSummary)
+	_, _ = fmt.Fprintf(h, "%d\n%s\n%s", e.CostMicros, e.CostCurrency, e.InsightSummary)
 
 	return hex.EncodeToString(h.Sum(nil))
 }
@@ -278,51 +278,51 @@ type CallState struct {
 	CurrentEnrichment Enrichment
 }
 
-func Apply(s CallState, evt event.Event) (CallState, error) {
+func Apply(state CallState, evt event.Event) (CallState, error) {
 	switch evt.Type() {
 	case EventObserved:
 		p, err := event.DecodePayloadAuto[CallObserved](evt)
 		if err != nil {
-			return s, err
+			return state, err
 		}
 
-		s.Observed = true
-		s.ContentHash = p.ContentHash()
-		s.Current = p.Observation
-		s.CurrentEnrichment = Enrichment{}
+		state.Observed = true
+		state.ContentHash = p.ContentHash()
+		state.Current = p.Observation
+		state.CurrentEnrichment = Enrichment{}
 
-		return s, nil
+		return state, nil
 
 	case EventCorrected:
 		p, err := event.DecodePayloadAuto[CallCorrected](evt)
 		if err != nil {
-			return s, err
+			return state, err
 		}
 
-		s.Observed = true
-		s.ContentHash = p.ContentHash()
-		s.Current = p.Observation
-		s.CurrentEnrichment = p.Enrichment
-		s.EnrichHash = p.Enrichment.Hash()
+		state.Observed = true
+		state.ContentHash = p.ContentHash()
+		state.Current = p.Observation
+		state.CurrentEnrichment = p.Enrichment
+		state.EnrichHash = p.Enrichment.Hash()
 
-		return s, nil
+		return state, nil
 
 	case EventEnriched:
 		p, err := event.DecodePayloadAuto[CallEnriched](evt)
 		if err != nil {
-			return s, err
+			return state, err
 		}
 
-		s.Observed = true
-		s.ContentHash = p.ContentHash()
-		s.Current = p.Observation
-		s.CurrentEnrichment = p.Enrichment
-		s.EnrichHash = p.Hash()
+		state.Observed = true
+		state.ContentHash = p.ContentHash()
+		state.Current = p.Observation
+		state.CurrentEnrichment = p.Enrichment
+		state.EnrichHash = p.Hash()
 
-		return s, nil
+		return state, nil
 
 	default:
-		return s, errorfamily.NewCorruption(
+		return state, errorfamily.NewCorruption(
 			"call.fold.unknown_event",
 			fmt.Sprintf("call stream received unknown event type %q", evt.Type()),
 		)
@@ -330,15 +330,15 @@ func Apply(s CallState, evt event.Event) (CallState, error) {
 }
 
 func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState] {
-	return func(s CallState, v event.Version) ([]event.Event, error) {
+	return func(state CallState, v event.Version) ([]event.Event, error) {
 		if err := obs.Validate(); err != nil {
 			return nil, err
 		}
 
-		if s.Observed {
-			if s.ContentHash == obs.ContentHash() {
+		if state.Observed {
+			if state.ContentHash == obs.ContentHash() {
 				return nil, nil
-			}
+		}
 
 			// Sources are read-only but not immutable snapshots: a Telnyx
 			// conversation grows between polls. Supersede via a correction
@@ -349,7 +349,7 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 				streamID,
 				StreamType,
 				v.Increment(),
-				CallCorrected{Observation: obs, Enrichment: s.CurrentEnrichment},
+				CallCorrected{Observation: obs, Enrichment: state.CurrentEnrichment},
 				event.WithSchemaVersion(1),
 			)
 			if err != nil {
@@ -379,15 +379,15 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 // Enriching before the observation exists rejects: enrichment without its
 // call is unaddressable, and the next poll re-attempts in the right order.
 func Enrich(obs Observation, enr Enrichment, streamID id.StreamID) decider.DecideFunc[CallState] {
-	return func(s CallState, v event.Version) ([]event.Event, error) {
-		if !s.Observed {
+	return func(state CallState, v event.Version) ([]event.Event, error) {
+		if !state.Observed {
 			return nil, errorfamily.NewRejection(
 				"call.enrich.before_observed",
 				fmt.Sprintf("stream %s has no observation to enrich yet", streamID),
 			)
 		}
 
-		if s.EnrichHash == enr.Hash() {
+		if state.EnrichHash == enr.Hash() {
 			return nil, nil
 		}
 
@@ -396,7 +396,7 @@ func Enrich(obs Observation, enr Enrichment, streamID id.StreamID) decider.Decid
 			streamID,
 			StreamType,
 			v.Increment(),
-			CallEnriched{Observation: s.Current, Enrichment: enr},
+			CallEnriched{Observation: state.Current, Enrichment: enr},
 			event.WithSchemaVersion(1),
 		)
 		if err != nil {

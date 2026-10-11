@@ -11,6 +11,10 @@ import (
 
 const Collection = "call_views"
 
+// viewVolumeCap sizes the call_views collection: one row per indexed call,
+// with headroom for years of a personal PBX.
+const viewVolumeCap = 100_000
+
 type callLookup struct{}
 
 type CallView struct {
@@ -32,24 +36,24 @@ type CallView struct {
 	ContentHash       string           `json:"content_hash"`
 }
 
-func ViewFrom(o Observation, e Enrichment) CallView {
+func ViewFrom(obs Observation, enr Enrichment) CallView {
 	return CallView{
-		NativeID:          o.NativeID,
-		Kind:              o.Kind,
-		Direction:         o.Direction,
-		StartedAt:         o.StartedAt.UTC(),
-		DurationSecs:      o.DurationSecs,
-		FromNumber:        o.FromNumber,
-		ToNumber:          o.ToNumber,
-		HangupCause:       o.HangupCause,
-		IsAI:              o.IsAI,
-		TranscriptExcerpt: o.TranscriptExcerpt,
-		Transcript:        o.Transcript,
-		RecordingRef:      o.RecordingRef,
-		CostMicros:        e.CostMicros,
-		CostCurrency:      e.CostCurrency,
-		InsightSummary:    e.InsightSummary,
-		ContentHash:       o.ContentHash(),
+		NativeID:          obs.NativeID,
+		Kind:              obs.Kind,
+		Direction:         obs.Direction,
+		StartedAt:         obs.StartedAt.UTC(),
+		DurationSecs:      obs.DurationSecs,
+		FromNumber:        obs.FromNumber,
+		ToNumber:          obs.ToNumber,
+		HangupCause:       obs.HangupCause,
+		IsAI:              obs.IsAI,
+		TranscriptExcerpt: obs.TranscriptExcerpt,
+		Transcript:        obs.Transcript,
+		RecordingRef:      obs.RecordingRef,
+		CostMicros:        enr.CostMicros,
+		CostCurrency:      enr.CostCurrency,
+		InsightSummary:    enr.InsightSummary,
+		ContentHash:       obs.ContentHash(),
 	}
 }
 
@@ -60,7 +64,7 @@ func Projection() ([]system.ProjectionDeclaration, *projectionadapter.TypeDecode
 	// fold with an update fold would route first events through the update
 	// path with a zero prev and store a zero view (AGENTS gotcha 2026-10-10).
 	query := metaengine.Query[callLookup, CallView](Collection,
-		metaengine.Volume(100_000),
+		metaengine.Volume(viewVolumeCap),
 		metaengine.OnRecordTyped(
 			string(EventObserved),
 			projectionadapter.EventWithID[CallObserved]{},

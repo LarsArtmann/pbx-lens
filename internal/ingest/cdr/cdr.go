@@ -5,6 +5,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,44 +13,56 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-var fields13 = []string{
-	"caller_id_name",
-	"caller_id_number",
-	"destination_number",
-	"context",
-	"start_stamp",
-	"answer_stamp",
-	"end_stamp",
-	"duration",
-	"billsec",
-	"hangup_cause",
-	"uuid",
-	"bleg_uuid",
-	"accountcode",
+// fieldTemplates returns the two Master.csv column layouts FreeSWITCH
+// writes (13- and 18-column). They are values derived from the dialplan
+// template, not mutable state, so they are built per Parse call.
+func fieldTemplates() (thirteen, eighteen []string) {
+	thirteen = []string{
+		"caller_id_name",
+		"caller_id_number",
+		"destination_number",
+		"context",
+		"start_stamp",
+		"answer_stamp",
+		"end_stamp",
+		"duration",
+		"billsec",
+		"hangup_cause",
+		"uuid",
+		"bleg_uuid",
+		"accountcode",
+	}
+
+	eighteen = []string{
+		"accountcode",
+		"caller_id_number",
+		"destination_number",
+		"context",
+		"caller_id",
+		"channel_name",
+		"bridge_channel",
+		"last_app",
+		"last_arg",
+		"start_stamp",
+		"answer_stamp",
+		"end_stamp",
+		"duration",
+		"billsec",
+		"hangup_cause",
+		"amaflags",
+		"uuid",
+		"userfield",
+	}
+
+	return thirteen, eighteen
 }
 
-var fields18 = []string{
-	"accountcode",
-	"caller_id_number",
-	"destination_number",
-	"context",
-	"caller_id",
-	"channel_name",
-	"bridge_channel",
-	"last_app",
-	"last_arg",
-	"start_stamp",
-	"answer_stamp",
-	"end_stamp",
-	"duration",
-	"billsec",
-	"hangup_cause",
-	"amaflags",
-	"uuid",
-	"userfield",
-}
+const (
+	stampLayout = "2006-01-02 15:04:05"
 
-const stampLayout = "2006-01-02 15:04:05"
+	scannerInitialBuf = 64 * 1024
+	scannerMaxLine    = 1024 * 1024
+)
 
 type Result struct {
 	Observations []calls.Observation
@@ -58,8 +71,9 @@ type Result struct {
 
 func Parse(r io.Reader) (Result, error) {
 	res := Result{}
+	fields13, fields18 := fieldTemplates()
 	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+	sc.Buffer(make([]byte, 0, scannerInitialBuf), scannerMaxLine)
 
 	for sc.Scan() {
 		line := strings.TrimRight(sc.Text(), " \t\r\n")
@@ -69,7 +83,10 @@ func Parse(r io.Reader) (Result, error) {
 
 		line = strings.TrimSuffix(line, ";")
 
-		row, err := decodeLine(line)
+		cr := csv.NewReader(strings.NewReader(line))
+		cr.FieldsPerRecord = -1
+
+		row, err := cr.Read()
 		if err != nil {
 			return Result{}, errorfamily.NewCorruption("cdr.parse.read", fmt.Sprintf("reading Master.csv: %v", err))
 		}
@@ -110,17 +127,10 @@ func Parse(r io.Reader) (Result, error) {
 	return res, nil
 }
 
-func decodeLine(line string) ([]string, error) {
-	cr := csv.NewReader(strings.NewReader(line))
-	cr.FieldsPerRecord = -1
-
-	return cr.Read()
-}
-
 func normalize(row []string) []string {
-	out := make([]string, len(row))
-	for i, f := range row {
-		out[i] = strings.TrimSpace(strings.Trim(strings.TrimSuffix(strings.TrimSpace(f), ";"), `"`))
+	out := make([]string, 0, len(row))
+	for _, f := range row {
+		out = append(out, strings.TrimSpace(strings.Trim(strings.TrimSuffix(strings.TrimSpace(f), ";"), `"`)))
 	}
 
 	return out
@@ -128,8 +138,8 @@ func normalize(row []string) []string {
 
 func zip(names, values []string) map[string]string {
 	m := make(map[string]string, len(names))
-	for i, n := range names {
-		m[n] = values[i]
+	for i, name := range names {
+		m[name] = values[i]
 	}
 
 	return m
@@ -166,14 +176,9 @@ func direction(context string) calls.Direction {
 }
 
 func atoi(s string) int {
-	n := 0
-
-	for _, c := range s {
-		if c < '0' || c > '9' {
-			return -1
-		}
-
-		n = n*10 + int(c-'0')
+	n, err := strconv.Atoi(s)
+	if err != nil {
+		return -1
 	}
 
 	return n
