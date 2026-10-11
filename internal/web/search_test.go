@@ -36,6 +36,15 @@ func sqliteSearcher(t *testing.T, observations ...calls.Observation) *search.Ind
 	return index
 }
 
+// newTestServerWithSearch is newTestServerWith with a real FTS index rebuilt
+// over the same observations — the one-flow serve pattern, where the search
+// db is a separate file from the server's index db.
+func newTestServerWithSearch(t *testing.T, observations ...calls.Observation) *http.ServeMux {
+	t.Helper()
+
+	return newTestServerWith(t, Options{Search: sqliteSearcher(t, observations...)}, observations...)
+}
+
 func TestSearchAnswersFromSqliteIndex(t *testing.T) {
 	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
 	observation := webObservation("conv-a", started)

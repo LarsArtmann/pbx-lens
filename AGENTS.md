@@ -46,7 +46,8 @@ webphone later gets a read-only deep link, never a data dependency.
 - **UI trio (2026-10-11, F3/F4):** `go-appkit` v0.8.0 (HTTP service shell:
   `NewService(ServiceConfig{Addr})` → `svc.Mux *http.ServeMux`, `svc.Run(ctx)`
   owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.21.0 (display/
-  forms/feedback/layout/navigation components), `a-h/templ` v0.3.1020 (codegen).
+  forms/feedback/layout/navigation components), `a-h/templ` v0.3.1070 (codegen;
+  manual bumps only — a dependabot templ PR mangles this go.mod).
   Stay on the PUBLISHED templ-components version — no local replace (breaks
   hermetic nix); hand-roll missing thin pieces instead.
 - **templ-components v1.21.0 adoption map** (skill's consumer tip; the skill

@@ -1,15 +1,12 @@
 package web
 
 import (
-	"context"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
-	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
 // TestOneFlowFromSeedToDetail is the whole user loop in one flow: seed two
@@ -18,8 +15,6 @@ import (
 // composes, exercised in the order an operator walks them. Auth gating is
 // layered on at the end (one middleware wraps the same mux).
 func TestOneFlowFromSeedToDetail(t *testing.T) {
-	ctx := context.Background()
-
 	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
 
 	inbound := webObservation("conv-in", started.Add(time.Minute))
@@ -27,25 +22,7 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 
 	seeded := []calls.Observation{webObservation("conv-out", started), inbound}
 
-	// The index must be rebuilt over the same views the list page reads —
-	// exactly what a serve poll pass does after ingesting.
-	index, err := search.Open(ctx, filepath.Join(t.TempDir(), "flow.db"))
-	if err != nil {
-		t.Fatalf("search.Open: %v", err)
-	}
-
-	t.Cleanup(func() { _ = index.Close() })
-
-	views := make([]calls.CallView, 0, len(seeded))
-	for _, obs := range seeded {
-		views = append(views, calls.ViewFrom(obs, calls.Enrichment{}))
-	}
-
-	if err := index.Rebuild(ctx, views); err != nil {
-		t.Fatalf("index rebuild: %v", err)
-	}
-
-	mux := newTestServerWith(t, Options{Search: index}, seeded...)
+	mux := newTestServerWithSearch(t, seeded...)
 
 	// 1. Seed visible on the list page, oldest-date index flags stale.
 	status, body := getBody(t, mux, "/")
