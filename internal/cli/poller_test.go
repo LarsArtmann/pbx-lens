@@ -31,11 +31,11 @@ func TestPollOnceIngestsAndRebuildsSearch(t *testing.T) {
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
-		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}}` +
+		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
 		"\n" +
 		`{"received_at":"2026-10-10T09:00:26Z","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.hangup","occurred_at":"2026-10-10T09:00:26Z","payload":` +
-		`{"call_control_id":"poll-1","hangup_cause":"normal_clearing"}}}}}`
+		`{"call_control_id":"poll-1","hangup_cause":"normal_clearing"}}}}`
 	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
 		t.Fatalf("write webhook log: %v", err)
 	}
@@ -76,11 +76,11 @@ func TestPollOnceIsIdempotentAcrossPasses(t *testing.T) {
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
-		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}}` +
+		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
 		"\n" +
 		`{"received_at":"2026-10-10T09:00:26Z","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.hangup","occurred_at":"2026-10-10T09:00:26Z","payload":` +
-		`{"call_control_id":"poll-1","hangup_cause":"normal_clearing"}}}}}`
+		`{"call_control_id":"poll-1","hangup_cause":"normal_clearing"}}}}`
 	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
 		t.Fatalf("write webhook log: %v", err)
 	}
