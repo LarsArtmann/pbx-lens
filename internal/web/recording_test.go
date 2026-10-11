@@ -23,9 +23,8 @@ var auditWav = []byte("RIFF-fake-wav-bytes-0123456789")
 
 // fakeTelnyxState records what the fake API saw, for the audit assertions.
 type fakeTelnyxState struct {
-	authHeader   string
-	rangeHeader  string
-	wavURLInJSON bool
+	authOnMetadata string
+	rangeHeader     string
 }
 
 // fakeTelnyx stands in for the Telnyx v2 API: recording metadata at
@@ -34,12 +33,10 @@ func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 	t.Helper()
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		state.authHeader = r.Header.Get("Authorization")
-
 		switch r.URL.Path {
 		case "/v2/recordings/rec-1":
+			state.authOnMetadata = r.Header.Get("Authorization")
 			wavURL := "http://" + r.Host + "/v2/audio.wav"
-			state.wavURLInJSON = true
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":%q}}}`, wavURL)
 		case "/v2/audio.wav":
@@ -123,8 +120,8 @@ func TestRecordingProxyStreamsTelnyxWav(t *testing.T) {
 		t.Error("response body leaks the API key")
 	}
 
-	if state.authHeader != "Bearer "+auditAPIKey {
-		t.Errorf("upstream Authorization = %q, want the server-side Bearer key", state.authHeader)
+	if state.authOnMetadata != "Bearer "+auditAPIKey {
+		t.Errorf("upstream Authorization = %q, want the server-side Bearer key", state.authOnMetadata)
 	}
 }
 

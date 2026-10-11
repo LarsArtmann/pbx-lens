@@ -1,7 +1,6 @@
 package web
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +9,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
-	"github.com/larsartmann/pbx-lens/internal/cli"
 )
 
 func webObservation(nativeID string, started time.Time) calls.Observation {
@@ -34,30 +32,7 @@ func webObservation(nativeID string, started time.Time) calls.Observation {
 func newTestServer(t *testing.T, observations ...calls.Observation) *http.ServeMux {
 	t.Helper()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	t.Cleanup(cancel)
-
-	sys, cleanup, err := cli.OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
-
-	if len(observations) > 0 {
-		if stats := cli.Ingest(ctx, sys, observations); len(stats.Rejected) > 0 {
-			t.Fatalf("ingest rejected: %v", stats.Rejected)
-		}
-
-		if err := cli.DrainProjections(ctx, sys); err != nil {
-			t.Fatalf("drain: %v", err)
-		}
-	}
-
-	mux := http.NewServeMux()
-	Register(mux, sys, RecordingOptions{})
-
-	return mux
+	return newTestServerWith(t, RecordingOptions{}, observations...)
 }
 
 func getBody(t *testing.T, mux *http.ServeMux, path string) (int, string) {
