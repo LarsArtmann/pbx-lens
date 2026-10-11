@@ -98,7 +98,7 @@ func Parse(r io.Reader, fallbackUUID string) (Transcript, error) {
 }
 
 func normalizeTurn(role, text string) (calls.TranscriptTurn, bool) {
-	mapped, ok := map[string]string{"caller": "user", "agent": "assistant"}[role]
+	mapped, ok := map[string]calls.TurnRole{"caller": calls.TurnRoleUser, "agent": calls.TurnRoleAssistant}[role]
 	if !ok {
 		return calls.TranscriptTurn{}, false
 	}

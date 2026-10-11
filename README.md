@@ -14,9 +14,10 @@ composition root + metaengine sqlite engine).
 
 ## Status
 
-Ingest core works and is live-proven (Telnyx: 8 real conversations
-double-ingested with zero duplicate events). The web UI is not built yet —
-see [FEATURES.md](FEATURES.md) for the honest inventory and
+Core ingest, enrichment (cost + AI insight summaries), and the read-only web
+UI (list, detail, search, dashboard, export) all work; Telnyx ingest is
+live-proven (8 real conversations double-ingested with zero duplicate
+events). See [FEATURES.md](FEATURES.md) for the honest inventory and
 [ROADMAP.md](ROADMAP.md) for direction.
 
 ## Installation
@@ -76,7 +77,14 @@ filters, per-call detail with transcript and recording playback, FTS5
 search, a freshness banner, and a quality dashboard. Ingest keeps working
 from the same CLI; `serve` also embeds an optional poll loop
 (`-poll-every 15m -cdr-file … -webhook-log … -transcripts-dir …`) so the
-index stays fresh without external timers.
+index stays fresh without external timers. `-max-age 720h` refuses polled
+observations older than the window at ingest (`0`, the default, keeps
+everything) — the ingest-side half of retention.
+
+Every row is also exportable without the UI: `/api/export.jsonl` and
+`/api/export.csv` accept the same filters as the list page, and
+`?pii=hash` swaps participant numbers for their salted hashes before
+anything leaves the server.
 
 Protect it with bcrypt basic auth for anything beyond loopback:
 
@@ -88,6 +96,29 @@ pbx-lens serve -db calls.db -htpasswd /etc/pbx-lens/htpasswd
 `/health` style readiness is appkit-owned; under systemd (`Type=notify`,
 see `deploy/systemd/pbx-lens.service`) the binary sends `READY=1` after the
 listener binds and feeds the watchdog.
+
+### Purge old calls
+
+```console
+pbx-lens purge -db /var/lib/pbx-lens/calls.db -max-age 2160h [-dry-run]
+```
+
+Retention is tombstone-based: over-age calls get a `call.retired` event and
+disappear from every read surface (list, search, export, dashboard), while
+the event log stays append-only. Re-polling a purged call is a no-op, so
+the view stays purged. Full erasure remains the disposable-DB move: drop
+the file and re-ingest.
+
+### Back up the index
+
+```console
+pbx-lens backup -db /var/lib/pbx-lens/calls.db -out /var/backups/pbx-lens/$(date +%F).db
+```
+
+The snapshot is a consistent copy (`VACUUM INTO`) taken while `serve` keeps
+writing, fsynced before it is renamed into place, and verified readable
+afterwards. `deploy/systemd/pbx-lens-backup.{service,timer}` stage it
+nightly; retention and off-host shipping stay with the host backup tool.
 
 ### Deep-link contract (for webphone and friends)
 

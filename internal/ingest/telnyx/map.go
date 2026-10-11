@@ -91,7 +91,8 @@ func turnsByTime(msgs []Message) []calls.TranscriptTurn {
 
 	turns := make([]calls.TranscriptTurn, 0, len(sorted))
 	for _, m := range sorted {
-		if m.Role != "user" && m.Role != "assistant" {
+		role := calls.TurnRole(m.Role)
+		if role != calls.TurnRoleUser && role != calls.TurnRoleAssistant {
 			continue
 		}
 
@@ -101,7 +102,7 @@ func turnsByTime(msgs []Message) []calls.TranscriptTurn {
 		}
 
 		turns = append(turns, calls.TranscriptTurn{
-			Role: m.Role,
+			Role: role,
 			Text: text,
 			At:   m.CreatedAt.Truncate(time.Second).UTC(),
 		})

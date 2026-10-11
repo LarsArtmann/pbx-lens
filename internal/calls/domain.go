@@ -45,7 +45,7 @@ func Excerpt(turns []TranscriptTurn, maxRunes int) string {
 	opening := ""
 
 	for _, turn := range turns {
-		if turn.Role == "user" {
+		if turn.Role == TurnRoleUser {
 			opening = turn.Text
 
 			break
@@ -116,6 +116,18 @@ type ParticipantHash string
 
 type NativeID string
 
+// TurnRole is the transcript speaker role. The domain normalizes every
+// source's vocabulary (Telnyx user/assistant, the FreeSWITCH agent's
+// caller/agent) onto these two values; ContentHash renders the role via %s,
+// so the string values are byte-identical to the plain strings used before
+// the type existed and no historical hash changes.
+type TurnRole string
+
+const (
+	TurnRoleUser      TurnRole = "user"
+	TurnRoleAssistant TurnRole = "assistant"
+)
+
 // TranscriptTurn is one utterance of a call transcript, normalized to the
 // user/assistant roles regardless of source vocabulary (Telnyx
 // user/assistant, the FreeSWITCH agent's caller/agent). At is zero for
@@ -123,7 +135,7 @@ type NativeID string
 // only), and At is always truncated to whole seconds before it reaches the
 // domain so the sub-second noise of live APIs never enters ContentHash.
 type TranscriptTurn struct {
-	Role string    `json:"role"`
+	Role TurnRole  `json:"role"`
 	Text string    `json:"text"`
 	At   time.Time `json:"at,omitzero"`
 }
