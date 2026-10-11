@@ -33,27 +33,35 @@ func (f *fakeTelnyx) server(t *testing.T) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		switch {
-		case r.URL.Path == "/ai/conversations":
+		switch r.URL.Path {
+		case "/ai/conversations":
 			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{
-				"id":             "conv-1",
-				"created_at":     "2026-10-09T19:50:03Z",
+				"id":              "conv-1",
+				"created_at":      "2026-10-09T19:50:03Z",
 				"last_message_at": "2026-10-09T19:50:29Z",
 				"metadata": map[string]any{
-					"assistant_id":          "assistant-1",
-					"call_control_id":       "v3:eggcall:leg1",
-					"telnyx_agent_target":   "+17287289311",
+					"assistant_id":           "assistant-1",
+					"call_control_id":        "v3:eggcall:leg1",
+					"telnyx_agent_target":    "+17287289311",
 					"telnyx_end_user_target": "+14084757593",
 				},
 			}}})
-		case r.URL.Path == "/ai/conversations/conv-1/messages":
+		case "/ai/conversations/conv-1/messages":
 			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{
-				{"role": "user", "text": "Woolly, did you take my eggs?", "created_at": "2026-10-09T19:50:10Z"},
-				{"role": "assistant", "text": "I did NOT take your eggs!", "created_at": "2026-10-09T19:50:20Z"},
+				{
+					"role":       "user",
+					"text":       "Woolly, did you take my eggs?",
+					"created_at": "2026-10-09T19:50:10Z",
+				},
+				{
+					"role":       "assistant",
+					"text":       "I did NOT take your eggs!",
+					"created_at": "2026-10-09T19:50:20Z",
+				},
 			}})
-		case r.URL.Path == "/recordings":
+		case "/recordings":
 			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{}})
-		case r.URL.Path == "/detail_records":
+		case "/detail_records":
 			f.detailHits++
 			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{
 				"id":              "dr-1",
@@ -62,11 +70,11 @@ func (f *fakeTelnyx) server(t *testing.T) *httptest.Server {
 				"currency":        "USD",
 				"started_at":      "2026-10-09T19:50:03Z",
 			}}})
-		case r.URL.Path == "/ai/conversations/conv-1/conversations-insights":
+		case "/ai/conversations/conv-1/conversations-insights":
 			f.insightsHits++
 			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{
-				"id":     "ins-1",
-				"status": f.insightsStatus,
+				"id":         "ins-1",
+				"status":     f.insightsStatus,
 				"created_at": "2026-10-09T19:51:35",
 				"conversation_insights": []map[string]string{
 					{"insight_id": "tpl", "result": f.insightsResult},
@@ -81,7 +89,10 @@ func (f *fakeTelnyx) server(t *testing.T) *httptest.Server {
 func TestEnrichTelnyxCallsFillsCostAndSummary(t *testing.T) {
 	ctx := context.Background()
 
-	fake := &fakeTelnyx{insightsStatus: "completed", insightsResult: "Caller wanted to know about the eggs."}
+	fake := &fakeTelnyx{
+		insightsStatus: "completed",
+		insightsResult: "Caller wanted to know about the eggs.",
+	}
 	srv := fake.server(t)
 	t.Cleanup(srv.Close)
 
@@ -102,7 +113,13 @@ func TestEnrichTelnyxCallsFillsCostAndSummary(t *testing.T) {
 	client := telnyx.NewClient("test-key", srv.URL)
 	logs := &pollTestLog{}
 
-	PollOnce(ctx, sys, index, PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound}, logs.printf)
+	PollOnce(
+		ctx,
+		sys,
+		index,
+		PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound},
+		logs.printf,
+	)
 
 	view := telnyxView(t, ctx, sys, "conv-1")
 	if view.CostMicros != 2000 || view.CostCurrency != "USD" {
@@ -123,17 +140,29 @@ func TestEnrichTelnyxCallsFillsCostAndSummary(t *testing.T) {
 	}
 
 	joined := strings.Join(logs.lines, "\n")
-	if !strings.Contains(joined, "poll telnyx enrich: 1 considered, 1 enriched, 0 unchanged, 0 missing, 0 rejected") {
+	if !strings.Contains(
+		joined,
+		"poll telnyx enrich: 1 considered, 1 enriched, 0 unchanged, 0 missing, 0 rejected",
+	) {
 		t.Fatalf("first pass enrichment log wrong:\n%s", joined)
 	}
 
 	// The second pass replays to zero everywhere: the observation is
 	// idempotent AND the enrichment is unchanged, so no event is appended.
 	logs.lines = nil
-	PollOnce(ctx, sys, index, PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound}, logs.printf)
+	PollOnce(
+		ctx,
+		sys,
+		index,
+		PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound},
+		logs.printf,
+	)
 
 	joined = strings.Join(logs.lines, "\n")
-	if !strings.Contains(joined, "poll telnyx enrich: 1 considered, 0 enriched, 1 unchanged, 0 missing, 0 rejected") {
+	if !strings.Contains(
+		joined,
+		"poll telnyx enrich: 1 considered, 0 enriched, 1 unchanged, 0 missing, 0 rejected",
+	) {
 		t.Fatalf("second pass must replay to zero:\n%s", joined)
 	}
 }
@@ -155,14 +184,30 @@ func TestEnrichTelnyxCallsSkipsFetchWhenAlreadyEnriched(t *testing.T) {
 	client := telnyx.NewClient("test-key", srv.URL)
 	logs := &pollTestLog{}
 
-	PollOnce(ctx, sys, nil, PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound}, logs.printf)
+	PollOnce(
+		ctx,
+		sys,
+		nil,
+		PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound},
+		logs.printf,
+	)
 
 	if fake.detailHits != 1 || fake.insightsHits != 1 {
-		t.Fatalf("first pass must fetch both sources: detail=%d insights=%d", fake.detailHits, fake.insightsHits)
+		t.Fatalf(
+			"first pass must fetch both sources: detail=%d insights=%d",
+			fake.detailHits,
+			fake.insightsHits,
+		)
 	}
 
 	logs.lines = nil
-	PollOnce(ctx, sys, nil, PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound}, logs.printf)
+	PollOnce(
+		ctx,
+		sys,
+		nil,
+		PollConfig{Telnyx: client, SinceAgo: 48 * time.Hour, Direction: calls.DirectionOutbound},
+		logs.printf,
+	)
 
 	if fake.detailHits != 1 || fake.insightsHits != 1 {
 		t.Fatalf(
@@ -190,7 +235,10 @@ func TestEnrichTelnyxCallsCountsMissingAndRejects(t *testing.T) {
 
 	// A seed whose observation never landed counts Missing, not Rejected:
 	// the next pass retries once the observation ingest catches up.
-	missing := TelnyxSeed{ConversationID: "ghost", StreamKey: "StreamMarker:telnyx-conversation:ghost"}
+	missing := TelnyxSeed{
+		ConversationID: "ghost",
+		StreamKey:      "StreamMarker:telnyx-conversation:ghost",
+	}
 
 	stats, err := EnrichTelnyxCalls(ctx, sys, client, []TelnyxSeed{missing}, time.Now().UTC())
 	if err != nil {
@@ -204,10 +252,18 @@ func TestEnrichTelnyxCallsCountsMissingAndRejects(t *testing.T) {
 
 // telnyxView reads one conversation's projected view through the same key
 // derivation the enrich pass uses.
-func telnyxView(t *testing.T, ctx context.Context, sys *system.System, conversationID string) calls.CallView {
+func telnyxView(
+	t *testing.T,
+	ctx context.Context,
+	sys *system.System,
+	conversationID string,
+) calls.CallView {
 	t.Helper()
 
-	sid, err := calls.Observation{NativeID: calls.NativeID(conversationID), Kind: calls.SourceTelnyxConversation}.StreamID()
+	sid, err := calls.Observation{
+		NativeID: calls.NativeID(conversationID),
+		Kind:     calls.SourceTelnyxConversation,
+	}.StreamID()
 	if err != nil {
 		t.Fatalf("stream id: %v", err)
 	}

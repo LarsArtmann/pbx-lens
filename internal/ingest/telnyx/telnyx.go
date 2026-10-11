@@ -98,15 +98,28 @@ func (c *Client) ListConversations(ctx context.Context, opts ListOptions) ([]Con
 
 func (c *Client) Messages(ctx context.Context, conversationID string) ([]Message, error) {
 	if conversationID == "" {
-		return nil, errorfamily.NewRejection("telnyx.empty_conversation_id", "conversation id is required")
+		return nil, errorfamily.NewRejection(
+			"telnyx.empty_conversation_id",
+			"conversation id is required",
+		)
 	}
 
-	return fetchAll[Message](ctx, c, "/ai/conversations/"+url.PathEscape(conversationID)+"/messages", url.Values{}, 0, 0)
+	return fetchAll[Message](
+		ctx,
+		c,
+		"/ai/conversations/"+url.PathEscape(conversationID)+"/messages",
+		url.Values{},
+		0,
+		0,
+	)
 }
 
 func (c *Client) Recording(ctx context.Context, recordingID string) (Recording, error) {
 	if recordingID == "" {
-		return Recording{}, errorfamily.NewRejection("telnyx.empty_recording_id", "recording id is required")
+		return Recording{}, errorfamily.NewRejection(
+			"telnyx.empty_recording_id",
+			"recording id is required",
+		)
 	}
 
 	var out struct {
@@ -142,13 +155,13 @@ type DetailRecord struct {
 
 func (d *DetailRecord) UnmarshalJSON(data []byte) error {
 	var raw struct {
-		ID             *string          `json:"id"`
-		UUID           *string          `json:"uuid"`
-		CallControlID  *string          `json:"call_control_id"`
-		TelnyxCCID     *string          `json:"telnyx_call_control_id"`
-		Cost           *json.RawMessage `json:"cost"`
-		Currency       *string          `json:"currency"`
-		StartedAt      wire.FlexTime    `json:"started_at"`
+		ID            *string          `json:"id"`
+		UUID          *string          `json:"uuid"`
+		CallControlID *string          `json:"call_control_id"`
+		TelnyxCCID    *string          `json:"telnyx_call_control_id"`
+		Cost          *json.RawMessage `json:"cost"`
+		Currency      *string          `json:"currency"`
+		StartedAt     wire.FlexTime    `json:"started_at"`
 	}
 
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -218,6 +231,7 @@ type InsightResult struct {
 func (c *Client) DetailRecords(ctx context.Context, since time.Time) ([]DetailRecord, error) {
 	q := url.Values{}
 	q.Set("filter[record_type]", "call-control")
+
 	if !since.IsZero() {
 		q.Set("filter[started_at][gte]", since.UTC().Format(time.RFC3339))
 	}
@@ -228,9 +242,15 @@ func (c *Client) DetailRecords(ctx context.Context, since time.Time) ([]DetailRe
 // ConversationInsights lists the insight rows generated for one conversation
 // (path verified against the OpenAPI spec: conversations-insights, not
 // insights).
-func (c *Client) ConversationInsights(ctx context.Context, conversationID string) ([]ConversationInsight, error) {
+func (c *Client) ConversationInsights(
+	ctx context.Context,
+	conversationID string,
+) ([]ConversationInsight, error) {
 	if conversationID == "" {
-		return nil, errorfamily.NewRejection("telnyx.empty_conversation_id", "conversation id is required")
+		return nil, errorfamily.NewRejection(
+			"telnyx.empty_conversation_id",
+			"conversation id is required",
+		)
 	}
 
 	path := "/ai/conversations/" + url.PathEscape(conversationID) + "/conversations-insights"
@@ -255,7 +275,13 @@ func DetailRecordByCallControl(recs []DetailRecord, callControlID string) (Detai
 // fetchAll pages a list endpoint until exhausted, capped, or the page
 // shortens. pageSize 0 uses the client default (the endpoint's own maximum
 // is the caller's responsibility to pass).
-func fetchAll[T any](ctx context.Context, client *Client, path string, base url.Values, limit, pageSize int) ([]T, error) {
+func fetchAll[T any](
+	ctx context.Context,
+	client *Client,
+	path string,
+	base url.Values,
+	limit, pageSize int,
+) ([]T, error) {
 	if pageSize <= 0 {
 		pageSize = client.PageSize
 	}
@@ -301,7 +327,10 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 	if err != nil {
-		return errorfamily.NewRejection("telnyx.request_build", fmt.Sprintf("GET %s: %v", path, err))
+		return errorfamily.NewRejection(
+			"telnyx.request_build",
+			fmt.Sprintf("GET %s: %v", path, err),
+		)
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.apiKey)
@@ -309,7 +338,10 @@ func (c *Client) get(ctx context.Context, path string, query url.Values, out any
 
 	resp, err := c.http.Do(req)
 	if err != nil {
-		return errorfamily.NewTransient("telnyx.request_failed", fmt.Sprintf("GET %s: %v", path, err))
+		return errorfamily.NewTransient(
+			"telnyx.request_failed",
+			fmt.Sprintf("GET %s: %v", path, err),
+		)
 	}
 	defer func() { _ = resp.Body.Close() }()
 

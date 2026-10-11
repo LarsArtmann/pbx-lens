@@ -57,6 +57,7 @@ func TestInsightSummaryNewestCompletedWins(t *testing.T) {
 
 	got := InsightSummary(insights)
 	want := "Caller asked about invoices.\nsent"
+
 	if got != want {
 		t.Fatalf("InsightSummary = %q, want %q", got, want)
 	}

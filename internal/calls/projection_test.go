@@ -7,15 +7,15 @@ import (
 
 func TestViewObservationRoundTripHashesIdentically(t *testing.T) {
 	obs := Observation{
-		NativeID:     "conv-roundtrip",
-		Kind:         SourceTelnyxConversation,
-		Direction:    DirectionOutbound,
-		StartedAt:    time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC),
-		DurationSecs: 26,
-		FromNumber:   "+17287289311",
-		ToNumber:     "+14084757593",
-		HangupCause:  "normal_clearing",
-		IsAI:         true,
+		NativeID:          "conv-roundtrip",
+		Kind:              SourceTelnyxConversation,
+		Direction:         DirectionOutbound,
+		StartedAt:         time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC),
+		DurationSecs:      26,
+		FromNumber:        "+17287289311",
+		ToNumber:          "+14084757593",
+		HangupCause:       "normal_clearing",
+		IsAI:              true,
 		TranscriptExcerpt: "Woolly, did you take my eggs?",
 		Transcript: []TranscriptTurn{
 			{Role: "user", Text: "Woolly, did you take my eggs?", At: time.Unix(10, 0).UTC()},
@@ -36,7 +36,11 @@ func TestViewObservationRoundTripHashesIdentically(t *testing.T) {
 	}
 
 	if rebuilt.ContentHash() != view.ContentHash {
-		t.Fatalf("rebuild must match the stored view hash: %s != %s", rebuilt.ContentHash(), view.ContentHash)
+		t.Fatalf(
+			"rebuild must match the stored view hash: %s != %s",
+			rebuilt.ContentHash(),
+			view.ContentHash,
+		)
 	}
 
 	if _, err := rebuilt.StreamID(); err != nil {

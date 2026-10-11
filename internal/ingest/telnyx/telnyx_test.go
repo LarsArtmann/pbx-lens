@@ -69,7 +69,11 @@ func TestListConversationsPaginatesAndFilters(t *testing.T) {
 		switch page {
 		case 1:
 			data = []Conversation{
-				{ID: "conv-1", CreatedAt: ft(1000), Metadata: map[string]any{"assistant_id": "assistant-x"}},
+				{
+					ID:        "conv-1",
+					CreatedAt: ft(1000),
+					Metadata:  map[string]any{"assistant_id": "assistant-x"},
+				},
 				{ID: "conv-2", CreatedAt: ft(2000)},
 			}
 		case 2:
@@ -203,7 +207,11 @@ func TestRecordingFetchShape(t *testing.T) {
 	}
 
 	if !rec.RecordingEndedAt.After(rec.RecordingStartedAt.Time) {
-		t.Fatalf("recording timestamps wrong: %v -> %v", rec.RecordingStartedAt, rec.RecordingEndedAt)
+		t.Fatalf(
+			"recording timestamps wrong: %v -> %v",
+			rec.RecordingStartedAt,
+			rec.RecordingEndedAt,
+		)
 	}
 }
 
@@ -385,7 +393,12 @@ func TestMapConversationTruncatesExcerptByRunes(t *testing.T) {
 	}
 	msgs := []Message{{Role: "assistant", Text: "äöü" + strings.Repeat("x", 30)}}
 
-	obs, err := MapConversation(conv, msgs, nil, MapOptions{Direction: calls.DirectionOutbound, ExcerptMax: 5})
+	obs, err := MapConversation(
+		conv,
+		msgs,
+		nil,
+		MapOptions{Direction: calls.DirectionOutbound, ExcerptMax: 5},
+	)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -407,7 +420,9 @@ func TestMapConversationRejectsParticipantlessConv(t *testing.T) {
 func TestFlexTimeAcceptsOffsetlessTimestamps(t *testing.T) {
 	var c Conversation
 	if err := json.Unmarshal(
-		[]byte(`{"id":"c1","created_at":"2026-10-09T19:51:35","last_message_at":"2026-10-09T19:52:00.123456Z"}`),
+		[]byte(
+			`{"id":"c1","created_at":"2026-10-09T19:51:35","last_message_at":"2026-10-09T19:52:00.123456Z"}`,
+		),
 		&c,
 	); err != nil {
 		t.Fatal(err)
@@ -446,7 +461,11 @@ func TestMapConversationTimestampPrecisionStable(t *testing.T) {
 	}
 
 	if obsA.ContentHash() != obsB.ContentHash() {
-		t.Fatalf("timestamp precision leaked into the content hash: %s vs %s", obsA.ContentHash(), obsB.ContentHash())
+		t.Fatalf(
+			"timestamp precision leaked into the content hash: %s vs %s",
+			obsA.ContentHash(),
+			obsB.ContentHash(),
+		)
 	}
 
 	if obsA.StartedAt.Format(time.RFC3339) != "2026-10-09T19:50:27Z" {
@@ -487,7 +506,11 @@ func TestExcerptOrderIndependent(t *testing.T) {
 	}
 
 	if asc.ContentHash() != desc.ContentHash() {
-		t.Fatalf("message order leaked into the content hash:\n asc %s\ndesc %s", asc.ContentHash(), desc.ContentHash())
+		t.Fatalf(
+			"message order leaked into the content hash:\n asc %s\ndesc %s",
+			asc.ContentHash(),
+			desc.ContentHash(),
+		)
 	}
 
 	// The excerpt is the call opening: the first user line, not the last
@@ -575,6 +598,7 @@ func TestDetailRecordsSendsRequiredFilter(t *testing.T) {
 		}
 
 		gotQuery = r.URL.Query()
+
 		writeJSON(t, w, map[string]any{"data": []map[string]any{}})
 	})
 
@@ -615,17 +639,34 @@ func TestDetailRecordDecodesTolerantly(t *testing.T) {
 		{
 			name: "documented shape: id + call_control_id + string cost",
 			body: `{"id":"dr-1","call_control_id":"v3:a:1","cost":"0.002","currency":"USD","started_at":"2026-10-09T19:50:03Z"}`,
-			want: DetailRecord{ID: "dr-1", CallControlID: "v3:a:1", Cost: "0.002", Currency: "USD", StartedAt: wire.FlexTime{Time: time.Date(2026, 10, 9, 19, 50, 3, 0, time.UTC)}},
+			want: DetailRecord{
+				ID:            "dr-1",
+				CallControlID: "v3:a:1",
+				Cost:          "0.002",
+				Currency:      "USD",
+				StartedAt:     wire.FlexTime{Time: time.Date(2026, 10, 9, 19, 50, 3, 0, time.UTC)},
+			},
 		},
 		{
 			name: "webrtc-doc shape: uuid + telnyx_call_control_id",
 			body: `{"uuid":"dr-2","telnyx_call_control_id":"v3:b:2","cost":"0.002","currency":"USD","started_at":"2026-10-09T19:50:03Z"}`,
-			want: DetailRecord{ID: "dr-2", CallControlID: "v3:b:2", Cost: "0.002", Currency: "USD", StartedAt: wire.FlexTime{Time: time.Date(2026, 10, 9, 19, 50, 3, 0, time.UTC)}},
+			want: DetailRecord{
+				ID:            "dr-2",
+				CallControlID: "v3:b:2",
+				Cost:          "0.002",
+				Currency:      "USD",
+				StartedAt:     wire.FlexTime{Time: time.Date(2026, 10, 9, 19, 50, 3, 0, time.UTC)},
+			},
 		},
 		{
 			name: "numeric cost",
 			body: `{"id":"dr-3","call_control_id":"v3:c:3","cost":0.0031,"currency":"USD"}`,
-			want: DetailRecord{ID: "dr-3", CallControlID: "v3:c:3", Cost: "0.0031", Currency: "USD"},
+			want: DetailRecord{
+				ID:            "dr-3",
+				CallControlID: "v3:c:3",
+				Cost:          "0.0031",
+				Currency:      "USD",
+			},
 		},
 		{
 			name: "missing everything optional",

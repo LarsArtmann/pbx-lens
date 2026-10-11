@@ -53,98 +53,145 @@ func EnrichTelnyxCalls(
 
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
-	// The detail-records list is fetched lazily: only when a seed actually
-	// lacks cost, and at most once per pass.
-	var (
-		records       []telnyx.DetailRecord
-		detailFetched bool
-	)
-
-	fetchDetails := func() error {
-		if detailFetched {
-			return nil
-		}
-
-		recs, err := client.DetailRecords(ctx, since)
-		if err != nil {
-			return err
-		}
-
-		records = recs
-		detailFetched = true
-
-		return nil
-	}
+	pass := enrichPass{client: client, since: since, reader: reader}
 
 	for _, seed := range seeds {
-		view, found, getErr := reader.Get(ctx, seed.StreamKey)
-		if getErr != nil {
-			stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+getErr.Error())
-
-			continue
-		}
-
-		if !found {
-			stats.Missing++
-
-			continue
-		}
-
-		current := calls.Enrichment{
-			CostMicros:     view.CostMicros,
-			CostCurrency:   view.CostCurrency,
-			InsightSummary: view.InsightSummary,
-		}
-
-		enr := current
-
-		if view.CostMicros == 0 && seed.CallControlID != "" {
-			if fetchErr := fetchDetails(); fetchErr != nil {
-				stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+fetchErr.Error())
-
-				continue
-			}
-
-			if rec, ok := telnyx.DetailRecordByCallControl(records, seed.CallControlID); ok {
-				if micros, currency, costOK := telnyx.CostEnrichment(rec); costOK {
-					enr.CostMicros = micros
-					enr.CostCurrency = currency
-				}
-			}
-		}
-
-		if view.InsightSummary == "" {
-			insights, insErr := client.ConversationInsights(ctx, seed.ConversationID)
-			if insErr != nil {
-				stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+insErr.Error())
-
-				continue
-			}
-
-			enr.InsightSummary = telnyx.InsightSummary(insights)
-		}
-
-		if enr == current {
-			stats.Unchanged++
-
-			continue
-		}
-
-		cmd, cmdErr := calls.NewEnrichCommand(view.Observation(), enr)
-		if cmdErr != nil {
-			stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+cmdErr.Error())
-
-			continue
-		}
-
-		if err := sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
-			stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+err.Error())
-
-			continue
-		}
-
-		stats.Enriched++
+		pass.seed(ctx, sys, seed, &stats)
 	}
 
 	return stats, nil
+}
+
+// enrichPass carries the per-pass state of one enrichment run: the lazy
+// detail-records list (fetched at most once, only when a seed still lacks
+// cost) and the typed reader over the projection.
+type enrichPass struct {
+	client   *telnyx.Client
+	since    time.Time
+	reader   *metaengine.TypedReader[calls.CallView]
+	records  []telnyx.DetailRecord
+	detailed bool
+}
+
+func (p *enrichPass) seed(ctx context.Context, sys *system.System, seed TelnyxSeed, stats *EnrichStats) {
+	view, found, err := p.reader.Get(ctx, seed.StreamKey)
+	if err != nil {
+		stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+err.Error())
+
+		return
+	}
+
+	if !found {
+		stats.Missing++
+
+		return
+	}
+
+	current := enrichmentOf(view)
+
+	enr, reject := p.targetEnrichment(ctx, seed, view, current)
+	if reject != "" {
+		stats.Rejected = append(stats.Rejected, reject)
+
+		return
+	}
+
+	if enr == current {
+		stats.Unchanged++
+
+		return
+	}
+
+	if reject := dispatchEnrich(ctx, sys, seed, view, enr); reject != "" {
+		stats.Rejected = append(stats.Rejected, reject)
+
+		return
+	}
+
+	stats.Enriched++
+}
+
+// targetEnrichment resolves what the sources currently report for one seed,
+// starting from the view's enrichment (already-final fields carry forward
+// unfetched) and overwriting the halves that still need fetching. A
+// non-empty reject string reports a fetch failure.
+func (p *enrichPass) targetEnrichment(
+	ctx context.Context,
+	seed TelnyxSeed,
+	view calls.CallView,
+	current calls.Enrichment,
+) (calls.Enrichment, string) {
+	enr := current
+
+	if view.CostMicros == 0 && seed.CallControlID != "" {
+		records, err := p.detailRecords(ctx)
+		if err != nil {
+			return current, seed.ConversationID + ": " + err.Error()
+		}
+
+		if rec, ok := telnyx.DetailRecordByCallControl(records, seed.CallControlID); ok {
+			if micros, currency, costOK := telnyx.CostEnrichment(rec); costOK {
+				enr.CostMicros = micros
+				enr.CostCurrency = currency
+			}
+		}
+	}
+
+	if view.InsightSummary == "" {
+		insights, err := p.client.ConversationInsights(ctx, seed.ConversationID)
+		if err != nil {
+			return current, seed.ConversationID + ": " + err.Error()
+		}
+
+		enr.InsightSummary = telnyx.InsightSummary(insights)
+	}
+
+	return enr, ""
+}
+
+// detailRecords lazily fetches the pass's Detail Records list.
+func (p *enrichPass) detailRecords(ctx context.Context) ([]telnyx.DetailRecord, error) {
+	if p.detailed {
+		return p.records, nil
+	}
+
+	records, err := p.client.DetailRecords(ctx, p.since)
+	if err != nil {
+		return nil, err
+	}
+
+	p.records = records
+	p.detailed = true
+
+	return records, nil
+}
+
+// dispatchEnrich appends call.enriched for one stream; a non-empty string
+// reports the refusal.
+func dispatchEnrich(
+	ctx context.Context,
+	sys *system.System,
+	seed TelnyxSeed,
+	view calls.CallView,
+	enr calls.Enrichment,
+) string {
+	cmd, err := calls.NewEnrichCommand(view.Observation(), enr)
+	if err != nil {
+		return seed.ConversationID + ": " + err.Error()
+	}
+
+	if err := sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
+		return seed.ConversationID + ": " + err.Error()
+	}
+
+	return ""
+}
+
+// enrichmentOf reads the view's current enrichment payload.
+func enrichmentOf(view calls.CallView) calls.Enrichment {
+	return calls.Enrichment{
+		CostMicros:     view.CostMicros,
+		CostCurrency:   view.CostCurrency,
+		InsightSummary: view.InsightSummary,
+	}
 }
