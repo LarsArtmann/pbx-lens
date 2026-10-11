@@ -2,22 +2,23 @@ package web
 
 import (
 	"encoding/csv"
+	"encoding/json/v2"
 	"net/http"
 	"strconv"
 	"time"
 
-	"encoding/json/v2"
-
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// exportColumns is the CSV header in emission order. The names mirror the
+// exportHeader is the CSV header in emission order. The names mirror the
 // JSONL field names so a JSONL consumer and a CSV consumer read the same
 // record shape.
-var exportColumns = []string{
-	"kind", "native_id", "started_at", "from_number", "to_number",
-	"direction", "duration_secs", "is_ai", "hangup_cause", "recording_ref",
-	"cost_micros", "cost_currency", "insight_summary", "transcript_excerpt",
+func exportHeader() []string {
+	return []string{
+		"kind", "native_id", "started_at", "from_number", "to_number",
+		"direction", "duration_secs", "is_ai", "hangup_cause", "recording_ref",
+		"cost_micros", "cost_currency", "insight_summary", "transcript_excerpt",
+	}
 }
 
 // exportJSONL streams the filtered call index as newline-delimited JSON
@@ -38,6 +39,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		//nolint:gosec // JSON-encoded payload served as an ndjson attachment; never rendered as HTML
 		if _, err := w.Write(append(line, '\n')); err != nil {
 			return
 		}
@@ -56,7 +58,7 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 
 	writer := csv.NewWriter(w)
 
-	if err := writer.Write(exportColumns); err != nil {
+	if err := writer.Write(exportHeader()); err != nil {
 		return
 	}
 

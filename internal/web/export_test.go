@@ -1,11 +1,10 @@
 package web
 
 import (
+	"encoding/json/v2"
 	"strings"
 	"testing"
 	"time"
-
-	"encoding/json/v2"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
