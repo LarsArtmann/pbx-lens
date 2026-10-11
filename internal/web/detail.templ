@@ -1,10 +1,10 @@
 package web
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
-	"github.com/larsartmann/templ-components/navigation"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -22,25 +22,21 @@ templ listRoute(page CallListPage, filters ListCallsQuery, staleFor time.Duratio
 // detailRoute is the per-call page: metadata, transcript, recording player.
 // Everything is read from the one CallView snapshot.
 templ detailRoute(view calls.CallView) {
-	@shell(callTitle(view), view.Href()) {
+	@shell(callTitle(view), "/") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    callTitle(view),
 			Subtitle: "source: " + string(view.Kind),
 		})
-		@display.Split(display.SplitProps{}) {
-			<div>
+		<div class="grid items-start gap-6 lg:grid-cols-3">
+			<div class="space-y-6 lg:col-span-2">
 				@detailFacts(view)
 				if len(view.Transcript) > 0 {
-					<div class="mt-6">
-						@transcriptPane(view.Transcript)
-					</div>
+					@transcriptPane(view.Transcript)
 				} else {
-					<div class="mt-6">
-						@display.EmptyState(display.EmptyStateProps{
-							Title:       "No transcript",
-							Description: "This source recorded no transcript (human calls, or the transcript file is not ingested yet).",
-						})
-					</div>
+					@display.EmptyState(display.EmptyStateProps{
+						Title:       "No transcript",
+						Description: "This source recorded no transcript (human calls, or the transcript file is not ingested yet).",
+					})
 				}
 			</div>
 			<aside>
@@ -52,31 +48,36 @@ templ detailRoute(view calls.CallView) {
 
 templ detailFacts(view calls.CallView) {
 	@display.Card(display.CardProps{Title: "Call facts"}) {
-		@display.DefinitionList(display.DefinitionListProps{}) {
-			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">From</dt>
-			<dd class="font-mono text-sm">{ stringOrDash(view.FromNumber) }</dd>
-			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">To</dt>
-			<dd class="font-mono text-sm">{ stringOrDash(view.ToNumber) }</dd>
-			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Started</dt>
-			<dd class="text-sm"><time datetime={ view.StartedAt.Format(time.RFC3339) }>{ view.StartedAt.Local().Format("Jan 2, 2006 15:04:05") }</time></dd>
-			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Duration</dt>
-			<dd class="text-sm tabular-nums">{ clockDuration(time.Duration(view.DurationSecs) * time.Second) }</dd>
-			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Direction</dt>
-			<dd class="text-sm">{ string(view.Direction) }</dd>
-			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Who</dt>
-			<dd class="text-sm">{ whoText(view.IsAI) }</dd>
-			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Hangup cause</dt>
-			<dd class="text-sm">{ stringOrDash(view.HangupCause) }</dd>
-			if view.CostMicros != 0 {
-				<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Cost</dt>
-				<dd class="text-sm tabular-nums">{ costText(view.CostMicros, view.CostCurrency) }</dd>
-			}
-			if view.InsightSummary != "" {
-				<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">AI insight</dt>
-				<dd class="text-sm">{ view.InsightSummary }</dd>
-			}
-		}
+		@display.DefinitionList(display.DefinitionListProps{Items: detailItems(view)})
 	}
+}
+
+// detailItems builds the term/detail pairs in display order. Conditional
+// facts (cost, insight) append only when the source actually carries them.
+func detailItems(view calls.CallView) []display.DefinitionItem {
+	items := []display.DefinitionItem{
+		{Term: "From", Detail: stringOrDash(view.FromNumber)},
+		{Term: "To", Detail: stringOrDash(view.ToNumber)},
+		{Term: "Started", Detail: view.StartedAt.Local().Format("Jan 2, 2006 15:04:05")},
+		{Term: "Duration", Detail: clockDuration(time.Duration(view.DurationSecs) * time.Second)},
+		{Term: "Direction", Detail: string(view.Direction)},
+		{Term: "Who", Detail: whoText(view.IsAI)},
+		{Term: "Hangup cause", Detail: stringOrDash(view.HangupCause)},
+	}
+	if view.CostMicros != 0 {
+		items = append(items, display.DefinitionItem{
+			Term:   "Cost",
+			Detail: costText(view.CostMicros, view.CostCurrency),
+		})
+	}
+	if view.InsightSummary != "" {
+		items = append(items, display.DefinitionItem{
+			Term:   "AI insight",
+			Detail: view.InsightSummary,
+		})
+	}
+
+	return items
 }
 
 // transcriptPane renders the role-split transcript in call order.
@@ -111,7 +112,7 @@ templ recordingCard(view calls.CallView) {
 }
 
 templ notFoundPage(message string) {
-	@shell("Not found — pbx-lens", "") {
+	@shell("Not found — pbx-lens", "/") {
 		@display.EmptyState(display.EmptyStateProps{
 			Title:       "Not found",
 			Description: message,
@@ -134,9 +135,12 @@ func whoText(isAI bool) string {
 	return "Human"
 }
 
+// microsPerUnit converts Telnyx cost micros to currency units.
+const microsPerUnit = 1_000_000
+
 func costText(micros int64, currency string) string {
-	units := float64(micros) / 1_000_000
-	return trimZero(units) + " " + stringOrDash(currency)
+	units := strconv.FormatFloat(float64(micros)/microsPerUnit, 'f', -1, 64)
+	return units + " " + stringOrDash(currency)
 }
 
 func recordingHref(view calls.CallView) string {
