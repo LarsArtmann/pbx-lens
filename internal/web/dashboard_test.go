@@ -1,9 +1,14 @@
 package web
 
 import (
+	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/cli"
 )
 
 func TestDashboardRendersStatsAndCharts(t *testing.T) {
@@ -69,13 +74,28 @@ func TestDashboardEmptyIndexIsHonest(t *testing.T) {
 func TestDashboardStatsQueryWindowMath(t *testing.T) {
 	// Query-level check: in-window days aggregate, out-of-window calls only
 	// feed the totals, and the window always spans exactly 30 day buckets.
-	mux := newTestServer(t,
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "dashboard-test.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	if stats := cli.Ingest(ctx, sys, []calls.Observation{
 		webObservation("conv-a", time.Date(2026, 10, 9, 8, 0, 0, 0, time.UTC)),
 		webObservation("conv-b", time.Date(2026, 10, 9, 9, 0, 0, 0, time.UTC)),
 		webObservation("conv-c", time.Date(2026, 9, 20, 12, 0, 0, 0, time.UTC)),
 		webObservation("conv-old", time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)),
-	)
-	sys := testSystem(t)
+	}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
 
 	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC))
 	if err != nil {
