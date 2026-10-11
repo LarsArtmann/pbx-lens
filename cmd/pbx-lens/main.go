@@ -12,6 +12,7 @@ import (
 	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/pbx-lens/internal/backup"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
@@ -59,6 +60,8 @@ func main() {
 		ingestAgent(os.Args[minArgs:])
 	case "serve":
 		serve(os.Args[minArgs:])
+	case "backup":
+		backupCmd(os.Args[minArgs:])
 	default:
 		usage()
 		os.Exit(exitUsage)
@@ -72,7 +75,8 @@ func usage() {
 			" pbx-lens ingest-telnyx -db <dsn> [-key-file path] [-since 48h] [-direction outbound] [-limit N] |"+
 			" pbx-lens ingest-webhook -db <dsn> <inbound.jsonl> |"+
 			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts |"+
-			" pbx-lens serve -db <dsn> [-addr 127.0.0.1:8300]",
+			" pbx-lens serve -db <dsn> [-addr 127.0.0.1:8300] |"+
+			" pbx-lens backup -db <dsn> -out <snapshot.db>",
 	)
 }
 
@@ -388,6 +392,34 @@ func smoke(args []string) {
 
 		time.Sleep(projectionPollInterval)
 	}
+}
+
+// backupCmd writes and verifies a consistent sqlite snapshot for the nightly
+// backup staging (C4/T14). It is safe to run against a live serve database.
+func backupCmd(args []string) {
+	fs := flag.NewFlagSet("backup", flag.ExitOnError)
+	db := fs.String("db", "", "sqlite DSN (required)")
+	out := fs.String("out", "", "snapshot output path (required)")
+	_ = fs.Parse(args)
+
+	requireDB(fs, *db)
+
+	if *out == "" {
+		fatal(errorfamily.NewRejection("lens.cli.missing_out", "backup needs -out <path>"))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
+	defer cancel()
+
+	if err := backup.Snapshot(ctx, *db, *out); err != nil {
+		fatal(err)
+	}
+
+	if err := backup.Verify(ctx, *out); err != nil {
+		fatal(err)
+	}
+
+	fmt.Printf("snapshot written and verified: %s\n", *out)
 }
 
 // serve runs the read-only web UI until SIGINT/SIGTERM (appkit Run owns the
