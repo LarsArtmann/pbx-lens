@@ -41,13 +41,13 @@
 
 ## Low impact
 
-| Task                                                                                                        | Status    | Impact | Effort | Evidence                                                                                            |
-| ----------------------------------------------------------------------------------------------------------- | --------- | ------ | ------ | --------------------------------------------------------------------------------------------------- |
-| Hand `deploy/nixos/module-draft.nix` to nix-international-telephony as `services.pbx-lens` (T7 half 2)      | 🔴 `TODO` | Low    | 30min  | draft shipped here 2026-10-11; sibling repo owns the module                                         |
-| Swap the hand-rolled AI/human proportion bar for `display.SegmentBar` when templ-components publishes it    | 🔴 `TODO` | Low    | 10min  | `internal/web/dashboard.templ` `aiHumanCard`; SegmentBar exists unreleased upstream, not in v1.21.0 |
-| FTS prefix queries (or a search-box hint) for partial phone numbers                                         | 🔴 `TODO` | Low    | 30min  | FTS5 tokenizes `+17287289311` as one token; substring queries match nothing                         |
-| Verify at source level + file upstream: cqrs-lint C009 exemption excludes bare `must` (len 4)               | 🔴 `TODO` | Low    | 30min  | go-cqrs-lite `c009.go` `len(name) > 4` guard; report §b.3                                           |
-| Upstream filings (D6): sqliteengine time binding, memory-engine field-name resolution, treefmt templ go pin | 🔴 `TODO` | Low    | 60min  | all three verified in-repo with repros; AGENTS.md gotchas document them                             |
+| Task                                                                                                                                                     | Status    | Impact | Effort | Evidence                                                                                            |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------ | ------ | --------------------------------------------------------------------------------------------------- |
+| Hand `deploy/nixos/module-draft.nix` to nix-international-telephony as `services.pbx-lens` (T7 half 2)                                                   | 🔴 `TODO` | Low    | 30min  | draft shipped here 2026-10-11; sibling repo owns the module                                         |
+| Swap the hand-rolled AI/human proportion bar for `display.SegmentBar` when templ-components publishes it                                                 | 🔴 `TODO` | Low    | 10min  | `internal/web/dashboard.templ` `aiHumanCard`; SegmentBar exists unreleased upstream, not in v1.21.0 |
+| FTS prefix queries (or a search-box hint) for partial phone numbers                                                                                      | 🔴 `TODO` | Low    | 30min  | FTS5 tokenizes `+17287289311` as one token; substring queries match nothing                         |
+| Verify at source level + file upstream: cqrs-lint C009 exemption excludes bare `must` (len 4)                                                            | 🔴 `TODO` | Low    | 30min  | go-cqrs-lite `c009.go` `len(name) > 4` guard; report §b.3                                           |
+| Upstream filings (D6): sqliteengine time binding, memory-engine field-name resolution, treefmt templ go pin                                              | 🔴 `TODO` | Low    | 60min  | all three verified in-repo with repros; AGENTS.md gotchas document them                             |
 | Rebuild/reinstall the BuildFlow binary (200ab99 → HEAD) so license-check's sandbox go meets the 1.27.1 floor; then drop the AGENTS.md license-check note | 🔴 `TODO` | Low    | 15min  | the dev gate's only red step; direct `go-licenses` is clean (AGENTS.md license-check note)          |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
