@@ -72,3 +72,21 @@ No version has been tagged yet; everything lives under Unreleased.
   handset number.
 - README: dropped the not-yet-usable `go install @latest` line and corrected
   the changed-row doctrine (supersession, not conflict).
+- The web UI era (`serve` on go-appkit + templ-components): calls list with
+  direction/AI/date filters and keyset pagination, per-call detail with
+  role-split transcript and honest empty states, FTS5 full-text search with
+  `<mark>` highlighting, recording playback through a server-side proxy
+  (signed URLs never reach the browser, Range supported), bcrypt-htpasswd
+  basic auth, `/api/freshness` + stale-index banner, JSONL/CSV export, and
+  the quality dashboard (stat cards, 30-day volume chart, AI/human split,
+  trend sparkline, MOS placeholder).
+- Poll loop inside `serve` (`-poll-every`): per-source ingest, one projection
+  drain and one FTS rebuild per pass; per-source failures are logged and
+  skipped, never fatal.
+- `pbx-lens backup` command (T14): live-safe index DB snapshot for the
+  nightly staging (the timer itself is host-side).
+- sd_notify integration via `go-appkit/systemd` (`Type=notify`, READY/STOPPING/
+  WATCHDOG) plus the systemd unit and NixOS module drafts under `deploy/`
+  (T7; the module moves to the sibling repo).
+- sqlite FTS index with busy-timeout coexistence, rebuild commands for every
+  ingest verb, and a documented full-token matching caveat for phone numbers.

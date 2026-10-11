@@ -65,11 +65,49 @@ Telnyx conversation metadata exposes no direction field), `-limit N`
 recordings via `call_control_id`; each call's Observation carries a transcript
 excerpt and the recording reference.
 
+### Serve the call-history UI
+
+```console
+pbx-lens serve -db /var/lib/pbx-lens/calls.db -addr 127.0.0.1:8300
+```
+
+A read-only web UI over the index: the calls list with direction/AI/date
+filters, per-call detail with transcript and recording playback, FTS5
+search, a freshness banner, and a quality dashboard. Ingest keeps working
+from the same CLI; `serve` also embeds an optional poll loop
+(`-poll-every 15m -cdr-file … -webhook-log … -transcripts-dir …`) so the
+index stays fresh without external timers.
+
+Protect it with bcrypt basic auth for anything beyond loopback:
+
+```console
+htpasswd -B -c /etc/pbx-lens/htpasswd operator
+pbx-lens serve -db calls.db -htpasswd /etc/pbx-lens/htpasswd
+```
+
+`/health` style readiness is appkit-owned; under systemd (`Type=notify`,
+see `deploy/systemd/pbx-lens.service`) the binary sends `READY=1` after the
+listener binds and feeds the watchdog.
+
+### Deep-link contract (for webphone and friends)
+
+`/calls/{kind}/{id}` is a **stable URL**: ids are deterministic stream
+identities (`<source-kind>:<native-id>`), so the same real-world call keeps
+the same URL across re-ingests. Webphone (sibling repo) links INTO these
+URLs read-only; pbx-lens never links back into webphone and holds no
+webphone data. Bookmark and share freely — an unknown id renders a 404,
+never a wrong call.
+
 ## Project layout
 
-- `cmd/pbx-lens/` — CLI (`version`, `smoke`, `ingest-cdr`, `ingest-telnyx`)
+- `cmd/pbx-lens/` — CLI (`version`, `smoke`, `ingest-cdr`, `ingest-telnyx`,
+  `ingest-webhook`, `ingest-agent`, `serve`, `backup`)
 - `internal/calls/` — domain (Observation, invariants, idempotency) + read model
-- `internal/cli/` — tested command internals: flags, dispatch loop, projection drain
-- `internal/ingest/` — source parsers/mappers (`cdr`, `telnyx`)
+- `internal/cli/` — tested command internals: flags, dispatch loop, projection drain, poller, search rebuild
+- `internal/ingest/` — source parsers/mappers (`cdr`, `telnyx`, `webhook`, `agent`)
+- `internal/web/` — templ UI: list/detail/search/dashboard, recording proxy, auth, freshness, export
+- `internal/search/` — FTS5 index over transcripts
+- `internal/backup/` — live-safe index DB backup command
 - `internal/wire/` — shared wire-decoding helpers (`FlexTime`)
+- `deploy/` — systemd unit + NixOS module drafts (the sibling repo owns the module)
 - `docs/DOMAIN_LANGUAGE.md` — the vocabulary the code speaks
