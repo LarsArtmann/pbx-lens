@@ -64,7 +64,17 @@ webphone later gets a read-only deep link, never a data dependency.
   dev`); the flake's generic apps.test/apps.lint stay module-generated
   conveniences, deliberately not overridden into a second gate.
 - **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version
-  subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens`.
+  subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens`. Flag
+  validation for the index-opening subcommands is shared: `requireDB` and
+  `requireOneArg` in package main (messages derive from `fs.Name()`, so a new
+  subcommand gets consistent rejections for free). The `internal/ingest` ROOT
+  package hosts the shared parser scaffolding — `Result` (observations +
+  skipped-row count) and `NewScanner`/`EachLine` (64 KiB→1 MiB bounded line
+  scan; `EachLine` trims and skips blanks). `cdr.Parse`/`webhook.Parse` return
+  `ingest.Result` directly (no per-package Result alias — one type, no split
+  brain); `agent.Result` keeps its own shape (Transcripts, not Observations).
+  CDR keeps its own scan loop (semicolon-trimming CSV semantics), but through
+  `ingest.NewScanner`.
 
 ## Domain
 
