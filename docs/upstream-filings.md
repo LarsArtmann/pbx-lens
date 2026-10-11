@@ -3,6 +3,9 @@
 Extracted from AGENTS.md 2026-10-11 (go-structure-linter size limit).
 Update these notes when upstream lands.
 
+**State check 2026-10-11 ~20:05 (read-only, gh api): all five filings OPEN
+upstream — no upstream movement to fold in yet.**
+
 - **go-cqrs-lite#62**: sqliteengine binds filter values raw (`filter_clause.go:44`,
   `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,
   Ge/Gt drop it, Eq never). In-repo fix stays: bind `rfc3339Nano` strings.

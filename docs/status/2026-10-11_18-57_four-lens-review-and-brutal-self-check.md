@@ -15,22 +15,22 @@ full-code-review, go-modularize, naming-review), no repo-wide re-audit.
 
 ## a) FULLY DONE
 
-| Work | Evidence |
-| --- | --- |
-| Every file visited (32 src + 24 test + 5 templ) | review reports, session read log |
-| StreamMarker projection-key fix in `cli/agent.go` + test fixture | `grep StreamMarker internal/cli/` = 0 hand-built literals; tests green |
-| htpasswd timing-pad cost fix (`padCost` matches loaded entries) | `web/auth.go`; claimed property now actually true |
-| `usage()` gained the missing `purge` subcommand | `cmd/pbx-lens/main.go:84` |
-| `search.Hit` identity typed (`SourceKind`/`NativeID`) | swap now a compile error; search+web tests green |
-| Agent excerpt capped at domain ceiling (200 runes) + regression test | `calls.DefaultExcerptMax` owned by domain; telnyx aliases it |
-| `direction(context)` shadow + `uuid` param renamed | `cdr.go` / `cli/agent.go` |
-| Dead `fallthrough` case removed; export CSV/JSONL comment corrected | `web/recording.go`, `web/export.go` |
-| `internal/wire` directly tested (8 subtests + round-trip) | `wire/flextime_test.go`; was zero-coverage package |
-| 4 stale `DOMAIN_LANGUAGE.md` claims fixed (hash-conflict → correction semantics, one-observed-event, FlexTime location, AI badge) + tombstone term added | doc matches code again |
-| go-modularize verdict: HOLD single module, 3 revisit triggers | AGENTS.md + full-code-review report |
-| 3 review reports + plan written (HTML, kit template) | `docs/reviews/`, `docs/planning/` |
-| AGENTS.md + TODO_LIST.md updated (structure, decisions, 3 new tickets) | both files |
-| Final verification: 12/12 test packages green, golangci-lint 0 issues, buildflow gate 73 steps 0 failed | gate log: "passed with warnings" (all remaining findings documented deliberate) |
+| Work                                                                                                                                                     | Evidence                                                                        |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| Every file visited (32 src + 24 test + 5 templ)                                                                                                          | review reports, session read log                                                |
+| StreamMarker projection-key fix in `cli/agent.go` + test fixture                                                                                         | `grep StreamMarker internal/cli/` = 0 hand-built literals; tests green          |
+| htpasswd timing-pad cost fix (`padCost` matches loaded entries)                                                                                          | `web/auth.go`; claimed property now actually true                               |
+| `usage()` gained the missing `purge` subcommand                                                                                                          | `cmd/pbx-lens/main.go:84`                                                       |
+| `search.Hit` identity typed (`SourceKind`/`NativeID`)                                                                                                    | swap now a compile error; search+web tests green                                |
+| Agent excerpt capped at domain ceiling (200 runes) + regression test                                                                                     | `calls.DefaultExcerptMax` owned by domain; telnyx aliases it                    |
+| `direction(context)` shadow + `uuid` param renamed                                                                                                       | `cdr.go` / `cli/agent.go`                                                       |
+| Dead `fallthrough` case removed; export CSV/JSONL comment corrected                                                                                      | `web/recording.go`, `web/export.go`                                             |
+| `internal/wire` directly tested (8 subtests + round-trip)                                                                                                | `wire/flextime_test.go`; was zero-coverage package                              |
+| 4 stale `DOMAIN_LANGUAGE.md` claims fixed (hash-conflict → correction semantics, one-observed-event, FlexTime location, AI badge) + tombstone term added | doc matches code again                                                          |
+| go-modularize verdict: HOLD single module, 3 revisit triggers                                                                                            | AGENTS.md + full-code-review report                                             |
+| 3 review reports + plan written (HTML, kit template)                                                                                                     | `docs/reviews/`, `docs/planning/`                                               |
+| AGENTS.md + TODO_LIST.md updated (structure, decisions, 3 new tickets)                                                                                   | both files                                                                      |
+| Final verification: 12/12 test packages green, golangci-lint 0 issues, buildflow gate 73 steps 0 failed                                                  | gate log: "passed with warnings" (all remaining findings documented deliberate) |
 
 ## b) PARTIALLY DONE
 

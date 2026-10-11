@@ -2,13 +2,12 @@ package cli
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
-	"strings"
-
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 

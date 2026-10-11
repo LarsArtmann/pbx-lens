@@ -287,7 +287,10 @@ func TestFreshnessMidWriteFailureLogsInsteadOfCorrupting(t *testing.T) {
 	}
 
 	if writer.writes != 1 {
-		t.Errorf("write attempts = %d, want 1 — an error body must not be appended after the response started", writer.writes)
+		t.Errorf(
+			"write attempts = %d, want 1 — an error body must not be appended after the response started",
+			writer.writes,
+		)
 	}
 }
 

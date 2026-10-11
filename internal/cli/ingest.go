@@ -109,7 +109,12 @@ func (g AgeGate) Apply(observations []calls.Observation, now time.Time) ([]calls
 
 // GateIngest applies the age gate and ingests the survivors. Total counts
 // everything offered, so refusals report against the real batch size.
-func GateIngest(ctx context.Context, sys *system.System, maxAge time.Duration, observations []calls.Observation) IngestStats {
+func GateIngest(
+	ctx context.Context,
+	sys *system.System,
+	maxAge time.Duration,
+	observations []calls.Observation,
+) IngestStats {
 	admitted, refusals := AgeGate{MaxAge: maxAge}.Apply(observations, time.Now().UTC())
 
 	stats := Ingest(ctx, sys, admitted)

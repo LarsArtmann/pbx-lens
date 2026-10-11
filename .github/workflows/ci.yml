@@ -95,6 +95,30 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
+  cqrs-lint:
+    name: cqrs-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Generate templ code
+        # cqrs-lint loads packages, so the gitignored *_templ.go must exist.
+        run: go tool templ generate
+
+      - name: Install cqrs-lint
+        # Same master rev the flake devShell pins (flake.nix cqrs-lint);
+        # the module has no stable tags. Errors fail the lane; the
+        # documented warning/info decisions live in docs/cqrs-lint-policy.md.
+        run: go install github.com/LarsArtmann/go-cqrs-lite/cmd/cqrs-lint/v4@afaffa19105b2422ef0722f156bca6d92169c529
+
+      - name: Run cqrs-lint
+        run: "$(go env GOPATH)/bin/cqrs-lint ."
+
   duplication:
     name: Code Duplication Check
     runs-on: ubuntu-latest
