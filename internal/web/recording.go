@@ -162,10 +162,14 @@ func (s *server) serveLocalRecording(w http.ResponseWriter, r *http.Request, vie
 	http.Error(w, "no local recording file found for this call", http.StatusNotFound)
 }
 
+// localRecordingStemCandidates bounds the candidate stems below (ref,
+// {uuid}_{dest}, bare uuid).
+const localRecordingStemCandidates = 3
+
 // localRecordingStems lists candidate file stems, most specific first: the
 // indexed ref, then the {uuid}_{dest} dialplan naming, then the bare uuid.
 func localRecordingStems(view calls.CallView) []string {
-	stems := make([]string, 0, 3)
+	stems := make([]string, 0, localRecordingStemCandidates)
 
 	if view.RecordingRef != "" {
 		stems = append(stems, view.RecordingRef)

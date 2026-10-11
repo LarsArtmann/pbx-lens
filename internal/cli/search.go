@@ -21,7 +21,7 @@ func RebuildSearchIndex(ctx context.Context, sys *system.System, dsn string) err
 		return nil
 	}
 
-	index, err := search.Open(dsn)
+	index, err := search.Open(ctx, dsn)
 	if err != nil {
 		return err
 	}

@@ -274,6 +274,9 @@ linters:
           - recvcheck
           - contextcheck
           - exhaustive
+          # httptest.NewRequest without ctx is the stdlib test pattern;
+          # context.Background() is implicit anyway.
+          - noctx
           # Fleet precedent (go-output): table-driven stdlib tests gain
           # nothing from t.Parallel plumbing; fixtures are long CSV/JSON
           # literals; helper params are intentionally terse.
@@ -290,6 +293,22 @@ linters:
       - path: ^cmd/
         linters:
           - forbidigo
+      # godoclint counts the "// templ: version:" header above `package X`
+      # in every generated *_templ.go as an extra package doc (fleet
+      # precedent: samber-do-auditlog hit the same false positive). The
+      # package doc lives in queries.go; path exclusion cannot help because
+      # the finding is reported on the doc-carrying file, not the generated
+      # one.
+      - text: package has more than one godoc
+        linters:
+          - godoclint
+      # templ-generated component closures do not thread r.Context() into
+      # child Render calls (the templ runtime owns that); contextcheck
+      # reports the gap at the handler's render() call site. Framework
+      # false positive — the ctx IS passed via render's r.Context().
+      - path: ^internal/web/
+        linters:
+          - contextcheck
     paths:
       - \.gen\.go$
       - _templ\.go$

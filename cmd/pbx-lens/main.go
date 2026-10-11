@@ -420,7 +420,7 @@ func serve(args []string) {
 		fatal(err)
 	}
 
-	index, err := search.Open(*db)
+	index, err := search.Open(setupCtx, *db)
 	if err != nil {
 		fatal(err)
 	}

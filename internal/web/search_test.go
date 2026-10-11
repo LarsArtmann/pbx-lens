@@ -17,16 +17,16 @@ import (
 func sqliteSearcher(t *testing.T, observations ...calls.Observation) *search.Index {
 	t.Helper()
 
-	index, err := search.Open(filepath.Join(t.TempDir(), "search.db"))
+	index, err := search.Open(context.Background(), filepath.Join(t.TempDir(), "search.db"))
 	if err != nil {
 		t.Fatalf("open search index: %v", err)
 	}
 
 	t.Cleanup(func() { _ = index.Close() })
 
-	views := make([]calls.CallView, len(observations))
-	for i, obs := range observations {
-		views[i] = calls.ViewFrom(obs, calls.Enrichment{})
+	views := make([]calls.CallView, 0, len(observations))
+	for _, obs := range observations {
+		views = append(views, calls.ViewFrom(obs, calls.Enrichment{}))
 	}
 
 	if err := index.Rebuild(context.Background(), views); err != nil {

@@ -54,7 +54,7 @@ type CallListPage struct {
 }
 
 // ListCalls runs the query against the read model, newest first.
-func ListCalls(ctx context.Context, sys *system.System, q ListCallsQuery) (CallListPage, error) {
+func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (CallListPage, error) {
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
 	opts := []metaengine.ScanOption{
@@ -63,12 +63,12 @@ func ListCalls(ctx context.Context, sys *system.System, q ListCallsQuery) (CallL
 		metaengine.WithLimit(pageSize + 1),
 	}
 
-	if q.Direction != "" {
-		opts = append(opts, metaengine.WithFilter("direction", metaengine.FilterEq, string(q.Direction)))
+	if query.Direction != "" {
+		opts = append(opts, metaengine.WithFilter("direction", metaengine.FilterEq, string(query.Direction)))
 	}
 
-	if q.AI != nil {
-		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *q.AI))
+	if query.AI != nil {
+		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *query.AI))
 	}
 
 	// Time bounds bind as RFC3339Nano strings — the exact wire format the
@@ -76,16 +76,16 @@ func ListCalls(ctx context.Context, sys *system.System, q ListCallsQuery) (CallL
 	// sqlite (the driver renders it "2006-01-02 15:04:05 -0700 MST", and the
 	// 'T' vs ' ' format difference silently corrupts same-day comparisons).
 	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
-	if !q.From.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, rfc3339Nano(q.From)))
+	if !query.From.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, rfc3339Nano(query.From)))
 	}
 
-	if !q.To.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(q.To)))
+	if !query.To.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(query.To)))
 	}
 
-	if !q.Before.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(q.Before)))
+	if !query.Before.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
 	}
 
 	views, err := reader.Scan(ctx, opts...)
@@ -130,6 +130,7 @@ func CallDetail(ctx context.Context, sys *system.System, kind, nativeID string) 
 
 	sid, err := obs.StreamID()
 	if err != nil {
+		//nolint:nilerr // a malformed kind/id is a plain miss (404), not a server error
 		return calls.CallView{}, false, nil
 	}
 

@@ -28,6 +28,10 @@ const (
 	// DefaultLimit caps one search result page.
 	DefaultLimit = 50
 
+	// searchBodyFixedFields counts the non-transcript parts of the indexed
+	// body: from, to, excerpt.
+	searchBodyFixedFields = 3
+
 	maxQueryRunes = 256
 
 	tableName = "lens_search"
@@ -55,7 +59,7 @@ type Index struct {
 // Open connects to the index sqlite file (same DSN as the read model). The
 // connection carries a busy timeout so FTS rebuilds coexist with the read
 // model's own connection instead of failing fast with SQLITE_BUSY.
-func Open(dsn string) (*Index, error) {
+func Open(ctx context.Context, dsn string) (*Index, error) {
 	db, err := sql.Open("sqlite", withBusyTimeout(dsn))
 	if err != nil {
 		return nil, errorfamily.NewRejection("lens.search.open", fmt.Sprintf("opening %s: %v", dsn, err))
@@ -63,7 +67,7 @@ func Open(dsn string) (*Index, error) {
 
 	db.SetMaxOpenConns(1)
 
-	if err := db.Ping(); err != nil {
+	if err := db.PingContext(ctx); err != nil {
 		_ = db.Close()
 
 		return nil, errorfamily.NewRejection("lens.search.ping", fmt.Sprintf("pinging %s: %v", dsn, err))
@@ -91,7 +95,11 @@ func withBusyTimeout(dsn string) string {
 
 // Close releases the connection.
 func (i *Index) Close() error {
-	return i.db.Close()
+	if err := i.db.Close(); err != nil {
+		return errorfamily.NewTransient("lens.search.close", err.Error())
+	}
+
+	return nil
 }
 
 // Rebuild recreates the FTS table from the given views — a full recompute,
@@ -141,7 +149,7 @@ func (i *Index) Rebuild(ctx context.Context, views []calls.CallView) error {
 // searchBody is the indexed text: parties, excerpt, and every transcript
 // turn — anything a person would grep for.
 func searchBody(view calls.CallView) string {
-	parts := make([]string, 0, len(view.Transcript)+3)
+	parts := make([]string, 0, len(view.Transcript)+searchBodyFixedFields)
 	parts = append(parts, view.FromNumber, view.ToNumber, view.TranscriptExcerpt)
 
 	for _, turn := range view.Transcript {

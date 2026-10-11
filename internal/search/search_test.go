@@ -40,7 +40,7 @@ func searchViews() []calls.CallView {
 func openTestIndex(t *testing.T) *Index {
 	t.Helper()
 
-	index, err := Open(filepath.Join(t.TempDir(), "search.db"))
+	index, err := Open(context.Background(), filepath.Join(t.TempDir(), "search.db"))
 	if err != nil {
 		t.Fatalf("Open: %v", err)
 	}
