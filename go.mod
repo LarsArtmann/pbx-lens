@@ -3,7 +3,7 @@ module github.com/larsartmann/pbx-lens
 go 1.27.1
 
 require (
-	github.com/a-h/templ v0.3.1020
+	github.com/a-h/templ v0.3.1070
 	github.com/larsartmann/go-appkit v0.8.0
 	github.com/larsartmann/go-appkit/systemd v0.1.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.13.1
@@ -17,16 +17,14 @@ require (
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.6.2
 	github.com/larsartmann/go-cqrs-lite/system/v4 v4.12.0
 	github.com/larsartmann/go-error-family v0.11.0
-	github.com/larsartmann/templ-components v1.21.0
 	golang.org/x/crypto v0.57.0
 	modernc.org/sqlite v1.60.1
 )
 
 require (
-	github.com/Oudwins/tailwind-merge-go v0.2.3 // indirect
 	github.com/ThreeDotsLabs/watermill v1.5.3 // indirect
 	github.com/a-h/parse v0.0.0-20250122154542-74294addb73e // indirect
-	github.com/andybalholm/brotli v1.1.0 // indirect
+	github.com/andybalholm/brotli v1.2.6 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
@@ -42,7 +40,7 @@ require (
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
 	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
-	github.com/fatih/color v1.16.0 // indirect
+	github.com/fatih/color v1.19.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
@@ -75,12 +73,9 @@ require (
 	github.com/larsartmann/go-flightrecorder v0.2.1 // indirect
 	github.com/larsartmann/go-sse v0.6.2 // indirect
 	github.com/larsartmann/httputil v1.4.1 // indirect
-	github.com/larsartmann/templ-components/htmx v1.21.0 // indirect
-	github.com/larsartmann/templ-components/icons v1.21.0 // indirect
-	github.com/larsartmann/templ-components/utils v1.21.0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
-	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.30 // indirect
 	github.com/maypok86/otter/v2 v2.3.0 // indirect
