@@ -11,21 +11,26 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/app"
 )
 
-// OpenSystem boots the composition root with the projection host running in
-// the background. The returned cleanup stops the host and closes the system;
-// call it exactly once, after the last read.
+// OpenSystem boots the composition root. It deliberately does NOT start the
+// projection host: the host is a batch drainer, not a live tail — one Start
+// call drains the journal from the last checkpoint and its workers exit, so
+// events appended after a drain stay unprojected until the next Start.
+// Callers own the drain cadence: one-shot commands call DrainProjections
+// after dispatching; the serve poller re-Drains on its tick.
 func OpenSystem(ctx context.Context, dsn string) (*system.System, func(), error) {
 	sys, err := app.New(ctx, dsn)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	hostCtx, stopHost := context.WithCancel(ctx)
-	go func() { _ = sys.ProjectionHost().Start(hostCtx) }()
-
 	return sys, func() {
-		stopHost()
-
 		_ = sys.Close()
 	}, nil
+}
+
+// DrainProjections catches the call_views read model up with every event
+// appended so far. It is cheap when already caught up (one empty journal
+// read) and safe to call repeatedly.
+func DrainProjections(ctx context.Context, sys *system.System) error {
+	return sys.ProjectionHost().Start(ctx)
 }

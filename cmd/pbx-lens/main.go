@@ -101,6 +101,10 @@ func ingestCDR(args []string) {
 
 	stats := cli.Ingest(ctx, sys, parsed.Observations)
 
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		fatal(err)
+	}
+
 	fmt.Printf(
 		"ingest-cdr: %d rows parsed, %d parse-skipped, %d recorded, %d corrected, %d rejected\n",
 		stats.Total, parsed.Skipped, stats.Recorded, stats.Corrected, len(stats.Rejected),
@@ -163,6 +167,11 @@ func ingestTelnyx(args []string) {
 	}
 
 	stats := cli.Ingest(ctx, sys, observations)
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		fatal(err)
+	}
+
 	stats.Rejected = append(fetchRejects, stats.Rejected...)
 	stats.Total += len(fetchRejects)
 
@@ -212,6 +221,10 @@ func smoke(args []string) {
 	}
 
 	if err := sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
+		fatal(err)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
 		fatal(err)
 	}
 
