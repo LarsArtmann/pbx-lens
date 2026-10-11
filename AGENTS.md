@@ -256,3 +256,32 @@ DECISION.
   sleep under a 5 s context deadline — a one-shot CLI convergence wait, no
   hot path. `Watcher.Watch` is change-only (no current-value replay), so
   switching would trade a bounded poll for a subscribe race.
+
+## buildflow dev-gate residual findings policy (2026-10-11 full pass: gate PASSES with warnings)
+
+- **go-version-auto-configure (dep-forced, advisory by design)**: go.mod
+  carries `go 1.27.1` because go-appkit v0.8.0's module floor demands it —
+  `go mod tidy` reverts any major.minor downgrade. The checker's own
+  severity policy treats dep-forced patch floors as correct.
+- **go-auto-upgrade encoding/json v1→v2 suggestions**: deliberate — the
+  boundary types (metaengine DTOs) are non-stdlib-owned; the v2 swap waits
+  for T4 per the stack decisions. samber/lo suggestions ignored (stdlib
+  + go-cqrs-lite + go-error-family only).
+- **go-structure-linter assets/ suggestion**: `internal/web/static/` is
+  deliberate (go:embed already scopes it; moving buys nothing).
+- **art-dupl (20) / branching-flow (51) / nix-checker (hash bookkeeping
+  infos)**: advisory reports; revisit only if a dedicated dedup/nix pass
+  is scheduled (see TODO_LIST).
+- **treefmt templ formatter go (PAID FOR, 2026-10-11)**: treefmt-nix's
+  templ program wraps `templ fmt` with nixpkgs' DEFAULT `pkgs.go`
+  (1.26.8 at this lock) — older than this repo's floor, so the sandboxed
+  pre-commit check tried a forbidden toolchain download and failed. Fixed
+  in flake.nix by force-overriding `settings.formatter.templ.command`
+  with a writeShellApplication carrying OUR `go`. Upstream fix belongs in
+  go-nix-helpers (templ formatter should resolve goPkg when enableTempl).
+- **golangci exclusions added (2026-10-11)**: contextcheck in internal/web
+  (templ-generated closures don't thread r.Context; framework false
+  positive), noctx in tests (httptest.NewRequest stdlib pattern), and the
+  godoclint "more than one godoc" templ-header false positive (fleet
+  precedent: samber-do-auditlog). `.golangci.yml` `run.go` must track
+  go.mod's floor — govalid reads it.
