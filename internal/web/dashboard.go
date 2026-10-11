@@ -16,6 +16,11 @@ const dashboardWindowDays = 30
 // utcDay is the UTC day boundary used to bucket and truncate timestamps.
 const utcDay = 24 * time.Hour
 
+// dayFormat is the dashboard's day key: the exact "2006-01-02" string is
+// load-bearing — it keys ByDay buckets, matches the URL filters todayHref
+// builds, and renders directly in the chart tooltip.
+const dayFormat = "2006-01-02"
+
 // DayVolume is one day's call count in the dashboard window. MOSKnown is
 // the subset of that day's calls whose source reported a quality score;
 // MOSSum feeds AvgMOS.
@@ -83,12 +88,12 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 
 	stats := DashboardStats{WindowDays: dashboardWindowDays}
 
-	today := now.UTC().Format("2006-01-02")
+	today := now.UTC().Format(dayFormat)
 	windowStart := now.UTC().Truncate(utcDay).AddDate(0, 0, -(dashboardWindowDays - 1))
 	dayIndex := make(map[string]int, dashboardWindowDays)
 
 	for offset := range dashboardWindowDays {
-		day := windowStart.AddDate(0, 0, offset).Format("2006-01-02")
+		day := windowStart.AddDate(0, 0, offset).Format(dayFormat)
 		dayIndex[day] = len(stats.ByDay)
 		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})
 	}
@@ -105,7 +110,7 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 			stats.HumanCalls++
 		}
 
-		day := view.StartedAt.UTC().Format("2006-01-02")
+		day := view.StartedAt.UTC().Format(dayFormat)
 		if day == today {
 			stats.Today++
 		}
@@ -134,7 +139,7 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 
 // todayHref deep-links the "Calls today" stat card into the filtered list.
 func (s DashboardStats) todayHref(now time.Time) string {
-	today := now.UTC().Format("2006-01-02")
+	today := now.UTC().Format(dayFormat)
 
 	return fmt.Sprintf("/?from=%s&to=%s", today, today)
 }

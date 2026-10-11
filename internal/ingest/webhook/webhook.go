@@ -76,6 +76,11 @@ func Parse(r io.Reader) (ingest.Result, error) {
 		return ingest.Result{}, err
 	}
 
+	// Go randomizes map iteration order; that only permutes the
+	// Observations slice, never a call's content — each iteration reads
+	// only that call's own folded state (min/max timestamps, first-value
+	// folds), which is order-independent by construction (pinned by
+	// TestParseOrderIndependent).
 	for callControlID, state := range callsByID {
 		obs, err := observation(callControlID, state)
 		if err != nil {
