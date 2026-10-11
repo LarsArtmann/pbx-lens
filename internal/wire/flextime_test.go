@@ -67,7 +67,7 @@ func TestFlexTimeDecodesEverySourceDialect(t *testing.T) {
 				t.Fatalf("UnmarshalJSON(%s) unexpected error: %v", tt.json, err)
 			}
 
-			if !got.Time.Equal(tt.want) {
+			if !got.Equal(tt.want) {
 				t.Errorf("UnmarshalJSON(%s) = %v, want %v", tt.json, got.Time, tt.want)
 			}
 		})
@@ -91,7 +91,7 @@ func TestFlexTimeJSONRoundTripKeepsInstant(t *testing.T) {
 		t.Fatalf("Unmarshal(%s): %v", raw, err)
 	}
 
-	if !out.Time.Equal(in.Time) {
+	if !out.Equal(in.Time) {
 		t.Errorf("round trip = %v, want %v", out.Time, in.Time)
 	}
 }

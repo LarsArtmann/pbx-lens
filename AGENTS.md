@@ -11,6 +11,13 @@ webphone later gets a read-only deep link, never a data dependency.
 ## Stack decisions
 
 - **Modules:** `go-cqrs-lite` `system/v4` + `metaengine/v4` + projectionadapter
+  - **Module-boundary decision (2026-10-11 four-lens review): HOLD single
+    go.mod.** Two High "do not modularize" signals (small single-domain
+    project; zero external Go consumers — the sibling telephony repo gets a
+    NixOS module, not an import) mean every candidate seam has zero
+    composability payoff; the package DAG already enforces the layering.
+    Revisit triggers: a second aggregate (the E003 owner question), an
+    external Go consumer, or measurable CI cost.
   - sqliteengine (blank import registers the "sqlite" driver), pinned to the
     vetted set from go-cqrs-lite `example/getting-started/go.mod` (exact
     versions live in go.mod — never re-enumerate them here). ADR-0123: system.New is
@@ -87,7 +94,18 @@ webphone later gets a read-only deep link, never a data dependency.
   `ingest.Result` directly (no per-package Result alias — one type, no split
   brain); `agent.Result` keeps its own shape (Transcripts, not Observations).
   CDR keeps its own scan loop (semicolon-trimming CSV semantics), but through
-  `ingest.NewScanner`.
+  `ingest.NewScanner`. Support packages: `internal/wire` (FlexTime + shared
+  wire-decoding helpers; directly unit-tested since 2026-10-11),
+  `internal/backup` (VACUUM INTO snapshot + integrity verify), and
+  `internal/retention` (Policy/OldViews/Retire behind the `purge` command).
+  The projection record key is ALWAYS derived via `obs.StreamID().String()` —
+  the last hand-built `"StreamMarker:..."` literal (cli/agent.go CDR join) was
+  found and removed by the 2026-10-11 four-lens review; do not re-introduce one.
+  `calls.DefaultExcerptMax` (200 runes) is the domain-owned transcript-excerpt
+  ceiling; every source mapper caps with it (telnyx aliases it as
+  `telnyx.DefaultExcerptMax`). The serve htpasswd timing pad hashes at the
+  LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
+  when touching auth.go.
 - **serve/UI:** `serve` composes appkit (`ServiceConfig{Addr}` +
   `systemd.Install` — a no-op without `NOTIFY_SOCKET`, READY/STOPPING/WATCHDOG
   under the manager) around `web.Register`; every UI route is a query or a

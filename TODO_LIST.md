@@ -39,6 +39,9 @@
 | Upstream filings (D6): sqliteengine time binding, memory-engine field-name resolution, treefmt templ go pin                                              | 🔴 `TODO`    | Low    | 60min  | all three verified in-repo with repros; AGENTS.md gotchas document them                             |
 | Rebuild/reinstall the BuildFlow binary (200ab99 → HEAD) so license-check's sandbox go meets the 1.27.1 floor; then drop the AGENTS.md license-check note | 🔴 `TODO`    | Low    | 15min  | the dev gate's only red step; direct `go-licenses` is clean (AGENTS.md license-check note)          |
 | Live-verify the Telnyx Detail Records + insights DTOs against the real API (shapes decoded tolerantly; call-control record not in the public spec)       | 🔴 `TODO`    | Low    | 30min  | `internal/ingest/telnyx/telnyx.go` `DetailRecord` aliases; AGENTS.md quarterly re-verify cluster    |
+| Recording-proxy upstream timeout knob (metadata fetch + WAV stream ride `http.DefaultClient`, no timeout)                                                | 🔴 `TODO`    | Low    | 20min  | `web/recording.go` `proxyTelnyxRecording`; needs a product call on the longest legitimate transfer  |
+| Optional: consumer-side `RecordingFetcher` interface in `web.Options` (mirrors `Searcher`; decouples the UI from `*telnyx.Client`)                       | 🔴 `TODO`    | Low    | 15min  | `web/recording.go` `RecordingOptions`; no second implementation yet, pure pattern symmetry          |
+| At schema v2: length-prefixed ContentHash field encoding (newline-separated concatenation can alias crafted field pairs; format frozen at v1)            | 🔵 `BLOCKED` | Low    | 60min  | data-model review 2026-10-11 (docs/reviews); hash change = one-time correction wave, needs v2 gate  |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
      per docs-health harvest-guide: the ledger records the pass, it is not a

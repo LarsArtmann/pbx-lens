@@ -200,6 +200,7 @@ func MapTranscript(transcript Transcript, cdrView *calls.CallView) (calls.Observ
 // flood the list page's single table cell.
 func excerpt(turns []calls.TranscriptTurn) string {
 	opening := ""
+
 	for _, turn := range turns {
 		if turn.Role == "user" {
 			opening = turn.Text

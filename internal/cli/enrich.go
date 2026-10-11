@@ -66,14 +66,19 @@ func EnrichTelnyxCalls(
 // detail-records list (fetched at most once, only when a seed still lacks
 // cost) and the typed reader over the projection.
 type enrichPass struct {
-	client   *telnyx.Client
-	since    time.Time
-	reader   *metaengine.TypedReader[calls.CallView]
-	records  []telnyx.DetailRecord
+	client         *telnyx.Client
+	since          time.Time
+	reader         *metaengine.TypedReader[calls.CallView]
+	records        []telnyx.DetailRecord
 	recordsFetched bool
 }
 
-func (p *enrichPass) enrichConversation(ctx context.Context, sys *system.System, seed EnrichmentSeed, stats *EnrichStats) {
+func (p *enrichPass) enrichConversation(
+	ctx context.Context,
+	sys *system.System,
+	seed EnrichmentSeed,
+	stats *EnrichStats,
+) {
 	view, found, err := p.reader.Get(ctx, seed.StreamKey)
 	if err != nil {
 		stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+err.Error())
