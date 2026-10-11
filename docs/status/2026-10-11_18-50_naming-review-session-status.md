@@ -123,6 +123,7 @@ between build attempts (would have caught the parallel edits + placeholder
 earlier).
 
 **What could I have done better?**
+
 - Use `lsp_rename` (gopls semantic rename) instead of sed for multi-file
   renames; the stale gopls cache made me distrust the right tool and reach
   for the blunt one.
@@ -132,8 +133,8 @@ earlier).
   for post-fix line-number freshness; flagged in todos) — the report then
   had to describe fixed findings with pre-fix lines, a tradeoff worth a
   convention decision.
-- My stat card says "468 identifiers reviewed" — 468 is the *declaration
-  count* (types+funcs+consts); fields were reviewed in context, not counted.
+- My stat card says "468 identifiers reviewed" — 468 is the _declaration
+  count_ (types+funcs+consts); fields were reviewed in context, not counted.
   Honest proxy, imprecise label.
 
 **Split brains found/created?** Created: `mosAvgLabel` (above, unfixed).

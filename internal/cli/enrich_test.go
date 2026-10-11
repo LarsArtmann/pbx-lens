@@ -2,7 +2,7 @@ package cli
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -35,7 +35,7 @@ func (f *fakeTelnyx) server(t *testing.T) *httptest.Server {
 
 		switch r.URL.Path {
 		case "/ai/conversations":
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{
+			_ = json.MarshalWrite(w, map[string]any{"data": []map[string]any{{
 				"id":              "conv-1",
 				"created_at":      "2026-10-09T19:50:03Z",
 				"last_message_at": "2026-10-09T19:50:29Z",
@@ -47,7 +47,7 @@ func (f *fakeTelnyx) server(t *testing.T) *httptest.Server {
 				},
 			}}})
 		case "/ai/conversations/conv-1/messages":
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{
+			_ = json.MarshalWrite(w, map[string]any{"data": []map[string]any{
 				{
 					"role":       "user",
 					"text":       "Woolly, did you take my eggs?",
@@ -60,10 +60,10 @@ func (f *fakeTelnyx) server(t *testing.T) *httptest.Server {
 				},
 			}})
 		case "/recordings":
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{}})
+			_ = json.MarshalWrite(w, map[string]any{"data": []map[string]any{}})
 		case "/detail_records":
 			f.detailHits++
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{
+			_ = json.MarshalWrite(w, map[string]any{"data": []map[string]any{{
 				"id":              "dr-1",
 				"call_control_id": "v3:eggcall:leg1",
 				"cost":            "0.002",
@@ -72,7 +72,7 @@ func (f *fakeTelnyx) server(t *testing.T) *httptest.Server {
 			}}})
 		case "/ai/conversations/conv-1/conversations-insights":
 			f.insightsHits++
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": []map[string]any{{
+			_ = json.MarshalWrite(w, map[string]any{"data": []map[string]any{{
 				"id":         "ins-1",
 				"status":     f.insightsStatus,
 				"created_at": "2026-10-09T19:51:35",
@@ -234,10 +234,19 @@ func TestEnrichTelnyxCallsCountsMissingAndRejects(t *testing.T) {
 	client := telnyx.NewClient("test-key", srv.URL)
 
 	// A seed whose observation never landed counts Missing, not Rejected:
-	// the next pass retries once the observation ingest catches up.
+	// the next pass retries once the observation ingest catches up. The key
+	// derives the same way the fetch pass builds real seeds — never
+	// hand-assembled with the library's marker prefix.
+	ghost := calls.Observation{NativeID: "ghost", Kind: calls.SourceTelnyxConversation}
+
+	ghostKey, err := ghost.StreamID()
+	if err != nil {
+		t.Fatalf("ghost stream id: %v", err)
+	}
+
 	missing := EnrichmentSeed{
 		ConversationID: "ghost",
-		StreamKey:      "StreamMarker:telnyx-conversation:ghost",
+		StreamKey:      ghostKey.String(),
 	}
 
 	stats, err := EnrichTelnyxCalls(ctx, sys, client, []EnrichmentSeed{missing}, time.Now().UTC())
