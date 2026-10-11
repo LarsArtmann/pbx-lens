@@ -1,7 +1,6 @@
 package cdr
 
 import (
-	"bufio"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -11,6 +10,7 @@ import (
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 )
 
 // fieldTemplates returns the two Master.csv column layouts FreeSWITCH
@@ -59,20 +59,12 @@ func fieldTemplates() ([]string, []string) {
 
 const (
 	stampLayout = "2006-01-02 15:04:05"
-
-	scannerInitialBuf = 64 * 1024
-	scannerMaxLine    = 1024 * 1024
 )
 
 // DefaultAIDestination is the deployment's agent extension (nix-international-
 // telephony options.nix: agent.extension default "9100"); CDR rows whose
 // destination_number hits an AI destination badge IsAI.
 const DefaultAIDestination = "9100"
-
-type Result struct {
-	Observations []calls.Observation
-	Skipped      int
-}
 
 // ParseOptions carries the dialplan knowledge the CDR text cannot express.
 type ParseOptions struct {
@@ -94,7 +86,7 @@ func (o ParseOptions) isAI(destination string) bool {
 func ParseAIDestinations(flag string) map[string]bool {
 	out := map[string]bool{}
 
-	for _, part := range strings.Split(flag, ",") {
+	for part := range strings.SplitSeq(flag, ",") {
 		if trimmed := strings.TrimSpace(part); trimmed != "" {
 			out[trimmed] = true
 		}
@@ -103,15 +95,14 @@ func ParseAIDestinations(flag string) map[string]bool {
 	return out
 }
 
-func Parse(r io.Reader) (Result, error) {
+func Parse(r io.Reader) (ingest.Result, error) {
 	return ParseWithOptions(r, ParseOptions{})
 }
 
-func ParseWithOptions(r io.Reader, opts ParseOptions) (Result, error) {
-	res := Result{}
+func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
+	res := ingest.Result{}
 	fields13, fields18 := fieldTemplates()
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, scannerInitialBuf), scannerMaxLine)
+	sc := ingest.NewScanner(r)
 
 	for sc.Scan() {
 		line := strings.TrimRight(sc.Text(), " \t\r\n")
@@ -126,7 +117,7 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (Result, error) {
 
 		row, err := cr.Read()
 		if err != nil {
-			return Result{}, errorfamily.NewCorruption("cdr.parse.read", fmt.Sprintf("reading Master.csv: %v", err))
+			return ingest.Result{}, errorfamily.NewCorruption("cdr.parse.read", fmt.Sprintf("reading Master.csv: %v", err))
 		}
 
 		if len(row) == 0 {
@@ -159,7 +150,7 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (Result, error) {
 	}
 
 	if err := sc.Err(); err != nil {
-		return Result{}, errorfamily.NewCorruption("cdr.parse.scan", fmt.Sprintf("scanning Master.csv: %v", err))
+		return ingest.Result{}, errorfamily.NewCorruption("cdr.parse.scan", fmt.Sprintf("scanning Master.csv: %v", err))
 	}
 
 	return res, nil

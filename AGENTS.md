@@ -33,15 +33,15 @@ webphone later gets a read-only deep link, never a data dependency.
 - **templ-components v1.21.0 adoption map** (skill's consumer tip; the skill
   docs drift ahead of the pinned tag — this table is the truth for THIS repo):
 
-  | Component | Status | Note |
-  | --- | --- | --- |
-  | layout.Base/DefaultPageProps | used | `.Title` set; CSSPath defaults to /app.css |
-  | navigation.SimpleNav + ThemeToggle | used | |
-  | display.Table/TableRow.Href/TableCell | used | row-click JS included |
-  | display.Badge, PageHeader, EmptyState, ListNote, RelativeTime, Card, DefinitionList, Button | used | DefinitionList takes `Items []DefinitionItem{Term, Detail, DetailComponent}` — NOT children |
-  | forms.Select/DatePicker | used | selected-ness is per `SelectOption.Selected`, no props-level Selected |
-  | feedback.Alert | used | staleness banner |
-  | FilterBar / SegmentedControl / utils/format / errorpage | ABSENT in v1.21.0 | hand-rolled equivalents; do not import |
+  | Component                                                                                   | Status            | Note                                                                                        |
+  | ------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------- |
+  | layout.Base/DefaultPageProps                                                                | used              | `.Title` set; CSSPath defaults to /app.css                                                  |
+  | navigation.SimpleNav + ThemeToggle                                                          | used              |                                                                                             |
+  | display.Table/TableRow.Href/TableCell                                                       | used              | row-click JS included                                                                       |
+  | display.Badge, PageHeader, EmptyState, ListNote, RelativeTime, Card, DefinitionList, Button | used              | DefinitionList takes `Items []DefinitionItem{Term, Detail, DetailComponent}` — NOT children |
+  | forms.Select/DatePicker                                                                     | used              | selected-ness is per `SelectOption.Selected`, no props-level Selected                       |
+  | feedback.Alert                                                                              | used              | staleness banner                                                                            |
+  | FilterBar / SegmentedControl / utils/format / errorpage                                     | ABSENT in v1.21.0 | hand-rolled equivalents; do not import                                                      |
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's pattern,
   adopted 2026-10-11): `subPackages = ["./cmd/pbx-lens"]` wires the package to
   the real binary (the module default `["."]` built the package-less root and

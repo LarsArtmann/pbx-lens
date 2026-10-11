@@ -17,6 +17,7 @@ require (
 	github.com/larsartmann/go-cqrs-lite/system/v4 v4.12.0
 	github.com/larsartmann/go-error-family v0.11.0
 	github.com/larsartmann/templ-components v1.21.0
+	modernc.org/sqlite v1.60.1
 )
 
 require (
@@ -103,5 +104,4 @@ require (
 	modernc.org/libc v1.77.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	modernc.org/sqlite v1.60.1 // indirect
 )

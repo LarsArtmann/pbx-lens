@@ -25,7 +25,7 @@ const (
 	minArgs   = 2
 	exitUsage = 2
 
-defaultAddr = "127.0.0.1:8300"
+	defaultAddr = "127.0.0.1:8300"
 	ingestTimeout = 5 * time.Minute
 	serveTimeout  = 5 * time.Minute
 	smokeTimeout  = 30 * time.Second
@@ -74,6 +74,22 @@ func usage() {
 	)
 }
 
+// requireDB enforces the mandatory -db flag every index-opening subcommand
+// shares.
+func requireDB(fs *flag.FlagSet, db string) {
+	if db == "" {
+		fatal(errorfamily.NewRejection("lens.cli.missing_db", fs.Name()+" needs -db <dsn>"))
+	}
+}
+
+// requireOneArg enforces the single positional argument of the file-ingesting
+// subcommands.
+func requireOneArg(fs *flag.FlagSet, what string) {
+	if fs.NArg() != 1 {
+		fatal(errorfamily.NewRejection("lens.cli.bad_args", fs.Name()+" needs exactly one "+what))
+	}
+}
+
 func ingestCDR(args []string) {
 	fs := flag.NewFlagSet("ingest-cdr", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
@@ -81,13 +97,8 @@ func ingestCDR(args []string) {
 		"comma-separated AI destinations (dialplan badge): destination_number matches badge IsAI")
 	_ = fs.Parse(args)
 
-	if *db == "" {
-		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-cdr needs -db <dsn>"))
-	}
-
-	if fs.NArg() != 1 {
-		fatal(errorfamily.NewRejection("lens.cli.bad_args", "ingest-cdr needs exactly one Master.csv path"))
-	}
+	requireDB(fs, *db)
+	requireOneArg(fs, "Master.csv path")
 
 	file, err := os.Open(fs.Arg(0))
 	if err != nil {
@@ -142,9 +153,7 @@ func ingestTelnyx(args []string) {
 	limit := fs.Int("limit", 0, "max conversations to fetch (0 = all)")
 	_ = fs.Parse(args)
 
-	if *db == "" {
-		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-telnyx needs -db <dsn>"))
-	}
+	requireDB(fs, *db)
 
 	key, err := cli.ResolveKey(*keyFile)
 	if err != nil {
@@ -204,13 +213,8 @@ func ingestWebhook(args []string) {
 	db := fs.String("db", "", "sqlite DSN (required)")
 	_ = fs.Parse(args)
 
-	if *db == "" {
-		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-webhook needs -db <dsn>"))
-	}
-
-	if fs.NArg() != 1 {
-		fatal(errorfamily.NewRejection("lens.cli.bad_args", "ingest-webhook needs exactly one inbound.jsonl path"))
-	}
+	requireDB(fs, *db)
+	requireOneArg(fs, "inbound.jsonl path")
 
 	file, err := os.Open(fs.Arg(0))
 	if err != nil {
@@ -258,9 +262,7 @@ func ingestAgent(args []string) {
 	dir := fs.String("dir", "/var/lib/telephony/recordings/transcripts", "transcripts directory ({call-uuid}.jsonl files)")
 	_ = fs.Parse(args)
 
-	if *db == "" {
-		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-agent needs -db <dsn>"))
-	}
+	requireDB(fs, *db)
 
 	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
 	defer cancel()
@@ -381,9 +383,7 @@ func serve(args []string) {
 	)
 	_ = fs.Parse(args)
 
-	if *db == "" {
-		fatal(errorfamily.NewRejection("lens.cli.missing_db", "serve needs -db <dsn>"))
-	}
+	requireDB(fs, *db)
 
 	setupCtx, cancel := context.WithTimeout(context.Background(), serveTimeout)
 	defer cancel()
