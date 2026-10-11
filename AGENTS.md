@@ -393,6 +393,19 @@ DECISION.
   (running go 1.27.0)". The devShell ships go 1.27.2 with GOTOOLCHAIN=local,
   which satisfies the floor. A bare-shell failure is an environment artifact,
   not a code defect.
+- **Gate under heavy machine load (PAID FOR, 2026-10-11)**: at load average
+  40-85 (unrelated llama-server/clickhouse jobs saturating the box), five
+  gate runs each lost DIFFERENT steps to "killed after Ns: no output at all"
+  (go-fix, test-race, nix-build, go-mod-tidy, golangci:detect) — starvation,
+  not code. Before believing a gate failure, verify the casualties
+  individually: `gofmt -l`, `go test -race ./...`, `nix build`,
+  `go mod tidy -diff`, `buildflow -s golangci-lint`. `vulnix` exits 1
+  persistently (buildflow-internal CVE scan, network/advisory-class; not in
+  the devShell — CI's govulncheck lane is the trusted one).
+- **`go mod tidy -diff` before CI (PAID FOR, 2026-10-11)**: dependency bumps
+  can leave removable go.sum entries that build fine but fail a CI
+  tidy-diff; tidy, then re-pin via `nix run .#update-vendor-hash` (the FOD
+  hash survived this trim unchanged — it covers the module tree, not go.sum).
 - **go-version-auto-configure (dep-forced, advisory by design)**: go.mod
   carries `go 1.27.1` because go-appkit v0.8.0's module floor demands it —
   `go mod tidy` reverts any major.minor downgrade. The checker's own

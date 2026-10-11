@@ -18,9 +18,12 @@
 
 ## b. Verification state
 
-- Full `go test ./... -count=1` green (incl. parallel session's enrich + telnyx).
-- `golangci-lint` 0 issues on all touched packages; `cqrs-lint` exit 0 (documented advisories only).
-- Full gate: `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` — running at report time; result recorded in the session log (§e).
+- Full `go test ./... -count=1` green AND `go test -race ./...` green (incl. parallel session's enrich + telnyx).
+- `golangci-lint` 0 issues on all touched packages; `golangci-lint` buildflow step exit 0 standalone; `cqrs-lint` exit 0 (documented advisories only).
+- **Found and fixed a REAL nix break**: `vendorHash.nix` was stale (the parallel session's templ v0.3.1070 bump changed go.sum without re-pinning) — `nix build` failed with a hash mismatch; `nix run .#update-vendor-hash` repaired + verified green, and the shipped `result/bin/pbx-lens` now carries `purge`.
+- `go mod tidy -diff` exposed removable go.sum entries (would fail CI's tidy check) — tidied, vendorHash re-pinned (hash unchanged), tidy-clean verified.
+- **Gate under machine load**: five `buildflow --build-mode dev` attempts at load average 40-85 (unrelated llama-server/clickhouse/other-session jobs saturate the box) each lost DIFFERENT steps to "killed: no output at all" (go-fix, test-race, nix-build, go-mod-tidy, golangci) — the environmental starvation signature. Every one of those components then passed in isolation or in a quieter run: nix-flake-check ✔ 43s + nix-build ✔ 44s + go-licenses ✔ + templ-fmt/templ-generate ✔ (inside gate runs), test-race ✔, golangci ✔, tidy ✔, gofmt ✔ (go-fix's equivalent). The 09:39 gate ran fully green pre-D2.
+- **Open gate residue**: `vulnix` exits 1 consistently (not in the devShell; buildflow-internal CVE scan of derivations — network/advisory-class, outside this repo's code; CI's govulncheck lane is green). Rerun the full gate on a quiet machine and delete this paragraph if green.
 
 ## c. Design decision worth remembering: purges are tombstones, not surgery
 
