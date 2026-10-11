@@ -105,8 +105,9 @@ webphone later gets a read-only deep link, never a data dependency.
   `"StreamMarker:..."` literal (cli/agent.go CDR join) was found and removed
   by the 2026-10-11 four-lens review; do not re-introduce one.
   `calls.DefaultExcerptMax` (200 runes) is the domain-owned transcript-excerpt
-  ceiling; every source mapper caps with it (telnyx aliases it as
-  `telnyx.DefaultExcerptMax`). The serve htpasswd timing pad hashes at the
+  ceiling; the selection rule is `calls.Excerpt` (first user turn, fallback
+  first turn) and every source mapper goes through it (telnyx passes its
+  configurable cap, agent passes the default). The serve htpasswd timing pad hashes at the
   LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
   when touching auth.go.
 - **serve/UI:** `serve` composes appkit (`ServiceConfig{Addr}` +

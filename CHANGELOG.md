@@ -81,6 +81,24 @@ No version has been tagged yet; everything lives under Unreleased.
   retention doctrine (the purge half is `pbx-lens purge`). Telnyx
   enrichment seeds are dropped in tandem, so refused streams cost no
   enrichment fetches. Zero keeps everything (retention stays opt-in).
+- The one-shot `ingest-cdr`/`ingest-telnyx`/`ingest-webhook`/`ingest-agent`
+  commands carry the same `-max-age` gate (`cli.AgeGate`), so a CLI backfill
+  cannot silently re-import rows the window refuses.
+- Failed basic-auth attempts are throttled by a shared token bucket
+  (`golang.org/x/time/rate`, ~10/minute sustained, burst 5): brute-force
+  guesses cost wall-clock time, not just bcrypt CPU; successful logins
+  never wait.
+- Typed boundary models: `TurnRole` (transcript speaker role, hash-compatible),
+  `calls.RetentionReason` (audit reason on the retire command — a typo'd
+  reason no longer compiles), `web.PIIMode` (export pii mode), and the
+  consumer-side `web.RecordingFetcher` interface (the UI no longer imports
+  the concrete Telnyx client type).
+- Backup durability: the staging snapshot is fsynced before the atomic
+  rename AND the parent directory is flushed after it, so a crash can
+  neither publish half-written pages nor lose the new name.
+- Checked-in UI e2e probe: `TestLiveServerEndToEnd` drives real HTTP over a
+  real listener against a real sqlite index on all four surfaces (the
+  manual probe is now a regression test).
 - Four-lens review session (2026-10-11: data-model, full-code, naming,
   modularize) with every file visited, 8 on-sight fixes, and HTML reports
   under `docs/reviews/`.
