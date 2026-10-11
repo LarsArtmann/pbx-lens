@@ -55,7 +55,7 @@ func newTestServer(t *testing.T, observations ...calls.Observation) *http.ServeM
 	}
 
 	mux := http.NewServeMux()
-	Register(mux, sys)
+	Register(mux, sys, RecordingOptions{})
 
 	return mux
 }

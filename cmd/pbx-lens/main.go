@@ -373,6 +373,12 @@ func serve(args []string) {
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
 	addr := fs.String("addr", defaultAddr, "listen address")
+	keyFile := fs.String("telnyx-key-file", "", "Telnyx API key file for the recording proxy (default: disabled)")
+	recordingsDir := fs.String(
+		"recordings-dir",
+		"/var/lib/telephony/recordings",
+		"local FreeSWITCH recordings directory ({uuid}_{dest}.wav files; empty = disabled)",
+	)
 	_ = fs.Parse(args)
 
 	if *db == "" {
@@ -398,7 +404,18 @@ func serve(args []string) {
 		fatal(err)
 	}
 
-	web.Register(svc.Mux, sys)
+	recordings := web.RecordingOptions{RecordingsDir: *recordingsDir}
+
+	if *keyFile != "" {
+		key, err := cli.ResolveKey(*keyFile)
+		if err != nil {
+			fatal(err)
+		}
+
+		recordings.Telnyx = telnyx.NewClient(key, "")
+	}
+
+	web.Register(svc.Mux, sys, recordings)
 
 	// The serve lifetime is signal-owned (Run handles SIGINT/SIGTERM) — no
 	// timeout context here, or the server would die with it.

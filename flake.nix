@@ -126,7 +126,13 @@
               packages =
                 builtins.attrValues {
                   inherit go;
-                  inherit (pkgs) golangci-lint gopls govulncheck templ tailwindcss_4;
+                  inherit (pkgs)
+                    golangci-lint
+                    gopls
+                    govulncheck
+                    templ
+                    tailwindcss_4
+                    ;
                 }
                 ++ [
                   cqrs-lint

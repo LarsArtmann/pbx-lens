@@ -22,16 +22,18 @@ const staleAfter = 6 * time.Hour
 
 // Register mounts every pbx-lens route on mux. The handler surface is
 // strictly read-only over the read model.
-func Register(mux *http.ServeMux, sys *system.System) {
-	web := &server{sys: sys}
+func Register(mux *http.ServeMux, sys *system.System, recordings RecordingOptions) {
+	web := &server{sys: sys, recordings: recordings}
 
 	mux.HandleFunc("GET /{$}", web.list)
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
+	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
 	mux.HandleFunc("GET /app.css", serveStyles)
 }
 
 type server struct {
-	sys *system.System
+	sys        *system.System
+	recordings RecordingOptions
 }
 
 func (s *server) list(w http.ResponseWriter, r *http.Request) {
