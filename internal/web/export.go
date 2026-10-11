@@ -84,14 +84,15 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 		return nil, false
 	}
 
-	switch r.URL.Query().Get("pii") {
+	pii := r.URL.Query().Get("pii")
+	switch pii {
 	case "", piiModeHash:
 	default:
 		http.Error(
 			w,
 			fmt.Sprintf(
 				"unknown pii mode %q: the only supported mode is pii=%s",
-				r.URL.Query().Get("pii"),
+				pii,
 				piiModeHash,
 			),
 			http.StatusBadRequest,
@@ -107,7 +108,7 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 		return nil, false
 	}
 
-	if r.URL.Query().Get("pii") == piiModeHash {
+	if pii == piiModeHash {
 		for i := range views {
 			views[i].FromNumber = piiParticipant(views[i].FromNumber)
 			views[i].ToNumber = piiParticipant(views[i].ToNumber)

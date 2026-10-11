@@ -35,6 +35,35 @@ const StreamType = "Call"
 // must never disagree on its shape.
 const DefaultExcerptMax = 200
 
+// Excerpt selects the call opening for list-page display: the first user
+// turn (what did they want?), falling back to the first turn of any role
+// (the greeting), capped at maxRunes runes. The selection rule lives in the
+// domain next to the ceiling — the twin implementations the source mappers
+// carried before 2026-10-11 had begun to drift in their fallback wording,
+// and the excerpt's meaning is a domain concern, not a mapper detail.
+func Excerpt(turns []TranscriptTurn, maxRunes int) string {
+	opening := ""
+
+	for _, turn := range turns {
+		if turn.Role == "user" {
+			opening = turn.Text
+
+			break
+		}
+	}
+
+	if opening == "" && len(turns) > 0 {
+		opening = turns[0].Text
+	}
+
+	runes := []rune(opening)
+	if len(runes) > maxRunes {
+		return string(runes[:maxRunes])
+	}
+
+	return opening
+}
+
 type SourceKind string
 
 const (

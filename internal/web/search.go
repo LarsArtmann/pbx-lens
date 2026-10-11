@@ -8,10 +8,8 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
-// searchResultLimit bounds one result page.
-const searchResultLimit = 50
-
-// searchPage serves the FTS content-search page (B3/m28-m29).
+// searchPage serves the FTS content-search page (B3/m28-m29). The page size
+// is search.DefaultLimit — one source of truth for what one result page is.
 func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	if query == "" {
@@ -30,7 +28,7 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	hits, err := s.search.Query(r.Context(), query, searchResultLimit)
+	hits, err := s.search.Query(r.Context(), query, search.DefaultLimit)
 	if err != nil {
 		http.Error(w, "search failed: "+err.Error(), http.StatusBadRequest)
 

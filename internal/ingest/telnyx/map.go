@@ -40,7 +40,7 @@ func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts Map
 		FromNumber:        conv.MetadataString("telnyx_agent_target"),
 		ToNumber:          conv.MetadataString("telnyx_end_user_target"),
 		IsAI:              conv.MetadataString("assistant_id") != "",
-		TranscriptExcerpt: excerpt(turns, opts.ExcerptMax),
+		TranscriptExcerpt: calls.Excerpt(turns, opts.ExcerptMax),
 		Transcript:        turns,
 	}
 
@@ -108,43 +108,4 @@ func turnsByTime(msgs []Message) []calls.TranscriptTurn {
 	}
 
 	return turns
-}
-
-// excerpt is the call opening for the list page: the first utterance of the
-// human (what did they want?), falling back to the assistant greeting when
-// the call never got a user turn. Input must already be chronological.
-func excerpt(turns []calls.TranscriptTurn, maxRunes int) string {
-	first := firstUserTurn(turns)
-	if first == nil {
-		first = firstAnyTurn(turns)
-	}
-
-	if first == nil {
-		return ""
-	}
-
-	runes := []rune(first.Text)
-	if len(runes) > maxRunes {
-		return string(runes[:maxRunes])
-	}
-
-	return first.Text
-}
-
-func firstUserTurn(turns []calls.TranscriptTurn) *calls.TranscriptTurn {
-	for i := range turns {
-		if turns[i].Role == "user" {
-			return &turns[i]
-		}
-	}
-
-	return nil
-}
-
-func firstAnyTurn(turns []calls.TranscriptTurn) *calls.TranscriptTurn {
-	if len(turns) == 0 {
-		return nil
-	}
-
-	return &turns[0]
 }
