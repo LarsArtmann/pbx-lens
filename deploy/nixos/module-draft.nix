@@ -118,8 +118,7 @@ in
           ]
         );
         LoadCredential =
-          lib.optional (cfg.telnyxApiKeyFile != null)
-            "telnyx-api-key:${cfg.telnyxApiKeyFile}"
+          lib.optional (cfg.telnyxApiKeyFile != null) "telnyx-api-key:${cfg.telnyxApiKeyFile}"
           ++ lib.optional (cfg.htpasswdFile != null) "htpasswd:${cfg.htpasswdFile}";
         ReadOnlyPaths = lib.optionals (cfg.recordingsDir != null) [ cfg.recordingsDir ];
         NoNewPrivileges = true;

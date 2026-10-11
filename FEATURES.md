@@ -60,34 +60,34 @@ All routes are read-only over the read model; the only server-side fetch is
 the recording proxy, which refetches signed URLs so the Telnyx key never
 reaches the browser.
 
-| Feature                                            | Status        | Evidence                                                              | Notes                                                        |
-| -------------------------------------------------- | ------------- | --------------------------------------------------------------------- | ------------------------------------------------------------ |
-| `serve` command on go-appkit (lifecycle, drain)    | 🟢 `DONE`     | `cmd/pbx-lens/main.go` `serve`; appkit `Service.Run`                  | Flags: `-addr -db -telnyx-key-file -recordings-dir -htpasswd -poll-*` |
-| List page: table, filters, keyset pagination       | 🟢 `DONE`     | `GET /`; direction/AI/date filters; "Older calls" cursor              | Plan T6 (M18–M20)                                            |
-| Stale-index banner + `/api/freshness` JSON         | 🟢 `DONE`     | `internal/web/freshness.go`; banner only on unfiltered first page     | Plan T12                                                     |
-| Per-call detail: metadata, transcript, 404 path    | 🟢 `DONE`     | `GET /calls/{kind}/{id}`                                              | Plan T8 (M23)                                                |
-| Recording proxy (signed-URL refetch, Range, audio) | 🟢 `DONE`     | `internal/web/recording.go` + tests incl. upstream-down               | Plan T8 (M24); key stays server-side                         |
-| Full-text search over transcripts (FTS5)           | 🟢 `DONE`     | `GET /search?q=`; `<mark>` highlights; rebuild command + on-ingest    | Plan T10 (M29–M30)                                           |
-| UI auth (bcrypt htpasswd, weak schemes rejected)   | 🟢 `DONE`     | `internal/web/auth.go`; `-htpasswd` flag gates every route            | Plan T24                                                     |
-| Export API (JSONL/CSV)                             | 🟢 `DONE`     | `GET /api/export.jsonl` `/api/export.csv`                             | Plan D5                                                      |
-| Quality dashboard                                  | 🟢 `DONE`     | `GET /dashboard`; StatCards, 30-day BarChart, AI/human bar, Sparkline | Plan T25 (F20); MOS is an honest placeholder                 |
-| AI insight summaries per call                      | 🟡 `PARTIAL`  | detail card renders `view.InsightSummary` when present                | Display + model shipped; Telnyx insights fetch (T13 data half) pending |
-| Cost display                                       | 🟡 `PARTIAL`  | detail metadata renders `CostMicros` when present                     | Display shipped; Detail-Records poller (T15 data half) pending |
-| Live SSE / auto-refresh polling                    | ⚪ `PLANNED` | staleness banner is static per page load                              | Needs an owner decision (plan §8)                            |
-| Deep link target for webphone                      | 🟢 `DONE`     | `/calls/{kind}/{id}` is deterministic (stream identity) — see README  | Plan T22 (lens side); webphone link lands in the sibling     |
+| Feature                                            | Status       | Evidence                                                              | Notes                                                                  |
+| -------------------------------------------------- | ------------ | --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `serve` command on go-appkit (lifecycle, drain)    | 🟢 `DONE`    | `cmd/pbx-lens/main.go` `serve`; appkit `Service.Run`                  | Flags: `-addr -db -telnyx-key-file -recordings-dir -htpasswd -poll-*`  |
+| List page: table, filters, keyset pagination       | 🟢 `DONE`    | `GET /`; direction/AI/date filters; "Older calls" cursor              | Plan T6 (M18–M20)                                                      |
+| Stale-index banner + `/api/freshness` JSON         | 🟢 `DONE`    | `internal/web/freshness.go`; banner only on unfiltered first page     | Plan T12                                                               |
+| Per-call detail: metadata, transcript, 404 path    | 🟢 `DONE`    | `GET /calls/{kind}/{id}`                                              | Plan T8 (M23)                                                          |
+| Recording proxy (signed-URL refetch, Range, audio) | 🟢 `DONE`    | `internal/web/recording.go` + tests incl. upstream-down               | Plan T8 (M24); key stays server-side                                   |
+| Full-text search over transcripts (FTS5)           | 🟢 `DONE`    | `GET /search?q=`; `<mark>` highlights; rebuild command + on-ingest    | Plan T10 (M29–M30)                                                     |
+| UI auth (bcrypt htpasswd, weak schemes rejected)   | 🟢 `DONE`    | `internal/web/auth.go`; `-htpasswd` flag gates every route            | Plan T24                                                               |
+| Export API (JSONL/CSV)                             | 🟢 `DONE`    | `GET /api/export.jsonl` `/api/export.csv`                             | Plan D5                                                                |
+| Quality dashboard                                  | 🟢 `DONE`    | `GET /dashboard`; StatCards, 30-day BarChart, AI/human bar, Sparkline | Plan T25 (F20); MOS is an honest placeholder                           |
+| AI insight summaries per call                      | 🟡 `PARTIAL` | detail card renders `view.InsightSummary` when present                | Display + model shipped; Telnyx insights fetch (T13 data half) pending |
+| Cost display                                       | 🟡 `PARTIAL` | detail metadata renders `CostMicros` when present                     | Display shipped; Detail-Records poller (T15 data half) pending         |
+| Live SSE / auto-refresh polling                    | ⚪ `PLANNED` | staleness banner is static per page load                              | Needs an owner decision (plan §8)                                      |
+| Deep link target for webphone                      | 🟢 `DONE`    | `/calls/{kind}/{id}` is deterministic (stream identity) — see README  | Plan T22 (lens side); webphone link lands in the sibling               |
 
 ## Operations
 
-| Feature                                    | Status       | Evidence                                                           | Notes                                                                               |
-| ------------------------------------------ | ------------ | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| Nix flake package build                    | 🟢 `DONE`    | `nix build` → `result/bin/pbx-lens version` works (subPackages fix)     | Templ+Tailwind regenerate inside the package build           |
-| Autonomous pollers (in-process loop)       | 🟢 `DONE`    | `serve -poll-every` loop (`internal/cli/poller.go`)                     | Plan T12 (in-process loop, not systemd timers)               |
-| Freshness self-check (stale UI banner)     | 🟢 `DONE`    | see Web UI                                                              | Plan T12                                                     |
+| Feature                                    | Status       | Evidence                                                                | Notes                                                                                             |
+| ------------------------------------------ | ------------ | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| Nix flake package build                    | 🟢 `DONE`    | `nix build` → `result/bin/pbx-lens version` works (subPackages fix)     | Templ+Tailwind regenerate inside the package build                                                |
+| Autonomous pollers (in-process loop)       | 🟢 `DONE`    | `serve -poll-every` loop (`internal/cli/poller.go`)                     | Plan T12 (in-process loop, not systemd timers)                                                    |
+| Freshness self-check (stale UI banner)     | 🟢 `DONE`    | see Web UI                                                              | Plan T12                                                                                          |
 | systemd unit + sd_notify (Type=notify)     | 🟢 `DONE`    | `deploy/systemd/pbx-lens.service` draft; `appkit/systemd.Install` wired | Plan T7 (M21–M22); NixOS module draft at `deploy/nixos/module-draft.nix`, module lands in sibling |
-| Index DB in nightly backup staging         | 🟡 `PARTIAL` | `pbx-lens backup` command (`internal/backup`), safe on a live DB        | Nightly timer wiring is host/sibling-side                    |
-| Cost column (Detail Records poller)        | 🟡 `PARTIAL` | see Web UI (display done, poller pending)                               | Plan T15                                                     |
-| AI insight summaries per call              | 🟡 `PARTIAL` | see Web UI (display done, fetch pending)                                | Plan T13                                                     |
-| Retention / PII purge job                  | ⚪ `PLANNED` | no code                                                                 | Plan T23                                                     |
-| UI auth (operator htpasswd reuse)          | 🟢 `DONE`    | see Web UI                                                              | Plan T24                                                     |
-| Quality dashboards (volume, AI share, MOS) | 🟢 `DONE`    | `GET /dashboard` (MOS placeholder until T15 data)                       | Plan T25                                                     |
-| CI lane (GitHub Actions)                   | ⚪ `PLANNED` | `ci.yml` landed by a parallel session; no remote yet                    | Open decision: Actions lane vs buildflow-only                |
+| Index DB in nightly backup staging         | 🟡 `PARTIAL` | `pbx-lens backup` command (`internal/backup`), safe on a live DB        | Nightly timer wiring is host/sibling-side                                                         |
+| Cost column (Detail Records poller)        | 🟡 `PARTIAL` | see Web UI (display done, poller pending)                               | Plan T15                                                                                          |
+| AI insight summaries per call              | 🟡 `PARTIAL` | see Web UI (display done, fetch pending)                                | Plan T13                                                                                          |
+| Retention / PII purge job                  | ⚪ `PLANNED` | no code                                                                 | Plan T23                                                                                          |
+| UI auth (operator htpasswd reuse)          | 🟢 `DONE`    | see Web UI                                                              | Plan T24                                                                                          |
+| Quality dashboards (volume, AI share, MOS) | 🟢 `DONE`    | `GET /dashboard` (MOS placeholder until T15 data)                       | Plan T25                                                                                          |
+| CI lane (GitHub Actions)                   | ⚪ `PLANNED` | `ci.yml` landed by a parallel session; no remote yet                    | Open decision: Actions lane vs buildflow-only                                                     |

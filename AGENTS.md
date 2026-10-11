@@ -36,15 +36,17 @@ webphone later gets a read-only deep link, never a data dependency.
 - **templ-components v1.21.0 adoption map** (skill's consumer tip; the skill
   docs drift ahead of the pinned tag — this table is the truth for THIS repo):
 
-  | Component                                                                                   | Status            | Note                                                                                        |
-  | ------------------------------------------------------------------------------------------- | ----------------- | ------------------------------------------------------------------------------------------- |
-  | layout.Base/DefaultPageProps                                                                | used              | `.Title` set; CSSPath defaults to /app.css                                                  |
-  | navigation.SimpleNav + ThemeToggle                                                          | used              |                                                                                             |
-  | display.Table/TableRow.Href/TableCell                                                       | used              | row-click JS included                                                                       |
-  | display.Badge, PageHeader, EmptyState, ListNote, RelativeTime, Card, DefinitionList, Button | used              | DefinitionList takes `Items []DefinitionItem{Term, Detail, DetailComponent}` — NOT children |
-  | forms.Select/DatePicker                                                                     | used              | selected-ness is per `SelectOption.Selected`, no props-level Selected                       |
-  | feedback.Alert                                                                              | used              | staleness banner                                                                            |
-  | FilterBar / SegmentedControl / utils/format / errorpage                                     | ABSENT in v1.21.0 | hand-rolled equivalents; do not import                                                      |
+  | Component                                                                                   | Status            | Note                                                                                                                          |
+  | ------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+  | layout.Base/DefaultPageProps                                                                | used              | `.Title` set; CSSPath defaults to /app.css                                                                                    |
+  | navigation.SimpleNav + ThemeToggle                                                          | used              |                                                                                                                               |
+  | display.Table/TableRow.Href/TableCell                                                       | used              | row-click JS included                                                                                                         |
+  | display.Badge, PageHeader, EmptyState, ListNote, RelativeTime, Card, DefinitionList, Button | used              | DefinitionList takes `Items []DefinitionItem{Term, Detail, DetailComponent}` — NOT children                                   |
+  | forms.Select/DatePicker                                                                     | used              | selected-ness is per `SelectOption.Selected`, no props-level Selected                                                         |
+  | feedback.Alert                                                                              | used              | staleness banner; dashboard MOS placeholder                                                                                   |
+  | display.Grid + StatCard (dashboard stat row)                                                | used              | StatCard.Value is a string; the library renders `>N </dd>` with a trailing space — assert accordingly                         |
+  | display.BarChart (vertical) + Sparkline (dashboard volume/trend)                            | used              | MinBarWidth `min-w-1` + Gap `gap-px` for dense 30-day series; Tooltip carries the full date                                   |
+  | display.SegmentBar / ProgressBar / utils/format / errorpage / FilterBar / SegmentedControl  | ABSENT in v1.21.0 | SegmentBar exists unreleased upstream — the dashboard ships a hand-rolled flex bar until it publishes; do not import the rest |
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's pattern,
   adopted 2026-10-11): `subPackages = ["./cmd/pbx-lens"]` wires the package to
   the real binary (the module default `["."]` built the package-less root and
@@ -78,6 +80,15 @@ webphone later gets a read-only deep link, never a data dependency.
   brain); `agent.Result` keeps its own shape (Transcripts, not Observations).
   CDR keeps its own scan loop (semicolon-trimming CSV semantics), but through
   `ingest.NewScanner`.
+- **serve/UI:** `serve` composes appkit (`ServiceConfig{Addr}` +
+  `systemd.Install` — a no-op without `NOTIFY_SOCKET`, READY/STOPPING/WATCHDOG
+  under the manager) around `web.Register`; every UI route is a query or a
+  proxy, never a write. The dashboard aggregates via the same bounded full
+  scan the export uses (`maxExportRows` cap); its day window always ends
+  "today" UTC so an idle index drifts out of the chart. Deploy drafts live in
+  `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential for the
+  Telnyx key + htpasswd) and `deploy/nixos/module-draft.nix` (handoff to
+  nix-international-telephony, which owns the real module).
 
 ## Domain
 
@@ -102,6 +113,9 @@ GOEXPERIMENT=jsonv2 go test ./...
 buildflow --build-mode dev            # the quality gate (lint+format+test)
 nix build                             # ships result/bin/pbx-lens (fixed 2026-10-11)
 nix run . -- version                  # run the built binary
+GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
+                                      # UI e2e: then probe /, /dashboard, /search,
+                                      # /api/freshness with a Go http probe (curl banned)
 nix develop                           # devShell: go, golangci-lint, gopls,
                                       # govulncheck, cqrs-lint
 nix develop -c cqrs-lint .            # cqrs findings policy (below)
