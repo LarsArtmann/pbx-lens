@@ -328,6 +328,7 @@ func TestRecordingUpstreamTimeoutBoundsWavHeaders(t *testing.T) {
 			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":"http://%s/v2/audio.wav"}}}`, r.Host)
 		case "/v2/audio.wav":
 			time.Sleep(50 * time.Millisecond)
+
 			_, _ = w.Write(auditWav)
 		default:
 			http.NotFound(w, r)

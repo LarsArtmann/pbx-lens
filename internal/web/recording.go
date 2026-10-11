@@ -146,6 +146,13 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 		return
 	}
 
+	copyRecordingResponse(w, response)
+}
+
+// copyRecordingResponse streams an upstream recording response to the
+// client, passing through the audio headers (defaulting the content type)
+// and forcing the response uncacheable since signed URLs expire.
+func copyRecordingResponse(w http.ResponseWriter, response *http.Response) {
 	for _, header := range []string{"Content-Type", "Content-Length", "Content-Range", "Accept-Ranges"} {
 		if value := response.Header.Get(header); value != "" {
 			w.Header().Set(header, value)
@@ -175,7 +182,12 @@ func resolveUpstreamTimeout(configured time.Duration) time.Duration {
 // newUpstreamClient builds the client the WAV stream rides: response
 // headers must arrive within timeout, the body streams without a total cap.
 func newUpstreamClient(timeout time.Duration) *http.Client {
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	base, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		base = &http.Transport{}
+	}
+
+	transport := base.Clone()
 	transport.ResponseHeaderTimeout = timeout
 
 	return &http.Client{Transport: transport}
