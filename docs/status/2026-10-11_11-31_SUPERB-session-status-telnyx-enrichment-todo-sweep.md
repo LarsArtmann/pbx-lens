@@ -207,6 +207,7 @@ session; statuses are verified, not assumed.
 ## f) NEXT — up to 50 things to get done (impact-ranked, evidence-based)
 
 **Live truth & T23 completion**
+
 1. Live-verify `DetailRecord`/insights DTOs with a real key; record
    sanitized fixtures (TODO_LIST row).
 2. T23: make `E164`/`ParticipantHash` load-bearing (PII mode).
@@ -224,49 +225,49 @@ session; statuses are verified, not assumed.
 9. File treefmt templ go-pin issue (D6, belongs in go-nix-helpers).
 10. Verify + file cqrs-lint C009 bare-`must` exemption (len 4 guard).
 11. Consider filing E005/E014 package-blindness class upstream (one issue
-    covering both, with repro).
+covering both, with repro).
 
 **Sibling repo / deploy**
 12. Hand `module-draft.nix` to nix-international-telephony as
-    `services.pbx-lens` (T7 half 2).
+`services.pbx-lens` (T7 half 2).
 13. Port the backup service+timer drafts into the sibling module; verify the
-    same-StateDirectory shared-dynamic-user claim on a real host.
+same-StateDirectory shared-dynamic-user claim on a real host.
 14. Validate draft units with `systemd-analyze verify` + security
-    score on a systemd machine.
+score on a systemd machine.
 15. Align templ CLI pin with the v0.3.1070 lib bump (flake).
 16. Re-run `nix build` + `nix flake check` after the parallel templ bump;
-    repair `vendorHash.nix` via `buildflow -s nix-hash-fix --fix` if
-    go.sum moved.
+repair `vendorHash.nix` via `buildflow -s nix-hash-fix --fix` if
+go.sum moved.
 17. Rebuild BuildFlow binary → re-run dev gate → drop AGENTS license-check
-    note.
+note.
 
 **Product surfaces (now that enrichment data lands)**
 18. Dashboard cost stat card (total spend in window) — data now exists.
 19. Detail page: show currency properly when absent (verify dash rendering
-    has a test).
+has a test).
 20. Export tests asserting CostMicros/InsightSummary round-trip.
 21. List page: cost column (opt-in, small) — or explicitly decide against.
 22. Search: full-number hint parity on the list filter (if numbers are
-    filterable there later).
+filterable there later).
 23. `ingest-telnyx -dry-run` (fetch/map/enrich without dispatch) for field
-    diagnosis.
+diagnosis.
 24. Insights display: render multi-result joins readably (currently raw
-    `\n` join inside one definition detail).
+`\n` join inside one definition detail).
 
 **Robustness & tests**
 25. Detail-records multi-page pagination test.
 26. Conversation-insights multi-page pagination test.
 27. Insights-fetch error path test (seed rejected, others proceed).
 28. Detail-list fetch error path test (lazy fetch surfaces per-seed
-    rejection).
+rejection).
 29. `ingest-telnyx` command-level e2e with the fake server (double-drain
-    wiring).
+wiring).
 30. Enrichment idempotency across a correction (corrected event carries
-    enrichment — has domain tests; add an e2e pass-over-correction).
+enrichment — has domain tests; add an e2e pass-over-correction).
 31. Zero-cost call e2e (records with "0.000") — pin the no-display +
-    re-fetch behavior deliberately.
+re-fetch behavior deliberately.
 32. `CallView.Observation()` StreamID equality assertion (currently implied
-    via Validate).
+via Validate).
 
 **Internal quality**
 33. Extract `telnyxtest` shared fake server package.
@@ -276,30 +277,30 @@ session; statuses are verified, not assumed.
 37. art-dupl pass over the new code (warning-only gate).
 38. `govulncheck` local run (CI covers; local gate parity).
 39. DOMAIN_LANGUAGE.md: glossary TelnyxSeed, EnrichStats, Enrichment
-    lifecycle, `conversations-insights` vocabulary.
+lifecycle, `conversations-insights` vocabulary.
 40. AGENTS: refresh the UI-trio templ pin row post-bump.
 41. README: mention enrichment + nightly backup staging in operations
-    (sales-page-adjacent, owner's call).
+(sales-page-adjacent, owner's call).
 
 **Hygiene / small**
 42. TODO_LIST: add the live-verify row's sibling — insights status enum
-    drift watch (upstream could add statuses).
+drift watch (upstream could add statuses).
 43. Search hint: measure whether users actually hit it (log zero-result
-    queries server-side? owner decision, privacy-sensitive).
+queries server-side? owner decision, privacy-sensitive).
 44. `fakeTelnyx` conversations fixture: add a second conversation to prove
-    multi-seed passes (currently single-seed e2e).
+multi-seed passes (currently single-seed e2e).
 45. Poller: cap enrichment seeds per pass (YAGNI guard for a huge backlog
-    after long downtime).
+after long downtime).
 46. Consider `WithPrefetch` revisit note for the enrich reader (F026
-    sibling).
+sibling).
 47. Make `RetentionReport`-style summary structs a house pattern for CLI
-    outputs (consistency with EnrichStats/IngestStats).
+outputs (consistency with EnrichStats/IngestStats).
 48. deploy/pbx-lens.service: cross-reference the backup unit in comments
-    (discoverability).
+(discoverability).
 49. CHANGELOG: note enrichment never enters ContentHash (v2 stability) —
-    one sentence, prevents future fear.
+one sentence, prevents future fear.
 50. Session-process: add "full-suite baseline before first edit" +
-    "inventory untracked dirs" to AGENTS gotchas (this report's lessons).
+"inventory untracked dirs" to AGENTS gotchas (this report's lessons).
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 

@@ -17,11 +17,11 @@ For a struct row that ends in `extractValueByName` (`metaengine/reflect.go:307-3
 
 Consequences on the memory engine for a JSON-tag-named filter column:
 
-| Op | Behavior (value compared against nil) |
-| --- | --- |
-| `Le`/`Lt` | match EVERYTHING |
-| `Ge`/`Gt` | match NOTHING |
-| `Eq` | never matches |
+| Op        | Behavior (value compared against nil) |
+| --------- | ------------------------------------- |
+| `Le`/`Lt` | match EVERYTHING                      |
+| `Ge`/`Gt` | match NOTHING                         |
+| `Eq`      | never matches                         |
 
 Sort (`typed_reader_scan.go:246`) and keyset cursor comparisons (`typed_reader_scan.go:294-295`, `313-314`) go through the same extractor, so ordering and pagination carry the same split brain.
 

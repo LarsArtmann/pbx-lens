@@ -25,8 +25,8 @@
 
 ## Medium impact
 
-| Task                                                                                                  | Status           | Impact | Effort | Evidence                                                                                                            |
-| ----------------------------------------------------------------------------------------------------- | ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| Task                                                                                                  | Status    | Impact | Effort | Evidence                                                                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------- | --------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Retention/PII purge (T23): retention command + PII mode; `E164`/`ParticipantHash` become load-bearing | 🟢 `DONE` | Med    | 90min  | `internal/retention/` + `purge -max-age [-dry-run]` + `call.retired` tombstone + `?pii=hash` export; e2e verified. Open enhancement: wire `Policy.Admits` as an ingest-side cutoff in the poller |
 
 ## Low impact

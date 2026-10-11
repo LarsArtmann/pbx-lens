@@ -93,10 +93,12 @@ webphone later gets a read-only deep link, never a data dependency.
   under the manager) around `web.Register`; every UI route is a query or a
   proxy, never a write. The dashboard aggregates via the same bounded full
   scan the export uses (`maxExportRows` cap); its day window always ends
-  "today" UTC so an idle index drifts out of the chart. Deploy drafts live in
+  "today" UTC so an idle index drifts out of the chart. The systemd draft lives in
   `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential for the
-  Telnyx key + htpasswd) and `deploy/nixos/module-draft.nix` (handoff to
-  nix-international-telephony, which owns the real module).
+  Telnyx key + htpasswd); the NixOS module LANDED in
+  nix-international-telephony 2026-10-11 (`modules/telephony/lens.nix`,
+  `services.telephony.pbx-lens.*` with backup + purge timers;
+  `deploy/nixos/module-draft.nix` is a superseded design record).
 
 ## Domain
 
@@ -281,6 +283,26 @@ nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.su
   mapper and the web display must never re-declare it (a former
   `web.microsPerUnit` duplicate was folded into the domain 2026-10-11).
 
+- **Retention deletion is tombstone-only (2026-10-11, D2)**: metaengine exposes NO public
+  direct record delete (`MapDelete` is unexported on the Store's engine) — the sanctioned
+  removal path is a registered remove fold: `metaengine.OnRecordTyped(EventRetired,
+  CallRetired{}, metaengine.Remove[CallView]())`. Pairing it with the create folds is safe
+  (the zero-prev hazard is an UPDATE-fold-only trap). `call.retired` tombstones keep the
+  stream append-only; re-polling a purged call is a ContentHash no-op, so views stay purged
+  (tested). A post-retirement CORRECTION would resurrect the view — convergence comes from
+  the periodic purge, not from stream surgery.
+- **The PATH `templ` can trail the module's templ (2026-10-11)**: the devShell pinned
+  v0.3.1020 while go.mod moved to v0.3.1070 and `templ generate` then failed on valid
+  syntax. Generate with the module version:
+  `GOEXPERIMENT=jsonv2 go run github.com/a-h/templ/cmd/templ@v0.3.1070 generate ./internal/web/`.
+- **`rg -r` means --replace (paid for, 2026-10-11)**: `rg -rn "pattern"` silently rewrote
+  every match in the OUTPUT to "n" and sent the diagnosis down a wrong path for a minute.
+  Use `rg -n` for line numbers.
+- **Read-only NixOS options reject mkIf-gated second definitions (paid for, 2026-10-11)**:
+  `services.telephony.state` in nix-international-telephony is read-only — contribute via
+  the central list in `modules/telephony/default.nix`, never by defining the option again
+  in a sibling module (even gated, the definition trips the read-only check).
+
 ## cqrs-lint findings policy (0 errors; every surviving warning/info below is a documented decision)
 
 Run: `nix develop -c cqrs-lint .` (cqrs-lint ships in the flake devShell since
@@ -346,6 +368,21 @@ DECISION.
   `decider.StrictApply` were both considered; StrictApply rejected above
   (loses the Corruption family), and handwritten constructors stay because
   the flat domain has only two commands.
+
+## Upstream filings (D6, 2026-10-11 — all source-verified, voice-checked, review boxes left UNCHECKED for Lars)
+
+- **go-cqrs-lite#62**: sqliteengine binds filter values raw (`filter_clause.go:44`,
+  `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,
+  Ge/Gt drop it, Eq never). In-repo fix stays: bind `rfc3339Nano` strings.
+- **go-cqrs-lite#63**: memory engine resolves filter/sort/cursor columns by Go FIELD name
+  (`typed_reader_scan.go:271` → `reflect.go:307`) vs sqlite's JSON keys.
+- **go-cqrs-lite#64**: cqrs-lint C009 `len(name) > 4` flags the bare `must` idiom;
+  E005 doesn't recognize `system.RegisterCommand` (ADR-0123 root API).
+- **go-nix-helpers#7**: go-standard's templ formatter inherits treefmt-nix's `pkgs.go`
+  wrap (`go-standard.nix:1297`) instead of the module's resolved goPkg (line 665).
+- **numtide/treefmt-nix#545**: already filed upstream 2026-10-02 — corroborating comment
+  posted with our independent repro (nixpkgs go 1.26.8 vs floor 1.27.1).
+- Drafts live in `docs/drafts/` (never /tmp); update these notes when upstream lands.
 
 ## buildflow dev-gate residual findings policy (2026-10-11 full pass: gate PASSES with warnings)
 
