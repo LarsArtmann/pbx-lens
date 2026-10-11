@@ -214,7 +214,30 @@ nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.su
   `call_control_id` in metadata, recordings carry the same field, so
   ingest-telnyx lists recent recordings and matches in-process
   (`RecordingByCallControl`) — the recordings list filter's supported keys
-  are undocumented, so no server-side filter is trusted.
+  are undocumented, so no server-side filter is trusted. Detail Records
+  correlation works the same way (`DetailRecordByCallControl`).
+- **Enrichment endpoints (spec-verified 2026-10-11 against the Telnyx
+  OpenAPI spec; LIVE verification still pending — no key at
+  implementation time; fold into the quarterly re-verify cluster):
+  1. `GET /ai/conversations/{id}/conversations-insights` — the suffix is
+     `conversations-insights`, NOT `insights` (both 404-magnet guesses
+     exist in the docs). Response: `data[]{id, status:
+     pending|in_progress|completed|failed, created_at,
+     conversation_insights[]{insight_id, result}}`. Only `completed` rows
+     are summary sources; the newest row wins; its non-empty results join
+     with `\n` (`telnyx.InsightSummary`).
+  2. `GET /detail_records` — deepObject filter with REQUIRED
+     `filter[record_type]` (we send `call-control`), optional
+     `filter[started_at][gte]`; `page[size]` caps at 50 (vs 100
+     elsewhere). `cost` is a decimal STRING in currency units ("0.002")
+     with `currency` — NOT micros; convert via `telnyx.MicrosFromCost`
+     (round to `calls.MicrosPerUnit`).
+  3. The call-control record shape is NOT in the public spec (its
+     DetailRecord union lists only messaging/conference/amd/verify/sim/
+     media), so `DetailRecord.UnmarshalJSON` is deliberately
+     alias-tolerant: `id`/`uuid`, `call_control_id`/
+     `telnyx_call_control_id`, cost as string or number. If live calls
+     show a third spelling, extend the aliases there.
 - **metaengine time-typed filter values miscompare on sqlite (2026-10-11,
   paid for by the ?to= wart test)**: sqliteengine binds the raw `time.Time`
   as a SQL parameter; modernc renders it `2006-01-02 15:04:05 -0700 MST`
@@ -234,7 +257,29 @@ nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.su
   semantics must match production. Upstream divergence issue pending (D6).
 - **FTS5 tokenizes `+17287289311` as one token** (unicode61; `+` is not a
   token char): substring queries like `87289311` find nothing — search the
-  full number or a word from the transcript.
+  full number or a word from the transcript. Prefix queries CANNOT fix
+  mid-number substrings (a prefix must match from the token start), so the
+  search page carries an explicit hint instead (`search.templ`).
+- **The enrich pass reads the read model — drain first (2026-10-11)**:
+  `cli.EnrichTelnyxCalls` looks streams up via the projection, so callers
+  MUST `DrainProjections` between `Ingest` and enrichment, or every
+  just-recorded stream counts `Missing` and retries next pass (the domain
+  rejects enrich-before-observed by design). `pollTelnyx` drains mid-pass
+  for exactly this reason; `ingest-telnyx` drains twice (ingest → drain →
+  enrich → drain). Second-order contract: enrichment is idempotent via
+  `Enrichment.Hash()` — an unchanged enrichment replays to zero events,
+  and already-final fields skip their fetch (cost set → no detail fetch;
+  summary set → no insights fetch), so re-polling a settled window costs
+  one lazy detail-list request, nothing per call.
+- **`CallView.Observation()` is the only sanctioned view→observation
+  rebuild**: `ViewFrom` is lossless, so the rebuild re-hashes to the view's
+  stored `ContentHash` (pinned by
+  `TestViewObservationRoundTripHashesIdentically`). The enrich pass uses
+  it to address `call.enrich` — never hand-copy view fields into an
+  Observation.
+- **`calls.MicrosPerUnit` is the single cost-unit constant**: the ingest
+  mapper and the web display must never re-declare it (a former
+  `web.microsPerUnit` duplicate was folded into the domain 2026-10-11).
 
 ## cqrs-lint findings policy (0 errors; every surviving warning/info below is a documented decision)
 

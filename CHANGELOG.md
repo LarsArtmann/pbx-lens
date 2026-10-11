@@ -49,6 +49,32 @@ No version has been tagged yet; everything lives under Unreleased.
   golangci-lint, gopls, govulncheck, and vendored cqrs-lint (pinned
   go-cqrs-lite rev, replacing the /tmp binary), plus the
   `nix run .#update-vendor-hash` repair app.
+- Telnyx enrichment pass (T15 + T13): `EnrichTelnyxCalls` correlates
+  `/detail_records` (call-control CDRs, cost → `Enrichment.CostMicros`)
+  and `/ai/conversations/{id}/conversations-insights` (newest completed
+  row → `Enrichment.InsightSummary`) against already-observed streams and
+  dispatches `call.enrich`. Wired into `ingest-telnyx` and the serve
+  poller (a drain separates ingest from enrichment, and enrichment events
+  drain before the pass ends). Already-final fields skip their fetch; the
+  detail list is fetched lazily at most once per pass; an unchanged
+  enrichment replays to zero events. Detail-record decoding is
+  alias-tolerant (`id`/`uuid`, `call_control_id`/`telnyx_call_control_id`,
+  cost as string or number) because the public OpenAPI spec publishes no
+  call-control record shape — live-API verification still pending.
+- `CallView.Observation()` rebuild with a hash-roundtrip invariant test —
+  the enrich pass addresses `call.enrich` through the stored view without
+  re-fetching sources.
+- Nightly backup staging drafts (T14): `deploy/systemd/pbx-lens-backup.service`
+  + `.timer` (02:15 nightly, Persistent) staging a verified snapshot into
+  `/var/lib/pbx-lens/backups/`, and `backup.enable`/`backup.calendar`
+  options in the NixOS module draft. Retention and off-host shipping stay
+  with the host backup tool.
+- One-flow UI e2e test (seed → list → filter → detail → search →
+  freshness → auth gate) and an httptest-fake Telnyx poller test covering
+  the full fetch → ingest → enrich → index-rebuild loop plus second-pass
+  idempotency.
+- Search-page hint that partial phone numbers never match (FTS5 keeps a
+  number as one token), replacing silent zero-result confusion.
 
 ### Fixed
 
