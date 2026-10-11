@@ -41,6 +41,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	web := &server{sys: sys, recordings: opts.Recordings, search: opts.Search}
 
 	mux.HandleFunc("GET /{$}", web.list)
+	mux.HandleFunc("GET /dashboard", web.dashboard)
 	mux.HandleFunc("GET /search", web.searchPage)
 	mux.HandleFunc("GET /api/freshness", web.freshness)
 	mux.HandleFunc("GET /api/export.jsonl", web.exportJSONL)
@@ -175,6 +176,18 @@ func staleness(filters ListCallsQuery, page CallListPage) (time.Duration, bool) 
 	age := time.Since(page.Rows[0].When)
 
 	return age, age > staleAfter
+}
+
+// dashboard serves the quality-dashboard page (T25).
+func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
+	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now())
+	if err != nil {
+		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	render(w, r, dashboardRoute(stats, time.Now()))
 }
 
 func (s *server) detail(w http.ResponseWriter, r *http.Request) {

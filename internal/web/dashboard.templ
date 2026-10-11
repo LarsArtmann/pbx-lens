@@ -1,6 +1,7 @@
 package web
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
@@ -34,12 +35,12 @@ templ dashboardRoute(stats DashboardStats, now time.Time) {
 templ statCards(stats DashboardStats, now time.Time) {
 	@display.Grid(display.GridProps{Cols: display.GridCols4}) {
 		@display.StatCard(display.StatCardProps{
-			Value: formatCount(stats.Total),
+			Value: strconv.Itoa(stats.Total),
 			Label: "Calls indexed",
 			Href:  "/",
 		})
 		@display.StatCard(display.StatCardProps{
-			Value: formatCount(stats.Today),
+			Value: strconv.Itoa(stats.Today),
 			Label: "Calls today",
 			Href:  stats.todayHref(now),
 		})
@@ -59,28 +60,32 @@ templ statCards(stats DashboardStats, now time.Time) {
 templ volumeCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays)}) {
 		@display.BarChart(display.BarChartProps{
-			Bars:        volumeBars(stats.ByDay),
-			Orient:      display.BarVertical,
-			MinBarWidth: "min-w-1",
-			Gap:         "gap-px",
-			ShowValues:  false,
-			EmptyMessage: "No calls in the last " + formatCount(stats.WindowDays) + " days",
+			Bars:         volumeBars(stats.ByDay),
+			Orient:       display.BarVertical,
+			MinBarWidth:  "min-w-1",
+			Gap:          "gap-px",
+			ShowValues:   false,
+			EmptyMessage: "No calls in the last " + strconv.Itoa(stats.WindowDays) + " days",
 		})
 	}
 }
 
-// aiHumanCard is the AI-vs-human proportion bar.
+// aiHumanCard is the AI-vs-human proportion. templ-components v1.21 has no
+// SegmentBar yet (it exists unreleased upstream), so this is the minimal
+// native flex bar with exact counts in the legend — swap in SegmentBar when
+// the next version publishes.
 templ aiHumanCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "AI vs human"}) {
 		if stats.Total == 0 {
 			@display.SimpleEmptyState("No calls indexed yet.")
 		} else {
-			@display.SegmentBar(display.SegmentBarProps{
-				Segments: []display.SegmentBarSegment{
-					{Label: "AI", Value: float64(stats.AICalls)},
-					{Label: "Human", Value: float64(stats.HumanCalls)},
-				},
-			})
+			<div class="flex h-4 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+				<div class="h-full bg-blue-600 dark:bg-blue-400" style={ proportion(stats.AICalls, stats.Total) }></div>
+				<div class="h-full bg-emerald-600 dark:bg-emerald-400" style={ proportion(stats.HumanCalls, stats.Total) }></div>
+			</div>
+			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+				AI { strconv.Itoa(stats.AICalls) } · Human { strconv.Itoa(stats.HumanCalls) } · { aiShare(stats) } AI
+			</p>
 		}
 	}
 }
@@ -116,7 +121,7 @@ func volumeBars(days []DayVolume) []display.BarChartBar {
 		bars = append(bars, display.BarChartBar{
 			Label:   day.Day[5:], // MM-DD keeps the dense axis readable
 			Value:   float64(day.Calls),
-			Tooltip: day.Day + ": " + formatCount(day.Calls),
+			Tooltip: day.Day + ": " + strconv.Itoa(day.Calls),
 		})
 	}
 
@@ -134,7 +139,7 @@ func volumeValues(days []DayVolume) []float64 {
 }
 
 func volumeTitle(windowDays int) string {
-	return "Calls per day (last " + formatCount(windowDays) + " days)"
+	return "Calls per day (last " + strconv.Itoa(windowDays) + " days)"
 }
 
 // aiShare renders the AI percentage, or an em dash when nothing is indexed
@@ -144,9 +149,19 @@ func aiShare(stats DashboardStats) string {
 		return "—"
 	}
 
-	return formatPercent(stats.AIRatio())
+	return percent(stats.AIRatio())
 }
 
-func formatCount(n int) string {
-	return fmtInt(n)
+// percent renders a [0,1] ratio as "NN.N%" — one decimal, honest above 100.
+func percent(ratio float64) string {
+	return strconv.FormatFloat(ratio*100, 'f', 1, 64) + "%"
+}
+
+// proportion renders one segment's width as a CSS percentage string.
+func proportion(part, total int) string {
+	if total == 0 {
+		return "width:0%"
+	}
+
+	return "width:" + strconv.FormatFloat(float64(part)/float64(total)*100, 'f', 2, 64) + "%"
 }
