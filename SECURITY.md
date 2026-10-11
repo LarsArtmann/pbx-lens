@@ -2,7 +2,9 @@
 
 pbx-lens indexes call metadata (numbers, transcripts, recordings references)
 for a live PBX — treat the index database as sensitive. The repo itself is
-private and never published.
+public, but call data never is: the index database, secrets, and any real
+call content stay local and are never committed (fixtures use synthetic
+numbers only).
 
 ## Reporting a vulnerability
 

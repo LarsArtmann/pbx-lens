@@ -75,9 +75,10 @@ Raw ideas:
 
 ## Open questions (owner decisions, not tasks)
 
-- **Public or private on GitHub?** Zero secrets in the repo, but it encodes
-  the call-index schema; SECURITY.md currently states private. Decision gates
-  the first push and repo metadata. (report 2026-10-10_06-57 §g.2)
+- ~~**Public or private on GitHub?**~~ **Resolved 2026-10-11:** public, at
+  `github.com/LarsArtmann/pbx-lens`; `main` pushed, repo metadata set. The
+  zero-secrets scan (gitleaks, full history) and synthetic-only fixtures made
+  public visibility safe.
 - **Keep the flat `internal/calls` package or split it?** Documented policy is
   flat (one aggregate, one projection); the natural revisit trigger is T9
   landing a second concern. (report 2026-10-10_06-57 §g.3, cqrs-lint E003)

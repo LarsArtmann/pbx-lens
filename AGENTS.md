@@ -67,7 +67,15 @@ webphone later gets a read-only deep link, never a data dependency.
   govulncheck, art-dupl (warning-only). Dependabot watches github-actions +
   gomod. BuildFlow remains the LOCAL quality gate (`buildflow --build-mode
   dev`); the flake's generic apps.test/apps.lint stay module-generated
-  conveniences, deliberately not overridden into a second gate.
+  conveniences, deliberately not overridden into a second gate. Every
+  Go-compiling CI job runs `go tool templ generate` first — `*_templ.go`
+  are gitignored, and the templ CLI is pinned by a go.mod `tool` directive
+  (`go run github.com/a-h/templ/cmd/templ` FAILS: its CLI-only deps are not
+  in go.sum). Paid for on the first real CI run (2026-10-11): the
+  golangci-lint pin must be a version BUILT with go ≥ the module's language
+  level (v2.12 binaries are go1.26 and refuse to load config; v2.14 is
+  go1.27.1), and the repo .golangci.yml enables `mnd` — local buildflow's
+  lint may not, so run `golangci-lint run ./...` before pushing.
 - **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version
   subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens`. Flag
   validation for the index-opening subcommands is shared: `requireDB` and
