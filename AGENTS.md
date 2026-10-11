@@ -269,7 +269,7 @@ DECISION.
 - **go-auto-upgrade encoding/json v1→v2 suggestions**: deliberate — the
   boundary types (metaengine DTOs) are non-stdlib-owned; the v2 swap waits
   for T4 per the stack decisions. samber/lo suggestions ignored (stdlib
-  + go-cqrs-lite + go-error-family only).
+  - go-cqrs-lite + go-error-family only).
 - **go-structure-linter assets/ suggestion**: `internal/web/static/` is
   deliberate (go:embed already scopes it; moving buys nothing).
 - **art-dupl (20) / branching-flow (51) / nix-checker (hash bookkeeping

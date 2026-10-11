@@ -1,7 +1,7 @@
 package web
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"time"
 
@@ -46,7 +46,7 @@ func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	if err := json.NewEncoder(w).Encode(fresh); err != nil {
+	if err := json.MarshalWrite(w, fresh); err != nil {
 		http.Error(w, "encoding freshness failed: "+err.Error(), http.StatusInternalServerError)
 	}
 }

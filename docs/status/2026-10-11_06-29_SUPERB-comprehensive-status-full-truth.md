@@ -12,14 +12,14 @@
 
 ### B3 search — COMPLETE including wiring (was ~90%)
 
-| What | Where | Proof |
-| --- | --- | --- |
-| Rebuild helpers | `internal/cli/search.go` (new) | `RebuildSearchIndex` (open→rebuild→close, no-op on `dsn==""`), `RebuildIndex` (open-index variant for serve/poller), `readAllViews` (`WithLimit(0)` = unlimited) |
-| 4 ingest verbs rebuild FTS | `cmd/pbx-lens/main.go` | every `cli.DrainProjections` in ingest-cdr/telnyx/webhook/agent is followed by `cli.RebuildSearchIndex` |
-| serve passes Search | same | `search.Open(setupCtx, *db)` long-lived + startup `RebuildIndex` + `Options{Recordings, Search: index}` |
-| busy timeout | `internal/search/search.go` | `withBusyTimeout` appends `_pragma=busy_timeout(5000)` to the DSN so the FTS connection coexists with the metaengine connection |
-| /search web tests | `internal/web/search_test.go` (new) | 3 tests: real-sqlite index answers with `>hello</mark>` + deep link; empty q shows form; nil searcher 503s naming `-db` |
-| **E2E verified** | real sqlite | ingest-webhook twice → idempotent; `serve` → `/search?q=%2B17287289311` **200 with `<mark>` highlight**; form page renders; list/detail/calls fine (Go httpprobe at /tmp/httpprobe — curl is banned) |
+| What                       | Where                               | Proof                                                                                                                                                                                                |
+| -------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Rebuild helpers            | `internal/cli/search.go` (new)      | `RebuildSearchIndex` (open→rebuild→close, no-op on `dsn==""`), `RebuildIndex` (open-index variant for serve/poller), `readAllViews` (`WithLimit(0)` = unlimited)                                     |
+| 4 ingest verbs rebuild FTS | `cmd/pbx-lens/main.go`              | every `cli.DrainProjections` in ingest-cdr/telnyx/webhook/agent is followed by `cli.RebuildSearchIndex`                                                                                              |
+| serve passes Search        | same                                | `search.Open(setupCtx, *db)` long-lived + startup `RebuildIndex` + `Options{Recordings, Search: index}`                                                                                              |
+| busy timeout               | `internal/search/search.go`         | `withBusyTimeout` appends `_pragma=busy_timeout(5000)` to the DSN so the FTS connection coexists with the metaengine connection                                                                      |
+| /search web tests          | `internal/web/search_test.go` (new) | 3 tests: real-sqlite index answers with `>hello</mark>` + deep link; empty q shows form; nil searcher 503s naming `-db`                                                                              |
+| **E2E verified**           | real sqlite                         | ingest-webhook twice → idempotent; `serve` → `/search?q=%2B17287289311` **200 with `<mark>` highlight**; form page renders; list/detail/calls fine (Go httpprobe at /tmp/httpprobe — curl is banned) |
 
 Learned and documented: FTS5 tokenizes `+17287289311` as ONE token — substring queries (`87289311`) match nothing; search full numbers or transcript words.
 
@@ -74,18 +74,18 @@ Learned and documented: FTS5 tokenizes `+17287289311` as ONE token — substring
 
 ## c) NOT STARTED (backend plan order)
 
-| Item | Notes |
-| --- | --- |
-| C5/C6 live probes | Telnyx key at `~/.pbx-prod-secrets/telnyx_api_key`, GET-only; prod CDR/webhook files |
-| C4 backup | sqlite file backup story |
-| C3 systemd module | thin NixOS module in nix-international-telephony (sibling repo) |
-| D2 purge (T23) | retention + PII policy; E164/ParticipantHash become load-bearing |
-| D3 dashboard (T25) | nav link exists, route doesn't; volume by day, AI share, MOS trends |
-| D5 export | CSV/JSONL dump endpoint |
-| D6 upstream filings | now FIVE verified candidates (see §f) |
-| D4 webphone link (T22) | sibling repo, LAST |
-| C9 §30 strike | blocked on owner Q3 |
-| C8 CI activation | blocked on owner Q1 (a parallel session already landed ci.yml) |
+| Item                   | Notes                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| C5/C6 live probes      | Telnyx key at `~/.pbx-prod-secrets/telnyx_api_key`, GET-only; prod CDR/webhook files |
+| C4 backup              | sqlite file backup story                                                             |
+| C3 systemd module      | thin NixOS module in nix-international-telephony (sibling repo)                      |
+| D2 purge (T23)         | retention + PII policy; E164/ParticipantHash become load-bearing                     |
+| D3 dashboard (T25)     | nav link exists, route doesn't; volume by day, AI share, MOS trends                  |
+| D5 export              | CSV/JSONL dump endpoint                                                              |
+| D6 upstream filings    | now FIVE verified candidates (see §f)                                                |
+| D4 webphone link (T22) | sibling repo, LAST                                                                   |
+| C9 §30 strike          | blocked on owner Q3                                                                  |
+| C8 CI activation       | blocked on owner Q1 (a parallel session already landed ci.yml)                       |
 
 ## d) Anything TOTALLY FUCKED UP?
 
@@ -163,7 +163,7 @@ Learned and documented: FTS5 tokenizes `+17287289311` as ONE token — substring
 2. **Q2 (carried, gates doctrine):** `call.corrected` supersession replaced the documented conflict-rejection — keep supersession for all sources, or conflicts (reject) for freeswitch-cdr only?
 3. **Q3 (carried, gates C9):** Confirm striking the pbx-lens rows of `~/projects/pbx-artmann/TODO_LIST.md` §30 (cross-repo edit; I will add moved-to markers, not just delete).
 
-*(One new almost-question — whether to file the five upstream items now vs. after the todo list — I resolved myself: they're queued as D6 work items, filing happens there with verify-before-filing discipline.)*
+_(One new almost-question — whether to file the five upstream items now vs. after the todo list — I resolved myself: they're queued as D6 work items, filing happens there with verify-before-filing discipline.)_
 
 ---
 

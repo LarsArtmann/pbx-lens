@@ -406,7 +406,7 @@ func serve(args []string) {
 	htpasswdPath := fs.String(
 		"htpasswd",
 		"",
-		"bcrypt htpasswd file gating every route (htpasswd -B; empty = no auth — localhost dev only)",
+		"bcrypt htpasswd file gating every route (htpasswd -B; empty = no auth for localhost dev)",
 	)
 	pollEvery := fs.Duration(
 		"poll-every",
