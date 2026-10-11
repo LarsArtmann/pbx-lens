@@ -16,10 +16,24 @@ const dashboardWindowDays = 30
 // utcDay is the UTC day boundary used to bucket and truncate timestamps.
 const utcDay = 24 * time.Hour
 
-// DayVolume is one day's call count in the dashboard window.
+// DayVolume is one day's call count in the dashboard window. MOSKnown is
+// the subset of that day's calls whose source reported a quality score;
+// MOSSum feeds AvgMOS.
 type DayVolume struct {
-	Day   string // YYYY-MM-DD, UTC
-	Calls int
+	Day      string // YYYY-MM-DD, UTC
+	Calls    int
+	MOSKnown int
+	MOSSum   float64
+}
+
+// AvgMOS is the day's mean MOS, or 0 when no call that day reported one;
+// the renderer treats 0-known as "no data", never as a 0.0 measurement.
+func (d DayVolume) AvgMOS() float64 {
+	if d.MOSKnown == 0 {
+		return 0
+	}
+
+	return d.MOSSum / float64(d.MOSKnown)
 }
 
 // DashboardStats is the quality-dashboard view model (T25): totals, AI
@@ -32,8 +46,20 @@ type DashboardStats struct {
 	AICalls     int
 	HumanCalls  int
 	AvgDuration time.Duration
+	MOSKnown    int     // calls whose source reported a MOS score
+	MOSSum      float64 // sum of reported scores; MOSAvg divides by MOSKnown
 	WindowDays  int
 	ByDay       []DayVolume
+}
+
+// MOSAvg is the mean MOS across every scored call in the index, or 0 when
+// nothing has reported a score yet.
+func (s DashboardStats) MOSAvg() float64 {
+	if s.MOSKnown == 0 {
+		return 0
+	}
+
+	return s.MOSSum / float64(s.MOSKnown)
 }
 
 // AIRatio is the AI share of all calls in [0,1]. Zero calls → zero value
@@ -86,6 +112,16 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 
 		if idx, ok := dayIndex[day]; ok {
 			stats.ByDay[idx].Calls++
+		}
+
+		if view.MOS > 0 {
+			stats.MOSKnown++
+			stats.MOSSum += view.MOS
+
+			if idx, ok := dayIndex[day]; ok {
+				stats.ByDay[idx].MOSKnown++
+				stats.ByDay[idx].MOSSum += view.MOS
+			}
 		}
 	}
 

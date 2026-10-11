@@ -28,19 +28,30 @@ type TelnyxOptions struct {
 	RecordingsLookback int
 }
 
+// TelnyxSeed carries what the enrichment pass needs about one fetched
+// conversation: its stream identity (the projection record key, built via
+// the mapped observation's StreamID — never hand-assembled) and the
+// call_control_id metadata the Detail Records correlation matches through.
+type TelnyxSeed struct {
+	ConversationID string
+	CallControlID  string
+	StreamKey      string
+}
+
 // FetchTelnyxObservations pulls conversations, their messages, and recent
 // recordings, then maps each conversation to one observation. A conversation
 // that cannot be fetched or mapped is reported in rejections (prefixed with
 // its id) instead of failing the whole pass; fetch errors of the two list
-// endpoints abort.
+// endpoints abort. Successfully mapped conversations also yield an
+// enrichment seed for the Detail Records / insights pass.
 func FetchTelnyxObservations(
 	ctx context.Context,
 	client *telnyx.Client,
 	opts TelnyxOptions,
-) ([]calls.Observation, []string, error) {
+) ([]calls.Observation, []TelnyxSeed, []string, error) {
 	convs, err := client.ListConversations(ctx, telnyx.ListOptions{Since: opts.Since, Limit: opts.Limit})
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	lookback := opts.RecordingsLookback
@@ -50,11 +61,12 @@ func FetchTelnyxObservations(
 
 	recs, err := client.ListRecordings(ctx, lookback)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var (
 		observations []calls.Observation
+		seeds        []TelnyxSeed
 		rejected     []string
 	)
 
@@ -78,8 +90,14 @@ func FetchTelnyxObservations(
 			continue
 		}
 
+		seed := TelnyxSeed{ConversationID: conv.ID, CallControlID: conv.MetadataString("call_control_id")}
+		if sid, sidErr := obs.StreamID(); sidErr == nil {
+			seed.StreamKey = sid.String()
+		}
+
 		observations = append(observations, obs)
+		seeds = append(seeds, seed)
 	}
 
-	return observations, rejected, nil
+	return observations, seeds, rejected, nil
 }

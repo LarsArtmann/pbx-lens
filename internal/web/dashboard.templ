@@ -9,7 +9,7 @@ import (
 )
 
 // dashboardRoute is the quality-dashboard page (T25): stat cards, volume
-// chart, AI/human split, trend, and the honest MOS placeholder.
+// chart, AI/human split, trend, and the MOS card.
 templ dashboardRoute(stats DashboardStats, now time.Time) {
 	@shell("Dashboard — pbx-lens", "/dashboard") {
 		@display.PageHeader(display.PageHeaderProps{
@@ -24,7 +24,7 @@ templ dashboardRoute(stats DashboardStats, now time.Time) {
 			<div class="space-y-6">
 				@aiHumanCard(stats)
 				@trendCard(stats)
-				@mosPlaceholderCard()
+				@mosCard(stats)
 			</div>
 		</div>
 	}
@@ -102,16 +102,58 @@ templ trendCard(stats DashboardStats) {
 	}
 }
 
-// mosPlaceholderCard is the honest MOS stand-in: the score arrives with the
-// CDR Detail-Records data (T15); nothing fake is rendered until then.
-templ mosPlaceholderCard() {
+// mosCard renders the mean MOS and per-day trend once any call reports a
+// score; before the first MOS arrives it stays the honest placeholder so a
+// quiet index never fakes a measurement.
+templ mosCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call quality (MOS)"}) {
-		@feedback.Alert(feedback.AlertProps{
-			Type:    feedback.FeedbackInfo,
-			Title:   "Not available yet",
-			Message: "MOS scores land with the CDR Detail-Records poller (T15). This card will show the quality trend once that data flows.",
-		})
+		if stats.MOSKnown == 0 {
+			@feedback.Alert(feedback.AlertProps{
+				Type:    feedback.FeedbackInfo,
+				Title:   "Not available yet",
+				Message: "MOS scores land with the CDR Detail-Records poller (T15). This card will show the quality trend once that data flows.",
+			})
+		} else {
+			<p class="text-2xl font-semibold">{ mosAvgLabel(stats) }</p>
+			<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+				mean of { strconv.Itoa(stats.MOSKnown) } scored call{ if stats.MOSKnown != 1 { "s" } }
+			</p>
+			<div class="mt-3">
+				@display.BarChart(display.BarChartProps{
+					Bars:         mosBars(stats.ByDay),
+					Orient:       display.BarVertical,
+					MinBarWidth:  "min-w-1",
+					Gap:          "gap-px",
+					ShowValues:   false,
+					EmptyMessage: "No MOS data in the last " + strconv.Itoa(stats.WindowDays) + " days",
+				})
+			</div>
+		}
 	}
+}
+
+// mosBars maps per-day mean MOS onto chart bars. A day without scores keeps
+// its slot as an empty bar whose tooltip says so: a missing measurement must
+// never render as a 0.0 dip in quality.
+func mosBars(days []DayVolume) []display.BarChartBar {
+	bars := make([]display.BarChartBar, 0, len(days))
+	for _, day := range days {
+		bar := display.BarChartBar{Label: day.Day[5:], Value: day.AvgMOS()}
+		if day.MOSKnown == 0 {
+			bar.Tooltip = day.Day + ": no MOS data"
+		} else {
+			bar.Tooltip = day.Day + ": avg " + strconv.FormatFloat(day.AvgMOS(), 'f', 2, 64) +
+				" (" + strconv.Itoa(day.MOSKnown) + " scored)"
+		}
+
+		bars = append(bars, bar)
+	}
+
+	return bars
+}
+
+func mosAvgLabel(stats DashboardStats) string {
+	return strconv.FormatFloat(stats.MOSAvg(), 'f', 1, 64)
 }
 
 // volumeBars maps the day series onto chart bars (oldest → newest).
