@@ -1,13 +1,21 @@
 // Package backup writes a consistent sqlite snapshot of the index for the
 // nightly backup staging (C4/T14). The snapshot is produced with VACUUM INTO,
 // which reads through one transaction, so the copy is consistent even while
-// the serve process keeps writing. The snapshot lands via a temp file, an
-// fsync of that staging file, and an atomic rename: a failed run never
-// destroys the previous good snapshot, and a crash between write and rename
-// cannot publish half-flushed pages. Verify is the post-condition the
-// nightly job runs on the PUBLISHED file — the fsync guarantees what lands
-// is what VACUUM wrote, Verify guarantees what landed is a readable lens
-// snapshot.
+// the serve process keeps writing. The snapshot lands via a uniquely-named
+// staging file, an fsync of that file, an atomic rename, and a parent-dir
+// flush: a failed run never destroys the previous good snapshot, two
+// concurrent runs cannot corrupt each other through a shared staging name,
+// and a crash between write and rename cannot publish half-flushed pages.
+// Verify is the post-condition the nightly job runs on the PUBLISHED file —
+// the fsyncs guarantee what lands is what VACUUM wrote, Verify guarantees
+// what landed is a readable lens snapshot.
+//
+// The stage → fsync → rename → dir-fsync chain mirrors the semantics of
+// github.com/larsartmann/go-atomic-write (atomicRename/syncDir); that
+// library cannot own this flow — its write entry points take Go data, while
+// the staging file is written by sqlite itself — but if it grows an
+// exported rename/commit primitive, adopt it here and delete this
+// hand-rolled chain (see docs/drafts/).
 package backup
 
 import (
@@ -16,6 +24,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	_ "modernc.org/sqlite"
@@ -38,11 +47,18 @@ func Snapshot(ctx context.Context, dsn, out string) error {
 
 	defer func() { _ = db.Close() }()
 
-	staging := out + ".tmp"
+	// A unique staging name per run: two concurrent backup invocations
+	// must not stage through one shared path (the failure mode
+	// go-atomic-write's unique-temp discipline exists for). VACUUM INTO
+	// requires the target not to exist, so the name is minted, not created.
+	staging := filepath.Join(
+		filepath.Dir(out),
+		fmt.Sprintf("%s.tmp-%d-%d", filepath.Base(out), os.Getpid(), time.Now().UnixNano()),
+	)
 
-	if err := os.Remove(staging); err != nil && !os.IsNotExist(err) {
-		return errorfamily.NewRejection("lens.backup.clear_staging", fmt.Sprintf("clearing %s: %v", staging, err))
-	}
+	// Best-effort cleanup of our own staging file on every exit path; after
+	// a successful rename it is already gone, so the remove is a no-op.
+	defer func() { _ = os.Remove(staging) }()
 
 	if _, err := db.ExecContext(ctx, "VACUUM INTO ?", staging); err != nil {
 		return errorfamily.NewRejection("lens.backup.vacuum", fmt.Sprintf("snapshotting %s to %s: %v", dsn, out, err))

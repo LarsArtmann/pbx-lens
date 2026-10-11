@@ -78,6 +78,7 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 			// canceled context still answers 401 (best effort).
 			if bcrypt.CompareHashAndPassword(hash, []byte(password)) != nil {
 				_ = failures.Wait(r.Context())
+
 				unauthorized(w)
 
 				return

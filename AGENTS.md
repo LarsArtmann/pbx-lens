@@ -35,6 +35,14 @@ webphone later gets a read-only deep link, never a data dependency.
   `golang.org/x/crypto` v0.57.0 (bcrypt only) is direct since D1: it was
   ALREADY in the module graph via projectionhost/watermill — promoting it
   added no new module; htpasswd without bcrypt is not worth hand-rolling.
+  Same precedent promoted `golang.org/x/time` (rate) direct 2026-10-11: the
+  auth failed-attempt throttle rides a module that was already in the
+  graph. `go-atomic-write` was EVALUATED for the backup staging chain
+  (2026-10-11) and NOT adopted: its write entry points take Go data, while
+  the staging file is written by sqlite itself (`VACUUM INTO`); the
+  hand-rolled chain mirrors its semantics and adopts its unique-staging
+  discipline — revisit when it grows an exported commit/rename primitive
+  (draft ask in docs/drafts/).
 - **UI trio (2026-10-11, F3/F4):** `go-appkit` v0.8.0 (HTTP service shell:
   `NewService(ServiceConfig{Addr})` → `svc.Mux *http.ServeMux`, `svc.Run(ctx)`
   owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.21.0 (display/
