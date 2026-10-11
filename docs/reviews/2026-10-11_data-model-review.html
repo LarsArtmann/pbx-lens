@@ -1,0 +1,1209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>DATA MODEL REVIEW</span>
+      <span>2026-10-11</span>
+      <span>pbx-lens &middot; architecture deep-dive</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#state">Current State</a>
+          <a href="#catalog">Problem Catalog</a>
+          <a href="#vision">The Vision</a>
+          <a href="#model">Go Data Model</a>
+          <a href="#compare">Composition in Action</a>
+          <a href="#validation">Validation Layer</a>
+          <a href="#decisions">Decision Log</a>
+          <a href="#antipatterns">Anti-Patterns</a>
+          <a href="#roadmap">Roadmap</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Architecture Deep-Dive</div>
+          <h1>pbx-lens Data Model Review</h1>
+          <p class="hero-subtitle">
+            The observation-to-view pipeline reviewed from first principles:
+            ~45 types across 12 packages, every field questioned, every
+            invariant checked against the code that enforces it.
+          </p>
+        </div>
+
+        <nav class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#state">Current State</a></li>
+            <li><a href="#catalog">Problem Catalog</a></li>
+            <li><a href="#vision">The Vision</a></li>
+            <li><a href="#model">Go Data Model</a></li>
+            <li><a href="#compare">Composition in Action</a></li>
+            <li><a href="#validation">Validation Layer</a></li>
+            <li><a href="#decisions">Decision Log</a></li>
+            <li><a href="#antipatterns">Anti-Patterns</a></li>
+            <li><a href="#roadmap">Roadmap</a></li>
+          </ul>
+        </nav>
+
+        <h2 id="state"><span class="num">00</span>Current State</h2>
+        <p>
+          Every production file was read this session (the 2026-10-11
+          <a href="2026-10-11_18-45_naming-review.html">naming review</a>
+          covered the vocabulary; this review covers the shapes). The model's
+          backbone is deliberately disciplined: branded identity strings,
+          validation at the construction boundary, zero-value-as-absent
+          instead of pointer state, and a read model that denormalizes with a
+          tested round-trip invariant. Most "findings" a generic review would
+          raise here are <strong>documented doctrine, not rot</strong>. The
+          real defects were at the seams &mdash; and two of them are fixed in
+          this pass.
+        </p>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">~45</div>
+            <div class="stat-label">Types Inventoried</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">2</div>
+            <div class="stat-label">Real Defects (fixed)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Accepted Risk (documented)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">6</div>
+            <div class="stat-label">Deliberate Doctrines (verified)</div>
+          </div>
+        </div>
+
+        <h2 id="catalog"><span class="num">01</span>Problem Catalog</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Fixed in this pass</span>
+          <h3>Search hits carried raw-string identity</h3>
+          <div class="where">internal/search/search.go:41</div>
+          <p>
+            <code>Hit.Kind</code> and <code>Hit.NativeID</code> were plain
+            strings while the domain owns <code>SourceKind</code> and
+            <code>NativeID</code> &mdash; swapping the two fields at a call
+            site compiled, and the deep-link builder trusted the order.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Typed both fields with the domain types (fixed in this pass;
+            tests green). A Kind/NativeID swap is now a compile error.
+          </div>
+        </div>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Fixed in this pass</span>
+          <h3>The excerpt ceiling was owned by one mapper, not the domain</h3>
+          <div class="where">internal/ingest/agent/agent.go:199 &middot; internal/ingest/telnyx/map.go:11</div>
+          <p>
+            Telnyx capped <code>TranscriptExcerpt</code> at 200 runes; the
+            agent mapper shipped the first turn uncapped. A long AI opening
+            line flowed into the read model and into the list page's single
+            table cell. Two sources, two silent shapes for one domain field.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            The bound moved into the domain (<code>calls.DefaultExcerptMax
+            = 200</code> &mdash; the domain owns its field's shape), the
+            Telnyx constant aliases it, and the agent mapper now caps with a
+            regression test. Existing agent rows re-derive on next ingest
+            (disposable-DB doctrine absorbs the one-time correction wave).
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Accepted risk &mdash; documented</span>
+          <h3>ContentHash concatenation can alias crafted field pairs</h3>
+          <div class="where">internal/calls/domain.go:128-142</div>
+          <p>
+            The hash joins fields with <code>\n</code> separators and no
+            length prefix. Free-text fields (transcript excerpts can contain
+            newlines) plus source-supplied party strings could in principle
+            be crafted so two different observations render the same hash
+            input &mdash; aliased streams, silently dropped corrections. For
+            this deployment the sources are the operator's own files and the
+            operator's own Telnyx account, so the attack surface is the
+            operator. <strong>Accepted</strong> &mdash; but the format is now
+            frozen at schema v1 precisely because it cannot be changed
+            casually (every stored hash would shift).
+          </p>
+          <div class="callout callout-solution">
+            <strong>Forward fix (v2)</strong>
+            Length-prefixed field encoding in the hash, gated behind schema
+            version 2 with an upcaster; the one-time correction wave on
+            re-poll is a supported operation (the index is re-derivable).
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Deliberate doctrine &mdash; verified, not rot</span>
+          <h3>Raw-as-observed participants</h3>
+          <div class="where">internal/calls/domain.go:95-114</div>
+          <p>
+            <code>FromNumber</code>/<code>ToNumber</code> are raw strings
+            although <code>E164</code>/<code>ParticipantHash</code> exist.
+            Real CDRs carry unknown and garbled parties; enforcing E.164 at
+            storage would reject honest source rows. The typed pair is
+            load-bearing exactly where the policy lives: the
+            <code>?pii=hash</code> export validates-then-hashes, and
+            unparseable parties render as an honest
+            <code>[redacted]</code> marker instead of a fake number.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Deliberate doctrine &mdash; verified, not rot</span>
+          <h3>Zero-value-as-absent, never pointer state</h3>
+          <div class="where">internal/calls/domain.go (MOS, Enrichment) &middot; internal/web/queries.go (AI *bool)</div>
+          <p>
+            MOS <code>0</code> = not reported (omitted from JSON and hash),
+            zero <code>Enrichment</code> = nothing fetched yet, and the list
+            filter's <code>AI *bool</code> nil = unset. The review actively
+            endorses the absence of <code>*float64</code>/<code>*string</code>
+            optionality here: the codebase documents each zero's meaning at
+            the field, and the hash covers the value fields only so re-polls
+            stay idempotent. The one tri-state pointer is the correct Go
+            idiom for nil-as-unset, not a pointer minefield.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Ready-when-touched</span>
+          <h3>TranscriptTurn.Role is a plain string</h3>
+          <div class="where">internal/calls/domain.go:89-93</div>
+          <p>
+            The role vocabulary is a closed two-value union
+            (<code>user</code>/<code>assistant</code>) normalized at both
+            mappers, but the domain field accepts any string. A
+            <code>TurnRole</code> named string with two constants would make
+            an invalid role unrepresentable &mdash; and is hash-compatible
+            today (<code>%s</code> prints the same bytes), so it can land
+            whenever the file is next touched for real reasons. Deferred as
+            pure churn right now.
+          </p>
+        </div>
+
+        <h2 id="vision"><span class="num">02</span>The Vision</h2>
+        <div class="strengths">
+          <div class="strength"><div class="check">1</div><div class="text"><strong>Boundaries own their invariants</strong><span>The domain owns the excerpt ceiling, the hash recipe, and the stream-id format; mappers and the UI adapt to it, never the reverse.</span></div></div>
+          <div class="strength"><div class="check">2</div><div class="text"><strong>Closed vocabularies are types</strong><span>SourceKind, Direction, and (when touched) TurnRole make invalid values compile errors, not runtime rejections.</span></div></div>
+          <div class="strength"><div class="check">3</div><div class="text"><strong>Zero means zero, documented</strong><span>Every zero value that means "absent" says so in a comment and stays out of ContentHash; no pointer state anywhere in the domain.</span></div></div>
+          <div class="strength"><div class="check">4</div><div class="text"><strong>Read-model denormalization with round-trip proofs</strong><span>CallView duplicates the observation deliberately, and ViewFrom/Observation() are lossless inverses &mdash; an invariant the enrich pass leans on.</span></div></div>
+          <div class="strength"><div class="check">5</div><div class="text"><strong>Wire tolerance isolated at the perimeter</strong><span>FlexTime, DetailRecord's dual spellings, and metadata-as-any live only in ingest adapters; the domain never sees a dialect.</span></div></div>
+          <div class="strength"><div class="check">6</div><div class="text"><strong>Identity is deterministic</strong><span>Stream id = kind:native-id, hash equality = observation equality; re-ingest is the same stream and replay emits zero events.</span></div></div>
+        </div>
+
+        <h2 id="model"><span class="num">03</span>Go Data Model</h2>
+        <p>The core that everything else serves, with the invariants annotated:</p>
+        <pre><code><span class="tok-comment">// Identity is branded, not stringly: swapping kinds for ids cannot compile.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">SourceKind</span> <span class="tok-type">string</span>   <span class="tok-comment">// freeswitch-cdr | telnyx-conversation | webhook-log | agent-transcript</span>
+<span class="tok-keyword">type</span> <span class="tok-type">NativeID</span> <span class="tok-type">string</span>     <span class="tok-comment">// the source's own row id; never invented by the lens</span>
+<span class="tok-keyword">type</span> <span class="tok-type">E164</span> <span class="tok-type">string</span>         <span class="tok-comment">// Valid() enforces +digits; Hash() feeds the PII export</span>
+
+<span class="tok-comment">// One source row. Validate() is the gate every parser passes through;</span>
+<span class="tok-comment">// zero MOS means "not reported" and stays out of the hash.</span>
+<span class="tok-keyword">type</span> <span class="tok-func">Observation</span> <span class="tok-keyword">struct</span> {
+    NativeID          <span class="tok-type">NativeID</span>
+    Kind              <span class="tok-type">SourceKind</span>
+    Direction         <span class="tok-type">Direction</span>
+    StartedAt         <span class="tok-type">time.Time</span>
+    DurationSecs      <span class="tok-type">int</span>
+    FromNumber, ToNumber <span class="tok-type">string</span>   <span class="tok-comment">// raw as observed; E164 policy applies at export</span>
+    HangupCause       <span class="tok-type">string</span>
+    IsAI              <span class="tok-type">bool</span>
+    TranscriptExcerpt <span class="tok-type">string</span>       <span class="tok-comment">// capped by the domain's DefaultExcerptMax</span>
+    Transcript        []<span class="tok-type">TranscriptTurn</span>
+    RecordingRef      <span class="tok-type">string</span>
+    MOS               <span class="tok-type">float64</span>       <span class="tok-comment">// 0 = not reported, omitted from JSON + hash</span>
+}
+
+<span class="tok-comment">// Derived data that never mutates observation identity: it refreshes</span>
+<span class="tok-comment">// independently and rides the full-recompute folds.</span>
+<span class="tok-keyword">type</span> <span class="tok-func">Enrichment</span> <span class="tok-keyword">struct</span> {
+    CostMicros     <span class="tok-type">int64</span>   <span class="tok-comment">// 0 = no cost reported</span>
+    CostCurrency   <span class="tok-type">string</span>
+    InsightSummary <span class="tok-type">string</span>
+}
+
+<span class="tok-comment">// The read-model row: observation + enrichment + the hash that proves it.</span>
+<span class="tok-comment">// ViewFrom and v.Observation() are lossless inverses (tested).</span>
+<span class="tok-keyword">type</span> <span class="tok-func">CallView</span> <span class="tok-keyword">struct</span> {
+    <span class="tok-comment">// ...every observation field, plus:</span>
+    CostMicros     <span class="tok-type">int64</span>
+    InsightSummary <span class="tok-type">string</span>
+    ContentHash    <span class="tok-type">string</span>  <span class="tok-comment">// equality of hashes IS equality of observations</span>
+}</code></pre>
+
+        <h2 id="compare"><span class="num">04</span>Composition in Action</h2>
+        <div class="compare-header">
+          <div class="compare-before">Before &mdash; raw strings, silent shape drift</div>
+          <div class="compare-after">After &mdash; domain-owned identity and bounds</div>
+        </div>
+        <div class="compare-row">
+          <div>
+            <pre><code><span class="tok-comment">// any two strings compile; order-swaps are silent</span>
+<span class="tok-keyword">type</span> <span class="tok-func">Hit</span> <span class="tok-keyword">struct</span> {
+    Kind     <span class="tok-type">string</span>
+    NativeID <span class="tok-type">string</span>
+}
+
+<span class="tok-comment">// one mapper caps excerpts, the other doesn't</span>
+<span class="tok-keyword">const</span> DefaultExcerptMax = <span class="tok-number">200</span> <span class="tok-comment">// telnyx only</span></code></pre>
+          </div>
+          <div>
+            <pre><code><span class="tok-comment">// a Kind/NativeID swap is a compile error</span>
+<span class="tok-keyword">type</span> <span class="tok-func">Hit</span> <span class="tok-keyword">struct</span> {
+    Kind     <span class="tok-type">calls.SourceKind</span>
+    NativeID <span class="tok-type">calls.NativeID</span>
+}
+
+<span class="tok-comment">// the domain owns the bound; mappers adapt</span>
+<span class="tok-keyword">const</span> DefaultExcerptMax =
+    <span class="tok-type">calls.DefaultExcerptMax</span> <span class="tok-comment">// = 200</span></code></pre>
+          </div>
+        </div>
+
+        <h2 id="validation"><span class="num">05</span>Validation Layer</h2>
+        <p>
+          Invalid observations cannot enter the index: every parser ends in
+          <code>obs.Validate()</code>, every command constructor
+          (<code>NewRecordCommand</code>, <code>NewEnrichCommand</code>,
+          <code>NewRetireCommand</code>) re-validates before addressing a
+          stream, and every rejection carries a stable error code
+          (<code>call.record.unknown_source_kind</code>,
+          <code>call.record.negative_duration</code>, &hellip;). The four
+          <code>.Valid()</code> predicates make the closed vocabularies
+          checkable at the boundary. What the model deliberately does
+          <em>not</em> do is hide its fields behind an unexported-field
+          constructor: the event store serializes payloads as JSON, so the
+          validation gate lives exactly where the writers live.
+        </p>
+
+        <h2 id="decisions"><span class="num">06</span>Decision Log</h2>
+        <table>
+          <thead><tr><th>Decision</th><th>Rejected alternative</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Raw-as-observed participant strings</td><td>Enforce E164 on storage</td><td>Real CDRs carry garbage parties; rejection would drop honest rows. The typed pair enforces where policy lives (export).</td></tr>
+            <tr><td>Zero-value-as-absent (MOS, Enrichment)</td><td><code>*float64</code>/<code>*string</code> optionals</td><td>Pointer state invites nil-mines and hash drift; each zero is documented at the field and excluded from ContentHash.</td></tr>
+            <tr><td>Hash format frozen at v1</td><td>Fix the newline-aliasing now</td><td>Changing the recipe shifts every stored hash &rarr; mass corrections. Gated behind schema v2 with an upcaster instead.</td></tr>
+            <tr><td>CallView duplicates the observation</td><td>Join tables / normalized read model</td><td>One row per stream, full-recompute folds, lossless rebuild &mdash; the disposable-DB doctrine wants re-derivable simplicity.</td></tr>
+            <tr><td><code>AI *bool</code> tri-state filter</td><td>Custom option enum</td><td>nil = unset is the idiomatic Go tri-state; an enum type here is ceremony.</td></tr>
+            <tr><td>TurnRole type deferred</td><td>Type it in this pass</td><td>Two mappers normalize before the domain sees roles; the type is hash-compatible and lands free next time the file is touched.</td></tr>
+          </tbody>
+        </table>
+
+        <h2 id="antipatterns"><span class="num">07</span>Anti-Patterns</h2>
+        <div class="card card-warning">
+          <h4>Do not change the hash recipe casually</h4>
+          <p>ContentHash equality IS observation equality. A "small" format tweak re-writes every stored hash and turns the next re-poll into a full correction wave. Gate format changes behind schema v2.</p>
+        </div>
+        <div class="card card-warning">
+          <h4>Do not hand-assemble projection record keys</h4>
+          <p>The <code>StreamMarker:</code> prefix is the library's business. Derive keys via <code>obs.StreamID().String()</code> &mdash; the hand-built variant was this session's highest-value fix (cli/agent.go).</p>
+        </div>
+        <div class="card card-warning">
+          <h4>Do not pair create folds with update folds</h4>
+          <p>metaengine routes a first event through the update fold with a zero prev and stores a zero view. Full-recompute views ship create folds only (documented gotcha, verified in projection.go).</p>
+        </div>
+        <div class="card card-warning">
+          <h4>Do not let a source own a domain field's shape</h4>
+          <p>The excerpt ceiling belonged to one mapper and silently didn't apply to another. Bounds on domain fields live in the domain; mappers reference them.</p>
+        </div>
+
+        <h2 id="roadmap"><span class="num">08</span>Migration Roadmap</h2>
+        <div class="migration-step">
+          <div class="migration-num">1</div>
+          <div class="migration-content"><h4>Nothing is required today</h4><p>Both real defects are fixed this pass with green tests; the model is healthy.</p></div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">2</div>
+          <div class="migration-content"><h4>At schema v2: canonical hash encoding</h4><p>Length-prefixed ContentHash fields + upcaster; absorb the one-time correction wave (re-derivable index).</p></div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content"><h4>Next touch of TranscriptTurn: add TurnRole</h4><p>Named string + two constants; zero hash impact; makes the closed vocabulary compile-time.</p></div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content"><h4>When a second consumer of call data appears</h4><p>Revisit the single-module hold (see the full-code-review report's modularize verdict) &mdash; the seam earns nothing while no consumer exists.</p></div>
+        </div>
+
+        <h2>Conclusion</h2>
+        <div class="card card-solution">
+          <p>
+            <strong>"The model is not perfect; it is honest &mdash; and every
+            dishonest byte this pass found was at a seam, not in the
+            core."</strong> The domain's doctrines (raw-as-observed,
+            zero-as-absent, deterministic identity) are documented and
+            verified; both real defects were seams forgetting the doctrine.
+          </p>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-10-11 &middot; data-model-review skill &middot; every claim verified against source this session &middot; companion reports: naming review (18-45), full-code review
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) { return l.getAttribute("href").slice(1); });
+        var sections = ids.map(function (id) { return document.getElementById(id); }).filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              links.forEach(function (link) {
+                link.classList.toggle("active", link.getAttribute("href") === "#" + entry.target.id);
+              });
+            }
+          });
+        }, { rootMargin: "-80px 0px -60% 0px", threshold: 0 });
+        sections.forEach(function (s) { observer.observe(s); });
+      })();
+    </script>
+  </body>
+</html>
