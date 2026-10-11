@@ -175,7 +175,6 @@ linters:
       sort: true
     tagliatelle:
       case:
-        use-case: false
         rules:
           # Project convention: JSON wire and storage tags are snake_case
           # (matches the deployed sqlite JSON columns and the export API).
