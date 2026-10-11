@@ -24,10 +24,12 @@ see [FEATURES.md](FEATURES.md) for the honest inventory and
 Requires Go 1.27+ (or Nix):
 
 ```console
-go install github.com/larsartmann/pbx-lens/cmd/pbx-lens@latest   # once published
 go build -o pbx-lens ./cmd/pbx-lens                              # from a checkout
 nix build                                                         # from a checkout (flake)
 ```
+
+No version has been tagged yet; `go install ...@latest` will work once a
+release exists.
 
 ## Quick start
 
@@ -42,12 +44,12 @@ go test ./...
 
 ```console
 pbx-lens ingest-cdr -db /var/lib/pbx-lens/calls.db /path/to/Master.csv
-# ingested 412, parse-skipped 3, rejected 0
+# ingest-cdr: 412 rows parsed, 3 parse-skipped, 412 recorded, 0 corrected, 0 rejected
 ```
 
 Re-running the same file is safe: identical rows replay to zero events
-(content-hash idempotency), and a changed row on an existing stream is
-rejected as a conflict, because CDRs are immutable.
+(content-hash idempotency), and a changed snapshot of an existing stream is
+superseded by a `call.corrected` event — the log keeps the full audit trail.
 
 ### Index Telnyx AI calls
 
@@ -67,5 +69,7 @@ excerpt and the recording reference.
 
 - `cmd/pbx-lens/` — CLI (`version`, `smoke`, `ingest-cdr`, `ingest-telnyx`)
 - `internal/calls/` — domain (Observation, invariants, idempotency) + read model
+- `internal/cli/` — tested command internals: flags, dispatch loop, projection drain
 - `internal/ingest/` — source parsers/mappers (`cdr`, `telnyx`)
+- `internal/wire/` — shared wire-decoding helpers (`FlexTime`)
 - `docs/DOMAIN_LANGUAGE.md` — the vocabulary the code speaks

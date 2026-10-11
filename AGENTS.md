@@ -177,7 +177,12 @@ DECISION.
 - **E005 (false positive)**: "RecordCallCmd has no registered handler" —
   the handler IS registered, in `internal/app` via
   `system.RegisterCommand` (ADR-0123 composition root); the lint analyzes
-  one package at a time and cannot see the wiring. Non-fix.
+  one package at a time and cannot see the wiring. Non-fix. Same class
+  covers the 2026-10-11 `EnrichCallCmd` warning.
+- **P-class Close() ignored in `cli.OpenSystem` cleanup (deliberate)**:
+  one-shot CLI processes close the system at exit; a close error there has
+  no recovery path and the event log is already durable. The serve process
+  owns a stricter shutdown.
 - **E003 (deliberate flat domain, OWNER QUESTION OPEN)**: `internal/calls`
   mixes command/event/fold by design — the domain is one aggregate
   (Observation) with one projection; a split today would be ceremony, not
