@@ -69,7 +69,7 @@
           # cqrs-lint is its own module (…/cmd/cqrs-lint/v4) inside the
           # go-cqrs-lite monorepo, so the build roots there; the hash pins a
           # master rev rather than a tag (the module has no stable tags).
-          cqrs-lint = pkgs.buildGoModule.override { go = go; } {
+          cqrs-lint = pkgs.buildGoModule.override { inherit go; } {
             pname = "cqrs-lint";
             version = "0.0.0-unstable-2026-10-11";
             src = pkgs.fetchFromGitHub {
@@ -111,12 +111,14 @@
             pkgs.mkShellNoCC {
               name = "pbx-lens";
 
-              packages = builtins.attrValues {
-                inherit go;
-                inherit (pkgs) golangci-lint gopls govulncheck;
-              } ++ [
-                cqrs-lint
-              ];
+              packages =
+                builtins.attrValues {
+                  inherit go;
+                  inherit (pkgs) golangci-lint gopls govulncheck;
+                }
+                ++ [
+                  cqrs-lint
+                ];
 
               GOWORK = "off";
               GOTOOLCHAIN = "local";
