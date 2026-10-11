@@ -15,9 +15,9 @@ import (
 // prompt.
 const basicAuthRealm = `Basic realm="pbx-lens"`
 
-// dummyHash keeps the failure path running the same bcrypt work as the
-// success path, so timing never reveals whether a username exists.
-var dummyHash, _ = bcrypt.GenerateFromPassword([]byte("pbx-lens-timing-pad"), bcrypt.MinCost)
+// timingPadPassword seeds the dummy hash compared against unknown users so
+// the failure and success paths run identical bcrypt work.
+const timingPadPassword = "pbx-lens-timing-pad"
 
 // HtpasswdMiddleware gates every route behind HTTP Basic auth (D1/T24):
 // call metadata must not be readable without operator credentials. The
@@ -27,6 +27,16 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 	users, err := parseHtpasswd(path)
 	if err != nil {
 		return nil, err
+	}
+
+	// The dummy hash keeps the failure path running the same bcrypt work as
+	// the success path, so timing never reveals whether a username exists.
+	dummyHash, err := bcrypt.GenerateFromPassword([]byte(timingPadPassword), bcrypt.MinCost)
+	if err != nil {
+		return nil, errorfamily.NewRejection(
+			"lens.web.htpasswd_timing_pad",
+			"preparing timing pad hash: "+err.Error(),
+		)
 	}
 
 	return func(next http.Handler) http.Handler {

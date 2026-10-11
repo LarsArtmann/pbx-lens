@@ -44,7 +44,9 @@ func authedServer(t *testing.T, htpasswdPath string) http.Handler {
 	return middleware(newTestServer(t, webObservation("conv-a", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC))))
 }
 
-func getWithBasicAuth(handler http.Handler, path, user, password string) *http.Response {
+// getWithBasicAuth drives one request through handler and returns the
+// recorder; HTTP Basic credentials are only sent when user is non-empty.
+func getWithBasicAuth(handler http.Handler, path, user, password string) *httptest.ResponseRecorder {
 	request := httptest.NewRequest(http.MethodGet, path, nil)
 	if user != "" {
 		request.SetBasicAuth(user, password)
@@ -53,29 +55,29 @@ func getWithBasicAuth(handler http.Handler, path, user, password string) *http.R
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
-	return recorder.Result()
+	return recorder
 }
 
 func TestAuthRejectsMissingAndWrongCredentials(t *testing.T) {
 	handler := authedServer(t, writeHtpasswd(t, "lars", authTestPassword))
 
 	response := getWithBasicAuth(handler, "/", "", "")
-	if response.StatusCode != http.StatusUnauthorized {
-		t.Errorf("no credentials status = %d, want 401", response.StatusCode)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("no credentials status = %d, want 401", response.Code)
 	}
 
-	if response.Header.Get("WWW-Authenticate") == "" {
+	if response.Header().Get("WWW-Authenticate") == "" {
 		t.Error("401 must carry WWW-Authenticate so browsers prompt")
 	}
 
 	response = getWithBasicAuth(handler, "/", "lars", "wrong")
-	if response.StatusCode != http.StatusUnauthorized {
-		t.Errorf("wrong password status = %d, want 401", response.StatusCode)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("wrong password status = %d, want 401", response.Code)
 	}
 
 	response = getWithBasicAuth(handler, "/", "nobody", authTestPassword)
-	if response.StatusCode != http.StatusUnauthorized {
-		t.Errorf("unknown user status = %d, want 401", response.StatusCode)
+	if response.Code != http.StatusUnauthorized {
+		t.Errorf("unknown user status = %d, want 401", response.Code)
 	}
 }
 
@@ -83,8 +85,8 @@ func TestAuthAcceptsCorrectCredentials(t *testing.T) {
 	handler := authedServer(t, writeHtpasswd(t, "lars", authTestPassword))
 
 	response := getWithBasicAuth(handler, "/", "lars", authTestPassword)
-	if response.StatusCode != http.StatusOK {
-		t.Errorf("correct credentials status = %d, want 200", response.StatusCode)
+	if response.Code != http.StatusOK {
+		t.Errorf("correct credentials status = %d, want 200", response.Code)
 	}
 }
 
@@ -93,8 +95,8 @@ func TestAuthAlsoGatesStaticAndDetailRoutes(t *testing.T) {
 
 	for _, path := range []string{"/app.css", "/calls/telnyx-conversation/conv-a", "/search?q=x"} {
 		response := getWithBasicAuth(handler, path, "", "")
-		if response.StatusCode != http.StatusUnauthorized {
-			t.Errorf("GET %s without credentials status = %d, want 401", path, response.StatusCode)
+		if response.Code != http.StatusUnauthorized {
+			t.Errorf("GET %s without credentials status = %d, want 401", path, response.Code)
 		}
 	}
 }
