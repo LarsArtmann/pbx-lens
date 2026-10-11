@@ -16,8 +16,12 @@ import (
 )
 
 const (
-	EventObserved = event.Type("call.observed")
+	EventObserved  = event.Type("call.observed")
+	EventCorrected = event.Type("call.corrected")
+	EventEnriched  = event.Type("call.enriched")
+
 	CommandRecord = command.Type("call.record")
+	CommandEnrich = command.Type("call.enrich")
 )
 
 const StreamType = "Call"
@@ -74,18 +78,31 @@ type ParticipantHash string
 
 type NativeID string
 
+// TranscriptTurn is one utterance of a call transcript, normalized to the
+// user/assistant roles regardless of source vocabulary (Telnyx
+// user/assistant, the FreeSWITCH agent's caller/agent). At is zero for
+// sources that stamp no per-turn time (the agent JSONL writes a start ts
+// only), and At is always truncated to whole seconds before it reaches the
+// domain so the sub-second noise of live APIs never enters ContentHash.
+type TranscriptTurn struct {
+	Role string    `json:"role"`
+	Text string    `json:"text"`
+	At   time.Time `json:"at,omitempty"`
+}
+
 type Observation struct {
-	NativeID          NativeID   `json:"native_id"`
-	Kind              SourceKind `json:"kind"`
-	Direction         Direction  `json:"direction"`
-	StartedAt         time.Time  `json:"started_at"`
-	DurationSecs      int        `json:"duration_secs"`
-	FromNumber        string     `json:"from_number"`
-	ToNumber          string     `json:"to_number"`
-	HangupCause       string     `json:"hangup_cause"`
-	IsAI              bool       `json:"is_ai"`
-	TranscriptExcerpt string     `json:"transcript_excerpt"`
-	RecordingRef      string     `json:"recording_ref"`
+	NativeID          NativeID         `json:"native_id"`
+	Kind              SourceKind       `json:"kind"`
+	Direction         Direction        `json:"direction"`
+	StartedAt         time.Time        `json:"started_at"`
+	DurationSecs      int              `json:"duration_secs"`
+	FromNumber        string           `json:"from_number"`
+	ToNumber          string           `json:"to_number"`
+	HangupCause       string           `json:"hangup_cause"`
+	IsAI              bool             `json:"is_ai"`
+	TranscriptExcerpt string           `json:"transcript_excerpt"`
+	Transcript        []TranscriptTurn `json:"transcript,omitempty"`
+	RecordingRef      string           `json:"recording_ref"`
 }
 
 func (o Observation) Validate() error {
@@ -115,10 +132,10 @@ func (o Observation) Validate() error {
 		return errorfamily.NewRejection("call.record.negative_duration", "duration cannot be negative")
 	}
 
-	if o.FromNumber == "" && o.ToNumber == "" {
+	if o.FromNumber == "" && o.ToNumber == "" && o.Kind != SourceAgentTranscript {
 		return errorfamily.NewRejection(
 			"call.record.both_parties_missing",
-			"at least one participant number is required",
+			"at least one participant number is required (agent transcripts may join one later)",
 		)
 	}
 
@@ -127,9 +144,23 @@ func (o Observation) Validate() error {
 
 func (o Observation) ContentHash() string {
 	h := sha256.New()
-	fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s",
+	fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s\n%s",
 		o.NativeID, o.Kind, o.Direction, o.StartedAt.UTC().UnixNano(), o.DurationSecs,
-		o.FromNumber, o.ToNumber, o.HangupCause, o.IsAI, o.TranscriptExcerpt, o.RecordingRef)
+		o.FromNumber, o.ToNumber, o.HangupCause, o.IsAI, o.TranscriptExcerpt,
+		transcriptHash(o.Transcript), o.RecordingRef)
+
+	return hex.EncodeToString(h.Sum(nil))
+}
+
+func transcriptHash(turns []TranscriptTurn) string {
+	if len(turns) == 0 {
+		return ""
+	}
+
+	h := sha256.New()
+	for _, t := range turns {
+		fmt.Fprintf(h, "%s\x00%s\x00%d\x00", t.Role, t.Text, t.At.UTC().Unix())
+	}
 
 	return hex.EncodeToString(h.Sum(nil))
 }
@@ -147,6 +178,46 @@ func (o Observation) StreamID() (id.StreamID, error) {
 
 type CallObserved struct {
 	Observation
+}
+
+// CallCorrected supersedes the stream's observation with a later snapshot
+// from the same source (a Telnyx conversation that grew between polls). The
+// enrichment rides along so the projection's full-recompute folds never lose
+// cost/insight data a correction would otherwise clobber.
+type CallCorrected struct {
+	Observation
+	Enrichment Enrichment
+}
+
+// CallEnriched carries derived data (cost, insight) that is NOT part of the
+// observation identity: it refreshes independently of the source snapshot
+// and never triggers corrections. The observation rides along for the same
+// full-recompute reason as in CallCorrected.
+type CallEnriched struct {
+	Observation
+	Enrichment
+}
+
+// Enrichment is derived data attached to a call after the fact: Telnyx
+// Detail Records cost and AI conversation insights. Fields are zero when the
+// source has not produced them yet; the hash covers the value fields only,
+// never fetch bookkeeping, so re-polling an unchanged enrichment stays
+// idempotent.
+type Enrichment struct {
+	CostMicros    int64  `json:"cost_micros,omitempty"`
+	CostCurrency  string `json:"cost_currency,omitempty"`
+	InsightSummary string `json:"insight_summary,omitempty"`
+}
+
+func (e Enrichment) Hash() string {
+	if e == (Enrichment{}) {
+		return ""
+	}
+
+	h := sha256.New()
+	fmt.Fprintf(h, "%d\n%s\n%s", e.CostMicros, e.CostCurrency, e.InsightSummary)
+
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 type RecordCallCmd struct {
@@ -173,9 +244,37 @@ func NewRecordCommand(obs Observation) (RecordCallCmd, error) {
 	return RecordCallCmd{BasicCommand: bc, Observation: obs}, nil
 }
 
+type EnrichCallCmd struct {
+	*command.BasicCommand
+
+	Observation Observation
+	Enrichment  Enrichment
+}
+
+func NewEnrichCommand(obs Observation, enr Enrichment) (EnrichCallCmd, error) {
+	if err := obs.Validate(); err != nil {
+		return EnrichCallCmd{}, err
+	}
+
+	sid, err := obs.StreamID()
+	if err != nil {
+		return EnrichCallCmd{}, err
+	}
+
+	bc, err := command.New(CommandEnrich, sid)
+	if err != nil {
+		return EnrichCallCmd{}, err
+	}
+
+	return EnrichCallCmd{BasicCommand: bc, Observation: obs, Enrichment: enr}, nil
+}
+
 type CallState struct {
-	Observed    bool
-	ContentHash string
+	Observed          bool
+	ContentHash       string
+	EnrichHash        string
+	Current           Observation
+	CurrentEnrichment Enrichment
 }
 
 func Apply(s CallState, evt event.Event) (CallState, error) {
@@ -188,8 +287,39 @@ func Apply(s CallState, evt event.Event) (CallState, error) {
 
 		s.Observed = true
 		s.ContentHash = p.ContentHash()
+		s.Current = p.Observation
+		s.CurrentEnrichment = Enrichment{}
 
 		return s, nil
+
+	case EventCorrected:
+		p, err := event.DecodePayloadAuto[CallCorrected](evt)
+		if err != nil {
+			return s, err
+		}
+
+		s.Observed = true
+		s.ContentHash = p.ContentHash()
+		s.Current = p.Observation
+		s.CurrentEnrichment = p.Enrichment
+		s.EnrichHash = p.Enrichment.Hash()
+
+		return s, nil
+
+	case EventEnriched:
+		p, err := event.DecodePayloadAuto[CallEnriched](evt)
+		if err != nil {
+			return s, err
+		}
+
+		s.Observed = true
+		s.ContentHash = p.ContentHash()
+		s.Current = p.Observation
+		s.CurrentEnrichment = p.Enrichment
+		s.EnrichHash = p.Enrichment.Hash()
+
+		return s, nil
+
 	default:
 		return s, errorfamily.NewCorruption(
 			"call.fold.unknown_event",
@@ -209,10 +339,23 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 				return nil, nil
 			}
 
-			return nil, errorfamily.NewConflict(
-				"call.record.mutated",
-				fmt.Sprintf("stream %s already holds a different observation", streamID),
+			// Sources are read-only but not immutable snapshots: a Telnyx
+			// conversation grows between polls. Supersede via a correction
+			// event instead of erroring, so the index converges to the final
+			// state and the event log keeps the audit trail.
+			evt, err := event.New(
+				EventCorrected,
+				streamID,
+				StreamType,
+				v.Increment(),
+				CallCorrected{Observation: obs, Enrichment: s.CurrentEnrichment},
+				event.WithSchemaVersion(1),
 			)
+			if err != nil {
+				return nil, err
+			}
+
+			return []event.Event{evt}, nil
 		}
 
 		evt, err := event.New(
@@ -221,6 +364,38 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 			StreamType,
 			v.Increment(),
 			CallObserved{Observation: obs},
+			event.WithSchemaVersion(1),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return []event.Event{evt}, nil
+	}
+}
+
+// Enrich attaches derived data (cost, insight) to an already-observed call.
+// Enriching before the observation exists rejects: enrichment without its
+// call is unaddressable, and the next poll re-attempts in the right order.
+func Enrich(obs Observation, enr Enrichment, streamID id.StreamID) decider.DecideFunc[CallState] {
+	return func(s CallState, v event.Version) ([]event.Event, error) {
+		if !s.Observed {
+			return nil, errorfamily.NewRejection(
+				"call.enrich.before_observed",
+				fmt.Sprintf("stream %s has no observation to enrich yet", streamID),
+			)
+		}
+
+		if s.EnrichHash == enr.Hash() {
+			return nil, nil
+		}
+
+		evt, err := event.New(
+			EventEnriched,
+			streamID,
+			StreamType,
+			v.Increment(),
+			CallEnriched{Observation: s.Current, Enrichment: enr},
 			event.WithSchemaVersion(1),
 		)
 		if err != nil {

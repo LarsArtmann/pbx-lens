@@ -1,6 +1,7 @@
 package calls
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 	"time"
@@ -112,20 +113,97 @@ func TestRecordIdempotentReplay(t *testing.T) {
 	}
 }
 
-func TestRecordMutatedObservationConflicts(t *testing.T) {
+func TestRecordChangedObservationCorrects(t *testing.T) {
 	obs := validObservation()
-	state := CallState{Observed: true, ContentHash: obs.ContentHash()}
+	sid := mustSID(t, obs)
 
-	mutated := obs
-	mutated.DurationSecs = 99
-
-	_, err := Record(mutated, mustSID(t, mutated))(state, 1)
-	if err == nil {
-		t.Fatal("mutated observation must conflict")
+	events, err := Record(obs, sid)(CallState{}, 0)
+	if err != nil || len(events) != 1 {
+		t.Fatalf("first record: %d events, err %v", len(events), err)
 	}
 
-	if got := err.Error(); !strings.Contains(got, "call.record.mutated") {
-		t.Fatalf("conflict code missing from %q", got)
+	state := foldAll(t, events)
+
+	grown := obs
+	grown.DurationSecs = 99
+	grown.Transcript = []TranscriptTurn{{Role: "user", Text: "one more thing"}}
+
+	corrections, err := Record(grown, sid)(state, 1)
+	if err != nil {
+		t.Fatalf("changed observation must correct, got %v", err)
+	}
+
+	if len(corrections) != 1 || corrections[0].Type() != EventCorrected {
+		t.Fatalf("want one call.corrected event, got %v", corrections)
+	}
+
+	corrected := foldAll(t, corrections)
+	if corrected.ContentHash != grown.ContentHash() {
+		t.Fatalf("corrected state hash = %q, want grown %q", corrected.ContentHash, grown.ContentHash())
+	}
+
+	if corrected.Current.DurationSecs != 99 {
+		t.Fatalf("corrected state must hold the new snapshot: %+v", corrected.Current)
+	}
+}
+
+func TestCorrectionCarriesEnrichmentForward(t *testing.T) {
+	obs := validObservation()
+	sid := mustSID(t, obs)
+	enr := Enrichment{CostMicros: 4200, CostCurrency: "USD"}
+
+	state := foldAll(t, mustEvents(t, Record(obs, sid)(CallState{}, 0)))
+	state = foldAll(t, mustEvents(t, Enrich(obs, enr, sid)(state, 1)))
+	if state.CurrentEnrichment != enr {
+		t.Fatalf("enriched state must hold enrichment: %+v", state.CurrentEnrichment)
+	}
+
+	grown := obs
+	grown.DurationSecs = 120
+
+	corrections, err := Record(grown, sid)(state, 2)
+	if err != nil || len(corrections) != 1 {
+		t.Fatalf("correction after enrichment: %d events, err %v", len(corrections), err)
+	}
+
+	var payload CallCorrected
+	if err := json.Unmarshal(mustPayload(t, corrections[0]), &payload); err != nil {
+		t.Fatal(err)
+	}
+
+	if payload.Enrichment != enr {
+		t.Fatalf("correction must carry enrichment forward, got %+v", payload.Enrichment)
+	}
+}
+
+func TestEnrichIdempotentAndOrdered(t *testing.T) {
+	obs := validObservation()
+	sid := mustSID(t, obs)
+	enr := Enrichment{InsightSummary: "caller asked about eggs"}
+
+	if _, err := Enrich(obs, enr, sid)(CallState{}, 0); err == nil {
+		t.Fatal("enrich before observed must reject")
+	}
+
+	state := foldAll(t, mustEvents(t, Record(obs, sid)(CallState{}, 0)))
+
+	events, err := Enrich(obs, enr, sid)(state, 1)
+	if err != nil || len(events) != 1 || events[0].Type() != EventEnriched {
+		t.Fatalf("enrich: %d events, err %v", len(events), err)
+	}
+
+	enriched := foldAll(t, events)
+	if enriched.EnrichHash != enr.Hash() || enriched.CurrentEnrichment != enr {
+		t.Fatalf("enriched state wrong: %+v", enriched)
+	}
+
+	replay, err := Enrich(obs, enr, sid)(enriched, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(replay) != 0 {
+		t.Fatalf("enrichment replay must emit 0 events, got %d", len(replay))
 	}
 }
 
@@ -181,4 +259,45 @@ func mustSID(t *testing.T, obs Observation) id.StreamID {
 	}
 
 	return sid
+}
+
+func mustEvents(t *testing.T, events []event.Event, err error) []event.Event {
+	t.Helper()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return events
+}
+
+func foldAll(t *testing.T, events []event.Event) CallState {
+	t.Helper()
+
+	state := CallState{}
+	for _, evt := range events {
+		var err error
+		state, err = Apply(state, evt)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	return state
+}
+
+func mustPayload(t *testing.T, evt event.Event) []byte {
+	t.Helper()
+
+	var payload any = evt.Payload()
+	switch p := payload.(type) {
+	case []byte:
+		return p
+	default:
+		b, err := json.Marshal(payload)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		return b
+	}
 }
