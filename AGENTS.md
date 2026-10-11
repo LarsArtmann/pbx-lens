@@ -195,7 +195,12 @@ nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.su
   fetches), which is impossible in the hermetic sandbox — hence
   `doCheck = false` on the vendored build (the tool is exercised for real on
   every run against this repo). Bump the rev deliberately; expect two hash
-  iterations (src + vendor).
+  iterations (src + vendor). PAID FOR 2026-10-11: an earlier session pasted
+  the pbx-lens module vendor hash (vendorHash.nix's value) into BOTH cqrs-lint
+  pins — the devShell only kept working from nix's positive cache until a
+  rebuild exposed the mismatch. The three hashes (cqrs-lint src, cqrs-lint
+  vendor, vendorHash.nix) are independent; fix a devShell FOD failure by
+  reading the `got:` hash from the error, not by copying from vendorHash.nix.
 - **This machine's global git config sets `core.hooksPath=.githooks`**, so
   git-hooks.nix's treefmt hook can never auto-install here (first
   `nix develop` prints pre-commit's "Cowardly refusing" once, then skips
