@@ -111,12 +111,22 @@ func Projection() ([]system.ProjectionDeclaration, *projectionadapter.TypeDecode
 				return e.ID, ViewFrom(e.Payload.Observation, e.Payload.Enrichment)
 			},
 		),
+		// The retirement tombstone removes the view row; the stream's earlier
+		// events stay in the store, but the create folds only run on replay of
+		// those older events, after which the tombstone (last in the stream)
+		// removes the row again. Replays converge to the same purged state.
+		metaengine.OnRecordTyped(
+			string(EventRetired),
+			CallRetired{},
+			metaengine.Remove[CallView](),
+		),
 	)
 
 	decoder := projectionadapter.NewTypeDecoder(
 		projectionadapter.Register(EventObserved, CallObserved{}),
 		projectionadapter.Register(EventCorrected, CallCorrected{}),
 		projectionadapter.Register(EventEnriched, CallEnriched{}),
+		projectionadapter.Register(EventRetired, CallRetired{}),
 	)
 
 	return []system.ProjectionDeclaration{system.RawQuery(query)}, decoder

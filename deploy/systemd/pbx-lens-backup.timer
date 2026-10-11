@@ -1,0 +1,19 @@
+# pbx-lens backup staging timer — DRAFT (T14).
+
+# Nightly at 02:15 (off-peak; the snapshot is safe against a live serve
+# anyway, but schedules still deserve quiet hours). Persistent=true catches
+# up after downtime — an offline machine still gets its snapshot on boot.
+
+# This is the DEPLOY DRAFT the thin NixOS module (sibling repo
+# nix-international-telephony) translates into module options.
+
+[Unit]
+Description=pbx-lens — nightly index snapshot staging schedule
+
+[Timer]
+OnCalendar=*-*-* 02:15:00
+RandomizedDelaySec=10m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

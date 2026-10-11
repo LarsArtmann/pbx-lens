@@ -1,0 +1,45 @@
+# pbx-lens backup staging unit — DRAFT (T14).
+
+# Nightly staging companion to pbx-lens.service: stages one verified,
+# consistent sqlite snapshot (VACUUM INTO — safe while serve keeps writing)
+# for the host's backup tool to pick up. This is STAGING, not the archive:
+# retention and off-host shipping belong to the host backup system
+# (borg/restic/...), which should include /var/lib/pbx-lens/backups/.
+
+# This is the DEPLOY DRAFT the thin NixOS module (sibling repo
+# nix-international-telephony) translates into module options. Nothing here
+# is installed by this repo — pbx-lens ships the binary, the sibling owns
+# the service module.
+
+[Unit]
+Description=pbx-lens — nightly index snapshot staging (T14)
+
+[Service]
+Type=oneshot
+DynamicUser=yes
+StateDirectory=pbx-lens
+StateDirectoryMode=0750
+# Same StateDirectory as pbx-lens.service: systemd assigns both units the
+# same dynamic user, so this unit may read index.db and stage into backups/.
+ExecStart=/usr/bin/env pbx-lens backup \
+  -db /var/lib/pbx-lens/index.db \
+  -out /var/lib/pbx-lens/backups/index.db
+
+# Hardening mirrors pbx-lens.service; a snapshot run needs no network,
+# no devices, and nothing outside the state directory.
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=

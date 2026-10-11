@@ -19,9 +19,11 @@ const (
 	EventObserved  = event.Type("call.observed")
 	EventCorrected = event.Type("call.corrected")
 	EventEnriched  = event.Type("call.enriched")
+	EventRetired   = event.Type("call.retired")
 
 	CommandRecord = command.Type("call.record")
 	CommandEnrich = command.Type("call.enrich")
+	CommandRetire = command.Type("call.retire")
 )
 
 const StreamType = "Call"
@@ -211,6 +213,15 @@ type CallEnriched struct {
 	Enrichment
 }
 
+// CallRetired is the retention tombstone: it removes the call from the read
+// model (every list, search, export, and dashboard surface) while the stream
+// itself stays append-only in the event store. The payload carries no call
+// data, only why: the audit answer lives in the stream id, and a tombstone
+// must not re-introduce the PII it is retiring.
+type CallRetired struct {
+	Reason string `json:"reason"`
+}
+
 // Enrichment is derived data attached to a call after the fact: Telnyx
 // Detail Records cost and AI conversation insights. Fields are zero when the
 // source has not produced them yet; the hash covers the value fields only,
@@ -289,6 +300,8 @@ func NewEnrichCommand(obs Observation, enr Enrichment) (EnrichCallCmd, error) {
 
 type CallState struct {
 	Observed          bool
+	Retired           bool
+	RetireReason      string
 	ContentHash       string
 	EnrichHash        string
 	Current           Observation
@@ -335,6 +348,17 @@ func Apply(state CallState, evt event.Event) (CallState, error) {
 		state.Current = p.Observation
 		state.CurrentEnrichment = p.Enrichment
 		state.EnrichHash = p.Hash()
+
+		return state, nil
+
+	case EventRetired:
+		p, err := event.DecodePayloadAuto[CallRetired](evt)
+		if err != nil {
+			return state, err
+		}
+
+		state.Retired = true
+		state.RetireReason = p.Reason
 
 		return state, nil
 
@@ -422,4 +446,70 @@ func Enrich(obs Observation, enr Enrichment, streamID id.StreamID) decider.Decid
 
 		return []event.Event{evt}, nil
 	}
+}
+
+// Retire applies a retention decision: the call leaves every read surface
+// while the stream keeps its append-only audit trail. Retiring an
+// unobserved stream rejects (nothing exists to retire) and re-retiring is
+// an idempotent no-op, so a purge interrupted midway can safely rerun.
+func Retire(reason string, streamID id.StreamID) decider.DecideFunc[CallState] {
+	return func(state CallState, v event.Version) ([]event.Event, error) {
+		if !state.Observed {
+			return nil, errorfamily.NewRejection(
+				"call.retire.before_observed",
+				fmt.Sprintf("stream %s has no observation to retire", streamID),
+			)
+		}
+
+		if state.Retired {
+			return nil, nil
+		}
+
+		evt, err := event.New(
+			EventRetired,
+			streamID,
+			StreamType,
+			v.Increment(),
+			CallRetired{Reason: reason},
+			event.WithSchemaVersion(1),
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		return []event.Event{evt}, nil
+	}
+}
+
+type RetireCallCmd struct {
+	*command.BasicCommand
+
+	Kind     SourceKind
+	NativeID NativeID
+}
+
+// NewRetireCommand addresses the call by stream identity alone: a purge runs
+// from read-model rows, and requiring a full observation would couple the
+// retention job to the source's current snapshot shape.
+func NewRetireCommand(kind SourceKind, nativeID NativeID, reason string) (RetireCallCmd, error) {
+	if reason == "" {
+		return RetireCallCmd{}, errorfamily.NewRejection(
+			"call.retire.empty_reason",
+			"a retirement needs a policy reason for the audit trail",
+		)
+	}
+
+	obs := Observation{NativeID: nativeID, Kind: kind}
+
+	sid, err := obs.StreamID()
+	if err != nil {
+		return RetireCallCmd{}, err
+	}
+
+	bc, err := command.New(CommandRetire, sid)
+	if err != nil {
+		return RetireCallCmd{}, err
+	}
+
+	return RetireCallCmd{BasicCommand: bc, Kind: kind, NativeID: nativeID}, nil
 }

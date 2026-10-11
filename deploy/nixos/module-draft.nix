@@ -79,6 +79,24 @@ in
       default = null;
       description = "Agent transcripts dir re-scanned every poll.";
     };
+
+    backup = {
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = ''
+          Stage one verified index snapshot nightly (T14). This is staging
+          only: the host backup tool owns retention and off-host shipping
+          and must include "/var/lib/pbx-lens/backups".
+        '';
+      };
+
+      calendar = lib.mkOption {
+        type = lib.types.str;
+        default = "*-*-* 02:15:00";
+        description = "OnCalendar schedule for the snapshot staging timer.";
+      };
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -132,6 +150,41 @@ in
           "AF_INET6"
         ];
         MemoryDenyWriteExecute = true;
+      };
+    };
+
+    systemd.services.pbx-lens-backup = lib.mkIf cfg.backup.enable {
+      description = "pbx-lens — nightly index snapshot staging (T14)";
+      serviceConfig = {
+        Type = "oneshot";
+        DynamicUser = true;
+        # Same StateDirectory as pbx-lens.service: both units share the
+        # dynamic user, so this one may read index.db and stage into backups/.
+        StateDirectory = "pbx-lens";
+        StateDirectoryMode = "0750";
+        ExecStart = lib.concatStringsSep " " [
+          (lib.getExe cfg.package)
+          "backup"
+          "-db ${cfg.stateDir}/index.db"
+          "-out ${cfg.stateDir}/backups/index.db"
+        ];
+        NoNewPrivileges = true;
+        ProtectSystem = "strict";
+        ProtectHome = true;
+        PrivateTmp = true;
+        PrivateDevices = true;
+        RestrictAddressFamilies = [ "AF_UNIX" ];
+        MemoryDenyWriteExecute = true;
+      };
+    };
+
+    systemd.timers.pbx-lens-backup = lib.mkIf cfg.backup.enable {
+      description = "pbx-lens — nightly index snapshot staging schedule";
+      wantedBy = [ "timers.target" ];
+      timerConfig = {
+        OnCalendar = cfg.backup.calendar;
+        RandomizedDelaySec = "10m";
+        Persistent = true;
       };
     };
   };

@@ -29,7 +29,7 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 	}
 
 	domain := system.DomainConfig{
-		Events: []event.Type{calls.EventObserved, calls.EventCorrected, calls.EventEnriched},
+		Events: []event.Type{calls.EventObserved, calls.EventCorrected, calls.EventEnriched, calls.EventRetired},
 		Commands: func(sys *system.System) {
 			mustRegister(system.RegisterDecider(sys, calls.StreamType, decider.Decider[calls.CallState]{
 				Initial: calls.CallState{},
@@ -53,6 +53,21 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 						cmd.StreamID(),
 						calls.StreamType,
 						calls.Enrich(cmd.Observation, cmd.Enrichment, cmd.StreamID()),
+					)
+				}))
+
+			mustRegister(system.RegisterCommand[calls.RetireCallCmd, calls.CallState](sys, calls.CommandRetire,
+				func(cmdCtx context.Context, cmd calls.RetireCallCmd) system.Op[calls.CallState] {
+					sid, sidErr := calls.Observation{NativeID: cmd.NativeID, Kind: cmd.Kind}.StreamID()
+					if sidErr != nil {
+						return system.Op[calls.CallState]{}, sidErr
+					}
+
+					return system.Execute(
+						cmdCtx,
+						sid,
+						calls.StreamType,
+						calls.Retire(retireReason(cmd), sid),
 					)
 				}))
 		},

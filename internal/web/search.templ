@@ -14,12 +14,12 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 			Title:    "Search",
 			Subtitle: "Find any conversation by content",
 		})
-		<form method="get" action="/search" class="mb-6 flex max-w-xl gap-2">
+		<form method="get" action="/search" class="mb-2 flex max-w-xl gap-2">
 			<input
 				type="search"
 				name="q"
 				value={ query }
-				placeholder="e.g. woolly invoice"
+				placeholder="e.g. woolly invoice or +17287289311"
 				aria-label="Search transcripts"
 				class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
 			/>
@@ -30,6 +30,11 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 				Search
 			</button>
 		</form>
+		<p class="mb-6 max-w-xl text-xs text-gray-500 dark:text-gray-400">
+			Matches transcript words and whole phone numbers (+…). Partial numbers
+			never match — the index tokenizes a number as one word, so search the
+			full +number or filter the list instead.
+		</p>
 		if errMessage != "" {
 			@feedback.Alert(feedback.AlertProps{
 				Type:    feedback.FeedbackWarning,
