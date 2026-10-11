@@ -109,6 +109,24 @@
               deadnix.enable = true;
               statix.enable = true;
             };
+            # treefmt-nix's templ program wraps templ with pkgs.go — the
+            # nixpkgs DEFAULT go (1.26.8 at this lock), older than this
+            # repo's go.mod floor (1.27.1). templ fmt shells out to that go
+            # for import processing, so the sandboxed pre-commit check
+            # tries a forbidden toolchain download and the format fails.
+            # Wrap with OUR resolved go instead. Upstream fix pending in
+            # go-nix-helpers: the templ formatter should use the module's
+            # goPkg when enableTempl.
+            settings.formatter.templ.command = lib.mkForce (
+              pkgs.writeShellApplication {
+                name = "templ";
+                runtimeInputs = [
+                  go
+                  pkgs.templ
+                ];
+                text = ''exec templ "$@"'';
+              }
+            );
           };
 
           pre-commit.settings = {
