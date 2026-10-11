@@ -3,6 +3,7 @@ package app_test
 import (
 	"context"
 	"path/filepath"
+	"reflect"
 	"testing"
 	"time"
 
@@ -113,7 +114,7 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 	startProjections(t, ctx, sys2)
 
 	replayed := awaitView(t, ctx, sys2, cmd.StreamID().String())
-	if replayed != view {
+	if !reflect.DeepEqual(replayed, view) {
 		t.Fatalf("replayed view differs:\n got %+v\nwant %+v", replayed, view)
 	}
 }

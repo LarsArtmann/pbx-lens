@@ -1,11 +1,12 @@
 package calls
 
 import (
-	"encoding/json"
+
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/decider/v4"
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
 )
@@ -152,8 +153,8 @@ func TestCorrectionCarriesEnrichmentForward(t *testing.T) {
 	sid := mustSID(t, obs)
 	enr := Enrichment{CostMicros: 4200, CostCurrency: "USD"}
 
-	state := foldAll(t, mustEvents(t, Record(obs, sid)(CallState{}, 0)))
-	state = foldAll(t, mustEvents(t, Enrich(obs, enr, sid)(state, 1)))
+	state := foldAll(t, decide(t, Record(obs, sid), CallState{}, 0))
+	state = foldAll(t, decide(t, Enrich(obs, enr, sid), state, 1))
 	if state.CurrentEnrichment != enr {
 		t.Fatalf("enriched state must hold enrichment: %+v", state.CurrentEnrichment)
 	}
@@ -161,13 +162,13 @@ func TestCorrectionCarriesEnrichmentForward(t *testing.T) {
 	grown := obs
 	grown.DurationSecs = 120
 
-	corrections, err := Record(grown, sid)(state, 2)
-	if err != nil || len(corrections) != 1 {
-		t.Fatalf("correction after enrichment: %d events, err %v", len(corrections), err)
+	corrections := decide(t, Record(grown, sid), state, 2)
+	if len(corrections) != 1 {
+		t.Fatalf("correction after enrichment: %d events", len(corrections))
 	}
 
-	var payload CallCorrected
-	if err := json.Unmarshal(mustPayload(t, corrections[0]), &payload); err != nil {
+	payload, err := event.DecodePayloadAuto[CallCorrected](corrections[0])
+	if err != nil {
 		t.Fatal(err)
 	}
 
@@ -185,11 +186,11 @@ func TestEnrichIdempotentAndOrdered(t *testing.T) {
 		t.Fatal("enrich before observed must reject")
 	}
 
-	state := foldAll(t, mustEvents(t, Record(obs, sid)(CallState{}, 0)))
+	state := foldAll(t, decide(t, Record(obs, sid), CallState{}, 0))
 
-	events, err := Enrich(obs, enr, sid)(state, 1)
-	if err != nil || len(events) != 1 || events[0].Type() != EventEnriched {
-		t.Fatalf("enrich: %d events, err %v", len(events), err)
+	events := decide(t, Enrich(obs, enr, sid), state, 1)
+	if len(events) != 1 || events[0].Type() != EventEnriched {
+		t.Fatalf("enrich: %d events", len(events))
 	}
 
 	enriched := foldAll(t, events)
@@ -197,11 +198,7 @@ func TestEnrichIdempotentAndOrdered(t *testing.T) {
 		t.Fatalf("enriched state wrong: %+v", enriched)
 	}
 
-	replay, err := Enrich(obs, enr, sid)(enriched, 2)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	replay := decide(t, Enrich(obs, enr, sid), enriched, 2)
 	if len(replay) != 0 {
 		t.Fatalf("enrichment replay must emit 0 events, got %d", len(replay))
 	}
@@ -270,6 +267,22 @@ func mustEvents(t *testing.T, events []event.Event, err error) []event.Event {
 	return events
 }
 
+func decide(
+	t *testing.T,
+	fn decider.DecideFunc[CallState],
+	s CallState,
+	v event.Version,
+) []event.Event {
+	t.Helper()
+
+	events, err := fn(s, v)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return events
+}
+
 func foldAll(t *testing.T, events []event.Event) CallState {
 	t.Helper()
 
@@ -285,19 +298,3 @@ func foldAll(t *testing.T, events []event.Event) CallState {
 	return state
 }
 
-func mustPayload(t *testing.T, evt event.Event) []byte {
-	t.Helper()
-
-	var payload any = evt.Payload()
-	switch p := payload.(type) {
-	case []byte:
-		return p
-	default:
-		b, err := json.Marshal(payload)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		return b
-	}
-}

@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"strings"
 	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/pbx-lens/internal/wire"
 )
 
 const (
@@ -43,31 +43,10 @@ type ListOptions struct {
 	Limit int
 }
 
-type FlexTime struct {
-	time.Time
-}
-
-func (t *FlexTime) UnmarshalJSON(b []byte) error {
-	s := strings.Trim(string(b), `"`)
-	if s == "null" || s == "" {
-		return nil
-	}
-
-	for _, layout := range []string{time.RFC3339Nano, "2006-01-02T15:04:05"} {
-		if pt, err := time.Parse(layout, s); err == nil {
-			t.Time = pt
-
-			return nil
-		}
-	}
-
-	return fmt.Errorf("unparseable timestamp %q", s)
-}
-
 type Conversation struct {
 	ID            string         `json:"id"`
-	CreatedAt     FlexTime       `json:"created_at"`
-	LastMessageAt FlexTime       `json:"last_message_at"`
+	CreatedAt     wire.FlexTime  `json:"created_at"`
+	LastMessageAt wire.FlexTime  `json:"last_message_at"`
 	Name          string         `json:"name"`
 	Metadata      map[string]any `json:"metadata"`
 }
@@ -79,10 +58,10 @@ func (c Conversation) MetadataString(key string) string {
 }
 
 type Message struct {
-	Role      string   `json:"role"`
-	Text      string   `json:"text"`
-	CreatedAt FlexTime `json:"created_at"`
-	SentAt    FlexTime `json:"sent_at"`
+	Role      string       `json:"role"`
+	Text      string       `json:"text"`
+	CreatedAt wire.FlexTime `json:"created_at"`
+	SentAt    wire.FlexTime `json:"sent_at"`
 }
 
 type DownloadURLs struct {
@@ -91,17 +70,17 @@ type DownloadURLs struct {
 }
 
 type Recording struct {
-	ID                 string       `json:"id"`
-	CallControlID      string       `json:"call_control_id"`
-	Channels           string       `json:"channels"`
-	CreatedAt          FlexTime     `json:"created_at"`
-	DownloadURLs       DownloadURLs `json:"download_urls"`
-	DurationMillis     int          `json:"duration_millis"`
-	RecordingStartedAt FlexTime     `json:"recording_started_at"`
-	RecordingEndedAt   FlexTime     `json:"recording_ended_at"`
-	From               string       `json:"from"`
-	To                 string       `json:"to"`
-	Status             string       `json:"status"`
+	ID                 string        `json:"id"`
+	CallControlID      string        `json:"call_control_id"`
+	Channels           string        `json:"channels"`
+	CreatedAt          wire.FlexTime `json:"created_at"`
+	DownloadURLs       DownloadURLs  `json:"download_urls"`
+	DurationMillis     int           `json:"duration_millis"`
+	RecordingStartedAt wire.FlexTime `json:"recording_started_at"`
+	RecordingEndedAt   wire.FlexTime `json:"recording_ended_at"`
+	From               string        `json:"from"`
+	To                 string        `json:"to"`
+	Status             string        `json:"status"`
 }
 
 func (c *Client) ListConversations(ctx context.Context, opts ListOptions) ([]Conversation, error) {
