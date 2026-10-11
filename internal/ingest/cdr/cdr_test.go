@@ -114,3 +114,40 @@ func TestParseStreamIDsDeterministic(t *testing.T) {
 		}
 	}
 }
+
+const fixtureAIDest = `"John Doe","+17287289311","9100","public","2026-10-09 21:30:00","2026-10-09 21:30:02","2026-10-09 21:30:20","18","16","NORMAL_CLEARING","ddddeeee-ffff-4aaa-9aaa-000000000009","b0a9-3333",""`
+
+const fixtureHumanDest = `"John Doe","+17287289311","17287289311","public","2026-10-09 21:31:00","2026-10-09 21:31:02","2026-10-09 21:31:20","18","16","NORMAL_CLEARING","ddddeeee-ffff-4aaa-9aaa-000000000010","b0a9-4444",""`
+
+func TestParseAIBadgeByDestination(t *testing.T) {
+	t.Parallel()
+
+	defaults, err := Parse(strings.NewReader(fixtureAIDest))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(defaults.Observations) != 1 || !defaults.Observations[0].IsAI {
+		t.Fatalf("destination 9100 should badge AI by default: %+v", defaults.Observations)
+	}
+
+	human, err := Parse(strings.NewReader(fixtureHumanDest))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(human.Observations) != 1 || human.Observations[0].IsAI {
+		t.Fatalf("non-AI destination must not badge: %+v", human.Observations)
+	}
+
+	custom, err := ParseWithOptions(strings.NewReader(fixtureHumanDest), ParseOptions{
+		AIDestinations: ParseAIDestinations("17287289311, +1999"),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(custom.Observations) != 1 || !custom.Observations[0].IsAI {
+		t.Fatalf("custom -ai-dest should badge the listed destination: %+v", custom.Observations)
+	}
+}

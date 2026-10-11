@@ -183,7 +183,7 @@ func zip(names, values []string) map[string]string {
 	return m
 }
 
-func observation(shape map[string]string) (calls.Observation, error) {
+func observation(shape map[string]string, opts ParseOptions) (calls.Observation, error) {
 	started, err := time.Parse(stampLayout, shape["start_stamp"])
 	if err != nil {
 		return calls.Observation{}, fmt.Errorf("start_stamp %q: %w", shape["start_stamp"], err)
@@ -200,6 +200,7 @@ func observation(shape map[string]string) (calls.Observation, error) {
 		FromNumber:   shape["caller_id_number"],
 		ToNumber:     shape["destination_number"],
 		HangupCause:  shape["hangup_cause"],
+		IsAI:         opts.isAI(shape["destination_number"]),
 	}
 
 	return obs, obs.Validate()

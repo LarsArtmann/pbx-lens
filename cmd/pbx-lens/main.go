@@ -49,6 +49,8 @@ func main() {
 		ingestTelnyx(os.Args[minArgs:])
 	case "ingest-webhook":
 		ingestWebhook(os.Args[minArgs:])
+	case "ingest-agent":
+		ingestAgent(os.Args[minArgs:])
 	default:
 		usage()
 		os.Exit(exitUsage)
@@ -60,13 +62,16 @@ func usage() {
 		os.Stderr,
 		"usage: pbx-lens version | pbx-lens smoke [-db path] | pbx-lens ingest-cdr -db <dsn> <Master.csv> |"+
 			" pbx-lens ingest-telnyx -db <dsn> [-key-file path] [-since 48h] [-direction outbound] [-limit N] |"+
-			" pbx-lens ingest-webhook -db <dsn> <inbound.jsonl>",
+			" pbx-lens ingest-webhook -db <dsn> <inbound.jsonl> |"+
+			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts",
 	)
 }
 
 func ingestCDR(args []string) {
 	fs := flag.NewFlagSet("ingest-cdr", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
+	aiDest := fs.String("ai-dest", cdr.DefaultAIDestination,
+		"comma-separated AI destinations (dialplan badge): destination_number matches badge IsAI")
 	_ = fs.Parse(args)
 
 	if *db == "" {
@@ -82,7 +87,7 @@ func ingestCDR(args []string) {
 		fatal(err)
 	}
 
-	parsed, err := cdr.Parse(file)
+	parsed, err := cdr.ParseWithOptions(file, cdr.ParseOptions{AIDestinations: cdr.ParseAIDestinations(*aiDest)})
 	closeErr := file.Close()
 
 	if err != nil {
@@ -235,6 +240,47 @@ func ingestWebhook(args []string) {
 	fmt.Printf(
 		"ingest-webhook: %d calls aggregated, %d lines skipped, %d recorded, %d corrected, %d rejected\n",
 			stats.Total, parsed.Skipped, stats.Recorded, stats.Corrected, len(stats.Rejected),
+	)
+
+	printRejected(stats.Rejected)
+}
+
+func ingestAgent(args []string) {
+	fs := flag.NewFlagSet("ingest-agent", flag.ExitOnError)
+	db := fs.String("db", "", "sqlite DSN (required)")
+	dir := fs.String("dir", "/var/lib/telephony/recordings/transcripts", "transcripts directory ({call-uuid}.jsonl files)")
+	_ = fs.Parse(args)
+
+	if *db == "" {
+		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-agent needs -db <dsn>"))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
+	defer cancel()
+
+	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	if err != nil {
+		fatal(err)
+	}
+
+	defer cleanup()
+
+	observations, rejects, err := cli.FetchAgentObservations(ctx, sys, *dir)
+	if err != nil {
+		fatal(err)
+	}
+
+	stats := cli.Ingest(ctx, sys, observations)
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		fatal(err)
+	}
+
+	stats.Rejected = append(rejects, stats.Rejected...)
+
+	fmt.Printf(
+		"ingest-agent: %d transcripts ingested, %d recorded, %d corrected, %d rejected\n",
+			len(observations), stats.Recorded, stats.Corrected, len(stats.Rejected),
 	)
 
 	printRejected(stats.Rejected)
