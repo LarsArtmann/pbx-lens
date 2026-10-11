@@ -1,31 +1,18 @@
+// Package web serves the pbx-lens UI: a read-only surface over the
+// call_views read model. Every route is a query; the index DB stays
+// disposable and no source ever sees a write from here.
 package web
 
 import (
-	"github.com/larsartmann/templ-components/htmx"
 	"github.com/larsartmann/templ-components/layout"
-	"github.com/larsartmann/templ-components/navigation"
 )
 
 // shell is the shared page frame: nav, theme toggle, htmx error handling.
 templ shell(title string, currentPath string) {
 	@layout.Base(pageProps(title)) {
-		@navigation.SimpleNav(navigation.SimpleNavProps{
-			BrandText:  "pbx-lens",
-			Links:      navLinks(),
-			RightItems: layout.ThemeToggle("Toggle theme", ""),
-			CurrentPath: currentPath,
-		})
+		@nav(currentPath)
 		<main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
 			{ children... }
 		</main>
-		@htmx.GlobalErrorHandling(htmx.DefaultErrorHandlingConfig())
-	}
-}
-
-func navLinks() []navigation.NavLinkProps {
-	return []navigation.NavLinkProps{
-		{Href: "/", Text: "Calls"},
-		{Href: "/search", Text: "Search"},
-		{Href: "/dashboard", Text: "Dashboard"},
 	}
 }
