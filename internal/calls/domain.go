@@ -103,6 +103,12 @@ type Observation struct {
 	TranscriptExcerpt string           `json:"transcript_excerpt"`
 	Transcript        []TranscriptTurn `json:"transcript,omitempty"`
 	RecordingRef      string           `json:"recording_ref"`
+
+	// MOS is the call's Mean Opinion Score when the source reports one
+	// (FreeSWITCH CDR rtp_audio_in_mos). Zero means "not reported" and is
+	// omitted from both JSON and ContentHash, so sources without MOS keep
+	// their historical hashes.
+	MOS float64 `json:"mos,omitempty"`
 }
 
 func (o Observation) Validate() error {
