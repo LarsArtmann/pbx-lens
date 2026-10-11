@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -562,5 +563,145 @@ func TestRecordingByCallControl(t *testing.T) {
 
 	if _, ok := RecordingByCallControl(recs, "v3:missing"); ok {
 		t.Fatal("missing call control id must not match")
+	}
+}
+
+func TestDetailRecordsSendsRequiredFilter(t *testing.T) {
+	var gotQuery url.Values
+
+	c, _ := testServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/detail_records" {
+			t.Fatalf("path: %s", r.URL.Path)
+		}
+
+		gotQuery = r.URL.Query()
+		writeJSON(t, w, map[string]any{"data": []map[string]any{}})
+	})
+
+	since := time.Unix(1700000000, 0).UTC()
+
+	recs, err := c.DetailRecords(context.Background(), since)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if recs != nil {
+		t.Fatalf("empty page must decode to nothing: %+v", recs)
+	}
+
+	if got := gotQuery.Get("filter[record_type]"); got != "call-control" {
+		t.Fatalf("record_type filter = %q, want call-control", got)
+	}
+
+	if got := gotQuery.Get("filter[started_at][gte]"); got != since.Format(time.RFC3339) {
+		t.Fatalf("started_at gte = %q, want %q", got, since.Format(time.RFC3339))
+	}
+
+	if got := gotQuery.Get("page[size]"); got != "50" {
+		t.Fatalf("detail records page size = %q, want the endpoint max 50", got)
+	}
+}
+
+func TestDetailRecordDecodesTolerantly(t *testing.T) {
+	// The public spec publishes no call-control record shape, so the decode
+	// must accept both id spellings, both call-control id spellings, and
+	// cost as string or number (unverified live — fixtures document the
+	// tolerance contract).
+	tests := []struct {
+		name string
+		body string
+		want DetailRecord
+	}{
+		{
+			name: "documented shape: id + call_control_id + string cost",
+			body: `{"id":"dr-1","call_control_id":"v3:a:1","cost":"0.002","currency":"USD","started_at":"2026-10-09T19:50:03Z"}`,
+			want: DetailRecord{ID: "dr-1", CallControlID: "v3:a:1", Cost: "0.002", Currency: "USD", StartedAt: wire.FlexTime{Time: time.Date(2026, 10, 9, 19, 50, 3, 0, time.UTC)}},
+		},
+		{
+			name: "webrtc-doc shape: uuid + telnyx_call_control_id",
+			body: `{"uuid":"dr-2","telnyx_call_control_id":"v3:b:2","cost":"0.002","currency":"USD","started_at":"2026-10-09T19:50:03Z"}`,
+			want: DetailRecord{ID: "dr-2", CallControlID: "v3:b:2", Cost: "0.002", Currency: "USD", StartedAt: wire.FlexTime{Time: time.Date(2026, 10, 9, 19, 50, 3, 0, time.UTC)}},
+		},
+		{
+			name: "numeric cost",
+			body: `{"id":"dr-3","call_control_id":"v3:c:3","cost":0.0031,"currency":"USD"}`,
+			want: DetailRecord{ID: "dr-3", CallControlID: "v3:c:3", Cost: "0.0031", Currency: "USD"},
+		},
+		{
+			name: "missing everything optional",
+			body: `{"id":"dr-4"}`,
+			want: DetailRecord{ID: "dr-4"},
+		},
+	}
+
+	for _, test := range tests {
+		var got DetailRecord
+		if err := json.Unmarshal([]byte(test.body), &got); err != nil {
+			t.Fatalf("%s: decode: %v", test.name, err)
+		}
+
+		if got.ID != test.want.ID || got.CallControlID != test.want.CallControlID ||
+			got.Cost != test.want.Cost || got.Currency != test.want.Currency ||
+			!got.StartedAt.Equal(test.want.StartedAt.Time) {
+			t.Errorf("%s: got %+v, want %+v", test.name, got, test.want)
+		}
+	}
+}
+
+func TestDetailRecordByCallControl(t *testing.T) {
+	recs := []DetailRecord{
+		{ID: "dr-a", CallControlID: "v3:one"},
+		{ID: "dr-b", CallControlID: "v3:two"},
+	}
+
+	got, ok := DetailRecordByCallControl(recs, "v3:one")
+	if !ok || got.ID != "dr-a" {
+		t.Fatalf("match wrong: %t %+v", ok, got)
+	}
+
+	if _, ok := DetailRecordByCallControl(recs, "v3:missing"); ok {
+		t.Fatal("missing call control id must not match")
+	}
+}
+
+func TestConversationInsightsPathAndShape(t *testing.T) {
+	c, _ := testServer(t, func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/ai/conversations/conv-7/conversations-insights" {
+			t.Fatalf("path: %s", r.URL.Path)
+		}
+
+		writeJSON(t, w, map[string]any{"data": []map[string]any{
+			{
+				"id":         "ins-1",
+				"status":     "completed",
+				"created_at": "2026-10-09T19:51:35",
+				"conversation_insights": []map[string]string{
+					{"insight_id": "tpl-summarize", "result": "Caller wanted eggs."},
+				},
+			},
+		}})
+	})
+
+	insights, err := c.ConversationInsights(context.Background(), "conv-7")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(insights) != 1 || insights[0].Status != "completed" {
+		t.Fatalf("insight row wrong: %+v", insights)
+	}
+
+	if got := InsightSummary(insights); got != "Caller wanted eggs." {
+		t.Fatalf("summary through the wire decode wrong: %q", got)
+	}
+}
+
+func TestConversationInsightsRejectsEmptyID(t *testing.T) {
+	c, _ := testServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		t.Fatal("must not hit the wire with an empty conversation id")
+	})
+
+	if _, err := c.ConversationInsights(context.Background(), ""); err == nil {
+		t.Fatal("empty conversation id must reject")
 	}
 }
