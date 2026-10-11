@@ -16,7 +16,8 @@ webphone later gets a read-only deep link, never a data dependency.
     project; zero external Go consumers — the sibling telephony repo gets a
     NixOS module, not an import) mean every candidate seam has zero
     composability payoff; the package DAG already enforces the layering.
-    Revisit triggers: a second aggregate (the E003 owner question), an
+    Revisit triggers: a second aggregate (E003 decided 2026-10-11: hold
+    flat; write/read seam pre-agreed — see the cqrs-lint policy section), an
     external Go consumer, or measurable CI cost.
   - sqliteengine (blank import registers the "sqlite" driver), pinned to the
     vetted set from go-cqrs-lite `example/getting-started/go.mod` (exact
@@ -356,11 +357,15 @@ DECISION.
   one-shot CLI processes close the system at exit; a close error there has
   no recovery path and the event log is already durable. The serve process
   owns a stricter shutdown.
-- **E003 (deliberate flat domain, OWNER QUESTION OPEN)**: `internal/calls`
+- **E003 (flat domain, DECIDED 2026-10-11: HOLD, seam pre-agreed)**: `internal/calls`
   mixes command/event/fold by design — the domain is one aggregate
   (Observation) with one projection; a split today would be ceremony, not
-  boundary. Revisit when a second aggregate or T9 (agent transcripts) lands;
-  the split-vs-policy decision stays open pending the owner's answer.
+  boundary. Owner decision: keep flat. IF a second aggregate or an external
+  Go consumer ever lands, the pre-agreed seam is write/read:
+  `internal/calls` (aggregate: Observation, commands, events, CallState,
+  Apply) vs `internal/callviews` (CallView, ViewFrom, Projection());
+  ingest+cli depend on the write half, web+search on the read half, and
+  retention legitimately spans both (scan reads → dispatch writes).
 - **F007 (superseded by domain-level idempotency)**: the middleware rule
   wants `middleware.CommandIdempotency` with a durable claim store. This
   app's idempotency is STRONGER at the domain layer: ContentHash replay
