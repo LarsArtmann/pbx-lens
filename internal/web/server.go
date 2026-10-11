@@ -153,6 +153,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !found {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
 
 		render(w, r, notFoundPage("No indexed call with that id."))

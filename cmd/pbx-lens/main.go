@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -15,6 +16,7 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/ingest/webhook"
+	"github.com/larsartmann/pbx-lens/internal/web"
 )
 
 const (
@@ -23,7 +25,9 @@ const (
 	minArgs   = 2
 	exitUsage = 2
 
+defaultAddr = "127.0.0.1:8300"
 	ingestTimeout = 5 * time.Minute
+	serveTimeout  = 5 * time.Minute
 	smokeTimeout  = 30 * time.Second
 
 	projectionDeadline     = 5 * time.Second
@@ -51,6 +55,8 @@ func main() {
 		ingestWebhook(os.Args[minArgs:])
 	case "ingest-agent":
 		ingestAgent(os.Args[minArgs:])
+	case "serve":
+		serve(os.Args[minArgs:])
 	default:
 		usage()
 		os.Exit(exitUsage)
@@ -63,7 +69,8 @@ func usage() {
 		"usage: pbx-lens version | pbx-lens smoke [-db path] | pbx-lens ingest-cdr -db <dsn> <Master.csv> |"+
 			" pbx-lens ingest-telnyx -db <dsn> [-key-file path] [-since 48h] [-direction outbound] [-limit N] |"+
 			" pbx-lens ingest-webhook -db <dsn> <inbound.jsonl> |"+
-			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts",
+			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts |"+
+			" pbx-lens serve -db <dsn> [-addr 127.0.0.1:8300]",
 	)
 }
 
@@ -356,6 +363,47 @@ func smoke(args []string) {
 		}
 
 		time.Sleep(projectionPollInterval)
+	}
+}
+
+// serve runs the read-only web UI until SIGINT/SIGTERM (appkit Run owns the
+// signal handling and the graceful drain). One drain at startup catches the
+// read model up with whatever the ingest commands left unprojected.
+func serve(args []string) {
+	fs := flag.NewFlagSet("serve", flag.ExitOnError)
+	db := fs.String("db", "", "sqlite DSN (required)")
+	addr := fs.String("addr", defaultAddr, "listen address")
+	_ = fs.Parse(args)
+
+	if *db == "" {
+		fatal(errorfamily.NewRejection("lens.cli.missing_db", "serve needs -db <dsn>"))
+	}
+
+	setupCtx, cancel := context.WithTimeout(context.Background(), serveTimeout)
+	defer cancel()
+
+	sys, cleanup, err := cli.OpenSystem(setupCtx, *db)
+	if err != nil {
+		fatal(err)
+	}
+
+	defer cleanup()
+
+	if err := cli.DrainProjections(setupCtx, sys); err != nil {
+		fatal(err)
+	}
+
+	svc, err := appkit.NewService(appkit.ServiceConfig{Addr: *addr})
+	if err != nil {
+		fatal(err)
+	}
+
+	web.Register(svc.Mux, sys)
+
+	// The serve lifetime is signal-owned (Run handles SIGINT/SIGTERM) — no
+	// timeout context here, or the server would die with it.
+	if err := svc.Run(context.Background()); err != nil {
+		fatal(err)
 	}
 }
 
