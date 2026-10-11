@@ -77,6 +77,25 @@ nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.su
 
 ## Gotchas (paid for)
 
+- **Projection record keys carry the `StreamMarker:` prefix (2026-10-11):**
+  `cmd.StreamID().String()` returns `"StreamMarker:<kind>:<native-id>"` and
+  that marker-ful string IS the call_views record key (the folds key by the
+  event record ID). Polling `reader.Get` with a hand-built
+  `"telnyx-conversation:x"` key always misses — cost ~1h of debugging that
+  looked like a flaky projection engine. Always derive keys via
+  `obs.StreamID().String()`.
+- **The projection host is a one-shot batch drainer (2026-10-11):** workers
+  drain the journal from their checkpoint, then EXIT; `Start` refuses with
+  `projectionhost.already_started` until `Stop` resets the host, and `Stop`
+  CANCELS the run ctx (it can kill a drain before it processes anything).
+  Fire-and-forget `go host.Start(ctx)` is a race (events appended after the
+  first drain exits are never projected). The correct synchronous drain —
+  `cli.DrainProjections`: idempotent `Stop` → `Start` → poll
+  `host.Status()` until every worker is `WorkerStopped` (WorkerIdle right
+  after Start means "not drained yet", NOT done) — is what every CLI
+  command and the serve poller must use after each dispatch batch. Memory
+  engine NEVER projects without a host drain (the sqlite e2e test passed
+  only because its flow coincided with a drain).
 - **metaengine fold selection:** for a full-recompute view ship
   ONLY the 2-arg create fold (`OnRecordTyped` returning `(key, view)`).
   Pairing it with a 3-arg update fold lets metaengine route the FIRST event

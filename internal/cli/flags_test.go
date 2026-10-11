@@ -60,6 +60,8 @@ func TestResolveKeyFileEmptyRejects(t *testing.T) {
 }
 
 func TestParseSince(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name    string
 		input   string

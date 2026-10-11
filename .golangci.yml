@@ -173,6 +173,13 @@ linters:
         - validate
         - mapstructure
       sort: true
+    tagliatelle:
+      case:
+        use-case: false
+        rules:
+          # Project convention: JSON wire and storage tags are snake_case
+          # (matches the deployed sqlite JSON columns and the export API).
+          json: snake
     testifylint:
       disable:
         - go-require
@@ -213,6 +220,14 @@ linters:
       max-distance: 15
       min-name-length: 2
     wrapcheck:
+      ignore-package-globs:
+        # Own packages already classify errors via errorfamily; wrapping
+        # again only buries the family code.
+        - github.com/larsartmann/pbx-lens
+        - github.com/larsartmann/pbx-lens/*
+        # The cqrs stack's constructors return fully-contextualized errors.
+        - github.com/larsartmann/go-cqrs-lite/*
+        - github.com/larsartmann/go-error-family*
       ignore-sig-regexps:
         - encoding/json
         - fmt\.
@@ -259,10 +274,22 @@ linters:
           - recvcheck
           - contextcheck
           - exhaustive
+          # Fleet precedent (go-output): table-driven stdlib tests gain
+          # nothing from t.Parallel plumbing; fixtures are long CSV/JSON
+          # literals; helper params are intentionally terse.
+          - paralleltest
+          - lll
+          - unparam
+          - varnamelen
       - path: _test\.go
         text: unused
         linters:
           - unused
+      # The CLI's product IS terminal output (fleet precedent: go-output
+      # exempts its examples/ the same way); internal/ stays print-free.
+      - path: ^cmd/
+        linters:
+          - forbidigo
     paths:
       - \.gen\.go$
       - _templ\.go$

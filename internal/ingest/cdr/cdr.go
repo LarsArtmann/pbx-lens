@@ -16,8 +16,8 @@ import (
 // fieldTemplates returns the two Master.csv column layouts FreeSWITCH
 // writes (13- and 18-column). They are values derived from the dialplan
 // template, not mutable state, so they are built per Parse call.
-func fieldTemplates() (thirteen, eighteen []string) {
-	thirteen = []string{
+func fieldTemplates() ([]string, []string) {
+	thirteen := []string{
 		"caller_id_name",
 		"caller_id_number",
 		"destination_number",
@@ -33,7 +33,7 @@ func fieldTemplates() (thirteen, eighteen []string) {
 		"accountcode",
 	}
 
-	eighteen = []string{
+	eighteen := []string{
 		"accountcode",
 		"caller_id_number",
 		"destination_number",
