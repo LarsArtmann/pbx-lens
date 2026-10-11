@@ -1,0 +1,67 @@
+# pbx-lens systemd unit draft (T7/F23, M23.1+M23.4).
+
+# This is the DEPLOY DRAFT the thin NixOS module (sibling repo
+# nix-international-telephony) translates into module options. Nothing here
+# is installed by this repo — pbx-lens ships the binary, the sibling owns
+# the service module.
+
+[Unit]
+Description=pbx-lens — unified call-history index (read-only UI)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+# appkit sends READY=1 after the listener binds and STOPPING=1 at the
+# graceful drain; WatchdogSec arms the liveness watchdog the binary feeds
+# at WatchdogSec/2. Remove WatchdogSec if you disable sd_notify.
+WatchdogSec=30
+
+DynamicUser=yes
+StateDirectory=pbx-lens
+StateDirectoryMode=0750
+
+# Secrets arrive as systemd credentials, never argv or environment:
+#   /etc/credstore/pbx-lens/telnyx-api-key   (0600, owned root)
+#   /etc/credstore/pbx-lens/htpasswd         (0600, bcrypt entries: htpasswd -B)
+# $CREDENTIALS_DIRECTORY is the per-unit mount point systemd exposes them at.
+# Drop either LoadCredential line (and its flag) when the feature is unused;
+# serve treats empty -telnyx-key-file / -htpasswd as feature-disabled.
+LoadCredential=telnyx-api-key:/etc/credstore/pbx-lens/telnyx-api-key
+LoadCredential=htpasswd:/etc/credstore/pbx-lens/htpasswd
+
+ExecStart=/usr/bin/env pbx-lens serve \
+  -db /var/lib/pbx-lens/index.db \
+  -addr 127.0.0.1:8300 \
+  -telnyx-key-file $CREDENTIALS_DIRECTORY/telnyx-api-key \
+  -htpasswd $CREDENTIALS_DIRECTORY/htpasswd \
+  -recordings-dir /var/lib/telephony/recordings \
+  -poll-every 15m \
+  -cdr-file /var/lib/telephony/cdr/Master.csv \
+  -webhook-log /var/lib/telephony/webhook/log.jsonl \
+  -transcripts-dir /var/lib/telephony/transcripts
+
+# Read-only ingest sources: the lens never writes back to any of them.
+ReadWritePaths=/var/lib/pbx-lens
+ReadOnlyPaths=/var/lib/telephony
+
+# Standard hardening (systemd-analyze security should stay ~<5).
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallArchitectures=native
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+[Install]
+WantedBy=multi-user.target

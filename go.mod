@@ -5,6 +5,7 @@ go 1.27.1
 require (
 	github.com/a-h/templ v0.3.1020
 	github.com/larsartmann/go-appkit v0.8.0
+	github.com/larsartmann/go-appkit/systemd v0.1.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.13.1
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.7.2
 	github.com/larsartmann/go-cqrs-lite/event/v4 v4.13.1
@@ -35,6 +36,7 @@ require (
 	github.com/charmbracelet/x/term v0.2.2 // indirect
 	github.com/clipperhouse/displaywidth v0.11.0 // indirect
 	github.com/clipperhouse/uax29/v2 v2.7.0 // indirect
+	github.com/coreos/go-systemd/v22 v22.7.0 // indirect
 	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.6 // indirect

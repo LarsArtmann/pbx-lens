@@ -10,6 +10,7 @@ import (
 	"time"
 
 	appkit "github.com/larsartmann/go-appkit"
+	"github.com/larsartmann/go-appkit/systemd"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/backup"
@@ -493,6 +494,12 @@ func serve(args []string) {
 	}
 
 	serviceConfig := appkit.ServiceConfig{Addr: *addr}
+
+	// sd_notify (T7/F23): READY=1 after the listener binds, STOPPING=1 at
+	// the drain, WATCHDOG keepalive while serving. A no-op outside systemd
+	// (NOTIFY_SOCKET unset), so the same binary serves localhost dev and
+	// the service manager unchanged.
+	systemd.Install(&serviceConfig)
 
 	if *htpasswdPath != "" {
 		auth, err := web.HtpasswdMiddleware(*htpasswdPath)
