@@ -65,6 +65,22 @@
         let
           inherit (pkgs) lib;
           go = pkgs.go_1_27;
+
+          # cqrs-lint is its own module (…/cmd/cqrs-lint/v4) inside the
+          # go-cqrs-lite monorepo, so the build roots there; the hash pins a
+          # master rev rather than a tag (the module has no stable tags).
+          cqrs-lint = pkgs.buildGoModule.override { go = go; } {
+            pname = "cqrs-lint";
+            version = "0.0.0-unstable-2026-10-11";
+            src = pkgs.fetchFromGitHub {
+              owner = "LarsArtmann";
+              repo = "go-cqrs-lite";
+              rev = "afaffa19105b2422ef0722f156bca6d92169c529";
+              hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            };
+            sourceRoot = "source/cmd/cqrs-lint";
+            vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          };
         in
         {
           treefmt = {
@@ -90,7 +106,9 @@
               packages = builtins.attrValues {
                 inherit go;
                 inherit (pkgs) golangci-lint gopls govulncheck;
-              };
+              } ++ [
+                cqrs-lint
+              ];
 
               GOWORK = "off";
               GOTOOLCHAIN = "local";
