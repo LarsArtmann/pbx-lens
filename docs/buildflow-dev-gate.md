@@ -54,12 +54,12 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   (invalid for the installed golangci-lint schema; `golangci-lint-config-verify`
   rejected it and the runner terminated with "configuration contains invalid
   elements").
-- **license-check RESOLVED (2026-10-11 22:31)**: the note previously
+- **license-check RESOLVED (2026-10-11 23:23)**: the note previously
   recorded here (sandbox `go` 1.27.0 vs go-appkit's 1.27.1 floor, buildflow
   binary 200ab99) is gone because its own fix condition landed: the binary
-  was rebuilt (now 8b8269c) and `buildflow -s license-check` is green
-  (13.6s, 1/1). Remaining delta: binary still behind BuildFlow HEAD — a
-  per-run advisory warning, not a gate factor.
+  was rebuilt (now at BuildFlow HEAD) and `buildflow -s license-check` is
+  green (13.6s, 1/1). The same rerun closed the 22:26 full pass's only
+  failure: `buildflow -s nix-build` green (23.6s) after load-98+ starvation.
 - **dprint-format: markdown tables must be dprint-padded (PAID FOR,
   2026-10-11 23:24)**: a TODO_LIST table whose cells were padded to a
   narrower width than its longest row failed `dprint-format` (exit 20) and
