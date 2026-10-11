@@ -1,7 +1,6 @@
 package calls
 
 import (
-
 	"strings"
 	"testing"
 	"time"
@@ -154,6 +153,7 @@ func TestCorrectionCarriesEnrichmentForward(t *testing.T) {
 	enr := Enrichment{CostMicros: 4200, CostCurrency: "USD"}
 
 	state := foldAll(t, decide(t, Record(obs, sid), CallState{}, 0))
+
 	state = foldAll(t, decide(t, Enrich(obs, enr, sid), state, 1))
 	if state.CurrentEnrichment != enr {
 		t.Fatalf("enriched state must hold enrichment: %+v", state.CurrentEnrichment)
@@ -260,6 +260,7 @@ func mustSID(t *testing.T, obs Observation) id.StreamID {
 
 func mustEvents(t *testing.T, events []event.Event, err error) []event.Event {
 	t.Helper()
+
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -287,8 +288,10 @@ func foldAll(t *testing.T, events []event.Event) CallState {
 	t.Helper()
 
 	state := CallState{}
+
 	for _, evt := range events {
 		var err error
+
 		state, err = Apply(state, evt)
 		if err != nil {
 			t.Fatal(err)
@@ -297,4 +300,3 @@ func foldAll(t *testing.T, events []event.Event) CallState {
 
 	return state
 }
-

@@ -58,8 +58,8 @@ func (c Conversation) MetadataString(key string) string {
 }
 
 type Message struct {
-	Role      string       `json:"role"`
-	Text      string       `json:"text"`
+	Role      string        `json:"role"`
+	Text      string        `json:"text"`
 	CreatedAt wire.FlexTime `json:"created_at"`
 	SentAt    wire.FlexTime `json:"sent_at"`
 }

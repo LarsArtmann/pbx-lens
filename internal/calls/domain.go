@@ -186,6 +186,7 @@ type CallObserved struct {
 // cost/insight data a correction would otherwise clobber.
 type CallCorrected struct {
 	Observation
+
 	Enrichment Enrichment
 }
 
@@ -204,8 +205,8 @@ type CallEnriched struct {
 // never fetch bookkeeping, so re-polling an unchanged enrichment stays
 // idempotent.
 type Enrichment struct {
-	CostMicros    int64  `json:"cost_micros,omitempty"`
-	CostCurrency  string `json:"cost_currency,omitempty"`
+	CostMicros     int64  `json:"cost_micros,omitempty"`
+	CostCurrency   string `json:"cost_currency,omitempty"`
 	InsightSummary string `json:"insight_summary,omitempty"`
 }
 
@@ -316,7 +317,7 @@ func Apply(s CallState, evt event.Event) (CallState, error) {
 		s.ContentHash = p.ContentHash()
 		s.Current = p.Observation
 		s.CurrentEnrichment = p.Enrichment
-		s.EnrichHash = p.Enrichment.Hash()
+		s.EnrichHash = p.Hash()
 
 		return s, nil
 

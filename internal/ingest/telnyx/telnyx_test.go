@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -13,10 +14,11 @@ import (
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/wire"
 )
 
-func ft(unix int64) FlexTime {
-	return FlexTime{Time: time.Unix(unix, 0).UTC()}
+func ft(unix int64) wire.FlexTime {
+	return wire.FlexTime{Time: time.Unix(unix, 0).UTC()}
 }
 
 func testServer(t *testing.T, handler http.HandlerFunc) (*Client, *httptest.Server) {
@@ -452,6 +454,98 @@ func TestMapConversationTimestampPrecisionStable(t *testing.T) {
 
 	if obsA.DurationSecs != 32 {
 		t.Fatalf("fallback duration must use truncated timestamps: %d", obsA.DurationSecs)
+	}
+}
+
+func TestExcerptOrderIndependent(t *testing.T) {
+	conv := Conversation{
+		ID:            "conv-ord",
+		CreatedAt:     ft(0),
+		LastMessageAt: ft(30),
+		Metadata:      map[string]any{"assistant_id": "a1", "telnyx_agent_target": "+17287289311"},
+	}
+
+	// The API serves newest-first; both orders must map to ONE observation
+	// (same ContentHash) or re-poll would "correct" every conversation.
+	oldestFirst := []Message{
+		{Role: "assistant", Text: "Hi! This is Woolly.", CreatedAt: ft(5)},
+		{Role: "user", Text: "Did you take my eggs?", CreatedAt: ft(10)},
+		{Role: "assistant", Text: "Never!", CreatedAt: ft(20)},
+	}
+	newestFirst := slices.Clone(oldestFirst)
+	slices.Reverse(newestFirst)
+
+	asc, err := MapConversation(conv, oldestFirst, nil, DefaultMapOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	desc, err := MapConversation(conv, newestFirst, nil, DefaultMapOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if asc.ContentHash() != desc.ContentHash() {
+		t.Fatalf("message order leaked into the content hash:\n asc %s\ndesc %s", asc.ContentHash(), desc.ContentHash())
+	}
+
+	// The excerpt is the call opening: the first user line, not the last
+	// utterance the newest-first API happens to serve first.
+	if asc.TranscriptExcerpt != "Did you take my eggs?" {
+		t.Fatalf("excerpt must be the first user line: %q", asc.TranscriptExcerpt)
+	}
+}
+
+func TestExcerptFallsBackToAssistantGreeting(t *testing.T) {
+	conv := Conversation{
+		ID:        "conv-greet",
+		CreatedAt: ft(0),
+		Metadata:  map[string]any{"assistant_id": "a1", "telnyx_agent_target": "+17287289311"},
+	}
+	msgs := []Message{{Role: "assistant", Text: "Hi Lars! This is Woolly.", CreatedAt: ft(5)}}
+
+	obs, err := MapConversation(conv, msgs, nil, DefaultMapOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if obs.TranscriptExcerpt != "Hi Lars! This is Woolly." {
+		t.Fatalf("no-user-turn call must excerpt the greeting: %q", obs.TranscriptExcerpt)
+	}
+}
+
+func TestTranscriptChronologicalAndFiltered(t *testing.T) {
+	conv := Conversation{
+		ID:        "conv-tr",
+		CreatedAt: ft(0),
+		Metadata:  map[string]any{"telnyx_agent_target": "+17287289311"},
+	}
+	msgs := []Message{
+		{Role: "tool", Text: "internal", CreatedAt: ft(1)},
+		{Role: "assistant", Text: "second", CreatedAt: ft(20)},
+		{Role: "user", Text: "first", CreatedAt: ft(10)},
+		{Role: "user", Text: "  ", CreatedAt: ft(15)},
+	}
+
+	obs, err := MapConversation(conv, msgs, nil, DefaultMapOptions())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(obs.Transcript) != 2 {
+		t.Fatalf("tool turns and blank turns must drop: %+v", obs.Transcript)
+	}
+
+	if obs.Transcript[0].Role != "user" || obs.Transcript[0].Text != "first" {
+		t.Fatalf("turns must be chronological: %+v", obs.Transcript)
+	}
+
+	if obs.Transcript[1].Role != "assistant" || obs.Transcript[1].Text != "second" {
+		t.Fatalf("turn order wrong: %+v", obs.Transcript)
+	}
+
+	if !obs.Transcript[0].At.Equal(time.Unix(10, 0).UTC()) {
+		t.Fatalf("turn timestamps must truncate to seconds: %v", obs.Transcript[0].At)
 	}
 }
 
