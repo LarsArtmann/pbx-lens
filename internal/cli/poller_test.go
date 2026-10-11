@@ -21,6 +21,7 @@ func (l *pollTestLog) printf(msg string, args ...any) {
 
 func TestPollOnceIngestsAndRebuildsSearch(t *testing.T) {
 	ctx := context.Background()
+
 	sys, cleanup, err := OpenSystem(ctx, "")
 	if err != nil {
 		t.Fatalf("OpenSystem: %v", err)
@@ -29,6 +30,7 @@ func TestPollOnceIngestsAndRebuildsSearch(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
+
 	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
 		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
@@ -66,6 +68,7 @@ func TestPollOnceIngestsAndRebuildsSearch(t *testing.T) {
 
 func TestPollOnceIsIdempotentAcrossPasses(t *testing.T) {
 	ctx := context.Background()
+
 	sys, cleanup, err := OpenSystem(ctx, "")
 	if err != nil {
 		t.Fatalf("OpenSystem: %v", err)
@@ -74,6 +77,7 @@ func TestPollOnceIsIdempotentAcrossPasses(t *testing.T) {
 	t.Cleanup(cleanup)
 
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
+
 	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
 		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
@@ -107,6 +111,7 @@ func TestPollOnceIsIdempotentAcrossPasses(t *testing.T) {
 
 func TestPollOnceSkipsMissingSourcesWithoutFailing(t *testing.T) {
 	ctx := context.Background()
+
 	sys, cleanup, err := OpenSystem(ctx, "")
 	if err != nil {
 		t.Fatalf("OpenSystem: %v", err)
@@ -124,6 +129,7 @@ func TestPollOnceSkipsMissingSourcesWithoutFailing(t *testing.T) {
 
 func TestPollLoopStopsWithCanceledContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
+
 	sys, cleanup, err := OpenSystem(ctx, "")
 	if err != nil {
 		t.Fatalf("OpenSystem: %v", err)

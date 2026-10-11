@@ -408,9 +408,21 @@ func serve(args []string) {
 		"",
 		"bcrypt htpasswd file gating every route (htpasswd -B; empty = no auth — localhost dev only)",
 	)
-	pollEvery := fs.Duration("poll-every", cli.DefaultPollEvery, "poll cadence for keeping the index fresh (0 = disabled)")
-	pollSince := fs.Duration("poll-since", 48*time.Hour, "Telnyx look-back window per poll")
-	pollDirection := fs.String("poll-direction", "outbound", "caller-declared direction for polled Telnyx conversations")
+	pollEvery := fs.Duration(
+		"poll-every",
+		cli.DefaultPollEvery,
+		"poll cadence for keeping the index fresh (0 = disabled)",
+	)
+	pollSince := fs.Duration(
+		"poll-since",
+		cli.DefaultPollSince,
+		"Telnyx look-back window per poll",
+	)
+	pollDirection := fs.String(
+		"poll-direction",
+		"outbound",
+		"caller-declared direction for polled Telnyx conversations",
+	)
 	cdrFile := fs.String("cdr-file", "", "FreeSWITCH Master.csv re-ingested every poll (empty = skip)")
 	webhookLog := fs.String("webhook-log", "", "receiver webhook JSONL re-ingested every poll (empty = skip)")
 	transcriptsDir := fs.String("transcripts-dir", "", "agent transcripts dir re-scanned every poll (empty = skip)")

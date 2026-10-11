@@ -17,6 +17,9 @@ import (
 // DefaultPollEvery is the serve poller cadence when -poll-every is unset.
 const DefaultPollEvery = 15 * time.Minute
 
+// DefaultPollSince is the Telnyx look-back window when -poll-since is unset.
+const DefaultPollSince = 48 * time.Hour
+
 // PollConfig names the sources one serve poller pass refreshes. Every
 // source is optional; configured ones run in a fixed order (cheap local
 // files first, then the network fetch) and a failure in one logs and skips
@@ -79,63 +82,10 @@ func PollOnce(
 ) {
 	var stats IngestStats
 
-	if cfg.CDRFile != "" {
-		pass, err := pollFile(cfg.CDRFile, func(path *os.File) (IngestStats, error) {
-			parsed, err := cdr.Parse(path)
-			if err != nil {
-				return IngestStats{}, err
-			}
-
-			return Ingest(ctx, sys, parsed.Observations), nil
-		})
-		if err != nil {
-			log("poll cdr: %v", err)
-		} else {
-			stats = mergeStats(stats, pass)
-		}
-	}
-
-	if cfg.WebhookLog != "" {
-		pass, err := pollFile(cfg.WebhookLog, func(path *os.File) (IngestStats, error) {
-			parsed, err := webhook.Parse(path)
-			if err != nil {
-				return IngestStats{}, err
-			}
-
-			return Ingest(ctx, sys, parsed.Observations), nil
-		})
-		if err != nil {
-			log("poll webhook log: %v", err)
-		} else {
-			stats = mergeStats(stats, pass)
-		}
-	}
-
-	if cfg.TranscriptsDir != "" {
-		observations, rejects, err := FetchAgentObservations(ctx, sys, cfg.TranscriptsDir)
-		if err != nil {
-			log("poll transcripts: %v", err)
-		} else {
-			pass := Ingest(ctx, sys, observations)
-			pass.Rejected = append(rejects, pass.Rejected...)
-			stats = mergeStats(stats, pass)
-		}
-	}
-
-	if cfg.Telnyx != nil {
-		since := time.Now().UTC().Add(-cfg.SinceAgo)
-		observations, rejects, err := FetchTelnyxObservations(ctx, cfg.Telnyx, TelnyxOptions{
-			Since:     since,
-			Direction: cfg.Direction,
-		})
-		if err != nil {
-			log("poll telnyx: %v", err)
-		} else {
-			pass := Ingest(ctx, sys, observations)
-			pass.Rejected = append(rejects, pass.Rejected...)
-			stats = mergeStats(stats, pass)
-		}
-	}
+	stats = mergeStats(stats, pollCDR(ctx, sys, cfg, log))
+	stats = mergeStats(stats, pollWebhook(ctx, sys, cfg, log))
+	stats = mergeStats(stats, pollTranscripts(ctx, sys, cfg, log))
+	stats = mergeStats(stats, pollTelnyx(ctx, sys, cfg, log))
 
 	if err := DrainProjections(ctx, sys); err != nil {
 		log("poll drain: %v", err)
@@ -155,6 +105,116 @@ func PollOnce(
 	for _, reason := range stats.Rejected {
 		log("  rejected: %s", reason)
 	}
+}
+
+// pollCDR re-ingests the FreeSWITCH CDR file when configured, logging and
+// swallowing any failure so one dead source never aborts a pass.
+func pollCDR(
+	ctx context.Context,
+	sys *system.System,
+	cfg PollConfig,
+	log func(msg string, args ...any),
+) IngestStats {
+	if cfg.CDRFile == "" {
+		return IngestStats{}
+	}
+
+	pass, err := pollFile(cfg.CDRFile, func(path *os.File) (IngestStats, error) {
+		parsed, err := cdr.Parse(path)
+		if err != nil {
+			return IngestStats{}, err
+		}
+
+		return Ingest(ctx, sys, parsed.Observations), nil
+	})
+	if err != nil {
+		log("poll cdr: %v", err)
+
+		return IngestStats{}
+	}
+
+	return pass
+}
+
+// pollWebhook re-ingests the receiver webhook JSONL when configured.
+func pollWebhook(
+	ctx context.Context,
+	sys *system.System,
+	cfg PollConfig,
+	log func(msg string, args ...any),
+) IngestStats {
+	if cfg.WebhookLog == "" {
+		return IngestStats{}
+	}
+
+	pass, err := pollFile(cfg.WebhookLog, func(path *os.File) (IngestStats, error) {
+		parsed, err := webhook.Parse(path)
+		if err != nil {
+			return IngestStats{}, err
+		}
+
+		return Ingest(ctx, sys, parsed.Observations), nil
+	})
+	if err != nil {
+		log("poll webhook log: %v", err)
+
+		return IngestStats{}
+	}
+
+	return pass
+}
+
+// pollTranscripts re-scans the agent transcript directory when configured.
+func pollTranscripts(
+	ctx context.Context,
+	sys *system.System,
+	cfg PollConfig,
+	log func(msg string, args ...any),
+) IngestStats {
+	if cfg.TranscriptsDir == "" {
+		return IngestStats{}
+	}
+
+	observations, rejects, err := FetchAgentObservations(ctx, sys, cfg.TranscriptsDir)
+	if err != nil {
+		log("poll transcripts: %v", err)
+
+		return IngestStats{}
+	}
+
+	pass := Ingest(ctx, sys, observations)
+	pass.Rejected = append(rejects, pass.Rejected...)
+
+	return pass
+}
+
+// pollTelnyx polls conversations+recordings when a client is configured.
+func pollTelnyx(
+	ctx context.Context,
+	sys *system.System,
+	cfg PollConfig,
+	log func(msg string, args ...any),
+) IngestStats {
+	if cfg.Telnyx == nil {
+		return IngestStats{}
+	}
+
+	since := time.Now().UTC().Add(-cfg.SinceAgo)
+
+	observations, rejects, err := FetchTelnyxObservations(ctx, cfg.Telnyx, TelnyxOptions{
+		Since:     since,
+		Direction: cfg.Direction,
+	})
+	if err != nil {
+		log("poll telnyx: %v", err)
+
+		return IngestStats{}
+	}
+
+	pass := Ingest(ctx, sys, observations)
+	pass.Rejected = append(rejects, pass.Rejected...)
+
+	return pass
 }
 
 // pollFile opens, feeds, and closes a file source.
