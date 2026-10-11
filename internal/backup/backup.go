@@ -15,6 +15,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	_ "modernc.org/sqlite"
@@ -58,6 +59,14 @@ func Snapshot(ctx context.Context, dsn, out string) error {
 		return errorfamily.NewRejection("lens.backup.publish", fmt.Sprintf("publishing %s: %v", out, err))
 	}
 
+	// The file fsync alone does not persist the RENAME: a crash right
+	// after publish could leave the directory entry pointing at nothing
+	// (or at the old snapshot). Flushing the parent directory makes the
+	// new name durable too.
+	if err := syncDir(filepath.Dir(out)); err != nil {
+		return errorfamily.NewRejection("lens.backup.sync_dir", fmt.Sprintf("syncing %s directory: %v", out, err))
+	}
+
 	return nil
 }
 
@@ -71,6 +80,19 @@ func syncFile(path string) error {
 	defer func() { _ = file.Close() }()
 
 	return file.Sync()
+}
+
+// syncDir flushes a directory's entries (e.g. a just-renamed file) to
+// stable storage.
+func syncDir(path string) error {
+	dir, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = dir.Close() }()
+
+	return dir.Sync()
 }
 
 // Verify opens the snapshot and confirms it is a readable sqlite database

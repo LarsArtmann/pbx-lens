@@ -224,10 +224,8 @@ func pollTelnyx(
 	now := time.Now().UTC()
 
 	admitted, refusals := applyAgeCutoff(cfg, now, observations)
-
-	pass := Ingest(ctx, sys, admitted)
-	pass.Total = len(observations)
-	pass.Rejected = append(rejects, refusals...)
+	pass := ingestStatsFor(ctx, sys, observations, admitted, refusals)
+	pass.Rejected = append(rejects, pass.Rejected...)
 
 	// An observation refused by the age gate must not be enriched either:
 	// its stream never lands, so keeping the seed would only burn a fetch
@@ -286,8 +284,19 @@ func ingestAdmitted(
 ) IngestStats {
 	admitted, refusals := applyAgeCutoff(cfg, time.Now().UTC(), observations)
 
+	return ingestStatsFor(ctx, sys, observations, admitted, refusals)
+}
+
+// ingestStatsFor ingests the admitted set and reports the refusals against
+// the full offered batch — the one finisher every gated source shares.
+func ingestStatsFor(
+	ctx context.Context,
+	sys *system.System,
+	offered, admitted []calls.Observation,
+	refusals []string,
+) IngestStats {
 	stats := Ingest(ctx, sys, admitted)
-	stats.Total = len(observations)
+	stats.Total = len(offered)
 	stats.Rejected = append(stats.Rejected, refusals...)
 
 	return stats
