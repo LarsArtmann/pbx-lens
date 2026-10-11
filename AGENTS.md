@@ -24,10 +24,24 @@ webphone later gets a read-only deep link, never a data dependency.
   surface needs it.
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family ONLY. No testify
   (banned; stdlib table-driven tests), no cobra, no ORM.
-- **Flake:** go-standard flakeModule from go-nix-helpers (copy of go-output's
-  pattern); `vendorHash.nix` carries the landed vendor hash. If a go.mod/
-  go.sum change breaks the nix build, repair with
-  `buildflow -s nix-hash-fix --fix` — never paste hashes by hand.
+- **Flake:** go-standard flakeModule from go-nix-helpers (go-output's pattern,
+  adopted 2026-10-11): `subPackages = ["./cmd/pbx-lens"]` wires the package to
+  the real binary (the module default `["."]` built the package-less root and
+  shipped an empty result); treefmt runs nixfmt + deadnix + statix only —
+  `enableGofumpt`/`enableGoimports` are OFF because BuildFlow owns Go
+  formatting (go-output's house split). The devShell (mkShellNoCC) carries
+  go/golangci-lint/gopls/govulncheck/cqrs-lint with GOTOOLCHAIN=local +
+  GOEXPERIMENT=jsonv2. `vendorHash.nix` carries the landed vendor hash; repair
+  a go.mod/go.sum break with `buildflow -s nix-hash-fix --fix` or
+  `nix run .#update-vendor-hash` — never paste hashes by hand.
+- **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's pattern,
+  adapted single-module): build+test(-race)+coverage+tidy, golangci-lint,
+  govulncheck, art-dupl (warning-only). Dependabot watches github-actions +
+  gomod. BuildFlow remains the LOCAL quality gate (`buildflow --build-mode
+  dev`); the flake's generic apps.test/apps.lint stay module-generated
+  conveniences, deliberately not overridden into a second gate.
+- **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version
+  subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens`.
 
 ## Domain
 
@@ -50,8 +64,14 @@ webphone later gets a read-only deep link, never a data dependency.
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
 buildflow --build-mode dev            # the quality gate (lint+format+test)
-nix build                             # BROKEN: exits 0 but ships an empty
-                                      # result (no bin/pbx-lens) — see TODO_LIST
+nix build                             # ships result/bin/pbx-lens (fixed 2026-10-11)
+nix run . -- version                  # run the built binary
+nix develop                           # devShell: go, golangci-lint, gopls,
+                                      # govulncheck, cqrs-lint
+nix develop -c cqrs-lint .            # cqrs findings policy (below)
+nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
+                                      # changes (buildflow -s nix-hash-fix
+                                      # --fix does the same)
 ./scripts/...                         # (none yet)
 ```
 
@@ -70,6 +90,21 @@ nix build                             # BROKEN: exits 0 but ships an empty
   generates ONLY an update fold and keys by the view's `ID` field, which the
   closure cannot populate from the stream id — it panicked in poisoned-
   collection here. Revisit only if the library grows an explicit-create fold.
+- **Vendored cqrs-lint (flake devShell):** built from a pinned go-cqrs-lite
+  master rev — the `cmd/cqrs-lint/v4` module has no stable tags to pin
+  instead. Two traps paid for: the monorepo root carries a `go.work`, so the
+  build needs `env.GOWORK = "off"` or the modules FOD dies in workspace mode;
+  and its own test suite runs fixture projects through `go` (network module
+  fetches), which is impossible in the hermetic sandbox — hence
+  `doCheck = false` on the vendored build (the tool is exercised for real on
+  every run against this repo). Bump the rev deliberately; expect two hash
+  iterations (src + vendor).
+- **This machine's global git config sets `core.hooksPath=.githooks`**, so
+  git-hooks.nix's treefmt hook can never auto-install here (first
+  `nix develop` prints pre-commit's "Cowardly refusing" once, then skips
+  silently; go-output's installed hook is inert for the same reason). The
+  wiring stays for pattern parity and manual checks (`nix develop -c pre-commit
+  run --all-files`); the firing quality gate remains BuildFlow.
 - **`errorfamily.NewRejection/NewConflict` take exactly (code, message)** —
   no format args; wrap with fmt.Sprintf. StreamID is a struct (cbid), not a
   string: use .String() / id.ParseStreamID, never a cast.
@@ -106,9 +141,10 @@ nix build                             # BROKEN: exits 0 but ships an empty
 
 ## cqrs-lint findings policy (0 errors; every surviving warning/info below is a documented decision)
 
-Run: `go build -o /tmp/cqrs-lint ~/projects/go-cqrs-lite/cmd/cqrs-lint` then
-`/tmp/cqrs-lint .` (the `./...` pattern crashes the package loader — use
-`.`). Gate: ERROR severity fails; warnings/infos below are each a DECISION.
+Run: `nix develop -c cqrs-lint .` (cqrs-lint ships in the flake devShell since
+2026-10-11 — no more /tmp binary; the `./...` pattern crashes the package
+loader — use `.`). Gate: ERROR severity fails; warnings/infos below are each a
+DECISION.
 
 - **C003 (ERROR, fixed)**: the fold is TOTAL — unknown event types on a
   Call stream return `errorfamily.NewCorruption("call.fold.unknown_event")`

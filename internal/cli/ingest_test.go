@@ -22,10 +22,14 @@ func observation(nativeID string, durationSecs int) calls.Observation {
 	}
 }
 
-// awaitView polls the projection until the stream id converges, the way the
-// smoke command does; classification in Ingest reads the same reader.
+// awaitView drains the projection host, then polls until the stream id
+// converges — the one-shot command flow (dispatch, drain, read).
 func awaitView(t *testing.T, sys *system.System, streamID string) calls.CallView {
 	t.Helper()
+
+	if err := DrainProjections(context.Background(), sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
 
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 	deadline := time.Now().Add(5 * time.Second)
@@ -71,6 +75,10 @@ func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 	replay := Ingest(ctx, sys, []calls.Observation{obs})
 	if replay.Recorded != 1 || replay.Corrected != 0 {
 		t.Fatalf("identical replay = %+v, want idempotent record", replay)
+	}
+
+	if err := DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain after replay: %v", err)
 	}
 
 	grown := observation("conv-a", 40)
