@@ -50,7 +50,7 @@ type call struct {
 	from      string
 	to        string
 	cause     string
-	sawCall   bool
+	hasStart  bool
 }
 
 // Parse reads the whole JSONL and folds it into one Observation per call.
@@ -111,9 +111,9 @@ func applyEvent(callsByID map[string]*call, evt Event) bool {
 
 	at := evt.OccurredAt.UTC()
 
-	if !state.sawCall || at.Before(state.startedAt) {
+	if !state.hasStart || at.Before(state.startedAt) {
 		state.startedAt = at
-		state.sawCall = true
+		state.hasStart = true
 	}
 
 	if at.After(state.endedAt) {

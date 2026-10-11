@@ -43,7 +43,7 @@ func EnrichTelnyxCalls(
 	ctx context.Context,
 	sys *system.System,
 	client *telnyx.Client,
-	seeds []TelnyxSeed,
+	seeds []EnrichmentSeed,
 	since time.Time,
 ) (EnrichStats, error) {
 	stats := EnrichStats{Considered: len(seeds)}
@@ -56,7 +56,7 @@ func EnrichTelnyxCalls(
 	pass := enrichPass{client: client, since: since, reader: reader}
 
 	for _, seed := range seeds {
-		pass.seed(ctx, sys, seed, &stats)
+		pass.enrichConversation(ctx, sys, seed, &stats)
 	}
 
 	return stats, nil
@@ -70,10 +70,10 @@ type enrichPass struct {
 	since    time.Time
 	reader   *metaengine.TypedReader[calls.CallView]
 	records  []telnyx.DetailRecord
-	detailed bool
+	recordsFetched bool
 }
 
-func (p *enrichPass) seed(ctx context.Context, sys *system.System, seed TelnyxSeed, stats *EnrichStats) {
+func (p *enrichPass) enrichConversation(ctx context.Context, sys *system.System, seed EnrichmentSeed, stats *EnrichStats) {
 	view, found, err := p.reader.Get(ctx, seed.StreamKey)
 	if err != nil {
 		stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+err.Error())
@@ -117,7 +117,7 @@ func (p *enrichPass) seed(ctx context.Context, sys *system.System, seed TelnyxSe
 // non-empty reject string reports a fetch failure.
 func (p *enrichPass) targetEnrichment(
 	ctx context.Context,
-	seed TelnyxSeed,
+	seed EnrichmentSeed,
 	view calls.CallView,
 	current calls.Enrichment,
 ) (calls.Enrichment, string) {
@@ -151,7 +151,7 @@ func (p *enrichPass) targetEnrichment(
 
 // detailRecords lazily fetches the pass's Detail Records list.
 func (p *enrichPass) detailRecords(ctx context.Context) ([]telnyx.DetailRecord, error) {
-	if p.detailed {
+	if p.recordsFetched {
 		return p.records, nil
 	}
 
@@ -161,7 +161,7 @@ func (p *enrichPass) detailRecords(ctx context.Context) ([]telnyx.DetailRecord, 
 	}
 
 	p.records = records
-	p.detailed = true
+	p.recordsFetched = true
 
 	return records, nil
 }
@@ -171,7 +171,7 @@ func (p *enrichPass) detailRecords(ctx context.Context) ([]telnyx.DetailRecord, 
 func dispatchEnrich(
 	ctx context.Context,
 	sys *system.System,
-	seed TelnyxSeed,
+	seed EnrichmentSeed,
 	view calls.CallView,
 	enr calls.Enrichment,
 ) string {

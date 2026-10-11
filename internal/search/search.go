@@ -37,10 +37,12 @@ const (
 	tableName = "lens_search"
 )
 
-// Hit is one matching call with a highlight-flagged snippet.
+// Hit is one matching call with a highlight-flagged snippet. The identity
+// fields carry the domain types so a Kind/NativeID swap cannot compile —
+// they are the same strings the detail route addresses streams by.
 type Hit struct {
-	Kind     string
-	NativeID string
+	Kind     calls.SourceKind
+	NativeID calls.NativeID
 	Started  time.Time
 	Parts    []Part
 }

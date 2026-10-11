@@ -28,11 +28,11 @@ type TelnyxOptions struct {
 	RecordingsLookback int
 }
 
-// TelnyxSeed carries what the enrichment pass needs about one fetched
+// EnrichmentSeed carries what the enrichment pass needs about one fetched
 // conversation: its stream identity (the projection record key, built via
 // the mapped observation's StreamID — never hand-assembled) and the
 // call_control_id metadata the Detail Records correlation matches through.
-type TelnyxSeed struct {
+type EnrichmentSeed struct {
 	ConversationID string
 	CallControlID  string
 	StreamKey      string
@@ -48,7 +48,7 @@ func FetchTelnyxObservations(
 	ctx context.Context,
 	client *telnyx.Client,
 	opts TelnyxOptions,
-) ([]calls.Observation, []TelnyxSeed, []string, error) {
+) ([]calls.Observation, []EnrichmentSeed, []string, error) {
 	convs, err := client.ListConversations(ctx, telnyx.ListOptions{Since: opts.Since, Limit: opts.Limit})
 	if err != nil {
 		return nil, nil, nil, err
@@ -66,7 +66,7 @@ func FetchTelnyxObservations(
 
 	var (
 		observations []calls.Observation
-		seeds        []TelnyxSeed
+		seeds        []EnrichmentSeed
 		rejected     []string
 	)
 
@@ -90,7 +90,7 @@ func FetchTelnyxObservations(
 			continue
 		}
 
-		seed := TelnyxSeed{ConversationID: conv.ID, CallControlID: conv.MetadataString("call_control_id")}
+		seed := EnrichmentSeed{ConversationID: conv.ID, CallControlID: conv.MetadataString("call_control_id")}
 		if sid, sidErr := obs.StreamID(); sidErr == nil {
 			seed.StreamKey = sid.String()
 		}

@@ -232,8 +232,10 @@ func observation(shape map[string]string, opts ParseOptions, mosRaw string) (cal
 	return obs, obs.Validate()
 }
 
-func direction(context string) calls.Direction {
-	if context == "public" {
+// direction derives the call leg orientation from the FreeSWITCH dialplan:
+// calls that ended in the "public" context came in from outside.
+func direction(dialplanContext string) calls.Direction {
+	if dialplanContext == "public" {
 		return calls.DirectionInbound
 	}
 

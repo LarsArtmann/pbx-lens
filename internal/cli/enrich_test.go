@@ -235,12 +235,12 @@ func TestEnrichTelnyxCallsCountsMissingAndRejects(t *testing.T) {
 
 	// A seed whose observation never landed counts Missing, not Rejected:
 	// the next pass retries once the observation ingest catches up.
-	missing := TelnyxSeed{
+	missing := EnrichmentSeed{
 		ConversationID: "ghost",
 		StreamKey:      "StreamMarker:telnyx-conversation:ghost",
 	}
 
-	stats, err := EnrichTelnyxCalls(ctx, sys, client, []TelnyxSeed{missing}, time.Now().UTC())
+	stats, err := EnrichTelnyxCalls(ctx, sys, client, []EnrichmentSeed{missing}, time.Now().UTC())
 	if err != nil {
 		t.Fatalf("EnrichTelnyxCalls: %v", err)
 	}

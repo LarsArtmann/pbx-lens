@@ -511,7 +511,7 @@ func serve(args []string) {
 
 	defer func() { _ = index.Close() }()
 
-	if err := cli.RebuildIndex(setupCtx, sys, index); err != nil {
+	if err := cli.RebuildOpenIndex(setupCtx, sys, index); err != nil {
 		fatal(err)
 	}
 

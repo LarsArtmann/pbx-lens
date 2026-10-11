@@ -40,7 +40,9 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	render(w, r, searchRoute(query, hits, ""))
 }
 
-// hitHref deep-links a search hit to its call page.
+// hitHref deep-links a search hit to its call page. The hit's identity
+// fields are the domain's own SourceKind/NativeID, so the path is the same
+// deep link the list rows render.
 func hitHref(hit search.Hit) string {
-	return "/calls/" + url.PathEscape(hit.Kind) + "/" + url.PathEscape(hit.NativeID)
+	return "/calls/" + url.PathEscape(string(hit.Kind)) + "/" + url.PathEscape(string(hit.NativeID))
 }
