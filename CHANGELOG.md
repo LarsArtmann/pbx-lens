@@ -75,6 +75,15 @@ No version has been tagged yet; everything lives under Unreleased.
   idempotency.
 - Search-page hint that partial phone numbers never match (FTS5 keeps a
   number as one token), replacing silent zero-result confusion.
+- Ingest-side retention gate (2026-10-11): `serve -max-age` refuses polled
+  observations older than the window with a labeled `retention:age-cutoff`
+  rejection instead of recording them — the ingest-side half of the
+  retention doctrine (the purge half is `pbx-lens purge`). Telnyx
+  enrichment seeds are dropped in tandem, so refused streams cost no
+  enrichment fetches. Zero keeps everything (retention stays opt-in).
+- Four-lens review session (2026-10-11: data-model, full-code, naming,
+  modularize) with every file visited, 8 on-sight fixes, and HTML reports
+  under `docs/reviews/`.
 
 ### Fixed
 
@@ -116,3 +125,22 @@ No version has been tagged yet; everything lives under Unreleased.
   (T7; the module moves to the sibling repo).
 - sqlite FTS index with busy-timeout coexistence, rebuild commands for every
   ingest verb, and a documented full-token matching caveat for phone numbers.
+- `usage()` now lists the `purge` subcommand (it existed but was hidden).
+- Search `Hit` carries typed `Kind`/`NativeID` (was raw strings re-parsed at
+  the web boundary).
+- Auth timing pad hashes at the LOADED htpasswd entries' bcrypt cost
+  (`padCost`), so the equalization claim holds for cost>10 files; was
+  MinCost.
+- Transcript excerpts are capped by the domain-owned ceiling
+  (`calls.DefaultExcerptMax`, 200 runes) in every source mapper, not just
+  the display layer.
+- The last hand-built `"StreamMarker:..."` projection-key literal (CDR join
+  in the agent transcript path) was removed; keys derive via
+  `obs.StreamID().String()` exclusively.
+- AGENTS.md slimmed under the 220-line structure-lint limit by extracting
+  the paid-for war stories and policies into `docs/` (gotchas,
+  telnyx-live-api, cqrs-lint-policy, buildflow-dev-gate,
+  upstream-filings). Owner decisions recorded there: flat `internal/calls`
+  domain HOLD with a pre-agreed write/read seam, single-module HOLD,
+  ContentHash v2 length-prefixed encoding SCHEDULED at v2, recording-proxy
+  timeout bound DEFERRED until traffic data.
