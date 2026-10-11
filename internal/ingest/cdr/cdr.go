@@ -64,12 +64,50 @@ const (
 	scannerMaxLine    = 1024 * 1024
 )
 
+// DefaultAIDestination is the deployment's agent extension (nix-international-
+// telephony options.nix: agent.extension default "9100"); CDR rows whose
+// destination_number hits an AI destination badge IsAI.
+const DefaultAIDestination = "9100"
+
 type Result struct {
 	Observations []calls.Observation
 	Skipped      int
 }
 
+// ParseOptions carries the dialplan knowledge the CDR text cannot express.
+type ParseOptions struct {
+	// AIDestinations badges a call AI when destination_number matches
+	// (comma-free values); nil means {DefaultAIDestination} only.
+	AIDestinations map[string]bool
+}
+
+func (o ParseOptions) isAI(destination string) bool {
+	if len(o.AIDestinations) == 0 {
+		return destination == DefaultAIDestination
+	}
+
+	return o.AIDestinations[destination]
+}
+
+// ParseAIDestinations turns a comma-separated -ai-dest flag value into the
+// lookup set, trimming whitespace and dropping empties.
+func ParseAIDestinations(flag string) map[string]bool {
+	out := map[string]bool{}
+
+	for _, part := range strings.Split(flag, ",") {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			out[trimmed] = true
+		}
+	}
+
+	return out
+}
+
 func Parse(r io.Reader) (Result, error) {
+	return ParseWithOptions(r, ParseOptions{})
+}
+
+func ParseWithOptions(r io.Reader, opts ParseOptions) (Result, error) {
 	res := Result{}
 	fields13, fields18 := fieldTemplates()
 	sc := bufio.NewScanner(r)
@@ -110,7 +148,7 @@ func Parse(r io.Reader) (Result, error) {
 			continue
 		}
 
-		obs, err := observation(shape)
+		obs, err := observation(shape, opts)
 		if err != nil {
 			res.Skipped++
 

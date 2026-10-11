@@ -14,6 +14,7 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
+	"github.com/larsartmann/pbx-lens/internal/ingest/webhook"
 )
 
 const (
@@ -46,6 +47,8 @@ func main() {
 		ingestCDR(os.Args[minArgs:])
 	case "ingest-telnyx":
 		ingestTelnyx(os.Args[minArgs:])
+	case "ingest-webhook":
+		ingestWebhook(os.Args[minArgs:])
 	default:
 		usage()
 		os.Exit(exitUsage)
@@ -56,7 +59,8 @@ func usage() {
 	fmt.Fprintln(
 		os.Stderr,
 		"usage: pbx-lens version | pbx-lens smoke [-db path] | pbx-lens ingest-cdr -db <dsn> <Master.csv> |"+
-			" pbx-lens ingest-telnyx -db <dsn> [-key-file path] [-since 48h] [-direction outbound] [-limit N]",
+			" pbx-lens ingest-telnyx -db <dsn> [-key-file path] [-since 48h] [-direction outbound] [-limit N] |"+
+			" pbx-lens ingest-webhook -db <dsn> <inbound.jsonl>",
 	)
 }
 
@@ -178,6 +182,59 @@ func ingestTelnyx(args []string) {
 	fmt.Printf(
 		"ingest-telnyx: %d conversations fetched, %d recorded, %d corrected, %d rejected\n",
 		stats.Total, stats.Recorded, stats.Corrected, len(stats.Rejected),
+	)
+
+	printRejected(stats.Rejected)
+}
+
+func ingestWebhook(args []string) {
+	fs := flag.NewFlagSet("ingest-webhook", flag.ExitOnError)
+	db := fs.String("db", "", "sqlite DSN (required)")
+	_ = fs.Parse(args)
+
+	if *db == "" {
+		fatal(errorfamily.NewRejection("lens.cli.missing_db", "ingest-webhook needs -db <dsn>"))
+	}
+
+	if fs.NArg() != 1 {
+		fatal(errorfamily.NewRejection("lens.cli.bad_args", "ingest-webhook needs exactly one inbound.jsonl path"))
+	}
+
+	file, err := os.Open(fs.Arg(0))
+	if err != nil {
+		fatal(err)
+	}
+
+	parsed, err := webhook.Parse(file)
+	closeErr := file.Close()
+
+	if err != nil {
+		fatal(err)
+	}
+
+	if closeErr != nil {
+		fatal(closeErr)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
+	defer cancel()
+
+	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	if err != nil {
+		fatal(err)
+	}
+
+	defer cleanup()
+
+	stats := cli.Ingest(ctx, sys, parsed.Observations)
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		fatal(err)
+	}
+
+	fmt.Printf(
+		"ingest-webhook: %d calls aggregated, %d lines skipped, %d recorded, %d corrected, %d rejected\n",
+			stats.Total, parsed.Skipped, stats.Recorded, stats.Corrected, len(stats.Rejected),
 	)
 
 	printRejected(stats.Rejected)
