@@ -1,0 +1,133 @@
+// Package web serves the pbx-lens UI: a read-only surface over the
+// call_views read model. Every route is a query; the index DB stays
+// disposable and no source ever sees a write from here.
+package web
+
+import (
+	"context"
+	"fmt"
+	"net/url"
+	"time"
+
+	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	"github.com/larsartmann/pbx-lens/internal/calls"
+)
+
+// pageSize caps one rendered page (bounding-tables doctrine: no unbounded
+// table ever ships; older calls walk via the keyset cursor).
+const pageSize = 50
+
+// ListCallsQuery is the fully-parsed list-page request. Zero fields mean
+// unfiltered; Before is the exclusive keyset cursor (RFC3339).
+type ListCallsQuery struct {
+	Direction calls.Direction
+	AI        *bool
+	From      time.Time
+	To        time.Time
+	Before    time.Time
+}
+
+// CallRow is the list-page view model — the UI never touches domain types.
+type CallRow struct {
+	Kind      calls.SourceKind
+	NativeID  string
+	When      time.Time
+	From      string
+	To        string
+	Direction calls.Direction
+	Duration  time.Duration
+	IsAI      bool
+	Excerpt   string
+}
+
+// Href is the stable detail-page path (deterministic stream identity makes
+// it deep-link safe).
+func (r CallRow) Href() string {
+	return fmt.Sprintf("/calls/%s/%s", url.PathEscape(string(r.Kind)), url.PathEscape(r.NativeID))
+}
+
+// CallListPage is one rendered page plus the cursor for the next-older walk.
+type CallListPage struct {
+	Rows      []CallRow
+	NextOlder string // empty when this page was the last
+}
+
+// ListCalls runs the query against the read model, newest first.
+func ListCalls(ctx context.Context, sys *system.System, q ListCallsQuery) (CallListPage, error) {
+	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
+
+	opts := []metaengine.ScanOption{
+		metaengine.WithSort("started_at", true),
+		// fetch one extra row to detect whether an older page exists
+		metaengine.WithLimit(pageSize + 1),
+	}
+
+	if q.Direction != "" {
+		opts = append(opts, metaengine.WithFilter("direction", metaengine.FilterEq, string(q.Direction)))
+	}
+
+	if q.AI != nil {
+		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *q.AI))
+	}
+
+	if !q.From.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, q.From.UTC()))
+	}
+
+	if !q.To.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, q.To.UTC()))
+	}
+
+	if !q.Before.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, q.Before.UTC()))
+	}
+
+	views, err := reader.Scan(ctx, opts...)
+	if err != nil {
+		return CallListPage{}, err
+	}
+
+	page := CallListPage{Rows: make([]CallRow, 0, min(len(views), pageSize))}
+
+	for _, view := range views {
+		if len(page.Rows) == pageSize {
+			page.NextOlder = views[pageSize-1].StartedAt.UTC().Format(time.RFC3339)
+
+			break
+		}
+
+		page.Rows = append(page.Rows, CallRow{
+			Kind:      view.Kind,
+			NativeID:  string(view.NativeID),
+			When:      view.StartedAt,
+			From:      view.FromNumber,
+			To:        view.ToNumber,
+			Direction: view.Direction,
+			Duration:  time.Duration(view.DurationSecs) * time.Second,
+			IsAI:      view.IsAI,
+			Excerpt:   view.TranscriptExcerpt,
+		})
+	}
+
+	return page, nil
+}
+
+// CallDetail looks one call up by its stream identity parts.
+func CallDetail(ctx context.Context, sys *system.System, kind, nativeID string) (calls.CallView, bool, error) {
+	obs := calls.Observation{NativeID: calls.NativeID(nativeID), Kind: calls.SourceKind(kind)}
+
+	sid, err := obs.StreamID()
+	if err != nil {
+		return calls.CallView{}, false, nil
+	}
+
+	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
+
+	view, found, err := reader.Get(ctx, sid.String())
+	if err != nil || !found {
+		return calls.CallView{}, false, err
+	}
+
+	return view, true, nil
+}
