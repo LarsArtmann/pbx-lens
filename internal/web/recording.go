@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
@@ -20,9 +21,22 @@ type RecordingFetcher interface {
 	Recording(ctx context.Context, recordingID string) (telnyx.Recording, error)
 }
 
+// DefaultUpstreamTimeout bounds each upstream hop of the recording proxy
+// when RecordingOptions.UpstreamTimeout is unset: the metadata fetch runs
+// under this deadline and the WAV stream must deliver its response headers
+// within it. The body itself never carries a total timeout — long
+// recordings must not be cut mid-download — and there is deliberately no
+// "unbounded" setting: an upstream that never answers must not pin a
+// browser request forever. Production tuning waits for real traffic data.
+const DefaultUpstreamTimeout = 30 * time.Second
+
 // RecordingOptions wires the recording proxy's two sources. Both optional:
 // a disabled source answers 503 with the reason, never a silent 404.
 type RecordingOptions struct {
+	// UpstreamTimeout bounds each upstream hop: the metadata fetch deadline
+	// and the WAV stream's response-header budget. Zero or negative selects
+	// DefaultUpstreamTimeout.
+	UpstreamTimeout time.Duration
 	// Telnyx serves kind telnyx-conversation: the fresh signed WAV URL is
 	// fetched SERVER-SIDE with the API key and the bytes stream through
 	// this process — neither key nor signed URL ever reaches the browser.
@@ -82,8 +96,17 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 		return
 	}
 
-	recording, err := s.recordings.Telnyx.Recording(r.Context(), recordingID)
+	metaCtx, cancel := context.WithTimeout(r.Context(), s.recTimeout)
+	defer cancel()
+
+	recording, err := s.recordings.Telnyx.Recording(metaCtx, recordingID)
 	if err != nil {
+		if metaCtx.Err() != nil {
+			http.Error(w, "recording metadata fetch exceeded the upstream timeout", http.StatusGatewayTimeout)
+
+			return
+		}
+
 		http.Error(w, "fetching the recording metadata failed: "+err.Error(), http.StatusBadGateway)
 
 		return
@@ -108,7 +131,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 		upstream.Header.Set("Range", rangeHeader)
 	}
 
-	response, err := http.DefaultClient.Do(upstream)
+	response, err := s.upstream.Do(upstream)
 	if err != nil {
 		http.Error(w, "fetching the recording audio failed: "+err.Error(), http.StatusBadGateway)
 
@@ -137,6 +160,25 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 	w.WriteHeader(response.StatusCode)
 
 	_, _ = io.Copy(w, response.Body)
+}
+
+// resolveUpstreamTimeout applies the RecordingOptions.UpstreamTimeout
+// contract: unset or negative selects the default bound.
+func resolveUpstreamTimeout(configured time.Duration) time.Duration {
+	if configured <= 0 {
+		return DefaultUpstreamTimeout
+	}
+
+	return configured
+}
+
+// newUpstreamClient builds the client the WAV stream rides: response
+// headers must arrive within timeout, the body streams without a total cap.
+func newUpstreamClient(timeout time.Duration) *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.ResponseHeaderTimeout = timeout
+
+	return &http.Client{Transport: transport}
 }
 
 // serveLocalRecording serves the FreeSWITCH recording file. http.ServeFile

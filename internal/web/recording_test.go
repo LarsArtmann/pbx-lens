@@ -295,3 +295,75 @@ func getWithHeaders(t *testing.T, mux *http.ServeMux, path string) (int, string,
 
 	return response.StatusCode, string(body), response.Header
 }
+
+// TestRecordingUpstreamTimeoutBoundsMetadata proves the UpstreamTimeout
+// knob on the metadata hop: an upstream that never answers inside the
+// deadline fails fast with 504 instead of pinning the browser request.
+func TestRecordingUpstreamTimeoutBoundsMetadata(t *testing.T) {
+	blocked := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		<-r.Context().Done()
+	}))
+	t.Cleanup(blocked.Close)
+
+	mux := newTestServerWith(t, Options{
+		Recordings: RecordingOptions{
+			Telnyx:          telnyx.NewClient(auditAPIKey, blocked.URL+"/v2"),
+			UpstreamTimeout: time.Millisecond,
+		},
+	}, telnyxRecordingObservation())
+
+	status, body, _ := getWithHeaders(t, mux, "/calls/telnyx-conversation/conv-rec/recording")
+	if status != http.StatusGatewayTimeout {
+		t.Fatalf("status = %d, want 504 (body: %s)", status, body)
+	}
+}
+
+// TestRecordingUpstreamTimeoutBoundsWavHeaders proves the same knob on the
+// audio hop: WAV response headers must arrive within the budget, so a
+// stalled upstream becomes a 502 rather than a hung stream.
+func TestRecordingUpstreamTimeoutBoundsWavHeaders(t *testing.T) {
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v2/recordings/rec-1":
+			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":"http://%s/v2/audio.wav"}}}`, r.Host)
+		case "/v2/audio.wav":
+			time.Sleep(50 * time.Millisecond)
+			_, _ = w.Write(auditWav)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(api.Close)
+
+	mux := newTestServerWith(t, Options{
+		Recordings: RecordingOptions{
+			Telnyx:          telnyx.NewClient(auditAPIKey, api.URL+"/v2"),
+			UpstreamTimeout: time.Millisecond,
+		},
+	}, telnyxRecordingObservation())
+
+	status, body, _ := getWithHeaders(t, mux, "/calls/telnyx-conversation/conv-rec/recording")
+	if status != http.StatusBadGateway {
+		t.Fatalf("status = %d, want 502 (body: %s)", status, body)
+	}
+}
+
+func TestResolveUpstreamTimeout(t *testing.T) {
+	tests := []struct {
+		name       string
+		configured time.Duration
+		want       time.Duration
+	}{
+		{"zero selects the default", 0, DefaultUpstreamTimeout},
+		{"negative selects the default", -time.Second, DefaultUpstreamTimeout},
+		{"explicit wins", 7 * time.Second, 7 * time.Second},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveUpstreamTimeout(tt.configured); got != tt.want {
+				t.Errorf("resolveUpstreamTimeout(%v) = %v, want %v", tt.configured, got, tt.want)
+			}
+		})
+	}
+}

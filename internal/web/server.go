@@ -43,7 +43,16 @@ type Searcher interface {
 // Register mounts every pbx-lens route on mux. The handler surface is
 // strictly read-only over the read model.
 func Register(mux *http.ServeMux, sys *system.System, opts Options) {
-	web := &server{sys: sys, recordings: opts.Recordings, search: opts.Search, log: opts.Log}
+	timeout := resolveUpstreamTimeout(opts.Recordings.UpstreamTimeout)
+
+	web := &server{
+		sys:        sys,
+		recordings: opts.Recordings,
+		search:     opts.Search,
+		log:        opts.Log,
+		recTimeout: timeout,
+		upstream:   newUpstreamClient(timeout),
+	}
 
 	mux.HandleFunc("GET /{$}", web.list)
 	mux.HandleFunc("GET /dashboard", web.dashboard)
@@ -61,6 +70,8 @@ type server struct {
 	recordings RecordingOptions
 	search     Searcher
 	log        func(msg string, args ...any)
+	recTimeout time.Duration
+	upstream   *http.Client
 }
 
 // logf reports a failure that surfaces after the response body started —
