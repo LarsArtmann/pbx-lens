@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"io"
 	"net/http"
 	"os"
@@ -10,13 +11,22 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 )
 
+// RecordingFetcher is the consumer-side view of a Telnyx client the
+// recording proxy needs: fetch one recording's metadata (including its
+// fresh signed download URL) by recording id. Declared here instead of
+// importing the concrete *telnyx.Client so tests and future sources can
+// stand in with a fake — telnyx.Client satisfies it as-is.
+type RecordingFetcher interface {
+	Recording(ctx context.Context, recordingID string) (telnyx.Recording, error)
+}
+
 // RecordingOptions wires the recording proxy's two sources. Both optional:
 // a disabled source answers 503 with the reason, never a silent 404.
 type RecordingOptions struct {
 	// Telnyx serves kind telnyx-conversation: the fresh signed WAV URL is
 	// fetched SERVER-SIDE with the API key and the bytes stream through
 	// this process — neither key nor signed URL ever reaches the browser.
-	Telnyx *telnyx.Client
+	Telnyx RecordingFetcher
 
 	// RecordingsDir serves kind freeswitch-cdr local {stem}.wav files
 	// (http.ServeFile: Range and conditional requests for free). The stem

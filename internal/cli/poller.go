@@ -11,7 +11,6 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/ingest/webhook"
-	"github.com/larsartmann/pbx-lens/internal/retention"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -133,7 +132,7 @@ func pollCDR(
 			return IngestStats{}, err
 		}
 
-		return ingestAdmitted(ctx, sys, cfg, parsed.Observations), nil
+		return GateIngest(ctx, sys, cfg.MaxAge, parsed.Observations), nil
 	})
 	if err != nil {
 		log("poll cdr: %v", err)
@@ -161,7 +160,7 @@ func pollWebhook(
 			return IngestStats{}, err
 		}
 
-		return ingestAdmitted(ctx, sys, cfg, parsed.Observations), nil
+		return GateIngest(ctx, sys, cfg.MaxAge, parsed.Observations), nil
 	})
 	if err != nil {
 		log("poll webhook log: %v", err)
@@ -190,7 +189,7 @@ func pollTranscripts(
 		return IngestStats{}
 	}
 
-	pass := ingestAdmitted(ctx, sys, cfg, observations)
+	pass := GateIngest(ctx, sys, cfg.MaxAge, observations)
 	pass.Rejected = append(rejects, pass.Rejected...)
 
 	return pass
@@ -223,7 +222,7 @@ func pollTelnyx(
 
 	now := time.Now().UTC()
 
-	admitted, refusals := applyAgeCutoff(cfg, now, observations)
+	admitted, refusals := AgeGate{MaxAge: cfg.MaxAge}.Apply(observations, now)
 	pass := ingestStatsFor(ctx, sys, observations, admitted, refusals)
 	pass.Rejected = append(rejects, pass.Rejected...)
 
@@ -271,24 +270,9 @@ func pollTelnyx(
 	return pass
 }
 
-// ingestAdmitted gates the retention window at ingest: observations older
-// than the policy cutoff are refused with a labeled rejection instead of
-// recorded (the ingest-side half of the retention doctrine; the purge half
-// is retention.Retire). Total counts everything the source offered, so the
-// pass summary shows refusals against the real batch size.
-func ingestAdmitted(
-	ctx context.Context,
-	sys *system.System,
-	cfg PollConfig,
-	observations []calls.Observation,
-) IngestStats {
-	admitted, refusals := applyAgeCutoff(cfg, time.Now().UTC(), observations)
-
-	return ingestStatsFor(ctx, sys, observations, admitted, refusals)
-}
-
 // ingestStatsFor ingests the admitted set and reports the refusals against
-// the full offered batch — the one finisher every gated source shares.
+// the full offered batch — the one finisher the gated telnyx source shares
+// with GateIngest.
 func ingestStatsFor(
 	ctx context.Context,
 	sys *system.System,
@@ -300,32 +284,6 @@ func ingestStatsFor(
 	stats.Rejected = append(stats.Rejected, refusals...)
 
 	return stats
-}
-
-// applyAgeCutoff splits a source batch into admitted observations and
-// labeled refusals (retention.ReasonAgeCutoff). A non-positive MaxAge
-// admits everything — retention is opt-in, matching the Policy zero value.
-func applyAgeCutoff(cfg PollConfig, now time.Time, observations []calls.Observation) ([]calls.Observation, []string) {
-	if cfg.MaxAge <= 0 {
-		return observations, nil
-	}
-
-	policy := retention.Policy{MaxAge: cfg.MaxAge}
-
-	admitted := make([]calls.Observation, 0, len(observations))
-	refusals := make([]string, 0)
-
-	for _, obs := range observations {
-		if policy.Admits(obs, now) {
-			admitted = append(admitted, obs)
-
-			continue
-		}
-
-		refusals = append(refusals, streamLabel(obs)+": "+string(retention.ReasonAgeCutoff))
-	}
-
-	return admitted, refusals
 }
 
 // pollFile opens, feeds, and closes a file source.

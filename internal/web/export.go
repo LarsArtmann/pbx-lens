@@ -84,16 +84,16 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 		return nil, false
 	}
 
-	pii := r.URL.Query().Get("pii")
+	pii := PIIMode(r.URL.Query().Get("pii"))
 	switch pii {
-	case "", piiModeHash:
+	case PIIModePlain, PIIModeHash:
 	default:
 		http.Error(
 			w,
 			fmt.Sprintf(
 				"unknown pii mode %q: the only supported mode is pii=%s",
-				pii,
-				piiModeHash,
+				string(pii),
+				PIIModeHash,
 			),
 			http.StatusBadRequest,
 		)
@@ -108,7 +108,7 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 		return nil, false
 	}
 
-	if pii == piiModeHash {
+	if pii == PIIModeHash {
 		for i := range views {
 			views[i].FromNumber = piiParticipant(views[i].FromNumber)
 			views[i].ToNumber = piiParticipant(views[i].ToNumber)
@@ -118,9 +118,18 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 	return views, true
 }
 
-// piiModeHash names the participant-hash-only export mode (T23): numbers
-// render as sha256:<16 hex chars>, everything else as a redaction marker.
-const piiModeHash = "hash"
+// PIIMode selects how participant numbers leave the server in an export.
+type PIIMode string
+
+const (
+	// PIIModePlain is the unset default: numbers export exactly as stored
+	// (the index stores raw numbers by design — see DOMAIN_LANGUAGE.md).
+	PIIModePlain PIIMode = ""
+	// PIIModeHash is the participant-hash-only export mode (T23): numbers
+	// render as sha256:<16 hex chars>, everything else as a redaction
+	// marker.
+	PIIModeHash PIIMode = "hash"
+)
 
 // piiRedacted is the honest marker for a party that was never a parseable
 // number: real CDRs carry unknown or garbled parties, and free text must not

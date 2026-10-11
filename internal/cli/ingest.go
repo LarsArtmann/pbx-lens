@@ -3,10 +3,12 @@ package cli
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/retention"
 )
 
 // IngestStats reports what one dispatch pass did to the index.
@@ -67,4 +69,52 @@ func Ingest(ctx context.Context, sys *system.System, observations []calls.Observ
 
 func streamLabel(obs calls.Observation) string {
 	return fmt.Sprintf("%s:%s", obs.Kind, obs.NativeID)
+}
+
+// AgeGate applies the retention window to a source batch at ingest:
+// observations older than MaxAge are refused with a labeled rejection
+// instead of recorded (the ingest-side half of the retention doctrine; the
+// purge half is retention.Retire). The zero value keeps everything —
+// retention is opt-in, matching the Policy zero value. Shared by the serve
+// poller and the one-shot ingest commands so a CLI backfill cannot
+// silently re-import rows the window refuses.
+type AgeGate struct {
+	MaxAge time.Duration
+}
+
+// Apply splits a source batch into admitted observations and labeled
+// refusals (retention.ReasonAgeCutoff).
+func (g AgeGate) Apply(observations []calls.Observation, now time.Time) ([]calls.Observation, []string) {
+	if g.MaxAge <= 0 {
+		return observations, nil
+	}
+
+	policy := retention.Policy{MaxAge: g.MaxAge}
+
+	admitted := make([]calls.Observation, 0, len(observations))
+	refusals := make([]string, 0)
+
+	for _, obs := range observations {
+		if policy.Admits(obs, now) {
+			admitted = append(admitted, obs)
+
+			continue
+		}
+
+		refusals = append(refusals, streamLabel(obs)+": "+string(retention.ReasonAgeCutoff))
+	}
+
+	return admitted, refusals
+}
+
+// GateIngest applies the age gate and ingests the survivors. Total counts
+// everything offered, so refusals report against the real batch size.
+func GateIngest(ctx context.Context, sys *system.System, maxAge time.Duration, observations []calls.Observation) IngestStats {
+	admitted, refusals := AgeGate{MaxAge: maxAge}.Apply(observations, time.Now().UTC())
+
+	stats := Ingest(ctx, sys, admitted)
+	stats.Total = len(observations)
+	stats.Rejected = append(stats.Rejected, refusals...)
+
+	return stats
 }
