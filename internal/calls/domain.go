@@ -155,6 +155,12 @@ func (o Observation) ContentHash() string {
 		o.FromNumber, o.ToNumber, o.HangupCause, o.IsAI, o.TranscriptExcerpt,
 		transcriptHash(o.Transcript), o.RecordingRef)
 
+	// MOS joins the hash only when reported, so a source that never carries
+	// it keeps the exact hash it had before the field existed.
+	if o.MOS != 0 {
+		_, _ = fmt.Fprintf(h, "\nmos=%g", o.MOS)
+	}
+
 	return hex.EncodeToString(h.Sum(nil))
 }
 

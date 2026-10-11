@@ -33,6 +33,7 @@ type CallView struct {
 	CostMicros        int64            `json:"cost_micros,omitempty"`
 	CostCurrency      string           `json:"cost_currency,omitempty"`
 	InsightSummary    string           `json:"insight_summary,omitempty"`
+	MOS               float64          `json:"mos,omitempty"`
 	ContentHash       string           `json:"content_hash"`
 }
 
@@ -53,6 +54,7 @@ func ViewFrom(obs Observation, enr Enrichment) CallView {
 		CostMicros:        enr.CostMicros,
 		CostCurrency:      enr.CostCurrency,
 		InsightSummary:    enr.InsightSummary,
+		MOS:               obs.MOS,
 		ContentHash:       obs.ContentHash(),
 	}
 }

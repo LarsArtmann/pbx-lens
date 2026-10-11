@@ -131,18 +131,31 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 
 		var shape map[string]string
 
+		var mosRaw string
+
 		switch len(fields) {
 		case len(fields13):
 			shape = zip(fields13, fields)
 		case len(fields18):
 			shape = zip(fields18, fields)
+		case len(fields13) + 1:
+			// mod_cdr_csv appends extra configured fields AFTER the template;
+			// this deployment's only extra field is rtp_audio_in_mos. The
+			// parse below rejects anything outside the MOS scale, so a
+			// different extra field degrades to "no MOS" rather than a bad
+			// value.
+			shape = zip(fields13, fields[:len(fields13)])
+			mosRaw = fields[len(fields13)]
+		case len(fields18) + 1:
+			shape = zip(fields18, fields[:len(fields18)])
+			mosRaw = fields[len(fields18)]
 		default:
 			res.Skipped++
 
 			continue
 		}
 
-		obs, err := observation(shape, opts)
+		obs, err := observation(shape, opts, mosRaw)
 		if err != nil {
 			res.Skipped++
 
@@ -177,7 +190,25 @@ func zip(names, values []string) map[string]string {
 	return m
 }
 
-func observation(shape map[string]string, opts ParseOptions) (calls.Observation, error) {
+// cdrMOSMax is FreeSWITCH's Mean Opinion Score ceiling (the 1..5 scale).
+const cdrMOSMax = 5.0
+
+// parseMOS accepts a reported rtp_audio_in_mos value; anything empty,
+// unparseable, or outside the MOS scale reads as "not reported" (0).
+func parseMOS(raw string) float64 {
+	if raw == "" {
+		return 0
+	}
+
+	v, err := strconv.ParseFloat(raw, 64)
+	if err != nil || v <= 0 || v > cdrMOSMax {
+		return 0
+	}
+
+	return v
+}
+
+func observation(shape map[string]string, opts ParseOptions, mosRaw string) (calls.Observation, error) {
 	started, err := time.Parse(stampLayout, shape["start_stamp"])
 	if err != nil {
 		return calls.Observation{}, fmt.Errorf("start_stamp %q: %w", shape["start_stamp"], err)
@@ -195,6 +226,7 @@ func observation(shape map[string]string, opts ParseOptions) (calls.Observation,
 		ToNumber:     shape["destination_number"],
 		HangupCause:  shape["hangup_cause"],
 		IsAI:         opts.isAI(shape["destination_number"]),
+		MOS:          parseMOS(mosRaw),
 	}
 
 	return obs, obs.Validate()
