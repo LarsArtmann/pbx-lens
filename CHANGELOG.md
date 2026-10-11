@@ -26,6 +26,14 @@ No version has been tagged yet; everything lives under Unreleased.
 - `smoke` and `version` CLI commands.
 - Project documentation set: README, FEATURES, TODO_LIST, ROADMAP,
   docs/DOMAIN_LANGUAGE (SUPERB plan T16).
+- GitHub Actions CI lane (go-output's pattern, adapted single-module): build,
+  test with race + coverage floor, go mod tidy check, golangci-lint,
+  govulncheck, and a warning-only art-dupl gate; dependabot now also watches
+  the github-actions ecosystem.
+- Flake devShell and tooling (go-output's pattern): hermetic shell with go,
+  golangci-lint, gopls, govulncheck, and vendored cqrs-lint (pinned
+  go-cqrs-lite rev, replacing the /tmp binary), plus the
+  `nix run .#update-vendor-hash` repair app.
 
 ### Fixed
 
@@ -34,3 +42,7 @@ No version has been tagged yet; everything lives under Unreleased.
   composition-root helper, errorfamily classification across the CLI, and
   `Volume(100_000)` declared on the projection. Remaining warnings are
   documented decisions in AGENTS.md.
+- `nix build` shipped an empty result (no binary): the flake built the
+  package-less repo root instead of the binary; it now targets
+  `./cmd/pbx-lens`, so `result/bin/pbx-lens` exists and `nix run . -- version`
+  works.
