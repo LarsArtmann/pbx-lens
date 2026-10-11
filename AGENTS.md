@@ -24,6 +24,9 @@ webphone later gets a read-only deep link, never a data dependency.
   surface needs it.
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
   (below). No testify (banned; stdlib table-driven tests), no cobra, no ORM.
+  `golang.org/x/crypto` v0.57.0 (bcrypt only) is direct since D1: it was
+  ALREADY in the module graph via projectionhost/watermill — promoting it
+  added no new module; htpasswd without bcrypt is not worth hand-rolling.
 - **UI trio (2026-10-11, F3/F4):** `go-appkit` v0.8.0 (HTTP service shell:
   `NewService(ServiceConfig{Addr})` → `svc.Mux *http.ServeMux`, `svc.Run(ctx)`
   owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.21.0 (display/

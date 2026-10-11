@@ -402,6 +402,11 @@ func serve(args []string) {
 		"/var/lib/telephony/recordings",
 		"local FreeSWITCH recordings directory ({uuid}_{dest}.wav files; empty = disabled)",
 	)
+	htpasswdPath := fs.String(
+		"htpasswd",
+		"",
+		"bcrypt htpasswd file gating every route (htpasswd -B; empty = no auth — localhost dev only)",
+	)
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -431,7 +436,18 @@ func serve(args []string) {
 		fatal(err)
 	}
 
-	svc, err := appkit.NewService(appkit.ServiceConfig{Addr: *addr})
+	serviceConfig := appkit.ServiceConfig{Addr: *addr}
+
+	if *htpasswdPath != "" {
+		auth, err := web.HtpasswdMiddleware(*htpasswdPath)
+		if err != nil {
+			fatal(err)
+		}
+
+		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares, auth)
+	}
+
+	svc, err := appkit.NewService(serviceConfig)
 	if err != nil {
 		fatal(err)
 	}

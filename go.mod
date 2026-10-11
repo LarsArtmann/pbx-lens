@@ -17,6 +17,7 @@ require (
 	github.com/larsartmann/go-cqrs-lite/system/v4 v4.12.0
 	github.com/larsartmann/go-error-family v0.11.0
 	github.com/larsartmann/templ-components v1.21.0
+	golang.org/x/crypto v0.57.0
 	modernc.org/sqlite v1.60.1
 )
 
