@@ -1,6 +1,9 @@
 package calls
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -62,6 +65,36 @@ func TestValidate(t *testing.T) {
 				t.Fatalf("want rejection %q, got %v", tc.wantErr, err)
 			}
 		})
+	}
+}
+
+func TestContentHashMOSOnlyWhenReported(t *testing.T) {
+	obs := validObservation()
+
+	// The MOS==0 hash must equal the pre-MOS algorithm byte-for-byte: that
+	// is the contract that lets older streams (and re-polled CDR rows without
+	// a score) keep their historical identity after the field was added. If
+	// the base format ever changes intentionally, update this golden too.
+	h := sha256.New()
+	_, _ = fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s\n%s",
+		obs.NativeID, obs.Kind, obs.Direction, obs.StartedAt.UTC().UnixNano(), obs.DurationSecs,
+		obs.FromNumber, obs.ToNumber, obs.HangupCause, obs.IsAI, obs.TranscriptExcerpt,
+		transcriptHash(obs.Transcript), obs.RecordingRef)
+
+	if got := obs.ContentHash(); got != hex.EncodeToString(h.Sum(nil)) {
+		t.Error("a MOS-less observation must hash exactly as before the MOS field existed")
+	}
+
+	scored := obs
+	scored.MOS = 4.2
+	if scored.ContentHash() == obs.ContentHash() {
+		t.Error("a reported MOS must change the content hash")
+	}
+
+	rescored := obs
+	rescored.MOS = 3.1
+	if rescored.ContentHash() == scored.ContentHash() {
+		t.Error("different MOS values must hash differently")
 	}
 }
 

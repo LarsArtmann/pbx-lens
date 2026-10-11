@@ -188,7 +188,9 @@ func pollTranscripts(
 	return pass
 }
 
-// pollTelnyx polls conversations+recordings when a client is configured.
+// pollTelnyx polls conversations+recordings when a client is configured,
+// then runs the enrichment pass (Detail Records cost + conversation
+// insights) over the same conversations.
 func pollTelnyx(
 	ctx context.Context,
 	sys *system.System,
@@ -201,7 +203,7 @@ func pollTelnyx(
 
 	since := time.Now().UTC().Add(-cfg.SinceAgo)
 
-	observations, rejects, err := FetchTelnyxObservations(ctx, cfg.Telnyx, TelnyxOptions{
+	observations, seeds, rejects, err := FetchTelnyxObservations(ctx, cfg.Telnyx, TelnyxOptions{
 		Since:     since,
 		Direction: cfg.Direction,
 	})
@@ -213,6 +215,29 @@ func pollTelnyx(
 
 	pass := Ingest(ctx, sys, observations)
 	pass.Rejected = append(rejects, pass.Rejected...)
+
+	// Enrichment reads the read model, so this pass's recordings must be
+	// projected before it runs; the pass-end drain then covers the
+	// enrichment events themselves.
+	if err := DrainProjections(ctx, sys); err != nil {
+		log("poll telnyx drain: %v", err)
+
+		return pass
+	}
+
+	estats, err := EnrichTelnyxCalls(ctx, sys, cfg.Telnyx, seeds, since)
+	if err != nil {
+		log("poll telnyx enrich: %v", err)
+
+		return pass
+	}
+
+	log("poll telnyx enrich: %d considered, %d enriched, %d unchanged, %d missing, %d rejected",
+		estats.Considered, estats.Enriched, estats.Unchanged, estats.Missing, len(estats.Rejected))
+
+	for _, reason := range estats.Rejected {
+		log("  enrichment rejected: %s", reason)
+	}
 
 	return pass
 }

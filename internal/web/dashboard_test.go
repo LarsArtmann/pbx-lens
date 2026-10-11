@@ -76,6 +76,100 @@ func TestDashboardEmptyIndexIsHonest(t *testing.T) {
 	}
 }
 
+func TestDashboardMOSSummaryAndTrend(t *testing.T) {
+	day := time.Date(2026, 10, 9, 10, 0, 0, 0, time.UTC)
+	scoredA := webObservation("conv-mos-a", day)
+	scoredA.MOS = 4.2
+	scoredB := webObservation("conv-mos-b", day.Add(time.Hour))
+	scoredB.MOS = 3.8
+	unscored := webObservation("conv-mos-none", day.Add(2 * time.Hour))
+
+	status, body := getBody(t, newTestServer(t, scoredA, scoredB, unscored), "/dashboard")
+	if status != 200 {
+		t.Fatalf("GET /dashboard status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{"Call quality (MOS)", "4.0", "mean of 2 scored calls"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard missing %q", want)
+		}
+	}
+
+	if strings.Contains(body, "Not available yet") {
+		t.Error("scored calls must replace the MOS placeholder")
+	}
+}
+
+func TestDashboardMOSOutsideWindowStillCounts(t *testing.T) {
+	old := webObservation("conv-mos-old", time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC))
+	old.MOS = 3.5
+
+	_, body := getBody(t, newTestServer(t, old), "/dashboard")
+
+	for _, want := range []string{"3.5", "mean of 1 scored call", "No MOS data in the last 30 days"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard missing %q", want)
+		}
+	}
+}
+
+func TestDashboardStatsQueryMOSAggregation(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "dashboard-mos-test.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	day := time.Date(2026, 10, 9, 8, 0, 0, 0, time.UTC)
+	scoredA := webObservation("conv-mos-1", day)
+	scoredA.MOS = 4.0
+	scoredB := webObservation("conv-mos-2", day.Add(time.Hour))
+	scoredB.MOS = 2.0
+	unscored := webObservation("conv-mos-3", day.Add(2 * time.Hour))
+
+	if stats := cli.Ingest(ctx, sys, []calls.Observation{scoredA, scoredB, unscored}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatalf("DashboardStatsQuery: %v", err)
+	}
+
+	if stats.MOSKnown != 2 {
+		t.Errorf("MOSKnown = %d, want 2", stats.MOSKnown)
+	}
+
+	if stats.MOSSum != 6.0 {
+		t.Errorf("MOSSum = %v, want 6", stats.MOSSum)
+	}
+
+	if got := stats.MOSAvg(); got != 3.0 {
+		t.Errorf("MOSAvg = %v, want 3", got)
+	}
+
+	for _, dayVolume := range stats.ByDay {
+		switch dayVolume.Day {
+		case "2026-10-09":
+			if dayVolume.MOSKnown != 2 || dayVolume.MOSSum != 6.0 || dayVolume.AvgMOS() != 3.0 {
+				t.Errorf("2026-10-09 MOS = %d/%v/%v, want 2/6/3", dayVolume.MOSKnown, dayVolume.MOSSum, dayVolume.AvgMOS())
+			}
+		default:
+			if dayVolume.MOSKnown != 0 || dayVolume.AvgMOS() != 0 {
+				t.Errorf("%s MOS = %d/%v, want 0/0", dayVolume.Day, dayVolume.MOSKnown, dayVolume.AvgMOS())
+			}
+		}
+	}
+}
+
 func TestDashboardStatsQueryWindowMath(t *testing.T) {
 	// Query-level check: in-window days aggregate, out-of-window calls only
 	// feed the totals, and the window always spans exactly 30 day buckets.

@@ -116,7 +116,7 @@ templ mosCard(stats DashboardStats) {
 		} else {
 			<p class="text-2xl font-semibold">{ mosAvgLabel(stats) }</p>
 			<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-				mean of { strconv.Itoa(stats.MOSKnown) } scored call{ if stats.MOSKnown != 1 { "s" } }
+				mean of { scoredCallsLabel(stats.MOSKnown) }
 			</p>
 			<div class="mt-3">
 				@display.BarChart(display.BarChartProps{
@@ -154,6 +154,16 @@ func mosBars(days []DayVolume) []display.BarChartBar {
 
 func mosAvgLabel(stats DashboardStats) string {
 	return strconv.FormatFloat(stats.MOSAvg(), 'f', 1, 64)
+}
+
+// scoredCallsLabel renders "N scored calls" with honest singular when the
+// index holds exactly one measured call.
+func scoredCallsLabel(known int) string {
+	if known == 1 {
+		return "1 scored call"
+	}
+
+	return strconv.Itoa(known) + " scored calls"
 }
 
 // volumeBars maps the day series onto chart bars (oldest → newest).

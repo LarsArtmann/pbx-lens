@@ -193,7 +193,7 @@ func ingestTelnyx(args []string) {
 
 	client := telnyx.NewClient(key, "")
 
-	observations, fetchRejects, err := cli.FetchTelnyxObservations(ctx, client, cli.TelnyxOptions{
+	observations, seeds, fetchRejects, err := cli.FetchTelnyxObservations(ctx, client, cli.TelnyxOptions{
 		Since:     sinceAt,
 		Direction: dir,
 		Limit:     *limit,
@@ -203,6 +203,18 @@ func ingestTelnyx(args []string) {
 	}
 
 	stats := cli.Ingest(ctx, sys, observations)
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		fatal(err)
+	}
+
+	// Enrichment reads the read model, so it runs after the drain that
+	// projected this pass's recordings; the second drain covers the
+	// call.enriched events the pass appends.
+	estats, err := cli.EnrichTelnyxCalls(ctx, sys, client, seeds, sinceAt)
+	if err != nil {
+		fatal(err)
+	}
 
 	if err := cli.DrainProjections(ctx, sys); err != nil {
 		fatal(err)
@@ -220,7 +232,13 @@ func ingestTelnyx(args []string) {
 		stats.Total, stats.Recorded, stats.Corrected, len(stats.Rejected),
 	)
 
+	fmt.Printf(
+		"enrichment: %d considered, %d enriched, %d unchanged, %d missing, %d rejected\n",
+		estats.Considered, estats.Enriched, estats.Unchanged, estats.Missing, len(estats.Rejected),
+	)
+
 	printRejected(stats.Rejected)
+	printRejected(estats.Rejected)
 }
 
 func ingestWebhook(args []string) {
