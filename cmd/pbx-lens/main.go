@@ -16,6 +16,7 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/ingest/webhook"
+	"github.com/larsartmann/pbx-lens/internal/search"
 	"github.com/larsartmann/pbx-lens/internal/web"
 )
 
@@ -132,6 +133,10 @@ func ingestCDR(args []string) {
 		fatal(err)
 	}
 
+	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+		fatal(err)
+	}
+
 	fmt.Printf(
 		"ingest-cdr: %d rows parsed, %d parse-skipped, %d recorded, %d corrected, %d rejected\n",
 		stats.Total, parsed.Skipped, stats.Recorded, stats.Corrected, len(stats.Rejected),
@@ -197,6 +202,10 @@ func ingestTelnyx(args []string) {
 		fatal(err)
 	}
 
+	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+		fatal(err)
+	}
+
 	stats.Rejected = append(fetchRejects, stats.Rejected...)
 	stats.Total += len(fetchRejects)
 
@@ -248,6 +257,10 @@ func ingestWebhook(args []string) {
 		fatal(err)
 	}
 
+	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+		fatal(err)
+	}
+
 	fmt.Printf(
 		"ingest-webhook: %d calls aggregated, %d lines skipped, %d recorded, %d corrected, %d rejected\n",
 		stats.Total, parsed.Skipped, stats.Recorded, stats.Corrected, len(stats.Rejected),
@@ -286,6 +299,10 @@ func ingestAgent(args []string) {
 	stats := cli.Ingest(ctx, sys, observations)
 
 	if err := cli.DrainProjections(ctx, sys); err != nil {
+		fatal(err)
+	}
+
+	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
 		fatal(err)
 	}
 
@@ -403,6 +420,17 @@ func serve(args []string) {
 		fatal(err)
 	}
 
+	index, err := search.Open(*db)
+	if err != nil {
+		fatal(err)
+	}
+
+	defer func() { _ = index.Close() }()
+
+	if err := cli.RebuildIndex(setupCtx, sys, index); err != nil {
+		fatal(err)
+	}
+
 	svc, err := appkit.NewService(appkit.ServiceConfig{Addr: *addr})
 	if err != nil {
 		fatal(err)
@@ -419,7 +447,7 @@ func serve(args []string) {
 		recordings.Telnyx = telnyx.NewClient(key, "")
 	}
 
-	web.Register(svc.Mux, sys, web.Options{Recordings: recordings})
+	web.Register(svc.Mux, sys, web.Options{Recordings: recordings, Search: index})
 
 	// The serve lifetime is signal-owned (Run handles SIGINT/SIGTERM) — no
 	// timeout context here, or the server would die with it.

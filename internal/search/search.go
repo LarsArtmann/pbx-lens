@@ -52,9 +52,11 @@ type Index struct {
 	db *sql.DB
 }
 
-// Open connects to the index sqlite file (same DSN as the read model).
+// Open connects to the index sqlite file (same DSN as the read model). The
+// connection carries a busy timeout so FTS rebuilds coexist with the read
+// model's own connection instead of failing fast with SQLITE_BUSY.
 func Open(dsn string) (*Index, error) {
-	db, err := sql.Open("sqlite", dsn)
+	db, err := sql.Open("sqlite", withBusyTimeout(dsn))
 	if err != nil {
 		return nil, errorfamily.NewRejection("lens.search.open", fmt.Sprintf("opening %s: %v", dsn, err))
 	}
@@ -68,6 +70,23 @@ func Open(dsn string) (*Index, error) {
 	}
 
 	return &Index{db: db}, nil
+}
+
+// withBusyTimeout appends the busy_timeout pragma to a modernc sqlite DSN
+// (query params are stripped from non-file: DSNs by the driver before
+// opening, so plain paths are fine).
+func withBusyTimeout(dsn string) string {
+	if strings.Contains(dsn, "busy_timeout") {
+		return dsn
+	}
+
+	const pragma = "_pragma=busy_timeout(5000)"
+
+	if strings.Contains(dsn, "?") {
+		return dsn + "&" + pragma
+	}
+
+	return dsn + "?" + pragma
 }
 
 // Close releases the connection.
