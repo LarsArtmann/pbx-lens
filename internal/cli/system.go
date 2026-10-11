@@ -29,8 +29,23 @@ func OpenSystem(ctx context.Context, dsn string) (*system.System, func(), error)
 }
 
 // DrainProjections catches the call_views read model up with every event
-// appended so far. It is cheap when already caught up (one empty journal
-// read) and safe to call repeatedly.
+// appended so far, SYNCHRONOUSLY: it restarts the host's batch-drain workers
+// and waits for them to finish (the host is a one-shot drainer, not a live
+// tail — Start alone returns before the drain runs). It is cheap when
+// already caught up and safe to call repeatedly.
 func DrainProjections(ctx context.Context, sys *system.System) error {
-	return sys.ProjectionHost().Start(ctx)
+	host := sys.ProjectionHost()
+
+	// Stop is idempotent on a fresh or stopped host; it resets the host to
+	// the startable state.
+	if err := host.Stop(); err != nil {
+		return err
+	}
+
+	if err := host.Start(ctx); err != nil {
+		return err
+	}
+
+	// The second Stop awaits the drain workers' graceful completion.
+	return host.Stop()
 }

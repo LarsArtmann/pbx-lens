@@ -52,6 +52,19 @@ func awaitView(t *testing.T, sys *system.System, streamID string) calls.CallView
 	}
 }
 
+func viewKey(t *testing.T, obs calls.Observation) string {
+	t.Helper()
+
+	sid, err := obs.StreamID()
+	if err != nil {
+		t.Fatalf("StreamID: %v", err)
+	}
+
+	// StreamID.String() carries the StreamMarker prefix; it IS the
+	// projection's record key.
+	return sid.String()
+}
+
 func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
@@ -64,13 +77,14 @@ func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 	defer cleanup()
 
 	obs := observation("conv-a", 26)
+	key := viewKey(t, obs)
 
 	first := Ingest(ctx, sys, []calls.Observation{obs})
 	if first.Total != 1 || first.Recorded != 1 || first.Corrected != 0 || len(first.Rejected) != 0 {
 		t.Fatalf("first pass = %+v, want 1 recorded", first)
 	}
 
-	awaitView(t, sys, "telnyx-conversation:conv-a")
+	awaitView(t, sys, key)
 
 	replay := Ingest(ctx, sys, []calls.Observation{obs})
 	if replay.Recorded != 1 || replay.Corrected != 0 {
@@ -88,7 +102,7 @@ func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 		t.Fatalf("changed snapshot = %+v, want 1 corrected", corrected)
 	}
 
-	view := awaitView(t, sys, "telnyx-conversation:conv-a")
+	view := awaitView(t, sys, key)
 	if view.DurationSecs != 40 {
 		t.Fatalf("corrected view duration = %d, want 40", view.DurationSecs)
 	}
