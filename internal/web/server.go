@@ -111,7 +111,7 @@ func parseFilters(r *http.Request) (ListCallsQuery, error) {
 		if err != nil {
 			return ListCallsQuery{}, errorfamily.NewRejection(
 				"lens.web.bad_date",
-					field.name+" must be YYYY-MM-DD or RFC3339, got "+strconv.Quote(v),
+				field.name+" must be YYYY-MM-DD or RFC3339, got "+strconv.Quote(v),
 			)
 		}
 

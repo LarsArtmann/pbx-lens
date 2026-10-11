@@ -51,6 +51,8 @@ func (s *server) recording(w http.ResponseWriter, r *http.Request) {
 		s.proxyTelnyxRecording(w, r, view.RecordingRef)
 	case calls.SourceFreeSwitchCDR:
 		s.serveLocalRecording(w, r, view)
+	case calls.SourceWebhookLog, calls.SourceAgentTranscript:
+		fallthrough
 	default:
 		http.Error(w, "source kind "+string(view.Kind)+" records no playable audio", http.StatusNotFound)
 	}
