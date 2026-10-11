@@ -6,14 +6,26 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/time/rate"
 )
 
 // basicAuthRealm names the protection space browsers show in their login
 // prompt.
 const basicAuthRealm = `Basic realm="pbx-lens"`
+
+// authFailureInterval and authFailureBurst throttle failed basic-auth
+// attempts with one shared token bucket: bcrypt comparisons are the
+// expensive path, so capping the FAILURE rate caps brute-force throughput
+// without a per-IP bookkeeping map (personal-PBX scale, one realm).
+// Successful logins never wait.
+const (
+	authFailureInterval = 6 * time.Second
+	authFailureBurst    = 5
+)
 
 // timingPadSeed seeds the dummy hash compared against unknown users so the
 // failure and success paths run identical bcrypt work. It is a fixed
@@ -43,6 +55,8 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 		)
 	}
 
+	failures := rate.NewLimiter(rate.Every(authFailureInterval), authFailureBurst)
+
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, password, ok := r.BasicAuth()
@@ -58,8 +72,12 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 			}
 
 			// The bcrypt comparison always runs — known user or not — so
-			// response timing does not enumerate valid usernames.
+			// response timing does not enumerate valid usernames. A failed
+			// attempt then waits for a throttle token before answering: an
+			// attacker's guesses cost wall-clock time, not just CPU. A
+			// canceled context still answers 401 (best effort).
 			if bcrypt.CompareHashAndPassword(hash, []byte(password)) != nil {
+				_ = failures.Wait(r.Context())
 				unauthorized(w)
 
 				return

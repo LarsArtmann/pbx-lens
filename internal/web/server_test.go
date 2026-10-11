@@ -1,15 +1,18 @@
 package web
 
 import (
+	"context"
 	"errors"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
 func webObservation(nativeID string, started time.Time) calls.Observation {
@@ -285,5 +288,73 @@ func TestFreshnessMidWriteFailureLogsInsteadOfCorrupting(t *testing.T) {
 
 	if writer.writes != 1 {
 		t.Errorf("write attempts = %d, want 1 — an error body must not be appended after the response started", writer.writes)
+	}
+}
+
+// TestLiveServerEndToEnd is the checked-in version of the manual UI probe
+// the 2026-10-11 dispatch ran by hand: a real listener (httptest.NewServer
+// over the registered mux, real HTTP over the loopback stack) serving a
+// real sqlite index, probed on all four surfaces. Index wiring follows the
+// one-flow pattern (search.Open + Rebuild over the seeded views).
+func TestLiveServerEndToEnd(t *testing.T) {
+	ctx := context.Background()
+
+	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	seeded := []calls.Observation{
+		webObservation("conv-e2e", started),
+		webObservation("conv-e2e-b", started.Add(time.Minute)),
+	}
+
+	index, err := search.Open(ctx, filepath.Join(t.TempDir(), "e2e.db"))
+	if err != nil {
+		t.Fatalf("search.Open: %v", err)
+	}
+
+	t.Cleanup(func() { _ = index.Close() })
+
+	views := make([]calls.CallView, 0, len(seeded))
+	for _, obs := range seeded {
+		views = append(views, calls.ViewFrom(obs, calls.Enrichment{}))
+	}
+
+	if err := index.Rebuild(ctx, views); err != nil {
+		t.Fatalf("index rebuild: %v", err)
+	}
+
+	mux := newTestServerWith(t, Options{Search: index}, seeded...)
+
+	server := httptest.NewServer(mux)
+	t.Cleanup(server.Close)
+
+	checks := []struct {
+		path     string
+		wantText []string
+	}{
+		{"/", []string{"conv-e2e", "+17287289311"}},
+		{"/dashboard", []string{"Call quality (MOS)"}},
+		{"/search?q=17287289311", []string{"conv-e2e"}},
+		{"/api/freshness", []string{`"calls_indexed":2`}},
+	}
+
+	for _, c := range checks {
+		resp, err := http.Get(server.URL + c.path)
+		if err != nil {
+			t.Fatalf("GET %s: %v", c.path, err)
+		}
+
+		body, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("GET %s status = %d, want 200 (body: %.200s)", c.path, resp.StatusCode, body)
+
+			continue
+		}
+
+		for _, want := range c.wantText {
+			if !strings.Contains(string(body), want) {
+				t.Errorf("GET %s body missing %q", c.path, want)
+			}
+		}
 	}
 }
