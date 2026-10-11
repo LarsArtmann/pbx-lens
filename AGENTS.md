@@ -259,13 +259,37 @@ DECISION.
   sleep under a 5 s context deadline — a one-shot CLI convergence wait, no
   hot path. `Watcher.Watch` is change-only (no current-value replay), so
   switching would trade a bounded poll for a subscribe race.
+- **F009 (deliberate, poller)**: `internal/cli/poller.go` uses a hand-rolled
+  `time.NewTicker`; the scheduling module's durable TimerStore buys nothing
+  for a stateless re-ingest loop whose only failure mode is "poll again next
+  tick". Same class of one-shot/periodic CLI wait as P006.
+- **D014 (deliberate)**: `CallCorrected.Enrichment` carries no json tag
+  because the field is not persisted as a flat column; the whole event
+  payload is stored as the stream record. Adding a tag would be noise.
+- **F026 (deliberate at v1)**: the readers in `internal/cli/agent.go` scan
+  bounded result sets (transcripts, recent recordings); `WithPrefetch` only
+  pays off on large cursor pages. Revisit when a source grows past a few
+  hundred rows/pass.
+- **B004/B005 (informational)**: `cqrs-gen` constructors and
+  `decider.StrictApply` were both considered; StrictApply rejected above
+  (loses the Corruption family), and handwritten constructors stay because
+  the flat domain has only two commands.
 
 ## buildflow dev-gate residual findings policy (2026-10-11 full pass: gate PASSES with warnings)
 
+- **Run the gate INSIDE the devShell (PAID FOR, 2026-10-11)**: invoke
+  `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev`.
+  Run from a bare shell, buildflow resolves a go older than the 1.27.1 floor
+  and `go-generate`/`workspace-build-verify` fail with "requires go >= 1.27.1
+  (running go 1.27.0)". The devShell ships go 1.27.2 with GOTOOLCHAIN=local,
+  which satisfies the floor. A bare-shell failure is an environment artifact,
+  not a code defect.
 - **go-version-auto-configure (dep-forced, advisory by design)**: go.mod
   carries `go 1.27.1` because go-appkit v0.8.0's module floor demands it —
   `go mod tidy` reverts any major.minor downgrade. The checker's own
-  severity policy treats dep-forced patch floors as correct.
+  severity policy treats dep-forced patch floors as correct. If a stray
+  `go-mod-*` step ever rewrites the directive to `go 1.27`, restore it
+  (`git restore go.mod`); a 1.27 directive breaks `go list`.
 - **go-auto-upgrade encoding/json v1→v2 suggestions**: deliberate — the
   boundary types (metaengine DTOs) are non-stdlib-owned; the v2 swap waits
   for T4 per the stack decisions. samber/lo suggestions ignored (stdlib
@@ -287,4 +311,7 @@ DECISION.
   positive), noctx in tests (httptest.NewRequest stdlib pattern), and the
   godoclint "more than one godoc" templ-header false positive (fleet
   precedent: samber-do-auditlog). `.golangci.yml` `run.go` must track
-  go.mod's floor — govalid reads it.
+  go.mod's floor — govalid reads it. Removed `tagliatelle.case.use-case`
+  (invalid for the installed golangci-lint schema; `golangci-lint-config-verify`
+  rejected it and the runner terminated with "configuration contains invalid
+  elements").
