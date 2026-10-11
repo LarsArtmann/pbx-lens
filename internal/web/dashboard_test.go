@@ -14,9 +14,9 @@ import (
 func TestDashboardRendersStatsAndCharts(t *testing.T) {
 	day := time.Date(2026, 10, 9, 10, 0, 0, 0, time.UTC) // inside the 30-day window
 	ai := webObservation("conv-ai", day)
+	ai.IsAI = true
 	human := webObservation("conv-human", day.Add(time.Hour))
 	human.IsAI = false
-	human.NativeID = "conv-human"
 
 	mux := newTestServer(t, ai, human)
 
@@ -28,6 +28,7 @@ func TestDashboardRendersStatsAndCharts(t *testing.T) {
 	for _, want := range []string{
 		"Dashboard", "Calls indexed", "Calls today", "AI share", "Avg duration",
 		"AI vs human", "30-day trend", "Call quality (MOS)", "Not available yet",
+		"50.0% AI",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("dashboard missing %q", want)
@@ -38,6 +39,7 @@ func TestDashboardRendersStatsAndCharts(t *testing.T) {
 func TestDashboardCountsMatchFixture(t *testing.T) {
 	day := time.Date(2026, 10, 9, 10, 0, 0, 0, time.UTC)
 	ai := webObservation("conv-ai", day)
+	ai.IsAI = true
 	human := webObservation("conv-human", day.Add(time.Hour))
 	human.IsAI = false
 
@@ -46,12 +48,15 @@ func TestDashboardCountsMatchFixture(t *testing.T) {
 	mux := newTestServer(t, ai, human, older)
 	_, body := getBody(t, mux, "/dashboard")
 
-	// Totals cover the whole index (3), not just the chart window (2 in-window).
-	if !strings.Contains(body, ">3<") {
-		t.Errorf("dashboard should count all 3 indexed calls, got: %s", body[len(body)-min(len(body), 2000):])
+	// Totals cover the whole index (3), not just the chart window (2
+	// in-window); the legend carries the exact AI/human split.
+	for _, want := range []string{"AI 1 · Human 2", "33.3% AI"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard missing %q", want)
+		}
 	}
 
-	if strings.Count(body, "conv-") != 0 {
+	if strings.Contains(body, "conv-") {
 		t.Error("dashboard must not leak native ids into the page")
 	}
 }
@@ -84,12 +89,15 @@ func TestDashboardStatsQueryWindowMath(t *testing.T) {
 
 	t.Cleanup(cleanup)
 
-	if stats := cli.Ingest(ctx, sys, []calls.Observation{
-		webObservation("conv-a", time.Date(2026, 10, 9, 8, 0, 0, 0, time.UTC)),
-		webObservation("conv-b", time.Date(2026, 10, 9, 9, 0, 0, 0, time.UTC)),
-		webObservation("conv-c", time.Date(2026, 9, 20, 12, 0, 0, 0, time.UTC)),
-		webObservation("conv-old", time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC)),
-	}); len(stats.Rejected) > 0 {
+	aiCall := webObservation("conv-a", time.Date(2026, 10, 9, 8, 0, 0, 0, time.UTC))
+	aiCall.IsAI = true
+	aiCallB := webObservation("conv-b", time.Date(2026, 10, 9, 9, 0, 0, 0, time.UTC))
+	aiCallB.IsAI = true
+	aiCallC := webObservation("conv-c", time.Date(2026, 9, 20, 12, 0, 0, 0, time.UTC))
+	aiCallC.IsAI = true
+	humanCall := webObservation("conv-old", time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC))
+
+	if stats := cli.Ingest(ctx, sys, []calls.Observation{aiCall, aiCallB, aiCallC, humanCall}); len(stats.Rejected) > 0 {
 		t.Fatalf("ingest rejected: %v", stats.Rejected)
 	}
 
