@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	DefaultBase       = "https://api.telnyx.com/v2"
-	defaultPageSize   = 100
-	maxPages          = 500
-	maxErrorBytes     = 300
-	maxBodyBytes      = 8 << 20
+	DefaultBase     = "https://api.telnyx.com/v2"
+	defaultPageSize = 100
+	maxPages        = 500
+	maxErrorBytes   = 300
+	maxBodyBytes    = 8 << 20
 )
 
 type Client struct {

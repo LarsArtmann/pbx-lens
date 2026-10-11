@@ -177,7 +177,7 @@ C2 poller + freshness, C3 systemd/NixOS draft, C4 backup hook, C5 insights
 18. B3 search: in-memory index rebuilt at boot + after polls, box + snippet
     highlighting.
 19. C2 poller timers (telnyx re-poll, webhook rescan, transcripts rescan)
-    + /healthz freshness + PolledRegion stale banner.
+    - /healthz freshness + PolledRegion stale banner.
 20. C5 insights: live GET probe → schema → Enrichment.InsightSummary wiring.
 21. C6 cost: live detail-records probe → join by call_control_id →
     CostMicros/Currency enrichment.

@@ -25,6 +25,7 @@ func OpenSystem(ctx context.Context, dsn string) (*system.System, func(), error)
 
 	return sys, func() {
 		stopHost()
+
 		_ = sys.Close()
 	}, nil
 }

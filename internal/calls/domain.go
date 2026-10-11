@@ -338,7 +338,7 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 		if state.Observed {
 			if state.ContentHash == obs.ContentHash() {
 				return nil, nil
-		}
+			}
 
 			// Sources are read-only but not immutable snapshots: a Telnyx
 			// conversation grows between polls. Supersede via a correction

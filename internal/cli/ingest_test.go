@@ -74,6 +74,7 @@ func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 	}
 
 	grown := observation("conv-a", 40)
+
 	corrected := Ingest(ctx, sys, []calls.Observation{grown})
 	if corrected.Recorded != 0 || corrected.Corrected != 1 {
 		t.Fatalf("changed snapshot = %+v, want 1 corrected", corrected)
@@ -86,6 +87,7 @@ func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 
 	invalid := observation("", 10)
 	invalid.Kind = calls.SourceKind("bogus")
+
 	rejected := Ingest(ctx, sys, []calls.Observation{invalid})
 	if rejected.Recorded != 0 || len(rejected.Rejected) != 1 {
 		t.Fatalf("invalid observation = %+v, want 1 rejection", rejected)

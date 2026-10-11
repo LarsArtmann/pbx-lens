@@ -1,2 +1,6 @@
 # Enforce consistent line endings across all platforms
 * text=auto eol=lf
+
+# Language statistics exclusions: status reports are bookkeeping, not the
+# project's code surface (go-output's pattern).
+docs/status/*.md linguist-documentation

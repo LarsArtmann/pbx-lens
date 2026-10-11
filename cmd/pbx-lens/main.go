@@ -19,7 +19,7 @@ import (
 const (
 	version = "0.1.0"
 
-	minArgs = 2
+	minArgs   = 2
 	exitUsage = 2
 
 	ingestTimeout = 5 * time.Minute
@@ -80,6 +80,7 @@ func ingestCDR(args []string) {
 
 	parsed, err := cdr.Parse(file)
 	closeErr := file.Close()
+
 	if err != nil {
 		fatal(err)
 	}
