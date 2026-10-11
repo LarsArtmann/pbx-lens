@@ -54,13 +54,9 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   (invalid for the installed golangci-lint schema; `golangci-lint-config-verify`
   rejected it and the runner terminated with "configuration contains invalid
   elements").
-- **license-check toolchain skew (environment, 2026-10-11)**: buildflow's
-  `license-check` step runs go-licenses in a sandbox whose `go` resolves to
-  1.27.0, so `go-appkit@v0.8.0`'s `go >= 1.27.1` floor hard-fails the step
-  ("requires go >= 1.27.1 (running go 1.27.0)"); direct `go-licenses` outside
-  the sandbox is clean. The installed buildflow binary (200ab99) is also
-  behind its repo HEAD (c7b44d8, feat/toolsdk-provider-switchover) — the fix
-  belongs upstream: rebuild/reinstall buildflow, re-run
-  `buildflow --build-mode dev`, and delete this note. Everything else in the
-  gate is green; `nix build`, `go test ./... -count=1`, `cqrs-lint` (0
-  errors), and `workspace-build-verify` in isolation all pass.
+- **license-check RESOLVED (2026-10-11 22:31)**: the note previously
+  recorded here (sandbox `go` 1.27.0 vs go-appkit's 1.27.1 floor, buildflow
+  binary 200ab99) is gone because its own fix condition landed: the binary
+  was rebuilt (now 8b8269c) and `buildflow -s license-check` is green
+  (13.6s, 1/1). Remaining delta: binary still behind BuildFlow HEAD — a
+  per-run advisory warning, not a gate factor.
