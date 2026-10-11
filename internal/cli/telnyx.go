@@ -38,6 +38,28 @@ type EnrichmentSeed struct {
 	StreamKey      string
 }
 
+// SeedsFor keeps only the enrichment seeds whose stream survived the age
+// gate: a refused observation never lands, so its seed would burn a fetch
+// and retry as Missing every pass. Keys derive from the admitted set itself
+// — one cutoff evaluation, no drifting clock.
+func SeedsFor(admitted []calls.Observation, seeds []EnrichmentSeed) []EnrichmentSeed {
+	admittedKeys := make(map[string]struct{}, len(admitted))
+	for _, obs := range admitted {
+		if sid, sidErr := obs.StreamID(); sidErr == nil {
+			admittedKeys[sid.String()] = struct{}{}
+		}
+	}
+
+	kept := make([]EnrichmentSeed, 0, len(seeds))
+	for _, seed := range seeds {
+		if _, ok := admittedKeys[seed.StreamKey]; ok {
+			kept = append(kept, seed)
+		}
+	}
+
+	return kept
+}
+
 // FetchTelnyxObservations pulls conversations, their messages, and recent
 // recordings, then maps each conversation to one observation. A conversation
 // that cannot be fetched or mapped is reported in rejections (prefixed with

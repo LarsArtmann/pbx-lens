@@ -7,6 +7,8 @@ import (
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	"strings"
+
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -113,5 +115,41 @@ func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 	rejected := Ingest(ctx, sys, []calls.Observation{invalid})
 	if rejected.Recorded != 0 || len(rejected.Rejected) != 1 {
 		t.Fatalf("invalid observation = %+v, want 1 rejection", rejected)
+	}
+}
+
+func TestGateIngestRefusesOverAgeAndReportsAgainstBatch(t *testing.T) {
+	ctx := context.Background()
+
+	sys, cleanup, err := OpenSystem(ctx, "")
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	fresh := observation("gate-fresh", 30)
+	fresh.StartedAt = time.Now().UTC().Add(-1 * time.Hour)
+	overAge := observation("gate-overage", 30)
+	overAge.StartedAt = time.Now().UTC().Add(-25 * time.Hour)
+
+	stats := GateIngest(ctx, sys, 24*time.Hour, []calls.Observation{fresh, overAge})
+
+	if stats.Total != 2 {
+		t.Errorf("Total = %d, want 2 (everything the caller offered)", stats.Total)
+	}
+
+	if stats.Recorded != 1 {
+		t.Errorf("Recorded = %d, want 1", stats.Recorded)
+	}
+
+	if len(stats.Rejected) != 1 || !strings.Contains(stats.Rejected[0], "retention:age-cutoff") {
+		t.Fatalf("rejected = %v, want one retention:age-cutoff entry", stats.Rejected)
+	}
+
+	// A zero gate keeps everything (retention is opt-in, never silent).
+	stats = GateIngest(ctx, sys, 0, []calls.Observation{overAge})
+	if stats.Recorded != 1 || len(stats.Rejected) != 0 {
+		t.Errorf("zero MaxAge must admit everything, got %+v", stats)
 	}
 }

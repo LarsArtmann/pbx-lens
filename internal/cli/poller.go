@@ -228,21 +228,8 @@ func pollTelnyx(
 
 	// An observation refused by the age gate must not be enriched either:
 	// its stream never lands, so keeping the seed would only burn a fetch
-	// and retry as Missing every pass. Keys derive from the admitted set
-	// itself — one cutoff evaluation, no drifting clock.
-	admittedKeys := make(map[string]struct{}, len(admitted))
-	for _, obs := range admitted {
-		if sid, sidErr := obs.StreamID(); sidErr == nil {
-			admittedKeys[sid.String()] = struct{}{}
-		}
-	}
-
-	keptSeeds := seeds[:0:0]
-	for _, seed := range seeds {
-		if _, ok := admittedKeys[seed.StreamKey]; ok {
-			keptSeeds = append(keptSeeds, seed)
-		}
-	}
+	// and retry as Missing every pass.
+	keptSeeds := SeedsFor(admitted, seeds)
 
 	// Enrichment reads the read model, so this pass's recordings must be
 	// projected before it runs; the pass-end drain then covers the

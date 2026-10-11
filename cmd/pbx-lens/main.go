@@ -106,6 +106,7 @@ func ingestCDR(args []string) {
 	db := fs.String("db", "", "sqlite DSN (required)")
 	aiDest := fs.String("ai-dest", cdr.DefaultAIDestination,
 		"comma-separated AI destinations (dialplan badge): destination_number matches badge IsAI")
+	maxAge := fs.Duration("max-age", 0, "refuse observations older than this (0 = keep everything)")
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -137,7 +138,7 @@ func ingestCDR(args []string) {
 
 	defer cleanup()
 
-	stats := cli.Ingest(ctx, sys, parsed.Observations)
+	stats := cli.GateIngest(ctx, sys, *maxAge, parsed.Observations)
 
 	if err := cli.DrainProjections(ctx, sys); err != nil {
 		fatal(err)
@@ -166,6 +167,7 @@ func ingestTelnyx(args []string) {
 		"conversation direction (Telnyx metadata exposes none): outbound|inbound",
 	)
 	limit := fs.Int("limit", 0, "max conversations to fetch (0 = all)")
+	telnyxMaxAge := fs.Duration("max-age", 0, "refuse conversations older than this (0 = keep everything)")
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -206,7 +208,11 @@ func ingestTelnyx(args []string) {
 		fatal(err)
 	}
 
-	stats := cli.Ingest(ctx, sys, observations)
+	admitted, ageRefusals := (cli.AgeGate{MaxAge: *telnyxMaxAge}).Apply(observations, time.Now().UTC())
+
+	stats := cli.Ingest(ctx, sys, admitted)
+	stats.Total = len(observations)
+	stats.Rejected = append(stats.Rejected, ageRefusals...)
 
 	if err := cli.DrainProjections(ctx, sys); err != nil {
 		fatal(err)
@@ -214,8 +220,10 @@ func ingestTelnyx(args []string) {
 
 	// Enrichment reads the read model, so it runs after the drain that
 	// projected this pass's recordings; the second drain covers the
-	// call.enriched events the pass appends.
-	estats, err := cli.EnrichTelnyxCalls(ctx, sys, client, seeds, sinceAt)
+	// call.enriched events the pass appends. Seeds whose observation the
+	// age gate refused are dropped: enriching a stream that never lands
+	// would count Missing and retry forever.
+	estats, err := cli.EnrichTelnyxCalls(ctx, sys, client, cli.SeedsFor(admitted, seeds), sinceAt)
 	if err != nil {
 		fatal(err)
 	}
@@ -248,6 +256,7 @@ func ingestTelnyx(args []string) {
 func ingestWebhook(args []string) {
 	fs := flag.NewFlagSet("ingest-webhook", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
+	webhookMaxAge := fs.Duration("max-age", 0, "refuse observations older than this (0 = keep everything)")
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -279,7 +288,7 @@ func ingestWebhook(args []string) {
 
 	defer cleanup()
 
-	stats := cli.Ingest(ctx, sys, parsed.Observations)
+	stats := cli.GateIngest(ctx, sys, *webhookMaxAge, parsed.Observations)
 
 	if err := cli.DrainProjections(ctx, sys); err != nil {
 		fatal(err)
@@ -305,6 +314,7 @@ func ingestAgent(args []string) {
 		"/var/lib/telephony/recordings/transcripts",
 		"transcripts directory ({call-uuid}.jsonl files)",
 	)
+	agentMaxAge := fs.Duration("max-age", 0, "refuse transcripts older than this (0 = keep everything)")
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -324,7 +334,7 @@ func ingestAgent(args []string) {
 		fatal(err)
 	}
 
-	stats := cli.Ingest(ctx, sys, observations)
+	stats := cli.GateIngest(ctx, sys, *agentMaxAge, observations)
 
 	if err := cli.DrainProjections(ctx, sys); err != nil {
 		fatal(err)
