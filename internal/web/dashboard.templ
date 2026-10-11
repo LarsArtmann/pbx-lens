@@ -1,0 +1,152 @@
+package web
+
+import (
+	"time"
+
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/feedback"
+)
+
+// dashboardRoute is the quality-dashboard page (T25): stat cards, volume
+// chart, AI/human split, trend, and the honest MOS placeholder.
+templ dashboardRoute(stats DashboardStats, now time.Time) {
+	@shell("Dashboard — pbx-lens", "/dashboard") {
+		@display.PageHeader(display.PageHeaderProps{
+			Title:    "Dashboard",
+			Subtitle: "Index health and call quality at a glance",
+		})
+		@statCards(stats, now)
+		<div class="grid items-start gap-6 lg:grid-cols-3">
+			<div class="lg:col-span-2">
+				@volumeCard(stats)
+			</div>
+			<div class="space-y-6">
+				@aiHumanCard(stats)
+				@trendCard(stats)
+				@mosPlaceholderCard()
+			</div>
+		</div>
+	}
+}
+
+// statCards is the headline row: total, today, AI share, average duration.
+// Empty-index honesty: zero calls render 0 / "—", never a fake percentage.
+templ statCards(stats DashboardStats, now time.Time) {
+	@display.Grid(display.GridProps{Cols: display.GridCols4}) {
+		@display.StatCard(display.StatCardProps{
+			Value: formatCount(stats.Total),
+			Label: "Calls indexed",
+			Href:  "/",
+		})
+		@display.StatCard(display.StatCardProps{
+			Value: formatCount(stats.Today),
+			Label: "Calls today",
+			Href:  stats.todayHref(now),
+		})
+		@display.StatCard(display.StatCardProps{
+			Value: aiShare(stats),
+			Label: "AI share",
+			Href:  "/?ai=yes",
+		})
+		@display.StatCard(display.StatCardProps{
+			Value: clockDuration(stats.AvgDuration),
+			Label: "Avg duration",
+		})
+	}
+}
+
+// volumeCard is the calls-per-day bar chart over the dashboard window.
+templ volumeCard(stats DashboardStats) {
+	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays)}) {
+		@display.BarChart(display.BarChartProps{
+			Bars:        volumeBars(stats.ByDay),
+			Orient:      display.BarVertical,
+			MinBarWidth: "min-w-1",
+			Gap:         "gap-px",
+			ShowValues:  false,
+			EmptyMessage: "No calls in the last " + formatCount(stats.WindowDays) + " days",
+		})
+	}
+}
+
+// aiHumanCard is the AI-vs-human proportion bar.
+templ aiHumanCard(stats DashboardStats) {
+	@display.Card(display.CardProps{Title: "AI vs human"}) {
+		if stats.Total == 0 {
+			@display.SimpleEmptyState("No calls indexed yet.")
+		} else {
+			@display.SegmentBar(display.SegmentBarProps{
+				Segments: []display.SegmentBarSegment{
+					{Label: "AI", Value: float64(stats.AICalls)},
+					{Label: "Human", Value: float64(stats.HumanCalls)},
+				},
+			})
+		}
+	}
+}
+
+// trendCard is the 30-day sparkline over the same series as the bar chart.
+templ trendCard(stats DashboardStats) {
+	@display.Card(display.CardProps{Title: "30-day trend"}) {
+		@display.Sparkline(display.SparklineProps{
+			Values: volumeValues(stats.ByDay),
+			Filled: true,
+			Width:  260,
+			Height: 60,
+		})
+	}
+}
+
+// mosPlaceholderCard is the honest MOS stand-in: the score arrives with the
+// CDR Detail-Records data (T15); nothing fake is rendered until then.
+templ mosPlaceholderCard() {
+	@display.Card(display.CardProps{Title: "Call quality (MOS)"}) {
+		@feedback.Alert(feedback.AlertProps{
+			Type:    feedback.FeedbackInfo,
+			Title:   "Not available yet",
+			Message: "MOS scores land with the CDR Detail-Records poller (T15). This card will show the quality trend once that data flows.",
+		})
+	}
+}
+
+// volumeBars maps the day series onto chart bars (oldest → newest).
+func volumeBars(days []DayVolume) []display.BarChartBar {
+	bars := make([]display.BarChartBar, 0, len(days))
+	for _, day := range days {
+		bars = append(bars, display.BarChartBar{
+			Label:   day.Day[5:], // MM-DD keeps the dense axis readable
+			Value:   float64(day.Calls),
+			Tooltip: day.Day + ": " + formatCount(day.Calls),
+		})
+	}
+
+	return bars
+}
+
+// volumeValues is the same series as plain numbers for the sparkline.
+func volumeValues(days []DayVolume) []float64 {
+	values := make([]float64, 0, len(days))
+	for _, day := range days {
+		values = append(values, float64(day.Calls))
+	}
+
+	return values
+}
+
+func volumeTitle(windowDays int) string {
+	return "Calls per day (last " + formatCount(windowDays) + " days)"
+}
+
+// aiShare renders the AI percentage, or an em dash when nothing is indexed
+// (0 calls → "0.0%" would imply measurement, not absence).
+func aiShare(stats DashboardStats) string {
+	if stats.Total == 0 {
+		return "—"
+	}
+
+	return formatPercent(stats.AIRatio())
+}
+
+func formatCount(n int) string {
+	return fmtInt(n)
+}

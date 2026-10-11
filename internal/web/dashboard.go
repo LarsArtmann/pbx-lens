@@ -1,0 +1,101 @@
+package web
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
+)
+
+// dashboardWindowDays is the chart window: the volume charts cover the last
+// N days ending today (UTC), zero days included — a quiet stretch must show
+// as a gap, not vanish.
+const dashboardWindowDays = 30
+
+// DayVolume is one day's call count in the dashboard window.
+type DayVolume struct {
+	Day   string // YYYY-MM-DD, UTC
+	Calls int
+}
+
+// DashboardStats is the quality-dashboard view model (T25): totals, AI
+// share, average duration, and the per-day volume series. Aggregation is
+// in-process over the same bounded full scan the export uses — personal-PBX
+// volumes are far below the cap, and the index is re-derivable.
+type DashboardStats struct {
+	Total       int
+	Today       int
+	AICalls     int
+	HumanCalls  int
+	AvgDuration time.Duration
+	WindowDays  int
+	ByDay       []DayVolume
+}
+
+// AIRatio is the AI share of all calls in [0,1]. Zero calls → zero value
+// (the page renders an em dash, not a fake percentage).
+func (s DashboardStats) AIRatio() float64 {
+	if s.Total == 0 {
+		return 0
+	}
+
+	return float64(s.AICalls) / float64(s.Total)
+}
+
+// DashboardStatsQuery computes the dashboard aggregates over the whole
+// read model. The day window always ends "today" (UTC), so an idle index
+// shows its volume drifting out of the chart instead of freezing.
+func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time) (DashboardStats, error) {
+	views, err := ExportCalls(ctx, sys, ListCallsQuery{})
+	if err != nil {
+		return DashboardStats{}, err
+	}
+
+	stats := DashboardStats{WindowDays: dashboardWindowDays}
+
+	today := now.UTC().Format("2006-01-02")
+	windowStart := now.UTC().Truncate(24*time.Hour).AddDate(0, 0, -(dashboardWindowDays - 1))
+	dayIndex := make(map[string]int, dashboardWindowDays)
+
+	for offset := 0; offset < dashboardWindowDays; offset++ {
+		day := windowStart.AddDate(0, 0, offset).Format("2006-01-02")
+		dayIndex[day] = len(stats.ByDay)
+		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})
+	}
+
+	var totalDuration time.Duration
+
+	for _, view := range views {
+		stats.Total++
+		totalDuration += time.Duration(view.DurationSecs) * time.Second
+
+		if view.IsAI {
+			stats.AICalls++
+		} else {
+			stats.HumanCalls++
+		}
+
+		day := view.StartedAt.UTC().Format("2006-01-02")
+		if day == today {
+			stats.Today++
+		}
+
+		if idx, ok := dayIndex[day]; ok {
+			stats.ByDay[idx].Calls++
+		}
+	}
+
+	if stats.Total > 0 {
+		stats.AvgDuration = totalDuration / time.Duration(stats.Total)
+	}
+
+	return stats, nil
+}
+
+// todayHref deep-links the "Calls today" stat card into the filtered list.
+func (s DashboardStats) todayHref(now time.Time) string {
+	today := now.UTC().Format("2006-01-02")
+
+	return fmt.Sprintf("/?from=%s&to=%s", today, today)
+}
