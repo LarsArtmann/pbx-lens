@@ -253,7 +253,11 @@ func newTestServerWith(t *testing.T, opts Options, observations ...calls.Observa
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
 
-	sys, cleanup, err := cli.OpenSystem(ctx, "")
+	// Real sqlite, not the memory engine: the memory engine's closure
+	// fallback resolves filter columns by Go field name, so JSON-tag columns
+	// (started_at, is_ai) misfilter there — production always serves from
+	// sqlite, and the tests must share those semantics.
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "web-tests.db"))
 	if err != nil {
 		t.Fatalf("OpenSystem: %v", err)
 	}
