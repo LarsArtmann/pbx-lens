@@ -102,6 +102,9 @@ No version has been tagged yet; everything lives under Unreleased.
 - Four-lens review session (2026-10-11: data-model, full-code, naming,
   modularize) with every file visited, 8 on-sight fixes, and HTML reports
   under `docs/reviews/`.
+- Shared `newTestServerWithSearch` test helper (search.Open + Rebuild over
+  the seeded views); the one-flow test and the live-server e2e test both
+  collapsed onto it (was two 15-line copies of the index wiring).
 
 ### Fixed
 
@@ -162,3 +165,8 @@ No version has been tagged yet; everything lives under Unreleased.
   domain HOLD with a pre-agreed write/read seam, single-module HOLD,
   ContentHash v2 length-prefixed encoding SCHEDULED at v2, recording-proxy
   timeout bound DEFERRED until traffic data.
+- Two golangci-lint residuals (err113 dynamic test error replaced by the
+  static `errClientVanished`; a 132-column flag help line wrapped under the
+  120 limit).
+- AGENTS.md templ version corrected to the landed v0.3.1070 (manual-bump-only
+  dependency since dependabot mangles this go.mod).
