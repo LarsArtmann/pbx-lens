@@ -4,8 +4,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/templ-components/display"
 )
 
 // listRoute is the full list page: shell + optional staleness banner + the
@@ -85,10 +85,12 @@ templ transcriptPane(turns []calls.TranscriptTurn) {
 	@display.Card(display.CardProps{Title: "Transcript"}) {
 		<div class="space-y-3">
 			for _, turn := range turns {
-				<div class={
-					templ.KV("rounded-lg px-4 py-2 text-sm", turn.Role == "user"),
-					"bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100",
-				}>
+				<div
+					class={
+						templ.KV("rounded-lg px-4 py-2 text-sm", turn.Role == "user"),
+						"bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100",
+					}
+				>
 					<span class="mr-2 font-semibold uppercase tracking-wide text-xs text-blue-600 dark:text-blue-400">{ turn.Role }</span>
 					{ turn.Text }
 				</div>
