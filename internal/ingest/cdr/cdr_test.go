@@ -158,3 +158,33 @@ func TestParseAIBadgeByDestination(t *testing.T) {
 		t.Fatalf("custom -ai-dest should badge the listed destination: %+v", custom.Observations)
 	}
 }
+
+func TestParseExtractsAppendedMOS(t *testing.T) {
+	res, err := Parse(strings.NewReader(fixture13MOS))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 1 || res.Skipped != 0 {
+		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
+	}
+
+	if mos := res.Observations[0].MOS; mos != 4.4 {
+		t.Fatalf("MOS = %v, want 4.4", mos)
+	}
+}
+
+func TestParseNonMOSExtraColumnReadsAsUnknown(t *testing.T) {
+	res, err := Parse(strings.NewReader(fixture13MOSGarbage))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 1 || res.Skipped != 0 {
+		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
+	}
+
+	if mos := res.Observations[0].MOS; mos != 0 {
+		t.Fatalf("a non-MOS extra column must read as unknown (0), got %v", mos)
+	}
+}
