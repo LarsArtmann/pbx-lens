@@ -137,11 +137,8 @@ func whoText(isAI bool) string {
 	return "Human"
 }
 
-// microsPerUnit converts Telnyx cost micros to currency units.
-const microsPerUnit = 1_000_000
-
 func costText(micros int64, currency string) string {
-	units := strconv.FormatFloat(float64(micros)/microsPerUnit, 'f', -1, 64)
+	units := strconv.FormatFloat(float64(micros)/calls.MicrosPerUnit, 'f', -1, 64)
 	return units + " " + stringOrDash(currency)
 }
 

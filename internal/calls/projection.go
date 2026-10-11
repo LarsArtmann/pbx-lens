@@ -59,6 +59,29 @@ func ViewFrom(obs Observation, enr Enrichment) CallView {
 	}
 }
 
+// Observation rebuilds the stored observation snapshot from the view.
+// ViewFrom is a lossless projection of the observation (enrichment aside),
+// so the rebuild's ContentHash equals the view's stored ContentHash — the
+// invariant the enrich pass relies on when it needs the current observation
+// to address a call.enrich command.
+func (v CallView) Observation() Observation {
+	return Observation{
+		NativeID:          v.NativeID,
+		Kind:              v.Kind,
+		Direction:         v.Direction,
+		StartedAt:         v.StartedAt,
+		DurationSecs:      v.DurationSecs,
+		FromNumber:        v.FromNumber,
+		ToNumber:          v.ToNumber,
+		HangupCause:       v.HangupCause,
+		IsAI:              v.IsAI,
+		TranscriptExcerpt: v.TranscriptExcerpt,
+		Transcript:        v.Transcript,
+		RecordingRef:      v.RecordingRef,
+		MOS:               v.MOS,
+	}
+}
+
 func Projection() ([]system.ProjectionDeclaration, *projectionadapter.TypeDecoder) {
 	// All three folds are 2-arg create folds (full recompute): every event
 	// payload carries the complete observation (and, for corrected/enriched,

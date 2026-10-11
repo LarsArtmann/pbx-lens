@@ -222,6 +222,11 @@ type Enrichment struct {
 	InsightSummary string `json:"insight_summary,omitempty"`
 }
 
+// MicrosPerUnit converts Telnyx cost micros to currency units. The domain
+// owns the unit because CostMicros is a domain field: the ingest mapper and
+// the web display must never disagree on it.
+const MicrosPerUnit = 1_000_000
+
 func (e Enrichment) Hash() string {
 	if e == (Enrichment{}) {
 		return ""
