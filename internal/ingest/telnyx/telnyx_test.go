@@ -147,7 +147,7 @@ func TestMessagesDecodesNullTextAsEmpty(t *testing.T) {
 		}})
 	})
 
-	msgs, err := c.Messages(context.Background(), "conv-9")
+	msgs, err := c.ListMessages(context.Background(), "conv-9")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -229,7 +229,7 @@ func TestHTTPErrorFamilies(t *testing.T) {
 			http.Error(w, `{"errors":[{"code":"10015","title":"nope"}]}`, tc.status)
 		})
 
-		_, err := c.Messages(context.Background(), "conv-x")
+		_, err := c.ListMessages(context.Background(), "conv-x")
 		if err == nil {
 			t.Fatalf("status %d: want error", tc.status)
 		}
@@ -604,7 +604,7 @@ func TestDetailRecordsSendsRequiredFilter(t *testing.T) {
 
 	since := time.Unix(1700000000, 0).UTC()
 
-	recs, err := c.DetailRecords(context.Background(), since)
+	recs, err := c.ListDetailRecords(context.Background(), since)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -723,7 +723,7 @@ func TestConversationInsightsPathAndShape(t *testing.T) {
 		}})
 	})
 
-	insights, err := c.ConversationInsights(context.Background(), "conv-7")
+	insights, err := c.ListConversationInsights(context.Background(), "conv-7")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -742,7 +742,7 @@ func TestConversationInsightsRejectsEmptyID(t *testing.T) {
 		t.Fatal("must not hit the wire with an empty conversation id")
 	})
 
-	if _, err := c.ConversationInsights(context.Background(), ""); err == nil {
+	if _, err := c.ListConversationInsights(context.Background(), ""); err == nil {
 		t.Fatal("empty conversation id must reject")
 	}
 }

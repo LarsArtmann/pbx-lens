@@ -159,7 +159,7 @@ func mosBars(days []DayVolume) []display.BarChartBar {
 }
 
 func mosAvgLabel(stats DashboardStats) string {
-	return strconv.FormatFloat(stats.MOSAvg(), 'f', 1, 64)
+	return strconv.FormatFloat(stats.AvgMOS(), 'f', 1, 64)
 }
 
 // hasWindowMOS reports whether any day inside the chart window carries a

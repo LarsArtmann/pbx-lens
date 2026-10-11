@@ -156,12 +156,12 @@ func ParseDir(dir string) (Result, error) {
 	return res, nil
 }
 
-// Observation maps a transcript to its agent-transcript Observation. A joined
-// freeswitch-cdr CallView fills the parties, direction, duration, and the
-// started-at; without a join the transcript stands alone (numbers may stay
-// empty — validation relaxes for agent transcripts) and the start line's ts
-// anchors the call in time.
-func Observation(transcript Transcript, cdrView *calls.CallView) (calls.Observation, error) {
+// MapTranscript maps a transcript to its agent-transcript Observation. A
+// joined freeswitch-cdr CallView fills the parties, direction, duration, and
+// the started-at; without a join the transcript stands alone (numbers may
+// stay empty — validation relaxes for agent transcripts) and the start
+// line's ts anchors the call in time.
+func MapTranscript(transcript Transcript, cdrView *calls.CallView) (calls.Observation, error) {
 	obs := calls.Observation{
 		NativeID:          calls.NativeID(transcript.UUID),
 		Kind:              calls.SourceAgentTranscript,

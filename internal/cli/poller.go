@@ -94,7 +94,7 @@ func PollOnce(
 	}
 
 	if index != nil {
-		if err := RebuildIndex(ctx, sys, index); err != nil {
+		if err := RebuildOpenIndex(ctx, sys, index); err != nil {
 			log("poll search rebuild: %v", err)
 		}
 	}

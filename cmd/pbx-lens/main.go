@@ -80,7 +80,8 @@ func usage() {
 			" pbx-lens ingest-webhook -db <dsn> <inbound.jsonl> |"+
 			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts |"+
 			" pbx-lens serve -db <dsn> [-addr 127.0.0.1:8300] |"+
-			" pbx-lens backup -db <dsn> -out <snapshot.db>",
+			" pbx-lens backup -db <dsn> -out <snapshot.db> |"+
+			" pbx-lens purge -db <dsn> -max-age <duration> [-dry-run]",
 	)
 }
 

@@ -96,7 +96,7 @@ func (c *Client) ListConversations(ctx context.Context, opts ListOptions) ([]Con
 	return fetchAll[Conversation](ctx, c, "/ai/conversations", q, opts.Limit, 0)
 }
 
-func (c *Client) Messages(ctx context.Context, conversationID string) ([]Message, error) {
+func (c *Client) ListMessages(ctx context.Context, conversationID string) ([]Message, error) {
 	if conversationID == "" {
 		return nil, errorfamily.NewRejection(
 			"telnyx.empty_conversation_id",
@@ -224,11 +224,11 @@ type InsightResult struct {
 	Result    string `json:"result"`
 }
 
-// DetailRecords lists call-control detail records since the given lower
+// ListDetailRecords lists call-control detail records since the given lower
 // bound (zero = unfiltered). filter[record_type] is required by the
 // endpoint; started_at is one of the three call-control filter fields the
 // docs publish. Page size caps at 50 per the endpoint's own schema.
-func (c *Client) DetailRecords(ctx context.Context, since time.Time) ([]DetailRecord, error) {
+func (c *Client) ListDetailRecords(ctx context.Context, since time.Time) ([]DetailRecord, error) {
 	q := url.Values{}
 	q.Set("filter[record_type]", "call-control")
 
@@ -239,10 +239,10 @@ func (c *Client) DetailRecords(ctx context.Context, since time.Time) ([]DetailRe
 	return fetchAll[DetailRecord](ctx, c, "/detail_records", q, 0, detailRecordsPageSize)
 }
 
-// ConversationInsights lists the insight rows generated for one conversation
-// (path verified against the OpenAPI spec: conversations-insights, not
-// insights).
-func (c *Client) ConversationInsights(
+// ListConversationInsights lists the insight rows generated for one
+// conversation (path verified against the OpenAPI spec:
+// conversations-insights, not insights).
+func (c *Client) ListConversationInsights(
 	ctx context.Context,
 	conversationID string,
 ) ([]ConversationInsight, error) {

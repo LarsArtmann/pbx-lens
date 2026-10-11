@@ -28,12 +28,12 @@ func RebuildSearchIndex(ctx context.Context, sys *system.System, dsn string) err
 
 	defer func() { _ = index.Close() }()
 
-	return RebuildIndex(ctx, sys, index)
+	return RebuildOpenIndex(ctx, sys, index)
 }
 
-// RebuildIndex refreshes an already-open index — the serve path, which holds
-// one long-lived FTS connection instead of reopening per rebuild.
-func RebuildIndex(ctx context.Context, sys *system.System, index *search.Index) error {
+// RebuildOpenIndex refreshes an already-open index — the serve path, which
+// holds one long-lived FTS connection instead of reopening per rebuild.
+func RebuildOpenIndex(ctx context.Context, sys *system.System, index *search.Index) error {
 	views, err := readAllViews(ctx, sys)
 	if err != nil {
 		return err

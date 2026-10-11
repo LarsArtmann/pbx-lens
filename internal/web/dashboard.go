@@ -47,14 +47,14 @@ type DashboardStats struct {
 	HumanCalls  int
 	AvgDuration time.Duration
 	MOSKnown    int     // calls whose source reported a MOS score
-	MOSSum      float64 // sum of reported scores; MOSAvg divides by MOSKnown
+	MOSSum      float64 // sum of reported scores; AvgMOS divides by MOSKnown
 	WindowDays  int
 	ByDay       []DayVolume
 }
 
-// MOSAvg is the mean MOS across every scored call in the index, or 0 when
+// AvgMOS is the mean MOS across every scored call in the index, or 0 when
 // nothing has reported a score yet.
-func (s DashboardStats) MOSAvg() float64 {
+func (s DashboardStats) AvgMOS() float64 {
 	if s.MOSKnown == 0 {
 		return 0
 	}

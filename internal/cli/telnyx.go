@@ -71,7 +71,7 @@ func FetchTelnyxObservations(
 	)
 
 	for _, conv := range convs {
-		msgs, msgErr := client.Messages(ctx, conv.ID)
+		msgs, msgErr := client.ListMessages(ctx, conv.ID)
 		if msgErr != nil {
 			rejected = append(rejected, conv.ID+": "+msgErr.Error())
 

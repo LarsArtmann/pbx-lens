@@ -152,8 +152,8 @@ func TestDashboardStatsQueryMOSAggregation(t *testing.T) {
 		t.Errorf("MOSSum = %v, want 6", stats.MOSSum)
 	}
 
-	if got := stats.MOSAvg(); got != 3.0 {
-		t.Errorf("MOSAvg = %v, want 3", got)
+	if got := stats.AvgMOS(); got != 3.0 {
+		t.Errorf("AvgMOS = %v, want 3", got)
 	}
 
 	for _, dayVolume := range stats.ByDay {

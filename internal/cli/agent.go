@@ -34,7 +34,7 @@ func FetchAgentObservations(
 	)
 
 	for _, transcript := range parsed.Transcripts {
-		obs, mapErr := agent.Observation(transcript, cdrViewFor(ctx, reader, transcript.UUID))
+		obs, mapErr := agent.MapTranscript(transcript, cdrViewFor(ctx, reader, transcript.UUID))
 		if mapErr != nil {
 			rejected = append(rejected, "agent-transcript:"+transcript.UUID+": "+mapErr.Error())
 
@@ -48,9 +48,18 @@ func FetchAgentObservations(
 }
 
 // cdrViewFor looks up the joined freeswitch-cdr view by call uuid. The key
-// mirrors the projection's record key (StreamMarker-prefixed stream id).
-func cdrViewFor(ctx context.Context, reader *metaengine.TypedReader[calls.CallView], uuid string) *calls.CallView {
-	view, found, err := reader.Get(ctx, "StreamMarker:freeswitch-cdr:"+uuid)
+// derives from the observation's stream identity, so the projection's
+// record-key format (including any library marker prefix) stays owned by the
+// stream id type, never re-typed at a call site.
+func cdrViewFor(ctx context.Context, reader *metaengine.TypedReader[calls.CallView], callUUID string) *calls.CallView {
+	obs := calls.Observation{NativeID: calls.NativeID(callUUID), Kind: calls.SourceFreeSwitchCDR}
+
+	sid, err := obs.StreamID()
+	if err != nil {
+		return nil
+	}
+
+	view, found, err := reader.Get(ctx, sid.String())
 	if err != nil || !found {
 		return nil
 	}

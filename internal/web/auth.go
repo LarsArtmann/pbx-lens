@@ -32,7 +32,10 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 
 	// The dummy hash keeps the failure path running the same bcrypt work as
 	// the success path, so timing never reveals whether a username exists.
-	dummyHash, err := bcrypt.GenerateFromPassword([]byte(timingPadSeed), bcrypt.MinCost)
+	// The pad cost matches the entries' cost (one htpasswd file shares one
+	// cost in practice): a MinCost pad would make unknown-user failures
+	// measurably cheaper than real logins and defeat the equalization.
+	dummyHash, err := bcrypt.GenerateFromPassword([]byte(timingPadSeed), padCost(users))
 	if err != nil {
 		return nil, errorfamily.NewRejection(
 			"lens.web.htpasswd_timing_pad",
@@ -65,6 +68,21 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 			next.ServeHTTP(w, r)
 		})
 	}, nil
+}
+
+// padCost reads the bcrypt work factor the loaded entries use, so the
+// timing pad can match it. Entries carry their cost inside the hash
+// ($2a$10$...); the first parse wins because one file shares one cost in
+// practice. DefaultCost covers a file whose entries all failed to parse a
+// cost (unreachable via parseHtpasswd's $2 gate, kept as a safe fallback).
+func padCost(users map[string][]byte) int {
+	for _, hash := range users {
+		if cost, err := bcrypt.Cost(hash); err == nil {
+			return cost
+		}
+	}
+
+	return bcrypt.DefaultCost
 }
 
 // unauthorized answers with the 401 that makes browsers prompt.

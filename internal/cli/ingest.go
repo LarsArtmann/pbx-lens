@@ -39,7 +39,7 @@ func Ingest(ctx context.Context, sys *system.System, observations []calls.Observ
 	for _, obs := range observations {
 		cmd, err := calls.NewRecordCommand(obs)
 		if err != nil {
-			stats.Rejected = append(stats.Rejected, label(obs)+": "+err.Error())
+			stats.Rejected = append(stats.Rejected, streamLabel(obs)+": "+err.Error())
 
 			continue
 		}
@@ -50,7 +50,7 @@ func Ingest(ctx context.Context, sys *system.System, observations []calls.Observ
 		}
 
 		if err := sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
-			stats.Rejected = append(stats.Rejected, label(obs)+": "+err.Error())
+			stats.Rejected = append(stats.Rejected, streamLabel(obs)+": "+err.Error())
 
 			continue
 		}
@@ -65,6 +65,6 @@ func Ingest(ctx context.Context, sys *system.System, observations []calls.Observ
 	return stats
 }
 
-func label(obs calls.Observation) string {
+func streamLabel(obs calls.Observation) string {
 	return fmt.Sprintf("%s:%s", obs.Kind, obs.NativeID)
 }

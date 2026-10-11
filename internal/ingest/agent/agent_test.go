@@ -62,7 +62,7 @@ func TestObservationWithoutCDRJoin(t *testing.T) {
 		t.Fatalf("Parse: %v", err)
 	}
 
-	obs, err := Observation(transcript, nil)
+	obs, err := MapTranscript(transcript, nil)
 	if err != nil {
 		t.Fatalf("Observation without join should validate (agent transcripts may lack numbers): %v", err)
 	}
@@ -109,7 +109,7 @@ func TestObservationWithCDRJoin(t *testing.T) {
 		HangupCause:  "normal_clearing",
 	}
 
-	obs, err := Observation(transcript, joined)
+	obs, err := MapTranscript(transcript, joined)
 	if err != nil {
 		t.Fatalf("Observation: %v", err)
 	}

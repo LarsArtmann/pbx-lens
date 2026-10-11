@@ -138,7 +138,7 @@ func (p *enrichPass) targetEnrichment(
 	}
 
 	if view.InsightSummary == "" {
-		insights, err := p.client.ConversationInsights(ctx, seed.ConversationID)
+		insights, err := p.client.ListConversationInsights(ctx, seed.ConversationID)
 		if err != nil {
 			return current, seed.ConversationID + ": " + err.Error()
 		}
@@ -155,7 +155,7 @@ func (p *enrichPass) detailRecords(ctx context.Context) ([]telnyx.DetailRecord, 
 		return p.records, nil
 	}
 
-	records, err := p.client.DetailRecords(ctx, p.since)
+	records, err := p.client.ListDetailRecords(ctx, p.since)
 	if err != nil {
 		return nil, err
 	}
