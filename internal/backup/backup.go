@@ -67,7 +67,10 @@ func Verify(ctx context.Context, path string) error {
 	var result string
 
 	if err := db.QueryRowContext(ctx, "PRAGMA integrity_check").Scan(&result); err != nil {
-		return errorfamily.NewRejection("lens.backup.verify_integrity", fmt.Sprintf("integrity check %s: %v", path, err))
+		return errorfamily.NewRejection(
+			"lens.backup.verify_integrity",
+			fmt.Sprintf("integrity check %s: %v", path, err),
+		)
 	}
 
 	if result != "ok" {

@@ -57,38 +57,8 @@ type CallListPage struct {
 func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (CallListPage, error) {
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
-	opts := []metaengine.ScanOption{
-		metaengine.WithSort("started_at", true),
-		// fetch one extra row to detect whether an older page exists
-		metaengine.WithLimit(pageSize + 1),
-	}
-
-	if query.Direction != "" {
-		opts = append(opts, metaengine.WithFilter("direction", metaengine.FilterEq, string(query.Direction)))
-	}
-
-	if query.AI != nil {
-		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *query.AI))
-	}
-
-	// Time bounds bind as RFC3339Nano strings — the exact wire format the
-	// view's JSON is stored in. Binding time.Time directly miscompares on
-	// sqlite (the driver renders it "2006-01-02 15:04:05 -0700 MST", and the
-	// 'T' vs ' ' format difference silently corrupts same-day comparisons).
-	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
-	if !query.From.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, rfc3339Nano(query.From)))
-	}
-
-	if !query.To.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(query.To)))
-	}
-
-	if !query.Before.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
-	}
-
-	views, err := reader.Scan(ctx, opts...)
+	// fetch one extra row to detect whether an older page exists
+	views, err := reader.Scan(ctx, listOptions(query, pageSize+1)...)
 	if err != nil {
 		return CallListPage{}, err
 	}
@@ -116,6 +86,54 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 	}
 
 	return page, nil
+}
+
+// maxExportRows bounds one export dump. Personal-PBX volumes are far below
+// this; the cap only stops a runaway query from exhausting memory.
+const maxExportRows = 100_000
+
+// ExportCalls returns the raw views matching the same filters as the list
+// page, newest first, for the JSONL/CSV dump (D5).
+func ExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery) ([]calls.CallView, error) {
+	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
+
+	return reader.Scan(ctx, listOptions(query, maxExportRows)...)
+}
+
+// listOptions builds the shared scan options for the list page and the
+// export dump: newest first, with the same typed filters.
+func listOptions(query ListCallsQuery, limit int) []metaengine.ScanOption {
+	opts := []metaengine.ScanOption{
+		metaengine.WithSort("started_at", true),
+		metaengine.WithLimit(limit),
+	}
+
+	if query.Direction != "" {
+		opts = append(opts, metaengine.WithFilter("direction", metaengine.FilterEq, string(query.Direction)))
+	}
+
+	if query.AI != nil {
+		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *query.AI))
+	}
+
+	// Time bounds bind as RFC3339Nano strings — the exact wire format the
+	// view's JSON is stored in. Binding time.Time directly miscompares on
+	// sqlite (the driver renders it "2006-01-02 15:04:05 -0700 MST", and the
+	// 'T' vs ' ' format difference silently corrupts same-day comparisons).
+	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
+	if !query.From.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, rfc3339Nano(query.From)))
+	}
+
+	if !query.To.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(query.To)))
+	}
+
+	if !query.Before.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
+	}
+
+	return opts
 }
 
 // rfc3339Nano renders a query bound in the read model's stored timestamp

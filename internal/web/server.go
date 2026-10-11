@@ -43,6 +43,8 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /{$}", web.list)
 	mux.HandleFunc("GET /search", web.searchPage)
 	mux.HandleFunc("GET /api/freshness", web.freshness)
+	mux.HandleFunc("GET /api/export.jsonl", web.exportJSONL)
+	mux.HandleFunc("GET /api/export.csv", web.exportCSV)
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
 	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
 	mux.HandleFunc("GET /app.css", serveStyles)
