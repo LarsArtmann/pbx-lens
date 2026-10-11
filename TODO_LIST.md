@@ -27,7 +27,7 @@
 
 | Task                                                                                                  | Status           | Impact | Effort | Evidence                                                                                                            |
 | ----------------------------------------------------------------------------------------------------- | ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------- |
-| Retention/PII purge (T23): retention command + PII mode; `E164`/`ParticipantHash` become load-bearing | 🟡 `IN_PROGRESS` | Med    | 90min  | `internal/retention/` package + `purge` command landed (max-age, dry-run); PII mode + ingest-side cutoff still open |
+| Retention/PII purge (T23): retention command + PII mode; `E164`/`ParticipantHash` become load-bearing | 🟢 `DONE` | Med    | 90min  | `internal/retention/` + `purge -max-age [-dry-run]` + `call.retired` tombstone + `?pii=hash` export; e2e verified. Open enhancement: wire `Policy.Admits` as an ingest-side cutoff in the poller |
 
 ## Low impact
 

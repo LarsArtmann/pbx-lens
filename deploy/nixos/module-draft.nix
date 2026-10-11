@@ -1,6 +1,12 @@
-# pbx-lens NixOS module — DRAFT (T7/F23, M23.3)
+# pbx-lens NixOS module — SUPERSEDED DRAFT (T7/F23, M23.3)
 
-# Handoff note: this draft moves to the sibling repo
+# LANDED 2026-10-11 as `modules/telephony/lens.nix` in the sibling repo
+# (nix-international-telephony) as `services.telephony.pbx-lens.*` — with
+# backup AND retention-purge timers and state registration wired into the
+# stack's `services.telephony.state`. This file stays only as the historical
+# design record; do not evolve it here.
+
+# Original handoff note: this draft moves to the sibling repo
 # (nix-international-telephony) as its `services.pbx-lens` module; the
 # sibling owns the deploy surface, pbx-lens owns the binary. Kept here so
 # the option shape is decided next to the code that must satisfy it.
