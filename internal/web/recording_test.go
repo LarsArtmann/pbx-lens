@@ -24,7 +24,7 @@ var auditWav = []byte("RIFF-fake-wav-bytes-0123456789")
 // fakeTelnyxState records what the fake API saw, for the audit assertions.
 type fakeTelnyxState struct {
 	authOnMetadata string
-	rangeHeader     string
+	rangeHeader    string
 }
 
 // fakeTelnyx stands in for the Telnyx v2 API: recording metadata at
@@ -37,6 +37,7 @@ func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 		case "/v2/recordings/rec-1":
 			state.authOnMetadata = r.Header.Get("Authorization")
 			wavURL := "http://" + r.Host + "/v2/audio.wav"
+
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":%q}}}`, wavURL)
 		case "/v2/audio.wav":
@@ -193,12 +194,12 @@ func TestRecordingLocalServesFileWithRange(t *testing.T) {
 	dir := t.TempDir()
 
 	observation := calls.Observation{
-		NativeID:     "uuid-1",
-		Kind:         calls.SourceFreeSwitchCDR,
-		Direction:    calls.DirectionOutbound,
-		StartedAt:    time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
-		FromNumber:   "+17287289311",
-		ToNumber:     "+15555550123",
+		NativeID:   "uuid-1",
+		Kind:       calls.SourceFreeSwitchCDR,
+		Direction:  calls.DirectionOutbound,
+		StartedAt:  time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+		FromNumber: "+17287289311",
+		ToNumber:   "+15555550123",
 	}
 
 	wav := []byte("RIFF-local-wav-contents")
@@ -229,12 +230,12 @@ func TestRecordingLocalServesFileWithRange(t *testing.T) {
 
 func TestRecordingLocalMissingFileIs404(t *testing.T) {
 	observation := calls.Observation{
-		NativeID:     "uuid-2",
-		Kind:         calls.SourceFreeSwitchCDR,
-		Direction:    calls.DirectionOutbound,
-		StartedAt:    time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
-		FromNumber:   "+17287289311",
-		ToNumber:     "+15555550123",
+		NativeID:   "uuid-2",
+		Kind:       calls.SourceFreeSwitchCDR,
+		Direction:  calls.DirectionOutbound,
+		StartedAt:  time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+		FromNumber: "+17287289311",
+		ToNumber:   "+15555550123",
 	}
 
 	mux := newTestServerWith(t, Options{Recordings: RecordingOptions{RecordingsDir: t.TempDir()}}, observation)

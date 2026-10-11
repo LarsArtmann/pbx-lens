@@ -16,7 +16,6 @@ import (
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -157,8 +156,10 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 	hits := make([]Hit, 0, limit)
 
 	for rows.Next() {
-		var hit Hit
-		var started, snippet string
+		var (
+			hit              Hit
+			started, snippet string
+		)
 
 		if err := rows.Scan(&hit.Kind, &hit.NativeID, &started, &snippet); err != nil {
 			return nil, errorfamily.NewCorruption("lens.search.scan", err.Error())
@@ -193,7 +194,7 @@ func MatchExpression(query string) (string, error) {
 
 	var terms []string
 
-	for _, field := range strings.Fields(query) {
+	for field := range strings.FieldsSeq(query) {
 		if strings.ContainsAny(field, "\x01\x02") {
 			return "", errorfamily.NewRejection("lens.search.control_chars",
 				"queries must not contain control characters")
@@ -213,6 +214,7 @@ func MatchExpression(query string) (string, error) {
 // parseSnippet splits the marker-flagged snippet into render-safe parts.
 func parseSnippet(snippet string) []Part {
 	var parts []Part
+
 	remaining := snippet
 
 	for {
@@ -230,9 +232,9 @@ func parseSnippet(snippet string) []Part {
 		}
 
 		rest := remaining[start+len(highlightStart):]
-		stop := strings.Index(rest, highlightStop)
+		before, after, ok := strings.Cut(rest, highlightStop)
 
-		if stop < 0 {
+		if !ok {
 			if rest != "" {
 				parts = append(parts, Part{Text: rest, Highlight: true})
 			}
@@ -240,8 +242,8 @@ func parseSnippet(snippet string) []Part {
 			return parts
 		}
 
-		parts = append(parts, Part{Text: rest[:stop], Highlight: true})
-		remaining = rest[stop+len(highlightStop):]
+		parts = append(parts, Part{Text: before, Highlight: true})
+		remaining = after
 	}
 }
 

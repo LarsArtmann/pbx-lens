@@ -25,7 +25,7 @@ const (
 	minArgs   = 2
 	exitUsage = 2
 
-	defaultAddr = "127.0.0.1:8300"
+	defaultAddr   = "127.0.0.1:8300"
 	ingestTimeout = 5 * time.Minute
 	serveTimeout  = 5 * time.Minute
 	smokeTimeout  = 30 * time.Second
@@ -250,7 +250,7 @@ func ingestWebhook(args []string) {
 
 	fmt.Printf(
 		"ingest-webhook: %d calls aggregated, %d lines skipped, %d recorded, %d corrected, %d rejected\n",
-			stats.Total, parsed.Skipped, stats.Recorded, stats.Corrected, len(stats.Rejected),
+		stats.Total, parsed.Skipped, stats.Recorded, stats.Corrected, len(stats.Rejected),
 	)
 
 	printRejected(stats.Rejected)
@@ -259,7 +259,11 @@ func ingestWebhook(args []string) {
 func ingestAgent(args []string) {
 	fs := flag.NewFlagSet("ingest-agent", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
-	dir := fs.String("dir", "/var/lib/telephony/recordings/transcripts", "transcripts directory ({call-uuid}.jsonl files)")
+	dir := fs.String(
+		"dir",
+		"/var/lib/telephony/recordings/transcripts",
+		"transcripts directory ({call-uuid}.jsonl files)",
+	)
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -289,7 +293,7 @@ func ingestAgent(args []string) {
 
 	fmt.Printf(
 		"ingest-agent: %d transcripts ingested, %d recorded, %d corrected, %d rejected\n",
-			len(observations), stats.Recorded, stats.Corrected, len(stats.Rejected),
+		len(observations), stats.Recorded, stats.Corrected, len(stats.Rejected),
 	)
 
 	printRejected(stats.Rejected)

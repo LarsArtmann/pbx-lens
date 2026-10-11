@@ -27,7 +27,7 @@ func searchViews() []calls.CallView {
 			NativeID: "conv-b", Kind: calls.SourceTelnyxConversation,
 			StartedAt: base.Add(time.Hour), FromNumber: "+17287289311", ToNumber: "+15555550999",
 			Transcript: []calls.TranscriptTurn{
-				{Role: "user", Text: "woolly woolly double mention"},
+				{Role: "user", Text: "woolly double mention"},
 			},
 		},
 		{
@@ -144,7 +144,11 @@ func TestMatchExpression(t *testing.T) {
 		{name: "plain terms", query: `woolly invoice`, want: `"woolly" "invoice"`},
 		{name: "quotes are neutralized", query: `say "woolly" OR 1=1`, want: `"say" """woolly""" "OR" "1=1"`},
 		{name: "empty", query: "   ", wantErr: errorfamily.NewRejection("lens.search.empty_query", "")},
-		{name: "control chars", query: "bad\x01marker", wantErr: errorfamily.NewRejection("lens.search.control_chars", "")},
+		{
+			name:    "control chars",
+			query:   "bad\x01marker",
+			wantErr: errorfamily.NewRejection("lens.search.control_chars", ""),
+		},
 	}
 
 	for _, test := range tests {

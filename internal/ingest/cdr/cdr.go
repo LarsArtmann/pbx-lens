@@ -117,7 +117,10 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 
 		row, err := cr.Read()
 		if err != nil {
-			return ingest.Result{}, errorfamily.NewCorruption("cdr.parse.read", fmt.Sprintf("reading Master.csv: %v", err))
+			return ingest.Result{}, errorfamily.NewCorruption(
+				"cdr.parse.read",
+				fmt.Sprintf("reading Master.csv: %v", err),
+			)
 		}
 
 		if len(row) == 0 {
