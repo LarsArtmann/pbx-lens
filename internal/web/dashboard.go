@@ -13,6 +13,9 @@ import (
 // as a gap, not vanish.
 const dashboardWindowDays = 30
 
+// utcDay is the UTC day boundary used to bucket and truncate timestamps.
+const utcDay = 24 * time.Hour
+
 // DayVolume is one day's call count in the dashboard window.
 type DayVolume struct {
 	Day   string // YYYY-MM-DD, UTC
@@ -55,7 +58,7 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 	stats := DashboardStats{WindowDays: dashboardWindowDays}
 
 	today := now.UTC().Format("2006-01-02")
-	windowStart := now.UTC().Truncate(24*time.Hour).AddDate(0, 0, -(dashboardWindowDays - 1))
+	windowStart := now.UTC().Truncate(utcDay).AddDate(0, 0, -(dashboardWindowDays - 1))
 	dayIndex := make(map[string]int, dashboardWindowDays)
 
 	for offset := range dashboardWindowDays {
