@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -407,9 +408,20 @@ func serve(args []string) {
 		"",
 		"bcrypt htpasswd file gating every route (htpasswd -B; empty = no auth — localhost dev only)",
 	)
+	pollEvery := fs.Duration("poll-every", cli.DefaultPollEvery, "poll cadence for keeping the index fresh (0 = disabled)")
+	pollSince := fs.Duration("poll-since", 48*time.Hour, "Telnyx look-back window per poll")
+	pollDirection := fs.String("poll-direction", "outbound", "caller-declared direction for polled Telnyx conversations")
+	cdrFile := fs.String("cdr-file", "", "FreeSWITCH Master.csv re-ingested every poll (empty = skip)")
+	webhookLog := fs.String("webhook-log", "", "receiver webhook JSONL re-ingested every poll (empty = skip)")
+	transcriptsDir := fs.String("transcripts-dir", "", "agent transcripts dir re-scanned every poll (empty = skip)")
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
+
+	pollDir, err := cli.ParseDirection(*pollDirection)
+	if err != nil {
+		fatal(err)
+	}
 
 	setupCtx, cancel := context.WithTimeout(context.Background(), serveTimeout)
 	defer cancel()
@@ -454,16 +466,35 @@ func serve(args []string) {
 
 	recordings := web.RecordingOptions{RecordingsDir: *recordingsDir}
 
+	var telnyxClient *telnyx.Client
+
 	if *keyFile != "" {
 		key, err := cli.ResolveKey(*keyFile)
 		if err != nil {
 			fatal(err)
 		}
 
-		recordings.Telnyx = telnyx.NewClient(key, "")
+		telnyxClient = telnyx.NewClient(key, "")
+		recordings.Telnyx = telnyxClient
 	}
 
 	web.Register(svc.Mux, sys, web.Options{Recordings: recordings, Search: index})
+
+	// The poller keeps the index fresh until shutdown; each pass drains
+	// projections and rebuilds the FTS index so / and /search never serve
+	// yesterday's state while serve runs.
+	pollCtx, stopPoller := context.WithCancel(context.Background())
+	defer stopPoller()
+
+	go cli.PollLoop(pollCtx, sys, index, cli.PollConfig{
+		Every:          *pollEvery,
+		Telnyx:         telnyxClient,
+		SinceAgo:       *pollSince,
+		Direction:      pollDir,
+		CDRFile:        *cdrFile,
+		WebhookLog:     *webhookLog,
+		TranscriptsDir: *transcriptsDir,
+	}, log.Printf)
 
 	// The serve lifetime is signal-owned (Run handles SIGINT/SIGTERM) — no
 	// timeout context here, or the server would die with it.
