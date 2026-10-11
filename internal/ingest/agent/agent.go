@@ -15,7 +15,6 @@
 package agent
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -25,17 +24,13 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 )
 
 // DefaultDirection is used when no CDR view joins: this deployment's agent
 // places outbound calls (same caller-declared doctrine as Telnyx
 // conversations; revisit when inbound AI interception lands).
 const DefaultDirection = calls.DirectionOutbound
-
-const (
-	scannerInitialBuf = 64 * 1024
-	scannerMaxLine    = 1024 * 1024
-)
 
 // line is one JSONL record of a transcript file; the variants share the
 // discriminator field.
@@ -72,18 +67,10 @@ type Result struct {
 func Parse(r io.Reader, fallbackUUID string) (Transcript, error) {
 	out := Transcript{UUID: fallbackUUID}
 
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, scannerInitialBuf), scannerMaxLine)
-
-	for sc.Scan() {
-		raw := strings.TrimSpace(sc.Text())
-		if raw == "" {
-			continue
-		}
-
+	err := ingest.EachLine(r, func(raw string) {
 		var ln line
 		if err := json.Unmarshal([]byte(raw), &ln); err != nil {
-			continue
+			return
 		}
 
 		switch ln.Type {
@@ -102,9 +89,8 @@ func Parse(r io.Reader, fallbackUUID string) (Transcript, error) {
 		case "end":
 			out.EndReason = ln.Reason
 		}
-	}
-
-	if err := sc.Err(); err != nil {
+	})
+	if err != nil {
 		return Transcript{}, err
 	}
 
@@ -177,11 +163,11 @@ func ParseDir(dir string) (Result, error) {
 // anchors the call in time.
 func Observation(transcript Transcript, cdrView *calls.CallView) (calls.Observation, error) {
 	obs := calls.Observation{
-		NativeID: calls.NativeID(transcript.UUID),
-		Kind:     calls.SourceAgentTranscript,
-		Direction: DefaultDirection,
-		IsAI:      true,
-		Transcript: transcript.Turns,
+		NativeID:          calls.NativeID(transcript.UUID),
+		Kind:              calls.SourceAgentTranscript,
+		Direction:         DefaultDirection,
+		IsAI:              true,
+		Transcript:        transcript.Turns,
 		TranscriptExcerpt: excerpt(transcript.Turns),
 	}
 

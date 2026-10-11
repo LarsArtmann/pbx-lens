@@ -4,6 +4,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 )
 
 const fixtureJSONL = `
@@ -16,7 +18,7 @@ const fixtureJSONL = `
 not json at all
 `
 
-func mustParse(t *testing.T, input string) Result {
+func mustParse(t *testing.T, input string) ingest.Result {
 	t.Helper()
 
 	res, err := Parse(strings.NewReader(input))
@@ -27,7 +29,7 @@ func mustParse(t *testing.T, input string) Result {
 	return res
 }
 
-func findObservation(t *testing.T, res Result, nativeID string) (bool, int) {
+func findObservation(t *testing.T, res ingest.Result, nativeID string) (bool, int) {
 	t.Helper()
 
 	for i, obs := range res.Observations {

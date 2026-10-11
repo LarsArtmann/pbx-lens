@@ -7,19 +7,13 @@
 package webhook
 
 import (
-	"bufio"
 	"encoding/json"
 	"io"
-	"strings"
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 	"github.com/larsartmann/pbx-lens/internal/wire"
-)
-
-const (
-	scannerInitialBuf = 64 * 1024
-	scannerMaxLine    = 1024 * 1024
 )
 
 // Envelope is one JSONL line as the receiver writes it.
@@ -48,15 +42,6 @@ type Payload struct {
 	HangupCause   string `json:"hangup_cause"`
 }
 
-// Result is one pass over the JSONL file.
-type Result struct {
-	Observations []calls.Observation
-	// Skipped counts lines that are empty, undecodable, or carry no usable
-	// call lifecycle event — a log-only source tolerates garbage lines
-	// instead of failing the whole index.
-	Skipped int
-}
-
 // call is the per-call_control_id aggregation state.
 type call struct {
 	startedAt time.Time
@@ -71,33 +56,24 @@ type call struct {
 // Parse reads the whole JSONL and folds it into one Observation per call.
 // Events may arrive in any order (the receiver appends as Telnyx retries);
 // the aggregation is order-independent so the ContentHash is stable.
-func Parse(r io.Reader) (Result, error) {
+func Parse(r io.Reader) (ingest.Result, error) {
 	callsByID := map[string]*call{}
-	res := Result{}
+	res := ingest.Result{}
 
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, scannerInitialBuf), scannerMaxLine)
-
-	for sc.Scan() {
-		line := strings.TrimSpace(sc.Text())
-		if line == "" {
-			continue
-		}
-
+	err := ingest.EachLine(r, func(line string) {
 		var env Envelope
 		if err := json.Unmarshal([]byte(line), &env); err != nil {
 			res.Skipped++
 
-			continue
+			return
 		}
 
 		if !applyEvent(callsByID, env.Body.Data) {
 			res.Skipped++
 		}
-	}
-
-	if err := sc.Err(); err != nil {
-		return Result{}, err
+	})
+	if err != nil {
+		return ingest.Result{}, err
 	}
 
 	for callControlID, state := range callsByID {
