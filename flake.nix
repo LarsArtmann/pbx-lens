@@ -79,10 +79,15 @@
               hash = "sha256-2NQB4h2XHgFEnmCRDu/6TZfziINXcgUyXncKg8gLXVY=";
             };
             sourceRoot = "source/cmd/cqrs-lint";
+            # cqrs-lint's own tests run fixture projects through `go`, which
+            # fetches modules from the proxy — impossible in the hermetic
+            # sandbox. The tool compiles clean; it is exercised for real
+            # every run against this repo (see AGENTS.md findings policy).
+            doCheck = false;
             # The monorepo root carries a go.work; without this, `go mod
             # vendor` in the modules FOD runs in workspace mode and dies.
             env.GOWORK = "off";
-            vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            vendorHash = "sha256-sGolyKx1N5sZJpGMDR19wHc6qyfVesDVZc9Pd24KlVc=";
           };
         in
         {
