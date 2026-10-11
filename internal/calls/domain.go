@@ -486,6 +486,7 @@ type RetireCallCmd struct {
 
 	Kind     SourceKind
 	NativeID NativeID
+	Reason   string
 }
 
 // NewRetireCommand addresses the call by stream identity alone: a purge runs
@@ -511,5 +512,5 @@ func NewRetireCommand(kind SourceKind, nativeID NativeID, reason string) (Retire
 		return RetireCallCmd{}, err
 	}
 
-	return RetireCallCmd{BasicCommand: bc, Kind: kind, NativeID: nativeID}, nil
+	return RetireCallCmd{BasicCommand: bc, Kind: kind, NativeID: nativeID, Reason: reason}, nil
 }

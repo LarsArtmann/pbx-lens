@@ -58,16 +58,11 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 
 			mustRegister(system.RegisterCommand[calls.RetireCallCmd, calls.CallState](sys, calls.CommandRetire,
 				func(cmdCtx context.Context, cmd calls.RetireCallCmd) system.Op[calls.CallState] {
-					sid, sidErr := calls.Observation{NativeID: cmd.NativeID, Kind: cmd.Kind}.StreamID()
-					if sidErr != nil {
-						return system.Op[calls.CallState]{}, sidErr
-					}
-
 					return system.Execute(
 						cmdCtx,
-						sid,
+						cmd.StreamID(),
 						calls.StreamType,
-						calls.Retire(retireReason(cmd), sid),
+						calls.Retire(cmd.Reason, cmd.StreamID()),
 					)
 				}))
 		},

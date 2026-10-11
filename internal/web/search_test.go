@@ -70,6 +70,13 @@ func TestSearchEmptyQueryShowsForm(t *testing.T) {
 	if !strings.Contains(body, `name="q"`) {
 		t.Error("search page should render the query input")
 	}
+
+	// The FTS tokenizer keeps a phone number as one token, so partial
+	// numbers can never match; the page must say so instead of letting
+	// users conclude the call is not indexed (AGENTS gotcha).
+	if !strings.Contains(body, "Partial numbers") {
+		t.Error("search page should hint that partial numbers never match")
+	}
 }
 
 func TestSearchWithoutIndexExplainsItself(t *testing.T) {
