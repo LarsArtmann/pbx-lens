@@ -19,6 +19,7 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/ingest/webhook"
+	"github.com/larsartmann/pbx-lens/internal/retention"
 	"github.com/larsartmann/pbx-lens/internal/search"
 	"github.com/larsartmann/pbx-lens/internal/web"
 )
@@ -63,6 +64,8 @@ func main() {
 		serve(os.Args[minArgs:])
 	case "backup":
 		backupCmd(os.Args[minArgs:])
+	case "purge":
+		purgeCmd(os.Args[minArgs:])
 	default:
 		usage()
 		os.Exit(exitUsage)
@@ -581,4 +584,72 @@ func printRejected(rejected []string) {
 func fatal(err error) {
 	fmt.Fprintln(os.Stderr, "pbx-lens:", err)
 	os.Exit(1)
+}
+
+func purgeCmd(args []string) {
+	fs := flag.NewFlagSet("purge", flag.ExitOnError)
+	db := fs.String("db", "", "sqlite DSN (required)")
+	maxAge := fs.String("max-age", "", "retention window: Go duration (e.g. 2160h = 90 days); calls observed before now-minus-window are retired (required)")
+	dryRun := fs.Bool("dry-run", false, "list what would be retired without changing anything")
+	_ = fs.Parse(args)
+
+	requireDB(fs, *db)
+
+	if *maxAge == "" {
+		fatal(errorfamily.NewRejection(
+			"lens.purge.missing_max_age",
+			fs.Name()+" needs -max-age <duration> (e.g. 720h, 2160h); retention must be explicit",
+		))
+	}
+
+	age, err := time.ParseDuration(*maxAge)
+	if err != nil || age <= 0 {
+		fatal(errorfamily.NewRejection(
+			"lens.purge.bad_max_age",
+			fmt.Sprintf("-max-age %q must be a positive Go duration (e.g. 720h, 2160h)", *maxAge),
+		))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
+	defer cancel()
+
+	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	if err != nil {
+		fatal(err)
+	}
+
+	defer cleanup()
+
+	policy := retention.Policy{MaxAge: age}
+
+	if *dryRun {
+		views, err := retention.OldViews(ctx, sys, policy, time.Now())
+		if err != nil {
+			fatal(err)
+		}
+
+		fmt.Printf("purge (dry run): %d call(s) older than %s\n", len(views), *maxAge)
+
+		for _, view := range views {
+			fmt.Printf("  %s:%s started %s\n", view.Kind, view.NativeID, view.StartedAt.UTC().Format(time.RFC3339))
+		}
+
+		return
+	}
+
+	report, err := retention.Retire(ctx, sys, policy, time.Now())
+	if err != nil {
+		fatal(err)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		fatal(err)
+	}
+
+	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+		fatal(err)
+	}
+
+	fmt.Printf("purge: retired %d of %d over-age call(s)\n", report.Retired, report.OverAge)
+	printRejected(report.Rejections)
 }

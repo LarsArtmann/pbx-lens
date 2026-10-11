@@ -93,3 +93,39 @@ func TestExportRejectsGarbageFilter(t *testing.T) {
 		t.Fatalf("export with a bad filter status = %d, want 400", status)
 	}
 }
+
+func TestExportPIIHashModeReplacesParticipants(t *testing.T) {
+	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	call := webObservation("conv-pii", started)
+	call.FromNumber = "+17287289311"
+	call.ToNumber = "garbled-cdr-party"
+
+	mux := newTestServer(t, call)
+
+	status, body := getBody(t, mux, "/api/export.jsonl?pii=hash")
+	if status != 200 {
+		t.Fatalf("GET export?pii=hash status = %d, want 200 (body: %s)", status, body)
+	}
+
+	wantHash := "sha256:" + string(calls.E164("+17287289311").Hash())
+	for _, want := range []string{wantHash, "[redacted]"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("hash-mode export missing %q (body: %s)", want, body)
+		}
+	}
+
+	if strings.Contains(body, "+17287289311") || strings.Contains(body, "garbled-cdr-party") {
+		t.Error("hash-mode export leaked a raw participant")
+	}
+}
+
+func TestExportPIIUnknownModeRejected(t *testing.T) {
+	status, body := getBody(t, newTestServer(t), "/api/export.csv?pii=pseudonymous")
+	if status != 400 {
+		t.Fatalf("unknown pii mode status = %d, want 400", status)
+	}
+
+	if !strings.Contains(body, "pii=hash") {
+		t.Errorf("rejection should name the supported mode, got: %s", body)
+	}
+}

@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/csv"
 	"encoding/json/v2"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -72,11 +73,25 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 }
 
 // exportViews parses the shared filters and loads the rows; it writes the
-// error response itself and reports whether the caller may proceed.
+// error response itself and reports whether the caller may proceed. The
+// optional pii=hash mode swaps participants for their participant hashes
+// before anything leaves the server.
 func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.CallView, bool) {
 	query, err := parseFilters(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return nil, false
+	}
+
+	switch r.URL.Query().Get("pii") {
+	case "", piiModeHash:
+	default:
+		http.Error(
+			w,
+			fmt.Sprintf("unknown pii mode %q: the only supported mode is pii=%s", r.URL.Query().Get("pii"), piiModeHash),
+			http.StatusBadRequest,
+		)
 
 		return nil, false
 	}
@@ -88,7 +103,31 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 		return nil, false
 	}
 
+	if r.URL.Query().Get("pii") == piiModeHash {
+		for i := range views {
+			views[i].FromNumber = piiParticipant(views[i].FromNumber)
+			views[i].ToNumber = piiParticipant(views[i].ToNumber)
+		}
+	}
+
 	return views, true
+}
+
+// piiModeHash names the participant-hash-only export mode (T23): numbers
+// render as sha256:<16 hex chars>, everything else as a redaction marker.
+const piiModeHash = "hash"
+
+// piiRedacted is the honest marker for a party that was never a parseable
+// number: real CDRs carry unknown or garbled parties, and free text must not
+// pass through a PII-limited export pretending to be a number.
+const piiRedacted = "[redacted]"
+
+func piiParticipant(number string) string {
+	if calls.E164(number).Valid() {
+		return "sha256:" + string(calls.E164(number).Hash())
+	}
+
+	return piiRedacted
 }
 
 // exportRecord flattens one view into the CSV column order.
