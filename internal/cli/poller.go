@@ -322,7 +322,7 @@ func applyAgeCutoff(cfg PollConfig, now time.Time, observations []calls.Observat
 			continue
 		}
 
-		refusals = append(refusals, streamLabel(obs)+": "+retention.ReasonAgeCutoff)
+		refusals = append(refusals, streamLabel(obs)+": "+string(retention.ReasonAgeCutoff))
 	}
 
 	return admitted, refusals

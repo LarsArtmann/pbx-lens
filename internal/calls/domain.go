@@ -496,11 +496,17 @@ func Enrich(obs Observation, enr Enrichment, streamID id.StreamID) decider.Decid
 	}
 }
 
+// RetentionReason is the audit reason a retirement carries: the purge job
+// stamps retention:age, and every legitimate value is a named constant in
+// internal/retention — a free-form string here would let a typo'd reason
+// corrupt the event-log grouping silently.
+type RetentionReason string
+
 // Retire applies a retention decision: the call leaves every read surface
 // while the stream keeps its append-only audit trail. Retiring an
 // unobserved stream rejects (nothing exists to retire) and re-retiring is
 // an idempotent no-op, so a purge interrupted midway can safely rerun.
-func Retire(reason string, streamID id.StreamID) decider.DecideFunc[CallState] {
+func Retire(reason RetentionReason, streamID id.StreamID) decider.DecideFunc[CallState] {
 	return func(state CallState, v event.Version) ([]event.Event, error) {
 		if !state.Observed {
 			return nil, errorfamily.NewRejection(
@@ -518,7 +524,7 @@ func Retire(reason string, streamID id.StreamID) decider.DecideFunc[CallState] {
 			streamID,
 			StreamType,
 			v.Increment(),
-			CallRetired{Reason: reason},
+			CallRetired{Reason: string(reason)},
 			event.WithSchemaVersion(1),
 		)
 		if err != nil {
@@ -534,13 +540,13 @@ type RetireCallCmd struct {
 
 	Kind     SourceKind
 	NativeID NativeID
-	Reason   string
+	Reason   RetentionReason
 }
 
 // NewRetireCommand addresses the call by stream identity alone: a purge runs
 // from read-model rows, and requiring a full observation would couple the
 // retention job to the source's current snapshot shape.
-func NewRetireCommand(kind SourceKind, nativeID NativeID, reason string) (RetireCallCmd, error) {
+func NewRetireCommand(kind SourceKind, nativeID NativeID, reason RetentionReason) (RetireCallCmd, error) {
 	if reason == "" {
 		return RetireCallCmd{}, errorfamily.NewRejection(
 			"call.retire.empty_reason",
