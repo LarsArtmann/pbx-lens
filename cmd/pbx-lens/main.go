@@ -556,7 +556,7 @@ func serve(args []string) {
 		recordings.Telnyx = telnyxClient
 	}
 
-	web.Register(svc.Mux, sys, web.Options{Recordings: recordings, Search: index})
+	web.Register(svc.Mux, sys, web.Options{Recordings: recordings, Search: index, Log: log.Printf})
 
 	// The poller keeps the index fresh until shutdown; each pass drains
 	// projections and rebuilds the FTS index so / and /search never serve

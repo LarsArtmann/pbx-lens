@@ -47,6 +47,6 @@ func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	if err := json.MarshalWrite(w, fresh); err != nil {
-		http.Error(w, "encoding freshness failed: "+err.Error(), http.StatusInternalServerError)
+		s.logf("freshness encode: %v", err)
 	}
 }

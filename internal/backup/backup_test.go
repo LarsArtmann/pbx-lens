@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	_ "modernc.org/sqlite"
@@ -106,5 +107,27 @@ func TestVerifyRejectsNonDatabase(t *testing.T) {
 
 	if err := Verify(context.Background(), path); err == nil {
 		t.Error("Verify must reject a file that is not a sqlite database")
+	}
+}
+
+func TestVerifyRejectsValidButEmptySqlite(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "empty.db")
+
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open empty db: %v", err)
+	}
+
+	if err := db.Close(); err != nil {
+		t.Fatalf("close empty db: %v", err)
+	}
+
+	err = Verify(context.Background(), path)
+	if err == nil {
+		t.Fatal("a valid sqlite file with no lens tables must not verify as a snapshot")
+	}
+
+	if want := "no tables"; !strings.Contains(err.Error(), want) {
+		t.Errorf("error should explain %q, got: %v", want, err)
 	}
 }

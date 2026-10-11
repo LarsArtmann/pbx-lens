@@ -188,3 +188,27 @@ func TestParseNonMOSExtraColumnReadsAsUnknown(t *testing.T) {
 		t.Fatalf("a non-MOS extra column must read as unknown (0), got %v", mos)
 	}
 }
+
+// fixture18MOS is the fallback template with mod_cdr_csv's extra
+// rtp_audio_in_mos column appended (the semicolon quirk preserved).
+const fixture18MOS = `"","+14084757593","2000","default","Lars","SOFTA","SOFTB","bridge","park","2026-10-09 21:00:00","2026-10-09 21:00:01","2026-10-09 21:00:10","10","9","NORMAL_CLEARING","2","cccc4444-5555-4ccc-8ccc-000000000003","","3.9";` + "\n"
+
+func TestParseFallbackTemplateWithAppendedMOS(t *testing.T) {
+	res, err := Parse(strings.NewReader(fixture18MOS))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 1 || res.Skipped != 0 {
+		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
+	}
+
+	obs := res.Observations[0]
+	if obs.NativeID != "cccc4444-5555-4ccc-8ccc-000000000003" {
+		t.Fatalf("native id wrong: %+v", obs)
+	}
+
+	if mos := obs.MOS; mos != 3.9 {
+		t.Fatalf("18-column template must parse the appended MOS, got %v", mos)
+	}
+}

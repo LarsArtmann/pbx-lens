@@ -28,6 +28,11 @@ type Options struct {
 	// Search answers FTS content queries (search.Index). Nil disables
 	// /search with an explanatory 503.
 	Search Searcher
+
+	// Log receives mid-response failures the handler cannot turn into an
+	// HTTP error (the body has already started). Nil logs nothing; serve
+	// passes the process logger.
+	Log func(msg string, args ...any)
 }
 
 // Searcher is the content-query surface the web UI needs.
@@ -38,7 +43,7 @@ type Searcher interface {
 // Register mounts every pbx-lens route on mux. The handler surface is
 // strictly read-only over the read model.
 func Register(mux *http.ServeMux, sys *system.System, opts Options) {
-	web := &server{sys: sys, recordings: opts.Recordings, search: opts.Search}
+	web := &server{sys: sys, recordings: opts.Recordings, search: opts.Search, log: opts.Log}
 
 	mux.HandleFunc("GET /{$}", web.list)
 	mux.HandleFunc("GET /dashboard", web.dashboard)
@@ -55,6 +60,17 @@ type server struct {
 	sys        *system.System
 	recordings RecordingOptions
 	search     Searcher
+	log        func(msg string, args ...any)
+}
+
+// logf reports a failure that surfaces after the response body started —
+// at that point an http.Error would append plaintext to a half-written
+// body, so the only honest move is to log and let the truncated response
+// stand.
+func (s *server) logf(msg string, args ...any) {
+	if s.log != nil {
+		s.log(msg, args...)
+	}
 }
 
 func (s *server) list(w http.ResponseWriter, r *http.Request) {

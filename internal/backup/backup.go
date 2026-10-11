@@ -80,5 +80,26 @@ func Verify(ctx context.Context, path string) error {
 		)
 	}
 
+	// A valid-but-empty sqlite file passes integrity_check, so the schema
+	// check is what makes Verify prove the file is a lens index snapshot
+	// and not, say, a truncated or wrong-path download.
+	var tables int
+
+	if err := db.QueryRowContext(ctx,
+		"SELECT count(*) FROM sqlite_master WHERE type = 'table'",
+	).Scan(&tables); err != nil {
+		return errorfamily.NewRejection(
+			"lens.backup.verify_schema",
+			fmt.Sprintf("schema check %s: %v", path, err),
+		)
+	}
+
+	if tables == 0 {
+		return errorfamily.NewRejection(
+			"lens.backup.verify_empty",
+			fmt.Sprintf("snapshot %s has no tables — not a lens index snapshot", path),
+		)
+	}
+
 	return nil
 }

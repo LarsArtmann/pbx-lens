@@ -28,6 +28,11 @@ const (
 	// DefaultLimit caps one search result page.
 	DefaultLimit = 50
 
+	// MaxLimit is the hard ceiling on one query's page, however large the
+	// caller asks — the web layer forwards a user-controlled ?limit, and an
+	// unbounded page would let one request scan the whole index.
+	MaxLimit = 200
+
 	// searchBodyFixedFields counts the non-transcript parts of the indexed
 	// body: from, to, excerpt.
 	searchBodyFixedFields = 3
@@ -171,6 +176,8 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 	if limit <= 0 {
 		limit = DefaultLimit
 	}
+
+	limit = min(limit, MaxLimit)
 
 	rows, err := i.db.QueryContext(ctx,
 		"SELECT kind, native_id, started_at, snippet("+tableName+", 0, ?, ?, '…', 12) "+

@@ -116,3 +116,36 @@ func TestHtpasswdRejectsWeakSchemesAtStartup(t *testing.T) {
 		t.Errorf("error should name the fix %q, got: %v", want, err)
 	}
 }
+
+func TestPadCostReadsLoadedEntriesCost(t *testing.T) {
+	generate := func(cost int) []byte {
+		t.Helper()
+
+		hash, err := bcrypt.GenerateFromPassword([]byte("pad-cost-probe"), cost)
+		if err != nil {
+			t.Fatalf("hash at cost %d: %v", cost, err)
+		}
+
+		return hash
+	}
+
+	tests := []struct {
+		name  string
+		hash  []byte
+		calls string
+		want  int
+	}{
+		{name: "min cost entry", hash: generate(bcrypt.MinCost), want: bcrypt.MinCost},
+		{name: "production cost 12 entry", hash: generate(12), want: 12},
+		{name: "unparseable entries fall back to default", hash: []byte("garbage"), want: bcrypt.DefaultCost},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			users := map[string][]byte{"lars": tt.hash}
+			if got := padCost(users); got != tt.want {
+				t.Errorf("padCost = %d, want %d", got, tt.want)
+			}
+		})
+	}
+}
