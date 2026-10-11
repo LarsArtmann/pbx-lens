@@ -852,184 +852,299 @@
       <main class="main">
         <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Naming Review</div>
+          <h1>pbx-lens identifier audit</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Honesty, clarity, domain alignment, and consistency of every type,
+            function, field, and constant across all 30 non-test Go files and
+            the templ view layer. 9 renames applied in this pass; full test
+            suite green after each.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
-        <nav class="toc">
-          <h3>Contents</h3>
-          <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
-          </ul>
-        </nav>
-
-        <!-- Stats Dashboard -->
+        <!-- 00 Summary -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">468</div>
+            <div class="stat-label">Identifiers Reviewed</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">Honesty Issues</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">9</div>
+            <div class="stat-label">Fixed In Pass</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Report-Only</div>
           </div>
         </div>
-
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
-        </div>
-
         <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
-        </div>
-
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <h4>Verdict: healthy vocabulary, targeted drift</h4>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
-        </div>
-
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            The domain core (<code>Observation</code>, <code>CallView</code>,
+            <code>ContentHash</code>, the Record/Enrich/Retire command family)
+            is honest and consistent — the deprecated
+            <code>CallRecord</code>&rarr;<code>Observation</code> migration
+            was completed and documented in DOMAIN_LANGUAGE.md. Every finding
+            sits at adapter and CLI seams where naming drifted between
+            siblings. Zero lying names: no getter mutates, no euphemisms, no
+            hidden side effects. No Manager/Handler/Helper/Impl/Util types
+            exist anywhere. Automated detection (golangci-lint revive
+            var-naming/receiver-naming + naming-smells.sh) reported zero
+            findings before manual review began.
           </p>
         </div>
 
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+        <!-- 01 Method -->
+        <h2 id="method"><span class="num">01</span>Method</h2>
+        <p>
+          Every non-test source file was read in full (~7,800 lines incl.
+          templ). Identifiers were glossed by domain (telephony / ingest /
+          read model / web / CLI), cross-checked against
+          <code>docs/DOMAIN_LANGUAGE.md</code>, and reviewed against the
+          naming checklist: honesty, clarity, precision, domain alignment,
+          implementation leakage, boolean phrasing, function verbs,
+          consistency, Go conventions. Generated <code>*_templ.go</code>
+          files were excluded (build artifacts). Renames were restricted to
+          internal Go identifiers — no JSON tags, wire DTO field names, CLI
+          subcommand names, or sqlite columns were touched, so no persisted
+          event, export format, or deployed flag changed meaning.
+        </p>
+
+        <!-- 02 Honesty -->
+        <h2 id="honesty"><span class="num">02</span>Honesty — 0 issues</h2>
+        <div class="card card-solution">
+          <h4>No lying names found</h4>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            Spot-checked the high-risk candidates:
+            <code>Observation.Validate()</code> and <code>ContentHash()</code>
+            are pure queries; <code>DrainProjections</code> really does wait
+            for drain completion (not fire-and-forget); staleness/freshness
+            are deliberately paired antonyms, each documented;
+            <code>Retire</code> tombstones instead of deleting and says so in
+            its doc comment; <code>backup.Snapshot</code> writes via temp +
+            atomic rename exactly as named.
           </p>
+        </div>
+
+        <!-- 03 Clarity -->
+        <h2 id="clarity"><span class="num">03</span>Clarity</h2>
+        <div class="card card-warning">
+          <h4>Clarity issues — all fixed in this pass</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>File</th><th>Line</th><th>Identifier</th><th>Issue</th><th>Better Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>internal/cli/search.go</td><td>36</td>
+                <td><code>RebuildIndex</code></td>
+                <td>Confusingly similar to sibling <code>RebuildSearchIndex</code>; signature inspection required to tell the already-open-index (serve/poller) variant from the open-by-DSN (one-shot CLI) variant</td>
+                <td><code>RebuildOpenIndex</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>internal/cli/telnyx.go</td><td>35</td>
+                <td><code>TelnyxSeed</code></td>
+                <td>&ldquo;Seed of what?&rdquo; — the type exists solely as the enrichment pass input; the Telnyx qualifier adds nothing the fields don't</td>
+                <td><code>EnrichmentSeed</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>internal/cli/enrich.go</td><td>76</td>
+                <td><code>enrichPass.seed()</code></td>
+                <td>Method named identically to its parameter type concept (&ldquo;seed the seed&rdquo;) while actually running the whole per-conversation enrichment: lookup, target resolution, dispatch</td>
+                <td><code>enrichConversation()</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>internal/cli/enrich.go</td><td>73</td>
+                <td><code>detailed bool</code></td>
+                <td>Adjective reads as a quality judgment, not a state flag; means &ldquo;Detail Records list has been fetched&rdquo;</td>
+                <td><code>recordsFetched</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>internal/ingest/webhook/webhook.go</td><td>53</td>
+                <td><code>call.sawCall</code></td>
+                <td>Boolean not phrased as a question, and redundant on its own type (<code>call</code> saw a call); guards &ldquo;startedAt is set&rdquo;</td>
+                <td><code>hasStart</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 04 Domain Alignment -->
+        <h2 id="domain"><span class="num">04</span>Domain Alignment</h2>
+        <div class="card card-warning">
+          <h4>Domain alignment issues — fixed in this pass</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>File</th><th>Line</th><th>Identifier</th><th>Issue</th><th>Better Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>6</td>
+                <td>internal/ingest/agent/agent.go</td><td>164</td>
+                <td><code>agent.Observation()</code></td>
+                <td>Exported function wearing the domain type's name — at call sites it reads like constructing <code>calls.Observation</code>, and the sibling mapper <code>telnyx.MapConversation</code> already established the Map* verb for source&rarr;domain conversion</td>
+                <td><code>agent.MapTranscript()</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 05 Consistency -->
+        <h2 id="consistency"><span class="num">05</span>Consistency</h2>
+        <div class="card card-warning">
+          <h4>Consistency issues — fixed in this pass</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>File</th><th>Line</th><th>Identifier</th><th>Issue</th><th>Better Name</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>7</td>
+                <td>internal/ingest/telnyx/telnyx.go</td><td>99, 231, 245</td>
+                <td><code>Client.Messages</code>, <code>Client.DetailRecords</code>, <code>Client.ConversationInsights</code></td>
+                <td>Three list-endpoint fetchers as bare nouns while siblings are <code>ListConversations</code>/<code>ListRecordings</code> — same operation class, three naming shapes on one type</td>
+                <td><code>ListMessages</code>, <code>ListDetailRecords</code>, <code>ListConversationInsights</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>internal/web/dashboard.go</td><td>57</td>
+                <td><code>DashboardStats.MOSAvg</code></td>
+                <td>Split-brain with <code>DayVolume.AvgMOS</code> — the same concept (mean MOS) under two word orders in one file, one line apart in the type set</td>
+                <td><code>AvgMOS</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>internal/cli/ingest.go</td><td>68</td>
+                <td><code>label()</code></td>
+                <td>Same <code>kind:native-id</code> rejection label is <code>streamLabel</code> in retention; the cli spelling is also vague (&ldquo;label of what?&rdquo;)</td>
+                <td><code>streamLabel()</code> <span class="badge badge-fixed">Fixed</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 06 Report-only -->
+        <h2 id="remaining"><span class="num">06</span>Report-only observations</h2>
+        <div class="card">
+          <h4>Below the fix bar — deliberate non-fixes with rationale</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>File</th><th>Identifier</th><th>Observation</th><th>Severity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>10</td>
+                <td>internal/ingest/cdr/cdr.go:132</td>
+                <td><code>shape</code> (local)</td>
+                <td>Row-as-named-fields map; &ldquo;shape&rdquo; is layout jargon, <code>row</code> would collide with the positional slice — renaming both (<code>cells</code>/<code>row</code>) is churn below the value line</td>
+                <td><span class="badge badge-low">Low</span></td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>internal/retention/retention.go:23</td>
+                <td><code>ReasonRetention</code></td>
+                <td>Noun-adjective order reads awkwardly vs <code>RetentionReason</code>; single constant, stable wire value <code>"retention:age"</code> exported to event logs — rename would touch event audit strings for cosmetic gain</td>
+                <td><span class="badge badge-low">Low</span></td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>internal/ingest/telnyx/enrich.go:34</td>
+                <td><code>CostEnrichment()</code></td>
+                <td>Name promises an enrichment but returns a raw <code>(int64, string, bool)</code> tuple — the &ldquo;cost half&rdquo; per its doc; returning a struct would be a data-model change, not a rename</td>
+                <td><span class="badge badge-low">Low</span></td>
+              </tr>
+              <tr>
+                <td>13</td>
+                <td>internal/ingest/telnyx/telnyx.go:117</td>
+                <td><code>Client.Recording()</code></td>
+                <td>Bare-noun single-record fetch amid List* siblings — acceptable Go accessor idiom; only stands out because the list siblings were inconsistent (now fixed)</td>
+                <td><span class="badge badge-low">Low</span></td>
+              </tr>
+              <tr>
+                <td>14</td>
+                <td>internal/web + internal/search</td>
+                <td><code>searchResultLimit</code> / <code>search.DefaultLimit</code></td>
+                <td>Twin page caps (both 50) at two layers — honest names for genuinely distinct roles (page bound passed vs fallback default applied); noted for any future dedup pass</td>
+                <td><span class="badge badge-low">Low</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Strengths -->
-        <h2>Strengths</h2>
+        <h2 id="strengths">Strengths</h2>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
+              <strong>Layered view vocabulary</strong>
+              <span>Observation (source row) &rarr; CallView (read model) &rarr; CallRow (UI view model) — each layer has a distinct, honest name and the UI never touches domain types.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Command/event family discipline</strong>
+              <span>Record/Enrich/Retire verbs carry consistently through decider funcs, Cmd structs, Command constants, and Event payloads (observed/corrected/enriched/retired) with doc comments explaining each lifecycle decision.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Question-form booleans</strong>
+              <span>Valid(), IsZero-guarded staleness, hasFilters, hasWindowMOS, Searcher nil-checks — yes/no predicates read as questions throughout (after the sawCall fix).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Constant naming grammar</strong>
+              <span>Default* for overridable defaults (DefaultBase, DefaultPollEvery, DefaultAIDestination), max* for hard caps (maxPages, maxBodyBytes, maxScan, maxExportRows) — the distinction is applied without exception.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Deprecated-term hygiene</strong>
+              <span>The plan-era CallRecord was renamed to Observation everywhere and recorded in DOMAIN_LANGUAGE.md's deprecated table — split-brain terminology was retired, not just discouraged.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Search domain naming</strong>
+              <span>Hit, Part, MatchExpression, Index — the FTS package speaks its own clear dialect with zero leakage of sqlite/FTS5 jargon into callers.</span>
             </div>
           </div>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
-        </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
-          </div>
-        </div>
-
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
-
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
-        </div>
-
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-11 &middot; naming-review skill &middot; all
+          findings verified against source; every fixed rename re-verified by
+          the full test suite
         </footer>
       </main>
     </div>

@@ -11,9 +11,9 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// exportHeader is the CSV header in emission order. The names mirror the
-// JSONL field names so a JSONL consumer and a CSV consumer read the same
-// record shape.
+// exportHeader is the CSV header in emission order. The column names reuse
+// the JSONL field names; the JSONL rows are the full view and additionally
+// carry transcript, mos, and content_hash, which CSV omits to stay flat.
 func exportHeader() []string {
 	return []string{
 		"kind", "native_id", "started_at", "from_number", "to_number",
