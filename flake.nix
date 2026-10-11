@@ -99,7 +99,7 @@
             # The monorepo root carries a go.work; without this, `go mod
             # vendor` in the modules FOD runs in workspace mode and dies.
             env.GOWORK = "off";
-            vendorHash = "sha256-Rucg9dLf16858AK48KS5tCvlOu0M05IH8QMGln75vkA=";
+            vendorHash = "sha256-sGolyKx1N5sZJpGMDR19wHc6qyfVesDVZc9Pd24KlVc=";
           };
         in
         {

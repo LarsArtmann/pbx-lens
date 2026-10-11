@@ -195,17 +195,27 @@ func MapTranscript(transcript Transcript, cdrView *calls.CallView) (calls.Observ
 }
 
 // excerpt is the first user turn (the call opening), falling back to the
-// first assistant turn (the greeting) — same semantics as the Telnyx mapper.
+// first assistant turn (the greeting) — same semantics as the Telnyx mapper,
+// including the domain's excerpt ceiling: an uncapped opening line would
+// flood the list page's single table cell.
 func excerpt(turns []calls.TranscriptTurn) string {
+	opening := ""
 	for _, turn := range turns {
 		if turn.Role == "user" {
-			return turn.Text
+			opening = turn.Text
+
+			break
 		}
 	}
 
-	if len(turns) > 0 {
-		return turns[0].Text
+	if opening == "" && len(turns) > 0 {
+		opening = turns[0].Text
 	}
 
-	return ""
+	runes := []rune(opening)
+	if len(runes) > calls.DefaultExcerptMax {
+		return string(runes[:calls.DefaultExcerptMax])
+	}
+
+	return opening
 }

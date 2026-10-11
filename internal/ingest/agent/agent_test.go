@@ -92,6 +92,33 @@ func TestObservationWithoutCDRJoin(t *testing.T) {
 	}
 }
 
+// A long opening turn must land in the read model capped at the domain's
+// excerpt ceiling — same doctrine as the Telnyx mapper — so no source can
+// flood the list page's single table cell.
+func TestExcerptCappedAtDomainCeiling(t *testing.T) {
+	t.Parallel()
+
+	long := strings.Repeat("word ", 100)
+
+	transcript, err := Parse(strings.NewReader(
+		`{"type":"start","ts":1760041885,"uuid":"u1"}`+"\n"+
+			`{"type":"turn","role":"caller","text":"`+long+`"}`+"\n",
+	), "u1")
+	if err != nil {
+		t.Fatalf("Parse: %v", err)
+	}
+
+	obs, err := MapTranscript(transcript, nil)
+	if err != nil {
+		t.Fatalf("MapTranscript: %v", err)
+	}
+
+	runes := []rune(obs.TranscriptExcerpt)
+	if len(runes) != calls.DefaultExcerptMax {
+		t.Errorf("excerpt length = %d runes, want capped at %d", len(runes), calls.DefaultExcerptMax)
+	}
+}
+
 func TestObservationWithCDRJoin(t *testing.T) {
 	t.Parallel()
 
