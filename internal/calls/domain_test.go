@@ -86,12 +86,14 @@ func TestContentHashMOSOnlyWhenReported(t *testing.T) {
 	}
 
 	scored := obs
+
 	scored.MOS = 4.2
 	if scored.ContentHash() == obs.ContentHash() {
 		t.Error("a reported MOS must change the content hash")
 	}
 
 	rescored := obs
+
 	rescored.MOS = 3.1
 	if rescored.ContentHash() == scored.ContentHash() {
 		t.Error("different MOS values must hash differently")

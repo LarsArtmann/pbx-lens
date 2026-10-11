@@ -118,16 +118,22 @@ templ mosCard(stats DashboardStats) {
 			<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
 				mean of { scoredCallsLabel(stats.MOSKnown) }
 			</p>
-			<div class="mt-3">
-				@display.BarChart(display.BarChartProps{
-					Bars:         mosBars(stats.ByDay),
-					Orient:       display.BarVertical,
-					MinBarWidth:  "min-w-1",
-					Gap:          "gap-px",
-					ShowValues:   false,
-					EmptyMessage: "No MOS data in the last " + strconv.Itoa(stats.WindowDays) + " days",
-				})
-			</div>
+			if hasWindowMOS(stats.ByDay) {
+				<div class="mt-3">
+					@display.BarChart(display.BarChartProps{
+						Bars:         mosBars(stats.ByDay),
+						Orient:       display.BarVertical,
+						MinBarWidth:  "min-w-1",
+						Gap:          "gap-px",
+						ShowValues:   false,
+						EmptyMessage: "No MOS data in the last " + strconv.Itoa(stats.WindowDays) + " days",
+					})
+				</div>
+			} else {
+				<p class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+					No MOS data in the last { strconv.Itoa(stats.WindowDays) } days.
+				</p>
+			}
 		}
 	}
 }
@@ -154,6 +160,19 @@ func mosBars(days []DayVolume) []display.BarChartBar {
 
 func mosAvgLabel(stats DashboardStats) string {
 	return strconv.FormatFloat(stats.MOSAvg(), 'f', 1, 64)
+}
+
+// hasWindowMOS reports whether any day inside the chart window carries a
+// score; without it the chart shows nothing at all, so the card explains
+// itself in text instead.
+func hasWindowMOS(days []DayVolume) bool {
+	for _, day := range days {
+		if day.MOSKnown > 0 {
+			return true
+		}
+	}
+
+	return false
 }
 
 // scoredCallsLabel renders "N scored calls" with honest singular when the

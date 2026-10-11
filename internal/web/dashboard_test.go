@@ -82,7 +82,7 @@ func TestDashboardMOSSummaryAndTrend(t *testing.T) {
 	scoredA.MOS = 4.2
 	scoredB := webObservation("conv-mos-b", day.Add(time.Hour))
 	scoredB.MOS = 3.8
-	unscored := webObservation("conv-mos-none", day.Add(2 * time.Hour))
+	unscored := webObservation("conv-mos-none", day.Add(2*time.Hour))
 
 	status, body := getBody(t, newTestServer(t, scoredA, scoredB, unscored), "/dashboard")
 	if status != 200 {
@@ -129,7 +129,7 @@ func TestDashboardStatsQueryMOSAggregation(t *testing.T) {
 	scoredA.MOS = 4.0
 	scoredB := webObservation("conv-mos-2", day.Add(time.Hour))
 	scoredB.MOS = 2.0
-	unscored := webObservation("conv-mos-3", day.Add(2 * time.Hour))
+	unscored := webObservation("conv-mos-3", day.Add(2*time.Hour))
 
 	if stats := cli.Ingest(ctx, sys, []calls.Observation{scoredA, scoredB, unscored}); len(stats.Rejected) > 0 {
 		t.Fatalf("ingest rejected: %v", stats.Rejected)
@@ -160,7 +160,12 @@ func TestDashboardStatsQueryMOSAggregation(t *testing.T) {
 		switch dayVolume.Day {
 		case "2026-10-09":
 			if dayVolume.MOSKnown != 2 || dayVolume.MOSSum != 6.0 || dayVolume.AvgMOS() != 3.0 {
-				t.Errorf("2026-10-09 MOS = %d/%v/%v, want 2/6/3", dayVolume.MOSKnown, dayVolume.MOSSum, dayVolume.AvgMOS())
+				t.Errorf(
+					"2026-10-09 MOS = %d/%v/%v, want 2/6/3",
+					dayVolume.MOSKnown,
+					dayVolume.MOSSum,
+					dayVolume.AvgMOS(),
+				)
 			}
 		default:
 			if dayVolume.MOSKnown != 0 || dayVolume.AvgMOS() != 0 {
