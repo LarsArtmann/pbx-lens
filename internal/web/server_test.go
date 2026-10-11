@@ -215,3 +215,75 @@ func TestStalenessBannerOnlyOnUnfilteredPage(t *testing.T) {
 		t.Error("filtered page should not carry the staleness banner")
 	}
 }
+
+func TestEveryRegisteredRouteAnswers(t *testing.T) {
+	mux := newTestServer(t, webObservation("conv-a", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)))
+
+	routes := []string{
+		"/",
+		"/dashboard",
+		"/search",
+		"/api/freshness",
+		"/api/export.jsonl",
+		"/api/export.csv",
+		"/calls/telnyx-conversation/conv-a",
+		"/calls/telnyx-conversation/conv-a/recording",
+		"/app.css",
+	}
+
+	for _, path := range routes {
+		status, body := getBody(t, mux, path)
+
+		// The route table must stay wired: a missing registration answers
+		// with ServeMux's bare "404 page not found", and resource-level
+		// misses (an unenriched recording) answer with a real message.
+		if status == http.StatusNotImplemented {
+			t.Errorf("GET %s = 501", path)
+		}
+
+		if status == http.StatusNotFound && strings.TrimSpace(body) == "404 page not found" {
+			t.Errorf("GET %s hit no registered handler", path)
+		}
+
+		if status == http.StatusMethodNotAllowed {
+			t.Errorf("GET %s = 405 — route registered under the wrong method", path)
+		}
+	}
+}
+
+// failingWriter answers every write with an error, emulating a client that
+// vanished mid-response, and counts the attempts.
+type failingWriter struct {
+	header http.Header
+	writes int
+}
+
+func (f *failingWriter) Header() http.Header { return f.header }
+
+func (f *failingWriter) Write(p []byte) (int, error) {
+	f.writes++
+
+	return 0, errors.New("client vanished")
+}
+
+func (f *failingWriter) WriteHeader(int) {}
+
+func TestFreshnessMidWriteFailureLogsInsteadOfCorrupting(t *testing.T) {
+	var logged []string
+
+	mux := newTestServerWith(t, Options{
+		Log: func(msg string, args ...any) { logged = append(logged, msg) },
+	})
+
+	writer := &failingWriter{header: http.Header{}}
+	request := httptest.NewRequest(http.MethodGet, "/api/freshness", nil)
+	mux.ServeHTTP(writer, request)
+
+	if len(logged) == 0 {
+		t.Fatal("a mid-write encode failure must reach the log sink")
+	}
+
+	if writer.writes != 1 {
+		t.Errorf("write attempts = %d, want 1 — an error body must not be appended after the response started", writer.writes)
+	}
+}

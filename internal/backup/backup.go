@@ -1,8 +1,13 @@
 // Package backup writes a consistent sqlite snapshot of the index for the
 // nightly backup staging (C4/T14). The snapshot is produced with VACUUM INTO,
 // which reads through one transaction, so the copy is consistent even while
-// the serve process keeps writing. The snapshot lands via a temp file and an
-// atomic rename: a failed run never destroys the previous good snapshot.
+// the serve process keeps writing. The snapshot lands via a temp file, an
+// fsync of that staging file, and an atomic rename: a failed run never
+// destroys the previous good snapshot, and a crash between write and rename
+// cannot publish half-flushed pages. Verify is the post-condition the
+// nightly job runs on the PUBLISHED file — the fsync guarantees what lands
+// is what VACUUM wrote, Verify guarantees what landed is a readable lens
+// snapshot.
 package backup
 
 import (
@@ -42,11 +47,30 @@ func Snapshot(ctx context.Context, dsn, out string) error {
 		return errorfamily.NewRejection("lens.backup.vacuum", fmt.Sprintf("snapshotting %s to %s: %v", dsn, out, err))
 	}
 
+	// Flush the staging file to disk before the rename makes it visible:
+	// without the fsync a crash could publish a snapshot whose pages were
+	// still in the page cache.
+	if err := syncFile(staging); err != nil {
+		return errorfamily.NewRejection("lens.backup.sync", fmt.Sprintf("syncing %s: %v", staging, err))
+	}
+
 	if err := os.Rename(staging, out); err != nil {
 		return errorfamily.NewRejection("lens.backup.publish", fmt.Sprintf("publishing %s: %v", out, err))
 	}
 
 	return nil
+}
+
+// syncFile flushes one file's contents to stable storage.
+func syncFile(path string) error {
+	file, err := os.OpenFile(path, os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = file.Close() }()
+
+	return file.Sync()
 }
 
 // Verify opens the snapshot and confirms it is a readable sqlite database
