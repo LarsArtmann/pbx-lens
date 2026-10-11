@@ -478,6 +478,11 @@ func serve(args []string) {
 		"outbound",
 		"caller-declared direction for polled Telnyx conversations",
 	)
+	maxAge := fs.Duration(
+		"max-age",
+		0,
+		"refuse polled observations older than this (0 = keep everything)",
+	)
 	cdrFile := fs.String("cdr-file", "", "FreeSWITCH Master.csv re-ingested every poll (empty = skip)")
 	webhookLog := fs.String("webhook-log", "", "receiver webhook JSONL re-ingested every poll (empty = skip)")
 	transcriptsDir := fs.String("transcripts-dir", "", "agent transcripts dir re-scanned every poll (empty = skip)")
@@ -567,6 +572,7 @@ func serve(args []string) {
 		CDRFile:        *cdrFile,
 		WebhookLog:     *webhookLog,
 		TranscriptsDir: *transcriptsDir,
+		MaxAge:         *maxAge,
 	}, log.Printf)
 
 	// The serve lifetime is signal-owned (Run handles SIGINT/SIGTERM) — no

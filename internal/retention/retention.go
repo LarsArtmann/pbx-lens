@@ -22,6 +22,12 @@ import (
 // tombstone; the string is stable so exports of the event log group them.
 const ReasonRetention = "retention:age"
 
+// ReasonAgeCutoff is the audit label for an observation refused at ingest
+// because it predates the policy window (the serve poller's -max-age gate).
+// Distinct from ReasonRetention so the purge (tombstone) and ingest-gate
+// rejections group separately in event-log exports and poll summaries.
+const ReasonAgeCutoff = "retention:age-cutoff"
+
 // maxScan bounds one policy pass. Personal-PBX volumes sit far below this;
 // the cap only stops a runaway scan from exhausting memory (same doctrine
 // as the export cap).

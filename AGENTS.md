@@ -17,7 +17,7 @@ webphone later gets a read-only deep link, never a data dependency.
     NixOS module, not an import) mean every candidate seam has zero
     composability payoff; the package DAG already enforces the layering.
     Revisit triggers: a second aggregate (E003 decided 2026-10-11: hold
-    flat; write/read seam pre-agreed — see the cqrs-lint policy section), an
+    flat; write/read seam pre-agreed — see docs/cqrs-lint-policy.md), an
     external Go consumer, or measurable CI cost.
   - sqliteengine (blank import registers the "sqlite" driver), pinned to the
     vetted set from go-cqrs-lite `example/getting-started/go.mod` (exact
@@ -98,10 +98,12 @@ webphone later gets a read-only deep link, never a data dependency.
   `ingest.NewScanner`. Support packages: `internal/wire` (FlexTime + shared
   wire-decoding helpers; directly unit-tested since 2026-10-11),
   `internal/backup` (VACUUM INTO snapshot + integrity verify), and
-  `internal/retention` (Policy/OldViews/Retire behind the `purge` command).
-  The projection record key is ALWAYS derived via `obs.StreamID().String()` —
-  the last hand-built `"StreamMarker:..."` literal (cli/agent.go CDR join) was
-  found and removed by the 2026-10-11 four-lens review; do not re-introduce one.
+  `internal/retention` (Policy/OldViews/Retire behind the `purge` command;
+  `Policy.Admits` also gates ingest-side age via the serve poller's
+  `-max-age`, 0 = keep everything). The projection record key is ALWAYS
+  derived via `obs.StreamID().String()` — the last hand-built
+  `"StreamMarker:..."` literal (cli/agent.go CDR join) was found and removed
+  by the 2026-10-11 four-lens review; do not re-introduce one.
   `calls.DefaultExcerptMax` (200 runes) is the domain-owned transcript-excerpt
   ceiling; every source mapper caps with it (telnyx aliases it as
   `telnyx.DefaultExcerptMax`). The serve htpasswd timing pad hashes at the
@@ -147,332 +149,28 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
                                       # /api/freshness with a Go http probe (curl banned)
 nix develop                           # devShell: go, golangci-lint, gopls,
                                       # govulncheck, cqrs-lint
-nix develop -c cqrs-lint .            # cqrs findings policy (below)
+nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
                                       # changes (buildflow -s nix-hash-fix
                                       # --fix does the same)
 ./scripts/...                         # (none yet)
 ```
 
-## Gotchas (paid for)
+## Deep context (extracted to docs/ 2026-10-11 — 220-line limit)
 
-- **Projection record keys carry the `StreamMarker:` prefix (2026-10-11):**
-  `cmd.StreamID().String()` returns `"StreamMarker:<kind>:<native-id>"` and
-  that marker-ful string IS the call_views record key (the folds key by the
-  event record ID). Polling `reader.Get` with a hand-built
-  `"telnyx-conversation:x"` key always misses — cost ~1h of debugging that
-  looked like a flaky projection engine. Always derive keys via
-  `obs.StreamID().String()`.
-- **The projection host is a one-shot batch drainer (2026-10-11):** workers
-  drain the journal from their checkpoint, then EXIT; `Start` refuses with
-  `projectionhost.already_started` until `Stop` resets the host, and `Stop`
-  CANCELS the run ctx (it can kill a drain before it processes anything).
-  Fire-and-forget `go host.Start(ctx)` is a race (events appended after the
-  first drain exits are never projected). The correct synchronous drain —
-  `cli.DrainProjections`: idempotent `Stop` → `Start` → poll
-  `host.Status()` until every worker is `WorkerStopped` (WorkerIdle right
-  after Start means "not drained yet", NOT done) — is what every CLI
-  command and the serve poller must use after each dispatch batch. Memory
-  engine NEVER projects without a host drain (the sqlite e2e test passed
-  only because its flow coincided with a drain).
-- **metaengine fold selection:** for a full-recompute view ship
-  ONLY the 2-arg create fold (`OnRecordTyped` returning `(key, view)`).
-  Pairing it with a 3-arg update fold lets metaengine route the FIRST event
-  through the update fold with a zero `prev`, storing a zero view. Two-fold
-  patterns exist for INCREMENTAL folds (`prev.Field += ...`), not recompute.
-- **The coeffect gate's consumed set ignores `system.RawQuery`**
-  (projection_builder passthrough): declaring `DomainConfig.Events` with a
-  RawQuery projection logs an advisory "unconsumed event type" WARN at boot.
-  Harmless; keep the declaration (the hard-error direction still guards
-  deciders). The fluent `Evolve` + explicit-fold path feeds the gate but
-  generates ONLY an update fold and keys by the view's `ID` field, which the
-  closure cannot populate from the stream id — it panicked in poisoned-
-  collection here. Revisit only if the library grows an explicit-create fold.
-- **Vendored cqrs-lint (flake devShell):** built from a pinned go-cqrs-lite
-  master rev — the `cmd/cqrs-lint/v4` module has no stable tags to pin
-  instead. Two traps paid for: the monorepo root carries a `go.work`, so the
-  build needs `env.GOWORK = "off"` or the modules FOD dies in workspace mode;
-  and its own test suite runs fixture projects through `go` (network module
-  fetches), which is impossible in the hermetic sandbox — hence
-  `doCheck = false` on the vendored build (the tool is exercised for real on
-  every run against this repo). Bump the rev deliberately; expect two hash
-  iterations (src + vendor). PAID FOR 2026-10-11: an earlier session pasted
-  the pbx-lens module vendor hash (vendorHash.nix's value) into BOTH cqrs-lint
-  pins — the devShell only kept working from nix's positive cache until a
-  rebuild exposed the mismatch. The three hashes (cqrs-lint src, cqrs-lint
-  vendor, vendorHash.nix) are independent; fix a devShell FOD failure by
-  reading the `got:` hash from the error, not by copying from vendorHash.nix.
-- **This machine's global git config sets `core.hooksPath=.githooks`**, so
-  git-hooks.nix's treefmt hook can never auto-install here (first
-  `nix develop` prints pre-commit's "Cowardly refusing" once, then skips
-  silently; go-output's installed hook is inert for the same reason). The
-  wiring stays for pattern parity and manual checks (`nix develop -c pre-commit
-  run --all-files`); the firing quality gate remains BuildFlow.
-- **`errorfamily.NewRejection/NewConflict` take exactly (code, message)** —
-  no format args; wrap with fmt.Sprintf. StreamID is a struct (cbid), not a
-  string: use .String() / id.ParseStreamID, never a cast.
-- **Telnyx live-API truths (verified against the live API 2026-10-10; unit
-  fixtures alone missed all three — re-verify this cluster quarterly):
-  1. Conversations filters are FIELD-AS-PARAM (`last_message_at=gte.TS`,
-     `metadata->assistant_id=eq.x`) — NOT a `filter=` wrapper; the endpoint
-     400s (10015) listing its available params when you guess wrong.
-  2. Conversation metadata values are NOT all strings (`called_tools` is an
-     array despite the docs typing metadata.* as string) — decode as
-     `map[string]any` and read through `Conversation.MetadataString`.
-  3. Timestamps are precision-UNSTABLE across responses (the same
-     conversation served nanoseconds then microseconds minutes apart) and
-     recordings carry OFFSET-LESS stamps (`2026-10-09T19:51:35`). Wire DTOs
-     decode through `FlexTime` (RFC3339Nano, then bare
-     `2006-01-02T15:04:05`, UTC); the MAPPER truncates to whole seconds
-     before building the Observation — sub-second noise must never reach
-     `ContentHash`, or every re-poll rejects the stream as `call.record.
-     mutated`. Regression test:
-     `TestMapConversationTimestampPrecisionStable`.
-- **`FlexTime` promotes time.Time methods on the RECEIVER only** —
-  `conv.CreatedAt.UTC()` compiles, but `last.After(first)` does NOT accept a
-  FlexTime argument; write `.Time.After(x.Time)` explicitly.
-- **The conversation→Observation direction is caller-declared** (MapOptions.
-  Direction, CLI `-direction`): Telnyx conversation metadata exposes no
-  direction field (docs read 2026-10-10), so this deployment's assistant
-  calls default to outbound. Revisit when inbound AI calls land (the DID
-  interception path).
-- **Recording correlation is client-side**: conversations carry
-  `call_control_id` in metadata, recordings carry the same field, so
-  ingest-telnyx lists recent recordings and matches in-process
-  (`RecordingByCallControl`) — the recordings list filter's supported keys
-  are undocumented, so no server-side filter is trusted. Detail Records
-  correlation works the same way (`DetailRecordByCallControl`).
-- **Enrichment endpoints (spec-verified 2026-10-11 against the Telnyx
-  OpenAPI spec; LIVE verification still pending — no key at
-  implementation time; fold into the quarterly re-verify cluster):
-  1. `GET /ai/conversations/{id}/conversations-insights` — the suffix is
-     `conversations-insights`, NOT `insights` (both 404-magnet guesses
-     exist in the docs). Response: `data[]{id, status:
-     pending|in_progress|completed|failed, created_at,
-     conversation_insights[]{insight_id, result}}`. Only `completed` rows
-     are summary sources; the newest row wins; its non-empty results join
-     with `\n` (`telnyx.InsightSummary`).
-  2. `GET /detail_records` — deepObject filter with REQUIRED
-     `filter[record_type]` (we send `call-control`), optional
-     `filter[started_at][gte]`; `page[size]` caps at 50 (vs 100
-     elsewhere). `cost` is a decimal STRING in currency units ("0.002")
-     with `currency` — NOT micros; convert via `telnyx.MicrosFromCost`
-     (round to `calls.MicrosPerUnit`).
-  3. The call-control record shape is NOT in the public spec (its
-     DetailRecord union lists only messaging/conference/amd/verify/sim/
-     media), so `DetailRecord.UnmarshalJSON` is deliberately
-     alias-tolerant: `id`/`uuid`, `call_control_id`/
-     `telnyx_call_control_id`, cost as string or number. If live calls
-     show a third spelling, extend the aliases there.
-- **metaengine time-typed filter values miscompare on sqlite (2026-10-11,
-  paid for by the ?to= wart test)**: sqliteengine binds the raw `time.Time`
-  as a SQL parameter; modernc renders it `2006-01-02 15:04:05 -0700 MST`
-  while the stored JSON holds RFC3339 (`T` separator). Lexicographic compare
-  then silently corrupts same-day bounds: `Le/Lt` leak the day, `Ge/Gt`
-  drop it, `Eq` never matches. Fix in-repo: bind
-  `t.UTC().Format(time.RFC3339Nano)` strings (`web.rfc3339Nano`) — the exact
-  stored wire format, correct for eq/le/ge/lt and robust regardless of any
-  future upstream fix. Upstream sqliteengine issue pending (D6).
-- **The memory engine resolves filter columns by Go field name, not JSON
-  tag (2026-10-11)**: its closure fallback EqualFolds
-  `extractValueByName(item, col)` against struct FIELD names, so
-  `WithFilter("started_at", ...)` reads nil → Le/Lt match EVERYTHING, Ge
-  matches nothing (constant compare vs nil). sqlite's `json_extract` uses
-  JSON tags and is correct. Consequence: every web-layer test uses a real
-  temp sqlite file (`newTestServerWith`), never the memory engine — filter
-  semantics must match production. Upstream divergence issue pending (D6).
-- **FTS5 tokenizes `+17287289311` as one token** (unicode61; `+` is not a
-  token char): substring queries like `87289311` find nothing — search the
-  full number or a word from the transcript. Prefix queries CANNOT fix
-  mid-number substrings (a prefix must match from the token start), so the
-  search page carries an explicit hint instead (`search.templ`).
-- **The enrich pass reads the read model — drain first (2026-10-11)**:
-  `cli.EnrichTelnyxCalls` looks streams up via the projection, so callers
-  MUST `DrainProjections` between `Ingest` and enrichment, or every
-  just-recorded stream counts `Missing` and retries next pass (the domain
-  rejects enrich-before-observed by design). `pollTelnyx` drains mid-pass
-  for exactly this reason; `ingest-telnyx` drains twice (ingest → drain →
-  enrich → drain). Second-order contract: enrichment is idempotent via
-  `Enrichment.Hash()` — an unchanged enrichment replays to zero events,
-  and already-final fields skip their fetch (cost set → no detail fetch;
-  summary set → no insights fetch), so re-polling a settled window costs
-  one lazy detail-list request, nothing per call.
-- **`CallView.Observation()` is the only sanctioned view→observation
-  rebuild**: `ViewFrom` is lossless, so the rebuild re-hashes to the view's
-  stored `ContentHash` (pinned by
-  `TestViewObservationRoundTripHashesIdentically`). The enrich pass uses
-  it to address `call.enrich` — never hand-copy view fields into an
-  Observation.
-- **`calls.MicrosPerUnit` is the single cost-unit constant**: the ingest
-  mapper and the web display must never re-declare it (a former
-  `web.microsPerUnit` duplicate was folded into the domain 2026-10-11).
+Invariants summary — read the full doc BEFORE touching its area:
 
-- **Retention deletion is tombstone-only (2026-10-11, D2)**: metaengine exposes NO public
-  direct record delete (`MapDelete` is unexported on the Store's engine) — the sanctioned
-  removal path is a registered remove fold: `metaengine.OnRecordTyped(EventRetired,
-  CallRetired{}, metaengine.Remove[CallView]())`. Pairing it with the create folds is safe
-  (the zero-prev hazard is an UPDATE-fold-only trap). `call.retired` tombstones keep the
-  stream append-only; re-polling a purged call is a ContentHash no-op, so views stay purged
-  (tested). A post-retirement CORRECTION would resurrect the view — convergence comes from
-  the periodic purge, not from stream surgery.
-- **The PATH `templ` can trail the module's templ (2026-10-11)**: the devShell pinned
-  v0.3.1020 while go.mod moved to v0.3.1070 and `templ generate` then failed on valid
-  syntax. Generate with the module version:
-  `GOEXPERIMENT=jsonv2 go run github.com/a-h/templ/cmd/templ@v0.3.1070 generate ./internal/web/`.
-- **`rg -r` means --replace (paid for, 2026-10-11)**: `rg -rn "pattern"` silently rewrote
-  every match in the OUTPUT to "n" and sent the diagnosis down a wrong path for a minute.
-  Use `rg -n` for line numbers.
-- **Read-only NixOS options reject mkIf-gated second definitions (paid for, 2026-10-11)**:
-  `services.telephony.state` in nix-international-telephony is read-only — contribute via
-  the central list in `modules/telephony/default.nix`, never by defining the option again
-  in a sibling module (even gated, the definition trips the read-only check).
-
-## cqrs-lint findings policy (0 errors; every surviving warning/info below is a documented decision)
-
-Run: `nix develop -c cqrs-lint .` (cqrs-lint ships in the flake devShell since
-2026-10-11 — no more /tmp binary; the `./...` pattern crashes the package
-loader — use `.`). Gate: ERROR severity fails; warnings/infos below are each a
-DECISION.
-
-- **C003 (ERROR, fixed)**: the fold is TOTAL — unknown event types on a
-  Call stream return `errorfamily.NewCorruption("call.fold.unknown_event")`
-  instead of silently ignoring (the original `if evt.Type() != X` shape was
-  the bug class the rule exists for). `decider.StrictApply` was considered
-  and REJECTED: it wraps with a family-less `fmt.Errorf`, losing the
-  Corruption classification this repo's error doctrine requires.
-- **C009 (fixed via `mustRegister`)**: the panic-in-production rule exempts
-  functions named `must*`/`Must*` with `len(name) > 4` — a helper literally
-  named `must` is NOT exempt. The composition root uses `mustRegister`.
-- **E005 (false positive)**: "RecordCallCmd has no registered handler" —
-  the handler IS registered, in `internal/app` via
-  `system.RegisterCommand` (ADR-0123 composition root); the lint analyzes
-  one package at a time and cannot see the wiring. Non-fix. Same class
-  covers the 2026-10-11 `EnrichCallCmd` warning.
-- **E014 (false positive, same package-blindness class)**: "uses
-  projectionhost but has no projection drain/sync/flush call" — the drain
-  lives in `internal/cli.DrainProjections` and EVERY dispatcher (one-shot
-  commands, serve startup, poller passes) calls it explicitly; the lint
-  sees `internal/calls` alone. Non-fix.
-- **P-class Close() ignored in `cli.OpenSystem` cleanup (deliberate)**:
-  one-shot CLI processes close the system at exit; a close error there has
-  no recovery path and the event log is already durable. The serve process
-  owns a stricter shutdown.
-- **E003 (flat domain, DECIDED 2026-10-11: HOLD, seam pre-agreed)**: `internal/calls`
-  mixes command/event/fold by design — the domain is one aggregate
-  (Observation) with one projection; a split today would be ceremony, not
-  boundary. Owner decision: keep flat. IF a second aggregate or an external
-  Go consumer ever lands, the pre-agreed seam is write/read:
-  `internal/calls` (aggregate: Observation, commands, events, CallState,
-  Apply) vs `internal/callviews` (CallView, ViewFrom, Projection());
-  ingest+cli depend on the write half, web+search on the read half, and
-  retention legitimately spans both (scan reads → dispatch writes).
-- **F007 (superseded by domain-level idempotency)**: the middleware rule
-  wants `middleware.CommandIdempotency` with a durable claim store. This
-  app's idempotency is STRONGER at the domain layer: ContentHash replay
-  emits zero events (tested), and handlers have no side effects beyond the
-  deduplicating append — a claim store would be redundant state. Non-fix;
-  revisit only if a handler grows an external side effect.
-- **F005 (expected at v1)**: schema version 1 has no historical payloads to
-  upcast. Adding an upcaster is mandatory work at v2, not now.
-- **C013 (deliberate)**: `CallView.StartedAt time.Time` — the view is
-  serialized as JSON (not CBOR epoch) and `ViewFrom` forces `.UTC()`, so no
-  timezone is lost in the sqlite round-trip.
-- **P006 (deliberate)**: the smoke command polls `reader.Get` with a 20 ms
-  sleep under a 5 s context deadline — a one-shot CLI convergence wait, no
-  hot path. `Watcher.Watch` is change-only (no current-value replay), so
-  switching would trade a bounded poll for a subscribe race.
-- **F009 (deliberate, poller)**: `internal/cli/poller.go` uses a hand-rolled
-  `time.NewTicker`; the scheduling module's durable TimerStore buys nothing
-  for a stateless re-ingest loop whose only failure mode is "poll again next
-  tick". Same class of one-shot/periodic CLI wait as P006.
-- **D014 (deliberate)**: `CallCorrected.Enrichment` carries no json tag
-  because the field is not persisted as a flat column; the whole event
-  payload is stored as the stream record. Adding a tag would be noise.
-- **F026 (deliberate at v1)**: the readers in `internal/cli/agent.go` scan
-  bounded result sets (transcripts, recent recordings); `WithPrefetch` only
-  pays off on large cursor pages. Revisit when a source grows past a few
-  hundred rows/pass.
-- **B004/B005 (informational)**: `cqrs-gen` constructors and
-  `decider.StrictApply` were both considered; StrictApply rejected above
-  (loses the Corruption family), and handwritten constructors stay because
-  the flat domain has only two commands.
-
-## Upstream filings (D6, 2026-10-11 — all source-verified, voice-checked, review boxes left UNCHECKED for Lars)
-
-- **go-cqrs-lite#62**: sqliteengine binds filter values raw (`filter_clause.go:44`,
-  `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,
-  Ge/Gt drop it, Eq never). In-repo fix stays: bind `rfc3339Nano` strings.
-- **go-cqrs-lite#63**: memory engine resolves filter/sort/cursor columns by Go FIELD name
-  (`typed_reader_scan.go:271` → `reflect.go:307`) vs sqlite's JSON keys.
-- **go-cqrs-lite#64**: cqrs-lint C009 `len(name) > 4` flags the bare `must` idiom;
-  E005 doesn't recognize `system.RegisterCommand` (ADR-0123 root API).
-- **go-nix-helpers#7**: go-standard's templ formatter inherits treefmt-nix's `pkgs.go`
-  wrap (`go-standard.nix:1297`) instead of the module's resolved goPkg (line 665).
-- **numtide/treefmt-nix#545**: already filed upstream 2026-10-02 — corroborating comment
-  posted with our independent repro (nixpkgs go 1.26.8 vs floor 1.27.1).
-- Drafts live in `docs/drafts/` (never /tmp); update these notes when upstream lands.
-
-## buildflow dev-gate residual findings policy (2026-10-11 full pass: gate PASSES with warnings)
-
-- **Run the gate INSIDE the devShell (PAID FOR, 2026-10-11)**: invoke
-  `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev`.
-  Run from a bare shell, buildflow resolves a go older than the 1.27.1 floor
-  and `go-generate`/`workspace-build-verify` fail with "requires go >= 1.27.1
-  (running go 1.27.0)". The devShell ships go 1.27.2 with GOTOOLCHAIN=local,
-  which satisfies the floor. A bare-shell failure is an environment artifact,
-  not a code defect.
-- **Gate under heavy machine load (PAID FOR, 2026-10-11)**: at load average
-  40-85 (unrelated llama-server/clickhouse jobs saturating the box), five
-  gate runs each lost DIFFERENT steps to "killed after Ns: no output at all"
-  (go-fix, test-race, nix-build, go-mod-tidy, golangci:detect) — starvation,
-  not code. Before believing a gate failure, verify the casualties
-  individually: `gofmt -l`, `go test -race ./...`, `nix build`,
-  `go mod tidy -diff`, `buildflow -s golangci-lint`. `vulnix` exits 1
-  persistently (buildflow-internal CVE scan, network/advisory-class; not in
-  the devShell — CI's govulncheck lane is the trusted one).
-- **`go mod tidy -diff` before CI (PAID FOR, 2026-10-11)**: dependency bumps
-  can leave removable go.sum entries that build fine but fail a CI
-  tidy-diff; tidy, then re-pin via `nix run .#update-vendor-hash` (the FOD
-  hash survived this trim unchanged — it covers the module tree, not go.sum).
-- **go-version-auto-configure (dep-forced, advisory by design)**: go.mod
-  carries `go 1.27.1` because go-appkit v0.8.0's module floor demands it —
-  `go mod tidy` reverts any major.minor downgrade. The checker's own
-  severity policy treats dep-forced patch floors as correct. If a stray
-  `go-mod-*` step ever rewrites the directive to `go 1.27`, restore it
-  (`git restore go.mod`); a 1.27 directive breaks `go list`.
-- **go-auto-upgrade encoding/json v1→v2 suggestions**: deliberate — the
-  boundary types (metaengine DTOs) are non-stdlib-owned; the v2 swap waits
-  for T4 per the stack decisions. samber/lo suggestions ignored (stdlib
-  - go-cqrs-lite + go-error-family only).
-- **go-structure-linter assets/ suggestion**: `internal/web/static/` is
-  deliberate (go:embed already scopes it; moving buys nothing).
-- **art-dupl (20) / branching-flow (51) / nix-checker (hash bookkeeping
-  infos)**: advisory reports; revisit only if a dedicated dedup/nix pass
-  is scheduled (see TODO_LIST).
-- **treefmt templ formatter go (PAID FOR, 2026-10-11)**: treefmt-nix's
-  templ program wraps `templ fmt` with nixpkgs' DEFAULT `pkgs.go`
-  (1.26.8 at this lock) — older than this repo's floor, so the sandboxed
-  pre-commit check tried a forbidden toolchain download and failed. Fixed
-  in flake.nix by force-overriding `settings.formatter.templ.command`
-  with a writeShellApplication carrying OUR `go`. Upstream fix belongs in
-  go-nix-helpers (templ formatter should resolve goPkg when enableTempl).
-- **golangci exclusions added (2026-10-11)**: contextcheck in internal/web
-  (templ-generated closures don't thread r.Context; framework false
-  positive), noctx in tests (httptest.NewRequest stdlib pattern), and the
-  godoclint "more than one godoc" templ-header false positive (fleet
-  precedent: samber-do-auditlog). `.golangci.yml` `run.go` must track
-  go.mod's floor — govalid reads it. Removed `tagliatelle.case.use-case`
-  (invalid for the installed golangci-lint schema; `golangci-lint-config-verify`
-  rejected it and the runner terminated with "configuration contains invalid
-  elements").
-
-- **license-check toolchain skew (environment, 2026-10-11)**: buildflow's
-  `license-check` step runs go-licenses in a sandbox whose `go` resolves to
-  1.27.0, so `go-appkit@v0.8.0`'s `go >= 1.27.1` floor hard-fails the step
-  ("requires go >= 1.27.1 (running go 1.27.0)"); direct `go-licenses` outside
-  the sandbox is clean. The installed buildflow binary (200ab99) is also
-  behind its repo HEAD (c7b44d8, feat/toolsdk-provider-switchover) — the fix
-  belongs upstream: rebuild/reinstall buildflow, re-run
-  `buildflow --build-mode dev`, and delete this note. Everything else in the
-  gate is green; `nix build`, `go test ./... -count=1`, `cqrs-lint` (0
-  errors), and `workspace-build-verify` in isolation all pass.
+- **docs/gotchas.md** — every paid-for war story: `StreamMarker:`-prefixed
+  projection keys, the projection host's one-shot drain contract,
+  full-recompute fold selection, FTS5 tokenization, retention
+  tombstone-only deletes, drain-before-enrich, view→observation rebuild.
+- **docs/telnyx-live-api.md** — live-verified API truths (field-as-param
+  filters, unstable timestamp precision, client-side recording
+  correlation, enrichment endpoint shapes); re-verify the cluster
+  quarterly.
+- **docs/cqrs-lint-policy.md** — every surviving cqrs-lint warning/info as
+  a documented decision (E003 flat-domain HOLD + pre-agreed seam).
+- **docs/buildflow-dev-gate.md** — gate environment traps (run inside the
+  devShell, load-starvation casualties) + advisory-findings rationale.
+- **docs/upstream-filings.md** — D6 filings (go-cqrs-lite#62/#63/#64,
+  go-nix-helpers#7, treefmt-nix#545) and their upstream state.
