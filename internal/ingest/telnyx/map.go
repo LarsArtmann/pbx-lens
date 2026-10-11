@@ -8,7 +8,9 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-const DefaultExcerptMax = 200
+// DefaultExcerptMax is the domain's excerpt ceiling; the alias keeps the
+// mapper's public option surface speaking its own name.
+const DefaultExcerptMax = calls.DefaultExcerptMax
 
 type MapOptions struct {
 	Direction  calls.Direction

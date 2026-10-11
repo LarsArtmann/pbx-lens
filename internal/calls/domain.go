@@ -28,6 +28,13 @@ const (
 
 const StreamType = "Call"
 
+// DefaultExcerptMax is the transcript-excerpt ceiling in runes that every
+// source mapper applies: the excerpt renders in one list-table cell, so no
+// source may ship an uncapped opening line into the read model. The bound
+// lives in the domain because TranscriptExcerpt is a domain field — mappers
+// must never disagree on its shape.
+const DefaultExcerptMax = 200
+
 type SourceKind string
 
 const (
