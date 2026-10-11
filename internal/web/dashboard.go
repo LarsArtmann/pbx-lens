@@ -58,7 +58,7 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 	windowStart := now.UTC().Truncate(24*time.Hour).AddDate(0, 0, -(dashboardWindowDays - 1))
 	dayIndex := make(map[string]int, dashboardWindowDays)
 
-	for offset := 0; offset < dashboardWindowDays; offset++ {
+	for offset := range dashboardWindowDays {
 		day := windowStart.AddDate(0, 0, offset).Format("2006-01-02")
 		dayIndex[day] = len(stats.ByDay)
 		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})

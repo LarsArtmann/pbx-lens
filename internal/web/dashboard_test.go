@@ -97,7 +97,13 @@ func TestDashboardStatsQueryWindowMath(t *testing.T) {
 	aiCallC.IsAI = true
 	humanCall := webObservation("conv-old", time.Date(2026, 8, 1, 12, 0, 0, 0, time.UTC))
 
-	if stats := cli.Ingest(ctx, sys, []calls.Observation{aiCall, aiCallB, aiCallC, humanCall}); len(stats.Rejected) > 0 {
+	if stats := cli.Ingest(
+		ctx,
+		sys,
+		[]calls.Observation{aiCall, aiCallB, aiCallC, humanCall},
+	); len(
+		stats.Rejected,
+	) > 0 {
 		t.Fatalf("ingest rejected: %v", stats.Rejected)
 	}
 
