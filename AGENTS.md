@@ -190,6 +190,26 @@ nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.su
   ingest-telnyx lists recent recordings and matches in-process
   (`RecordingByCallControl`) — the recordings list filter's supported keys
   are undocumented, so no server-side filter is trusted.
+- **metaengine time-typed filter values miscompare on sqlite (2026-10-11,
+  paid for by the ?to= wart test)**: sqliteengine binds the raw `time.Time`
+  as a SQL parameter; modernc renders it `2006-01-02 15:04:05 -0700 MST`
+  while the stored JSON holds RFC3339 (`T` separator). Lexicographic compare
+  then silently corrupts same-day bounds: `Le/Lt` leak the day, `Ge/Gt`
+  drop it, `Eq` never matches. Fix in-repo: bind
+  `t.UTC().Format(time.RFC3339Nano)` strings (`web.rfc3339Nano`) — the exact
+  stored wire format, correct for eq/le/ge/lt and robust regardless of any
+  future upstream fix. Upstream sqliteengine issue pending (D6).
+- **The memory engine resolves filter columns by Go field name, not JSON
+  tag (2026-10-11)**: its closure fallback EqualFolds
+  `extractValueByName(item, col)` against struct FIELD names, so
+  `WithFilter("started_at", ...)` reads nil → Le/Lt match EVERYTHING, Ge
+  matches nothing (constant compare vs nil). sqlite's `json_extract` uses
+  JSON tags and is correct. Consequence: every web-layer test uses a real
+  temp sqlite file (`newTestServerWith`), never the memory engine — filter
+  semantics must match production. Upstream divergence issue pending (D6).
+- **FTS5 tokenizes `+17287289311` as one token** (unicode61; `+` is not a
+  token char): substring queries like `87289311` find nothing — search the
+  full number or a word from the transcript.
 
 ## cqrs-lint findings policy (0 errors; every surviving warning/info below is a documented decision)
 

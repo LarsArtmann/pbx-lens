@@ -71,16 +71,21 @@ func ListCalls(ctx context.Context, sys *system.System, q ListCallsQuery) (CallL
 		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *q.AI))
 	}
 
+	// Time bounds bind as RFC3339Nano strings — the exact wire format the
+	// view's JSON is stored in. Binding time.Time directly miscompares on
+	// sqlite (the driver renders it "2006-01-02 15:04:05 -0700 MST", and the
+	// 'T' vs ' ' format difference silently corrupts same-day comparisons).
+	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
 	if !q.From.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, q.From.UTC()))
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, rfc3339Nano(q.From)))
 	}
 
 	if !q.To.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, q.To.UTC()))
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(q.To)))
 	}
 
 	if !q.Before.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, q.Before.UTC()))
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(q.Before)))
 	}
 
 	views, err := reader.Scan(ctx, opts...)
@@ -111,6 +116,12 @@ func ListCalls(ctx context.Context, sys *system.System, q ListCallsQuery) (CallL
 	}
 
 	return page, nil
+}
+
+// rfc3339Nano renders a query bound in the read model's stored timestamp
+// format (see ListCalls).
+func rfc3339Nano(t time.Time) string {
+	return t.UTC().Format(time.RFC3339Nano)
 }
 
 // CallDetail looks one call up by its stream identity parts.
