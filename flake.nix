@@ -9,16 +9,29 @@
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
 
+    # go-standard (flakeModules.go-standard) composes treefmt-nix + systems
+    # internally — this repo does not declare them as direct inputs.
     go-nix-helpers = {
       url = "github:LarsArtmann/go-nix-helpers";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
   outputs =
-    inputs@{ flake-parts, ... }:
+    inputs@{
+      flake-parts,
+      ...
+    }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [ inputs.go-nix-helpers.flakeModules.go-standard ];
+      imports = [
+        inputs.go-nix-helpers.flakeModules.go-standard
+        inputs.git-hooks.flakeModule
+      ];
 
       go-standard = {
         pname = "pbx-lens";
@@ -26,11 +39,102 @@
         goPkgAttr = "go_1_27";
         goExperiment = "jsonv2";
         vendorHash = import ./vendorHash.nix;
+        # The binary lives in cmd/pbx-lens. The module default builds the
+        # root directory, which holds no Go package — the build then
+        # "succeeds" with an empty result and no bin/pbx-lens.
+        subPackages = [ "./cmd/pbx-lens" ];
+        # BuildFlow owns Go formatting in this repo (oxfmt); treefmt Go
+        # formatters would be a second source of truth. Nix files stay with
+        # treefmt (go-output's pattern: nixfmt + deadnix + statix only).
+        enableGofumpt = false;
+        enableGoimports = false;
+        enableNixfmt = true;
         extraMeta = {
           homepage = "https://github.com/larsartmann/pbx-lens";
           mainProgram = "pbx-lens";
           platforms = inputs.nixpkgs.lib.platforms.unix;
         };
       };
+
+      perSystem =
+        {
+          config,
+          pkgs,
+          ...
+        }:
+        let
+          inherit (pkgs) lib;
+          go = pkgs.go_1_27;
+        in
+        {
+          treefmt = {
+            projectRootFile = "go.mod";
+            programs = {
+              deadnix.enable = true;
+              statix.enable = true;
+            };
+          };
+
+          pre-commit.settings = {
+            hooks = {
+              treefmt.enable = true;
+            };
+          };
+
+          # mkForce composes with the pre-commit hook installation (the
+          # module's default shell has no shellHook).
+          devShells.default = lib.mkForce (
+            pkgs.mkShellNoCC {
+              name = "pbx-lens";
+
+              packages = builtins.attrValues {
+                inherit go;
+                inherit (pkgs) golangci-lint gopls govulncheck;
+              };
+
+              GOWORK = "off";
+              GOTOOLCHAIN = "local";
+              GOEXPERIMENT = "jsonv2";
+
+              shellHook = config.pre-commit.shellHook;
+            }
+          );
+
+          apps.update-vendor-hash = {
+            type = "app";
+            program = pkgs.lib.getExe (
+              pkgs.writeShellApplication {
+                name = "update-vendor-hash";
+                runtimeInputs = with pkgs; [
+                  nix
+                  git
+                  gnused
+                ];
+                text = ''
+                  set -euo pipefail
+                  root="$(git rev-parse --show-toplevel)"
+                  hash_file="$root/vendorHash.nix"
+                  cp "$hash_file" "$hash_file.bak"
+                  restore() { mv "$hash_file.bak" "$hash_file"; }
+                  trap restore ERR
+                  fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+                  printf '"%s"\n' "$fake" > "$hash_file"
+                  out="$(nix build "$root#default" --no-link 2>&1 || true)"
+                  got="$(printf '%s' "$out" | grep -oP 'got:\s+\Ksha256-[A-Za-z0-9+/=]+' | head -1 || true)"
+                  if [ -z "$got" ]; then
+                    echo "ERROR: expected a vendorHash mismatch but none surfaced. Build output:" >&2
+                    printf '%s\n' "$out" >&2
+                    exit 1
+                  fi
+                  printf '"%s"\n' "$got" > "$hash_file"
+                  nix build "$root#default" --no-link
+                  rm -f "$hash_file.bak"
+                  trap - ERR
+                  echo "vendorHash.nix updated to $got and verified with a green build."
+                '';
+              }
+            );
+          };
+        };
     };
 }
