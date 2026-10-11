@@ -68,7 +68,7 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	staleFor, stale := s.staleness(r.Context())
+	staleFor, stale := staleness(filters, page)
 
 	render(w, r, listRoute(page, filters, staleFor, stale))
 }
@@ -107,12 +107,18 @@ func parseFilters(r *http.Request) (ListCallsQuery, error) {
 			continue
 		}
 
-		parsed, err := parseDateParam(v)
+		parsed, dateOnly, err := parseDateParam(v)
 		if err != nil {
 			return ListCallsQuery{}, errorfamily.NewRejection(
 				"lens.web.bad_date",
-				field.name+" must be YYYY-MM-DD or RFC3339, got "+strconv.Quote(v),
+					field.name+" must be YYYY-MM-DD or RFC3339, got "+strconv.Quote(v),
 			)
+		}
+
+		// A bare date on the upper bound means the whole day, not its
+		// midnight — otherwise ?to= excludes the day it names.
+		if field.name == "to" && dateOnly {
+			parsed = parsed.AddDate(0, 0, 1).Add(-time.Second)
 		}
 
 		*field.target = parsed
@@ -141,20 +147,25 @@ func parseAIFilter(v string, query *ListCallsQuery) error {
 	return nil
 }
 
-func parseDateParam(v string) (time.Time, error) {
+// parseDateParam accepts a bare YYYY-MM-DD (flagged dateOnly, so callers
+// can widen the bound to the whole day) or an RFC3339 timestamp.
+func parseDateParam(v string) (time.Time, bool, error) {
 	if t, err := time.Parse("2006-01-02", v); err == nil {
-		return t, nil
+		return t, true, nil
 	}
 
-	return time.Parse(time.RFC3339, v)
+	t, err := time.Parse(time.RFC3339, v)
+
+	return t, false, err
 }
 
 // staleness reports the age of the newest indexed call and whether it
-// crosses the staleness threshold. An unreadable or empty index is never
-// reported stale (the empty state already explains itself).
-func (s *server) staleness(ctx context.Context) (time.Duration, bool) {
-	page, err := ListCalls(ctx, s.sys, ListCallsQuery{})
-	if err != nil || len(page.Rows) == 0 {
+// crosses the threshold. It rides ONLY the unfiltered first page, where
+// "newest" is what the page itself already shows — no second scan, and a
+// filtered view (a deliberate slice) never carries a global-freshness
+// warning. An empty index is never stale (the empty state explains itself).
+func staleness(filters ListCallsQuery, page CallListPage) (time.Duration, bool) {
+	if filters != (ListCallsQuery{}) || len(page.Rows) == 0 {
 		return 0, false
 	}
 

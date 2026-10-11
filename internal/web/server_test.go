@@ -161,3 +161,56 @@ func TestStylesUnbuiltReturns404(t *testing.T) {
 		t.Fatalf("GET /app.css status = %d, want 404 (body: %s)", status, body)
 	}
 }
+
+func TestListToDateIncludesThatDay(t *testing.T) {
+	// The observation starts 22:30 on the 9th; a bare ?to=2026-10-09 must
+	// cover the whole day, not just its midnight (the old start-of-day read
+	// silently excluded the day the parameter names).
+	lateEvening := time.Date(2026, 10, 9, 22, 30, 0, 0, time.UTC)
+	mux := newTestServer(t,
+		webObservation("conv-morning", time.Date(2026, 10, 9, 8, 0, 0, 0, time.UTC)),
+		webObservation("conv-evening", lateEvening),
+	)
+
+	status, body := getBody(t, mux, "/?to=2026-10-09")
+	if status != http.StatusOK {
+		t.Fatalf("GET /?to=2026-10-09 status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "conv-evening") {
+		t.Error("?to=<date> should include calls later that same day")
+	}
+
+	status, body = getBody(t, mux, "/?to=2026-10-08")
+	if status != http.StatusOK {
+		t.Fatalf("GET /?to=2026-10-08 status = %d, want 200", status)
+	}
+
+	if strings.Contains(body, "conv-morning") {
+		t.Error("?to= before the calls should exclude them")
+	}
+}
+
+func TestStalenessBannerOnlyOnUnfilteredPage(t *testing.T) {
+	// 2026-10-09 is far past the 6h threshold; the banner belongs on the
+	// unfiltered first page, never on a deliberate filtered slice.
+	mux := newTestServer(t, webObservation("conv-old", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)))
+
+	status, body := getBody(t, mux, "/")
+	if status != http.StatusOK {
+		t.Fatalf("GET / status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "Index may be stale") {
+		t.Error("unfiltered page should carry the staleness banner")
+	}
+
+	status, body = getBody(t, mux, "/?direction=outbound")
+	if status != http.StatusOK {
+		t.Fatalf("GET filtered status = %d, want 200", status)
+	}
+
+	if strings.Contains(body, "Index may be stale") {
+		t.Error("filtered page should not carry the staleness banner")
+	}
+}
