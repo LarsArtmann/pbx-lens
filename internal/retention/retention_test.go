@@ -72,6 +72,7 @@ func TestRetireTombstonesOnlyOverAgeViews(t *testing.T) {
 	}
 
 	policy := retention.Policy{MaxAge: 7 * 24 * time.Hour}
+
 	report, err := retention.Retire(ctx, sys, policy, now)
 	if err != nil {
 		t.Fatalf("Retire: %v", err)

@@ -589,7 +589,11 @@ func fatal(err error) {
 func purgeCmd(args []string) {
 	fs := flag.NewFlagSet("purge", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
-	maxAge := fs.String("max-age", "", "retention window: Go duration (e.g. 2160h = 90 days); calls observed before now-minus-window are retired (required)")
+	maxAge := fs.String(
+		"max-age",
+		"",
+		"retention window: Go duration (e.g. 2160h = 90 days); calls observed before now-minus-window are retired (required)",
+	)
 	dryRun := fs.Bool("dry-run", false, "list what would be retired without changing anything")
 	_ = fs.Parse(args)
 

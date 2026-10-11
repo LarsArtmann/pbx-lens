@@ -89,7 +89,11 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 	default:
 		http.Error(
 			w,
-			fmt.Sprintf("unknown pii mode %q: the only supported mode is pii=%s", r.URL.Query().Get("pii"), piiModeHash),
+			fmt.Sprintf(
+				"unknown pii mode %q: the only supported mode is pii=%s",
+				r.URL.Query().Get("pii"),
+				piiModeHash,
+			),
 			http.StatusBadRequest,
 		)
 
