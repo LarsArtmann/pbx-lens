@@ -166,7 +166,12 @@
 
           apps.update-vendor-hash = {
             type = "app";
-            program = pkgs.lib.getExe (
+            # nix flake check warns about apps without meta.description on
+            # every gate run — the module-generated apps carry one, so the
+            # hand-written app must too.
+            meta.description =
+              "Repair vendorHash.nix after a go.mod/go.sum change: probe the fixed-output derivation hash with a fake value, write the real one, and verify with a green build";
+            program = lib.getExe (
               pkgs.writeShellApplication {
                 name = "update-vendor-hash";
                 runtimeInputs = with pkgs; [
