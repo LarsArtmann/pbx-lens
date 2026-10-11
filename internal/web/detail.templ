@@ -1,0 +1,144 @@
+package web
+
+import (
+	"time"
+
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/navigation"
+	"github.com/larsartmann/pbx-lens/internal/calls"
+)
+
+// listRoute is the full list page: shell + optional staleness banner + the
+// calls table.
+templ listRoute(page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
+	@shell("Calls — pbx-lens", "/") {
+		if stale {
+			@staleBanner(staleFor)
+		}
+		@listPage(page, filters)
+	}
+}
+
+// detailRoute is the per-call page: metadata, transcript, recording player.
+// Everything is read from the one CallView snapshot.
+templ detailRoute(view calls.CallView) {
+	@shell(callTitle(view), view.Href()) {
+		@display.PageHeader(display.PageHeaderProps{
+			Title:    callTitle(view),
+			Subtitle: "source: " + string(view.Kind),
+		})
+		@display.Split(display.SplitProps{}) {
+			<div>
+				@detailFacts(view)
+				if len(view.Transcript) > 0 {
+					<div class="mt-6">
+						@transcriptPane(view.Transcript)
+					</div>
+				} else {
+					<div class="mt-6">
+						@display.EmptyState(display.EmptyStateProps{
+							Title:       "No transcript",
+							Description: "This source recorded no transcript (human calls, or the transcript file is not ingested yet).",
+						})
+					</div>
+				}
+			</div>
+			<aside>
+				@recordingCard(view)
+			</aside>
+		</div>
+	}
+}
+
+templ detailFacts(view calls.CallView) {
+	@display.Card(display.CardProps{Title: "Call facts"}) {
+		@display.DefinitionList(display.DefinitionListProps{}) {
+			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">From</dt>
+			<dd class="font-mono text-sm">{ stringOrDash(view.FromNumber) }</dd>
+			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">To</dt>
+			<dd class="font-mono text-sm">{ stringOrDash(view.ToNumber) }</dd>
+			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Started</dt>
+			<dd class="text-sm"><time datetime={ view.StartedAt.Format(time.RFC3339) }>{ view.StartedAt.Local().Format("Jan 2, 2006 15:04:05") }</time></dd>
+			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Duration</dt>
+			<dd class="text-sm tabular-nums">{ clockDuration(time.Duration(view.DurationSecs) * time.Second) }</dd>
+			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Direction</dt>
+			<dd class="text-sm">{ string(view.Direction) }</dd>
+			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Who</dt>
+			<dd class="text-sm">{ whoText(view.IsAI) }</dd>
+			<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Hangup cause</dt>
+			<dd class="text-sm">{ stringOrDash(view.HangupCause) }</dd>
+			if view.CostMicros != 0 {
+				<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">Cost</dt>
+				<dd class="text-sm tabular-nums">{ costText(view.CostMicros, view.CostCurrency) }</dd>
+			}
+			if view.InsightSummary != "" {
+				<dt class="text-sm font-medium text-gray-700 dark:text-gray-300">AI insight</dt>
+				<dd class="text-sm">{ view.InsightSummary }</dd>
+			}
+		}
+	}
+}
+
+// transcriptPane renders the role-split transcript in call order.
+templ transcriptPane(turns []calls.TranscriptTurn) {
+	@display.Card(display.CardProps{Title: "Transcript"}) {
+		<div class="space-y-3">
+			for _, turn := range turns {
+				<div class={
+					templ.KV("rounded-lg px-4 py-2 text-sm", turn.Role == "user"),
+					"bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100",
+				}>
+					<span class="mr-2 font-semibold uppercase tracking-wide text-xs text-blue-600 dark:text-blue-400">{ turn.Role }</span>
+					{ turn.Text }
+				</div>
+			}
+		</div>
+	}
+}
+
+// recordingCard offers playback. The audio src is the proxy route — the
+// Telnyx signed URL never reaches the browser; local recordings stream from
+// the same route when the file exists on disk.
+templ recordingCard(view calls.CallView) {
+	@display.Card(display.CardProps{Title: "Recording"}) {
+		if view.RecordingRef == "" {
+			<p class="text-sm text-gray-600 dark:text-gray-400">No recording reference indexed for this call.</p>
+		} else {
+			<audio controls preload="none" class="w-full" src={ recordingHref(view) }></audio>
+			<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Streams server-side; the source URL never reaches the browser.</p>
+		}
+	}
+}
+
+templ notFoundPage(message string) {
+	@shell("Not found — pbx-lens", "") {
+		@display.EmptyState(display.EmptyStateProps{
+			Title:       "Not found",
+			Description: message,
+		})
+		<div class="mt-4">
+			@display.Button(display.ButtonProps{Text: "Back to calls", Href: "/"})
+		</div>
+	}
+}
+
+func callTitle(view calls.CallView) string {
+	return "Call " + string(view.NativeID)
+}
+
+func whoText(isAI bool) string {
+	if isAI {
+		return "AI"
+	}
+
+	return "Human"
+}
+
+func costText(micros int64, currency string) string {
+	units := float64(micros) / 1_000_000
+	return trimZero(units) + " " + stringOrDash(currency)
+}
+
+func recordingHref(view calls.CallView) string {
+	return "/calls/" + string(view.Kind) + "/" + string(view.NativeID) + "/recording"
+}
