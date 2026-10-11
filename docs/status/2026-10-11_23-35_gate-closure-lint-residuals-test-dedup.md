@@ -8,6 +8,11 @@
 
 # Status — Gate Closure, Lint Residuals, Test-Wiring Dedup
 
+> **SUPERSEDED 2026-10-12 00:08** (§b and §f #1): a second full-gate attempt at 23:59
+> starved earlier (go-mod-update kill under load, auto-reverted cleanly); the
+> current state lives in docs/status/2026-10-12_00-08_session-status-gate-
+> closure-and-lint-dedup.md. Sections a/c/d/e remain accurate.
+
 Date: 2026-10-11 23:35 CEST · Baseline: dispatch-three's 129 test functions
 green; top task was the full-gate rerun.
 
