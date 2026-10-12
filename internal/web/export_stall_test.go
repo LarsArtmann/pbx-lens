@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -50,5 +51,61 @@ func TestExportStallEndsWithVisibleMarker(t *testing.T) {
 
 	if !strings.Contains(body, `"export_incomplete":"`+exportIncompleteCode+`"`) {
 		t.Errorf("stalled jsonl export must end with the marker object, got:\n%s", body)
+	}
+}
+
+// TestExportMemoryBudgetStreamsPastOldCap pins the R7 budget (plan T10.2):
+// the stream walks the keyset page by page and must deliver EVERY matching
+// row in started_at order — no maxRows cap may reappear, and the walk does
+// not stop at the first page. The shrunken batch makes this a multi-page
+// walk over a tiny corpus deterministically.
+func TestExportMemoryBudgetStreamsPastOldCap(t *testing.T) {
+	saved := exportBatchSize
+	exportBatchSize = 2
+
+	t.Cleanup(func() { exportBatchSize = saved })
+
+	base := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
+
+	var seeded []calls.Observation
+
+	for i := range 5 {
+		seeded = append(seeded, webObservation(fmt.Sprintf("row-%d", i), base.Add(time.Duration(i)*time.Minute)))
+	}
+
+	mux := newTestServer(t, seeded...)
+
+	status, body := getBody(t, mux, "/api/export.csv")
+	if status != http.StatusOK {
+		t.Fatalf("csv export status = %d, want 200", status)
+	}
+
+	for i := range 5 {
+		if !strings.Contains(body, fmt.Sprintf("row-%d", i)) {
+			t.Errorf("row-%d missing from the stream (cap or page-walk bug)", i)
+		}
+	}
+
+	if strings.Contains(body, exportIncompleteCode) {
+		t.Error("distinct timestamps must never stall the cursor")
+	}
+
+	if got := strings.Count(body, "\n"); got != 6 { // header + 5 rows
+		t.Errorf("csv line count = %d, want 6 (header + every row)", got)
+	}
+}
+
+// TestExportHonestyNoteVisibleOnListPage pins the operator-facing surface
+// (plan T10.3): the stall semantics render as visible text under the table
+// (the button tooltip hides), naming the marker code and the stall class.
+func TestExportHonestyNoteVisibleOnListPage(t *testing.T) {
+	mux := newTestServer(t, webObservation("conv-out", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)))
+
+	_, body := getBody(t, mux, "/")
+
+	for _, want := range []string{"EXPORT_INCOMPLETE", "lens.web.export_cursor_stalled", "no row cap"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("export honesty note missing %q on the list page", want)
+		}
 	}
 }
