@@ -114,6 +114,14 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 
 		cr := csv.NewReader(strings.NewReader(line))
 		cr.FieldsPerRecord = -1
+		// Vanilla mod_cdr_csv writes a bare quote in the compiled-in
+		// default template's tail (", \"\" — a comma-space before the
+		// final empty fields) on every call; Go's strict CSV rejects it
+		// ("bare \" in non-quoted-field", proven live by the
+		// nix-international-telephony telephony-lens VM suite
+		// 2026-10-12). LazyQuotes accepts the stray quote; normalize
+		// below already strips the residue from the field values.
+		cr.LazyQuotes = true
 
 		row, err := cr.Read()
 		if err != nil {

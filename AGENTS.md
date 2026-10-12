@@ -31,7 +31,10 @@ webphone later gets a read-only deep link, never a data dependency.
   `go test ./...` passes without the env var); it becomes load-bearing when a
   surface needs it.
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
-  (below). No testify (banned; stdlib table-driven tests), no cobra, no ORM.
+  (below) + `templ-components/htmx` v1.21.0 (direct since R9 2026-10-12 —
+  it was ALREADY in the module graph as templ-components' submodule rider;
+  promoting it added no new module, same precedent as `x/crypto`).
+  No testify (banned; stdlib table-driven tests), no cobra, no ORM.
   `golang.org/x/crypto` v0.57.0 (bcrypt only) is direct since D1: it was
   ALREADY in the module graph via projectionhost/watermill — promoting it
   added no new module; htpasswd without bcrypt is not worth hand-rolling.
@@ -118,18 +121,25 @@ webphone later gets a read-only deep link, never a data dependency.
   first turn) and every source mapper goes through it (telnyx passes its
   configurable cap, agent passes the default). The serve htpasswd timing pad hashes at the
   LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
-  when touching auth.go.
+  when touching auth.go; SIGHUP reloads the file (a broken reload keeps the
+  running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
+  FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
+  deliberately not honored).
 - **serve/UI:** `serve` composes appkit (`ServiceConfig{Addr}` +
   `systemd.Install` — a no-op without `NOTIFY_SOCKET`, READY/STOPPING/WATCHDOG
   under the manager) around `web.Register`; every UI route is a query or a
   proxy, never a write. The recording proxy's two upstream hops are bounded
   by `web.DefaultUpstreamTimeout` (30 s; `serve -recording-timeout`):
   metadata fetch deadline + WAV response headers, body streams unbounded.
-  The dashboard aggregates via the same bounded full
-  scan the export uses (`maxExportRows` cap); its day window always ends
-  "today" UTC so an idle index drifts out of the chart. The systemd draft lives in
-  `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential for the
-  Telnyx key + htpasswd); the NixOS module LANDED in
+  Exports and the dashboard STREAM via keyset pagination
+  (`StreamExportCalls`, 5k-row pages, memory-bounded, no row cap); the
+  dashboard's day buckets resolve in Europe/Berlin (owner R2 2026-10-12 —
+  bare date filters too), an idle index drifts out of the chart. htmx
+  polling (R9): `/frag/dashboard` 30 s, `/frag/staleness` 60 s, runtime
+  self-hosted at `/static/htmx.min.js` — no CDN. `/api/ops` (R15) serves
+  the poller's per-source counters behind the same auth. The systemd draft
+  lives in `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential
+  for the Telnyx key + htpasswd); the NixOS module LANDED in
   nix-international-telephony 2026-10-11 (`modules/telephony/lens.nix`,
   `services.telephony.pbx-lens.*` with backup + purge timers;
   `deploy/nixos/module-draft.nix` is a superseded design record).
@@ -155,6 +165,11 @@ webphone later gets a read-only deep link, never a data dependency.
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
 buildflow --build-mode dev            # the quality gate (lint+format+test)
+                                      # LOAD DOCTRINE (m27.9): run the FULL gate
+                                      # only when the 15-min load average is < 40
+                                      # (`cat /proc/loadavg` third field); above
+                                      # that, verify casualties individually
+                                      # (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens (fixed 2026-10-11)
 nix run . -- version                  # run the built binary
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
@@ -185,7 +200,8 @@ Invariants summary — read the full doc BEFORE touching its area:
 - **docs/telnyx-live-api.md** — live-verified API truths (field-as-param
   filters, unstable timestamp precision, client-side recording
   correlation, enrichment endpoint shapes); re-verify the cluster
-  quarterly.
+  quarterly (last live verify blocked on a key 2026-10-12; next attempt
+  window opens 2027-01 — calendar entry, m27.9).
 - **docs/cqrs-lint-policy.md** — every surviving cqrs-lint warning/info as
   a documented decision (E003 flat-domain HOLD + pre-agreed seam).
 - **docs/buildflow-dev-gate.md** — gate environment traps (run inside the

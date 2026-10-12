@@ -77,6 +77,33 @@ func TestParseFallbackTemplateWithQuirks(t *testing.T) {
 	}
 }
 
+// fixture13BareQuote is the shape vanilla mod_cdr_csv actually writes
+// on every call: the compiled-in default template's tail carries
+// `,"", ""` — a comma-space before the final empty fields, i.e. a bare
+// quote in a non-quoted field. Strict CSV rejects the line outright
+// (the telephony-lens VM suite caught this live, 2026-10-12).
+const fixture13BareQuote = `"","0000000000","2000","default","2026-10-12 04:56:29","","2026-10-12 04:56:29","0","0","NORMAL_CLEARING","88b26a7e-e923-439b-b92e-c48418cb4d03","", ""
+"","0000000000","2000","default","2026-10-12 04:56:29","","2026-10-12 04:56:29","0","0","NORMAL_CLEARING","639677df-0787-48db-81f2-27adf6587eff","", ""
+`
+
+func TestParseVanillaBareQuoteTail(t *testing.T) {
+	res, err := Parse(strings.NewReader(fixture13BareQuote))
+	if err != nil {
+		t.Fatalf("vanilla Master.csv tail must parse: %v", err)
+	}
+	if len(res.Observations) != 2 || res.Skipped != 0 {
+		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
+	}
+	for _, in := range res.Observations {
+		if in.ToNumber != "2000" || in.HangupCause != "NORMAL_CLEARING" {
+			t.Fatalf("row wrong: %+v", in)
+		}
+		if in.FromNumber != "0000000000" {
+			t.Fatalf("bare-quote residue leaked into participants: %+v", in)
+		}
+	}
+}
+
 func TestParseSkipsMalformedRows(t *testing.T) {
 	input := "not,enough,fields\n" + fixture13 + `"2026-13-99 99:99:99",x`
 
