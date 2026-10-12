@@ -92,7 +92,9 @@ function buildAndServe() {
           // still owns the port — captures would silently hit a stale
           // binary + CSS, so fail loudly instead.
           if (serve.exitCode !== null) {
-            return reject(new Error(`port ${PORT} already in use (stale serve?); kill it or pass --port`));
+            return reject(
+              new Error(`port ${PORT} already in use (stale serve?); kill it or pass --port`),
+            );
           }
           return resolve(serve);
         })

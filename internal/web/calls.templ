@@ -82,19 +82,19 @@ templ pagerRow(filters ListCallsQuery, page CallListPage) {
 	<nav aria-label="Pagination" class="mt-4 flex items-center justify-between">
 		<div>
 			@display.Button(display.ButtonProps{
-				Text:    "Newer calls",
-				Href:    listNewerHref(filters, page.NextNewer),
-				Variant: display.ButtonSecondary,
-				Icon:    icons.Icon("chevron-left", "size-4"),
+				Text:     "Newer calls",
+				Href:     listNewerHref(filters, page.NextNewer),
+				Variant:  display.ButtonSecondary,
+				Icon:     icons.Icon("chevron-left", "size-4"),
 				Disabled: page.NextNewer == "",
 			})
 		</div>
 		<div>
 			@display.Button(display.ButtonProps{
-				Text:    "Older calls",
-				Href:    listHref(filters, page.NextOlder),
-				Variant: display.ButtonSecondary,
-				Icon:    icons.Icon("chevron-right", "size-4"),
+				Text:     "Older calls",
+				Href:     listHref(filters, page.NextOlder),
+				Variant:  display.ButtonSecondary,
+				Icon:     icons.Icon("chevron-right", "size-4"),
 				Disabled: page.NextOlder == "",
 			})
 		</div>

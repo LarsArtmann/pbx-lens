@@ -32,8 +32,8 @@ casualties repaired on sight.
    the signal palette), `GET /favicon.svg` handler serving `image/svg+xml` +
    `Cache-Control: no-cache` (internal/web/server.go:80, serveFavicon ~411),
    wired into the ETag skip-policy table (`caching_test.go`: `false` = body
-     caching allowed, static asset). Self-hosted, no CDN — same doctrine as
-     the htmx runtime.
+   caching allowed, static asset). Self-hosted, no CDN — same doctrine as
+   the htmx runtime.
 3. **Stylesheet regenerated with the correct, flake-pinned binary.**
    `nix develop -c tailwindcss -i internal/web/static/app.css -o
    internal/web/static/styles.css --minify` (tailwindcss v4.3.3, the same

@@ -103,19 +103,19 @@
  * Give keyboard users the standard focus ring, inset so it hugs the row.
  */
 tr[role="link"]:focus-visible {
-	outline: 2px solid var(--color-tc-primary);
-	outline-offset: -2px;
+  outline: 2px solid var(--color-tc-primary);
+  outline-offset: -2px;
 }
 
 @media print {
-	nav,
-	footer,
-	button {
-		display: none !important;
-	}
+  nav,
+  footer,
+  button {
+    display: none !important;
+  }
 
-	main {
-		max-width: none;
-		padding: 0;
-	}
+  main {
+    max-width: none;
+    padding: 0;
+  }
 }
