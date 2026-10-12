@@ -7,6 +7,8 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/htmx"
+	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/templ-components/layout"
 )
 
 // listRoute is the full list page: shell + optional staleness banner + the
@@ -37,11 +39,15 @@ templ staleLive(staleFor time.Duration, stale bool) {
 templ detailRoute(view calls.CallView) {
 	@shell(callTitle(view), "/") {
 		@display.PageHeader(display.PageHeaderProps{
-			Title:    callTitle(view),
-			Subtitle: "source: " + string(view.Kind),
+			Title: callTitle(view),
+			SubtitleComponent: @display.Badge(display.BadgeProps{
+				Text: string(view.Kind),
+				Type: display.BadgeNeutral,
+				Pill: true,
+			}),
 		})
-		<div class="grid items-start gap-6 lg:grid-cols-3">
-			<div class="space-y-6 lg:col-span-2">
+		@layout.Split(layout.SplitProps{
+			Main: @layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 				@detailFacts(view)
 				if len(view.Transcript) > 0 {
 					@transcriptPane(view.Transcript)
@@ -49,13 +55,12 @@ templ detailRoute(view calls.CallView) {
 					@display.EmptyState(display.EmptyStateProps{
 						Title:       "No transcript",
 						Description: "This source recorded no transcript (human calls, or the transcript file is not ingested yet).",
+						Icon:        icons.Microphone,
 					})
 				}
-			</div>
-			<aside>
-				@recordingCard(view)
-			</aside>
-		</div>
+			},
+			Aside: @recordingCard(view),
+		})
 	}
 }
 
@@ -93,23 +98,38 @@ func detailItems(view calls.CallView) []display.DefinitionItem {
 	return items
 }
 
-// transcriptPane renders the role-split transcript in call order.
+// transcriptPane renders the role-split transcript as a terminal-style
+// voice log (library Scrollback): the caller's words and the assistant's
+// replies read top-down with tone-colored role tags. No stagger — a
+// transcript is reading content, not a replay animation.
 templ transcriptPane(turns []calls.TranscriptTurn) {
 	@display.Card(display.CardProps{Title: "Transcript"}) {
-		<div class="space-y-3">
-			for _, turn := range turns {
-				<div
-					class={
-						templ.KV("rounded-lg px-4 py-2 text-sm", turn.Role == calls.TurnRoleUser),
-						"bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100",
-					}
-				>
-					<span class="mr-2 font-semibold uppercase tracking-wide text-xs text-blue-600 dark:text-blue-400">{ string(turn.Role) }</span>
-					{ turn.Text }
-				</div>
-			}
-		</div>
+		@display.Scrollback(display.ScrollbackProps{
+			Stagger: false,
+			Lines:   transcriptLines(turns),
+		})
 	}
+}
+
+// transcriptLines maps conversation turns onto scrollback lines. The role
+// tag keeps its source vocabulary (user/assistant) — it names who spoke,
+// not what the UI thinks of them.
+func transcriptLines(turns []calls.TranscriptTurn) []display.ScrollbackLine {
+	lines := make([]display.ScrollbackLine, 0, len(turns))
+	for _, turn := range turns {
+		tone := display.ScrollbackToneSuccess
+		if turn.Role == calls.TurnRoleUser {
+			tone = display.ScrollbackToneInfo
+		}
+
+		lines = append(lines, display.ScrollbackLine{
+			Tag:  string(turn.Role),
+			Text: turn.Text,
+			Tone: tone,
+		})
+	}
+
+	return lines
 }
 
 // recordingCard offers playback. The audio src is the proxy route — the
@@ -118,7 +138,7 @@ templ transcriptPane(turns []calls.TranscriptTurn) {
 templ recordingCard(view calls.CallView) {
 	@display.Card(display.CardProps{Title: "Recording"}) {
 		if view.RecordingRef == "" {
-			<p class="text-sm text-gray-600 dark:text-gray-400">No recording reference indexed for this call.</p>
+			@display.SimpleEmptyState("No recording reference indexed for this call.")
 		} else {
 			<audio controls preload="none" class="w-full" src={ recordingHref(view) }></audio>
 			<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Streams server-side; the source URL never reaches the browser.</p>
@@ -131,10 +151,10 @@ templ notFoundPage(message string) {
 		@display.EmptyState(display.EmptyStateProps{
 			Title:       "Not found",
 			Description: message,
+			Icon:        icons.Question,
+			ActionText:  "Back to calls",
+			ActionHref:  "/",
 		})
-		<div class="mt-4">
-			@display.Button(display.ButtonProps{Text: "Back to calls", Href: "/"})
-		</div>
 	}
 }
 

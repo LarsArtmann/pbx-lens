@@ -8,6 +8,7 @@ import (
 
 	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-appkit/systemd"
+	"github.com/larsartmann/httputil"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/search"
@@ -113,21 +114,18 @@ func serve(args []string) {
 		fatal(err)
 	}
 
-	serviceConfig := appkit.ServiceConfig{Addr: *addr}
-
-	// sd_notify (T7/F23): READY=1 after the listener binds, STOPPING=1 at
-	// the drain, WATCHDOG keepalive while serving. A no-op outside systemd
-	// (NOTIFY_SOCKET unset), so the same binary serves localhost dev and
-	// the service manager unchanged.
-	systemd.Install(&serviceConfig)
-
-	if *htpasswdPath != "" {
-		auth, err := web.HtpasswdMiddleware(*htpasswdPath)
-		if err != nil {
-			fatal(err)
-		}
-
-		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares, auth)
+	// The composition the read-only surface runs on: no fixed response
+	// deadline (exports and recording WAVs stream unbounded — the appkit
+	// default 30s WriteTimeout would truncate them mid-stream), the build
+	// visible over HTTP (/version + appkit_build_info), the Prometheus
+	// surface behind the same posture as every route (htpasswd middleware
+	// when configured, loopback-only dev otherwise — hence the explicit
+	// opt-in), and the extras in wire order: auth gates everything,
+	// Server-Timing observes the full handler span, Compression sits outer
+	// of ETag so tags hash identity bodies (go-etag's ordering doctrine).
+	serviceConfig, err := buildServiceConfig(*addr, *htpasswdPath)
+	if err != nil {
+		fatal(err)
 	}
 
 	svc, err := appkit.NewService(serviceConfig)
@@ -181,4 +179,39 @@ func serve(args []string) {
 	if err := svc.Run(context.Background()); err != nil {
 		fatal(err)
 	}
+}
+
+// buildServiceConfig assembles the serve composition. sd_notify (T7/F23)
+// installs first: READY=1 after the listener binds, STOPPING=1 at the
+// drain, WATCHDOG keepalive while serving — a no-op outside systemd, so the
+// same binary serves localhost dev and the service manager unchanged.
+func buildServiceConfig(addr, htpasswdPath string) (appkit.ServiceConfig, error) {
+	serviceConfig := appkit.ServiceConfig{
+		Addr:    addr,
+		Version: version,
+		// Exports and the recording proxy stream unbounded by contract; a
+		// WriteTimeout would truncate both at the 30s appkit default, so
+		// the Timeout middleware drops out of the default stack entirely.
+		WriteTimeout: appkit.NoTimeout,
+		Metrics:      &appkit.MetricsConfig{AllowUnauthenticated: true},
+	}
+
+	systemd.Install(&serviceConfig)
+
+	if htpasswdPath != "" {
+		auth, err := web.HtpasswdMiddleware(htpasswdPath)
+		if err != nil {
+			return appkit.ServiceConfig{}, err
+		}
+
+		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares, auth)
+	}
+
+	serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
+		web.ServerTimingMiddleware(),
+		httputil.Compression(httputil.DefaultCompressionConfig()),
+		web.ETagMiddleware(),
+	)
+
+	return serviceConfig, nil
 }

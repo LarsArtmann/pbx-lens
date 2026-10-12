@@ -214,7 +214,7 @@ templ mosCard(stats DashboardStats) {
 			<div class="flex items-center gap-4">
 				@feedback.CircularProgress(feedback.CircularProgressProps{
 					Value:     mosGaugePercent(stats.AvgMOS()),
-					Size:      feedback.CircularProgressLG,
+					Size:      feedback.CircularProgressSizeLG,
 					ShowLabel: false,
 				})
 				<div>
