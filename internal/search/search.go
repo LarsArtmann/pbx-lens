@@ -37,9 +37,21 @@ const (
 	// body: from, to, excerpt.
 	searchBodyFixedFields = 3
 
+	// minSearchDigits is the shortest digit run that triggers the substring
+	// number search (R6): shorter runs would flood a small index with
+	// area-code noise, while 4+ digits pin a subscriber.
+	minSearchDigits = 4
+
 	maxQueryRunes = 256
 
 	tableName = "lens_search"
+
+	// digitsTableName is the substring-number shadow table (R6): FTS5
+	// tokenizes "+1728…" as ONE token, so a partial number silently matched
+	// nothing. Digits live in a plain column and match via LIKE — the index
+	// rebuilds wholesale (disposable-DB doctrine), so a scan-priced lookup
+	// at personal-PBX volume is free.
+	digitsTableName = "lens_digits"
 )
 
 // Hit is one matching call with a highlight-flagged snippet. The identity
@@ -123,10 +135,20 @@ func (i *Index) Rebuild(ctx context.Context, views []calls.CallView) error {
 		return errorfamily.NewTransient("lens.search.drop", err.Error())
 	}
 
+	if _, err := tx.ExecContext(ctx, "DROP TABLE IF EXISTS "+digitsTableName); err != nil {
+		return errorfamily.NewTransient("lens.search.drop_digits", err.Error())
+	}
+
 	create := "CREATE VIRTUAL TABLE " + tableName +
 		" USING fts5(body, kind UNINDEXED, native_id UNINDEXED, started_at UNINDEXED)"
 	if _, err := tx.ExecContext(ctx, create); err != nil {
 		return errorfamily.NewTransient("lens.search.create", err.Error())
+	}
+
+	createDigits := "CREATE TABLE " + digitsTableName +
+		" (kind TEXT NOT NULL, native_id TEXT NOT NULL, started_at TEXT NOT NULL, number TEXT NOT NULL, digits TEXT NOT NULL)"
+	if _, err := tx.ExecContext(ctx, createDigits); err != nil {
+		return errorfamily.NewTransient("lens.search.create_digits", err.Error())
 	}
 
 	insert, err := tx.PrepareContext(ctx,
@@ -137,12 +159,33 @@ func (i *Index) Rebuild(ctx context.Context, views []calls.CallView) error {
 
 	defer func() { _ = insert.Close() }()
 
+	insertDigit, err := tx.PrepareContext(ctx,
+		"INSERT INTO "+digitsTableName+"(kind, native_id, started_at, number, digits) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return errorfamily.NewTransient("lens.search.prepare_digits", err.Error())
+	}
+
+	defer func() { _ = insertDigit.Close() }()
+
 	for _, view := range views {
+		started := view.StartedAt.UTC().Format(time.RFC3339Nano)
+
 		if _, err := insert.ExecContext(ctx, searchBody(view),
-			string(view.Kind), string(view.NativeID),
-			view.StartedAt.UTC().Format(time.RFC3339Nano)); err != nil {
+			string(view.Kind), string(view.NativeID), started); err != nil {
 			return errorfamily.NewTransient("lens.search.insert",
 				fmt.Sprintf("indexing %s/%s: %v", view.Kind, view.NativeID, err))
+		}
+
+		for _, number := range []string{view.FromNumber, view.ToNumber} {
+			if number == "" {
+				continue
+			}
+
+			if _, err := insertDigit.ExecContext(ctx,
+				string(view.Kind), string(view.NativeID), started, number, digitsOnly(number)); err != nil {
+				return errorfamily.NewTransient("lens.search.insert_digits",
+					fmt.Sprintf("indexing %s/%s: %v", view.Kind, view.NativeID, err))
+			}
 		}
 	}
 
@@ -166,7 +209,9 @@ func searchBody(view calls.CallView) string {
 	return strings.Join(parts, "\n")
 }
 
-// Query runs a MATCH search, best rank first.
+// Query runs a MATCH search, best rank first, and merges in substring
+	// number hits (R6): a 4+ digit run matches any indexed party number that
+	// contains it, so partial numbers finally find their calls.
 func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, error) {
 	match, err := MatchExpression(query)
 	if err != nil {
@@ -216,7 +261,106 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 		return nil, errorfamily.NewTransient("lens.search.rows", err.Error())
 	}
 
+	if digits := digitsOnly(query); len(digits) >= minSearchDigits {
+		extra, err := i.digitHits(ctx, digits)
+		if err != nil {
+			return nil, err
+		}
+
+		hits = mergeHits(hits, extra, limit)
+	}
+
 	return hits, nil
+}
+
+// digitHits finds every indexed party number whose digit projection
+// contains the run. digitsOnly already stripped everything but 0-9, so the
+// LIKE pattern carries no wildcard metacharacters.
+func (i *Index) digitHits(ctx context.Context, digits string) ([]Hit, error) {
+	rows, err := i.db.QueryContext(ctx,
+		"SELECT kind, native_id, started_at, number FROM "+digitsTableName+" WHERE digits LIKE ?",
+		"%"+digits+"%")
+	if err != nil {
+		return nil, errorfamily.NewRejection("lens.search.digits", err.Error())
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	hits := make([]Hit, 0)
+
+	for rows.Next() {
+		var (
+			hit              Hit
+			started, number string
+		)
+
+		if err := rows.Scan(&hit.Kind, &hit.NativeID, &started, &number); err != nil {
+			return nil, errorfamily.NewCorruption("lens.search.scan_digits", err.Error())
+		}
+
+		startedAt, err := time.Parse(time.RFC3339Nano, started)
+		if err != nil {
+			return nil, errorfamily.NewCorruption("lens.search.parse_time",
+				fmt.Sprintf("digit hit %s/%s: %v", hit.Kind, hit.NativeID, err))
+		}
+
+		hit.Started = startedAt
+		// The whole matching number is the snippet: the operator searched
+		// for digits, so the honest highlight is the number itself.
+		hit.Parts = []Part{{Text: number, Highlight: true}}
+		hits = append(hits, hit)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errorfamily.NewTransient("lens.search.rows_digits", err.Error())
+	}
+
+	return hits, nil
+}
+
+// mergeHits appends unique extras after the ranked primary hits, capped.
+func mergeHits(primary, extra []Hit, limit int) []Hit {
+	seen := make(map[string]struct{}, len(primary)+len(extra))
+
+	for _, hit := range primary {
+		seen[hitKey(hit)] = struct{}{}
+	}
+
+	out := primary
+
+	for _, hit := range extra {
+		if len(out) >= limit {
+			break
+		}
+
+		key := hitKey(hit)
+		if _, dup := seen[key]; dup {
+			continue
+		}
+
+		seen[key] = struct{}{}
+		out = append(out, hit)
+	}
+
+	return out
+}
+
+func hitKey(hit Hit) string {
+	return string(hit.Kind) + "\x00" + string(hit.NativeID)
+}
+
+// digitsOnly keeps the 0-9 projection of a string: the normalized form a
+// partial-number search runs against.
+func digitsOnly(s string) string {
+	var builder strings.Builder
+
+	for _, r := range s {
+		if r >= '0' && r <= '9' {
+			builder.WriteRune(r)
+		}
+	}
+
+	return builder.String()
 }
 
 // MatchExpression turns free text into a safe FTS5 MATCH: every term is

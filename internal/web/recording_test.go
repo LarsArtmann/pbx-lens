@@ -327,7 +327,11 @@ func TestRecordingUpstreamTimeoutBoundsWavHeaders(t *testing.T) {
 		case "/v2/recordings/rec-1":
 			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":"http://%s/v2/audio.wav"}}}`, r.Host)
 		case "/v2/audio.wav":
-			time.Sleep(50 * time.Millisecond)
+			// Sleep far beyond the budget so only the audio hop misses it; the
+			// budget itself stays far above a loaded-machine localhost
+			// roundtrip, so the metadata fetch cannot be the one that trips
+			// (timeout-test hardening: 1ms budgets flake under load).
+			time.Sleep(250 * time.Millisecond)
 
 			_, _ = w.Write(auditWav)
 		default:
@@ -339,7 +343,7 @@ func TestRecordingUpstreamTimeoutBoundsWavHeaders(t *testing.T) {
 	mux := newTestServerWith(t, Options{
 		Recordings: RecordingOptions{
 			Telnyx:          telnyx.NewClient(auditAPIKey, api.URL+"/v2"),
-			UpstreamTimeout: time.Millisecond,
+			UpstreamTimeout: 50 * time.Millisecond,
 		},
 	}, telnyxRecordingObservation())
 

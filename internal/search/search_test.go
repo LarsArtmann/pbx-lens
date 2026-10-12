@@ -176,3 +176,121 @@ func TestMatchExpression(t *testing.T) {
 		t.Error("overlong query should reject")
 	}
 }
+
+func TestPartialNumberSubstringMatches(t *testing.T) {
+	// R6: FTS5 tokenizes "+17287289311" as one token, so partial numbers
+	// matched nothing before. A 4+ digit run must now find every call whose
+	// party digits contain it — prefix, suffix, and mid-number alike.
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	for _, digits := range []string{"7289", "17287289311", "8931"} {
+		hits, err := index.Query(context.Background(), digits, 0)
+		if err != nil {
+			t.Fatalf("Query(%q): %v", digits, err)
+		}
+
+		if len(hits) != 3 {
+			t.Errorf("partial %q hit %d calls, want all 3", digits, len(hits))
+		}
+	}
+
+	// To-side numbers surface too.
+	hits, err := index.Query(context.Background(), "550999", 0)
+	if err != nil {
+		t.Fatalf("Query(to): %v", err)
+	}
+
+	if len(hits) != 1 || hits[0].NativeID != "conv-b" {
+		t.Errorf("to-side partial hit %v, want conv-b", hits)
+	}
+}
+
+func TestDigitHitSnippetHighlightsTheNumber(t *testing.T) {
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	hits, err := index.Query(context.Background(), "50123", 0)
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+
+	if len(hits) != 1 {
+		t.Fatalf("hits = %d, want 1", len(hits))
+	}
+
+	if len(hits[0].Parts) != 1 || !hits[0].Parts[0].Highlight {
+		t.Fatalf("digit hit parts = %+v, want one highlighted part", hits[0].Parts)
+	}
+
+	if got := hits[0].Parts[0].Text; got != "+15555550123" {
+		t.Errorf("highlighted snippet = %q, want the matching raw number", got)
+	}
+}
+
+func TestShortDigitRunsStayFTSOnly(t *testing.T) {
+	// The min-length guard (R6): a 3-digit run would flood the index with
+	// area-code noise, so it must not open the substring path.
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	hits, err := index.Query(context.Background(), "311", 0)
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+
+	if len(hits) != 0 {
+		t.Errorf("3-digit run must not substring-match, got %d hits", len(hits))
+	}
+}
+
+func TestAbsentDigitsMatchNothing(t *testing.T) {
+	// False-positive guard: digits no indexed number carries return no hits
+	// instead of wildcard noise.
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	hits, err := index.Query(context.Background(), "999999", 0)
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+
+	if len(hits) != 0 {
+		t.Errorf("absent digits matched %d calls", len(hits))
+	}
+}
+
+func TestRebuildRefreshesDigitTable(t *testing.T) {
+	// The digits shadow table rides the wholesale rebuild: after reindexing
+	// without a view, its numbers must stop matching (no drift).
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	if err := index.Rebuild(context.Background(), nil); err != nil {
+		t.Fatalf("Rebuild(empty): %v", err)
+	}
+
+	hits, err := index.Query(context.Background(), "7289", 0)
+	if err != nil {
+		t.Fatalf("Query: %v", err)
+	}
+
+	if len(hits) != 0 {
+		t.Errorf("digits matched after an empty rebuild: %d hits", len(hits))
+	}
+}

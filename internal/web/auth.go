@@ -217,24 +217,30 @@ func (p *perIPThrottler) wait(ctx context.Context, remoteAddr string) {
 		return
 	}
 
+	_ = p.limiterFor(host).Wait(ctx)
+}
+
+// limiterFor returns the peer's bucket, creating it (with FIFO eviction at
+// the cap) when absent.
+func (p *perIPThrottler) limiterFor(host string) *rate.Limiter {
 	p.mu.Lock()
+	defer p.mu.Unlock()
 
-	limiter, known := p.buckets[host]
-	if !known {
-		if len(p.buckets) >= p.capacity {
-			oldest := p.order[0]
-			p.order = p.order[1:]
-			delete(p.buckets, oldest)
-		}
-
-		limiter = rate.NewLimiter(rate.Every(authFailureInterval), authFailureBurst)
-		p.buckets[host] = limiter
-		p.order = append(p.order, host)
+	if limiter, known := p.buckets[host]; known {
+		return limiter
 	}
 
-	p.mu.Unlock()
+	if len(p.buckets) >= p.capacity {
+		oldest := p.order[0]
+		p.order = p.order[1:]
+		delete(p.buckets, oldest)
+	}
 
-	_ = limiter.Wait(ctx)
+	limiter := rate.NewLimiter(rate.Every(authFailureInterval), authFailureBurst)
+	p.buckets[host] = limiter
+	p.order = append(p.order, host)
+
+	return limiter
 }
 
 // bucket returns the live limiter for an address (test seam: identity of
@@ -245,14 +251,7 @@ func (p *perIPThrottler) bucket(remoteAddr string) *rate.Limiter {
 		return p.fallback
 	}
 
-	p.mu.Lock()
-	defer p.mu.Unlock()
-
-	if limiter, known := p.buckets[host]; known {
-		return limiter
-	}
-
-	return nil
+	return p.limiterFor(host)
 }
 
 // padCost reads the bcrypt work factor the loaded entries use, so the
