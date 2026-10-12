@@ -136,3 +136,12 @@ round of tests missed.
 ---
 
 _Snapshot only — do not edit stale reports; bring them current via docs-health ANNOTATE. Harvest section (f) into TODO_LIST.md/ROADMAP.md, then let this file rest._
+
+---
+
+## Appendix (ANNOTATE 2026-10-12 13:5x — same session, post-report events)
+
+- **B1/B4/B5 resolved:** race detector green locally (`go test -race` on web + cmd). CI ran the full matrix **green** on main HEAD after `fd0e082` (runs 38243761913, 38244128681: success).
+- **CI incident:** run 38242512527 on `fd0e082` itself FAILED — `TestDumpPagesForVisualAudit`. Root cause: my commit (correctly) did not stage the concurrent session's working-tree deletion of that harness, so it shipped with the commit; it writes `/tmp/pbxlens-baseline` without creating it → clean-runner failure. Healed by the daemon's deletion commit `6bb7d17`. Local runs had passed because the file was already deleted in the shared tree — the suite I ran was never the suite I shipped.
+- **Full local gate (`buildflow --build-mode dev`):** attempted once load dropped below 40 — 2 steps failed + 9 tools failed health checks, while a SECOND session was actively editing the tree (their 13:32 plan, `page.templ`, `error_handling_test.go`) and likely holding tool locks (the BuildFlow#45 spawn/lock class). `nix build` green twice on the current tree confirms no real vendor-hash or compile problem. A trustworthy clean gate needs a quiet tree — defer until the concurrent session lands; verification was achieved via the green CI matrix instead.
+- Upstream filings from this work landed: **go-etag#2** (Flush observability) and **go-appkit#26** (testkit 5s drain per test), drafts + ledger in `docs/drafts/` / `docs/upstream-filings.md`.

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -156,11 +157,49 @@ func TestDetailNotFound(t *testing.T) {
 	}
 }
 
-func TestStylesUnbuiltReturns404(t *testing.T) {
-	// styles.css is a build artifact (tailwind), absent in a clean checkout.
-	status, body := getBody(t, newTestServer(t), "/app.css")
-	if status != http.StatusNotFound {
-		t.Fatalf("GET /app.css status = %d, want 404 (body: %s)", status, body)
+func TestStylesServed(t *testing.T) {
+	// styles.css is a tailwind build artifact (gitignored): absent in a
+	// clean checkout, present after buildflow/nix codegen. Both states are
+	// legitimate — the contract is 200 + text/css when built, an
+	// explanatory 404 when not. The MIME header is load-bearing: an
+	// http.Error 404 answers text/plain, which browsers report as a
+	// stylesheet MIME refusal (strict MIME checking), not as a 404.
+	recorder := httptest.NewRecorder()
+	serveStyles(recorder, httptest.NewRequest(http.MethodGet, "/app.css", nil))
+
+	if _, err := fs.ReadFile(staticFS, "static/styles.css"); err != nil {
+		if recorder.Code != http.StatusNotFound {
+			t.Fatalf("GET /app.css without styles.css = %d, want 404 (body: %s)", recorder.Code, recorder.Body.String())
+		}
+
+		return
+	}
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("GET /app.css with styles.css = %d, want 200 (body: %s)", recorder.Code, recorder.Body.String())
+	}
+
+	if got := recorder.Header().Get("Content-Type"); got != "text/css; charset=utf-8" {
+		t.Errorf("Content-Type = %q, want text/css; charset=utf-8", got)
+	}
+}
+
+func TestFaviconServed(t *testing.T) {
+	// layout.Base pins /favicon.svg upstream (DefaultPageProps); without
+	// the route every page load logs a favicon 404 in the browser console.
+	recorder := httptest.NewRecorder()
+	newTestServer(t).ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/favicon.svg", nil))
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("GET /favicon.svg status = %d, want 200 (body: %s)", recorder.Code, recorder.Body.String())
+	}
+
+	if got := recorder.Header().Get("Content-Type"); got != "image/svg+xml" {
+		t.Errorf("Content-Type = %q, want image/svg+xml", got)
+	}
+
+	if !strings.Contains(recorder.Body.String(), "<svg") {
+		t.Error("favicon should be an SVG document")
 	}
 }
 

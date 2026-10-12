@@ -76,6 +76,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
 	mux.HandleFunc("GET /app.css", serveStyles)
 	mux.HandleFunc("GET /static/htmx.min.js", serveHtmx)
+	mux.HandleFunc("GET /favicon.svg", serveFavicon)
 }
 
 type server struct {
@@ -403,6 +404,24 @@ func serveHtmx(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+
+	_, _ = w.Write(src)
+}
+
+// serveFavicon serves the self-hosted lens mark: layout.Base pins
+// /favicon.svg upstream (DefaultPageProps), so without this route every
+// page load logs a 404 in the browser console. Self-hosted for the same
+// LAN-isolation reason as the htmx runtime — no CDN reach-out.
+func serveFavicon(w http.ResponseWriter, _ *http.Request) {
+	src, err := fs.ReadFile(staticFS, "static/favicon.svg")
+	if err != nil {
+		http.Error(w, "favicon missing from the build", http.StatusNotFound)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/svg+xml")
 	w.Header().Set("Cache-Control", "no-cache")
 
 	_, _ = w.Write(src)

@@ -22,6 +22,7 @@ func TestSkipBodyCaching(t *testing.T) {
 		{"/calls/telnyx-conversation/conv-a", false},
 		{"/app.css", false},
 		{"/static/htmx.min.js", false},
+		{"/favicon.svg", false},
 		{"/api/ops", false},
 		{"/frag/staleness", true},
 		{"/api/freshness", true},
