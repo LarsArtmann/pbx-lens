@@ -1,0 +1,123 @@
+# Status Report — 2026-10-12 02:34 CEST — Third-pass TODO closure, file splits, upstream filings
+
+**Session scope:** execute the six open 🔴 TODO items from TODO_LIST.md (recording-proxy
+timeout knob, three file-size splits, flake meta.description, C009 source verify, D6
+filings state, BuildFlow go-mod-update false positive) plus docs closure. Session-ran
+verification only; no unrelated research.
+
+**Environment at close:** full BuildFlow dev gate **74/74 steps GREEN** (run
+`20261011-232234-c`, `BUILDFLOW_NO_RESULT_CACHE=1`, inside the devShell); go.sum clean;
+working tree = this session's doc edits + 2 untracked files (upstream draft, prior
+session's status report), all auto-commit-daemon candidates.
+
+**Concurrent-session note:** a parallel session ran mid-way through this one (lint fixes
+in `internal/web/recording.go`, a 01:16 status report, new buildflow-dev-gate 2026-10-12
+entries incl. `-test.shuffle` flake notes). Its work was respected, not reverted; its
+untracked status report was dprint-formatted by this session after the gate flagged it.
+
+---
+
+## a) FULLY DONE
+
+| # | Item | Evidence |
+|---|------|----------|
+| 1 | **Recording-proxy upstream timeout knob** — `web.DefaultUpstreamTimeout` (30 s) bounds both upstream hops: metadata fetch under a hard deadline (→504), WAV response-header budget (→502), audio body deliberately unbounded (no total client Timeout); zero/negative selects the default; no "unbounded" escape hatch | `internal/web/recording.go` (`resolveUpstreamTimeout`, `newUpstreamClient`, deadline-wrapped metadata ctx), `server.go` (server fields + Register wiring), `cmd/pbx-lens/serve.go` (`-recording-timeout` flag); 3 new tests (metadata 504, stalled-WAV-headers 502, resolution table) — package suite green |
+| 2 | **`internal/calls/domain.go` split** 570 → 4 responsibility files: `domain.go` 209 (value types, validation, excerpt, enrichment), `events.go` 92 (event types, payloads, ContentHash, StreamID), `commands.go` 101 (command types, constructors, RetentionReason), `decider.go` 193 (CallState, Apply, Record/Enrich/Retire) | pure moves, zero API change; `go build ./...` + full package tests green |
+| 3 | **`cmd/pbx-lens/main.go` split** 677 → 4 files: `main.go` 87 (dispatch, usage, requireDB/requireOneArg, fatal), `ingest.go` 269 (four ingest commands + `ingestTimeout`), `serve.go` 164 (serve + `defaultAddr`/`serveTimeout` + NEW flag), `ops.go` 198 (smoke, backup, purge + their consts) | consts split per user file (package-scoped, no duplication); vet clean |
+| 4 | **`internal/ingest/telnyx/telnyx.go` split** 379 → 2: client 237 (`Client`, pagers, `get`, `fetchAll`) + `dto.go` 153 (wire shapes, tolerant `DetailRecord` decode, `DetailRecordByCallControl`) | `dto.go` opens with a one-line scope note; telnyx package tests green |
+| 5 | **flake: `meta.description` on `apps.update-vendor-hash`** (+ `pkgs.lib.getExe` → `lib.getExe` per nix-review checklist) | `nix eval` shows the description; `nix flake check` "lacks attribute" count = **0** (was: warning on every gate run) |
+| 6 | **C009 bare-`must` verified at source — already filed** | `go-cqrs-lite` `cmd/cqrs-lint/pkg/rules/correctness/c009.go:95` guard confirmed verbatim (`len(name) > 4`; same shape for `New` at :99); covered by **go-cqrs-lite#64** (OPEN) — no duplicate filed; TODO_LIST row was stale |
+| 7 | **D6 filings state re-check** — all five still OPEN upstream 2026-10-12: go-cqrs-lite#62, #63, #64, go-nix-helpers#7, treefmt-nix#545 | `gh api` per issue; `docs/upstream-filings.md` state line refreshed |
+| 8 | **BuildFlow#45 filed**: a load-starved (deadline-killed) compile gate is misreported as "dependency bump introduced compile errors" and silently reverts go.mod/go.sum | source-traced at BuildFlow `51d31b1a4`: `cmdrun_streaming.go:84-87` (Transient/`tool.timeout` wrap) → `update.go:289-302` (classify-while-raw covers floor+vendoring only) → `update.go:238-251` (revert + blaming Warnf); observed instance 2026-10-11 23:59 (load 40-85, tree clean immediately after revert); suggested fix: classify `tool.timeout` like the floor case — no revert, honest framing; draft in `docs/drafts/2026-10-12_buildflow-gomod-update-tool-timeout.md`, voice-check 0 FAIL / 0 WARN, banner box UNCHECKED |
+| 9 | **Docs closure** — TODO_LIST third pass (only the 3 BLOCKED rows remain), CHANGELOG (2 Added + 1 Fixed entries), FEATURES (serve row flags + recording-proxy row), AGENTS.md serve/UI knob line (189 < 220 limit), `docs/upstream-filings.md` (2026-10-12 state + BuildFlow#45 + C009 note), `docs/buildflow-dev-gate.md` (BuildFlow#45 pointer + "treat as environment casualty" guidance under the starvation bullet) | all dprint-formatted; AGENTS.md 189 lines |
+| 10 | **Full gate GREEN** — `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` = 74/74, 0 failed | go-structure-linter now reports exactly ONE finding: the documented `assets/` non-fix (buildflow-dev-gate.md) — **all file-size advisories retired** |
+
+## b) PARTIALLY DONE
+
+| # | Item | What's missing / deferred |
+|---|------|---------------------------|
+| 1 | Timeout knob mechanism | **Production value is a placeholder**: 30 s default until real traffic data (owner decision 2026-10-11 stands). No ops telemetry on expiries — a 504/502 from the budget is currently indistinguishable in logs from any other bad gateway |
+| 2 | `usage()` one-liner | `-recording-timeout` NOT added (consistent: no serve flag except `-db`/`-addr` appears there). Deliberate, reversible |
+| 3 | Sibling NixOS module | `nix-international-telephony` `modules/telephony/lens.nix` does not expose the new flag — handoff incomplete by design (untouched sibling) |
+| 4 | Timeout-test robustness | 1 ms budgets + a 50 ms sleep are timing-sensitive; the concurrent session already logged them as expected `-test.shuffle` flake candidates under load (buildflow-dev-gate.md 2026-10-12) |
+| 5 | Docs residuals | `docs/cqrs-lint-policy.md` C009/E005 entries lack upstream pointers (#64); AGENTS.md Commands block doesn't show the new flag; old status reports (23-35, 00-08) whose TODO items this session closed are NOT annotated (docs-health ANNOTATE skipped — TODO_LIST treated as the canonical tracker) |
+| 6 | Untracked artifacts | `docs/drafts/2026-10-12_...md` and the prior session's `docs/status/2026-10-12_01-16_...md` are untracked — left for the auto-commit daemon per harness contract (anti-pattern: don't assume it committed; not yet verified post-report) |
+
+## c) NOT STARTED
+
+1. **Fix BuildFlow#45 in the BuildFlow repo** — classify `tool.timeout` in `compileGate`, return without revert; add a test. Owner is Lars; TODO said "file", fix not ordered.
+2. **Sibling NixOS module option** for `-recording-timeout` (`services.telephony.pbx-lens.*`).
+3. **The three BLOCKED TODO_LIST items** — untouched, externally blocked: SegmentBar (unreleased upstream), Telnyx live DTO verification (needs API key), ContentHash v2 length-prefixed encoding (needs the v2 gate).
+4. **Fake-clock/injected-deadline refactor** of the timeout tests.
+5. **HARVEST of this report's (f) section** into TODO_LIST/ROADMAP (status-report skill: the loop is not closed until harvested — parked pending your instructions).
+
+## d) TOTALLY FUCKED UP
+
+No data loss, no broken main, no wrongly-reverted work — but honest process failures:
+
+1. **Overwrote a living doc from a stale read.** TODO_LIST.md was rewritten from the session-start read; a concurrent session was active. The no-clobber check happened AFTER the write, not before. Verified clean this time — the process was still wrong, and the same move on a file the other session HAD touched would have silently destroyed its work.
+2. **Wasted a full gate cycle** on `--failed-only` (it reruns failed steps only — the 7 DAG-blocked steps stayed skipped), then had to run the full gate anyway. Should have gone straight to the authoritative full run.
+3. **`gh issue view repo#N` failed twice** ("invalid issue format") before switching to `gh issue view <n> --repo O/R` / full-URL forms; the first batched filings state-check 404'd wholesale and had to be redone individually.
+4. **CHANGELOG multiedit rejected** — the file had only been bash-viewed (`head`/`sed`), never View-read; one wasted round trip.
+5. **Repeatedly surfaced stale gopls/golangci-ls diagnostics** mid-edit (undefined symbols that existed two writes later) — harmless but noisy; and LSP document symbols timed out on main.go twice, forcing a grep fallback.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Re-check `git status`/file mtime IMMEDIATELY before overwriting any living doc** (TODO_LIST, CHANGELOG) — concurrent sessions + the auto-commit daemon make every read stale by default.
+2. **Inject time in tests instead of real sleeps/budgets** (1 ms deadlines are load-flakes); the same discipline the fleet already applies to shuffle-stable suites.
+3. **Verify tool claims against tool source, not inference** — the structure-linter's test-file exemption was inferred from file sizes, never read from the linter.
+4. **Authoritative verification first**: run the full gate once rather than failed-only → full.
+5. **Sibling-repo and command-reference updates ride the same change as a new flag** — a flag that exists in `serve` but nowhere in the NixOS module or AGENTS commands block is a handoff debt.
+6. **Diagnose the recurring `⚠ 9 tools unavailable (health check failed)` buildflow warning** — it appeared in every gate run this session and was never investigated (out of scope per instructions).
+7. **Keep gh argument forms canonical** (`gh issue view <n> --repo O/R` or full URL) — the `repo#N` shorthand failed twice this session.
+
+## f) Up to 50 things we should get done next (brainstorm — HARVEST fuel, ranked by impact)
+
+1. **Fix BuildFlow#45 in the BuildFlow repo** (classify `tool.timeout`, no revert, honest message + test) — own repo, direct fix possible.
+2. **Expose `-recording-timeout` in the sibling NixOS module** (`services.telephony.pbx-lens.recordingTimeout`) + wire into ExecStart.
+3. **Harden the timeout tests** — injected deadlines/fake clock; kill the 1 ms/50 ms load flakes flagged in buildflow-dev-gate.md.
+4. **HARVEST this report's (f) list** into TODO_LIST.md/ROADMAP.md (docs-health).
+5. **ANNOTATE the 23-35 and 00-08 status reports** — mark their harvested items done inline (docs-health ANNOTATE).
+6. **Add upstream pointers to docs/cqrs-lint-policy.md** (C009 → #64; E005 class → #64) so the policy doc and the filings ledger agree.
+7. **AGENTS.md Commands block**: add `-recording-timeout` to the serve example line.
+8. **Decide usage()-one-liner policy** for serve flags (list all, or keep minimal — pick one and make it consistent).
+9. **Run `buildflow doctor`** and chase the "9 tools unavailable (health check failed)" warning to ground.
+10. **Ops visibility for upstream-budget expiries**: log a line (with the recording id + elapsed) when metadata 504 / WAV 502 fire, via the existing `Options.Log` hook.
+11. **Add the no-total-timeout invariant test** for `newUpstreamClient` (body unbounded is load-bearing for long recordings — pin it).
+12. **README**: one sentence that recording playback bounds its upstream hops (user-facing trust).
+13. **Verify the auto-commit daemon actually committed** today's doc diff + the 2 untracked files (skill anti-pattern: never assume).
+14. **`cmd/pbx-lens/ingest.go` (269 lines)**: extract the shared open-system → age-gate → drain → rebuild sequence before it re-approaches 350.
+15. **Telnyx live DTO verification** when an API key exists (quarterly cluster per AGENTS).
+16. **SegmentBar swap** when templ-components publishes it.
+17. **ContentHash v2 length-prefixed encoding** at the v2 gate (SCHEDULED).
+18. **Track go-cqrs-lite#62/#63 upstream** — when the sqliteengine time binding fixes land, drop the in-repo rfc3339 binding workaround and re-run the storage tests.
+19. **Track go-nix-helpers#7 / treefmt-nix#545** — when the templ formatter resolves the module go, drop the flake.nix `mkForce` wrapper.
+20. **cqrs-lint #64 fix landed?** — revisit the `mustRegister` composition-root naming (could return to bare `must`).
+21. **Systemd unit draft** (`deploy/systemd/pbx-lens.service`): decide whether the flag belongs there once the sibling module carries it (avoid a third config surface).
+22. **Run on-demand `buildflow -s gitleaks`** over the new draft/report (confirm nothing secret-shaped in evidence blocks).
+23. **Run on-demand `buildflow -s markdown-lint`** over today's doc edits.
+24. **Record the cross-project lesson** ("re-read living docs before overwrite under concurrent sessions") in crush-config `references/lessons.md` — by commit, never in-session global writes.
+25. **buildflow timings review** after today's splits (confirm no step-duration regressions from the new files).
+26. **Spot-check dprint-re-padded FEATURES/TODO tables render correctly** (the 23:24 incident class: hand-padding vs dprint).
+27. **Review the concurrent session's 01:16 report §g** — it carries unanswered questions of its own; fold anything actionable into TODO_LIST.
+28. **Poller/serve flag audit** — confirm every serve flag has exactly one NixOS-module expression path (split-brain risk as knobs grow).
+29. **`vulnix` persistent advisory** — it remains red by documentation; schedule the periodic re-triage rather than absorbing it forever.
+30. **art-dupl (20) / branching-flow (51) advisories** — the documented "dedicated pass" they wait for.
+31. **Consider a `web.RecordingOptions` constructor** (`NewRecordingOptions(...)`) if the option count keeps growing — keep zero-value validity.
+32. **Decide whether 504-vs-502 mapping deserves a typed sentinel** (currently a `metaCtx.Err()` check at the call site).
+33. **CHANGELOG link for BuildFlow#45** — fine as a bare number today; revisit if the repo ever goes public.
+34. **Next gate under real load**: confirm the BuildFlow#45 guidance ("treat as environment casualty, rerun the step") holds for go-mod-update until the fix lands.
+
+*(Stopped at 34 substantive items — the rest would be filler. Sections c) + b) 1/3 overlap deliberately: those are the blocked/deferred spine.)*
+
+## g) Questions I cannot figure out myself
+
+1. **Recording-timeout production value**: keep the 30 s default until real traffic data exists (owner decision 2026-10-11), or do you have Telnyx latency expectations that let us pin a real number now?
+2. **BuildFlow#45 is your own repo** — do you want it FIXED directly next session (code + test in BuildFlow), or does it stay issue-only until you've reviewed the filing?
+3. **Old status reports**: should closed harvested items be annotated inline in `docs/status/*` (docs-health ANNOTATE) as a standing rule, or is TODO_LIST.md the only canonical tracker and reports stay point-in-time?
+
+---
+_Point-in-time snapshot 2026-10-12 02:34 CEST. Evidence: gate run `20261011-232234-c`
+(74/74), BuildFlow#45, go-cqrs-lite#62/63/64 + go-nix-helpers#7 + treefmt-nix#545 state
+checks via gh api, `nix flake check` lacks-attribute count 0, go-structure-linter
+remaining-findings = 1 (documented assets/ non-fix)._
