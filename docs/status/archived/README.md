@@ -30,6 +30,30 @@ here — terminal state. Archived 2026-10-12 by the docs-health AUDIT pass.
 | 2026-10-11_23-35_gate-closure-lint-residuals-test-dedup.md             | ANNOTATE → ARCHIVED | Superseded (inline note) by 00-08; lint residuals + helper extraction landed; split done 02:34         |
 | 2026-10-11_23-41_gate-closure-verification-status.md                   | ANNOTATE → ARCHIVED | Gate closed green (73/0/0); templ-pin + harvest §b items closed by 00-08 + this pass                   |
 | 2026-10-12_00-08_session-status-gate-closure-and-lint-dedup.md         | ANNOTATE → ARCHIVED | Step-level closure superseded by the 01:16 full-mode green; §f misclassification filed as BuildFlow#45 |
+| 2026-10-12_14-30_superb-followups-harvest-wrap.md                      | SKIP → ARCHIVED     | Self-annotating wrap: §b gate outcome annotated inline same day, §c resolved, §d ledger carries per-item dispositions |
+| 2026-10-12_15-20_templ-ui-pareto-execution-t1-t22-status.md            | ANNOTATE → ARCHIVED | Session two executed every §f/§b/§c item (13-32 EXECUTED); §g answered by owner defaults + #51 (22 inline markers) |
+
+## Triage of the 2026-10-12 live set (17-31 plan T16.3, 2026-10-12 evening)
+
+Annotated this pass: **15-20 + 17-17** (41 + 22 inline markers — the templ-UI
+lineage whose follow-ups the 17-31 plan executed). Archived: **15-20, 14-30**.
+
+Keep-open triage for the rest (their forward items live in TODO_LIST /
+ROADMAP / owner-gated rows; annotate+archive each in its own follow-up pass):
+
+- `01-16`, `02-34`, `03-39` — already partially annotated by the earlier
+  2026-10-12 AUDIT sweep; residue = owner-gated rows only.
+- `07-13`, `07-56`, `10-33` — the gate-starvation line; resolved by the
+  evening green gates; annotate when the next full-gate pass touches them.
+- `12-23` — release + sibling session; candidate for the next archive pass.
+- `13-27`, `13-28`, `13-49` — superseded in substance by the 12-47/13-32
+  EXECUTED annotations + docs/research report; bulk-archive candidates.
+- `14-16`, `15-07`, `15-10` — forward items routed to TODO_LIST; low-value
+  to annotate until the owner-gated deploy row opens.
+- `17-17` — annotated this pass; stays LIVE: §f 1-11 owner-gated rows +
+  f17 (stale-poller warn) + f19 (cache e2e hardening) + f40 (styles trim) +
+  f41 (scratch-dir convention) remain open.
+- `19-20` (both) — the concurrent session's fresh reports; theirs to close.
 
 Kept ACTIVE (not archived — they hold open work):
 

@@ -39,18 +39,18 @@
 
 ## b) PARTIALLY DONE
 
-- **B1 — T19 visual sign-off**: buckets, rendering, and goldens are green, but the post-heatmap screenshot re-capture has not been eyeballed (harness exists; one `node scripts/screenshot-probe.js` run + one look pending).
-- **B2 — `-update` flow doc row (T22.3)**: the golden update command (`go test ./internal/web/ -run TestGoldenPages -update`) is documented in the test header but NOT yet in AGENTS.md's Commands block — folded into T25/T26 to avoid racing the concurrent session's AGENTS.md edits (a foreign 10-line AGENTS.md diff is uncommitted right now).
+- ~~**B1 — T19 visual sign-off**~~ done — T19-eyeball PASS in session two (fresh 20-PNG probe run reviewed): buckets, rendering, and goldens are green, but the post-heatmap screenshot re-capture has not been eyeballed (harness exists; one `node scripts/screenshot-probe.js` run + one look pending).
+- ~~**B2 — `-update` flow doc row (T22.3)**~~ done — the flow is watchlist step 5 + the golden test header; T22.3 closed: the golden update command (`go test ./internal/web/ -run TestGoldenPages -update`) is documented in the test header but NOT yet in AGENTS.md's Commands block — folded into T25/T26 to avoid racing the concurrent session's AGENTS.md edits (a foreign 10-line AGENTS.md diff is uncommitted right now).
 
 ## c) NOT STARTED (queued in plan order)
 
-- **C1 — T20** CopyButton on phone numbers / native IDs (detail page DefinitionList DetailComponent + PageHeader area).
-- **C2 — T21** transcript search-highlight jump (`?q=` plumb, matched-turn highlight, noscript anchor jump) — now goldens-protected.
-- **C3 — T23** LineChart-vs-BarChart volume spike, DataTable + AppShell adopt/reject notes → adoption map rows.
-- **C4 — T24** upstream filings: (1) vertical BarChart % collapse — bars are structurally 0px without `Height` (CSS value!) + `items-stretch` override (proven in-browser, `bar:0 → 113px`); (2) TableRow focus-visible gap; (3) Scrollback aria-hidden default (arguably correct as-is, AriaLabel doc could be louder); verify-before-filing gate + github-voice register.
-- **C5 — T25** next-bump watchlist in AGENTS.md: re-run `scripts/gen-tc-classes.js` on every templ-components bump (the corpus regeneration is now MACHINERY, not archaeology), re-audit adoption map, re-check SegmentBar/errorpage/utils-format/FilterChips candidates; plus the B2 doc row.
-- **C6 — T26** docs harvest (TODO_LIST rows for C1–C4 + B1, DOMAIN_LANGUAGE entries, CHANGELOG fold for T1–T19+T22).
-- **C7 — T27** host-deploy readiness (owner-blocked items recorded per plan).
+- ~~**C1 — T20**~~ done in session two (CopyButton + tests): CopyButton on phone numbers / native IDs (detail page DefinitionList DetailComponent + PageHeader area).
+- ~~**C2 — T21**~~ done in session two (search_jump_test.go + goldens): transcript search-highlight jump (`?q=` plumb, matched-turn highlight, noscript anchor jump) — now goldens-protected.
+- ~~**C3 — T23**~~ done (rejection rows with adopt triggers): LineChart-vs-BarChart volume spike, DataTable + AppShell adopt/reject notes → adoption map rows.
+- ~~**C4 — T24**~~ done — filed as templ-components#48/#49/#50: upstream filings: (1) vertical BarChart % collapse — bars are structurally 0px without `Height` (CSS value!) + `items-stretch` override (proven in-browser, `bar:0 → 113px`); (2) TableRow focus-visible gap; (3) Scrollback aria-hidden default (arguably correct as-is, AriaLabel doc could be louder); verify-before-filing gate + github-voice register.
+- ~~**C5 — T25**~~ done (adoption-map watchlist + AGENTS.md wiring): next-bump watchlist in AGENTS.md: re-run `scripts/gen-tc-classes.js` on every templ-components bump (the corpus regeneration is now MACHINERY, not archaeology), re-audit adoption map, re-check SegmentBar/errorpage/utils-format/FilterChips candidates; plus the B2 doc row.
+- ~~**C6 — T26**~~ done (CHANGELOG/TODO_LIST/DOMAIN_LANGUAGE/nolint-ledger/drafts README): docs harvest (TODO_LIST rows for C1–C4 + B1, DOMAIN_LANGUAGE entries, CHANGELOG fold for T1–T19+T22).
+- ~~**C7 — T27**~~ done (packaged-binary probe; owner rows recorded): host-deploy readiness (owner-blocked items recorded per plan).
 
 ## d) FUCKED UP (all found, all fixed, kept for the pattern library)
 
@@ -72,22 +72,22 @@
 
 ## f) NEXT 10 (Pareto-sorted; the full tail is C1–C7 + plan §2)
 
-1. **T20 CopyButton** (30 min) — detail page from/to numbers + native ID; CSP-safe by library construction.
-2. **T21 transcript jump** (90 min) — `?q=` plumb + `<mark>` + noscript anchor; goldens will catch regressions.
-3. **B1 heatmap eyeball** (5 min) — one probe run + look.
-4. **T24 upstream filings** (60 min) — BarChart collapse (with the bartest evidence), TableRow focus ring, per verify-before-filing; record in docs/upstream-filings.md.
-5. **T23 spikes** (60 min) — LineChart/DataTable/AppShell adopt-reject notes into the adoption map.
-6. **T25 watchlist** (30 min) — gen-tc-classes re-run procedure into AGENTS.md + bump trigger note (after the concurrent session's AGENTS.md diff lands).
-7. **T26 docs harvest** (60 min) — TODO_LIST rows for C1–C3 + B1, CHANGELOG fold for T1–T19+T22, DOMAIN_LANGUAGE entries (observation, stream, voice log, signal palette, hour-day bucket).
-8. **T27 deploy readiness** (30 min) — module option set gap list; owner-blocked rows recorded.
-9. **B2 golden doc row** — AGENTS.md Commands: golden update flow (with #6).
-10. **Plan annotation** — ANNOTATE the 13-32 plan: T1–T19+T22 EXECUTED with evidence pointers, tail C1–C7 remaining (plan §5.6: never rewrite).
+~~1. **T20 CopyButton** (30 min) — detail page from/to numbers + native ID; CSP-safe by library construction.~~ done — session two (13-32 EXECUTED table; CopyButton + tests + browser proof)
+~~2. **T21 transcript jump** (90 min) — `?q=` plumb + `<mark>` + noscript anchor; goldens will catch regressions.~~ done — session two (search_jump_test.go, goldens, templ-components#51 for the hook gap)
+~~3. **B1 heatmap eyeball** (5 min) — one probe run + look.~~ done — T19-eyeball PASS (20-PNG probe run reviewed)
+~~4. **T24 upstream filings** (60 min) — BarChart collapse (with the bartest evidence), TableRow focus ring, per verify-before-filing; record in docs/upstream-filings.md.~~ done — templ-components#48/#49/#50, voice-checked, recorded
+~~5. **T23 spikes** (60 min) — LineChart/DataTable/AppShell adopt-reject notes into the adoption map.~~ done — all three rejected with adopt triggers in the adoption map
+~~6. **T25 watchlist** (30 min) — gen-tc-classes re-run procedure into AGENTS.md + bump trigger note (after the concurrent session's AGENTS.md diff lands).~~ done — adoption-map watchlist + AGENTS.md wiring
+~~7. **T26 docs harvest** (60 min) — TODO_LIST rows for C1–C3 + B1, CHANGELOG fold for T1–T19+T22, DOMAIN_LANGUAGE entries (observation, stream, voice log, signal palette, hour-day bucket).~~ done — CHANGELOG/TODO_LIST/DOMAIN_LANGUAGE/nolint-ledger/drafts README
+~~8. **T27 deploy readiness** (30 min) — module option set gap list; owner-blocked rows recorded.~~ done — nix build + packaged-binary HTTP probe; owner rows recorded
+~~9. **B2 golden doc row** — AGENTS.md Commands: golden update flow (with #6).~~ done — watchlist step 5 carries the -update flow (T22.3 closed)
+~~10. **Plan annotation** — ANNOTATE the 13-32 plan: T1–T19+T22 EXECUTED with evidence pointers, tail C1–C7 remaining (plan §5.6: never rewrite).~~ done — 13-32 EXECUTED table + T22.4 annotated at `0ac2a82`
 
 ## g) QUESTIONS (max 3)
 
-1. **Q1 — same-file concurrency norm**: §d2 showed disjoint-features-same-file collides. Proposed norm: before editing a file a concurrent session has touched this hour, re-read it immediately before the edit and prefer scripted single-block patches; conflicts resolve last-writer-wins with a build check. Confirm or tighten?
-2. **Q2 — pager shape**: the plan said `navigation.Pagination`; keyset reality made numberless prev/next the honest form (rationale in `pagerRow`). Keep the Buttons pager, or do you want real page numbers enough to pay for a Count + cursor-walk renderer (O(page) scans per view)?
-3. **Q3 — corpus upstreaming**: `gen-tc-classes.js` fixes a consumer-side gap the library could own (it already ships its corpus "from the next release" per ADR-0045). File the over-capture extractor upstream as part of T24, or keep it consumer-local?
+~~1. **Q1 — same-file concurrency norm**: §d2 showed disjoint-features-same-file collides. Proposed norm: before editing a file a concurrent session has touched this hour, re-read it immediately before the edit and prefer scripted single-block patches; conflicts resolve last-writer-wins with a build check. Confirm or tighten?~~ answered by owner default (17-31 plan §0): retry-with-fresh-read stands, no claim system
+~~2. **Q2 — pager shape**: the plan said `navigation.Pagination`; keyset reality made numberless prev/next the honest form (rationale in `pagerRow`). Keep the Buttons pager, or do you want real page numbers enough to pay for a Count + cursor-walk renderer (O(page) scans per view)?~~ answered by owner default (17-31 plan §0): numberless pager final; no count-query work planned
+~~3. **Q3 — corpus upstreaming**: `gen-tc-classes.js` fixes a consumer-side gap the library could own (it already ships its corpus "from the next release" per ADR-0045). File the over-capture extractor upstream as part of T24, or keep it consumer-local?~~ answered by owner default (17-31 plan §0 §g.3): file now — done as templ-components#51
 
 ---
 
