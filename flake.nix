@@ -79,16 +79,17 @@
           go = pkgs.go_1_27;
 
           # cqrs-lint is its own module (…/cmd/cqrs-lint/v4) inside the
-          # go-cqrs-lite monorepo, so the build roots there; the hash pins a
-          # master rev rather than a tag (the module has no stable tags).
+          # go-cqrs-lite monorepo, so the build roots there. Pinned to the
+          # cmd/cqrs-lint/v4.16.0 release tag (the first tag carrying the
+          # P015 journal-readall rule; 2026-10-12).
           cqrs-lint = pkgs.buildGoModule.override { inherit go; } {
             pname = "cqrs-lint";
-            version = "0.0.0-unstable-2026-10-11";
+            version = "4.16.0";
             src = pkgs.fetchFromGitHub {
               owner = "LarsArtmann";
               repo = "go-cqrs-lite";
-              rev = "afaffa19105b2422ef0722f156bca6d92169c529";
-              hash = "sha256-2NQB4h2XHgFEnmCRDu/6TZfziINXcgUyXncKg8gLXVY=";
+              rev = "5a08b0ead55cd923b3b08cd45aba07d425aa193e";
+              hash = "sha256-AAAA";
             };
             sourceRoot = "source/cmd/cqrs-lint";
             # cqrs-lint's own tests run fixture projects through `go`, which
