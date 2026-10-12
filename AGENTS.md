@@ -40,7 +40,23 @@ webphone later gets a read-only deep link, never a data dependency.
   added no new module; htpasswd without bcrypt is not worth hand-rolling.
   Same precedent promoted `golang.org/x/time` (rate) direct 2026-10-11: the
   auth failed-attempt throttle rides a module that was already in the
-  graph. `go-atomic-write` was EVALUATED for the backup staging chain
+  graph. The 2026-10-12 HTTP-stack audit promoted three more in-graph
+  modules to direct (all were already pulled in via go-appkit → httputil):
+  `httputil` v1.4.1 (Compression middleware — the ONLY direct use; its ETag
+  support left for the sibling module in v1.1.0), `httputil/server_timing`
+  v1.0.2 (Server-Timing instrumentation; the released surface has NO
+  middleware constructor — wire via its own `WrapServerTiming`, and metrics
+  recorded after the first body write are silently dropped from the
+  header), and `go-etag/server` v0.6.1 (conditional GET; `entitytag` stays
+  indirect — server re-exports everything). Considered and NOT adopted
+  (2026-10-12 audit, docs/planning/2026-10-12_12-47_SUPERB-*.md):
+  appkit `errorpages`/`security`/`realtime` (do not exist in v0.8.0 —
+  HEAD-only), errorpages doubly blocked by templ-components `errorpage`
+  being ABSENT in pinned v1.21.0, rate-limiting exports (auth throttle +
+  bounded queries cover it), SSE-hub-instead-of-polling (rewrites shipped
+  R9), go-etag client for Telnyx (upstream ETag emission unverified),
+  handler-side data-fingerprint fast-304 (YAGNI at current index sizes).
+  `go-atomic-write` was EVALUATED for the backup staging chain
   (2026-10-11) and NOT adopted: its write entry points take Go data, while
   the staging file is written by sqlite itself (`VACUUM INTO`); the
   hand-rolled chain mirrors its semantics and adopts its unique-staging
@@ -53,20 +69,34 @@ webphone later gets a read-only deep link, never a data dependency.
   manual bumps only — a dependabot templ PR mangles this go.mod).
   Stay on the PUBLISHED templ-components version — no local replace (breaks
   hermetic nix); hand-roll missing thin pieces instead.
+- **UI theme — signal palette (2026-10-12):** app.css overrides the semantic
+  tokens `--color-tc-primary` (teal-600), `-hover` (teal-700), `--color-tc-info`
+  (teal-500) in an @theme block placed AFTER the `templ-components-theme.css`
+  import (later @theme wins the merge — the theme file binds
+  `--color-blue-600: var(--color-tc-primary)`, so one override re-skins every
+  library blue: buttons, badges, focus rings, BarChart bars, StatCard tiles,
+  nav active). Never hand-write `bg-blue-*` in pbx-lens .templ files; the
+  library's own classes re-skin through the token chain.
 - **templ-components v1.21.0 adoption map** (skill's consumer tip; the skill
   docs drift ahead of the pinned tag — this table is the truth for THIS repo):
 
   | Component                                                                                   | Status            | Note                                                                                                                          |
   | ------------------------------------------------------------------------------------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-  | layout.Base/DefaultPageProps                                                                | used              | `.Title` set; CSSPath defaults to /app.css                                                                                    |
-  | navigation.SimpleNav + ThemeToggle                                                          | used              |                                                                                                                               |
+  | layout.Base/DefaultPageProps                                                                | used              | `.Title` set; CSSPath defaults to /app.css; Base EMITS the `<main>` landmark — never nest a second main in the shell            |
+  | layout.Container / Split / Stack                                                            | used 2026-10-12   | Container replaces the hand-rolled main wrapper; Split(1-3)+Stack(LG) replaced hand-rolled grid/space-y in dashboard + detail  |
+  | navigation.SimpleNav + ThemeToggle + Footer                                                 | used              | Footer (BrandText single-row) anchored to Base's Footer slot since 2026-10-12                                                  |
   | display.Table/TableRow.Href/TableCell                                                       | used              | row-click JS included                                                                                                         |
-  | display.Badge, PageHeader, EmptyState, ListNote, RelativeTime, Card, DefinitionList, Button | used              | DefinitionList takes `Items []DefinitionItem{Term, Detail, DetailComponent}` — NOT children                                   |
-  | forms.Select/DatePicker                                                                     | used              | selected-ness is per `SelectOption.Selected`, no props-level Selected                                                         |
-  | feedback.Alert                                                                              | used              | staleness banner; dashboard MOS placeholder                                                                                   |
-  | display.Grid + StatCard (dashboard stat row)                                                | used              | StatCard.Value is a string; the library renders `>N </dd>` with a trailing space — assert accordingly                         |
+  | display.Badge, PageHeader, EmptyState, ListNote, RelativeTime, Card, DefinitionList, Button | used              | DefinitionList takes `Items []DefinitionItem{Term, Detail, DetailComponent}` — NOT children; PageHeader.Action = Export CSV     |
+  | display.Scrollback (transcript)                                                             | used 2026-10-12   | replaced hand-rolled bubbles; `Stagger: false` (reading content, not replay); exact counts ride in legend Labels                |
+  | display.PieChart Donut (AI/human mix)                                                       | used 2026-10-12   | Donut+CenterLabel+ShowLegend replaced the hand-rolled flex bar; Slice.Color is a text-* class (fill=currentColor)               |
+  | display.Grid + StatCard (dashboard stat row)                                                | used              | icons (Phone/Calendar/Microphone/Clock) + Tones added 2026-10-12; StatCard.Value is a string; renders `>N </dd>` — assert so    |
   | display.BarChart (vertical) + Sparkline (dashboard volume/trend)                            | used              | MinBarWidth `min-w-1` + Gap `gap-px` for dense 30-day series; Tooltip carries the full date                                   |
-  | display.SegmentBar / ProgressBar / utils/format / errorpage / FilterBar / SegmentedControl  | ABSENT in v1.21.0 | SegmentBar exists unreleased upstream — the dashboard ships a hand-rolled flex bar until it publishes; do not import the rest |
+  | forms.Select/DatePicker + Form(FormGet, FormLayoutInline)                                   | used 2026-10-12   | FormLayoutInline == the old hand-rolled `flex flex-wrap items-end gap-3` row; Form renders the `<form>`, Apply/Reset are Button |
+  | forms.Input (InputSearch)                                                                   | used 2026-10-12   | replaced the raw search input on /search                                                                                       |
+  | feedback.Alert + CircularProgress                                                           | used              | Alert: staleness + MOS placeholder; CircularProgress: MOS gauge ((MOS-1)/4*100, aria-valuenow asserted in tests)                |
+  | icons                                                                                       | used 2026-10-12   | EmptyState.Icon takes `icons.Name`; Button.Icon takes a rendered `icons.Icon(name, class)`; ~100 names in icon_names.go         |
+  | htmx.PolledRegion                                                                           | used              | dashboard cards 30s, staleness banner 60s                                                                                      |
+  | display.SegmentBar / utils/format / errorpage / FilterBar / SegmentedControl                | ABSENT in v1.21.0 | feedback.ProgressBar EXISTS (contrary to earlier note) — SegmentBar alone is unreleased upstream; the rest stays unimported    |
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's pattern,
   adopted 2026-10-11): `subPackages = ["./cmd/pbx-lens"]` wires the package to
   the real binary (the module default `["."]` built the package-less root and
@@ -125,21 +155,40 @@ webphone later gets a read-only deep link, never a data dependency.
   running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
   FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
   deliberately not honored).
-- **serve/UI:** `serve` composes appkit (`ServiceConfig{Addr}` +
-  `systemd.Install` — a no-op without `NOTIFY_SOCKET`, READY/STOPPING/WATCHDOG
-  under the manager) around `web.Register`; every UI route is a query or a
-  proxy, never a write. The recording proxy's two upstream hops are bounded
-  by `web.DefaultUpstreamTimeout` (30 s; `serve -recording-timeout`):
-  metadata fetch deadline + WAV response headers, body streams unbounded.
-  Exports and the dashboard STREAM via keyset pagination
-  (`StreamExportCalls`, 5k-row pages, memory-bounded, no row cap); the
-  dashboard's day buckets resolve in Europe/Berlin (owner R2 2026-10-12 —
-  bare date filters too), an idle index drifts out of the chart. htmx
-  polling (R9): `/frag/dashboard` 30 s, `/frag/staleness` 60 s, runtime
-  self-hosted at `/static/htmx.min.js` — no CDN. `/api/ops` (R15) serves
-  the poller's per-source counters behind the same auth. The systemd draft
-  lives in `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential
-  for the Telnyx key + htpasswd); the NixOS module LANDED in
+- **serve/UI:** `serve` composes appkit (`ServiceConfig` with `Addr`,
+  `Version` → `GET /version` + `appkit_build_info`, `WriteTimeout:
+  NoTimeout` — the Timeout middleware drops out because exports and the
+  recording WAV stream UNBOUNDED by contract and a 30 s deadline truncated
+  both, and `Metrics` with the explicit `AllowUnauthenticated` opt-in —
+  auth is the htpasswd middleware or loopback-only dev — → `GET /metrics`
+  Prometheus text) + `systemd.Install` (a no-op without `NOTIFY_SOCKET`,
+  READY/STOPPING/WATCHDOG under the manager) around `web.Register`; every
+  UI route is a query or a proxy, never a write. ExtraMiddlewares wire in
+  strict order auth → `web.ServerTimingMiddleware` (W3C Server-Timing via
+  httputil/server_timing's `WrapServerTiming`; handlers add named metrics
+  with `MeasureServerTiming` BEFORE the first body write — records after
+  the header flush are lost, which is why streaming routes only time their
+  pre-first-write hops) → `httputil.Compression` (q-value negotiation,
+  outer of ETag so tags hash identity bodies — go-etag's ordering
+  doctrine) → `web.ETagMiddleware` (go-etag/server; `SkipIfPresent` on;
+  Skip policy: `/frag/staleness` + `/api/freshness` embed an age that
+  changes every response, `/api/export.*` + `*/recording` stream
+  unbounded and must never be buffered). `web.render` buffers templ pages
+  into one atomic write: templ's streaming writer flushes per section and
+  a flushed body can never be hashed into a 304. `/version` and `/metrics`
+  exist beside the appkit `/health{,/live,/ready}` routes. The recording
+  proxy's two upstream hops are bounded by `web.DefaultUpstreamTimeout`
+  (30 s; `serve -recording-timeout`): metadata fetch deadline + WAV
+  response headers, body streams unbounded. Exports and the dashboard
+  STREAM via keyset pagination (`StreamExportCalls`, 5k-row pages,
+  memory-bounded, no row cap); the dashboard's day buckets resolve in
+  Europe/Berlin (owner R2 2026-10-12 — bare date filters too), an idle
+  index drifts out of the chart. htmx polling (R9): `/frag/dashboard`
+  30 s, `/frag/staleness` 60 s, runtime self-hosted at
+  `/static/htmx.min.js` — no CDN. `/api/ops` (R15) serves the poller's
+  per-source counters behind the same auth. The systemd draft lives in
+  `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential for the
+  Telnyx key + htpasswd); the NixOS module LANDED in
   nix-international-telephony 2026-10-11 (`modules/telephony/lens.nix`,
   `services.telephony.pbx-lens.*` with backup + purge timers;
   `deploy/nixos/module-draft.nix` is a superseded design record).

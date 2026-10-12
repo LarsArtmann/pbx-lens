@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
-	"github.com/larsartmann/httputil/server_timing"
 	errorfamily "github.com/larsartmann/go-error-family"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
@@ -108,6 +108,7 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
 	page, err := ListCalls(r.Context(), s.sys, filters)
+
 	stop()
 
 	if err != nil {
@@ -234,6 +235,7 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
 	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters)
+
 	stop()
 
 	if err != nil {
@@ -255,6 +257,7 @@ func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
 	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters)
+
 	stop()
 
 	if err != nil {
@@ -334,6 +337,7 @@ func (s *server) stalenessFragment(w http.ResponseWriter, r *http.Request) {
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
 	page, err := ListCalls(r.Context(), s.sys, filters)
+
 	stop()
 
 	if err != nil {
@@ -350,6 +354,7 @@ func (s *server) stalenessFragment(w http.ResponseWriter, r *http.Request) {
 func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
 	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
+
 	stop()
 
 	if err != nil {

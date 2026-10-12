@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/larsartmann/httputil"
-	"github.com/larsartmann/httputil/server_timing"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 )
 
 // ServerTimingMiddleware instruments every route with W3C Server-Timing

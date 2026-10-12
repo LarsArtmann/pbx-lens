@@ -9,6 +9,41 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ### Added
 
+- HTTP-stack adoption pass (audit: docs/planning/2026-10-12_12-47_SUPERB-
+  httputil-go-etag-go-appkit-max-adoption.md): conditional GET everywhere —
+  go-etag/server middleware answers unchanged pages, htmx poll fragments
+  (the 30s dashboard region), and static assets with 304 Not Modified,
+  with a Skip policy that keeps the unbounded export/recording streams and
+  the ever-changing staleness/freshness bodies out of the buffer;
+  Server-Timing instrumentation on every route (per-route named metrics:
+  query/stats/fts/count plus the recording proxy's metadata/headers hops)
+  via httputil/server_timing; gzip wire compression for HTML/JSON/CSS/JS/
+  CSV, ordered outer of ETag so tags hash identity bodies; `GET /version`
+  and a Prometheus `/metrics` surface from previously unused appkit
+  ServiceConfig knobs; and the stream-contract fix — `WriteTimeout:
+  NoTimeout` removes the appkit default 30s request deadline that
+  truncated no-row-cap exports and long recording downloads. `web.render`
+  now buffers templ pages into one atomic write (a flushed body can never
+  be hashed into a 304, and a mid-render failure is a real 500 instead of
+  an error appended to a half-written page). `httputil` v1.4.1,
+  `httputil/server_timing` v1.0.2, and `go-etag/server` v0.6.1 promoted to
+  direct dependencies — all three were already in the module graph via
+  go-appkit (same precedent as x/crypto and x/time).
+- UI pass over the serve web app using templ-components v1.21.0 to the hilt:
+  library `forms.Form` (inline layout) + `display.Button` replace every
+  hand-rolled filter/search form control; `layout.Container`/`Split`/`Stack`
+  replace hand-rolled page wrappers; `display.Scrollback` renders transcripts
+  as a terminal-style voice log; the AI/human mix becomes a `display.PieChart`
+  donut with the exact counts in its legend (supersedes the blocked
+  SegmentBar swap); `feedback.CircularProgress` gauges the MOS mean;
+  StatCards and EmptyStates gain icons; the page header surfaces the existing
+  CSV export route; a footer anchors the shell; and the duplicate nested
+  `<main>` landmark is fixed.
+- Signal-palette theming: `app.css` overrides the library's semantic tokens
+  (`--color-tc-primary`/`-hover`/`--color-tc-info`) with teal after the theme
+  import, re-skinning every library blue (buttons, badges, charts, focus
+  rings, nav active state) from one block.
+
 - DID-interception direction auto-detect (R22, post-release slice of the
   design note): `-ai-did` (comma-separated AI-facing DIDs) on both
   `ingest-telnyx` and `serve`; conversations touching a known AI DID

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/larsartmann/httputil/server_timing"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 )
@@ -102,7 +102,9 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 
 	metaStop := servertiming.MeasureServerTiming(r.Context(), "metadata")
 	recording, err := s.recordings.Telnyx.FetchRecording(metaCtx, recordingID)
+
 	metaStop()
+
 	if err != nil {
 		if metaCtx.Err() != nil {
 			http.Error(w, "recording metadata fetch exceeded the upstream timeout", http.StatusGatewayTimeout)
@@ -136,6 +138,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 
 	headerStop := servertiming.MeasureServerTiming(r.Context(), "headers")
 	response, err := s.upstream.Do(upstream)
+
 	headerStop()
 
 	if err != nil {
