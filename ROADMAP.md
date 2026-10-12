@@ -38,9 +38,8 @@ nightly backup staging, purge timers. Raw ideas:
 - Per-IP rate limiting (the shared bucket is global)
 - Poller ops endpoint: per-source rejection counters (log lines only today)
 - Structured logging (`log/slog`) for poller/serve passes
-- Production `-max-age` window in the sibling NixOS module (owner picks the
-  value; also `-recording-timeout` exposure there)
-- v0.1.0 first release tag once the owner ratifies the release gate
+- v0.1.0 release + the production `-max-age` / `-recording-timeout` module
+  values are owner-blocked rows in TODO_LIST (not repeated here)
 
 ### 3. Ecosystem integration (plan phase 4)
 
@@ -58,8 +57,6 @@ The index concentrates call metadata; it must age gracefully and respect PII.
 - Direction auto-detection for inbound AI calls (DID interception path);
   today direction is caller-declared because Telnyx conversation metadata
   exposes none
-- Production re-ingest for ContentHash v2 (the production DB must be
-  re-ingested once; needs the prod deploy path — owner)
 
 ## Non-goals
 

@@ -78,14 +78,14 @@ README screenshots, keyset-pagination probe.
 
 ## f) Top next tasks
 
-| # | Task                                                                                                                                          | Impact | Effort | Category      |
-| - | --------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| ~~1~~ | ~~Land the one fully-green single-pass gate (23:59 attempt pending)~~ done — superseded: full gate green 23:30 (73/0/0) the same evening; more greens 2026-10-12 | ~~High~~ | ~~S~~ | ~~Quality~~ |
-| 2 | P9 filings: post the five D6 drafts + go-atomic-write ask (owner go) **→ owner go; drafts in docs/drafts/** | Medium | M      | Quality       |
-| 3 | Sibling module production `-max-age` + `ingest-* -max-age` flags (owner value) **→ TODO_LIST blocked row (owner picks the window)** | High   | S      | Feature       |
-| 4 | First release tag v0.1.0 via go-release **→ TODO_LIST blocked row (owner release gate)** | Medium | M      | Feature       |
-| ~~5~~ | ~~domain.go split pass to retire file-size advisories~~ done — landed 2026-10-12 (02:34 splits: domain/events/commands/decider) | ~~Low~~ | ~~M~~ | ~~Cleanup~~ |
-| 6 | crush-config lessons.md: "sibling repos are the first dependency search path" + "wire tests from existing scaffolding" (by commit, that repo) **→ crush-config repo, by commit** | Low    | S      | Documentation |
+| #     | Task                                                                                                                                                                             | Impact   | Effort | Category      |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
+| ~~1~~ | ~~Land the one fully-green single-pass gate (23:59 attempt pending)~~ done — superseded: full gate green 23:30 (73/0/0) the same evening; more greens 2026-10-12                 | ~~High~~ | ~~S~~  | ~~Quality~~   |
+| 2     | P9 filings: post the five D6 drafts + go-atomic-write ask (owner go) **→ owner go; drafts in docs/drafts/**                                                                      | Medium   | M      | Quality       |
+| 3     | Sibling module production `-max-age` + `ingest-* -max-age` flags (owner value) **→ TODO_LIST blocked row (owner picks the window)**                                              | High     | S      | Feature       |
+| 4     | First release tag v0.1.0 via go-release **→ TODO_LIST blocked row (owner release gate)**                                                                                         | Medium   | M      | Feature       |
+| ~~5~~ | ~~domain.go split pass to retire file-size advisories~~ done — landed 2026-10-12 (02:34 splits: domain/events/commands/decider)                                                  | ~~Low~~  | ~~M~~  | ~~Cleanup~~   |
+| 6     | crush-config lessons.md: "sibling repos are the first dependency search path" + "wire tests from existing scaffolding" (by commit, that repo) **→ crush-config repo, by commit** | Low      | S      | Documentation |
 
 ## g) Top questions I can NOT figure out myself
 

@@ -124,6 +124,14 @@ No version has been tagged yet; everything lives under Unreleased.
   `cli.RebuildOpenIndex`, `EnrichmentSeed`, `enrichConversation`,
   `streamLabel`, `hasStart`) — internal Go identifiers only; no JSON tags,
   wire fields, CLI flags, or DB columns changed.
+- Documentation pass (2026-10-12 docs-health AUDIT): the 21 superseded
+  status reports (2026-10-10 → 2026-10-12) annotated inline (every open item
+  carries a done/routed/won't verdict) and archived to `docs/status/archived/`
+  with a manifest; ROADMAP rebuilt (shipped ideas graduated to FEATURES,
+  owner questions collected); TODO_LIST fourth pass (prod re-ingest, v0.1.0,
+  and sibling-module values added as owner-blocked rows); FEATURES evidence
+  refreshed against the post-split file layout; the `mosAvgLabel` →
+  `avgMOSLabel` split-brain remnant renamed.
 
 ### Fixed
 

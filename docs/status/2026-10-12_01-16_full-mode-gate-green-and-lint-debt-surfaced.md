@@ -154,14 +154,14 @@ Code quality:
 
 Docs:
 18. ~~HARVEST this report's (f) into TODO_LIST.md/ROADMAP.md.~~ done — third-pass TODO
-    closure (02:34) + the 2026-10-12 docs-health AUDIT pass (TODO_LIST/ROADMAP rebuilt).
+closure (02:34) + the 2026-10-12 docs-health AUDIT pass (TODO_LIST/ROADMAP rebuilt).
 19. Record the `-test.shuffle` seed-replay trick in the session-status pattern for
 future gate triage (done in buildflow-dev-gate.md; cross-link from TODO_LIST).
 20. Update the CI lane docs if golangci-lint pin policy changes.
 
 Upstream (D6 cluster):
 21. ~~Check status of go-cqrs-lite#62 (sqlite time binding) — close in-repo note if fixed.~~
-    done at the 02:34 session: all five filings re-verified OPEN (docs/upstream-filings.md).
+done at the 02:34 session: all five filings re-verified OPEN (docs/upstream-filings.md).
 22. ~~Check go-cqrs-lite#63 (memory engine field-name filters).~~ done at the 02:34 session (OPEN).
 23. ~~Check go-cqrs-lite#64 (cqrs-lint C009/E005).~~ done at the 02:34 session (OPEN; covers the C009 bare-`must` gap).
 24. ~~Check go-nix-helpers#7 (templ formatter go wrap).~~ done at the 02:34 session (OPEN).
