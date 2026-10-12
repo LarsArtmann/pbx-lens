@@ -40,6 +40,13 @@ jobs:
         # contract is a visible lane, not an implicit byproduct of ./...
         run: go test -race -timeout 60s -v -run 'TestLiveServerEndToEnd' ./internal/web
 
+      - name: Backup restore drill
+        # R16: the nightly snapshot path (VACUUM INTO snapshot → integrity
+        # verify → restore into a fresh DSN → serve-startup FTS rebuild) is
+        # the disaster-recovery proof; a named lane keeps it visible on
+        # every push instead of an implicit byproduct of ./...
+        run: go test -race -timeout 60s -v -run 'TestRestoreDrillSnapshotToFreshIndex' ./internal/backup
+
       - name: Check coverage threshold
         run: |
           MIN_COVERAGE=50
