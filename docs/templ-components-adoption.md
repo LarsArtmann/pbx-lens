@@ -18,6 +18,28 @@
 | display.LineChart                                                                           | rejected 2026-10-12 | SVG fixed-pixel (Width/Height ints, 600×300 default) in a responsive card, no per-point tooltips; the one-spike volume series renders flatline+jump vs BarChart's labeled day bar (T23 spike, 2026-10-12); adopt trigger: multi-series quantitative comparison where axes/ticks earn their keep |
 | display.DataTable                                                                           | rejected 2026-10-12 | sort-link shell over Table — server-side sort must exist behind the sort URLs, and ListCallsQuery is keyset-paginated date-desc by design; adopt trigger: operators demand column sorting AND a sort-capable query surface lands |
 | layout.AppShell                                                                             | rejected 2026-10-12 | sidebar grid earns its keep at ≥6 destinations; 3-item SimpleNav + ThemeToggle + BottomBar already cover shell duties; revisit on real IA growth (operator/admin split) |
+
+## Version-bump watchlist (run on EVERY templ-components bump, in order)
+
+1. **Regenerate the Tailwind corpus:** `node scripts/gen-tc-classes.js` — the
+   class list is pinned to module-cache sources; a stale corpus silently
+   drops new/renamed library classes (this shipped the 2026-10-12 hamburger/
+   dark-shade breakage). Rebuild CSS after: `nix develop -c tailwindcss -i
+   internal/web/static/app.css -o internal/web/static/styles.css --minify`.
+2. **Re-audit this map against the new pin:** `ls` the new module cache for
+   every ABSENT/rejected row (SegmentBar, FilterBar, SegmentedControl,
+   utils/format, LineChart, DataTable, AppShell) — flip rows that shipped,
+   with a one-line why-not for flips that stay rejected.
+3. **Re-check the hand-rolled thin pieces** for library equivalents:
+   `transcriptMatchLog` (waits on a ScrollbackLine id/class hook),
+   SegmentBar stand-in, anything else carrying a "hand-rolled" status here.
+4. **Re-read the open templ-components filings** (#48 BarChart collapse,
+   #49 TableRow focus ring, #50 skill drift) — a fix upstream deletes a
+   local workaround (`!items-stretch` class args, the focus-visible CSS).
+5. **Goldens:** markup changes from the bump are deliberate — refresh with
+   `GOEXPERIMENT=jsonv2 go test ./internal/web/ -run TestGoldenPages
+   -update`, REVIEW the diff, then commit; the plain suite must go green
+   without `-update` afterwards.
 | display.PieChart Donut (AI/human mix)                                                       | used 2026-10-12   | Donut+CenterLabel+ShowLegend replaced the hand-rolled flex bar; Slice.Color is a text-* class (fill=currentColor)               |
 | display.Grid + StatCard (dashboard stat row)                                                | used              | icons (Phone/Calendar/Microphone/Clock) + Tones added 2026-10-12; StatCard.Value is a string; renders `>N </dd>` — assert so    |
 | display.BarChart (vertical) + Sparkline (dashboard volume/trend)                            | used              | MinBarWidth `min-w-1` + Gap `gap-px` for dense 30-day series; Tooltip carries the full date                                     |

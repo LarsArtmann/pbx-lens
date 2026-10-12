@@ -59,7 +59,10 @@ webphone later gets a read-only deep link, never a data dependency.
 - **templ-components v1.21.0 adoption map:** the per-component truth for
   THIS repo lives in docs/templ-components-adoption.md — the skill docs
   drift ahead of the pinned tag; several components are ABSENT in v1.21.0,
-  so check the map before importing anything new.
+  so check the map before importing anything new. The same doc carries the
+  version-bump watchlist (gen-tc-classes → map re-audit → hand-rolled
+  re-check → filings re-read → golden `-update`) — run it in order on
+  every templ-components bump.
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's
   pattern): `subPackages = ["./cmd/pbx-lens"]` wires the package to the
   real binary (the default `["."]` built the package-less root and shipped
