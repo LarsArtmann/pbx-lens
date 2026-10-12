@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"html"
 	"net/http"
 	"strings"
 	"testing"
@@ -44,7 +45,8 @@ func extractHref(t *testing.T, body, text string) string {
 	rest := after0
 	end := strings.Index(rest, `"`)
 
-	return rest[:end]
+	// templ HTML-escapes attribute values; & separators arrive as &amp;.
+	return html.UnescapeString(rest[:end])
 }
 
 // TestPagerSinglePageRendersNothing pins the exactly-one-page edge: with
@@ -147,5 +149,26 @@ func TestPagerPreservesFilters(t *testing.T) {
 	newerHref := extractHref(t, deep, "Newer calls")
 	if !strings.Contains(newerHref, "direction=inbound") || !strings.Contains(newerHref, "after=") {
 		t.Errorf("filtered Newer href = %q, want direction filter + cursor", newerHref)
+	}
+}
+
+// TestDetailBreadcrumbs pins the orientation trail (plan T8): the detail
+// page renders a breadcrumb nav whose first crumb links back to Calls and
+// whose last crumb is the current page.
+func TestDetailBreadcrumbs(t *testing.T) {
+	seeded := webObservation("conv-bc", time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
+	mux := newTestServer(t, seeded)
+
+	_, body := getBody(t, mux, "/calls/telnyx-conversation/conv-bc")
+	if !strings.Contains(body, `aria-label="Breadcrumb"`) && !strings.Contains(body, "Breadcrumb") {
+		t.Fatal("detail page missing breadcrumb nav")
+	}
+
+	if got := extractHref(t, body, "Calls"); got != "/" {
+		t.Errorf("first crumb href = %q, want /", got)
+	}
+
+	if !strings.Contains(body, "telnyx-conversation") {
+		t.Error("kind crumb missing")
 	}
 }

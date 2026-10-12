@@ -9,6 +9,7 @@ import (
 	"github.com/larsartmann/templ-components/htmx"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/layout"
+	"github.com/larsartmann/templ-components/navigation"
 )
 
 // listRoute is the full list page: shell + optional staleness banner + the
@@ -41,12 +42,26 @@ templ detailRoute(view calls.CallView) {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:             callTitle(view),
 			SubtitleComponent: sourceBadge(view.Kind),
+			Breadcrumb:        detailBreadcrumbs(view),
 		})
 		@layout.Split(layout.SplitProps{
 			Main:  detailMain(view),
 			Aside: recordingCard(view),
 		})
 	}
+}
+
+// detailBreadcrumbs orients the detail page (plan T8): Calls → source kind →
+// id. JSON-LD stays off — the kind segment has no honest list URL (the list
+// has no kind filter), and schema.org breadcrumbs want a URL per crumb.
+templ detailBreadcrumbs(view calls.CallView) {
+	@navigation.Breadcrumbs(navigation.BreadcrumbsProps{
+		Items: []navigation.BreadcrumbItem{
+			{Text: "Calls", Href: "/"},
+			{Text: string(view.Kind)},
+			{Text: callTitle(view)},
+		},
+	})
 }
 
 // sourceBadge names the originating system as a neutral pill under the title.
