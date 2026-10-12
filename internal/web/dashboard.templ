@@ -134,7 +134,7 @@ templ volumeCard(stats DashboardStats) {
 			// Height + !items-stretch: without them the bar wrapper has no
 			// definite height and every vertical bar collapses to 0 px
 			// (verified in-browser; upstream file candidate).
-			Height:       "h-40",
+			Height:       "10rem",
 			Class:        "!items-stretch",
 			MinBarWidth:  "min-w-1",
 			Gap:          "gap-px",
@@ -156,7 +156,7 @@ templ durationCard(stats DashboardStats) {
 		@display.BarChart(display.BarChartProps{
 			Bars: durationBars(stats.Durations),
 			Orient:      display.BarVertical,
-			Height:      "h-40",
+			Height:      "10rem",
 			Class:       "!items-stretch",
 			ShowValues:   true,
 			EmptyMessage: "No calls indexed yet",
@@ -249,7 +249,7 @@ templ mosCard(stats DashboardStats) {
 					@display.BarChart(display.BarChartProps{
 						Bars:  mosBars(stats.ByDay),
 						Orient: display.BarVertical,
-						Height: "h-24",
+						Height: "6rem",
 						Class:  "!items-stretch",
 						MinBarWidth:  "min-w-1",
 						Gap:          "gap-px",

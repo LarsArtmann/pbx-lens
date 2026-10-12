@@ -87,7 +87,15 @@ function buildAndServe() {
   return new Promise((resolve, reject) => {
     (function ping() {
       http
-        .get(`${BASE}/`, (r) => (r.statusCode === 200 ? resolve(serve) : retry()))
+        .get(`${BASE}/`, (r) => {
+          // A successful ping against a dead child means an older serve
+          // still owns the port — captures would silently hit a stale
+          // binary + CSS, so fail loudly instead.
+          if (serve.exitCode !== null) {
+            return reject(new Error(`port ${PORT} already in use (stale serve?); kill it or pass --port`));
+          }
+          return resolve(serve);
+        })
         .on("error", retry);
       function retry() {
         if (Date.now() > deadline) return reject(new Error("serve did not come up"));
@@ -155,6 +163,9 @@ function buildAndServe() {
     console.log(`DONE: ${n} PNGs in ${OUT}`);
   } finally {
     serve.kill("SIGTERM");
+    // Graceful drain can hang on a stuck keep-alive; never leave a serve
+    // squatting on the port for the next run.
+    setTimeout(() => serve.kill("SIGKILL"), 3000).unref();
   }
 })().catch((e) => {
   console.error(e);

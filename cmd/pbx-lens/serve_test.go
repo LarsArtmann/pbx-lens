@@ -79,11 +79,13 @@ func TestServeStackEndToEnd(t *testing.T) {
 	client := noAutoGzip()
 
 	// The cacheable surfaces: revalidation (200 → ETag → 304) and gzip on
-	// both the embedded asset and the hot 30s poll fragment.
-	for _, path := range []string{"/static/htmx.min.js", "/frag/dashboard"} {
-		assertConditionalGET(t, client, ts.FullChainURL, path)
-		assertGzip(t, client, ts.FullChainURL, path)
-	}
+	// both the embedded asset and the hot 30s poll fragment. Fragment routes
+	// additionally carry Cache-Control: no-cache on the 200 AND the 304, so
+	// browsers and htmx polls revalidate instead of serving stale HTML.
+	assertConditionalGET(t, client, ts.FullChainURL, "/static/htmx.min.js", false)
+	assertGzip(t, client, ts.FullChainURL, "/static/htmx.min.js")
+	assertConditionalGET(t, client, ts.FullChainURL, "/frag/dashboard", true)
+	assertGzip(t, client, ts.FullChainURL, "/frag/dashboard")
 
 	status, headers, _ := get(t, client, ts.FullChainURL, "/frag/staleness", nil)
 	if status != http.StatusOK {
@@ -92,6 +94,10 @@ func TestServeStackEndToEnd(t *testing.T) {
 
 	if headers.Get("ETag") != "" {
 		t.Errorf("staleness fragment carries ETag %q; the age it embeds changes every response", headers.Get("ETag"))
+	}
+
+	if cc := headers.Get("Cache-Control"); cc != "no-cache" {
+		t.Errorf("staleness fragment Cache-Control = %q, want no-cache (revalidate every poll even without an ETag)", cc)
 	}
 
 	_, headers, _ = get(t, client, ts.FullChainURL, "/dashboard", nil)
@@ -118,8 +124,10 @@ func TestServeStackEndToEnd(t *testing.T) {
 
 // assertConditionalGET cycles a path through the full revalidation
 // contract: 200 with an ETag, then a 304 with an empty body on
-// If-None-Match.
-func assertConditionalGET(t *testing.T, client *http.Client, base, path string) {
+// If-None-Match. wantNoCache additionally asserts Cache-Control: no-cache
+// on both responses (the deterministic-revalidation contract for HTML
+// fragments; static assets opt out).
+func assertConditionalGET(t *testing.T, client *http.Client, base, path string, wantNoCache bool) {
 	t.Helper()
 
 	status, headers, _ := get(t, client, base, path, nil)
@@ -132,13 +140,25 @@ func assertConditionalGET(t *testing.T, client *http.Client, base, path string) 
 		t.Fatalf("%s served without an ETag; conditional revalidation cannot work", path)
 	}
 
-	status, _, body := get(t, client, base, path, map[string]string{"If-None-Match": etag})
+	if wantNoCache {
+		if cc := headers.Get("Cache-Control"); cc != "no-cache" {
+			t.Errorf("%s 200 Cache-Control = %q, want no-cache", path, cc)
+		}
+	}
+
+	status, notModifiedHeaders, body := get(t, client, base, path, map[string]string{"If-None-Match": etag})
 	if status != http.StatusNotModified {
 		t.Fatalf("%s conditional GET status = %d, want 304 (body: %q)", path, status, body)
 	}
 
 	if body != "" {
 		t.Errorf("%s 304 carried a body of %d bytes, want empty", path, len(body))
+	}
+
+	if wantNoCache {
+		if cc := notModifiedHeaders.Get("Cache-Control"); cc != "no-cache" {
+			t.Errorf("%s 304 Cache-Control = %q, want no-cache (the header must survive revalidation)", path, cc)
+		}
 	}
 }
 

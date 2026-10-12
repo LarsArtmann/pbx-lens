@@ -39,6 +39,22 @@ structured slog records, the restore-drill test. Remaining raw ideas:
 - v0.1.0 release + the production `-max-age` / `-recording-timeout` module
   values are owner-blocked rows in TODO_LIST (not repeated here)
 
+HTTP-stack follow-ons (2026-10-12 adoption wrap; each parked on its own
+revisit trigger — not commitments):
+
+- gzip CPU cost check at production index size (revisit when real export
+  volumes are known; 4–6x ratios proven only on the synthetic probe)
+- errorpages / security middleware revisit when templ-components publishes
+  its errorpage or go-appkit v0.9 ships the `security/`/`errorpages/`
+  packages (both absent in the pinned v0.8.0 / v1.21.0)
+- data-fingerprint fast-304 (mtime+count keyed) if the index grows ~100x
+- static assets with hashed filenames + long max-age (measure the actual
+  cache-miss rate first; YAGNI-lean while htmx.min.js is the only asset)
+- `go-etag/entitytag` as a direct dep only if handler-set tags ever land
+- consolidate `timing.go`/`caching.go` when a fourth middleware arrives
+- etag/gzip ratios surfaced as `appkit_*` metrics (needs appkit metric
+  plumbing; `/api/ops` hook wiring is the TODO_LIST near-term)
+
 ### 3. Ecosystem integration (plan phase 4)
 
 The index is a consumer; the ecosystem reads from it.
@@ -108,3 +124,12 @@ Remaining raw idea:
   < 40; below that, casualties verify individually
   (docs/buildflow-dev-gate.md). Recorded as the standing norm so future
   sessions do not re-derive it.
+- **Multi-agent coordination for this repo** (2026-10-12): two concurrent
+  agent sessions collided twice in one day (shared-tree gate runs burned on
+  foreign edits; one commit shipped another session's unstaged deletion and
+  went CI-red). Candidate conventions: a session-claim line in AGENTS.md, or
+  branch-per-agent with explicit merges. Until the owner decides, the
+  standing norm is concurrency pre-flight (check `git status` for foreign
+  entries + fresh mtimes before any gate/commit) and ship-state verification
+  (test what HEAD contains, e.g. `git stash -u` the foreign delta or probe a
+  clean worktree of the commit). (docs/status/2026-10-12_13-49 §e/§g.3)

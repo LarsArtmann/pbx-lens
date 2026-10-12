@@ -36,6 +36,18 @@
 > check green, pushed). The old "expose -max-age/-recording-timeout"
 > sibling row resolved against code: both options existed and were wired
 > already — only the host deploy remains (blocked on the deploy path).
+>
+> Seventh pass 2026-10-12 (harvest of the 13-49 SUPERB wrap §f, 50 items):
+> go-etag cache-hook wiring, e2e cache-semantics hardening, README ops
+> notes, the templ-flush gotchas entry, coverage + hash-cost rows, and
+> SECURITY.md landed below; browser-level 304 check, upstream fold-in
+> (go-etag#2/go-appkit#26), v0.2.0 cut, >1MiB transcript policy, and the
+> dependabot confirmation landed as blocked rows; the deferred-trigger
+> ideas and the multi-agent-protocol question routed to ROADMAP; two
+> cross-project lessons routed to crush-config. The 13-49 §g questions:
+> Q1 answered by events (concurrent session landed; disjoint-file work
+> proved fine), Q2 = the blocked browser row + `Cache-Control: no-cache`
+> shipped, Q3 = ROADMAP open question.
 
 ## Status legend
 
@@ -57,7 +69,12 @@
 | Task                                                                                                                                                  | Status       | Impact | Effort | Evidence                                                                                                                                         |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Production re-ingest for ContentHash v2 (one-time; the live DB still hashes v1 fields)                                                                | 🔵 `BLOCKED` | High   | 60min  | needs the prod deploy path (owner); CHANGELOG domain-redesign entry; docs/status/archived 2026-10-11_18-21 §c.1; docs/status/2026-10-12_02-34 §c |
-| Deploy both hosts with the current lens module options (`aiDids` newly available; `-max-age`/`-recording-timeout` verified already exposed and wired) | 🔵 `BLOCKED` | High   | 30min  | needs the host deploy path (owner); `modules/telephony/lens.nix` (nix-international-telephony e7c0f8b); sibling flake check green 2026-10-12     |
+| Deploy both hosts with the current lens module options (`aiDids` newly available; `-max-age`/`-recording-timeout` verified already exposed and wired)  | 🔵 `BLOCKED` | High   | 30min  | needs the host deploy path (owner); `modules/telephony/lens.nix` (nix-international-telephony e7c0f8b); sibling flake check green 2026-10-12     |
+| Cut v0.2.0: the CHANGELOG Unreleased section carries the whole HTTP-stack adoption set                                                                 | 🔵 `BLOCKED` | Medium | 30min  | owner release cadence; CHANGELOG.md Unreleased; docs/status/2026-10-12_13-49 §f.41                                                               |
+| Browser-level check: htmx fragment polls really revalidate to 304 + DOM-churn on cached-body swaps                                                     | 🔵 `BLOCKED` | Low    | 15min  | owner manual check (no browser in the agent env); server-side 304s + no-cache proven in `cmd/pbx-lens/serve_test.go`; docs/status/2026-10-12_13-49 §f.7/39, §g.2 |
+| Fold in go-etag#2 (Flush observability) and go-appkit#26 (testkit drain cost) when upstream lands them; re-verify the ledger quarterly                 | 🔵 `BLOCKED` | Low    | 30min  | both OPEN 2026-10-12, zero comments; `docs/upstream-filings.md`; docs/status/2026-10-12_13-49 §f.24/48                                            |
+| >1MiB marathon transcripts: accept untagged streaming (log via `OnBufferOverflow`) or raise `MaxBufferSize` — policy decision                          | 🔵 `BLOCKED` | Low    | 15min  | owner policy; `internal/web/caching.go` buffer config; docs/status/2026-10-12_13-49 §f.28                                                         |
+| Confirm the next weekly dependabot run proposes bumps for the newly-direct deps (`httputil`, `server_timing`, `go-etag/server`)                        | 🔵 `BLOCKED` | Low    | 10min  | waits on the weekly dependabot cycle; `.github/dependabot.yml` gomod; docs/status/2026-10-12_13-49 §f.29/49                                        |
 
 ## Low impact
 
@@ -75,11 +92,18 @@
 | `/api/ops`: warn when the reported poller pass is stale (age the lastPass timestamp)                                                               | 🔴 `TODO`    | Low    | 20min  | `internal/web` ops endpoint + `SourceCounters`; docs/status/2026-10-12_10-33 §f.35                                                                                                 |
 | `docs/drafts/` README table (one row per draft: file, upstream issue, state)                                                                       | 🔴 `TODO`    | Low    | 15min  | `docs/drafts/`; docs/status/2026-10-12_10-33 §f.28                                                                                                                                 |
 | Render the 2026-10-12 HTTP-stack audit as the library-deep-dive HTML research report (substance already landed in the SUPERB plan + AGENTS.md)     | 🔴 `TODO`    | Low    | 30min  | docs/planning/2026-10-12_12-47_SUPERB-httputil-go-etag-go-appkit-max-adoption.md; library-deep-dive skill deliverable `docs/research/`                                             |
-| Optional: scrape the new `/metrics` surface from the sibling NixOS module (node_exporter-style job; endpoint is htpasswd-gated or loopback-only)   | 🔴 `TODO`    | Low    | 30min  | `cmd/pbx-lens/serve.go` `buildServiceConfig` Metrics wiring; nix-international-telephony `modules/telephony/lens.nix`                                                              |
+| Optional: scrape the new `/metrics` surface from the sibling NixOS module and smoke-test with a real scraper (Prometheus/Gatus; endpoint is htpasswd-gated or loopback-only) | 🔴 `TODO` | Low | 30min | `cmd/pbx-lens/serve.go` `buildServiceConfig` Metrics wiring; nix-international-telephony `modules/telephony/lens.nix`; docs/status/2026-10-12_13-49 §f.13/14 |
 | File the BuildFlow spawn-starvation failure mode upstream (tools killed at spawn under load; propose pre-flight load check or spawn retry)         | 🔴 `TODO`    | Low    | 30min  | docs/buildflow-dev-gate.md starvation entries (runs #1/#2); sibling filing BuildFlow#45; docs/status/2026-10-12_10-33 §f.6                                                         |
 | ANNOTATE + archive the 2026-10-11/12 status reports once their items are resolved; re-annotate the SUPERB plan post-release                        | 🔴 `TODO`    | Low    | 45min  | docs/status/2026-10-12_10-33 §f.38/§f.25; docs-health ANNOTATE mode                                                                                                                |
 | Watch dependabot-core#16538 and answer maintainer questions; owner decides gomod pinning afterward                                                 | 🔵 `BLOCKED` | Low    | 10min  | owner call pending (#16538 context); docs/status/2026-10-12_10-33 §f.29/§f.30                                                                                                      |
 | R27.x advisory residue pass: art-dupl, branching-flow, nix-checker cleanup, README screenshots, vulnix re-triage (all documented advisories)       | 🔵 `BLOCKED` | Low    | 60min  | docs/buildflow-dev-gate.md advisory list; docs/status/2026-10-12_10-33 §f.40                                                                                                       |
+| Wire the go-etag cache hooks into `/api/ops`: `OnETagGenerated`+`On304` counters → hit ratio, `OnBufferOverflow` → slog warn (hooks exist in pinned v0.6.1) | 🔴 `TODO` | Medium | 45min | `internal/web/caching.go` `ETagConfig`; go-etag `server@v0.6.1/etag.go:67-88`; docs/status/2026-10-12_13-49 §f.10/11 |
+| E2E cache-semantics hardening: `Vary: Accept-Encoding` on 304s, `Content-Length` on buffered renders, HEAD/query-string/trailing-slash skip-policy variants, recording timing-hop budget asserts | 🔴 `TODO` | Low | 45min | `cmd/pbx-lens/serve_test.go`; `internal/web/recording_test.go`; docs/status/2026-10-12_13-49 §f.15/16/25/46 |
+| README ops notes: `/version`, `/metrics`, ETag/304 + Server-Timing behavior, auth posture                                                              | 🔴 `TODO`    | Low    | 30min  | README.md; docs/status/2026-10-12_13-49 §f.17                                                                                                      |
+| `docs/gotchas.md` entry: templ's streaming flush silently disables go-etag — buffer the render (`internal/web/render.go` pattern)                      | 🔴 `TODO`    | Low    | 15min  | `internal/web/render.go`; docs/status/2026-10-12_13-49 §f.18                                                                                       |
+| Coverage pass on `caching_test.go` + `serve_test.go` (assert the hot path — fragment conditional GET — not static stand-ins)                           | 🔴 `TODO`    | Low    | 30min  | `internal/web/caching_test.go`; `cmd/pbx-lens/serve_test.go`; docs/status/2026-10-12_13-49 §f.43                                                   |
+| Concurrent-poll hash-cost sanity probe: overlapping 30s/60s fragment polls under one ETag middleware (CPU ceiling check)                               | 🔴 `TODO`    | Low    | 30min  | `internal/web` poller wiring; docs/status/2026-10-12_13-49 §f.26                                                                                   |
+| SECURITY.md: document the `/metrics` auth posture (`AllowUnauthenticated: true` is deliberate — loopback/htpasswd-gated deployment context)           | 🔴 `TODO`    | Low    | 20min  | `cmd/pbx-lens/serve.go` MetricsConfig; docs/status/2026-10-12_13-49 §f.35                                                                          |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
      per docs-health harvest-guide: the ledger records the pass, it is not a
