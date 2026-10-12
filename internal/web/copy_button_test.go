@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestDetailCopyButtons verifies the T20 copy affordances: the native id
@@ -11,7 +12,8 @@ import (
 // elements — the library's href/anchor variant is deliberately unused here,
 // so any anchor carrying the attribute is a regression.
 func TestDetailCopyButtons(t *testing.T) {
-	mux := newTestServerWithSearch(t, webObservation("conv-copy", testStartedAt))
+	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	mux := newTestServerWithSearch(t, webObservation("conv-copy", started))
 
 	status, body := getBody(t, mux, "/calls/telnyx-conversation/conv-copy")
 	if status != http.StatusOK {
@@ -39,7 +41,7 @@ func TestDetailCopyButtons(t *testing.T) {
 	if strings.Contains(body, "<a href=\"") && strings.Contains(body, "data-tc-copy=") {
 		// Only a regression if the SAME element carries both; the page has
 		// ordinary links (breadcrumbs, rows), so scan element-locally.
-		for _, chunk := range strings.Split(body, "<a ") {
+		for chunk := range strings.SplitSeq(body, "<a ") {
 			if strings.Contains(strings.SplitN(chunk, ">", 2)[0], "data-tc-copy=") {
 				t.Error("anchor copy variant rendered; button variant is the contract")
 			}

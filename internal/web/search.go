@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	servertiming "github.com/larsartmann/httputil/server_timing"
+	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -43,9 +44,21 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	render(w, r, searchRoute(query, hits, ""))
 }
 
-// hitHref deep-links a search hit to its call page. The hit's identity
-// fields are the domain's own SourceKind/NativeID, so the path is the same
-// deep link the list rows render.
-func hitHref(hit search.Hit) string {
-	return "/calls/" + url.PathEscape(string(hit.Kind)) + "/" + url.PathEscape(string(hit.NativeID))
+// detailURL is the canonical detail deep link for one indexed call — the
+// same path list rows, search hits, and the search-redirect (T21) build on.
+func detailURL(kind calls.SourceKind, id calls.NativeID) string {
+	return "/calls/" + url.PathEscape(string(kind)) + "/" + url.PathEscape(string(id))
+}
+
+// hitHref deep-links a search hit to its call page, carrying the query
+// along (plan T21): the detail page re-runs the match server-side, marks
+// the matching turns, and redirects once to the first match's anchor, so
+// the click lands at the evidence — no JS required.
+func hitHref(hit search.Hit, query string) string {
+	path := detailURL(hit.Kind, hit.NativeID)
+	if query == "" {
+		return path
+	}
+
+	return path + "?q=" + url.QueryEscape(query)
 }

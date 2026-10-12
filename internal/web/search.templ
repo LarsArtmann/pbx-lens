@@ -63,7 +63,7 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 				<div class="space-y-3">
 					for _, hit := range hits {
 						<a
-							href={ hitHref(hit) }
+							href={ hitHref(hit, query) }
 							class="block rounded-lg border border-gray-200 p-4 transition-colors motion-reduce:transition-none hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tc-primary dark:border-gray-800 dark:hover:bg-gray-900 dark:focus-visible:outline-tc-info"
 						>
 							<div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">

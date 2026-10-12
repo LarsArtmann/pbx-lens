@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
@@ -404,6 +405,8 @@ func (s *server) stalenessFragment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) detail(w http.ResponseWriter, r *http.Request) {
+	query := strings.TrimSpace(r.URL.Query().Get("q"))
+
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
 	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
 
@@ -424,7 +427,23 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, detailRoute(view))
+	// Search deep link (?q=, plan T21): when the query matches transcript
+	// turns, one redirect lands the browser on the first match's anchor.
+	// The URL fragment never reaches the server, so the at param breaks
+	// the would-be redirect loop — its presence means "already jumped".
+	if query != "" && !r.URL.Query().Has("at") {
+		if first, ok := firstMatchedTurn(view.Transcript, query); ok {
+			target := detailURL(calls.SourceKind(r.PathValue("kind")), calls.NativeID(r.PathValue("id"))) +
+				"?q=" + url.QueryEscape(query) +
+				"&at=" + strconv.Itoa(first) +
+				"#turn-" + strconv.Itoa(first)
+			http.Redirect(w, r, target, http.StatusFound)
+
+			return
+		}
+	}
+
+	render(w, r, detailRoute(view, query))
 }
 
 // serveStyles serves the Tailwind-built stylesheet (styles.css, produced by
