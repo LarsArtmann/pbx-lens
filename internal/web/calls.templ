@@ -59,15 +59,39 @@ templ listPage(page CallListPage, filters ListCallsQuery) {
 	} else {
 		@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(page.Rows)})
 		@display.Table(tableProps(page.Rows))
-		if page.NextOlder != "" {
-			<div class="mt-4">
-				@display.Button(display.ButtonProps{
-					Text: "Older calls",
-					Href: listHref(filters, page.NextOlder),
-				})
-			</div>
+		if page.NextOlder != "" || page.NextNewer != "" {
+			@pagerRow(filters, page)
 		}
 	}
+}
+
+// pagerRow is the two-direction keyset pager (plan T7). navigation.Pagination
+// is page-NUMBER based and this list walks live keyset cursors — fabricating
+// TotalPages would render lying links — so the pager renders as two library
+// Buttons in a Pagination-shaped nav, disabled at each end of the walk.
+// Filters ride both hrefs (listHref/listNewerHref) so a filtered walk stays
+// filtered.
+templ pagerRow(filters ListCallsQuery, page CallListPage) {
+	<nav aria-label="Pagination" class="mt-4 flex items-center justify-between">
+		<div>
+			@display.Button(display.ButtonProps{
+				Text:    "Newer calls",
+				Href:    listNewerHref(filters, page.NextNewer),
+				Variant: display.ButtonSecondary,
+				Icon:    icons.Icon("chevron-left", "size-4"),
+				Disabled: page.NextNewer == "",
+			})
+		</div>
+		<div>
+			@display.Button(display.ButtonProps{
+				Text:    "Older calls",
+				Href:    listHref(filters, page.NextOlder),
+				Variant: display.ButtonSecondary,
+				Icon:    icons.Icon("chevron-right", "size-4"),
+				Disabled: page.NextOlder == "",
+			})
+		</div>
+	</nav>
 }
 
 // exportAction surfaces the existing CSV export route in the page header
@@ -151,7 +175,8 @@ func aiValue(ai *bool) string {
 
 func hasFilters(filters ListCallsQuery) bool {
 	return filters.Direction != "" || filters.AI != nil ||
-		!filters.From.IsZero() || !filters.To.IsZero() || !filters.Before.IsZero()
+		!filters.From.IsZero() || !filters.To.IsZero() ||
+		!filters.Before.IsZero() || !filters.After.IsZero()
 }
 
 func dateValue(t time.Time) string {
@@ -206,8 +231,19 @@ func whoBadge(isAI bool) templ.Component {
 	return display.Badge(display.BadgeProps{Text: "Human", Type: display.BadgeNeutral, Pill: true})
 }
 
-// listHref preserves active filters across the keyset walk.
+// listHref preserves active filters across the older-keyset walk.
 func listHref(filters ListCallsQuery, before string) string {
+	return listPageHref(filters, "before", before)
+}
+
+// listNewerHref preserves active filters across the newer-keyset walk.
+func listNewerHref(filters ListCallsQuery, after string) string {
+	return listPageHref(filters, "after", after)
+}
+
+// listPageHref renders one list URL: the typed filters plus a single walk
+// cursor under the given parameter name.
+func listPageHref(filters ListCallsQuery, param string, value string) string {
 	query := make(url.Values)
 	if filters.Direction != "" {
 		query.Set("direction", string(filters.Direction))
@@ -225,8 +261,8 @@ func listHref(filters ListCallsQuery, before string) string {
 		query.Set("to", dateValue(filters.To))
 	}
 
-	if before != "" {
-		query.Set("before", before)
+	if value != "" {
+		query.Set(param, value)
 	}
 
 	if len(query) == 0 {

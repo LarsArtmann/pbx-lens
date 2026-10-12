@@ -100,6 +100,7 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 			metaengine.WithFilter("started_at", metaengine.FilterGt, rfc3339Nano(top)),
 			metaengine.WithLimit(1),
 		)
+
 		newer, err := reader.Scan(ctx, probe...)
 		if err != nil {
 			return CallListPage{}, err
