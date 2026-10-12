@@ -139,7 +139,7 @@ func TestDashboardStatsQueryMOSAggregation(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC))
+	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC), ListCallsQuery{})
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
@@ -210,7 +210,7 @@ func TestDashboardStatsQueryWindowMath(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC))
+	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC), ListCallsQuery{})
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}

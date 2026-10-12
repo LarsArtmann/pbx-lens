@@ -159,7 +159,7 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time,
 	dayIndex := make(map[string]int, dashboardWindowDays)
 
 	for offset := range dashboardWindowDays {
-		day := startOfDay(now).AddDate(0, 0, offset).Format(dayFormat)
+		day := windowStart.AddDate(0, 0, offset).Format(dayFormat)
 		dayIndex[day] = len(stats.ByDay)
 		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})
 	}

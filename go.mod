@@ -18,6 +18,7 @@ require (
 	github.com/larsartmann/go-cqrs-lite/system/v4 v4.12.0
 	github.com/larsartmann/go-error-family v0.11.0
 	github.com/larsartmann/templ-components v1.21.0
+	github.com/larsartmann/templ-components/htmx v1.21.0
 	golang.org/x/crypto v0.57.0
 	golang.org/x/time v0.16.0
 	modernc.org/sqlite v1.60.1
@@ -76,7 +77,6 @@ require (
 	github.com/larsartmann/go-flightrecorder v0.2.1 // indirect
 	github.com/larsartmann/go-sse v0.6.2 // indirect
 	github.com/larsartmann/httputil v1.4.1 // indirect
-	github.com/larsartmann/templ-components/htmx v1.21.0 // indirect
 	github.com/larsartmann/templ-components/icons v1.21.0 // indirect
 	github.com/larsartmann/templ-components/utils v1.21.0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect

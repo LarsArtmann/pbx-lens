@@ -164,13 +164,13 @@ func TestStylesUnbuiltReturns404(t *testing.T) {
 }
 
 func TestListToDateIncludesThatDay(t *testing.T) {
-	// The observation starts 22:30 on the 9th; a bare ?to=2026-10-09 must
-	// cover the whole day, not just its midnight (the old start-of-day read
-	// silently excluded the day the parameter names).
-	lateEvening := time.Date(2026, 10, 9, 22, 30, 0, 0, time.UTC)
+	// Bare dates mean the operator's day (Europe/Berlin, R2): ?to=2026-10-09
+	// covers up to Berlin midnight. 20:30 UTC is 22:30 CEST — still the 9th
+	// in Berlin; 22:30 UTC is already 00:30 CEST on the 10th and must NOT
+	// appear (the old UTC-day read silently lumped it in).
 	mux := newTestServer(t,
-		webObservation("conv-morning", time.Date(2026, 10, 9, 8, 0, 0, 0, time.UTC)),
-		webObservation("conv-evening", lateEvening),
+		webObservation("conv-evening", time.Date(2026, 10, 9, 20, 30, 0, 0, time.UTC)),
+		webObservation("conv-past-midnight", time.Date(2026, 10, 9, 22, 30, 0, 0, time.UTC)),
 	)
 
 	status, body := getBody(t, mux, "/?to=2026-10-09")
@@ -179,7 +179,11 @@ func TestListToDateIncludesThatDay(t *testing.T) {
 	}
 
 	if !strings.Contains(body, "conv-evening") {
-		t.Error("?to=<date> should include calls later that same day")
+		t.Error("?to=<date> should include calls later that Berlin day")
+	}
+
+	if strings.Contains(body, "conv-past-midnight") {
+		t.Error("?to=<date> must exclude calls that crossed Berlin midnight")
 	}
 
 	status, body = getBody(t, mux, "/?to=2026-10-08")
@@ -187,7 +191,7 @@ func TestListToDateIncludesThatDay(t *testing.T) {
 		t.Fatalf("GET /?to=2026-10-08 status = %d, want 200", status)
 	}
 
-	if strings.Contains(body, "conv-morning") {
+	if strings.Contains(body, "conv-evening") {
 		t.Error("?to= before the calls should exclude them")
 	}
 }

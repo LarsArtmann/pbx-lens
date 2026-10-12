@@ -91,8 +91,9 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 
 // exportBatchSize is one keyset page of a streaming export (R7): memory
 // stays at one batch however large the index grows, and dumps past the old
-// maxExportRows cap stream fully instead of truncating.
-const exportBatchSize = 5_000
+// maxExportRows cap stream fully instead of truncating. A var so tests can
+// shrink the page and walk the loop's seams deterministically.
+var exportBatchSize = 5_000
 
 // StreamExportCalls walks every view matching the same filters as the list
 // page, newest first, calling fn per view (D5). Pagination is a started_at
@@ -136,8 +137,6 @@ func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQ
 				if _, done := seen[key]; done {
 					continue
 				}
-
-				seen[key] = struct{}{}
 			}
 
 			if err := fn(view); err != nil {
@@ -160,12 +159,21 @@ func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQ
 		}
 
 		// Newest-first order: the page's last (oldest) row is the next keyset
-		// boundary. When a single timestamp group spans pages the boundary
-		// repeats, and the seen set must survive so those ties stay deduped.
+		// boundary. On a strict advance the seen set restarts; when a single
+		// timestamp group spans pages the boundary repeats and the seen set
+		// must survive so those ties stay deduped.
 		if next := views[len(views)-1].StartedAt; cursor.IsZero() || next.Before(cursor) {
 			cursor = next
 
 			clear(seen)
+		}
+
+		// The boundary row itself was emitted on THIS page and sits exactly
+		// on the cursor: record it (and any ties) so the next page skips it.
+		for _, view := range views {
+			if view.StartedAt.Equal(cursor) {
+				seen[string(view.Kind)+"\x00"+string(view.NativeID)] = struct{}{}
+			}
 		}
 	}
 }
@@ -190,10 +198,27 @@ func ExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery) 
 // listOptions builds the shared scan options for the list page and the
 // export dump: newest first, with the same typed filters.
 func listOptions(query ListCallsQuery, limit int) []metaengine.ScanOption {
-	opts := []metaengine.ScanOption{
+	opts := append([]metaengine.ScanOption{
 		metaengine.WithSort("started_at", true),
 		metaengine.WithLimit(limit),
+	}, scanFilters(query)...)
+
+	// Time bounds bind as RFC3339Nano strings — the exact wire format the
+	// view's JSON is stored in. Binding time.Time directly miscompares on
+	// sqlite (the driver renders it "2006-01-02 15:04:05 -0700 MST", and the
+	// 'T' vs ' ' format difference silently corrupts same-day comparisons).
+	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
+	if !query.Before.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
 	}
+
+	return opts
+}
+
+// scanFilters is the typed-filter half of the scan options, shared by the
+// list page and the streaming export (whose cursor binds separately).
+func scanFilters(query ListCallsQuery) []metaengine.ScanOption {
+	var opts []metaengine.ScanOption
 
 	if query.Direction != "" {
 		opts = append(opts, metaengine.WithFilter("direction", metaengine.FilterEq, string(query.Direction)))
@@ -203,21 +228,12 @@ func listOptions(query ListCallsQuery, limit int) []metaengine.ScanOption {
 		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *query.AI))
 	}
 
-	// Time bounds bind as RFC3339Nano strings — the exact wire format the
-	// view's JSON is stored in. Binding time.Time directly miscompares on
-	// sqlite (the driver renders it "2006-01-02 15:04:05 -0700 MST", and the
-	// 'T' vs ' ' format difference silently corrupts same-day comparisons).
-	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
 	if !query.From.IsZero() {
 		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGe, rfc3339Nano(query.From)))
 	}
 
 	if !query.To.IsZero() {
 		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(query.To)))
-	}
-
-	if !query.Before.IsZero() {
-		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
 	}
 
 	return opts

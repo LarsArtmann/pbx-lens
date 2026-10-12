@@ -31,7 +31,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("X-PII-Mode", string(pii))
+	w.Header().Set("X-PII-Mode", piiHeaderValue(pii))
 	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.jsonl"`)
 
@@ -62,7 +62,7 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("X-PII-Mode", string(pii))
+	w.Header().Set("X-PII-Mode", piiHeaderValue(pii))
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.csv"`)
 
@@ -120,6 +120,8 @@ type PIIMode string
 const (
 	// PIIModePlain is the unset default: numbers export exactly as stored
 	// (the index stores raw numbers by design — see DOMAIN_LANGUAGE.md).
+	// The response header renders it explicitly as "plain" so a dump can
+	// never masquerade as hashed.
 	PIIModePlain PIIMode = ""
 	// PIIModeHash is the participant-hash-only export mode (T23): numbers
 	// render as sha256:<16 hex chars> (or [redacted] when unparseable).
@@ -128,6 +130,16 @@ const (
 	// participant identity, not free text.
 	PIIModeHash PIIMode = "hash"
 )
+
+// piiHeaderValue renders the X-PII-Mode response value: the empty default
+// mode is spelled out, so every export announces exactly what left.
+func piiHeaderValue(pii PIIMode) string {
+	if pii == PIIModePlain {
+		return "plain"
+	}
+
+	return string(pii)
+}
 
 // piiRedacted is the honest marker for a party that was never a parseable
 // number: real CDRs carry unknown or garbled parties, and free text must not
