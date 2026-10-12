@@ -47,6 +47,7 @@ templ detailRoute(view calls.CallView) {
 			Title:             callTitle(view),
 			SubtitleComponent: sourceBadge(view.Kind),
 			Breadcrumb:        detailBreadcrumbs(view),
+			Action:            nativeIDCopy(view),
 		})
 		@layout.Split(layout.SplitProps{
 			Main:  detailMain(view),
@@ -66,6 +67,31 @@ templ detailBreadcrumbs(view calls.CallView) {
 			{Text: callTitle(view)},
 		},
 	})
+}
+
+// nativeIDCopy is the PageHeader action (plan T20): the native id is the
+// value operators paste into source-system consoles, so it gets one-click
+// copy beside the title. Button variant (no Href) is deliberate — a copy-as-
+// link would carry a session-scoped route, not the id itself.
+templ nativeIDCopy(view calls.CallView) {
+	@display.CopyButton(display.CopyButtonProps{
+		Text:      string(view.NativeID),
+		Label:     "Copy ID",
+		AriaLabel: "Copy call ID " + string(view.NativeID),
+	})
+}
+
+// copyableValue pairs a facts-row value with a copy affordance (plan T20).
+// It rides DefinitionItem.DetailComponent: for an unobserved value the
+// component stays nil and the plain dash Detail stands.
+templ copyableValue(value, label string) {
+	<span class="inline-flex items-center gap-2">
+		<span>{ value }</span>
+		@display.CopyButton(display.CopyButtonProps{
+			Text:      value,
+			AriaLabel: "Copy " + label,
+		})
+	</span>
 }
 
 // sourceBadge names the originating system as a neutral pill under the title.
@@ -99,8 +125,8 @@ templ detailFacts(view calls.CallView) {
 // facts (cost, insight) append only when the source actually carries them.
 func detailItems(view calls.CallView) []display.DefinitionItem {
 	items := []display.DefinitionItem{
-		{Term: "From", Detail: stringOrDash(view.FromNumber)},
-		{Term: "To", Detail: stringOrDash(view.ToNumber)},
+		{Term: "From", Detail: stringOrDash(view.FromNumber), DetailComponent: copyDetail(view.FromNumber, "from number")},
+		{Term: "To", Detail: stringOrDash(view.ToNumber), DetailComponent: copyDetail(view.ToNumber, "to number")},
 		{Term: "Started", Detail: view.StartedAt.Local().Format("Jan 2, 2006 15:04:05")},
 		{Term: "Duration", Detail: clockDuration(time.Duration(view.DurationSecs) * time.Second)},
 		{Term: "Direction", Detail: string(view.Direction)},
@@ -121,6 +147,16 @@ func detailItems(view calls.CallView) []display.DefinitionItem {
 	}
 
 	return items
+}
+
+// copyDetail returns the copyable variant of a facts value; nil keeps the
+// plain Detail fallback for empty values.
+func copyDetail(value, label string) templ.Component {
+	if value == "" {
+		return nil
+	}
+
+	return copyableValue(value, label)
 }
 
 // transcriptPane renders the role-split transcript as a terminal-style
