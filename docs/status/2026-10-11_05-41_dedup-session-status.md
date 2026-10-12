@@ -98,78 +98,78 @@ _(Brainstorm per skill contract — most belong in ROADMAP/TODO_LIST via HARVEST
 
 **Dedup thread (this session):**
 
-1. Finish B3 search wiring: `cli.RebuildSearchIndex` + serve/poller call (SUPERB session's missing 10%).
-2. Implement `/dashboard` route — nav already links to a 404 (ghost link).
-3. Unit-test `internal/ingest` directly (blank lines, 1 MiB line, scanner error, EachLine trim semantics).
-4. Comment smoke's deliberate double-dispatch.
-5. Record the 11-group dedup accept-baseline durably.
-6. Wire art-dupl into the routine (CI warning-only or a BuildFlow provider ask — fleet question).
-7. Re-run art-dupl at `-t 5` to confirm the actionable-threshold baseline is clean.
+1. ~~Finish B3 search wiring: `cli.RebuildSearchIndex` + serve/poller call (SUPERB session's missing 10%).~~ done (docs-health pass 2026-10-12)
+2. ~~Implement `/dashboard` route — nav already links to a 404 (ghost link).~~ done (docs-health pass 2026-10-12)
+3. ~~Unit-test `internal/ingest` directly (blank lines, 1 MiB line, scanner error, EachLine trim semantics).~~ done (docs-health pass 2026-10-12)
+4. ~~Comment smoke's deliberate double-dispatch.~~ done (docs-health pass 2026-10-12)
+5. ~~Record the 11-group dedup accept-baseline durably.~~ done (docs-health pass 2026-10-12)
+6. Wire art-dupl into the routine (CI warning-only or a BuildFlow provider ask — fleet question). **→ advisory; documented non-fix class**
+7. Re-run art-dupl at `-t 5` to confirm the actionable-threshold baseline is clean. **→ advisory; documented non-fix class**
 
 **Gate / toolchain (root cause family):**
-8. Bump Go toolchain everywhere to 1.27.1 (devShell pin + sandbox story) or drop the go.mod patch floor — pick one.
-9. Re-run `nix build` + pre-commit check green after #8.
-10. Diagnose `govalid-generate` exit 1.
-11. Diagnose golangci-lint "no go files to analyze" in 1 module (root `.` package trap?).
-12. Investigate or `skip_steps` nix-hash-fix (93% failure rate, documented pattern still bleeding).
-13. Decide go-version-auto-configure policy: fix go.mod or suppress the step.
-14. Reconcile AGENTS.md "vendorHash.nix" claim vs nix-checker seeing inline hashes at `flake.nix:91/102`; extract or annotate.
-15. Verify govulncheck actually scans files (0ms cached greens).
-16. File upstream: templ/treefmt error message flooding `nix log` with generated code.
-17. Confirm CI lane (`.github/workflows/ci.yml`) mirrors or deliberately diverges from the local gate.
+8. ~~Bump Go toolchain everywhere to 1.27.1 (devShell pin + sandbox story) or drop the go.mod patch floor — pick one.~~ done — resolved: unified toolchain + devShell pin; gates green through 2026-10-12
+9. ~~Re-run `nix build` + pre-commit check green after #8.~~ done (docs-health pass 2026-10-12)
+10. ~~Diagnose `govalid-generate` exit 1.~~ done — transient class; rerun-before-diagnosing doctrine in docs/buildflow-dev-gate.md
+11. ~~Diagnose golangci-lint "no go files to analyze" in 1 module (root `.` package trap?).~~ done — resolved (go directive floor; documented in the gate doc)
+12. ~~Investigate or `skip_steps` nix-hash-fix (93% failure rate, documented pattern still bleeding).~~ done (docs-health pass 2026-10-12)
+13. ~~Decide go-version-auto-configure policy: fix go.mod or suppress the step.~~ done (docs-health pass 2026-10-12)
+14. ~~Reconcile AGENTS.md "vendorHash.nix" claim vs nix-checker seeing inline hashes at `flake.nix:91/102`; extract or annotate.~~ done — vendorHash.nix is the single home today; checker advisory documented
+15. ~~Verify govulncheck actually scans files (0ms cached greens).~~ done — gate + CI run govulncheck green
+16. ~~File upstream: templ/treefmt error message flooding `nix log` with generated code.~~ done — filed: go-nix-helpers#7 + treefmt-nix#545
+17. ~~Confirm CI lane (`.github/workflows/ci.yml`) mirrors or deliberately diverges from the local gate.~~ done — CI lane landed + cqrs-lint job (20:26 dispatch)
 
 **Docs:**
-18. docs-health VERIFY pass on AGENTS.md claims (the `internal/cli` structure claim vs main-package reality; vendorHash claim).
-19. TODO_LIST.md HARVEST of this report's section (f).
-20. FEATURES.md refresh (search, recordings, serve, dashboard status).
-21. README check: 6 verbs, serve flags, current screenshots.
-22. Check `docs/DOMAIN_LANGUAGE.md` needs the now-shared `Result`/`Skipped` vocabulary.
-23. ANNOTATE the 03-55 "gate-truth" report with today's root cause (templ fmt + toolchain skew).
+18. ~~docs-health VERIFY pass on AGENTS.md claims (the `internal/cli` structure claim vs main-package reality; vendorHash claim).~~ done — vendorHash.nix is the single home today; checker advisory documented
+19. ~~TODO_LIST.md HARVEST of this report's section (f).~~ done (docs-health pass 2026-10-12)
+20. ~~FEATURES.md refresh (search, recordings, serve, dashboard status).~~ done (docs-health pass 2026-10-12)
+21. README check: 6 verbs, serve flags, current screenshots. **→ ROADMAP theme 2 (public presence)**
+22. ~~Check `docs/DOMAIN_LANGUAGE.md` needs the now-shared `Result`/`Skipped` vocabulary.~~ done — Result/Skipped live in the shared ingest package doc; glossary rows landed
+23. ~~ANNOTATE the 03-55 "gate-truth" report with today's root cause (templ fmt + toolchain skew).~~ done — in the 2026-10-12 docs-health pass (that report is annotated + archived)
 
 **jsonv2 / modernization:**
-24. Decide jsonv2 migration timing (go-auto-upgrade advisories: main, agent, webhook, telnyx, +6 more).
-25. If migrating: audit `wire.FlexTime` + wire DTO boundaries first (runtime-invisible failure class).
-26. Reuse the ContentHash stability tests as the jsonv2 canary.
+24. Decide jsonv2 migration timing (go-auto-upgrade advisories: main, agent, webhook, telnyx, +6 more). **→ ROADMAP (T4 stack decision)**
+25. If migrating: audit `wire.FlexTime` + wire DTO boundaries first (runtime-invisible failure class). **→ ROADMAP (T4 stack decision)**
+26. Reuse the ContentHash stability tests as the jsonv2 canary. **→ ROADMAP (T4 stack decision)**
 
 **Domain (planned, untouched by this session):**
-27. PII policy: enforce `E164`/`ParticipantHash` (types exist, unenforced).
-28. T9 agent-transcript growth; `agent.Result` shape decision rides on it.
-29. Inbound AI interception → revisit caller-declared Direction for Telnyx + agent.
-30. Resolve E003 owner question: split `internal/calls` or document flat-domain policy permanently.
-31. Plan schema v2 upcasters (F005: mandatory at v2).
-32. Quarterly Telnyx live-API re-verification (filters/metadata/timestamps cluster).
-33. Watch Telnyx docs for recordings-list filter keys (client-side correlation is the current workaround).
-34. Revisit P006 (poll vs Watcher) if serve grows hot paths.
-35. F007 revisit trigger: any handler growing an external side effect.
+27. PII policy: enforce `E164`/`ParticipantHash` (types exist, unenforced). **→ ROADMAP theme 4 (stored-row enforcement)**
+28. ~~T9 agent-transcript growth; `agent.Result` shape decision rides on it.~~ done (docs-health pass 2026-10-12)
+29. Inbound AI interception → revisit caller-declared Direction for Telnyx + agent. **→ ROADMAP theme 4**
+30. Resolve E003 owner question: split `internal/calls` or document flat-domain policy permanently. **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)**
+31. Plan schema v2 upcasters (F005: mandatory at v2). **→ TODO_LIST blocked row (schema v2 gate)**
+32. Quarterly Telnyx live-API re-verification (filters/metadata/timestamps cluster). **→ TODO_LIST blocked row (needs a real API key)**
+33. ~~Watch Telnyx docs for recordings-list filter keys (client-side correlation is the current workaround).~~ done (docs-health pass 2026-10-12)
+34. ~~Revisit P006 (poll vs Watcher) if serve grows hot paths.~~ done (docs-health pass 2026-10-12)
+35. ~~F007 revisit trigger: any handler growing an external side effect.~~ done (docs-health pass 2026-10-12)
 
 **UI:**
-36. templ-components >v1.21.0 watch: adopt `errorpage`/`FilterBar`/`SegmentedControl`/`utils/format` when published (replaces hand-rolled equivalents).
-37. Deliberate templ-components bump routine (stay on published versions, no local replace).
-38. Dashboard page design (depends on #2).
-39. Keyset pagination UX consistency once dashboard lands.
+36. templ-components >v1.21.0 watch: adopt `errorpage`/`FilterBar`/`SegmentedControl`/`utils/format` when published (replaces hand-rolled equivalents). **→ ROADMAP theme 1 (templ-components upgrade watch)**
+37. Deliberate templ-components bump routine (stay on published versions, no local replace). **→ ROADMAP theme 1 (templ-components upgrade watch)**
+38. ~~Dashboard page design (depends on #2).~~ done — landed (09:35 session, F20)
+39. Keyset pagination UX consistency once dashboard lands. **→ ROADMAP theme 1**
 
 **Testing:**
-40. E2E serve test automated in CI (currently manual-evidence only, per 05-21 report).
-41. Property/order-independence test for webhook aggregation (load-bearing for ContentHash).
-42. Split-brain fix: unify `excerpt()` doctrine between agent + telnyx mapper (one function, one package, both call it).
-43. `call.record.mutated` conflict-path test at the app layer (parsing-bug detector).
-44. Coverage report on the ingest packages post-refactor.
+40. ~~E2E serve test automated in CI (currently manual-evidence only, per 05-21 report).~~ done (docs-health pass 2026-10-12)
+41. ~~Property/order-independence test for webhook aggregation (load-bearing for ContentHash).~~ done — pinned by the webhook tests + the P11 order-independence note
+42. ~~Split-brain fix: unify `excerpt()` doctrine between agent + telnyx mapper (one function, one package, both call it).~~ done — landed as calls.Excerpt (P7, 19:37 dispatch)
+43. ~~`call.record.mutated` conflict-path test at the app layer (parsing-bug detector).~~ **Won't implement — doctrine replaced by call.corrected supersession (domain redesign, 03:55 session).**
+44. Coverage report on the ingest packages post-refactor. **→ ROADMAP theme 2**
 
 **Nix / build:**
-45. Verify templ `preBuild` codegen stays sandbox-safe after the toolchain change (#8).
-46. cqrs-lint vendored rev bump routine note (two hash iterations expected).
+45. ~~Verify templ `preBuild` codegen stays sandbox-safe after the toolchain change (#8).~~ done (docs-health pass 2026-10-12)
+46. ~~cqrs-lint vendored rev bump routine note (two hash iterations expected).~~ done (docs-health pass 2026-10-12)
 
 **Ops / product:**
-47. Thin NixOS deploy module for nix-international-telephony (AGENTS.md plan).
-48. webphone read-only deep link (planned, no data dependency).
-49. Staleness threshold: make T12's constant configurable or document it.
-50. Serve log rotation (proactive-maintenance rule).
+47. ~~Thin NixOS deploy module for nix-international-telephony (AGENTS.md plan).~~ done (docs-health pass 2026-10-12)
+48. webphone read-only deep link (planned, no data dependency). **→ ROADMAP theme 3 (sibling side)**
+49. Staleness threshold: make T12's constant configurable or document it. **→ ROADMAP theme 2**
+50. Serve log rotation (proactive-maintenance rule). **→ ROADMAP theme 2**
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
-1. **Is the SUPERB session still active?** B3 search sat at ~90% (missing `cli.RebuildSearchIndex` wiring) and `/dashboard` is a live 404. Should I stay hands-off `main.go`/`internal/web`/`internal/search` (single-writer), or am I clear to finish B3 + dashboard in a follow-up?
-2. **Which side of the toolchain skew do we fix?** Root cause of the whole gate-red family: go.mod floor `go 1.27.1` (forced by go-appkit v0.8.0) vs the pinned 1.27.0 toolchain (devShell `GOTOOLCHAIN=local` + sandbox without network). Bump the fleet toolchain pin to 1.27.1, or is there a reason to stay on 1.27.0?
-3. **Policy call on the ambient red:** the 11 accepted duplicate groups, the jsonv1 advisories, the patch-floor warning, and nix-checker's extraction suggestions — accept-and-document, fix now, or file upstream? (I can execute any of the three; I should not choose the repo's risk posture unilaterally.)
+1. ~~**Is the SUPERB session still active?** B3 search sat at ~90% (missing `cli.RebuildSearchIndex` wiring) and `/dashboard` is a live 404. Should I stay hands-off `main.go`/`internal/web`/`internal/search` (single-writer), or am I clear to finish B3 + dashboard in a follow-up?~~ done — moot: B3 finished 06:29; dashboard landed 09:35
+2. ~~**Which side of the toolchain skew do we fix?** Root cause of the whole gate-red family: go.mod floor `go 1.27.1` (forced by go-appkit v0.8.0) vs the pinned 1.27.0 toolchain (devShell `GOTOOLCHAIN=local` + sandbox without network). Bump the fleet toolchain pin to 1.27.1, or is there a reason to stay on 1.27.0?~~ done — resolved: unified toolchain; gates green
+3. ~~**Policy call on the ambient red:** the 11 accepted duplicate groups, the jsonv1 advisories, the patch-floor warning, and nix-checker's extraction suggestions — accept-and-document, fix now, or file upstream? (I can execute any of the three; I should not choose the repo's risk posture unilaterally.)~~ done — resolved: green gate + documented advisory policy (AGENTS.md, buildflow-dev-gate.md)
 
 ---
 

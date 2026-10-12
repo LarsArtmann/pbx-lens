@@ -147,79 +147,79 @@ C2 poller + freshness, C3 systemd/NixOS draft, C4 backup hook, C5 insights
 
 ## f) NEXT (up to 50, ordered)
 
-1. Fix this session's new lint findings (gci fmt domain.go/domain_test.go,
-   embeddedstructfieldcheck CallEnriched, errcheck Fprintf x3, err113
-   flextime, omitzero modernize, staticcheck QF1008).
-2. Lint reconciliation policy: tagliatelle (snake_case tags vs camel policy),
-   forbidigo (CLI printing), mnd, wrapcheck, varnamelen, paralleltest
-   (t.Parallel()), or curate `.buildflow-baseline.json` for accepted noise.
-3. Re-run `buildflow -s golangci-lint` → green; then full-mode gate.
-4. cqrs-lint re-run on the new domain (3 events, 2 commands; C003 still
-   total).
-5. `internal/cli` package: ResolveKey/ParseSince + shared ingest runners
-   (per-source Run funcs, result structs with Corrected counts).
-6. Rewire cmd/main.go onto internal/cli (kills cyclop-15 + forbidigo surface).
-7. A3 hygiene: smoke 555 number, README install line, CHANGELOG bundle.
-8. B1 webhook ingest: reader (envelope from a-2) + per-call_control_id
-   aggregation + direction mapping + tests.
-9. B1 `ingest-webhook` CLI + backfill flag.
-10. B4 agent ingest: {uuid}.jsonl parser, caller/agent→user/assistant,
-    first-caller-turn excerpt, IsAI=true, tests.
-11. B4 CDR join: fill From/To/Direction/Duration from the CDR view.
-12. B5 dialplan badge: -ai-dest "9100" + answerDids in cdr mapper + tests.
-13. READ the 01-32 frontend plan, then A2: go-appkit serve host +
-    templ-components Table (who/when/duration/AI badge/excerpt).
-14. A2 filters (direction, AI, date range) + pagination + escape audit.
-15. A2 serve e2e test (ingest fixture → GET → rendered row).
-16. B2 detail route + Scrollback transcript pane (role-split).
-17. B2 recording proxy: Telnyx signed-URL refetch server-side + local
-    {uuid}_{dest}.wav with Range streaming.
-18. B3 search: in-memory index rebuilt at boot + after polls, box + snippet
-    highlighting.
-19. C2 poller timers (telnyx re-poll, webhook rescan, transcripts rescan)
-    - /healthz freshness + PolledRegion stale banner.
-20. C5 insights: live GET probe → schema → Enrichment.InsightSummary wiring.
-21. C6 cost: live detail-records probe → join by call_control_id →
-    CostMicros/Currency enrichment.
-22. C1 nix package fix: read go-nix-helpers go-standard module, wire the
-    binary, artifact-check `./result/bin/pbx-lens version`.
-23. C1 vendorHash repair (`buildflow -s nix-hash-fix --fix`).
-24. C3 systemd unit draft (DynamicUser, ReadOnlyPaths=sources,
-    ReadWritePaths=db) + NixOS module skeleton + sibling handoff note.
-25. C4 `backup` command: second sqlite connection, VACUUM INTO target,
-    staging inclusion note.
-26. C8 CI workflow (activation blocked on O1).
-27. C9 §30 strike with moved-to markers (owner answer pending).
-28. D1 htpasswd middleware reading /var/lib/telephony/recordings.htpasswd
-    ({PLAIN} + constant-time compare), 401 path tests.
-29. D2 purge/redact: rebuild-with-cutoff runner + participant-hash-only
-    export (E164/ParticipantHash become load-bearing).
-30. D3 dashboards: volume by day, AI share, duration trends (document: MOS
-    fields do not exist in the 13/18-col Master.csv — honest limitation).
-31. D5 export API: JSONL/CSV of all views (+redact mode).
-32. D6 C009: verify cqrs-lint exemption at source, file upstream issue.
-33. Docs sync: DOMAIN_LANGUAGE (TranscriptTurn, Enrichment, excerpt
-    semantics, call.corrected doctrine), FEATURES, TODO_LIST, CHANGELOG,
-    AGENTS (buildcache gotcha, dev-mode lint truth, dependency-policy edit).
-34. cqrs-lint policy section refresh (C003 now spans 3 event types).
-35. Production re-ingest run (ContentHash v2 → DB rebuild + verify counts).
+1. ~~Fix this session's new lint findings (gci fmt domain.go/domain_test.go,~~ done (docs-health pass 2026-10-12)
+   ~~embeddedstructfieldcheck CallEnriched, errcheck Fprintf x3, err113~~
+   ~~flextime, omitzero modernize, staticcheck QF1008).~~
+2. ~~Lint reconciliation policy: tagliatelle (snake_case tags vs camel policy),~~ done (docs-health pass 2026-10-12)
+   ~~forbidigo (CLI printing), mnd, wrapcheck, varnamelen, paralleltest~~
+   ~~(t.Parallel()), or curate `.buildflow-baseline.json` for accepted noise.~~
+3. ~~Re-run `buildflow -s golangci-lint` → green; then full-mode gate.~~ done (docs-health pass 2026-10-12)
+4. ~~cqrs-lint re-run on the new domain (3 events, 2 commands; C003 still~~ done (docs-health pass 2026-10-12)
+   ~~total).~~
+5. ~~`internal/cli` package: ResolveKey/ParseSince + shared ingest runners~~ done (docs-health pass 2026-10-12)
+   ~~(per-source Run funcs, result structs with Corrected counts).~~
+6. ~~Rewire cmd/main.go onto internal/cli (kills cyclop-15 + forbidigo surface).~~ done (docs-health pass 2026-10-12)
+7. ~~A3 hygiene: smoke 555 number, README install line, CHANGELOG bundle.~~ done (docs-health pass 2026-10-12)
+8. ~~B1 webhook ingest: reader (envelope from a-2) + per-call_control_id~~ done (docs-health pass 2026-10-12)
+   ~~aggregation + direction mapping + tests.~~
+9. ~~B1 `ingest-webhook` CLI + backfill flag.~~ done (docs-health pass 2026-10-12)
+10. ~~B4 agent ingest: {uuid}.jsonl parser, caller/agent→user/assistant,~~ done (docs-health pass 2026-10-12)
+    ~~first-caller-turn excerpt, IsAI=true, tests.~~
+11. ~~B4 CDR join: fill From/To/Direction/Duration from the CDR view.~~ done (docs-health pass 2026-10-12)
+12. B5 dialplan badge: -ai-dest "9100" + answerDids in cdr mapper + tests. **→ ROADMAP theme 2 (public presence)**
+13. ~~READ the 01-32 frontend plan, then A2: go-appkit serve host +~~ done (docs-health pass 2026-10-12)
+    ~~templ-components Table (who/when/duration/AI badge/excerpt).~~
+14. ~~A2 filters (direction, AI, date range) + pagination + escape audit.~~ done (docs-health pass 2026-10-12)
+15. ~~A2 serve e2e test (ingest fixture → GET → rendered row).~~ done (docs-health pass 2026-10-12)
+16. ~~B2 detail route + Scrollback transcript pane (role-split).~~ done (docs-health pass 2026-10-12)
+17. ~~B2 recording proxy: Telnyx signed-URL refetch server-side + local~~ done (docs-health pass 2026-10-12)
+    ~~{uuid}_{dest}.wav with Range streaming.~~
+18. ~~B3 search: in-memory index rebuilt at boot + after polls, box + snippet~~ done (docs-health pass 2026-10-12)
+    ~~highlighting.~~
+19. ~~C2 poller timers (telnyx re-poll, webhook rescan, transcripts rescan)~~ done (docs-health pass 2026-10-12)
+    ~~- /healthz freshness + PolledRegion stale banner.~~
+20. ~~C5 insights: live GET probe → schema → Enrichment.InsightSummary wiring.~~ done (docs-health pass 2026-10-12)
+21. ~~C6 cost: live detail-records probe → join by call_control_id →~~ done (docs-health pass 2026-10-12)
+    ~~CostMicros/Currency enrichment.~~
+22. ~~C1 nix package fix: read go-nix-helpers go-standard module, wire the~~ done (docs-health pass 2026-10-12)
+    ~~binary, artifact-check `./result/bin/pbx-lens version`.~~
+23. ~~C1 vendorHash repair (`buildflow -s nix-hash-fix --fix`).~~ done (docs-health pass 2026-10-12)
+24. ~~C3 systemd unit draft (DynamicUser, ReadOnlyPaths=sources,~~ done (docs-health pass 2026-10-12)
+    ~~ReadWritePaths=db) + NixOS module skeleton + sibling handoff note.~~
+25. ~~C4 `backup` command: second sqlite connection, VACUUM INTO target,~~ done (docs-health pass 2026-10-12)
+    ~~staging inclusion note.~~
+26. ~~C8 CI workflow (activation blocked on O1).~~ done (docs-health pass 2026-10-12)
+27. ~~C9 §30 strike with moved-to markers (owner answer pending).~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
+28. ~~D1 htpasswd middleware reading /var/lib/telephony/recordings.htpasswd~~ done (docs-health pass 2026-10-12)
+    ~~({PLAIN} + constant-time compare), 401 path tests.~~
+29. ~~D2 purge/redact: rebuild-with-cutoff runner + participant-hash-only~~ done (docs-health pass 2026-10-12)
+    ~~export (E164/ParticipantHash become load-bearing).~~
+30. ~~D3 dashboards: volume by day, AI share, duration trends (document: MOS~~ done (docs-health pass 2026-10-12)
+    ~~fields do not exist in the 13/18-col Master.csv — honest limitation).~~
+31. ~~D5 export API: JSONL/CSV of all views (+redact mode).~~ done (docs-health pass 2026-10-12)
+32. ~~D6 C009: verify cqrs-lint exemption at source, file upstream issue.~~ done (docs-health pass 2026-10-12)
+33. ~~Docs sync: DOMAIN_LANGUAGE (TranscriptTurn, Enrichment, excerpt~~ done (docs-health pass 2026-10-12)
+    ~~semantics, call.corrected doctrine), FEATURES, TODO_LIST, CHANGELOG,~~
+    ~~AGENTS (buildcache gotcha, dev-mode lint truth, dependency-policy edit).~~
+34. ~~cqrs-lint policy section refresh (C003 now spans 3 event types).~~ done (docs-health pass 2026-10-12)
+35. Production re-ingest run (ContentHash v2 → DB rebuild + verify counts). **→ TODO_LIST blocked row (needs prod deploy path)**
 
 ## g) QUESTIONS (cannot decide myself)
 
-1. **O1 — GitHub visibility + first push**: public or private, and may I
-   create the remote and push? (Gates CI activation, §30 marker links, and
-   any future `go install` path.)
-2. **Doctrine ratification — `call.corrected`**: I replaced the documented
-   "different hash on a live stream = conflict" rule with supersession
-   (append-only corrections, enrichment carried forward), because the old
-   behavior permanently wedges in-progress Telnyx conversations at partial
-   snapshots and would spam the C2 poller. This reverses a written AGENTS.md
-   decision. Ratify as-is, or restrict corrections to
-   telnyx-conversation/webhook-log kinds and keep conflicts for CDRs?
-3. **pbx-artmann TODO §30**: your "GET SHIT DONE (the WHOLE TODO LIST)"
-   reads as authorization to strike the pbx-lens rows there with moved-to
-   markers, but the plan explicitly gates that cross-repo edit on an owner
-   yes. Confirm?
+1. ~~**O1 — GitHub visibility + first push**: public or private, and may I~~ done — answered: public at github.com/LarsArtmann/pbx-lens (2026-10-11)
+   ~~create the remote and push? (Gates CI activation, §30 marker links, and~~
+   ~~any future `go install` path.)~~
+2. ~~**Doctrine ratification — `call.corrected`**: I replaced the documented~~ done — supersession doctrine documented (AGENTS.md gotchas; total fold intact)
+   ~~"different hash on a live stream = conflict" rule with supersession~~
+   ~~(append-only corrections, enrichment carried forward), because the old~~
+   ~~behavior permanently wedges in-progress Telnyx conversations at partial~~
+   ~~snapshots and would spam the C2 poller. This reverses a written AGENTS.md~~
+   ~~decision. Ratify as-is, or restrict corrections to~~
+   ~~telnyx-conversation/webhook-log kinds and keep conflicts for CDRs?~~
+3. ~~**pbx-artmann TODO §30**: your "GET SHIT DONE (the WHOLE TODO LIST)"~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
+   ~~reads as authorization to strike the pbx-lens rows there with moved-to~~
+   ~~markers, but the plan explicitly gates that cross-repo edit on an owner~~
+   ~~yes. Confirm?~~
 
 ## Limitations noted (no question slots left)
 

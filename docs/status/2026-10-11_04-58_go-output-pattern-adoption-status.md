@@ -100,12 +100,12 @@ The headline outcome: **`nix build` ships a real binary now** (was: empty result
 
 ## c) NOT STARTED (session-relevant, deliberately out of scope)
 
-1. **Release train (release.yml + scripts/pre-tag-check.sh + tag-release.sh).** Skipped: pbx-lens has no tags and no release train yet; adopting go-output's multi-module release workflow verbatim would be wrong (it carries TAGGED_SUBMODULES machinery). Needs a single-module adaptation when v0.1.0 is cut. Still wanted: yes, at tag time.
-2. **`.config/metadata.yaml`** (go-output has it; go-nix-helpers does not — fleet policy unclear). Skipped as not clearly fleet-standard. Needs the owner's call.
-3. **go-output's `scripts/` set** (pre-deploy-check, pre-tag-check, setup-workspace, tag-release). Skipped: workspace/release-specific; none apply to a single-module app without a release train.
-4. **uptime.yml / website.yml / website/ / package.json / .structure-linter.yml / AUTHORS / CODE_OF_CONDUCT / RELEASE.md.** Skipped: go-output-specific (website infrastructure) or not present in the go-nix-helpers template repo (not fleet-standard).
-5. **Flake apps fan-out (test/test-race/build/lint/tidy/govulncheck per-module apps).** Deliberately NOT adopted: BuildFlow is the covered quality gate in this repo; duplicating those steps as flake apps would create the split brain the buildflow skill warns about. go-standard's generic `apps.test`/`apps.lint` remain as module-generated conveniences. Documented in AGENTS.md.
-6. **Any `internal/cli` work.** New package landed mid-session from parallel work (daemon commits `eeb9f24`, `ead1617`); hands off — actively being iterated, including uncommitted edits while I worked.
+1. **Release train (release.yml + scripts/pre-tag-check.sh + tag-release.sh).** Skipped: pbx-lens has no tags and no release train yet; adopting go-output's multi-module release workflow verbatim would be wrong (it carries TAGGED_SUBMODULES machinery). Needs a single-module adaptation when v0.1.0 is cut. Still wanted: yes, at tag time. **→ ROADMAP theme 2 (at tag time)**
+2. **`.config/metadata.yaml`** (go-output has it; go-nix-helpers does not — fleet policy unclear). Skipped as not clearly fleet-standard. Needs the owner's call. **→ fleet policy, undecided**
+3. **go-output's `scripts/` set** (pre-deploy-check, pre-tag-check, setup-workspace, tag-release). Skipped: workspace/release-specific; none apply to a single-module app without a release train. **→ ROADMAP theme 2 (at tag time)**
+4. ~~**uptime.yml / website.yml / website/ / package.json / .structure-linter.yml / AUTHORS / CODE_OF_CONDUCT / RELEASE.md.** Skipped: go-output-specific (website infrastructure) or not present in the go-nix-helpers template repo (not fleet-standard).~~ **Won't implement — go-output-specific; YAGNI for a single-module app without a website.**
+5. ~~**Flake apps fan-out (test/test-race/build/lint/tidy/govulncheck per-module apps).** Deliberately NOT adopted: BuildFlow is the covered quality gate in this repo; duplicating those steps as flake apps would create the split brain the buildflow skill warns about. go-standard's generic `apps.test`/`apps.lint` remain as module-generated conveniences. Documented in AGENTS.md.~~ done (docs-health pass 2026-10-12)
+6. ~~**Any `internal/cli` work.** New package landed mid-session from parallel work (daemon commits `eeb9f24`, `ead1617`); hands off — actively being iterated, including uncommitted edits while I worked.~~ done — landed the same day (04:59 session)
 
 ## d) TOTALLY FUCKED UP
 
@@ -134,62 +134,62 @@ The headline outcome: **`nix build` ships a real binary now** (was: empty result
 
 | #  | Task                                                                                                                                                                                | Impact   | Effort | Category      |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
-| 1  | `[B]` Fix `TestIngestRecordsCorrectsAndRejects`: projection for `telnyx-conversation:conv-a` never converges (ingest_test.go:69) — the gate's only red step                         | Critical | M      | Bug           |
-| 2  | `[S]` Add `var version = "dev"` to `cmd/pbx-lens` so nix ldflags version injection actually lands; `version` subcommand prints it                                                   | High     | S      | Feature       |
-| 3  | `[B]` httptest end-to-end test for the ingest-telnyx command loop (now in `internal/cli`)                                                                                           | High     | M      | Quality       |
-| 4  | `[B]` Raise CI coverage floor 50 → fleet 80 once cmd/wire have tests                                                                                                                | High     | S      | Quality       |
-| 5  | `[B]` T6 list page (table, AI badge, excerpt, filters) — the 51% slice                                                                                                              | High     | L      | Feature       |
-| 6  | `[B]` Adopt go-appkit core + templ-components frontend stack (plan §2–§4)                                                                                                           | High     | L      | Feature       |
-| 7  | `[B]` Transcript-excerpt order-dependence: pin semantics + test                                                                                                                     | High     | S      | Bug           |
-| 8  | `[B]` T5 webhook JSONL tailer + ingest command                                                                                                                                      | High     | M      | Feature       |
-| 9  | `[B]` T12 poller timers + freshness self-check                                                                                                                                      | High     | M      | Feature       |
-| 10 | `[S]` Cut v0.1.0 and adapt go-output's release.yml + pre-tag-check to single-module                                                                                                 | High     | M      | Feature       |
-| 11 | `[S]` Update FEATURES.md with the new infra capabilities (CI lane, devShell, update-vendor-hash, cqrs-lint)                                                                         | Med      | S      | Documentation |
-| 12 | `[S]` Harvest this report's (f) into TODO_LIST.md / ROADMAP.md (docs-health HARVEST)                                                                                                | Med      | S      | Documentation |
-| 13 | `[S]` Align golangci-lint CI pin (v2.12) with devShell (2.14) — one number, one place                                                                                               | Med      | S      | Cleanup       |
-| 14 | `[S]` Decide + document `.golangci.yml` timeout 10m vs go-output's 5m                                                                                                               | Med      | S      | Documentation |
-| 15 | `[S]` cqrs-lint rev refresh policy (owner + cadence; consider an update app that automates the two-hash dance)                                                                      | Med      | M      | Cleanup       |
-| 16 | `[S]` Verify aarch64-linux/aarch64-darwin nix builds (`nix flake check --all-systems`) — CI only proves x86_64-linux                                                                | Med      | S      | Quality       |
-| 17 | `[S]` First real push to exercise ci.yml; fix whatever the runner exposes                                                                                                           | Med      | S      | Quality       |
-| 18 | `[S]` Run the never-run on-demand scans once: `buildflow -s gitleaks`, `-s codespell`, `-s markdown-lint` (covers this report + today's doc edits)                                  | Med      | S      | Quality       |
-| 19 | `[P]` Fleet decision on pre-commit: BuildFlow `precommit install` vs `.githooks/` convention vs inert git-hooks hooks (global `core.hooksPath` makes the current wiring dead)       | Med      | S      | Policy        |
-| 20 | `[S]` Re-verify TODO_LIST evidence rows against the new `internal/cli` reality (several rows cite `cmd/pbx-lens/main.go` line numbers that the CLI-layer extraction moved)          | Med      | S      | Documentation |
-| 21 | `[B]` Move `resolveKey`/`parseSince` into `internal/cli` + tests (evidence row needs the same path refresh)                                                                         | Med      | S      | Cleanup       |
-| 22 | `[B]` Fix smoke command's real-looking fake number (+14084757593 → 555 fake)                                                                                                        | Med      | S      | Bug           |
-| 23 | `[B]` T8 per-call detail page + recording streaming proxy                                                                                                                           | Med      | L      | Feature       |
-| 24 | `[B]` T10 FTS5 transcript search                                                                                                                                                    | Med      | M      | Feature       |
-| 25 | `[B]` T9 agent-transcript join (+ revisit E003 flat-domain decision)                                                                                                                | Med      | M      | Feature       |
-| 26 | `[B]` T7 systemd unit + thin NixOS module for the sibling repo                                                                                                                      | Med      | M      | Feature       |
-| 27 | `[B]` T14 nightly backup-staging for the index DB                                                                                                                                   | Med      | S      | Feature       |
-| 28 | `[B]` T25 quality dashboard page                                                                                                                                                    | Med      | L      | Feature       |
-| 29 | `[B]` T24 htpasswd basic-auth for the lens UI                                                                                                                                       | Med      | M      | Feature       |
-| 30 | `[B]` httptest e2e suite for UI routes (list→filter→detail→search→auth→stale)                                                                                                       | Med      | M      | Quality       |
-| 31 | `[B]` README: drop the `go install @latest` apology until a tag exists (unblocks with #10)                                                                                          | Low      | S      | Documentation |
-| 32 | `[B]` T11 dialplan-path AI-vs-human badge for FreeSWITCH CDRs                                                                                                                       | Low      | S      | Feature       |
-| 33 | `[B]` T13 Telnyx conversation insights per AI call                                                                                                                                  | Low      | M      | Feature       |
-| 34 | `[B]` T15 cost column via Detail Records poller                                                                                                                                     | Low      | M      | Feature       |
-| 35 | `[B]` Export API: JSONL/CSV dump of the index                                                                                                                                       | Low      | M      | Feature       |
-| 36 | `[B]` File upstream: cqrs-lint C009 exemption excludes bare `must` (`len(name) > 4`) — verify at source, then file with verify-before-filing                                        | Low      | S      | Bug           |
-| 37 | `[S]` `nix flake update` (go-nix-helpers `ad423c8` → current) + rebuild; schedule a cadence                                                                                         | Med      | S      | Cleanup       |
-| 38 | `[S]` Improve devShell first-entry UX: the one-time loud pre-commit "Cowardly refusing" message on hooksPath machines — consider README note or `enable...` guard                   | Low      | S      | Documentation |
-| 39 | `[S]` Verify README reflects the adopted reality (nix build/run, devShell, CI badge placeholder)                                                                                    | Med      | S      | Documentation |
-| 40 | `[P]` Decide `.config/metadata.yaml` fleet policy (go-output has it, go-nix-helpers doesn't)                                                                                        | Low      | S      | Policy        |
-| 41 | `[P]` Quarterly re-verify of the Telnyx live-API truths cluster (AGENTS.md mandate; next due ~2027-01)                                                                              | Med      | M      | Quality       |
-| 42 | `[S]` Coverage reporting per-package (total 52.2% hides cmd/wire at 0%) — consider per-package floors in ci.yml                                                                     | Low      | S      | Quality       |
-| 43 | `[S]` CI: add a concurrency group to cancel superseded runs (fleet-level idea; go-output lacks it too)                                                                              | Low      | S      | Quality       |
-| 44 | `[S]` Extend `update-vendor-hash` app to also handle the vendored cqrs-lint hashes (one command, all hashes)                                                                        | Low      | M      | Cleanup       |
-| 45 | `[P]` Decide `git-town.toml` rollout across the fleet (added here because both reference repos carry it; schema-valid TOML, but git-town usage itself is unconfirmed for this repo) | Low      | S      | Policy        |
-| 46 | `[B]` FTS/index maintenance story (vacuum/analyze cadence) once ingest volume is real                                                                                               | Low      | M      | Quality       |
-| 47 | `[S]` Confirm `nix develop` works on a fresh clone (pre-commit config generation + tool paths) — local machine has warm caches                                                      | Med      | S      | Quality       |
-| 48 | `[S]` Dependabot: expect first github-actions PRs; review whether gomod dependabot should stay alongside `buildflow update` (go-output dropped gomod)                               | Low      | S      | Policy        |
-| 49 | `[S]` Document the adopted-pattern deviations in one place (BuildFlow-owns-test/lint/tidy; no release.yml yet; hooksPath caveat) — currently spread across AGENTS.md + this report  | Low      | S      | Documentation |
-| 50 | `[P]` Genuinely consider the E003 flat-`internal/calls` split once `internal/cli` + agent transcripts settle (owner question already open in AGENTS.md)                             | Low      | M      | Architecture  |
+| ~~1~~  | ~~`[B]` Fix `TestIngestRecordsCorrectsAndRejects`: projection for `telnyx-conversation:conv-a` never converges (ingest_test.go:69) — the gate's only red step~~ done — root-caused the same night (StreamMarker prefix + one-shot drainer; 04:59 session) | ~~Critical~~ | ~~M~~ | ~~Bug~~ |
+| ~~2~~  | ~~`[S]` Add `var version = "dev"` to `cmd/pbx-lens` so nix ldflags version injection actually lands; `version` subcommand prints it~~ **Won't implement — kept the hard-coded dev placeholder; no release train yet.** | ~~High~~ | ~~S~~ | ~~Feature~~ |
+| ~~3~~  | ~~`[B]` httptest end-to-end test for the ingest-telnyx command loop (now in `internal/cli`)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| 4  | `[B]` Raise CI coverage floor 50 → fleet 80 once cmd/wire have tests **→ ROADMAP theme 2** | High     | S      | Quality       |
+| 5  | `[B]` T6 list page (table, AI badge, excerpt, filters) — the 51% slice **→ ROADMAP theme 2 (public presence)** | High     | L      | Feature       |
+| ~~6~~  | ~~`[B]` Adopt go-appkit core + templ-components frontend stack (plan §2–§4)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~L~~ | ~~Feature~~ |
+| ~~7~~  | ~~`[B]` Transcript-excerpt order-dependence: pin semantics + test~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~S~~ | ~~Bug~~ |
+| ~~8~~  | ~~`[B]` T5 webhook JSONL tailer + ingest command~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| ~~9~~  | ~~`[B]` T12 poller timers + freshness self-check~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| 10 | `[S]` Cut v0.1.0 and adapt go-output's release.yml + pre-tag-check to single-module **→ TODO_LIST blocked row (owner release gate)** | High     | M      | Feature       |
+| 11 | `[S]` Update FEATURES.md with the new infra capabilities (CI lane, devShell, update-vendor-hash, cqrs-lint) **→ ROADMAP theme 2 (tooling polish)** | Med      | S      | Documentation |
+| ~~12~~ | ~~`[S]` Harvest this report's (f) into TODO_LIST.md / ROADMAP.md (docs-health HARVEST)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Documentation~~ |
+| ~~13~~ | ~~`[S]` Align golangci-lint CI pin (v2.12) with devShell (2.14) — one number, one place~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~14~~ | ~~`[S]` Decide + document `.golangci.yml` timeout 10m vs go-output's 5m~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Documentation~~ |
+| ~~15~~ | ~~`[S]` cqrs-lint rev refresh policy (owner + cadence; consider an update app that automates the two-hash dance)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Cleanup~~ |
+| ~~16~~ | ~~`[S]` Verify aarch64-linux/aarch64-darwin nix builds (`nix flake check --all-systems`) — CI only proves x86_64-linux~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| ~~17~~ | ~~`[S]` First real push to exercise ci.yml; fix whatever the runner exposes~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| ~~18~~ | ~~`[S]` Run the never-run on-demand scans once: `buildflow -s gitleaks`, `-s codespell`, `-s markdown-lint` (covers this report + today's doc edits)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| 19 | `[P]` Fleet decision on pre-commit: BuildFlow `precommit install` vs `.githooks/` convention vs inert git-hooks hooks (global `core.hooksPath` makes the current wiring dead) **→ fleet decision; BuildFlow is the firing gate (documented)** | Med      | S      | Policy        |
+| ~~20~~ | ~~`[S]` Re-verify TODO_LIST evidence rows against the new `internal/cli` reality (several rows cite `cmd/pbx-lens/main.go` line numbers that the CLI-layer extraction moved)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Documentation~~ |
+| ~~21~~ | ~~`[B]` Move `resolveKey`/`parseSince` into `internal/cli` + tests (evidence row needs the same path refresh)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~22~~ | ~~`[B]` Fix smoke command's real-looking fake number (+14084757593 → 555 fake)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Bug~~ |
+| 23 | `[B]` T8 per-call detail page + recording streaming proxy **→ ROADMAP theme 1 (export streaming)** | Med      | L      | Feature       |
+| ~~24~~ | ~~`[B]` T10 FTS5 transcript search~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Feature~~ |
+| 25 | `[B]` T9 agent-transcript join (+ revisit E003 flat-domain decision) **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)** | Med      | M      | Feature       |
+| ~~26~~ | ~~`[B]` T7 systemd unit + thin NixOS module for the sibling repo~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Feature~~ |
+| ~~27~~ | ~~`[B]` T14 nightly backup-staging for the index DB~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Feature~~ |
+| ~~28~~ | ~~`[B]` T25 quality dashboard page~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~L~~ | ~~Feature~~ |
+| ~~29~~ | ~~`[B]` T24 htpasswd basic-auth for the lens UI~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Feature~~ |
+| ~~30~~ | ~~`[B]` httptest e2e suite for UI routes (list→filter→detail→search→auth→stale)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Quality~~ |
+| ~~31~~ | ~~`[B]` README: drop the `go install @latest` apology until a tag exists (unblocks with #10)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| 32 | `[B]` T11 dialplan-path AI-vs-human badge for FreeSWITCH CDRs **→ ROADMAP theme 2 (public presence)** | Low      | S      | Feature       |
+| ~~33~~ | ~~`[B]` T13 Telnyx conversation insights per AI call~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~M~~ | ~~Feature~~ |
+| ~~34~~ | ~~`[B]` T15 cost column via Detail Records poller~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~M~~ | ~~Feature~~ |
+| ~~35~~ | ~~`[B]` Export API: JSONL/CSV dump of the index~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~M~~ | ~~Feature~~ |
+| ~~36~~ | ~~`[B]` File upstream: cqrs-lint C009 exemption excludes bare `must` (`len(name) > 4`) — verify at source, then file with verify-before-filing~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Bug~~ |
+| ~~37~~ | ~~`[S]` `nix flake update` (go-nix-helpers `ad423c8` → current) + rebuild; schedule a cadence~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Cleanup~~ |
+| 38 | `[S]` Improve devShell first-entry UX: the one-time loud pre-commit "Cowardly refusing" message on hooksPath machines — consider README note or `enable...` guard **→ fleet decision; BuildFlow is the firing gate (documented)** | Low      | S      | Documentation |
+| 39 | `[S]` Verify README reflects the adopted reality (nix build/run, devShell, CI badge placeholder) **→ ROADMAP theme 2 (public presence)** | Med      | S      | Documentation |
+| 40 | `[P]` Decide `.config/metadata.yaml` fleet policy (go-output has it, go-nix-helpers doesn't) **→ fleet policy, undecided** | Low      | S      | Policy        |
+| 41 | `[P]` Quarterly re-verify of the Telnyx live-API truths cluster (AGENTS.md mandate; next due ~2027-01) **→ TODO_LIST blocked row (needs a real API key)** | Med      | M      | Quality       |
+| 42 | `[S]` Coverage reporting per-package (total 52.2% hides cmd/wire at 0%) — consider per-package floors in ci.yml **→ ROADMAP theme 2** | Low      | S      | Quality       |
+| 43 | `[S]` CI: add a concurrency group to cancel superseded runs (fleet-level idea; go-output lacks it too) **→ ROADMAP theme 2 (CI polish)** | Low      | S      | Quality       |
+| 44 | `[S]` Extend `update-vendor-hash` app to also handle the vendored cqrs-lint hashes (one command, all hashes) **→ ROADMAP theme 2 (tooling polish)** | Low      | M      | Cleanup       |
+| 45 | `[P]` Decide `git-town.toml` rollout across the fleet (added here because both reference repos carry it; schema-valid TOML, but git-town usage itself is unconfirmed for this repo) **→ fleet policy** | Low      | S      | Policy        |
+| ~~46~~ | ~~`[B]` FTS/index maintenance story (vacuum/analyze cadence) once ingest volume is real~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~M~~ | ~~Quality~~ |
+| ~~47~~ | ~~`[S]` Confirm `nix develop` works on a fresh clone (pre-commit config generation + tool paths) — local machine has warm caches~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| ~~48~~ | ~~`[S]` Dependabot: expect first github-actions PRs; review whether gomod dependabot should stay alongside `buildflow update` (go-output dropped gomod)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Policy~~ |
+| 49 | `[S]` Document the adopted-pattern deviations in one place (BuildFlow-owns-test/lint/tidy; no release.yml yet; hooksPath caveat) — currently spread across AGENTS.md + this report **→ fleet decision; BuildFlow is the firing gate (documented)** | Low      | S      | Documentation |
+| 50 | `[P]` Genuinely consider the E003 flat-`internal/calls` split once `internal/cli` + agent transcripts settle (owner question already open in AGENTS.md) **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)** | Low      | M      | Architecture  |
 
 ## g) Three questions I cannot answer myself
 
-1. **Coverage floor policy:** I set the CI gate at 50% (measured floor; packages 76–94%, cmd/wire at 0%). Do you want it at 50 until cmd/wire are tested (current), or go-output's 80 immediately with cmd/wire exempted like go-output's test-support modules — i.e., should the gate be green-now or honest-pain-now?
-2. **cqrs-lint pin:** the devShell ships cqrs-lint built from go-cqrs-lite master (`afaffa19`), which is newer than the v4.x library tags pbx-lens's go.mod pins. Is lint-binary-ahead-of-library acceptable to you (my assumption), or should the vendored rev track the same versions the repo consumes — accepting that per-version cqrs-lint binaries may not exist as tags?
-3. **Pre-commit end state on this machine:** your global `core.hooksPath=.githooks` silently disables every git-hooks.nix hook fleet-wide (including go-output's). Do you want (a) status quo — BuildFlow stays the only firing gate, the nix wiring stays decorative; (b) `buildflow precommit install` in covered repos; or (c) a fleet migration to `.githooks/` as the hook dir?
+1. **Coverage floor policy:** I set the CI gate at 50% (measured floor; packages 76–94%, cmd/wire at 0%). Do you want it at 50 until cmd/wire are tested (current), or go-output's 80 immediately with cmd/wire exempted like go-output's test-support modules — i.e., should the gate be green-now or honest-pain-now? **→ ROADMAP theme 2**
+2. ~~**cqrs-lint pin:** the devShell ships cqrs-lint built from go-cqrs-lite master (`afaffa19`), which is newer than the v4.x library tags pbx-lens's go.mod pins. Is lint-binary-ahead-of-library acceptable to you (my assumption), or should the vendored rev track the same versions the repo consumes — accepting that per-version cqrs-lint binaries may not exist as tags?~~ done — accepted and documented (AGENTS.md vendored cqrs-lint note)
+3. **Pre-commit end state on this machine:** your global `core.hooksPath=.githooks` silently disables every git-hooks.nix hook fleet-wide (including go-output's). Do you want (a) status quo — BuildFlow stays the only firing gate, the nix wiring stays decorative; (b) `buildflow precommit install` in covered repos; or (c) a fleet migration to `.githooks/` as the hook dir? **→ fleet decision; BuildFlow is the firing gate (documented)**
 
 ---
 

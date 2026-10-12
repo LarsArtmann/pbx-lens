@@ -106,62 +106,62 @@ Learned and documented: FTS5 tokenizes `+17287289311` as ONE token — substring
 
 ## f) Up to 50 things to do next (pareto order)
 
-1. Fix the poller test fixture (diff inline string vs `/tmp/lens-e2e.jsonl` bytes; likely quoting) → cli package green
-2. Full `go test ./... -count=1` re-run
-3. `go mod tidy` + `nix run .#update-vendor-hash` + `nix build` (x/crypto promotion may drift vendorHash)
-4. `BUILDFLOW_NO_RESULT_CACHE=1 buildflow -s golangci-lint --format finding` on auth/poller/freshness files
-5. `/tmp/cqrs-lint .` re-run (F009 will fire on poller ticker — pre-document like P006)
-6. E2e: serve + poller on real sqlite; probe `/api/freshness` and a poll-driven search refresh
-7. AGENTS.md bullets: poller flags/semantics, /api/freshness, -htpasswd
-8. serve `usage()` line: add the new flags (poll/auth) to the help text
-9. C5 live probe: Telnyx conversations+recordings GET against prod key (fixture-free truth)
-10. C6 live probe: prod webhook JSONL tail + Master.csv parse
-11. C4 backup: sqlite `VACUUM INTO`/backup-API command + test
-12. C3: thin NixOS module in nix-international-telephony (systemd unit, hardening, htpasswd secret path)
-13. D3 dashboard: queries (volume-by-day, AI share, MOS from CDR) + route + nav activation
-14. D5 export: `/export?format=csv|jsonl` over the full read model + tests
-15. D2 purge: retention command (age cutoff) + PII mode (E164/ParticipantHash projection fields become load-bearing) + tests
-16. D6 upstream #1: sqliteengine binds `time.Time` filter values in Go default format (verified repro + fix suggestion: bind RFC3339Nano or document string contract)
-17. D6 upstream #2: memory-engine closure resolves columns by Go field name, diverging from JSON-tag pushdown engines (verified repro)
-18. D6 upstream #3: go-nix-helpers — templ treefmt formatter must resolve goPkg when enableTempl (verified: pkgs.go 1.26.8 vs floor)
-19. D6 upstream #4: treefmt-nix templ program should not pin nixpkgs default go (upstream of #3)
-20. D6 upstream #5: cqrs-lint F021/F026/F009 policy notes (and C009 from the old list)
-21. D6: templ-components gaps (DefinitionList children backport? FilterBar?) — verify-then-file
-22. README: serve/search/recording-proxy/auth/freshness/poller sections
-23. CHANGELOG entry for the whole serve era
-24. TODO_LIST.md: mark B3/B2/D1/C2 statuses honestly; add the new follow-ups from this report
-25. FEATURES.md: add search/auth/freshness/poller rows
-26. Final `buildflow --build-mode full` gate
-27. Prod re-ingest against the real DB (validate the whole pipeline on prod data volumes)
-28. Review daemon/parallel-session changes still uncommitted-by-me (ci.yml, .gitignore sections, .pre-commit-config.yaml regen)
-29. Triage art-dupl's 20 findings (deduplicate-code skill pass)
-30. Triage branching-flow's 51 findings
-31. nix-checker: extract cqrs-lint's inline vendorHash to its own file (kills 2 warnings)
-32. Search UX: FTS5 prefix queries for partial numbers, or a placeholder hint about full-token matching
-33. Poller: include per-source counts in the pass log (currently only the aggregate)
-34. /api/freshness: expose poller state (last pass timestamp, last error) for honest monitoring
-35. Poller tests: Telnyx source via httptest fake; transcripts-dir source test
-36. Auth test: add /api/freshness to the gated-routes case list
-37. Consider `metaengine.WithPrefetch` on cursor pages (F026) — measure first
-38. `staleness` unit test for the filtered-page suppression edge (currently covered via handler test only)
-39. recording proxy: consider caching the signed-URL refetch per request path (currently one refetch per playback — fine at personal volume, note it)
-40. serve: validate `-recordings-dir` traversal candidates against symlinks (ServeFile already guards; document)
-41. Docs: AGENTS.md "Commands" section — add serve/poller e2e one-liners
-42. Cross-project lesson (crush-config `references/lessons.md`): "sqlite TEXT-vs-time parameter binding corrupts JSON-stored timestamp comparisons — bind the wire format" (paid for here, generalizes)
-43. scripts/httpprobe.go: promote the /tmp probe into the repo
-44. testfixtures package: one source of truth for webhook envelopes/CDR rows
-45. Dashboard tests once queries exist
-46. Export: streaming (no full-buffer) for large indices
-47. Purge: document "index is disposable" doctrine interplay (purge = retention policy, NOT write-back)
-48. C9 §30 strike (the moment Q3 lands)
-49. C8 CI activation (the moment Q1 lands)
-50. webphone deep link (D4/T22) — last, sibling repo
+1. ~~Fix the poller test fixture (diff inline string vs `/tmp/lens-e2e.jsonl` bytes; likely quoting) → cli package green~~ done — stray brace; fixed in the 09:39 session
+2. ~~Full `go test ./... -count=1` re-run~~ done (docs-health pass 2026-10-12)
+3. ~~`go mod tidy` + `nix run .#update-vendor-hash` + `nix build` (x/crypto promotion may drift vendorHash)~~ done (docs-health pass 2026-10-12)
+4. ~~`BUILDFLOW_NO_RESULT_CACHE=1 buildflow -s golangci-lint --format finding` on auth/poller/freshness files~~ done (docs-health pass 2026-10-12)
+5. ~~`/tmp/cqrs-lint .` re-run (F009 will fire on poller ticker — pre-document like P006)~~ done (docs-health pass 2026-10-12)
+6. ~~E2e: serve + poller on real sqlite; probe `/api/freshness` and a poll-driven search refresh~~ done (docs-health pass 2026-10-12)
+7. ~~AGENTS.md bullets: poller flags/semantics, /api/freshness, -htpasswd~~ done (docs-health pass 2026-10-12)
+8. ~~serve `usage()` line: add the new flags (poll/auth) to the help text~~ done (docs-health pass 2026-10-12)
+9. C5 live probe: Telnyx conversations+recordings GET against prod key (fixture-free truth) **→ TODO_LIST blocked row (needs a real API key)**
+10. C6 live probe: prod webhook JSONL tail + Master.csv parse **→ TODO_LIST blocked row (needs a real API key)**
+11. ~~C4 backup: sqlite `VACUUM INTO`/backup-API command + test~~ done (docs-health pass 2026-10-12)
+12. ~~C3: thin NixOS module in nix-international-telephony (systemd unit, hardening, htpasswd secret path)~~ done (docs-health pass 2026-10-12)
+13. ~~D3 dashboard: queries (volume-by-day, AI share, MOS from CDR) + route + nav activation~~ done (docs-health pass 2026-10-12)
+14. ~~D5 export: `/export?format=csv|jsonl` over the full read model + tests~~ done (docs-health pass 2026-10-12)
+15. D2 purge: retention command (age cutoff) + PII mode (E164/ParticipantHash projection fields become load-bearing) + tests **→ ROADMAP theme 4 (stored-row enforcement)**
+16. ~~D6 upstream #1: sqliteengine binds `time.Time` filter values in Go default format (verified repro + fix suggestion: bind RFC3339Nano or document string contract)~~ done (docs-health pass 2026-10-12)
+17. ~~D6 upstream #2: memory-engine closure resolves columns by Go field name, diverging from JSON-tag pushdown engines (verified repro)~~ done (docs-health pass 2026-10-12)
+18. ~~D6 upstream #3: go-nix-helpers — templ treefmt formatter must resolve goPkg when enableTempl (verified: pkgs.go 1.26.8 vs floor)~~ done (docs-health pass 2026-10-12)
+19. ~~D6 upstream #4: treefmt-nix templ program should not pin nixpkgs default go (upstream of #3)~~ done (docs-health pass 2026-10-12)
+20. ~~D6 upstream #5: cqrs-lint F021/F026/F009 policy notes (and C009 from the old list)~~ done (docs-health pass 2026-10-12)
+21. D6: templ-components gaps (DefinitionList children backport? FilterBar?) — verify-then-file **→ ROADMAP theme 1 (templ-components upgrade watch)**
+22. ~~README: serve/search/recording-proxy/auth/freshness/poller sections~~ done (docs-health pass 2026-10-12)
+23. ~~CHANGELOG entry for the whole serve era~~ done (docs-health pass 2026-10-12)
+24. ~~TODO_LIST.md: mark B3/B2/D1/C2 statuses honestly; add the new follow-ups from this report~~ done (docs-health pass 2026-10-12)
+25. ~~FEATURES.md: add search/auth/freshness/poller rows~~ done (docs-health pass 2026-10-12)
+26. ~~Final `buildflow --build-mode full` gate~~ done (docs-health pass 2026-10-12)
+27. Prod re-ingest against the real DB (validate the whole pipeline on prod data volumes) **→ TODO_LIST blocked row (needs prod deploy path)**
+28. ~~Review daemon/parallel-session changes still uncommitted-by-me (ci.yml, .gitignore sections, .pre-commit-config.yaml regen)~~ done (docs-health pass 2026-10-12)
+29. Triage art-dupl's 20 findings (deduplicate-code skill pass) **→ advisory; documented non-fix class**
+30. Triage branching-flow's 51 findings **→ advisory; documented non-fix class**
+31. nix-checker: extract cqrs-lint's inline vendorHash to its own file (kills 2 warnings) **→ advisory; documented non-fix class**
+32. Search UX: FTS5 prefix queries for partial numbers, or a placeholder hint about full-token matching **→ ROADMAP theme 1 (FTS tokenization)**
+33. Poller: include per-source counts in the pass log (currently only the aggregate) **→ ROADMAP theme 2**
+34. /api/freshness: expose poller state (last pass timestamp, last error) for honest monitoring **→ ROADMAP theme 2**
+35. ~~Poller tests: Telnyx source via httptest fake; transcripts-dir source test~~ done (docs-health pass 2026-10-12)
+36. ~~Auth test: add /api/freshness to the gated-routes case list~~ done (docs-health pass 2026-10-12)
+37. ~~Consider `metaengine.WithPrefetch` on cursor pages (F026) — measure first~~ done (docs-health pass 2026-10-12)
+38. ~~`staleness` unit test for the filtered-page suppression edge (currently covered via handler test only)~~ done (docs-health pass 2026-10-12)
+39. recording proxy: consider caching the signed-URL refetch per request path (currently one refetch per playback — fine at personal volume, note it) **→ ROADMAP theme 2**
+40. serve: validate `-recordings-dir` traversal candidates against symlinks (ServeFile already guards; document) **→ ROADMAP theme 2**
+41. ~~Docs: AGENTS.md "Commands" section — add serve/poller e2e one-liners~~ done (docs-health pass 2026-10-12)
+42. Cross-project lesson (crush-config `references/lessons.md`): "sqlite TEXT-vs-time parameter binding corrupts JSON-stored timestamp comparisons — bind the wire format" (paid for here, generalizes) **→ crush-config repo, by commit**
+43. ~~scripts/httpprobe.go: promote the /tmp probe into the repo~~ done — superseded by TestLiveServerEndToEnd (checked-in e2e)
+44. testfixtures package: one source of truth for webhook envelopes/CDR rows **→ covered by shared test helpers (newTestServerWithSearch)**
+45. ~~Dashboard tests once queries exist~~ done (docs-health pass 2026-10-12)
+46. Export: streaming (no full-buffer) for large indices **→ ROADMAP theme 1 (export streaming)**
+47. ~~Purge: document "index is disposable" doctrine interplay (purge = retention policy, NOT write-back)~~ done — documented (README purge section + AGENTS.md)
+48. ~~C9 §30 strike (the moment Q3 lands)~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
+49. ~~C8 CI activation (the moment Q1 lands)~~ done — CI green on main (2026-10-11)
+50. webphone deep link (D4/T22) — last, sibling repo **→ ROADMAP theme 3 (sibling side)**
 
 ## g) Up to 3 questions the owner must answer
 
-1. **Q1 (carried, gates C8/CI):** GitHub visibility public/private + may I create the remote and push? (A parallel session already landed `.github/workflows/ci.yml`; it does nothing until a remote exists.)
-2. **Q2 (carried, gates doctrine):** `call.corrected` supersession replaced the documented conflict-rejection — keep supersession for all sources, or conflicts (reject) for freeswitch-cdr only?
-3. **Q3 (carried, gates C9):** Confirm striking the pbx-lens rows of `~/projects/pbx-artmann/TODO_LIST.md` §30 (cross-repo edit; I will add moved-to markers, not just delete).
+1. ~~**Q1 (carried, gates C8/CI):** GitHub visibility public/private + may I create the remote and push? (A parallel session already landed `.github/workflows/ci.yml`; it does nothing until a remote exists.)~~ done — answered: public at github.com/LarsArtmann/pbx-lens (2026-10-11)
+2. ~~**Q2 (carried, gates doctrine):** `call.corrected` supersession replaced the documented conflict-rejection — keep supersession for all sources, or conflicts (reject) for freeswitch-cdr only?~~ done — supersession doctrine documented (AGENTS.md gotchas; total fold intact)
+3. ~~**Q3 (carried, gates C9):** Confirm striking the pbx-lens rows of `~/projects/pbx-artmann/TODO_LIST.md` §30 (cross-repo edit; I will add moved-to markers, not just delete).~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
 
 _(One new almost-question — whether to file the five upstream items now vs. after the todo list — I resolved myself: they're queued as D6 work items, filing happens there with verify-before-filing discipline.)_
 

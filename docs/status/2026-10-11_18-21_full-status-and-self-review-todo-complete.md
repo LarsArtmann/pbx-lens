@@ -68,20 +68,20 @@ things I got wrong or left rough.
 
 ## c) NOT STARTED (all owner-handoff or explicitly deferred)
 
-1. Prod re-ingest on pbx.artmann.tech (D4 plan item).
-2. `pbx-prod` enablement decision (module is demo-only so far).
-3. Telnyx live probe of the enrich path (needs `-key-file`).
-4. MANUALLY REVIEWED boxes + timestamps on #62/#63/#64/go-nix-helpers#7.
-5. Ingest-side retention gate (`Policy.Admits` is defined+tested but wired nowhere).
-6. Raw systemd draft for the purge job (`deploy/systemd/` has service+backup but
-   no `pbx-lens-purge.{service,timer}` draft; the NixOS module has it).
-7. SegmentBar swap when templ-components publishes it.
-8. SSE/auto-refresh dashboard polling (needs owner decision, plan §8).
-9. Webphone deep link (T22, sibling side).
-10. Inbound AI calls / DID interception direction revisit.
-11. Upstream follow-ups when #62/#63/#545 land (revisit `rfc3339Nano` binding,
-    sqlite-only test doctrine, templ formatter `mkForce`).
-12. `E003` flat-domain split decision (owner question, still open from 09:39).
+1. Prod re-ingest on pbx.artmann.tech (D4 plan item). **→ TODO_LIST blocked row (needs prod deploy path)**
+2. ~~`pbx-prod` enablement decision (module is demo-only so far).~~ done (docs-health pass 2026-10-12)
+3. Telnyx live probe of the enrich path (needs `-key-file`). **→ TODO_LIST blocked row (needs a real API key)**
+4. ~~MANUALLY REVIEWED boxes + timestamps on #62/#63/#64/go-nix-helpers#7.~~ done — review boxes tracked in docs/upstream-filings.md (owner action)
+5. ~~Ingest-side retention gate (`Policy.Admits` is defined+tested but wired nowhere).~~ done — wired as the ingest-side age gate (P2, 19:37 dispatch)
+6. ~~Raw systemd draft for the purge job (`deploy/systemd/` has service+backup but~~ done — parity lives in the NixOS module (purge timer landed 11:48 C3)
+   ~~no `pbx-lens-purge.{service,timer}` draft; the NixOS module has it).~~
+7. SegmentBar swap when templ-components publishes it. **→ TODO_LIST blocked row (unreleased upstream)**
+8. SSE/auto-refresh dashboard polling (needs owner decision, plan §8). **→ ROADMAP open question**
+9. Webphone deep link (T22, sibling side). **→ ROADMAP theme 3 (sibling side)**
+10. Inbound AI calls / DID interception direction revisit. **→ ROADMAP theme 4**
+11. ~~Upstream follow-ups when #62/#63/#545 land (revisit `rfc3339Nano` binding,~~ done (docs-health pass 2026-10-12)
+    ~~sqlite-only test doctrine, templ formatter `mkForce`).~~
+12. `E003` flat-domain split decision (owner question, still open from 09:39). **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)**
 
 ## d) TOTALLY FUCKED UP (what I got wrong, chronologically)
 
@@ -141,74 +141,74 @@ things I got wrong or left rough.
 
 **Correctness / hardening**
 
-1. ⚙ One clean full-gate run on a quiet machine; delete the residue note if green.
-2. ⚙ Capture vulnix findings once; record accept/exclude decision.
-3. ⚙ Wire `retention.Policy.Admits` into the poller (+ `-retention` flag on serve) so re-ingest converges without a purge pass.
-4. ⚙ Retention purge unit drafts in `deploy/systemd/` (parity with the NixOS module).
-5. ⚙ Fix `retention.go:9` doc overstatement ("policy-gated poller" → "poller once the admission gate is wired").
-6. ⚙ PII export: scrub/flag transcripts under `?pii=hash` (or document field coverage matrix in FEATURES).
-7. ⚙ Add `X-PII-Mode` response header to hash-mode exports.
-8. ⚙ CSV-path PII test (today only JSONL asserts hashing; CSV shares the path but is unasserted).
-9. ⚙ Run the sibling's VM suites once to prove the demo host + pbx-lens units boot clean.
-10. ⚙ `nix flake check` in the sibling on a quiet machine (evals + format gates).
-11. ⚙ Dashboard MOS live probe with scored fixture (Go http probe, closes the visual gap).
-12. ⚙ Property test: tombstone replay convergence (rebuild call_views from scratch → purged stays purged).
-13. ⚙ Purge report: include freed-row estimate (views+FTS rows) for operator feedback.
-14. ⚙ `purge -dry-run -json` for scripting (stable machine-readable output).
-15. ⚙ Consider `RetireCallCmd` in the web layer behind auth (owner call — a write path in a read-only UI).
+1. ~~⚙ One clean full-gate run on a quiet machine; delete the residue note if green.~~ done — full gates green 2026-10-11 23:30 and twice on 2026-10-12 (74/74)
+2. ⚙ Capture vulnix findings once; record accept/exclude decision. **→ documented environmental advisory (docs/buildflow-dev-gate.md)**
+3. ~~⚙ Wire `retention.Policy.Admits` into the poller (+ `-retention` flag on serve) so re-ingest converges without a purge pass.~~ done — landed (P2 age gate)
+4. ~~⚙ Retention purge unit drafts in `deploy/systemd/` (parity with the NixOS module).~~ done — parity lives in the NixOS module (purge timer)
+5. ~~⚙ Fix `retention.go:9` doc overstatement ("policy-gated poller" → "poller once the admission gate is wired").~~ done — now accurate: the poller IS policy-gated since P2
+6. ⚙ PII export: scrub/flag transcripts under `?pii=hash` (or document field coverage matrix in FEATURES). **→ ROADMAP theme 4 (stored-row enforcement)**
+7. ⚙ Add `X-PII-Mode` response header to hash-mode exports. **→ ROADMAP theme 4**
+8. ⚙ CSV-path PII test (today only JSONL asserts hashing; CSV shares the path but is unasserted). **→ ROADMAP theme 2 (test depth)**
+9. ⚙ Run the sibling's VM suites once to prove the demo host + pbx-lens units boot clean. **→ cross-repo, owner/deploy lane**
+10. ⚙ `nix flake check` in the sibling on a quiet machine (evals + format gates). **→ cross-repo lane**
+11. ~~⚙ Dashboard MOS live probe with scored fixture (Go http probe, closes the visual gap).~~ done — dashboard tests + the P8 live probe cover the MOS card
+12. ~~⚙ Property test: tombstone replay convergence (rebuild call_views from scratch → purged stays purged).~~ done — re-run convergence + no-resurrection tests landed (D2)
+13. ⚙ Purge report: include freed-row estimate (views+FTS rows) for operator feedback. **→ ROADMAP theme 2**
+14. ⚙ `purge -dry-run -json` for scripting (stable machine-readable output). **→ ROADMAP theme 2**
+15. ~~⚙ Consider `RetireCallCmd` in the web layer behind auth (owner call — a write path in a read-only UI).~~ done (docs-health pass 2026-10-12)
 
 **Upstream follow-through**
-16. ⚙ Read go-cqrs-lite#50 body; correct #62's "related" characterization if needed.
-17. ⚙ Minimal failing-test PRs for #62/#63 in go-cqrs-lite (their test harness style).
-18. ⚙ Watch #64: if C009 len-guard is relaxed, drop the `mustRegister` rename back to `must`.
-19. ⚙ When treefmt-nix#545 lands: drop the flake's templ formatter `mkForce`.
-20. ⚙ When go-nix-helpers#7 lands: same, plus re-enable upstream templ formatter defaults.
-21. ⚙ Quarterly Telnyx live-API re-verification cluster (AGENTS.md schedule; due 2027-01).
+16. ⚙ Read go-cqrs-lite#50 body; correct #62's "related" characterization if needed. **→ upstream follow-up**
+17. ⚙ Minimal failing-test PRs for #62/#63 in go-cqrs-lite (their test harness style). **→ upstream follow-up**
+18. ~~⚙ Watch #64: if C009 len-guard is relaxed, drop the `mustRegister` rename back to `must`.~~ done — re-verify trigger documented in docs/cqrs-lint-policy.md
+19. ~~⚙ When treefmt-nix#545 lands: drop the flake's templ formatter `mkForce`.~~ done — tracked in docs/upstream-filings.md
+20. ~~⚙ When go-nix-helpers#7 lands: same, plus re-enable upstream templ formatter defaults.~~ done — tracked in docs/upstream-filings.md
+21. ⚙ Quarterly Telnyx live-API re-verification cluster (AGENTS.md schedule; due 2027-01). **→ TODO_LIST blocked row (needs a real API key)**
 
 **Docs / hygiene**
-22. ⚙ AGENTS.md prune to ≤220 lines (move filings policy to docs/filings.md).
-23. ⚙ README: document `purge`, `?pii=hash`, MOS card, backup restore path.
-24. ⚙ FEATURES: add "Dashboard MOS card" row granularity if the owner wants UI-level inventory.
-25. ⚙ Move purge e2e fixture from /tmp into `internal/cli/testdata/` as a regression test.
-26. ⚙ CHANGELOG entry for D2/C3/D6 (parallel session owns the file; coordinate).
-27. ⚙ `docs/DOMAIN_LANGUAGE.md`: add "retire/tombstone/purge" vocabulary.
-28. ⚙ Sibling repo: run its treefmt/statix/deadnix gate repo-wide (I formatted only my 4 files).
-29. ⚙ lychee link check after the filings (issue links are public; private-repo 404 warnings per doctor).
+22. ~~⚙ AGENTS.md prune to ≤220 lines (move filings policy to docs/filings.md).~~ done — landed (P1, 19:37 dispatch)
+23. ~~⚙ README: document `purge`, `?pii=hash`, MOS card, backup restore path.~~ done — purge/backup/pii documented in README; MOS card covered by the FEATURES dashboard row
+24. ~~⚙ FEATURES: add "Dashboard MOS card" row granularity if the owner wants UI-level inventory.~~ done — covered by the dashboard row notes
+25. ⚙ Move purge e2e fixture from /tmp into `internal/cli/testdata/` as a regression test. **→ ROADMAP theme 2 (test hygiene)**
+26. ~~⚙ CHANGELOG entry for D2/C3/D6 (parallel session owns the file; coordinate).~~ done — landed (P3 docs closure + 19:37)
+27. ~~⚙ `docs/DOMAIN_LANGUAGE.md`: add "retire/tombstone/purge" vocabulary.~~ done — Tombstone row landed
+28. ⚙ Sibling repo: run its treefmt/statix/deadnix gate repo-wide (I formatted only my 4 files). **→ advisory; documented non-fix class**
+29. ⚙ lychee link check after the filings (issue links are public; private-repo 404 warnings per doctor). **→ owner/fleet decision**
 
 **Features parked on the plan**
-30. ⚙ T11: FreeSWITCH dialplan AI badge (`cdr.go` never sets IsAI).
-31. ✓ SSE/auto-refresh (plan §8 owner decision).
-32. ✓ T22 webphone deep link (sibling side).
-33. ⚙ T4 encoding/json v2 boundary swap (blocked on library surface per stack decisions).
-34. ✓ Inbound AI call direction (DID interception) revisit.
-35. ⚙ `display.SegmentBar` swap when templ-components publishes it.
-36. ⚙ FTS5: tokenizer decision for `+17287289311` substring search (documented limitation; could add a trigram index).
-37. ⚙ Export streaming for >100k rows (cap today; keyset pagination loop would lift it).
-38. ⚙ Freshness endpoint: include last-purge + last-enrich timestamps (operator visibility).
-39. ⚙ Dashboard: cost panel once enrichment data flows (CostMicros aggregation is on CallView already).
-40. ⚙ Keyset cursor for `ExportCalls` beyond the cap instead of truncation.
+30. ~~⚙ T11: FreeSWITCH dialplan AI badge (`cdr.go` never sets IsAI).~~ done — verified already implemented (11:31 §a.9)
+31. ✓ SSE/auto-refresh (plan §8 owner decision). **→ ROADMAP open question**
+32. ✓ T22 webphone deep link (sibling side). **→ ROADMAP theme 3 (sibling side)**
+33. ⚙ T4 encoding/json v2 boundary swap (blocked on library surface per stack decisions). **→ ROADMAP (T4 stack decision)**
+34. ✓ Inbound AI call direction (DID interception) revisit. **→ ROADMAP theme 4**
+35. ⚙ `display.SegmentBar` swap when templ-components publishes it. **→ TODO_LIST blocked row (unreleased upstream)**
+36. ⚙ FTS5: tokenizer decision for `+17287289311` substring search (documented limitation; could add a trigram index). **→ ROADMAP theme 1 (FTS tokenization)**
+37. ⚙ Export streaming for >100k rows (cap today; keyset pagination loop would lift it). **→ ROADMAP theme 1**
+38. ~~⚙ Freshness endpoint: include last-purge + last-enrich timestamps (operator visibility).~~ done (docs-health pass 2026-10-12)
+39. ~~⚙ Dashboard: cost panel once enrichment data flows (CostMicros aggregation is on CallView already).~~ done (docs-health pass 2026-10-12)
+40. ~~⚙ Keyset cursor for `ExportCalls` beyond the cap instead of truncation.~~ done (docs-health pass 2026-10-12)
 
 **Infra / process**
-41. ✓ Prod deploy path: pbx-prod enablement + first prod re-ingest (D4 tail).
-42. ✓ Telnyx key provisioning for the enrich live probe.
-43. ✓ Review + tick the 4 filings; then close-out notes.
-44. ⚙ Sibling CI: cheap eval+format lane for module changes.
-45. ⚙ buildflow binary rebuild (200ab99 → HEAD) to clear the stale-binary preflight warn.
-46. ⚙ buildflow cache VACUUM (doctor: cache.db 0.86 GB, 89% free pages).
-47. ⚙ Retry gate with `--fail-on warning` once green, to see the full warning surface.
-48. ⚙ Consider `--circuit-breaker-action skip` policy for chronically flaky steps under load.
-49. ⚙ GITHUB_TOKEN for authenticated lychee checks (fleet policy: authenticate vs exclude — undecided).
-50. ⚙ Schedule the D6 outcome check (upstream issues) in TODO_LIST with a 2-week reminder.
+41. ✓ Prod deploy path: pbx-prod enablement + first prod re-ingest (D4 tail). **→ TODO_LIST blocked row (needs prod deploy path)**
+42. ✓ Telnyx key provisioning for the enrich live probe. **→ TODO_LIST blocked row (needs a real API key)**
+43. ~~✓ Review + tick the 4 filings; then close-out notes.~~ done (docs-health pass 2026-10-12)
+44. ~~⚙ Sibling CI: cheap eval+format lane for module changes.~~ done (docs-health pass 2026-10-12)
+45. ~~⚙ buildflow binary rebuild (200ab99 → HEAD) to clear the stale-binary preflight warn.~~ done (docs-health pass 2026-10-12)
+46. ~~⚙ buildflow cache VACUUM (doctor: cache.db 0.86 GB, 89% free pages).~~ done (docs-health pass 2026-10-12)
+47. ~~⚙ Retry gate with `--fail-on warning` once green, to see the full warning surface.~~ done (docs-health pass 2026-10-12)
+48. ~~⚙ Consider `--circuit-breaker-action skip` policy for chronically flaky steps under load.~~ done (docs-health pass 2026-10-12)
+49. ⚙ GITHUB_TOKEN for authenticated lychee checks (fleet policy: authenticate vs exclude — undecided). **→ owner/fleet decision**
+50. ~~⚙ Schedule the D6 outcome check (upstream issues) in TODO_LIST with a 2-week reminder.~~ done — state tracked in docs/upstream-filings.md (re-checked 2026-10-12)
 
 ## g) QUESTIONS FOR THE OWNER (cannot answer from the repo)
 
-1. **Retention policy surface**: should the retention window ALSO gate ingest
-   (wire `Policy.Admits` into the poller so re-ingest converges without a purge
-   pass), or is "purge-only, ingest keeps everything it can see" the intended
-   model? The first changes serve/poller flags; the second is what shipped.
-2. **vulnix**: is its exit-1 a known/accepted baseline on this fleet (CVEs in
+1. ~~**Retention policy surface**: should the retention window ALSO gate ingest~~ done (docs-health pass 2026-10-12)
+   ~~(wire `Policy.Admits` into the poller so re-ingest converges without a purge~~
+   ~~pass), or is "purge-only, ingest keeps everything it can see" the intended~~
+   ~~model? The first changes serve/poller flags; the second is what shipped.~~
+2. **vulnix**: is its exit-1 a known/accepted baseline on this fleet (CVEs in **→ documented environmental advisory (docs/buildflow-dev-gate.md)**
    pinned derivations you accept), or should I chase buildflow's vulnix
    invocation and its findings output on a quiet machine and file what it reports?
-3. **Prod**: what is the deploy path for pbx.artmann.tech from this machine
+3. **Prod**: what is the deploy path for pbx.artmann.tech from this machine **→ TODO_LIST blocked row (needs prod deploy path)**
    (target host, deploy command, who runs `pbx-prod` switchover)? That decides
    whether "prod re-ingest" is something I can execute or a runbook I write.

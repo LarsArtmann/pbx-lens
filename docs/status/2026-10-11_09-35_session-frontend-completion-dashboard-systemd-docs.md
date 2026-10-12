@@ -178,72 +178,72 @@ the swap when the library publishes.
 
 ## f) Up to 50 things to do next (pareto order)
 
-1. Rebuild/reinstall the fleet BuildFlow binary → `buildflow --build-mode dev`
-   fully green → delete the AGENTS.md license-check note (needs g.3).
-2. Create the git remote + push `main` (needs g.1) — 25+ commits of unpushed work.
-3. T11: set `IsAI` from the CDR dialplan path — fixes the dashboard AI-share undercount.
-4. Add `/dashboard` + `/api/freshness` to the auth gated-routes test (M21.6/M24 polish).
-5. `scripts/httpprobe.go` — promote the probe, delete the /tmp sin class.
-6. One-flow UI e2e: seed → list → filter → detail → search → auth gate → stale banner → dashboard.
-7. T13: fetch + store Telnyx conversation insights at ingest.
-8. T15: Detail-Records poller for cost micros.
-9. Prod re-ingest for ContentHash v2 (validate the whole pipeline on real volume).
-10. Dashboard date-range picker (M20.1 delta) — or strike it from the plan deliberately.
-11. Dashboard duration histogram (M20.2 delta) — or strike.
-12. Sparkline `AriaLabel` (a11y).
-13. Telnyx httptest-fake poller test.
-14. Nightly backup timer wiring (host/sibling side).
-15. NixOS module handoff to nix-international-telephony (draft → `services.pbx-lens`).
-16. D6 upstream #1: sqliteengine time.Time filter binding (verified repro).
-17. D6 upstream #2: memory-engine field-name vs JSON-tag resolution.
-18. D6 upstream #3/#4: treefmt templ go pin (go-nix-helpers + treefmt-nix).
-19. D6 upstream #5: cqrs-lint C009 `must` exemption.
-20. T23 retention/PII purge (E164/ParticipantHash become load-bearing).
-21. Swap hand-rolled AI/human bar → `display.SegmentBar` when published.
-22. Swap hand-rolled `percent`/`clockDuration` → `utils/format` when published.
-23. FTS prefix queries or a search-box hint for partial phone numbers.
-24. `internal/testfixtures` package (shared webhook/CDR envelopes).
-25. Poller per-source counts in the pass log.
-26. `/api/freshness`: expose poller state (last pass, last error).
-27. `staleness` unit test for the filtered-page suppression edge.
-28. Recording proxy: consider caching the signed-URL refetch per path (measure first).
-29. `-recordings-dir` symlink-traversal note (ServeFile guards; document).
-30. art-dupl triage (20 findings).
-31. branching-flow triage (51 findings).
-32. nix-checker: extract cqrs-lint's inline vendorHash to a file (kills 2 warnings).
-33. `metaengine.WithPrefetch` on cursor pages (F026) — measure first.
-34. Cross-project lesson: "bind time filters in the stored wire format" → crush-config lessons.md.
-35. README screenshots (visual proof of the UI era; screenshots-as-CI candidate).
-36. Annotate the 04:59 / 05:41 / 06:29 status reports as superseded by this one.
-37. Quarterly Telnyx live-API re-verify cluster (AGENTS.md cadence note).
-38. Verify metaengine connection coexists with the FTS busy_timeout under poll+serve concurrency (search has `_pragma=busy_timeout(5000)`; the metaengine DSN path is not documented to).
-39. Dashboard week-over-week deltas (StatCard `Change`/`Trend` fields are unused).
-40. Consider `If-None-Match` on `/api/export.*` (only if export gets large).
-41. Dashboard tests: pin the handler's `time.Now()` seam (inject a clock) so window edges stay testable.
-42. Smoke command: reuse it in the e2e docs as the 10-second health check.
-43. CHANGELOG: "Changed" section for ContentHash v2 re-ingest requirement (it's implied, not stated as an action item).
-44. `.buildflow.yml`: consider documenting the `default_step_timeout` choice (the only non-default key).
-45. ROADMAP: move "live SSE / auto-refresh" decision request forward (needs owner).
-46. ROADMAP: webphone deep link (D4) — last, sibling repo.
-47. Search UX: full-token caveat into the search page itself, not just AGENTS.md.
-48. TODO_LIST: harvest b.1/b.2/b.3 rows from this report (they are not yet rows).
-49. LSP: restart gopls to clear the stale "systemd undefined" warning noise.
-50. Delete `/tmp/dashprobe.go`, `/tmp/routeprobe.go` after #5 lands.
+1. ~~Rebuild/reinstall the fleet BuildFlow binary → `buildflow --build-mode dev`~~ done — rebuilt 2026-10-11; license-check green 22:31
+   ~~fully green → delete the AGENTS.md license-check note (needs g.3).~~
+2. ~~Create the git remote + push `main` (needs g.1) — 25+ commits of unpushed work.~~ done — public repo created and pushed (10:28 session)
+3. ~~T11: set `IsAI` from the CDR dialplan path — fixes the dashboard AI-share undercount.~~ done — verified already implemented (11:31 session §a.9)
+4. ~~Add `/dashboard` + `/api/freshness` to the auth gated-routes test (M21.6/M24 polish).~~ done — flow e2e gates /api/freshness + route-table test
+5. ~~`scripts/httpprobe.go` — promote the probe, delete the /tmp sin class.~~ done — superseded by TestLiveServerEndToEnd (checked-in e2e)
+6. ~~One-flow UI e2e: seed → list → filter → detail → search → auth gate → stale banner → dashboard.~~ done — landed (11:31 flow_test + 20:26 TestLiveServerEndToEnd)
+7. ~~T13: fetch + store Telnyx conversation insights at ingest.~~ done — landed (11:31 session)
+8. ~~T15: Detail-Records poller for cost micros.~~ done — landed (11:31 session)
+9. Prod re-ingest for ContentHash v2 (validate the whole pipeline on real volume). **→ TODO_LIST blocked row (needs prod deploy path)**
+10. Dashboard date-range picker (M20.1 delta) — or strike it from the plan deliberately. **→ ROADMAP open question (deliver or strike)**
+11. Dashboard duration histogram (M20.2 delta) — or strike. **→ ROADMAP open question (deliver or strike)**
+12. Sparkline `AriaLabel` (a11y). **→ ROADMAP theme 1**
+13. ~~Telnyx httptest-fake poller test.~~ done — landed (11:31 enrich_test fakeTelnyx)
+14. ~~Nightly backup timer wiring (host/sibling side).~~ done — module backup timer landed (11:48 C3)
+15. ~~NixOS module handoff to nix-international-telephony (draft → `services.pbx-lens`).~~ done — landed (11:48 C3); draft annotated SUPERSEDED
+16. ~~D6 upstream #1: sqliteengine time.Time filter binding (verified repro).~~ done — filed: #62/#63/#64, go-nix-helpers#7, treefmt-nix#545
+17. ~~D6 upstream #2: memory-engine field-name vs JSON-tag resolution.~~ done — filed: #62/#63/#64, go-nix-helpers#7, treefmt-nix#545
+18. ~~D6 upstream #3/#4: treefmt templ go pin (go-nix-helpers + treefmt-nix).~~ done — filed: #62/#63/#64, go-nix-helpers#7, treefmt-nix#545
+19. ~~D6 upstream #5: cqrs-lint C009 `must` exemption.~~ done — filed: #62/#63/#64, go-nix-helpers#7, treefmt-nix#545
+20. T23 retention/PII purge (E164/ParticipantHash become load-bearing). **→ ROADMAP theme 4 (stored-row enforcement)**
+21. Swap hand-rolled AI/human bar → `display.SegmentBar` when published. **→ TODO_LIST blocked row (unreleased upstream)**
+22. ~~Swap hand-rolled `percent`/`clockDuration` → `utils/format` when published.~~ done (docs-health pass 2026-10-12)
+23. FTS prefix queries or a search-box hint for partial phone numbers. **→ ROADMAP theme 1 (FTS tokenization)**
+24. `internal/testfixtures` package (shared webhook/CDR envelopes). **→ covered by shared test helpers (newTestServerWithSearch)**
+25. Poller per-source counts in the pass log. **→ ROADMAP theme 2**
+26. `/api/freshness`: expose poller state (last pass, last error). **→ ROADMAP theme 2**
+27. ~~`staleness` unit test for the filtered-page suppression edge.~~ done (docs-health pass 2026-10-12)
+28. Recording proxy: consider caching the signed-URL refetch per path (measure first). **→ ROADMAP theme 2**
+29. `-recordings-dir` symlink-traversal note (ServeFile guards; document). **→ ROADMAP theme 2**
+30. art-dupl triage (20 findings). **→ advisory; documented non-fix class**
+31. branching-flow triage (51 findings). **→ advisory; documented non-fix class**
+32. nix-checker: extract cqrs-lint's inline vendorHash to a file (kills 2 warnings). **→ advisory; documented non-fix class**
+33. ~~`metaengine.WithPrefetch` on cursor pages (F026) — measure first.~~ done (docs-health pass 2026-10-12)
+34. Cross-project lesson: "bind time filters in the stored wire format" → crush-config lessons.md. **→ crush-config repo, by commit**
+35. README screenshots (visual proof of the UI era; screenshots-as-CI candidate). **→ ROADMAP theme 2 (public presence)**
+36. ~~Annotate the 04:59 / 05:41 / 06:29 status reports as superseded by this one.~~ done — in the 2026-10-12 docs-health pass
+37. Quarterly Telnyx live-API re-verify cluster (AGENTS.md cadence note). **→ TODO_LIST blocked row (needs a real API key)**
+38. ~~Verify metaengine connection coexists with the FTS busy_timeout under poll+serve concurrency (search has `_pragma=busy_timeout(5000)`; the metaengine DSN path is not documented to).~~ done — coexistence green (busy_timeout pragma + e2e through 2026-10-12)
+39. Dashboard week-over-week deltas (StatCard `Change`/`Trend` fields are unused). **→ ROADMAP theme 1**
+40. Consider `If-None-Match` on `/api/export.*` (only if export gets large). **→ ROADMAP theme 1**
+41. Dashboard tests: pin the handler's `time.Now()` seam (inject a clock) so window edges stay testable. **→ ROADMAP theme 2 (test determinism)**
+42. ~~Smoke command: reuse it in the e2e docs as the 10-second health check.~~ done — smoke is the README quick start
+43. ~~CHANGELOG: "Changed" section for ContentHash v2 re-ingest requirement (it's implied, not stated as an action item).~~ done — CHANGELOG states the re-ingest requirement
+44. `.buildflow.yml`: consider documenting the `default_step_timeout` choice (the only non-default key). **→ docs polish (buildflow config)**
+45. ~~ROADMAP: move "live SSE / auto-refresh" decision request forward (needs owner).~~ done — ROADMAP open questions carry SSE + webphone (2026-10-12 rebuild)
+46. ROADMAP: webphone deep link (D4) — last, sibling repo. **→ ROADMAP theme 3 (sibling side)**
+47. ~~Search UX: full-token caveat into the search page itself, not just AGENTS.md.~~ done (docs-health pass 2026-10-12)
+48. ~~TODO_LIST: harvest b.1/b.2/b.3 rows from this report (they are not yet rows).~~ done — rows landed (T13/T15/T23 + gate doc)
+49. ~~LSP: restart gopls to clear the stale "systemd undefined" warning noise.~~ **Won't implement — transient diagnostics; build/lint are authoritative.**
+50. ~~Delete `/tmp/dashprobe.go`, `/tmp/routeprobe.go` after #5 lands.~~ **Won't implement — transient /tmp files, gone.**
 
 ## g) Up to 3 questions the owner must answer
 
-1. **Q1 (carried twice, now blocking):** May I create `github.com/larsartmann/pbx-lens`
-   (public or private?) and push `main`? The repo has NO remote — the CI lane
-   is dormant and this session's work exists only on this machine.
-2. **Q2 (new, product semantics I cannot derive):** "Calls today" and the
-   dashboard day buckets are computed in **UTC**. For a German PBX owner,
-   should "today" mean Europe/Berlin local days? (23:30 CET calls currently
-   count toward the next day's bucket.)
-3. **Q3 (fleet tooling provenance):** license-check stays red until the
-   BuildFlow binary is rebuilt. May I rebuild/reinstall it from
-   `~/projects/BuildFlow` as-is (HEAD is on the active
-   `feat/toolsdk-provider-switchover` branch), or should that wait until the
-   branch merges?
+1. ~~**Q1 (carried twice, now blocking):** May I create `github.com/larsartmann/pbx-lens`~~ done (docs-health pass 2026-10-12)
+   ~~(public or private?) and push `main`? The repo has NO remote — the CI lane~~
+   ~~is dormant and this session's work exists only on this machine.~~
+2. ~~**Q2 (new, product semantics I cannot derive):** "Calls today" and the~~ done (docs-health pass 2026-10-12)
+   ~~dashboard day buckets are computed in **UTC**. For a German PBX owner,~~
+   ~~should "today" mean Europe/Berlin local days? (23:30 CET calls currently~~
+   ~~count toward the next day's bucket.)~~
+3. ~~**Q3 (fleet tooling provenance):** license-check stays red until the~~ done — green 2026-10-11 22:31 after the binary rebuild (buildflow-dev-gate.md)
+   ~~BuildFlow binary is rebuilt. May I rebuild/reinstall it from~~
+   ~~`~/projects/BuildFlow` as-is (HEAD is on the active~~
+   ~~`feat/toolsdk-provider-switchover` branch), or should that wait until the~~
+   ~~branch merges?~~
 
 ---
 

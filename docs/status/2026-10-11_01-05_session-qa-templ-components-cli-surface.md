@@ -55,15 +55,15 @@ _(All read from TODO_LIST/FEATURES/ROADMAP/AGENTS.md this session; nothing beyon
 
 | #   | What                                                                                                       | Why not started                                                                     | Still wanted?                 |
 | --- | ---------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ----------------------------- |
-| c.1 | T6 `serve` command + calls list page (templ-components is the planned but unadopted library)               | CLI-first build order; UI is the "lens" half of the project, deferred               | Yes — completes the 51% slice |
-| c.2 | T8 per-call detail page + recording streaming proxy                                                        | depends on T6 routes                                                                | Yes                           |
-| c.3 | T12 poller timers + freshness self-check / stale banner                                                    | ingest is CLI-invoked only; no scheduler code anywhere                              | Yes                           |
-| c.4 | T24 UI auth (operator htpasswd reuse)                                                                      | depends on T6                                                                       | Yes                           |
-| c.5 | webphone read-only deep link into a call view                                                              | depends on T6/T8; boundary: webphone links in, never a data dependency (ROADMAP:47) | Yes                           |
-| c.6 | PII policy: `E164` + `ParticipantHash` exist but are NOT enforced on stored fields (AGENTS.md domain note) | policy decision pending                                                             | Yes (documented in TODO_LIST) |
-| c.7 | T9 agent-transcript `SourceKind` ingest                                                                    | fourth source kind, not begun                                                       | Yes                           |
-| c.8 | CI lane (GitHub Actions vs buildflow-only)                                                                 | BLOCKED on owner decision (TODO_LIST:49)                                            | Yes, pending decision         |
-| c.9 | templ-components adoption work itself (go.mod entry, templ codegen in buildflow/flake, vendor hash)        | no UI to render yet                                                                 | Yes — this session's topic    |
+| ~~c.1~~ | ~~T6 `serve` command + calls list page (templ-components is the planned but unadopted library)~~ done (docs-health pass 2026-10-12) | ~~CLI-first build order; UI is the "lens" half of the project, deferred~~ | ~~Yes — completes the 51% slice~~ |
+| c.2 | T8 per-call detail page + recording streaming proxy **→ ROADMAP theme 1 (export streaming)** | depends on T6 routes                                                                | Yes                           |
+| ~~c.3~~ | ~~T12 poller timers + freshness self-check / stale banner~~ done (docs-health pass 2026-10-12) | ~~ingest is CLI-invoked only; no scheduler code anywhere~~ | ~~Yes~~ |
+| ~~c.4~~ | ~~T24 UI auth (operator htpasswd reuse)~~ done (docs-health pass 2026-10-12) | ~~depends on T6~~ | ~~Yes~~ |
+| c.5 | webphone read-only deep link into a call view **→ ROADMAP theme 3 (sibling side)** | depends on T6/T8; boundary: webphone links in, never a data dependency (ROADMAP:47) | Yes                           |
+| c.6 | PII policy: `E164` + `ParticipantHash` exist but are NOT enforced on stored fields (AGENTS.md domain note) **→ ROADMAP theme 4 (stored-row enforcement)** | policy decision pending                                                             | Yes (documented in TODO_LIST) |
+| ~~c.7~~ | ~~T9 agent-transcript `SourceKind` ingest~~ done (docs-health pass 2026-10-12) | ~~fourth source kind, not begun~~ | ~~Yes~~ |
+| ~~c.8~~ | ~~CI lane (GitHub Actions vs buildflow-only)~~ done — landed and green on main (2026-10-11) | ~~BLOCKED on owner decision (TODO_LIST:49)~~ | ~~Yes, pending decision~~ |
+| ~~c.9~~ | ~~templ-components adoption work itself (go.mod entry, templ codegen in buildflow/flake, vendor hash)~~ done — adopted as the UI trio (go-appkit + templ-components + templ), 2026-10-11 | ~~no UI to render yet~~ | ~~Yes — this session's topic~~ |
 
 ## d) TOTALLY FUCKED UP
 
@@ -88,52 +88,52 @@ _Ranked by impact. Items 1–10 are the commitment core; 11–40 are brainstorm 
 
 | #  | Task                                                                                                                                       | Impact   | Effort       | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------------ | ------------- |
-| 1  | Fix nix package: wire flakeModule output to `cmd/pbx-lens`; verify `nix run . -- version` works                                            | Critical | M (30-60min) | Bug           |
-| 2  | Fix excerpt order-dependence: define semantics, implement, pin with test (`internal/ingest/telnyx/map.go:70`)                              | Critical | S (15min)    | Bug           |
-| 3  | Run the verification battery this session skipped: `go build`, `go test`, binary `version`+`smoke`, artifact check                         | High     | S            | Quality       |
-| 4  | Add artifact-level guard: after `nix build`, assert `result/bin/pbx-lens` exists (kills the silent-empty-exit-0 class)                     | High     | S            | Quality       |
-| 5  | T6: implement `serve` command skeleton (http.Server, addr/db flags)                                                                        | High     | M            | Feature       |
-| 6  | T6: adopt templ-components in go.mod; wire `templ generate` into buildflow/flake; update vendor hash via `buildflow -s nix-hash-fix --fix` | High     | M            | Feature       |
-| 7  | T6: calls list page — one table, all calls (templ-components)                                                                              | High     | M            | Feature       |
-| 8  | T6: AI badge + excerpt column                                                                                                              | High     | S            | Feature       |
-| 9  | T6: direction/date filters (plan M18-M20)                                                                                                  | High     | S            | Feature       |
-| 10 | T6: httptest smoke test for the list page                                                                                                  | High     | S            | Quality       |
-| 11 | httptest end-to-end test for ingest-telnyx command loop (`main.go:172-206`)                                                                | High     | M            | Quality       |
-| 12 | T12: poller timers (cqrs-lite timers) so the index goes autonomous                                                                         | High     | M            | Feature       |
-| 13 | T12: freshness self-check + stale-index UI banner (M33-M34)                                                                                | High     | M            | Feature       |
-| 14 | T8: per-call detail page (M23-M25)                                                                                                         | Med      | M            | Feature       |
-| 15 | T8: recording streaming proxy; signed-URL refetch server-side                                                                              | Med      | L            | Feature       |
-| 16 | Decide excerpt semantics (asc-by-created_at vs newest-first) — unblocks #2                                                                 | High     | S            | Decision      |
-| 17 | Decide CI story: GitHub Actions lane vs buildflow-only, then wire                                                                          | Med      | M            | Decision      |
-| 18 | Add cqrs-lint to flake devShell — kill the /tmp binary dependency                                                                          | Med      | S            | Cleanup       |
-| 19 | T24: UI auth via operator htpasswd reuse                                                                                                   | Med      | M            | Feature       |
-| 20 | webphone read-only deep link contract (link-in, never data-dependency)                                                                     | Med      | M            | Feature       |
-| 21 | PII policy: enforce `E164` + `ParticipantHash` on stored observations                                                                      | Med      | M            | Feature       |
-| 22 | T9: agent-transcript SourceKind ingest path                                                                                                | Med      | L            | Feature       |
-| 23 | Inbound AI calls: DID interception path; revisit `-direction` default                                                                      | Med      | L            | Feature       |
-| 24 | Schedule the quarterly Telnyx live-API re-verification cluster (due ~2027-01)                                                              | Med      | S            | Maintenance   |
-| 25 | E003 owner decision: split `internal/calls` or keep flat domain (revisit when T9 lands)                                                    | Med      | S            | Decision      |
-| 26 | Record F005 obligation: schema upcasters become mandatory work at v2                                                                       | Low      | S            | Documentation |
-| 27 | Decide templ+Tailwind asset pipeline details (codegen, CSP-safety, dark mode) before T6 coding starts                                      | Med      | M            | Decision      |
-| 28 | Verify ContentHash replay idempotency is covered across BOTH ingest paths (cdr + telnyx), not just one                                     | Med      | S            | Quality       |
-| 29 | Verify `FlexTime` regression test covers the offset-less (`2006-01-02T15:04:05`) decode case                                               | Med      | S            | Quality       |
-| 30 | Re-run `smoke` after the nix fix to keep the CLI path green end-to-end                                                                     | Med      | S            | Quality       |
-| 31 | Check C003 fold totality still holds when T9 event types land (unknown-event → Corruption)                                                 | Med      | S            | Quality       |
-| 32 | Decide list-page → detail route shape (`/calls/{id}`)                                                                                      | Low      | S            | Decision      |
-| 33 | Decide list-page pagination strategy                                                                                                       | Low      | S            | Decision      |
-| 34 | Decide serve-mode DSN/deploy layout (memory vs sqlite path for the server)                                                                 | Med      | M            | Decision      |
-| 35 | Update AGENTS.md stack decisions the moment templ-components lands (dependency policy says "ONLY" three families)                          | Low      | S            | Documentation |
-| 36 | Write T6 UI copy in domain language (Observation, CallView, SourceKind)                                                                    | Low      | S            | Documentation |
-| 37 | Watch Telnyx recordings-list filter docs for server-side `RecordingByCallControl` replacement                                              | Low      | S            | Maintenance   |
-| 38 | Verify CDR parser coverage claim (13- and 18-column templates) against fixtures                                                            | Low      | S            | Quality       |
-| 39 | README: add CLI usage section (`version \| smoke \| ingest-cdr \| ingest-telnyx`) — it currently undersells the working engine             | Med      | S            | Documentation |
-| 40 | After this report: docs-health HARVEST — route (f) items into TODO_LIST.md / ROADMAP.md so they don't die in this timestamped file         | High     | M            | Process       |
+| ~~1~~  | ~~Fix nix package: wire flakeModule output to `cmd/pbx-lens`; verify `nix run . -- version` works~~ done (docs-health pass 2026-10-12) | ~~Critical~~ | ~~M (30-60min)~~ | ~~Bug~~ |
+| ~~2~~  | ~~Fix excerpt order-dependence: define semantics, implement, pin with test (`internal/ingest/telnyx/map.go:70`)~~ done (docs-health pass 2026-10-12) | ~~Critical~~ | ~~S (15min)~~ | ~~Bug~~ |
+| ~~3~~  | ~~Run the verification battery this session skipped: `go build`, `go test`, binary `version`+`smoke`, artifact check~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~S~~ | ~~Quality~~ |
+| 4  | Add artifact-level guard: after `nix build`, assert `result/bin/pbx-lens` exists (kills the silent-empty-exit-0 class) **→ ROADMAP open question** | High     | S            | Quality       |
+| ~~5~~  | ~~T6: implement `serve` command skeleton (http.Server, addr/db flags)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| ~~6~~  | ~~T6: adopt templ-components in go.mod; wire `templ generate` into buildflow/flake; update vendor hash via `buildflow -s nix-hash-fix --fix`~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| ~~7~~  | ~~T6: calls list page — one table, all calls (templ-components)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| 8  | T6: AI badge + excerpt column **→ ROADMAP theme 2 (public presence)** | High     | S            | Feature       |
+| ~~9~~  | ~~T6: direction/date filters (plan M18-M20)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~S~~ | ~~Feature~~ |
+| ~~10~~ | ~~T6: httptest smoke test for the list page~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~S~~ | ~~Quality~~ |
+| ~~11~~ | ~~httptest end-to-end test for ingest-telnyx command loop (`main.go:172-206`)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Quality~~ |
+| ~~12~~ | ~~T12: poller timers (cqrs-lite timers) so the index goes autonomous~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| ~~13~~ | ~~T12: freshness self-check + stale-index UI banner (M33-M34)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
+| ~~14~~ | ~~T8: per-call detail page (M23-M25)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Feature~~ |
+| 15 | T8: recording streaming proxy; signed-URL refetch server-side **→ ROADMAP theme 1 (export streaming)** | Med      | L            | Feature       |
+| ~~16~~ | ~~Decide excerpt semantics (asc-by-created_at vs newest-first) — unblocks #2~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~S~~ | ~~Decision~~ |
+| ~~17~~ | ~~Decide CI story: GitHub Actions lane vs buildflow-only, then wire~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Decision~~ |
+| ~~18~~ | ~~Add cqrs-lint to flake devShell — kill the /tmp binary dependency~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~19~~ | ~~T24: UI auth via operator htpasswd reuse~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Feature~~ |
+| 20 | webphone read-only deep link contract (link-in, never data-dependency) **→ ROADMAP theme 3 (sibling side)** | Med      | M            | Feature       |
+| 21 | PII policy: enforce `E164` + `ParticipantHash` on stored observations **→ ROADMAP theme 4 (stored-row enforcement)** | Med      | M            | Feature       |
+| ~~22~~ | ~~T9: agent-transcript SourceKind ingest path~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~L~~ | ~~Feature~~ |
+| 23 | Inbound AI calls: DID interception path; revisit `-direction` default **→ ROADMAP theme 4** | Med      | L            | Feature       |
+| 24 | Schedule the quarterly Telnyx live-API re-verification cluster (due ~2027-01) **→ TODO_LIST blocked row (needs a real API key)** | Med      | S            | Maintenance   |
+| 25 | E003 owner decision: split `internal/calls` or keep flat domain (revisit when T9 lands) **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)** | Med      | S            | Decision      |
+| ~~26~~ | ~~Record F005 obligation: schema upcasters become mandatory work at v2~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| 27 | Decide templ+Tailwind asset pipeline details (codegen, CSP-safety, dark mode) before T6 coding starts **→ ROADMAP open question** | Med      | M            | Decision      |
+| ~~28~~ | ~~Verify ContentHash replay idempotency is covered across BOTH ingest paths (cdr + telnyx), not just one~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| ~~29~~ | ~~Verify `FlexTime` regression test covers the offset-less (`2006-01-02T15:04:05`) decode case~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| ~~30~~ | ~~Re-run `smoke` after the nix fix to keep the CLI path green end-to-end~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| ~~31~~ | ~~Check C003 fold totality still holds when T9 event types land (unknown-event → Corruption)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
+| ~~32~~ | ~~Decide list-page → detail route shape (`/calls/{id}`)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Decision~~ |
+| ~~33~~ | ~~Decide list-page pagination strategy~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Decision~~ |
+| ~~34~~ | ~~Decide serve-mode DSN/deploy layout (memory vs sqlite path for the server)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~M~~ | ~~Decision~~ |
+| ~~35~~ | ~~Update AGENTS.md stack decisions the moment templ-components lands (dependency policy says "ONLY" three families)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| ~~36~~ | ~~Write T6 UI copy in domain language (Observation, CallView, SourceKind)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| ~~37~~ | ~~Watch Telnyx recordings-list filter docs for server-side `RecordingByCallControl` replacement~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Maintenance~~ |
+| ~~38~~ | ~~Verify CDR parser coverage claim (13- and 18-column templates) against fixtures~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~39~~ | ~~README: add CLI usage section (`version \~~ done (docs-health pass 2026-10-12) | ~~smoke \~~ | ~~ingest-cdr \~~ | ~~ingest-telnyx`) — it currently undersells the working engine~~ | ~~Med~~ | ~~S~~ | ~~Documentation~~ |
+| ~~40~~ | ~~After this report: docs-health HARVEST — route (f) items into TODO_LIST.md / ROADMAP.md so they don't die in this timestamped file~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Process~~ |
 
 ## g) Three questions I cannot figure out myself
 
-1. **Priority intent:** Was the templ-components question a signal to build T6 (serve + list page) **now**, or should the nix-package fix (#1) and excerpt bug (#2) go first? I can read the docs' priorities, but not your intent behind the question — and it decides the next session's shape.
-2. **Excerpt semantics (explicitly marked "define semantics" in TODO_LIST:30):** sort messages ascending by `created_at` (= call opening) or pin newest-first? This is a domain call about what an operator wants to see at a glance; it blocks the Critical fix #2.
-3. **CI story (explicitly marked open in TODO_LIST:49):** GitHub Actions lane like pbx-artmann, or buildflow-only? This gates item #17 and every future PR's safety net.
+1. ~~**Priority intent:** Was the templ-components question a signal to build T6 (serve + list page) **now**, or should the nix-package fix (#1) and excerpt bug (#2) go first? I can read the docs' priorities, but not your intent behind the question — and it decides the next session's shape.~~ done — answered: the UI was built on templ-components the same day (F3/F4)
+2. ~~**Excerpt semantics (explicitly marked "define semantics" in TODO_LIST:30):** sort messages ascending by `created_at` (= call opening) or pin newest-first? This is a domain call about what an operator wants to see at a glance; it blocks the Critical fix #2.~~ done — decided: first user turn by created_at (call opening); A1 fix + regression test
+3. ~~**CI story (explicitly marked open in TODO_LIST:49):** GitHub Actions lane like pbx-artmann, or buildflow-only? This gates item #17 and every future PR's safety net.~~ done — decided: GitHub Actions lane, green on main
 
 ---
 

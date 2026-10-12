@@ -140,28 +140,28 @@ FEATURES/TODO_LIST/AGENTS/CONTRIBUTING.
 
 | #  | Task                                                                                                                                                           | Impact | Effort   | Category       |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | -------------- |
-| 1  | Fix the nix package: exits 0, ships empty result; wire flakeModule to cmd/pbx-lens (NEW this session)                                                          | High   | 30-60min | Bug            |
-| 2  | Excerpt order-dependence: define semantics + pin with test (map.go:70)                                                                                         | High   | 15min    | Bug            |
-| 3  | T6 list page (M18-M20) — completes the 51% slice                                                                                                               | High   | 90min    | Feature        |
-| 4  | T5 webhook JSONL tailer + ingest (M15-M17)                                                                                                                     | High   | 45min    | Feature        |
-| 5  | T12 poller timers + freshness self-check (M33-M34)                                                                                                             | High   | 45min    | Feature        |
-| 6  | httptest e2e for the ingest-telnyx command loop                                                                                                                | High   | 30min    | Quality        |
-| 7  | Smoke fake number → 555 (main.go:283)                                                                                                                          | Med    | 5min     | Cleanup        |
-| 8  | T8 detail page + recording proxy (M23-M25)                                                                                                                     | Med    | 90min    | Feature        |
-| 9  | T10 FTS5 transcript search (M29-M30)                                                                                                                           | Med    | 60min    | Feature        |
-| 10 | T9 agent transcript join (M26-M28); revisit E003 split when it lands                                                                                           | Med    | 60min    | Feature        |
-| 11 | resolveKey/parseSince out of main.go into a tested package                                                                                                     | Med    | 30min    | Quality        |
-| 12 | cqrs-lint as flake devShell tool/app (kill the /tmp binary)                                                                                                    | Med    | 15min    | Quality        |
-| 13 | Review the daemon-landed flake.lock + telnyx_test.go diffs, repair the stale vendorHash (`buildflow -s nix-hash-fix --fix`), re-run the gate (hang permitting) | Med    | 20min    | Hygiene        |
-| 14 | T7 systemd unit + NixOS module draft for the sibling (M21-M22)                                                                                                 | Med    | 60min    | Feature        |
-| 15 | T14 index DB into nightly backup staging                                                                                                                       | Med    | 30min    | Feature        |
-| 16 | CI story decision + wiring (no .github/workflows today)                                                                                                        | Med    | 30min    | Quality        |
-| 17 | Reconcile ~63 golangci LSP INFO warnings vs buildflow config (fix or AGENTS policy) (NEW)                                                                      | Med    | 30min    | Quality        |
-| 18 | Strike the pbx-lens rows of pbx-artmann TODO §30 with moved-to markers (cross-repo, needs OK)                                                                  | Med    | 10min    | Docs           |
-| 19 | T11 dialplan-path AI badge (M31-M32)                                                                                                                           | Low    | 30min    | Feature        |
-| 20 | T13 conversation insights fetch+store (M35)                                                                                                                    | Low    | 60min    | Feature        |
-| 21 | T15 cost column via Detail Records (M39-M40)                                                                                                                   | Low    | 60min    | Feature        |
-| 22 | Verify + file upstream: cqrs-lint C009 exempts only len(name)>4, excluding bare `must`                                                                         | Low    | 30min    | Bug (upstream) |
+| ~~1~~  | ~~Fix the nix package: exits 0, ships empty result; wire flakeModule to cmd/pbx-lens (NEW this session)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~30-60min~~ | ~~Bug~~ |
+| ~~2~~  | ~~Excerpt order-dependence: define semantics + pin with test (map.go:70)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~15min~~ | ~~Bug~~ |
+| ~~3~~  | ~~T6 list page (M18-M20) — completes the 51% slice~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~90min~~ | ~~Feature~~ |
+| ~~4~~  | ~~T5 webhook JSONL tailer + ingest (M15-M17)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~45min~~ | ~~Feature~~ |
+| ~~5~~  | ~~T12 poller timers + freshness self-check (M33-M34)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~45min~~ | ~~Feature~~ |
+| ~~6~~  | ~~httptest e2e for the ingest-telnyx command loop~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~30min~~ | ~~Quality~~ |
+| ~~7~~  | ~~Smoke fake number → 555 (main.go:283)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~5min~~ | ~~Cleanup~~ |
+| ~~8~~  | ~~T8 detail page + recording proxy (M23-M25)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~90min~~ | ~~Feature~~ |
+| ~~9~~  | ~~T10 FTS5 transcript search (M29-M30)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~60min~~ | ~~Feature~~ |
+| 10 | T9 agent transcript join (M26-M28); revisit E003 split when it lands **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)** | Med    | 60min    | Feature        |
+| ~~11~~ | ~~resolveKey/parseSince out of main.go into a tested package~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~30min~~ | ~~Quality~~ |
+| ~~12~~ | ~~cqrs-lint as flake devShell tool/app (kill the /tmp binary)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~15min~~ | ~~Quality~~ |
+| ~~13~~ | ~~Review the daemon-landed flake.lock + telnyx_test.go diffs, repair the stale vendorHash (`buildflow -s nix-hash-fix --fix`), re-run the gate (hang permitting)~~ done — repaired (04:58 + 11:48 sessions) | ~~Med~~ | ~~20min~~ | ~~Hygiene~~ |
+| ~~14~~ | ~~T7 systemd unit + NixOS module draft for the sibling (M21-M22)~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~60min~~ | ~~Feature~~ |
+| ~~15~~ | ~~T14 index DB into nightly backup staging~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~30min~~ | ~~Feature~~ |
+| ~~16~~ | ~~CI story decision + wiring (no .github/workflows today)~~ done — GitHub Actions lane green on main (2026-10-11) | ~~Med~~ | ~~30min~~ | ~~Quality~~ |
+| ~~17~~ | ~~Reconcile ~63 golangci LSP INFO warnings vs buildflow config (fix or AGENTS policy) (NEW)~~ done — resolved: gate lint driven to 0 + curated policy (03:55-04:59 sessions) | ~~Med~~ | ~~30min~~ | ~~Quality~~ |
+| ~~18~~ | ~~Strike the pbx-lens rows of pbx-artmann TODO §30 with moved-to markers (cross-repo, needs OK)~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.** | ~~Med~~ | ~~10min~~ | ~~Docs~~ |
+| 19 | T11 dialplan-path AI badge (M31-M32) **→ ROADMAP theme 2 (public presence)** | Low    | 30min    | Feature        |
+| ~~20~~ | ~~T13 conversation insights fetch+store (M35)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~60min~~ | ~~Feature~~ |
+| ~~21~~ | ~~T15 cost column via Detail Records (M39-M40)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~60min~~ | ~~Feature~~ |
+| ~~22~~ | ~~Verify + file upstream: cqrs-lint C009 exempts only len(name)>4, excluding bare `must`~~ done — covered by go-cqrs-lite#64 (verified at source 2026-10-12) | ~~Low~~ | ~~30min~~ | ~~Bug (upstream)~~ |
 
 HARVEST note: rows 1, 13, 17 are session-born (this report); rows 2-12, 14-16,
 18-22 are already in TODO_LIST.md / ROADMAP.md — no re-harvest needed, the
@@ -169,16 +169,16 @@ list was built this session.
 
 ## g) Top questions (max 3, genuinely not self-answerable)
 
-1. **May I edit `pbx-artmann/TODO_LIST.md` §30** to strike the pbx-lens rows
-   with "moved to pbx-lens/TODO_LIST.md" markers? It is another repo's living
-   doc; leaving it creates a temporary split brain, editing it without your OK
-   crosses a repo boundary.
-2. **pbx-lens on GitHub: public or private?** SECURITY.md says private; the
-   flake homepage says github.com/larsartmann/pbx-lens. The answer gates the
-   first push, repo metadata, and whether CI (f.16) can use free Actions.
-3. **The nix empty-package bug (f.1): fix it now in a follow-up session, or
-   is it parked behind something** (e.g. the visibility decision, since a
-   public repo with a broken flake is worse than a private one)?
+1. ~~**May I edit `pbx-artmann/TODO_LIST.md` §30** to strike the pbx-lens rows~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
+   ~~with "moved to pbx-lens/TODO_LIST.md" markers? It is another repo's living~~
+   ~~doc; leaving it creates a temporary split brain, editing it without your OK~~
+   ~~crosses a repo boundary.~~
+2. ~~**pbx-lens on GitHub: public or private?** SECURITY.md says private; the~~ done — answered: public at github.com/LarsArtmann/pbx-lens (2026-10-11)
+   ~~flake homepage says github.com/larsartmann/pbx-lens. The answer gates the~~
+   ~~first push, repo metadata, and whether CI (f.16) can use free Actions.~~
+3. ~~**The nix empty-package bug (f.1): fix it now in a follow-up session, or~~ done — fixed 2026-10-11 (04:58 session; artifact-verified)
+   ~~is it parked behind something** (e.g. the visibility decision, since a~~
+   ~~public repo with a broken flake is worse than a private one)?~~
 
 ## Harvest ledger (2026-10-10 docs-health pass; source: report 06-57 §f + §30)
 

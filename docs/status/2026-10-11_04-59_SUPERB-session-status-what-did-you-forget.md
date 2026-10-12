@@ -172,63 +172,63 @@ v2), full-mode gate.
 
 ## Owner questions (cannot self-answer)
 
-1. **O1**: GitHub visibility public/private + may I create the remote and
-   push? (Gates CI activation, `go install @latest` someday.)
-2. **Doctrine ratification**: `call.corrected` supersession replaced the
-   documented "different hash on live stream = conflict". Keep as-is, or
-   keep conflicts for freeswitch-cdr kind only (immutable CDRs)?
-3. **§30 strike confirmed?** Cross-repo edit marking pbx-lens rows in
-   `~/projects/pbx-artmann/TODO_LIST.md` as moved-to (the blanket mandate
-   arguably covers it; explicit yes preferred).
+1. ~~**O1**: GitHub visibility public/private + may I create the remote and~~ done — answered: public at github.com/LarsArtmann/pbx-lens (2026-10-11)
+   ~~push? (Gates CI activation, `go install @latest` someday.)~~
+2. ~~**Doctrine ratification**: `call.corrected` supersession replaced the~~ done — supersession doctrine documented (AGENTS.md gotchas; total fold intact)
+   ~~documented "different hash on live stream = conflict". Keep as-is, or~~
+   ~~keep conflicts for freeswitch-cdr kind only (immutable CDRs)?~~
+3. ~~**§30 strike confirmed?** Cross-repo edit marking pbx-lens rows in~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
+   ~~`~/projects/pbx-artmann/TODO_LIST.md` as moved-to (the blanket mandate~~
+   ~~arguably covers it; explicit yes preferred).~~
 
 ## Next 40 (highest-value first)
 
-1. Fix detail.templ (Href → static, DefinitionList Items, Split props,
-   trimZero) → generate → build.
-2. Web render tests: list empty/rows, bad filter → 400, detail found/404.
-3. `serve` command: appkit Service{Addr}, web.Register, graceful drain.
-4. flake devShell: templ + tailwindcss_4; `.gitignore` `*_templ.go` +
-   `static/styles.css`.
-5. Build CSS; verify BuildFlow templ-generate + tailwind-build trigger.
-6. AGENTS.md dependency-policy edit + templ-components adoption table
+1. ~~Fix detail.templ (Href → static, DefinitionList Items, Split props,~~ done (docs-health pass 2026-10-12)
+   ~~trimZero) → generate → build.~~
+2. ~~Web render tests: list empty/rows, bad filter → 400, detail found/404.~~ done (docs-health pass 2026-10-12)
+3. ~~`serve` command: appkit Service{Addr}, web.Register, graceful drain.~~ done (docs-health pass 2026-10-12)
+4. ~~flake devShell: templ + tailwindcss_4; `.gitignore` `*_templ.go` +~~ done (docs-health pass 2026-10-12)
+   ~~`static/styles.css`.~~
+5. ~~Build CSS; verify BuildFlow templ-generate + tailwind-build trigger.~~ done (docs-health pass 2026-10-12)
+6. AGENTS.md dependency-policy edit + templ-components adoption table **→ ROADMAP theme 1 (templ-components upgrade watch)**
    (OVERDUE — guard #7).
-7. e2e httptest: seed 3-source fixture → list → filter → detail.
-8. B2 recording proxy (signed-URL refetch server-side + local
-   `{uuid}_{dest}.wav` Range); key-never-in-browser audit test.
-9. B3 search route + FilterInput (decision locked: in-memory index).
-10. C2 serve poller (ticker → Fetch + Ingest + Drain) + /api/freshness.
-11. C5 insights live probe (GET-only) → Enrichment wiring.
-12. C6 Detail Records cost probe → Enrichment.CostMicros.
-13. C4 backup command (VACUUM INTO) + staging note.
-14. C3 systemd unit + NixOS module draft + sibling handoff.
-15. D1 htpasswd auth ({PLAIN} shared file; x/crypto dep + policy edit).
-16. D2 retention/PII purge job.
-17. D3 dashboard page (MOS honest-limitation note).
-18. D5 export API (JSONL/CSV).
-19. D6 C009 verify-at-source + upstream issue.
-20. C9 §30 strike + daemon-diff review.
-21. Fix `?to=` end-of-day semantics + test.
-22. staleness(): reuse the fetched page (drop second scan).
-23. mnd audit on new web code (e.g. `1_000_000` in costText).
-24. cqrs-lint + golangci pass over the new packages.
-25. httptest e2e for the ingest-telnyx loop (C7/m53 residual).
-26. /api/freshness JSON + PolledRegion banner wiring.
-27. serve `-stale-after` flag.
-28. ListNote Total once a count query exists.
-29. Consider upstream templ-components issue: publish v1.22 with
+7. ~~e2e httptest: seed 3-source fixture → list → filter → detail.~~ done (docs-health pass 2026-10-12)
+8. ~~B2 recording proxy (signed-URL refetch server-side + local~~ done (docs-health pass 2026-10-12)
+   ~~`{uuid}_{dest}.wav` Range); key-never-in-browser audit test.~~
+9. ~~B3 search route + FilterInput (decision locked: in-memory index).~~ done (docs-health pass 2026-10-12)
+10. ~~C2 serve poller (ticker → Fetch + Ingest + Drain) + /api/freshness.~~ done (docs-health pass 2026-10-12)
+11. C5 insights live probe (GET-only) → Enrichment wiring. **→ TODO_LIST blocked row (needs a real API key)**
+12. ~~C6 Detail Records cost probe → Enrichment.CostMicros.~~ done (docs-health pass 2026-10-12)
+13. ~~C4 backup command (VACUUM INTO) + staging note.~~ done (docs-health pass 2026-10-12)
+14. ~~C3 systemd unit + NixOS module draft + sibling handoff.~~ done (docs-health pass 2026-10-12)
+15. ~~D1 htpasswd auth ({PLAIN} shared file; x/crypto dep + policy edit).~~ done (docs-health pass 2026-10-12)
+16. ~~D2 retention/PII purge job.~~ done (docs-health pass 2026-10-12)
+17. ~~D3 dashboard page (MOS honest-limitation note).~~ done (docs-health pass 2026-10-12)
+18. ~~D5 export API (JSONL/CSV).~~ done (docs-health pass 2026-10-12)
+19. ~~D6 C009 verify-at-source + upstream issue.~~ done (docs-health pass 2026-10-12)
+20. ~~C9 §30 strike + daemon-diff review.~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
+21. ~~Fix `?to=` end-of-day semantics + test.~~ done (docs-health pass 2026-10-12)
+22. ~~staleness(): reuse the fetched page (drop second scan).~~ done (docs-health pass 2026-10-12)
+23. ~~mnd audit on new web code (e.g. `1_000_000` in costText).~~ done (docs-health pass 2026-10-12)
+24. ~~cqrs-lint + golangci pass over the new packages.~~ done (docs-health pass 2026-10-12)
+25. ~~httptest e2e for the ingest-telnyx loop (C7/m53 residual).~~ done (docs-health pass 2026-10-12)
+26. ~~/api/freshness JSON + PolledRegion banner wiring.~~ done (docs-health pass 2026-10-12)
+27. serve `-stale-after` flag. **→ ROADMAP theme 2**
+28. ListNote Total once a count query exists. **→ ROADMAP theme 1**
+29. Consider upstream templ-components issue: publish v1.22 with **→ ROADMAP theme 1 (templ-components upgrade watch)**
     FilterBar/format/errorpage (fleet consumers hit the same gap).
-30. FEATURES.md/README UI rows when the list page ships.
-31. DOMAIN_LANGUAGE: TranscriptTurn, Enrichment, excerpt semantics,
-    corrected doctrine.
-32. TODO_LIST row flips for everything in section (a).
-33. Production DB re-ingest runbook (hash v2) — needs access-path answer.
-34. Full-mode buildflow gate.
-35. Verify parallel session's ci.yml matches fleet pattern (review pass).
-36. Detail-page cost/insight absent-state tests.
-37. Filter-form a11y pass (labels, noscript Apply affordance).
-38. Recording proxy degradation tests (upstream down → honest error).
-39. Consider Pagination vs LoadMore once count exists.
-40. Status-report refresh at the next interruption point.
+30. ~~FEATURES.md/README UI rows when the list page ships.~~ done (docs-health pass 2026-10-12)
+31. ~~DOMAIN_LANGUAGE: TranscriptTurn, Enrichment, excerpt semantics,~~ done (docs-health pass 2026-10-12)
+    ~~corrected doctrine.~~
+32. ~~TODO_LIST row flips for everything in section (a).~~ done (docs-health pass 2026-10-12)
+33. Production DB re-ingest runbook (hash v2) — needs access-path answer. **→ TODO_LIST blocked row (schema v2 gate)**
+34. ~~Full-mode buildflow gate.~~ done (docs-health pass 2026-10-12)
+35. ~~Verify parallel session's ci.yml matches fleet pattern (review pass).~~ done (docs-health pass 2026-10-12)
+36. ~~Detail-page cost/insight absent-state tests.~~ done (docs-health pass 2026-10-12)
+37. ~~Filter-form a11y pass (labels, noscript Apply affordance).~~ done (docs-health pass 2026-10-12)
+38. ~~Recording proxy degradation tests (upstream down → honest error).~~ done (docs-health pass 2026-10-12)
+39. ~~Consider Pagination vs LoadMore once count exists.~~ done (docs-health pass 2026-10-12)
+40. ~~Status-report refresh at the next interruption point.~~ done (docs-health pass 2026-10-12)
 
 _ARte in Aeternum — the index is honest, the gates are green, and the
 remaining work is enumerated._

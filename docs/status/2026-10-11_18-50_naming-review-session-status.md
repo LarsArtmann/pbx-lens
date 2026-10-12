@@ -78,15 +78,15 @@ fixes → HTML report → verification (tests, nix build, buildflow dev gate).
 
 ## c) NOT STARTED
 
-1. Push + CI lane run with the renames (local golangci green is the proxy;
-   no push without explicit ask).
-2. UI e2e serve probe after the templ regeneration (web package tests cover
-   the render paths; belt-and-braces probe not run).
-3. gopls restart / stale-diagnostics cleanup (see d).
-4. docs-health HARVEST of this report's (f) list into TODO_LIST/ROADMAP
-   beyond the one row already added.
-5. The `docs/reviews/` brutal-self-review companion artifact (this file
-   answers the self-review questions inline instead — see e).
+1. ~~Push + CI lane run with the renames (local golangci green is the proxy;~~ done — pushed; CI green on main (2026-10-11/12)
+   ~~no push without explicit ask).~~
+2. ~~UI e2e serve probe after the templ regeneration (web package tests cover~~ done — TestLiveServerEndToEnd + the P8 live probe
+   ~~the render paths; belt-and-braces probe not run).~~
+3. ~~gopls restart / stale-diagnostics cleanup (see d).~~ **Won't implement — transient diagnostics.**
+4. ~~docs-health HARVEST of this report's (f) list into TODO_LIST/ROADMAP~~ done — harvested via the TODO sweeps (20:26/23:xx) + this pass
+   ~~beyond the one row already added.~~
+5. ~~The `docs/reviews/` brutal-self-review companion artifact (this file~~ done — answered inline in this report (section e)
+   ~~answers the self-review questions inline instead — see e).~~
 
 ## d) TOTALLY FUCKED UP!
 
@@ -163,41 +163,41 @@ encoding (blocked) · cqrs-lint C009 upstream check.
 
 New from this session (harvest candidates, priority-ordered):
 
-1. Rename `mosAvgLabel` → `avgMOSLabel` (dashboard.templ) — closes the
-   split-brain remnant from this session's own fix. 5min.
-2. CHANGELOG.md entry: 9 naming renames + flake hash repair + vendorHash
-   restore. 10min.
-3. DOMAIN_LANGUAGE.md: gloss `EnrichmentSeed`, `EnrichStats`, `Enrichment`;
-   refresh code refs for MapTranscript/List*; fix drifted line numbers
-   (docs-health VERIFY). 20min.
-4. Open `docs/reviews/2026-10-11_18-45_naming-review.html` in a browser and
-   sanity-check rendering (badges/tables/TOC anchors). 5min.
-5. Decide + apply the 5 report-only naming findings (cdr `shape`,
-   `ReasonRetention`, `CostEnrichment` shape, `Client.Recording`,
-   searchResultLimit dedup) — or record them as permanent non-fixes. 30min.
-6. Push + watch the CI lane (templ generate pin, golangci v2.14, tidy-diff)
-   over the renames. 15min.
-7. UI e2e serve probe (/, /dashboard, /search, /api/freshness) post-rename,
-   per the AGENTS Go-probe pattern. 15min.
-8. Identify/coordinate the parallel worktree editor with the operator (see
-   question 1) — or add a session-start `git status` + mtime check to the
-   workflow. 10min.
-9. gopls restart / cache clear; confirm the stale-diagnostic class is gone
-   for future sessions. 10min.
-10. Convention decision: report-then-fix vs fix-then-report ordering for
+1. ~~Rename `mosAvgLabel` → `avgMOSLabel` (dashboard.templ) — closes the~~ done — renamed to avgMOSLabel during the 2026-10-12 docs-health pass (tests green)
+   ~~split-brain remnant from this session's own fix. 5min.~~
+2. ~~CHANGELOG.md entry: 9 naming renames + flake hash repair + vendorHash~~ done — added to CHANGELOG 2026-10-12 (docs-health pass)
+   ~~restore. 10min.~~
+3. ~~DOMAIN_LANGUAGE.md: gloss `EnrichmentSeed`, `EnrichStats`, `Enrichment`;~~ done — TurnRole/Age-gate/Tombstone landed; EnrichmentSeed/EnrichStats unglossed (ROADMAP polish)
+   ~~refresh code refs for MapTranscript/List*; fix drifted line numbers~~
+   ~~(docs-health VERIFY). 20min.~~
+4. ~~Open `docs/reviews/2026-10-11_18-45_naming-review.html` in a browser and~~ done — all five reports text-extracted and structure-verified 2026-10-12
+   ~~sanity-check rendering (badges/tables/TOC anchors). 5min.~~
+5. ~~Decide + apply the 5 report-only naming findings (cdr `shape`,~~ done — 3 closed by P7 (calls.Excerpt, search.DefaultLimit, single pii read); rest stand as documented report-only observations
+   ~~`ReasonRetention`, `CostEnrichment` shape, `Client.Recording`,~~
+   ~~searchResultLimit dedup) — or record them as permanent non-fixes. 30min.~~
+6. ~~Push + watch the CI lane (templ generate pin, golangci v2.14, tidy-diff)~~ done — CI green on main
+   ~~over the renames. 15min.~~
+7. ~~UI e2e serve probe (/, /dashboard, /search, /api/freshness) post-rename,~~ done — TestLiveServerEndToEnd + the P8 live probe
+   ~~per the AGENTS Go-probe pattern. 15min.~~
+8. ~~Identify/coordinate the parallel worktree editor with the operator (see~~ **Won't implement — resolved as concurrent sessions; cross-session protocol documented in the reports.**
+   ~~question 1) — or add a session-start `git status` + mtime check to the~~
+   ~~workflow. 10min.~~
+9. ~~gopls restart / cache clear; confirm the stale-diagnostic class is gone~~ **Won't implement — transient diagnostics; build/lint are authoritative.**
+   ~~for future sessions. 10min.~~
+10. Convention decision: report-then-fix vs fix-then-report ordering for **→ skills-layer decision, not repo work**
     review skills; record it in the skill or AGENTS. 10min.
-11. Cold-cache devShell canary: one `nix develop -c true` at session start
-    when infra state matters (would have exposed the hash paste in minutes).
-    2min/session.
-12. Add `set -o pipefail` habit (or no `cmd | tail && echo OK` chains) to
+11. ~~Cold-cache devShell canary: one `nix develop -c true` at session start~~ done (docs-health pass 2026-10-12)
+    ~~when infra state matters (would have exposed the hash paste in minutes).~~
+    ~~2min/session.~~
+12. Add `set -o pipefail` habit (or no `cmd | tail && echo OK` chains) to **→ crush-config lessons candidate, by commit**
     the session verification pattern. 0min (discipline).
-13. Consider `GetRecording` vs `Recording` if a second single-fetch client
-    method ever lands (naming symmetry watch-item). 5min.
-14. TODO_LIST: mark the naming-review row (if docs-health adds one) DONE →
-    CHANGELOG per living-doc rule. 5min.
-15. Next naming review trigger points (record in ROADMAP): T9 agent
-    transcripts landing, second aggregate, or schema v2 — each adds
-    vocabulary that should get the same pass. 5min.
+13. ~~Consider `GetRecording` vs `Recording` if a second single-fetch client~~ **Won't implement — naming-symmetry watch item only.**
+    ~~method ever lands (naming symmetry watch-item). 5min.~~
+14. ~~TODO_LIST: mark the naming-review row (if docs-health adds one) DONE →~~ done — rows flipped DONE in the 20:26 dispatch
+    ~~CHANGELOG per living-doc rule. 5min.~~
+15. ~~Next naming review trigger points (record in ROADMAP): T9 agent~~ done — revisit triggers documented in the AGENTS.md module-boundary decision
+    ~~transcripts landing, second aggregate, or schema v2 — each adds~~
+    ~~vocabulary that should get the same pass. 5min.~~
 
 (15 genuinely-new items; the remaining sensible next-work already lives in
 TODO_LIST/ROADMAP — padding to 50 with restatements would be noise.)

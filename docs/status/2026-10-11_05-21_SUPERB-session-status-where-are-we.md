@@ -68,11 +68,11 @@ Frontend tier + first two B-tier features, all test-verified. 9/9 packages green
 
 ## 6. Top 5 next tasks by impact (pareto)
 
-1. **Finish B3 wiring** (~20 min): `cli.RebuildSearchIndex` + call in 4 ingest verbs + serve passes `Options.Search` with startup rebuild. This flips `/search` from 503 to working — the single biggest user-visible gap.
-2. **Run the full quality gate** (~10 min): `BUILDFLOW_NO_RESULT_CACHE=1 buildflow -s golangci-lint --format finding`, `/tmp/cqrs-lint .`, then `buildflow --build-mode dev`. Fix findings in new files. Re-run `nix flake check` (flake.nix changed since last check... it passed at 05:1x WITH the codegen config).
-3. **C2 poller + /api/freshness** (~60 min): loop `ingest-telnyx` (and CDR/webhook when files change) every N minutes + tiny JSON endpoint; makes the staleness banner honest forever.
-4. **D1 auth** (~45 min): single-user htpasswd middleware in front of serve (appkit ExtraMiddlewares), key from file. serve is currently UNAUTHENTICATED on localhost — fine for dev, gate before any exposure.
-5. **Fix the two known warts** (~15 min): `?to=` end-of-day semantics (`AddDate(0,0,1).Add(-time.Second)` or FilterLt next-day) + kill the staleness double scan by computing staleness from the unfiltered list page the handler already fetched.
+1. **Finish B3 wiring** (~20 min): `cli.RebuildSearchIndex` + call in 4 ingest verbs + serve passes `Options.Search` with startup rebuild. This flips `/search` from 503 to working — the single biggest user-visible gap. **→ ROADMAP open question**
+2. **Run the full quality gate** (~10 min): `BUILDFLOW_NO_RESULT_CACHE=1 buildflow -s golangci-lint --format finding`, `/tmp/cqrs-lint .`, then `buildflow --build-mode dev`. Fix findings in new files. Re-run `nix flake check` (flake.nix changed since last check... it passed at 05:1x WITH the codegen config). **→ ROADMAP open question**
+3. ~~**C2 poller + /api/freshness** (~60 min): loop `ingest-telnyx` (and CDR/webhook when files change) every N minutes + tiny JSON endpoint; makes the staleness banner honest forever.~~ done (docs-health pass 2026-10-12)
+4. ~~**D1 auth** (~45 min): single-user htpasswd middleware in front of serve (appkit ExtraMiddlewares), key from file. serve is currently UNAUTHENTICATED on localhost — fine for dev, gate before any exposure.~~ done (docs-health pass 2026-10-12)
+5. ~~**Fix the two known warts** (~15 min): `?to=` end-of-day semantics (`AddDate(0,0,1).Add(-time.Second)` or FilterLt next-day) + kill the staleness double scan by computing staleness from the unfiltered list page the handler already fetched.~~ done (docs-health pass 2026-10-12)
 
 ## 7. What I'd TOTALLY FORGET if shutdown now
 

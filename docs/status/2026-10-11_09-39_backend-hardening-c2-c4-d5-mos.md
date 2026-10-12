@@ -85,64 +85,64 @@
 
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
-1. Wire the MOS panel into the dashboard (aggregate `CallView.MOS` by day; avg per day; “no data” empty state).
-2. Add a domain test: `ContentHash` unchanged when `MOS == 0`, changed when `MOS != 0`.
-3. Move the poller webhook fixture into a shared `testdata/` file.
-4. Fix `internal/web/dashboard.go:58` `mnd` magic 24 (coordinate with the parallel author or take it as covered work).
-5. C5: add a Telnyx conversation-insights fetch to the client + tests.
-6. C5: store insights on ingest; render a detail summary card.
-7. C5: live GET-only probe to learn the real insights response shape; record findings in AGENTS.md.
-8. C6: Detail Records poller skeleton (lag-tolerant, nullable cost).
-9. C6: cost join onto the view + nullable display in list/detail/export.
-10. C6: live probe for Detail Records shape/pagination.
-11. C6: currency handling (CostCurrency) and a “cost unknown” UI state.
-12. D2: retention/purge job with a `-retention` policy flag.
-13. D2: purge tests (age cutoff; participant-hash-only export mode).
-14. D2: make E164/ParticipantHash load-bearing in the purge path.
-15. C3: systemd unit draft (DynamicUser, `ReadWritePaths=`, `sd_notify` already documented by the parallel session).
-16. C3: thin NixOS module option draft for the sibling repo.
-17. C3: sibling handoff note.
-18. D6: verify the cqrs-lint C009 exemption at source, then file the issue.
-19. D6: file the sqliteengine time-binding issue (with `web.rfc3339Nano` as the workaround).
-20. D6: file the memory-engine column-naming issue.
-21. D6: file the go-nix-helpers templ-formatter goPkg issue.
-22. D6: file the treefmt-nix templ `pkgs.go` issue.
-23. D4: README sync (features, commands including `backup`/export/dashboard).
-24. D4: FEATURES.md reconciliation (dashboard DONE, export DONE, insights/cost PARTIAL).
-25. D4: TODO_LIST.md reconciliation (mark B3/C2/C4/D5 done).
-26. D4: ROADMAP.md graduation note for the export API.
-27. D4: CHANGELOG entry for this window.
-28. Full-mode `buildflow` (not just dev) green.
-29. Prod re-ingest dry run (CDR + webhook + telnyx) once the sibling MOS column is decided.
-30. Add `nix run .#test` / `.#lint` aliases if the flake lacks them.
-31. Add a CI lane matching the devShell gate (blocked on owner Q1 remote).
-32. Decide CI visibility/push (owner Q1).
-33. Ratify `call.corrected` supersession vs conflict-rejection (owner Q2).
-34. Confirm the §30 strike in `~/projects/pbx-artmann/TODO_LIST.md` (owner Q3).
-35. Add an integration test that runs the poller against a real sqlite DSN (not memory).
-36. Add `/api/freshness` to the dashboard header (reuse the JSON endpoint client-side).
-37. Export: add an explicit `-limit`/paging doc for very large dumps.
-38. Export: decide whether JSONL/CSV should stream (bounded memory) instead of buffering.
-39. Backup: add a `-verify-only` mode for the nightly staging check.
-40. Backup: wire `backup` into the sibling nightly sync (m48).
-41. Search: add a test for the FTS rebuild after a poller pass on a real sqlite file.
-42. Reduce AGENTS.md; move the cqrs-lint policy to `docs/lint-policy.md`.
-43. Add a `scripts/gate.sh` wrapper that always enters the devShell.
-44. Remove the em-dash from any remaining source strings (sweep).
-45. Add a golden test for `/api/export.csv` header stability.
-46. Add `mnd`-clean constants for all dashboard magic numbers.
-47. Re-check `go.mod` after every dev-gate run (guard against the downgrade).
-48. Document the MOS column assumption + sibling requirement in AGENTS.md.
-49. Add a test that a second `backup` run onto an existing path replaces atomically.
-50. Write the resume checklist into `docs/planning/` so the next session starts grounded.
+1. ~~Wire the MOS panel into the dashboard (aggregate `CallView.MOS` by day; avg per day; “no data” empty state).~~ done — landed (m65 MOS card, 11:48 continuation)
+2. ~~Add a domain test: `ContentHash` unchanged when `MOS == 0`, changed when `MOS != 0`.~~ done — landed (TestContentHashMOSOnlyWhenReported)
+3. Move the poller webhook fixture into a shared `testdata/` file. **→ ROADMAP theme 2 (test hygiene)**
+4. ~~Fix `internal/web/dashboard.go:58` `mnd` magic 24 (coordinate with the parallel author or take it as covered work).~~ done — landed (utcDay const, 10:28 session)
+5. ~~C5: add a Telnyx conversation-insights fetch to the client + tests.~~ done — landed (11:31 session)
+6. ~~C5: store insights on ingest; render a detail summary card.~~ done — landed (11:31 session)
+7. ~~C5: live GET-only probe to learn the real insights response shape; record findings in AGENTS.md.~~ done — landed (11:31 session)
+8. ~~C6: Detail Records poller skeleton (lag-tolerant, nullable cost).~~ done — landed (11:31 session)
+9. ~~C6: cost join onto the view + nullable display in list/detail/export.~~ done — landed (11:31 session)
+10. ~~C6: live probe for Detail Records shape/pagination.~~ done — landed (11:31 session)
+11. ~~C6: currency handling (CostCurrency) and a “cost unknown” UI state.~~ done — landed (11:31 session)
+12. ~~D2: retention/purge job with a `-retention` policy flag.~~ done — landed (11:48 D2)
+13. ~~D2: purge tests (age cutoff; participant-hash-only export mode).~~ done (docs-health pass 2026-10-12)
+14. D2: make E164/ParticipantHash load-bearing in the purge path. **→ ROADMAP theme 4 (stored-row enforcement)**
+15. ~~C3: systemd unit draft (DynamicUser, `ReadWritePaths=`, `sd_notify` already documented by the parallel session).~~ done — landed (11:48 C3)
+16. ~~C3: thin NixOS module option draft for the sibling repo.~~ done — landed (11:48 C3)
+17. ~~C3: sibling handoff note.~~ done — landed (11:48 C3)
+18. ~~D6: verify the cqrs-lint C009 exemption at source, then file the issue.~~ done — filed (11:48: #62/#63/#64, #7, #545)
+19. ~~D6: file the sqliteengine time-binding issue (with `web.rfc3339Nano` as the workaround).~~ done — filed (11:48: #62/#63/#64, #7, #545)
+20. ~~D6: file the memory-engine column-naming issue.~~ done — filed (11:48: #62/#63/#64, #7, #545)
+21. ~~D6: file the go-nix-helpers templ-formatter goPkg issue.~~ done — filed (11:48: #62/#63/#64, #7, #545)
+22. ~~D6: file the treefmt-nix templ `pkgs.go` issue.~~ done — filed (11:48: #62/#63/#64, #7, #545)
+23. ~~D4: README sync (features, commands including `backup`/export/dashboard).~~ done — README serve-era sections landed (09:35 F22 + later)
+24. ~~D4: FEATURES.md reconciliation (dashboard DONE, export DONE, insights/cost PARTIAL).~~ done — rows updated across the 11:31-11:48 sessions
+25. ~~D4: TODO_LIST.md reconciliation (mark B3/C2/C4/D5 done).~~ done — rows flipped across the 20:26/23:xx dispatches
+26. ~~D4: ROADMAP.md graduation note for the export API.~~ done — 2026-10-12 rebuild graduated the shipped ideas
+27. ~~D4: CHANGELOG entry for this window.~~ done — serve-era entries landed
+28. ~~Full-mode `buildflow` (not just dev) green.~~ done — first green full-mode gate 2026-10-12 00:45 (01:16 report)
+29. Prod re-ingest dry run (CDR + webhook + telnyx) once the sibling MOS column is decided. **→ TODO_LIST blocked row (needs prod deploy path)**
+30. ~~Add `nix run .#test` / `.#lint` aliases if the flake lacks them.~~ done — module-generated apps.test/apps.lint deliberately kept (AGENTS.md)
+31. ~~Add a CI lane matching the devShell gate (blocked on owner Q1 remote).~~ done — landed 2026-10-11; green on main
+32. ~~Decide CI visibility/push (owner Q1).~~ done — public; pushed (10:28 session)
+33. ~~Ratify `call.corrected` supersession vs conflict-rejection (owner Q2).~~ done — supersession doctrine documented (AGENTS.md gotchas)
+34. ~~Confirm the §30 strike in `~/projects/pbx-artmann/TODO_LIST.md` (owner Q3).~~ **Won't implement — owner-gated cross-repo edit; pbx-lens TODO_LIST is the canonical backlog.**
+35. ~~Add an integration test that runs the poller against a real sqlite DSN (not memory).~~ done — poller + age-gate tests run on real sqlite
+36. Add `/api/freshness` to the dashboard header (reuse the JSON endpoint client-side). **→ ROADMAP theme 2**
+37. Export: add an explicit `-limit`/paging doc for very large dumps. **→ ROADMAP theme 1**
+38. ~~Export: decide whether JSONL/CSV should stream (bounded memory) instead of buffering.~~ done (docs-health pass 2026-10-12)
+39. ~~Backup: add a `-verify-only` mode for the nightly staging check.~~ done (docs-health pass 2026-10-12)
+40. ~~Backup: wire `backup` into the sibling nightly sync (m48).~~ done — module backup timer landed (11:48 C3)
+41. ~~Search: add a test for the FTS rebuild after a poller pass on a real sqlite file.~~ done — poller tests assert the rebuild
+42. ~~Reduce AGENTS.md; move the cqrs-lint policy to `docs/lint-policy.md`.~~ done — landed (P1, 19:37 dispatch)
+43. ~~Add a `scripts/gate.sh` wrapper that always enters the devShell.~~ **Won't implement — doctrine documented in AGENTS.md/buildflow-dev-gate.md instead.**
+44. Remove the em-dash from any remaining source strings (sweep). **→ convention enforced going forward (no-em-dash rule)**
+45. Add a golden test for `/api/export.csv` header stability. **→ ROADMAP theme 2**
+46. ~~Add `mnd`-clean constants for all dashboard magic numbers.~~ done — landed (dayFormat/utcDay consts)
+47. ~~Re-check `go.mod` after every dev-gate run (guard against the downgrade).~~ done (docs-health pass 2026-10-12)
+48. ~~Document the MOS column assumption + sibling requirement in AGENTS.md.~~ done — documented in FEATURES MOS rows + this report
+49. ~~Add a test that a second `backup` run onto an existing path replaces atomically.~~ done — backup tests cover overwrite + unique staging (20:26)
+50. ~~Write the resume checklist into `docs/planning/` so the next session starts grounded.~~ done — this report series is the checklist; plans in docs/planning/
 
 ---
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **Do the two parallel sessions now conflict on scope?** The dashboard (D3) was landed by another session while I was mid-flight on MOS. Should I stop touching `internal/web/dashboard.go` and hand the MOS panel to that session, or take it over? I cannot see the other session's live intent.
-2. **Is `rtp_audio_in_mos` actually configured on the live PBX**, and should I add it to the sibling `cdr_csv` template now (C3 territory), or leave the CDR parser’s MOS path dormant until you confirm the deployment change? I cannot verify the live PBX state.
-3. **Does the owner want the index-disposable rehash accepted** if MOS ever enters ContentHash for existing rows? I kept `MOS == 0` hash-stable deliberately, but the general “schema change = one-time re-derive” policy is yours to ratify.
+1. ~~**Do the two parallel sessions now conflict on scope?** The dashboard (D3) was landed by another session while I was mid-flight on MOS. Should I stop touching `internal/web/dashboard.go` and hand the MOS panel to that session, or take it over? I cannot see the other session's live intent.~~ done — converged cleanly; both sessions' work landed and is verified in the tree
+2. **Is `rtp_audio_in_mos` actually configured on the live PBX**, and should I add it to the sibling `cdr_csv` template now (C3 territory), or leave the CDR parser’s MOS path dormant until you confirm the deployment change? I cannot verify the live PBX state. **→ owner/deploy-side decision (sibling cdr_csv template)**
+3. ~~**Does the owner want the index-disposable rehash accepted** if MOS ever enters ContentHash for existing rows? I kept `MOS == 0` hash-stable deliberately, but the general “schema change = one-time re-derive” policy is yours to ratify.~~ done — ratified: disposable-DB rebuild doctrine (AGENTS.md)
 
 ---
 

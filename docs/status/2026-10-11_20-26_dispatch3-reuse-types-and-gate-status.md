@@ -99,38 +99,38 @@ dispatch's completed rows.
 
 | #  | Task                                                                                                                                                               | Impact | Effort | Category            |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------ | ------ | ------------------- |
-| 1  | **Rerun the full buildflow gate at low load**; expect 0 errors; then retire the gate-pending note in this report — **Done (2026-10-11 23:23, step-level; see §b)** | High   | S      | Quality             |
-| 2  | **Decide the go-atomic-write `Commit` ask**: post the issue yourself or have me file it (github-voice)                                                             | Medium | S      | Feature (house lib) |
-| 3  | Extract `newTestServerWithSearch` helper; collapse the two duplicate index wirings in web tests — **Done (2026-10-11 ~22:30)**                                     | Low    | S      | Cleanup             |
-| 4  | Sibling NixOS module: pick + set the production `-max-age` window (needs owner value; e.g. 720h vs 2160h)                                                          | High   | S      | Feature             |
-| 5  | First release tag v0.1.0 via go-release (CHANGELOG ready; gate green is the precondition)                                                                          | Medium | M      | Feature             |
-| 6  | P10: rebuild BuildFlow binary (5aaf336 → HEAD), re-run gate, delete the stale license-check note                                                                   | Low    | S      | Cleanup             |
-| 7  | P9: post the five D6 filings after your review (drafts ready; all verified open today)                                                                             | Medium | M      | Quality             |
-| 8  | Post-or-drop pass over docs/drafts/ (six drafts, all owner-gated)                                                                                                  | Low    | S      | Documentation       |
-| 9  | Add `ingest-* -max-age` to the sibling module's ExecStart options alongside serve's                                                                                | Low    | S      | Feature             |
-| 10 | Auth: htpasswd reload on SIGHUP/mtime (restart required today)                                                                                                     | Low    | M      | Feature             |
-| 11 | Auth: per-IP limiter upgrade if the PBX ever leaves loopback-only trust                                                                                            | Low    | M      | Feature             |
-| 12 | Poller ops endpoint exposing per-source rejection counters (today: log lines only)                                                                                 | Low    | M      | Feature             |
-| 13 | slog adoption for poller/serve logs (std log.Printf today)                                                                                                         | Low    | M      | Quality             |
-| 14 | README UI screenshots of the four surfaces                                                                                                                         | Low    | S      | Documentation       |
-| 15 | Keyset-pagination probe beyond page 1 with >page-size data                                                                                                         | Low    | S      | Quality             |
-| 16 | templ-components upgrade watch (SegmentBar unblock = P17)                                                                                                          | Low    | S      | Feature             |
-| 17 | Live Telnyx DTO verification when an API key exists (P13, quarterly cluster)                                                                                       | Medium | S      | Quality             |
-| 18 | ContentHash v2 length-prefixed encoding at schema v2 (P14, owner-scheduled)                                                                                        | Low    | M      | Feature             |
-| 19 | Recording-proxy timeout knob at traffic-data time (P15, owner-deferred)                                                                                            | Low    | S      | Feature             |
-| 20 | lessons.md (crush-config, by commit): "sibling repos are the first dependency search path" + "wire tests from existing scaffolding"                                | Low    | S      | Documentation       |
+| ~~1~~  | ~~**Rerun the full buildflow gate at low load**; expect 0 errors; then retire the gate-pending note in this report — **Done (2026-10-11 23:23, step-level; see §b)**~~ done — full gate green 23:30; more greens 2026-10-12 | ~~High~~ | ~~S~~ | ~~Quality~~ |
+| 2  | **Decide the go-atomic-write `Commit` ask**: post the issue yourself or have me file it (github-voice) **→ owner decision; draft in docs/drafts/go-atomic-write-commit-primitive.md** | Medium | S      | Feature (house lib) |
+| ~~3~~  | ~~Extract `newTestServerWithSearch` helper; collapse the two duplicate index wirings in web tests — **Done (2026-10-11 ~22:30)**~~ done — landed (23:35 report §a) | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| 4  | Sibling NixOS module: pick + set the production `-max-age` window (needs owner value; e.g. 720h vs 2160h) **→ TODO_LIST blocked row (owner picks the window)** | High   | S      | Feature             |
+| 5  | First release tag v0.1.0 via go-release (CHANGELOG ready; gate green is the precondition) **→ TODO_LIST blocked row (owner release gate)** | Medium | M      | Feature             |
+| ~~6~~  | ~~P10: rebuild BuildFlow binary (5aaf336 → HEAD), re-run gate, delete the stale license-check note~~ done — rebuilt 2026-10-11; license-check green | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| 7  | P9: post the five D6 filings after your review (drafts ready; all verified open today) **→ owner go; docs/upstream-filings.md tracks state** | Medium | M      | Quality             |
+| ~~8~~  | ~~Post-or-drop pass over docs/drafts/ (six drafts, all owner-gated)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| 9  | Add `ingest-* -max-age` to the sibling module's ExecStart options alongside serve's **→ TODO_LIST blocked row (owner picks the window)** | Low    | S      | Feature             |
+| 10 | Auth: htpasswd reload on SIGHUP/mtime (restart required today) **→ ROADMAP theme 2** | Low    | M      | Feature             |
+| 11 | Auth: per-IP limiter upgrade if the PBX ever leaves loopback-only trust **→ ROADMAP theme 2** | Low    | M      | Feature             |
+| 12 | Poller ops endpoint exposing per-source rejection counters (today: log lines only) **→ ROADMAP theme 2** | Low    | M      | Feature             |
+| 13 | slog adoption for poller/serve logs (std log.Printf today) **→ ROADMAP theme 2** | Low    | M      | Quality             |
+| 14 | README UI screenshots of the four surfaces **→ ROADMAP theme 2 (public presence)** | Low    | S      | Documentation       |
+| 15 | Keyset-pagination probe beyond page 1 with >page-size data **→ ROADMAP theme 1** | Low    | S      | Quality             |
+| 16 | templ-components upgrade watch (SegmentBar unblock = P17) **→ TODO_LIST blocked row (unreleased upstream)** | Low    | S      | Feature             |
+| 17 | Live Telnyx DTO verification when an API key exists (P13, quarterly cluster) **→ TODO_LIST blocked row (needs a real API key)** | Medium | S      | Quality             |
+| 18 | ContentHash v2 length-prefixed encoding at schema v2 (P14, owner-scheduled) **→ TODO_LIST blocked row (schema v2 gate)** | Low    | M      | Feature             |
+| ~~19~~ | ~~Recording-proxy timeout knob at traffic-data time (P15, owner-deferred)~~ done — landed 2026-10-12 (30 s default); production value still deferred | ~~Low~~ | ~~S~~ | ~~Feature~~ |
+| 20 | lessons.md (crush-config, by commit): "sibling repos are the first dependency search path" + "wire tests from existing scaffolding" **→ crush-config repo, by commit** | Low    | S      | Documentation       |
 
 ## g) Top questions I can NOT figure out myself
 
-1. **go-atomic-write is YOUR repo**: do you want the `Commit`-primitive
+1. **go-atomic-write is YOUR repo**: do you want the `Commit`-primitive **→ owner decision; draft in docs/drafts/**
    issue filed as drafted (docs/drafts/go-atomic-write-commit-primitive.md),
    a PR with the exported function instead, or will you design the API
    yourself? (The draft's shape: `Commit(target, stagingPath string)`.)
-2. **Gate scheduling**: the nix-build step has now starved twice under
-   machine load. Should gates run only at idle times, or do you want me to
-   add a serial/low-parallelism mode to the BuildFlow invocation in this
-   repo's AGENTS.md commands?
-3. **Release gate**: is "one clean full-gate rerun + your explicit go"
+2. ~~**Gate scheduling**: the nix-build step has now starved twice under~~ done — superseded: gates green 74/74 on 2026-10-12; load doctrine documented
+   ~~machine load. Should gates run only at idle times, or do you want me to~~
+   ~~add a serial/low-parallelism mode to the BuildFlow invocation in this~~
+   ~~repo's AGENTS.md commands?~~
+3. **Release gate**: is "one clean full-gate rerun + your explicit go" **→ owner; TODO_LIST v0.1.0 blocked row**
    the release precondition for v0.1.0, or do you want the sibling repo's
    `-max-age` window decided and deployed first so the module ships
    complete?

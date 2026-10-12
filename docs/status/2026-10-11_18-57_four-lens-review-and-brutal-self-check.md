@@ -109,89 +109,89 @@ Sorted by impact; the first ~12 are actionable TODO_LIST material, the rest
 are ROADMAP-fuel / polish. (Per docs-health: extra items are a brainstorm,
 not commitments.)
 
-1. Wire `retention.Policy.Admits` into the poller as an ingest-side cutoff
-   (the ghost system: kills future over-age rows at the door).
-2. CHANGELOG.md entry for this session's fixes (typed Hit, excerpt ceiling,
-   auth timing pad, StreamMarker purge, doc corrections).
-3. Recording-proxy upstream timeout knob (needs the answer to Q1 below).
-4. Annotate the plan report's task table to done (docs-health ANNOTATE).
-5. Harvest sections e/f of this report into TODO_LIST/ROADMAP properly.
-6. Fix `freshness.go` error-after-headers path (log-and-abort, not
-   `http.Error` after body started).
-7. `backup.Snapshot`: fsync the staging file before the atomic rename.
-8. Dedupe `exportViews`' double `r.URL.Query().Get("pii")` read.
-9. Ticket or fix the twin `excerpt()` implementations (shared helper in
-   `calls` or accept as sibling-mapper twins — decide, then write it down).
-10. Reconcile `web.searchResultLimit` vs `search.DefaultLimit` (both 50;
-    naming report #14 — decide one source of truth).
-11. Document webhook `Parse`'s map-iteration nondeterminism (harmless for
-    hash stability; say so where the map is iterated).
-12. Add `TurnRole` typed enum next time `domain.go` is touched.
-13. Schedule ContentHash v2 canonical encoding decision (drop vs schedule).
-14. Run the AGENTS.md UI e2e probe once against a seeded sqlite index.
-15. Live-verify Telnyx Detail Records + insights DTOs (pre-existing TODO).
-16. Upstream filings D6 (sqliteengine time bind, memory-engine field
-    resolution, treefmt templ go pin).
-17. Verify + file cqrs-lint C009 `len(name) > 4` upstream.
-18. Rebuild/reinstall buildflow binary (200ab99 → HEAD); re-run gate; drop
-    the AGENTS.md license-check note if it goes green.
-19. Investigate `nix-build-verify` 6/6 failure inside buildflow (works via
-    plain `nix build`/flake check) — likely buildflow sandbox memory limit.
-20. Decide the E003 owner question (flat `internal/calls` split) — see Q3.
-21. Hand `deploy/nixos/module-draft.nix` status forward (module landed in
-    sibling repo; mark the draft as historical in FEATURES).
-22. Quarterly re-verify cluster: calendar the Telnyx live-API re-check.
-23. Add `?pii=hash` example to README's export section (PII mode is
+1. ~~Wire `retention.Policy.Admits` into the poller as an ingest-side cutoff~~ done (docs-health pass 2026-10-12)
+   ~~(the ghost system: kills future over-age rows at the door).~~
+2. ~~CHANGELOG.md entry for this session's fixes (typed Hit, excerpt ceiling,~~ done (docs-health pass 2026-10-12)
+   ~~auth timing pad, StreamMarker purge, doc corrections).~~
+3. ~~Recording-proxy upstream timeout knob (needs the answer to Q1 below).~~ done — landed 2026-10-12 (web.DefaultUpstreamTimeout, -recording-timeout)
+4. ~~Annotate the plan report's task table to done (docs-health ANNOTATE).~~ done — 18-30 badges flipped Done by the 19:37 P3 closure
+5. ~~Harvest sections e/f of this report into TODO_LIST/ROADMAP properly.~~ done (docs-health pass 2026-10-12)
+6. ~~Fix `freshness.go` error-after-headers path (log-and-abort, not~~ done — landed (P5 log-and-abort)
+   ~~`http.Error` after body started).~~
+7. ~~`backup.Snapshot`: fsync the staging file before the atomic rename.~~ done — landed (P6 + parent-dir flush, 20:26)
+8. ~~Dedupe `exportViews`' double `r.URL.Query().Get("pii")` read.~~ done — landed (P7)
+9. ~~Ticket or fix the twin `excerpt()` implementations (shared helper in~~ done — landed as calls.Excerpt (P7)
+   ~~`calls` or accept as sibling-mapper twins — decide, then write it down).~~
+10. ~~Reconcile `web.searchResultLimit` vs `search.DefaultLimit` (both 50;~~ done — landed (P7: web passes search.DefaultLimit)
+    ~~naming report #14 — decide one source of truth).~~
+11. ~~Document webhook `Parse`'s map-iteration nondeterminism (harmless for~~ done — landed (P11 order-independence note)
+    ~~hash stability; say so where the map is iterated).~~
+12. ~~Add `TurnRole` typed enum next time `domain.go` is touched.~~ done — landed (P11 typed enum)
+13. Schedule ContentHash v2 canonical encoding decision (drop vs schedule). **→ TODO_LIST blocked row (schema v2 gate)**
+14. ~~Run the AGENTS.md UI e2e probe once against a seeded sqlite index.~~ done (docs-health pass 2026-10-12)
+15. Live-verify Telnyx Detail Records + insights DTOs (pre-existing TODO). **→ TODO_LIST blocked row (needs a real API key)**
+16. ~~Upstream filings D6 (sqliteengine time bind, memory-engine field~~ done (docs-health pass 2026-10-12)
+    ~~resolution, treefmt templ go pin).~~
+17. ~~Verify + file cqrs-lint C009 `len(name) > 4` upstream.~~ done (docs-health pass 2026-10-12)
+18. ~~Rebuild/reinstall buildflow binary (200ab99 → HEAD); re-run gate; drop~~ done (docs-health pass 2026-10-12)
+    ~~the AGENTS.md license-check note if it goes green.~~
+19. ~~Investigate `nix-build-verify` 6/6 failure inside buildflow (works via~~ done — gates green 74/74 twice on 2026-10-12; starvation class documented
+    ~~plain `nix build`/flake check) — likely buildflow sandbox memory limit.~~
+20. Decide the E003 owner question (flat `internal/calls` split) — see Q3. **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)**
+21. ~~Hand `deploy/nixos/module-draft.nix` status forward (module landed in~~ done — header annotated SUPERSEDED
+    ~~sibling repo; mark the draft as historical in FEATURES).~~
+22. Quarterly re-verify cluster: calendar the Telnyx live-API re-check. **→ TODO_LIST blocked row (needs a real API key)**
+23. Add `?pii=hash` example to README's export section (PII mode is **→ ROADMAP theme 4 (stored-row enforcement)**
     load-bearing but under-documented for users).
-24. `web` package: extract the repeated `"reading the call index failed: "`
+24. `web` package: extract the repeated `"reading the call index failed: "` **→ ROADMAP theme 2**
     500-string into one helper (5 call sites).
-25. Consider `http.NewServeMux` route table test (every registered route
-    answers; catches route-typo regressions).
-26. `cli/system.go`: consider a `DrainProjections` watchdog log line when a
+25. ~~Consider `http.NewServeMux` route table test (every registered route~~ done — landed (TestEveryRegisteredRouteAnswers, P5)
+    ~~answers; catches route-typo regressions).~~
+26. `cli/system.go`: consider a `DrainProjections` watchdog log line when a **→ ROADMAP theme 2**
     drain exceeds a threshold (silent-stall diagnosability).
-27. `search.Query`: cap `limit` at a hard max (caller could pass 1e9).
-28. `retention.Retire`: batch-size guard for absurd views counts (maxScan
-    caps input, but a log line at >1000 tombstones would help operators).
-29. `wire.FlexTime`: consider rejecting year < 2000 (garbage guard) — only
-    if a real source ever produces one; otherwise noise.
-30. `telnyx.fetchAll`: propagate `Retry-After` on 429s (today it surfaces a
+27. ~~`search.Query`: cap `limit` at a hard max (caller could pass 1e9).~~ done — landed (search.MaxLimit = 200, P5)
+28. ~~`retention.Retire`: batch-size guard for absurd views counts (maxScan~~ done (docs-health pass 2026-10-12)
+    ~~caps input, but a log line at >1000 tombstones would help operators).~~
+29. ~~`wire.FlexTime`: consider rejecting year < 2000 (garbage guard) — only~~ **Won't implement — noise guard; no source produces one.**
+    ~~if a real source ever produces one; otherwise noise.~~
+30. `telnyx.fetchAll`: propagate `Retry-After` on 429s (today it surfaces a **→ ROADMAP theme 2**
     generic http.429 rejection).
-31. `cdr.ParseWithOptions`: unit-test the 18-column + MOS extra-column combo
-    (13+MOS has a test; 18+MOS path shares code but no named test).
-32. `web/auth.go`: test that `padCost` picks up a cost-12 file (lock the new
-    timing property).
-33. `backup.Verify`: also assert at least one expected table exists
-    (integrity_check alone passes on an unrelated valid sqlite file).
-34. Excerpt truncation marker (…) for capped excerpts? Domain decision —
+31. ~~`cdr.ParseWithOptions`: unit-test the 18-column + MOS extra-column combo~~ done — landed in the P4 regression pins
+    ~~(13+MOS has a test; 18+MOS path shares code but no named test).~~
+32. ~~`web/auth.go`: test that `padCost` picks up a cost-12 file (lock the new~~ done — landed (TestPadCostReadsLoadedEntriesCost, P4)
+    ~~timing property).~~
+33. ~~`backup.Verify`: also assert at least one expected table exists~~ done — landed (TestVerifyRejectsValidButEmptySqlite, P4)
+    ~~(integrity_check alone passes on an unrelated valid sqlite file).~~
+34. Excerpt truncation marker (…) for capped excerpts? Domain decision — **→ ROADMAP theme 1**
     current truncation is silent by design; document or add the ellipsis.
-35. `dashboard.go`: extract the `2006-01-02` day-format literal (3 uses)
-    into a named constant.
-36. `poller.go`: `PollOnce` runs sources sequentially; fine now, but a
-    per-source timeout would stop one hung file read from stalling a pass.
-37. Serve: `-recordings-dir` default is a real path while help says
-    "empty = disabled" — align help text with the default.
-38. `main.go`: `smoke` could also exercise the projection drain path with a
-    correction (second, changed dispatch) — cheap e2e depth.
-39. `DOMAIN_LANGUAGE.md`: line-number references rot; consider dropping them
+35. ~~`dashboard.go`: extract the `2006-01-02` day-format literal (3 uses)~~ done — landed (P11)
+    ~~into a named constant.~~
+36. ~~`poller.go`: `PollOnce` runs sources sequentially; fine now, but a~~ done (docs-health pass 2026-10-12)
+    ~~per-source timeout would stop one hung file read from stalling a pass.~~
+37. ~~Serve: `-recordings-dir` default is a real path while help says~~ done (docs-health pass 2026-10-12)
+    ~~"empty = disabled" — align help text with the default.~~
+38. ~~`main.go`: `smoke` could also exercise the projection drain path with a~~ done (docs-health pass 2026-10-12)
+    ~~correction (second, changed dispatch) — cheap e2e depth.~~
+39. `DOMAIN_LANGUAGE.md`: line-number references rot; consider dropping them **→ ROADMAP theme 2 (docs polish)**
     for file-level references only.
-40. FEATURES.md: add the retention purge + PII export entries if missing.
-41. CI: add `go tool templ generate` freshness check (diff after generate
+40. ~~FEATURES.md: add the retention purge + PII export entries if missing.~~ done — rows present in FEATURES.md
+41. CI: add `go tool templ generate` freshness check (diff after generate **→ ROADMAP theme 2 (CI polish)**
     must be empty) — currently only build correctness is proven.
-42. CI: art-dupl is warning-only; schedule a periodic dedup pass instead.
-43. `search.Rebuild` uses DROP+CREATE inside one tx; consider logging row
-    count at rebuild for operational insight.
-44. `web/export.go`: Content-Length unknown when streaming; consider
+42. CI: art-dupl is warning-only; schedule a periodic dedup pass instead. **→ advisory; documented non-fix class**
+43. ~~`search.Rebuild` uses DROP+CREATE inside one tx; consider logging row~~ done (docs-health pass 2026-10-12)
+    ~~count at rebuild for operational insight.~~
+44. `web/export.go`: Content-Length unknown when streaming; consider **→ ROADMAP theme 1 (export streaming)**
     `Transfer-Encoding` note in docs for API consumers.
-45. `internal/ingest` root package has no direct test for `EachLine` blank/
-    whitespace semantics (covered indirectly; a 10-line direct test would pin it).
-46. Consider `go.mod` `tool` directive audit — templ is pinned; confirm no
-    other CLI-only deps sneak in via go run.
-47. `AGENTS.md`: the Telnyx "re-verify quarterly" cluster has no due-date
+45. ~~`internal/ingest` root package has no direct test for `EachLine` blank/~~ done — landed in the P4 regression pins
+    ~~whitespace semantics (covered indirectly; a 10-line direct test would pin it).~~
+46. ~~Consider `go.mod` `tool` directive audit — templ is pinned; confirm no~~ done — templ pinned via the go.mod tool directive; CI green
+    ~~other CLI-only deps sneak in via go run.~~
+47. `AGENTS.md`: the Telnyx "re-verify quarterly" cluster has no due-date **→ standing cadence (AGENTS.md re-verify cluster)**
     marker; add last-verified dates per item.
-48. README: purge + backup commands are absent from the user-facing command
-    list (usage() has them; README may lag — verify next docs pass).
-49. `statix` 15 findings in the gate are advisory; batch-review them once.
-50. Post-launch follow-up: real-traffic sanity pass on the correction wave
+48. ~~README: purge + backup commands are absent from the user-facing command~~ done (docs-health pass 2026-10-12)
+    ~~list (usage() has them; README may lag — verify next docs pass).~~
+49. `statix` 15 findings in the gate are advisory; batch-review them once. **→ advisory; documented non-fix class**
+50. Post-launch follow-up: real-traffic sanity pass on the correction wave **→ owner/ops follow-up**
     behavior (first re-poll after the excerpt-cap change).
 
 ## g) Questions I cannot figure out myself

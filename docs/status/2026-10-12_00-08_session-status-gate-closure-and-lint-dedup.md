@@ -120,52 +120,52 @@ repo, by commit).
 
 | #  | Task                                                                                                                                                                    | Impact | Effort   | Category                   |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- | -------------------------- |
-| 1  | Land ONE fully-green single-pass gate at 15-min load < ~40 (closes the skipped-steps caveat too)                                                                        | High   | S        | Quality                    |
-| 2  | Sibling NixOS module: pick + set production `-max-age` (needs YOUR value, e.g. 720h vs 2160h)                                                                           | High   | S        | Feature                    |
-| 3  | P9: post the five D6 filings (drafts verified open 20:0x; needs YOUR go + github-voice)                                                                                 | Medium | M        | Quality                    |
-| 4  | Decide the go-atomic-write `Commit` ask: post as drafted, PR the exported fn, or you design the API                                                                     | Medium | S        | Feature (house lib)        |
-| 5  | First release tag v0.1.0 via go-release (CHANGELOG ready; step-level gate evidence in hand)                                                                             | Medium | M        | Feature                    |
-| 6  | Verify-at-source + file BuildFlow: go-mod-update reports starved `go build` kills as "compile errors" and silently reverts                                              | Medium | S verify | Quality (upstream)         |
-| 7  | Sibling module: add `ingest-* -max-age` ExecStart options alongside serve's                                                                                             | Low    | S        | Feature                    |
-| 8  | Split `internal/calls/domain.go` (571 vs 350) + the 2 other file-size advisories (harvested to TODO_LIST)                                                               | Low    | M        | Cleanup                    |
-| 9  | Auth: htpasswd reload on SIGHUP/mtime (restart required today)                                                                                                          | Low    | M        | Feature                    |
-| 10 | Auth: per-IP limiter upgrade if the PBX ever leaves loopback trust                                                                                                      | Low    | M        | Feature                    |
-| 11 | Poller ops endpoint: per-source rejection counters (log lines only today)                                                                                               | Low    | M        | Feature                    |
-| 12 | slog adoption for poller/serve logs (std log.Printf today)                                                                                                              | Low    | M        | Quality                    |
-| 13 | README UI screenshots of the four surfaces                                                                                                                              | Low    | S        | Documentation              |
-| 14 | Keyset-pagination probe with >page-size data beyond page 1                                                                                                              | Low    | S        | Quality                    |
-| 15 | Verify-at-source + file cqrs-lint C009: exemption excludes bare `must` (len 4)                                                                                          | Low    | S        | Quality (upstream)         |
-| 16 | flake: add `meta.description` to the generated `update-vendor-hash` app (nix-flake-check warning, every run)                                                            | Low    | S        | Cleanup                    |
-| 17 | Ask BuildFlow for ecosystem-scoped health checks (9 JS/Python "unavailable" alarms in a Go-only repo)                                                                   | Low    | S        | Quality (upstream)         |
-| 18 | Ask BuildFlow to name blocked-skipped steps in failed-pass summaries                                                                                                    | Low    | S        | Quality (upstream)         |
-| 19 | Verify the FOD-freshness mtime heuristic vs reality; ask for an "unverified" phrasing if it can't check                                                                 | Low    | S        | Quality (upstream)         |
-| 20 | AGENTS.md commands: add the load-gate doctrine (if #1's tool-side fix is declined)                                                                                      | Low    | S        | Documentation              |
-| 21 | crush-config lessons.md by commit: "sibling repos are the first dependency search path" · "wire tests from existing scaffolding" · "piped exit codes need PIPESTATUS"   | Low    | S        | Documentation              |
-| 22 | Post-or-drop weekly pass over docs/drafts/ (6 drafts with unchecked owner boxes)                                                                                        | Low    | S        | Documentation              |
-| 23 | Consolidate internal/web test helpers (newTestServerWith/getWithHeaders in recording_test.go vs sqliteSearcher/newTestServerWithSearch in search_test.go) into one home | Low    | S        | Cleanup                    |
-| 24 | templ-components upgrade watch: SegmentBar unblock = swap the hand-rolled AI/human bar (P17)                                                                            | Low    | S        | Feature (BLOCKED upstream) |
-| 25 | Live Telnyx Detail Records + insights DTO verification when an API key exists (P13; quarterly cluster)                                                                  | Medium | S        | Quality (BLOCKED key)      |
-| 26 | ContentHash v2 length-prefixed field encoding at schema v2 (P14; one-time correction wave)                                                                              | Low    | M        | Feature (BLOCKED v2)       |
-| 27 | Recording-proxy timeout knob at traffic-data time (P15; owner-deferred)                                                                                                 | Low    | S        | Feature (deferred)         |
-| 28 | Quarterly re-verify clusters: docs/telnyx-live-api.md + docs/upstream-filings.md (next due ~2027-01)                                                                    | Low    | S each   | Quality (calendar)         |
-| 29 | vulnix persistent exit-1: recheck after the next BuildFlow/nixpkgs bump (documented env-class)                                                                          | Low    | S        | Quality                    |
-| 30 | Annotate the 23-35 report as superseded by this one (§b/§f#1) — one-line inline note                                                                                    | Low    | S        | Documentation              |
+| ~~1~~  | ~~Land ONE fully-green single-pass gate at 15-min load < ~40 (closes the skipped-steps caveat too)~~ done — superseded: full-mode 74/74 (01:16) and dev 74/74 (02:34) on 2026-10-12 | ~~High~~ | ~~S~~ | ~~Quality~~ |
+| 2  | Sibling NixOS module: pick + set production `-max-age` (needs YOUR value, e.g. 720h vs 2160h) **→ TODO_LIST blocked row (owner picks the window)** | High   | S        | Feature                    |
+| ~~3~~  | ~~P9: post the five D6 filings (drafts verified open 20:0x; needs YOUR go + github-voice)~~ done (docs-health pass 2026-10-12) | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
+| ~~4~~  | ~~Decide the go-atomic-write `Commit` ask: post as drafted, PR the exported fn, or you design the API~~ done (docs-health pass 2026-10-12) | ~~Medium~~ | ~~S~~ | ~~Feature (house lib)~~ |
+| 5  | First release tag v0.1.0 via go-release (CHANGELOG ready; step-level gate evidence in hand) **→ TODO_LIST blocked row (owner release gate)** | Medium | M        | Feature                    |
+| ~~6~~  | ~~Verify-at-source + file BuildFlow: go-mod-update reports starved `go build` kills as "compile errors" and silently reverts~~ done — filed as BuildFlow#45 (2026-10-12, docs/upstream-filings.md) | ~~Medium~~ | ~~S verify~~ | ~~Quality (upstream)~~ |
+| 7  | Sibling module: add `ingest-* -max-age` ExecStart options alongside serve's **→ TODO_LIST blocked row (owner picks the window)** | Low    | S        | Feature                    |
+| ~~8~~  | ~~Split `internal/calls/domain.go` (571 vs 350) + the 2 other file-size advisories (harvested to TODO_LIST)~~ done — landed 2026-10-12 (02:34 splits) | ~~Low~~ | ~~M~~ | ~~Cleanup~~ |
+| 9  | Auth: htpasswd reload on SIGHUP/mtime (restart required today) **→ ROADMAP theme 2** | Low    | M        | Feature                    |
+| 10 | Auth: per-IP limiter upgrade if the PBX ever leaves loopback trust **→ ROADMAP theme 2** | Low    | M        | Feature                    |
+| 11 | Poller ops endpoint: per-source rejection counters (log lines only today) **→ ROADMAP theme 2** | Low    | M        | Feature                    |
+| 12 | slog adoption for poller/serve logs (std log.Printf today) **→ ROADMAP theme 2** | Low    | M        | Quality                    |
+| 13 | README UI screenshots of the four surfaces **→ ROADMAP theme 2 (public presence)** | Low    | S        | Documentation              |
+| 14 | Keyset-pagination probe with >page-size data beyond page 1 **→ ROADMAP theme 1** | Low    | S        | Quality                    |
+| ~~15~~ | ~~Verify-at-source + file cqrs-lint C009: exemption excludes bare `must` (len 4)~~ done — covered by go-cqrs-lite#64 | ~~Low~~ | ~~S~~ | ~~Quality (upstream)~~ |
+| ~~16~~ | ~~flake: add `meta.description` to the generated `update-vendor-hash` app (nix-flake-check warning, every run)~~ done — landed 2026-10-12 (02:34) | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| 17 | Ask BuildFlow for ecosystem-scoped health checks (9 JS/Python "unavailable" alarms in a Go-only repo) **→ BuildFlow upstream candidate** | Low    | S        | Quality (upstream)         |
+| 18 | Ask BuildFlow to name blocked-skipped steps in failed-pass summaries **→ BuildFlow upstream candidate** | Low    | S        | Quality (upstream)         |
+| 19 | Verify the FOD-freshness mtime heuristic vs reality; ask for an "unverified" phrasing if it can't check **→ BuildFlow upstream candidate** | Low    | S        | Quality (upstream)         |
+| ~~20~~ | ~~AGENTS.md commands: add the load-gate doctrine (if #1's tool-side fix is declined)~~ done — docs/buildflow-dev-gate.md carries the load guidance | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| 21 | crush-config lessons.md by commit: "sibling repos are the first dependency search path" · "wire tests from existing scaffolding" · "piped exit codes need PIPESTATUS" **→ crush-config repo, by commit** | Low    | S        | Documentation              |
+| ~~22~~ | ~~Post-or-drop weekly pass over docs/drafts/ (6 drafts with unchecked owner boxes)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| 23 | Consolidate internal/web test helpers (newTestServerWith/getWithHeaders in recording_test.go vs sqliteSearcher/newTestServerWithSearch in search_test.go) into one home **→ one helper landed (00:08 §a); one home pending (ROADMAP theme 2)** | Low    | S        | Cleanup                    |
+| 24 | templ-components upgrade watch: SegmentBar unblock = swap the hand-rolled AI/human bar (P17) **→ TODO_LIST blocked row (unreleased upstream)** | Low    | S        | Feature (BLOCKED upstream) |
+| 25 | Live Telnyx Detail Records + insights DTO verification when an API key exists (P13; quarterly cluster) **→ TODO_LIST blocked row (needs a real API key)** | Medium | S        | Quality (BLOCKED key)      |
+| 26 | ContentHash v2 length-prefixed field encoding at schema v2 (P14; one-time correction wave) **→ TODO_LIST blocked row (schema v2 gate)** | Low    | M        | Feature (BLOCKED v2)       |
+| ~~27~~ | ~~Recording-proxy timeout knob at traffic-data time (P15; owner-deferred)~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Feature (deferred)~~ |
+| 28 | Quarterly re-verify clusters: docs/telnyx-live-api.md + docs/upstream-filings.md (next due ~2027-01) **→ TODO_LIST blocked row (needs a real API key)** | Low    | S each   | Quality (calendar)         |
+| 29 | vulnix persistent exit-1: recheck after the next BuildFlow/nixpkgs bump (documented env-class) **→ documented environmental advisory (docs/buildflow-dev-gate.md)** | Low    | S        | Quality                    |
+| ~~30~~ | ~~Annotate the 23-35 report as superseded by this one (§b/§f#1) — one-line inline note~~ done — superseded banner inline in that report | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
 
 ## g) Top questions I can NOT figure out myself
 
-1. **Gate policy (third ask, third starvation)**: BuildFlow-side
-   `--max-jobs`/serial nix-build mode, a load-gate in this repo's AGENTS.md
-   ("full gate only at 15-min load < ~40"), or gates only at idle times?
-   Two of tonight's three starved steps would have been avoided by any of
-   the three — which do you want?
-2. **Release gate for v0.1.0**: is step-level gate closure (every step
+1. ~~**Gate policy (third ask, third starvation)**: BuildFlow-side~~ done — superseded: gates green 74/74 twice on 2026-10-12; doctrine documented
+   ~~`--max-jobs`/serial nix-build mode, a load-gate in this repo's AGENTS.md~~
+   ~~("full gate only at 15-min load < ~40"), or gates only at idle times?~~
+   ~~Two of tonight's three starved steps would have been avoided by any of~~
+   ~~the three — which do you want?~~
+2. **Release gate for v0.1.0**: is step-level gate closure (every step **→ owner; TODO_LIST v0.1.0 blocked row**
    green today, individually verified) a sufficient precondition, or do you
    want the single clean pass AND the sibling `-max-age` decision shipped
    first so the module deploys complete?
-3. **Concurrent-session coordination**: the overnight session rebuilt
-   BuildFlow at HEAD and added the dprint-padding lesson. Are the BuildFlow
-   findings from §e.3-5 (go-mod-update misclassification, blocked-steps
-   opacity, health-check noise) already on its radar, or should I
-   verify-at-source and file them myself?
+3. ~~**Concurrent-session coordination**: the overnight session rebuilt~~ done — BuildFlow#45 filed; the rest documented as fleet candidates
+   ~~BuildFlow at HEAD and added the dprint-padding lesson. Are the BuildFlow~~
+   ~~findings from §e.3-5 (go-mod-update misclassification, blocked-steps~~
+   ~~opacity, health-check noise) already on its radar, or should I~~
+   ~~verify-at-source and file them myself?~~
 
 Waiting for instructions.

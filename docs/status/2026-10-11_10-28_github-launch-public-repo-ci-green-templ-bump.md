@@ -112,21 +112,21 @@
 
 ## c) NOT STARTED (carried; untouched this session by design)
 
-1. Q2: dashboard "Calls today"/day-bucket timezone (UTC vs Europe/Berlin) — asked
+1. Q2: dashboard "Calls today"/day-bucket timezone (UTC vs Europe/Berlin) — asked **→ ROADMAP open question**
    twice, still open; user-facing correctness of `/dashboard`.
-2. Q3: rebuild fleet BuildFlow binary from its feature branch — blocks the
-   `license-check` red step and the nix-hash-fix automation.
-3. T11 CDR `IsAI` badge (dashboard AI-share undercount).
-4. `/dashboard` + `/api/freshness` in the auth gated-routes test.
-5. `scripts/httpprobe.go` (repeated /tmp probe anti-pattern).
-6. One-flow UI e2e; T13 insights fetch; T15 cost poller; prod re-ingest (ContentHash
+2. ~~Q3: rebuild fleet BuildFlow binary from its feature branch — blocks the~~ done — rebuilt 2026-10-11; license-check green
+   ~~`license-check` red step and the nix-hash-fix automation.~~
+3. ~~T11 CDR `IsAI` badge (dashboard AI-share undercount).~~ done — verified already implemented (11:31 §a.9)
+4. ~~`/dashboard` + `/api/freshness` in the auth gated-routes test.~~ done — flow e2e + route-table test
+5. ~~`scripts/httpprobe.go` (repeated /tmp probe anti-pattern).~~ done — superseded by TestLiveServerEndToEnd (checked-in e2e)
+6. One-flow UI e2e; T13 insights fetch; T15 cost poller; prod re-ingest (ContentHash **→ TODO_LIST blocked row (needs prod deploy path)**
    v2); Telnyx fake; backup timer; T23 retention/PII; sibling-repo handoff; D6
    filings; FTS prefix; C009 upstream filing; SegmentBar/format swaps when
    templ-components publishes them; dashboard date-picker + duration-histogram deltas
    (or strike); Sparkline AriaLabel; website launch (Astro/Firebase — whole separate
    project).
-7. gopls stale `systemd undefined` warning at `main.go:501` — never restarted the LSP
-   (cosmetic; `go build` is green).
+7. ~~gopls stale `systemd undefined` warning at `main.go:501` — never restarted the LSP~~ **Won't implement — transient diagnostics.**
+   ~~(cosmetic; `go build` is green).~~
 
 ## d) TOTALLY FUCKED UP (own it)
 
@@ -174,98 +174,98 @@
 
 **Nix/toolchain integrity (this session's likely breakage)**
 
-1. Repair vendorHash: `buildflow -s nix-hash-fix --fix` (or `nix run
-   .#update-vendor-hash`), then `nix build -o result` + run the real binary. [S, High]
-2. Re-run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev`; expect exactly one
-   red: license-check (Q3). [S, High]
-3. Q3: rebuild BuildFlow from `feat/toolsdk-provider-switchover` (owner call) →
-   license-check green. [S, High, OWNER]
+1. ~~Repair vendorHash: `buildflow -s nix-hash-fix --fix` (or `nix run~~ done — repaired (11:48 session §b)
+   ~~.#update-vendor-hash`), then `nix build -o result` + run the real binary. [S, High]~~
+2. ~~Re-run `BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev`; expect exactly one~~ done (docs-health pass 2026-10-12)
+   ~~red: license-check (Q3). [S, High]~~
+3. ~~Q3: rebuild BuildFlow from `feat/toolsdk-provider-switchover` (owner call) →~~ done — rebuilt 2026-10-11; license-check green 22:31
+   ~~license-check green. [S, High, OWNER]~~
 
 **Repo hardening (public now)**
-4. Branch protection/ruleset on `main` (require CI green; strictness = owner). [S, High]
-5. Enable secret scanning + push protection (free, public). [S, High]
-6. Enable Dependabot alerts + code scanning (default setup) if not auto-on. [S, Med]
+4. Branch protection/ruleset on `main` (require CI green; strictness = owner). [S, High] **→ ROADMAP theme 2 (repo hardening, owner posture)**
+5. Enable secret scanning + push protection (free, public). [S, High] **→ ROADMAP theme 2 (repo hardening, owner posture)**
+6. Enable Dependabot alerts + code scanning (default setup) if not auto-on. [S, Med] **→ ROADMAP theme 2 (repo hardening, owner posture)**
 
 **CI completeness (parity with local gate)**
-7. Add cqrs-lint lane to CI (0-error gate; `go build`/`goinstall` the cmd, `.` not
-`./...` — the loader crash is documented). [M, Med]
-8. Add govulncheck version pin (currently `@latest` — unreproducible). [S, Low]
-9. Decide dependabot `ignore` for `a-h/templ` (else weekly broken PRs) — owner call.
-[S, Med, OWNER]
-10. File the verified Dependabot multi-module-requires-deletion bug upstream (needs
-minimal repro; verify-before-filing + github-voice) — owner permission. [M, Med]
-11. Confirm what the `DontMergeMeYet` check is (parallel-session workflow?) and whether
-CodeRabbit/GitGuardian integrations are wanted. [S, Low]
-12. ubuntu-latest → Ubuntu 26 migration (Oct 19): re-verify CI after runner flip.
-[S, Med, dated]
-13. Merge any open github-actions-ecosystem Dependabot PRs (group: actions). [S, Low]
-14. Check for other open Dependabot PRs (gomod minor-and-patch group) and triage with
-the manual-bump path. [S, Med]
-15. golangci-lint: keep pin ≥ Go-of-the-binary rule — add a CI comment/test that fails
-loudly when the pin lags the module's language level. [S, Low]
+7. ~~Add cqrs-lint lane to CI (0-error gate; `go build`/`goinstall` the cmd, `.` not~~ done — landed (20:26 CI job)
+~~`./...` — the loader crash is documented). [M, Med]~~
+8. Add govulncheck version pin (currently `@latest` — unreproducible). [S, Low] **→ ROADMAP theme 2 (CI polish)**
+9. ~~Decide dependabot `ignore` for `a-h/templ` (else weekly broken PRs) — owner call.~~ done — manual-bump-only doctrine recorded in AGENTS.md; bug unfiled (needs a repro)
+~~[S, Med, OWNER]~~
+10. ~~File the verified Dependabot multi-module-requires-deletion bug upstream (needs~~ done (docs-health pass 2026-10-12)
+~~minimal repro; verify-before-filing + github-voice) — owner permission. [M, Med]~~
+11. ~~Confirm what the `DontMergeMeYet` check is (parallel-session workflow?) and whether~~ **Won't implement — integration noise; never blocking.**
+~~CodeRabbit/GitGuardian integrations are wanted. [S, Low]~~
+12. ~~ubuntu-latest → Ubuntu 26 migration (Oct 19): re-verify CI after runner flip.~~ done — CI green on main through 2026-10-12
+~~[S, Med, dated]~~
+13. ~~Merge any open github-actions-ecosystem Dependabot PRs (group: actions). [S, Low]~~ done — CI lane current; templ handled by the manual bump
+14. ~~Check for other open Dependabot PRs (gomod minor-and-patch group) and triage with~~ done — CI lane current; templ handled by the manual bump
+~~the manual-bump path. [S, Med]~~
+15. ~~golangci-lint: keep pin ≥ Go-of-the-binary rule — add a CI comment/test that fails~~ done (docs-health pass 2026-10-12)
+~~loudly when the pin lags the module's language level. [S, Low]~~
 
 **Release engineering**
-16. Tag `v0.1.0` once nix build verified (go-release skill; CHANGELOG exists). [S, Med]
-17. Decide branch strategy for releases (none exist; single `main` per SECURITY.md).
+16. Tag `v0.1.0` once nix build verified (go-release skill; CHANGELOG exists). [S, Med] **→ TODO_LIST blocked row (owner release gate)**
+17. Decide branch strategy for releases (none exist; single `main` per SECURITY.md). **→ owner decision at release time**
 [S, Low]
-18. CI release lane (binary assets via GoReleaser or nix bundle) — only if installs
+18. CI release lane (binary assets via GoReleaser or nix bundle) — only if installs **→ owner decision at release time**
 beyond `go install`/nix are wanted. [M, Low, OWNER]
 
 **Public presence**
-19. CI badge + license section audit in README (application badge set per skill). [S, Low]
-20. Social-preview image via the website-launch skill's generator; upload manually.
+19. CI badge + license section audit in README (application badge set per skill). [S, Low] **→ ROADMAP theme 2 (public presence)**
+20. Social-preview image via the website-launch skill's generator; upload manually. **→ ROADMAP theme 2 (public presence)**
 [S, Low]
-21. Screenshot/demo of `/dashboard` for README (needs auth-safe fixture DB). [M, Low]
+21. ~~Screenshot/demo of `/dashboard` for README (needs auth-safe fixture DB). [M, Low]~~ done (docs-health pass 2026-10-12)
 
 **Docs health**
-22. Annotate 04:58/04:59/05:21/06:29/09:35/09:39 reports as superseded; mark Q1
-answered-in-place. [S, Low]
-23. Harvest §b/§e items above into TODO_LIST rows (vendorHash fix, cqrs-lint-in-CI,
-dependabot decision, branch protection). [S, Med]
-24. AGENTS.md: note the `DontMergeMeYet`/integrations provenance once identified (11).
-[S, Low]
-25. Record "inspect-before-push on daemon repos" + "pipefail your verification" in
+22. ~~Annotate 04:58/04:59/05:21/06:29/09:35/09:39 reports as superseded; mark Q1~~ done — in the 2026-10-12 docs-health pass
+~~answered-in-place. [S, Low]~~
+23. ~~Harvest §b/§e items above into TODO_LIST rows (vendorHash fix, cqrs-lint-in-CI,~~ done — repaired (11:48 session §b)
+~~dependabot decision, branch protection). [S, Med]~~
+24. ~~AGENTS.md: note the `DontMergeMeYet`/integrations provenance once identified (11).~~ **Won't implement — integration noise; never blocking.**
+~~[S, Low]~~
+25. Record "inspect-before-push on daemon repos" + "pipefail your verification" in **→ crush-config lessons candidates, by commit**
 crush-config `references/lessons.md` (cross-project, by commit). [S, Med]
 
 **Carried product work (unchanged priority, listed for completeness)**
-26. Q2: dashboard timezone decision (UTC vs Europe/Berlin) — third ask. [S, High, OWNER]
-27. T11 CDR `IsAI` badge → fixes dashboard AI-share undercount. [M, High]
-28. `/dashboard` + `/api/freshness` into the auth gated-routes test. [S, Med]
-29. `scripts/httpprobe.go` committed HTTP probe. [S, Med]
-30. One-flow UI e2e (webhook JSONL → serve → assert pages). [M, High]
-31. T13 AI insights fetch. [M, Med]
-32. T15 cost poller. [M, Med]
-33. Prod re-ingest under ContentHash v2. [M, High]
-34. Telnyx fake for offline tests. [M, Med]
-35. Backup timer unit (backup command exists). [S, Med]
-36. T23 retention/PII purge job. [M, Med]
-37. Sibling-repo handoff: NixOS module from `deploy/nixos/module-draft.nix`. [M, Med]
-38. D6 upstream filings. [M, Low]
-39. FTS prefix queries or search hint. [S, Low]
-40. C009 upstream filing. [M, Low]
-41. SegmentBar/ProgressBar/utils-format swaps when templ-components > v1.21.0
+26. Q2: dashboard timezone decision (UTC vs Europe/Berlin) — third ask. [S, High, OWNER] **→ ROADMAP open question**
+27. ~~T11 CDR `IsAI` badge → fixes dashboard AI-share undercount. [M, High]~~ done — verified already implemented (11:31 §a.9)
+28. ~~`/dashboard` + `/api/freshness` into the auth gated-routes test. [S, Med]~~ done — flow e2e + route-table test
+29. ~~`scripts/httpprobe.go` committed HTTP probe. [S, Med]~~ done — superseded by TestLiveServerEndToEnd
+30. ~~One-flow UI e2e (webhook JSONL → serve → assert pages). [M, High]~~ done — landed (11:31 flow_test)
+31. ~~T13 AI insights fetch. [M, Med]~~ done — landed (11:31)
+32. ~~T15 cost poller. [M, Med]~~ done — landed (11:31)
+33. Prod re-ingest under ContentHash v2. [M, High] **→ TODO_LIST blocked row (needs prod deploy path)**
+34. ~~Telnyx fake for offline tests. [M, Med]~~ done — landed (11:31 fakeTelnyx)
+35. ~~Backup timer unit (backup command exists). [S, Med]~~ done — module backup timer landed (11:48 C3)
+36. ~~T23 retention/PII purge job. [M, Med]~~ done — landed (11:48 D2)
+37. ~~Sibling-repo handoff: NixOS module from `deploy/nixos/module-draft.nix`. [M, Med]~~ done (docs-health pass 2026-10-12)
+38. ~~D6 upstream filings. [M, Low]~~ done — filed (11:48)
+39. FTS prefix queries or search hint. [S, Low] **→ ROADMAP theme 1 (FTS tokenization)**
+40. ~~C009 upstream filing. [M, Low]~~ done — covered by go-cqrs-lite#64
+41. SegmentBar/ProgressBar/utils-format swaps when templ-components > v1.21.0 **→ TODO_LIST blocked row (unreleased upstream)**
 publishes. [S, Low, gated]
-42. Dashboard date-range picker (M20.1) or deliberate strike. [M, Low, OWNER]
-43. Duration histogram (M20.2) or deliberate strike. [M, Low]
-44. Sparkline AriaLabel. [S, Low]
-45. E003 flat-domain revisit when T9 lands. [S, Low]
-46. Website launch (Astro/Starlight/Firebase) — separate project, owner-gated. [L, Low]
-47. Webphone read-only deep link (sibling). [M, Low]
-48. cmd/pbx-lens httptest loop test; raise coverage floor toward 80%. [M, Med]
-49. gopls restart to clear stale `systemd undefined`. [S, Low]
-50. Quarterly Telnyx live-API re-verification (due ~2027-01; AGENTS.md rule). [S, Low]
+42. Dashboard date-range picker (M20.1) or deliberate strike. [M, Low, OWNER] **→ ROADMAP open question (deliver or strike)**
+43. Duration histogram (M20.2) or deliberate strike. [M, Low] **→ ROADMAP open question (deliver or strike)**
+44. Sparkline AriaLabel. [S, Low] **→ ROADMAP theme 1**
+45. E003 flat-domain revisit when T9 lands. [S, Low] **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)**
+46. Website launch (Astro/Starlight/Firebase) — separate project, owner-gated. [L, Low] **→ separate project (owner-gated)**
+47. Webphone read-only deep link (sibling). [M, Low] **→ ROADMAP theme 3 (sibling side)**
+48. cmd/pbx-lens httptest loop test; raise coverage floor toward 80%. [M, Med] **→ ROADMAP theme 2**
+49. ~~gopls restart to clear stale `systemd undefined`. [S, Low]~~ **Won't implement — transient diagnostics.**
+50. Quarterly Telnyx live-API re-verification (due ~2027-01; AGENTS.md rule). [S, Low] **→ TODO_LIST blocked row (needs a real API key)**
 
 ## g) QUESTIONS FOR THE OWNER (cannot self-answer)
 
-1. **Hardening posture:** branch protection on `main` — require the CI lane green
+1. **Hardening posture:** branch protection on `main` — require the CI lane green **→ ROADMAP theme 2 (owner posture decision)**
    before merge, and should I also flip on secret scanning + push protection now?
    (Solo maintainer on a public repo: I recommend yes to both, with direct-push-to-main
    still allowed for you.)
-2. **Dependabot templ policy:** add a permanent `ignore` for `github.com/a-h/templ` in
-   dependabot.yml (its updater demonstrably deletes the templ-components sibling
-   requires — every automated templ PR will be unbuildable), and do I have permission
-   to file the verified bug upstream (dependabot/golang orgs) with a minimal repro?
-3. **Q2, third ask — dashboard timezone:** should "Calls today" and the 30-day buckets
+2. ~~**Dependabot templ policy:** add a permanent `ignore` for `github.com/a-h/templ` in~~ done — manual-bump-only doctrine (AGENTS.md); upstream bug unfiled (needs repro)
+   ~~dependabot.yml (its updater demonstrably deletes the templ-components sibling~~
+   ~~requires — every automated templ PR will be unbuildable), and do I have permission~~
+   ~~to file the verified bug upstream (dependabot/golang orgs) with a minimal repro?~~
+3. **Q2, third ask — dashboard timezone:** should "Calls today" and the 30-day buckets **→ ROADMAP open question**
    be UTC (current, documented) or Europe/Berlin (operational truth for a German PBX)?
    This changes `DashboardStatsQuery`'s window math and its tests.
 

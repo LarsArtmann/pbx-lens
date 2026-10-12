@@ -120,20 +120,20 @@ session; statuses are verified, not assumed.
 
 ## c) NOT STARTED (left as found)
 
-1. Sibling handoff: `deploy/nixos/module-draft.nix` →
-   `services.pbx-lens` in nix-international-telephony (T7 half 2).
-2. SegmentBar swap in `dashboard.templ aiHumanCard` (BLOCKED: unreleased
+1. ~~Sibling handoff: `deploy/nixos/module-draft.nix` →~~ done — landed (11:48 C3)
+   ~~`services.pbx-lens` in nix-international-telephony (T7 half 2).~~
+2. SegmentBar swap in `dashboard.templ aiHumanCard` (BLOCKED: unreleased **→ TODO_LIST blocked row (unreleased upstream)**
    upstream, not in templ-components v1.21.0).
-3. cqrs-lint C009 bare-`must` upstream verify + filing.
-4. D6 upstream filings: sqliteengine time binding, memory-engine field-name
-   resolution, treefmt templ go pin (all three verified in-repo with
-   repros, none filed).
-5. BuildFlow binary rebuild (200ab99 → HEAD) to fix license-check's sandbox
-   go floor; then drop the AGENTS license-check note.
-6. `nix build` was NOT re-run after my changes (build+tests+lint+smoke were;
-   the flake build with templ/tailwind preBuild was not).
-7. DOMAIN_LANGUAGE.md not extended this session (Enrichment pre-dates me;
-   `TelnyxSeed`/`EnrichStats`/roundtrip terms not glossary'd).
+3. ~~cqrs-lint C009 bare-`must` upstream verify + filing.~~ done — covered by go-cqrs-lite#64 (verified at source 2026-10-12)
+4. ~~D6 upstream filings: sqliteengine time binding, memory-engine field-name~~ done — filed (11:48): #62/#63/#64, go-nix-helpers#7, treefmt-nix#545
+   ~~resolution, treefmt templ go pin (all three verified in-repo with~~
+   ~~repros, none filed).~~
+5. ~~BuildFlow binary rebuild (200ab99 → HEAD) to fix license-check's sandbox~~ done — rebuilt 2026-10-11; license-check green
+   ~~go floor; then drop the AGENTS license-check note.~~
+6. ~~`nix build` was NOT re-run after my changes (build+tests+lint+smoke were;~~ done — green after the vendorHash repair (11:48 §b)
+   ~~the flake build with templ/tailwind preBuild was not).~~
+7. ~~DOMAIN_LANGUAGE.md not extended this session (Enrichment pre-dates me;~~ done — partial: TurnRole/Age-gate/Tombstone rows landed; EnrichmentSeed/EnrichStats unglossed
+   ~~`TelnyxSeed`/`EnrichStats`/roundtrip terms not glossary'd).~~
 
 ## d) TOTALLY FUCKED UP (what I got wrong, honestly)
 
@@ -208,111 +208,111 @@ session; statuses are verified, not assumed.
 
 **Live truth & T23 completion**
 
-1. Live-verify `DetailRecord`/insights DTOs with a real key; record
+1. Live-verify `DetailRecord`/insights DTOs with a real key; record **→ TODO_LIST blocked row (needs a real API key)**
    sanitized fixtures (TODO_LIST row).
-2. T23: make `E164`/`ParticipantHash` load-bearing (PII mode).
-3. T23: ingest-side retention cutoff so re-derivation respects `purge`.
-4. T23: retention × serve concurrency — document or lock (purge while serve
-   holds the DB).
-5. T23: FTS rebuild integration after purge (verify search drops retired
-   calls).
-6. Quarterly re-verify cadence: add the two new endpoints to the AGENTS
-   checklist explicitly (currently prose).
+2. T23: make `E164`/`ParticipantHash` load-bearing (PII mode). **→ ROADMAP theme 4 (stored-row enforcement)**
+3. ~~T23: ingest-side retention cutoff so re-derivation respects `purge`.~~ done — landed as the age gate (P2, 19:37 dispatch)
+4. ~~T23: retention × serve concurrency — document or lock (purge while serve~~ done — coexistence green (busy_timeout + e2e through 2026-10-12)
+   ~~holds the DB).~~
+5. ~~T23: FTS rebuild integration after purge (verify search drops retired~~ done — purge rebuilds FTS (11:48 D2)
+   ~~calls).~~
+6. ~~Quarterly re-verify cadence: add the two new endpoints to the AGENTS~~ done — enrich endpoints recorded in docs/telnyx-live-api.md + AGENTS cluster
+   ~~checklist explicitly (currently prose).~~
 
 **Upstream filings (verified in-repo, unfiled)**
-7. File sqliteengine time-binding issue (D6 repro exists).
-8. File memory-engine field-name resolution issue (D6).
-9. File treefmt templ go-pin issue (D6, belongs in go-nix-helpers).
-10. Verify + file cqrs-lint C009 bare-`must` exemption (len 4 guard).
-11. Consider filing E005/E014 package-blindness class upstream (one issue
-covering both, with repro).
+7. ~~File sqliteengine time-binding issue (D6 repro exists).~~ done (docs-health pass 2026-10-12)
+8. ~~File memory-engine field-name resolution issue (D6).~~ done (docs-health pass 2026-10-12)
+9. ~~File treefmt templ go-pin issue (D6, belongs in go-nix-helpers).~~ done (docs-health pass 2026-10-12)
+10. ~~Verify + file cqrs-lint C009 bare-`must` exemption (len 4 guard).~~ done (docs-health pass 2026-10-12)
+11. ~~Consider filing E005/E014 package-blindness class upstream (one issue~~ done — #64 covers the E005 class; E014 documented in docs/cqrs-lint-policy.md
+~~covering both, with repro).~~
 
 **Sibling repo / deploy**
-12. Hand `module-draft.nix` to nix-international-telephony as
-`services.pbx-lens` (T7 half 2).
-13. Port the backup service+timer drafts into the sibling module; verify the
-same-StateDirectory shared-dynamic-user claim on a real host.
-14. Validate draft units with `systemd-analyze verify` + security
-score on a systemd machine.
-15. Align templ CLI pin with the v0.3.1070 lib bump (flake).
-16. Re-run `nix build` + `nix flake check` after the parallel templ bump;
-repair `vendorHash.nix` via `buildflow -s nix-hash-fix --fix` if
-go.sum moved.
-17. Rebuild BuildFlow binary → re-run dev gate → drop AGENTS license-check
-note.
+12. ~~Hand `module-draft.nix` to nix-international-telephony as~~ done (docs-health pass 2026-10-12)
+~~`services.pbx-lens` (T7 half 2).~~
+13. ~~Port the backup service+timer drafts into the sibling module; verify the~~ done (docs-health pass 2026-10-12)
+~~same-StateDirectory shared-dynamic-user claim on a real host.~~
+14. ~~Validate draft units with `systemd-analyze verify` + security~~ done (docs-health pass 2026-10-12)
+~~score on a systemd machine.~~
+15. ~~Align templ CLI pin with the v0.3.1070 lib bump (flake).~~ done — flake pin corrected (23:35 session)
+16. ~~Re-run `nix build` + `nix flake check` after the parallel templ bump;~~ done — green after the vendorHash repair (11:48 §b)
+~~repair `vendorHash.nix` via `buildflow -s nix-hash-fix --fix` if~~
+~~go.sum moved.~~
+17. ~~Rebuild BuildFlow binary → re-run dev gate → drop AGENTS license-check~~ done — rebuilt 2026-10-11; license-check green
+~~note.~~
 
 **Product surfaces (now that enrichment data lands)**
-18. Dashboard cost stat card (total spend in window) — data now exists.
-19. Detail page: show currency properly when absent (verify dash rendering
-has a test).
-20. Export tests asserting CostMicros/InsightSummary round-trip.
-21. List page: cost column (opt-in, small) — or explicitly decide against.
-22. Search: full-number hint parity on the list filter (if numbers are
-filterable there later).
-23. `ingest-telnyx -dry-run` (fetch/map/enrich without dispatch) for field
+18. Dashboard cost stat card (total spend in window) — data now exists. **→ ROADMAP theme 1**
+19. ~~Detail page: show currency properly when absent (verify dash rendering~~ done — costText renders the dash when cost is absent
+~~has a test).~~
+20. Export tests asserting CostMicros/InsightSummary round-trip. **→ ROADMAP theme 2 (test depth)**
+21. List page: cost column (opt-in, small) — or explicitly decide against. **→ ROADMAP theme 1**
+22. ~~Search: full-number hint parity on the list filter (if numbers are~~ **Won't implement — list filter has no number search today.**
+~~filterable there later).~~
+23. `ingest-telnyx -dry-run` (fetch/map/enrich without dispatch) for field **→ ROADMAP theme 2**
 diagnosis.
-24. Insights display: render multi-result joins readably (currently raw
+24. Insights display: render multi-result joins readably (currently raw **→ ROADMAP theme 1**
 `\n` join inside one definition detail).
 
 **Robustness & tests**
-25. Detail-records multi-page pagination test.
-26. Conversation-insights multi-page pagination test.
-27. Insights-fetch error path test (seed rejected, others proceed).
-28. Detail-list fetch error path test (lazy fetch surfaces per-seed
+25. Detail-records multi-page pagination test. **→ ROADMAP theme 2 (test depth)**
+26. Conversation-insights multi-page pagination test. **→ ROADMAP theme 2 (test depth)**
+27. Insights-fetch error path test (seed rejected, others proceed). **→ ROADMAP theme 2 (test depth)**
+28. Detail-list fetch error path test (lazy fetch surfaces per-seed **→ ROADMAP theme 2 (test depth)**
 rejection).
-29. `ingest-telnyx` command-level e2e with the fake server (double-drain
+29. `ingest-telnyx` command-level e2e with the fake server (double-drain **→ ROADMAP theme 2 (test depth)**
 wiring).
-30. Enrichment idempotency across a correction (corrected event carries
-enrichment — has domain tests; add an e2e pass-over-correction).
-31. Zero-cost call e2e (records with "0.000") — pin the no-display +
+30. ~~Enrichment idempotency across a correction (corrected event carries~~ done (docs-health pass 2026-10-12)
+~~enrichment — has domain tests; add an e2e pass-over-correction).~~
+31. Zero-cost call e2e (records with "0.000") — pin the no-display + **→ ROADMAP theme 2 (pin the behavior)**
 re-fetch behavior deliberately.
-32. `CallView.Observation()` StreamID equality assertion (currently implied
+32. `CallView.Observation()` StreamID equality assertion (currently implied **→ ROADMAP theme 2 (test depth)**
 via Validate).
 
 **Internal quality**
-33. Extract `telnyxtest` shared fake server package.
-34. `fetchAll` options struct refactor.
-35. Enrichment duration logging in pollTelnyx.
-36. Structured logging (key-value) for poller passes.
-37. art-dupl pass over the new code (warning-only gate).
-38. `govulncheck` local run (CI covers; local gate parity).
-39. DOMAIN_LANGUAGE.md: glossary TelnyxSeed, EnrichStats, Enrichment
-lifecycle, `conversations-insights` vocabulary.
-40. AGENTS: refresh the UI-trio templ pin row post-bump.
-41. README: mention enrichment + nightly backup staging in operations
-(sales-page-adjacent, owner's call).
+33. Extract `telnyxtest` shared fake server package. **→ ROADMAP theme 2**
+34. ~~`fetchAll` options struct refactor.~~ done (docs-health pass 2026-10-12)
+35. Enrichment duration logging in pollTelnyx. **→ ROADMAP theme 2**
+36. Structured logging (key-value) for poller passes. **→ ROADMAP open question**
+37. art-dupl pass over the new code (warning-only gate). **→ advisory; documented non-fix class**
+38. ~~`govulncheck` local run (CI covers; local gate parity).~~ done (docs-health pass 2026-10-12)
+39. ~~DOMAIN_LANGUAGE.md: glossary TelnyxSeed, EnrichStats, Enrichment~~ done — partial: TurnRole/Age-gate/Tombstone landed; EnrichmentSeed/EnrichStats unglossed
+~~lifecycle, `conversations-insights` vocabulary.~~
+40. ~~AGENTS: refresh the UI-trio templ pin row post-bump.~~ done — fixed (23:35 session)
+41. ~~README: mention enrichment + nightly backup staging in operations~~ done — README operations sections landed (backup/purge/export)
+~~(sales-page-adjacent, owner's call).~~
 
 **Hygiene / small**
-42. TODO_LIST: add the live-verify row's sibling — insights status enum
+42. TODO_LIST: add the live-verify row's sibling — insights status enum **→ TODO_LIST blocked row (needs a real API key)**
 drift watch (upstream could add statuses).
-43. Search hint: measure whether users actually hit it (log zero-result
-queries server-side? owner decision, privacy-sensitive).
-44. `fakeTelnyx` conversations fixture: add a second conversation to prove
+43. ~~Search hint: measure whether users actually hit it (log zero-result~~ **Won't implement — privacy-sensitive; declined.**
+~~queries server-side? owner decision, privacy-sensitive).~~
+44. `fakeTelnyx` conversations fixture: add a second conversation to prove **→ ROADMAP theme 2 (test depth)**
 multi-seed passes (currently single-seed e2e).
-45. Poller: cap enrichment seeds per pass (YAGNI guard for a huge backlog
+45. Poller: cap enrichment seeds per pass (YAGNI guard for a huge backlog **→ ROADMAP theme 2**
 after long downtime).
-46. Consider `WithPrefetch` revisit note for the enrich reader (F026
+46. Consider `WithPrefetch` revisit note for the enrich reader (F026 **→ advisory (F026)**
 sibling).
-47. Make `RetentionReport`-style summary structs a house pattern for CLI
+47. Make `RetentionReport`-style summary structs a house pattern for CLI **→ ROADMAP theme 2**
 outputs (consistency with EnrichStats/IngestStats).
-48. deploy/pbx-lens.service: cross-reference the backup unit in comments
+48. deploy/pbx-lens.service: cross-reference the backup unit in comments **→ ROADMAP theme 2**
 (discoverability).
-49. CHANGELOG: note enrichment never enters ContentHash (v2 stability) —
-one sentence, prevents future fear.
-50. Session-process: add "full-suite baseline before first edit" +
-"inventory untracked dirs" to AGENTS gotchas (this report's lessons).
+49. ~~CHANGELOG: note enrichment never enters ContentHash (v2 stability) —~~ done — CHANGELOG states the re-ingest requirement
+~~one sentence, prevents future fear.~~
+50. ~~Session-process: add "full-suite baseline before first edit" +~~ done — captured in the session reports; AGENTS.md carries the durable ones
+~~"inventory untracked dirs" to AGENTS gotchas (this report's lessons).~~
 
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **Telnyx key for live verification:** is there a key (or a machine that
+1. **Telnyx key for live verification:** is there a key (or a machine that **→ TODO_LIST blocked row (needs a real API key)**
    has one) I may use to live-verify the Detail Records + insights DTOs and
    record sanitized fixtures — or should the verify pass run on the deploy
    host? Without it, the alias-tolerance stays a documented bet, not a
    fact.
-2. **Parallel session boundary:** is the other session still active on T23
-   (`internal/retention/`, `purge`), and do you want me to stay out of that
-   package entirely, or take the PII-mode half once it lands?
-3. **Zero-cost presentation:** when Telnyx reports a true $0.00 call, should
+2. ~~**Parallel session boundary:** is the other session still active on T23~~ done — T23 landed (retention package + purge); boundary moot
+   ~~(`internal/retention/`, `purge`), and do you want me to stay out of that~~
+   ~~package entirely, or take the PII-mode half once it lands?~~
+3. **Zero-cost presentation:** when Telnyx reports a true $0.00 call, should **→ ROADMAP theme 1 (display decision)**
    the detail page show "0 USD" (requires distinguishing "fetched zero"
    from "not fetched" — a small model change) or is "no cost row" correct?
    This decides whether I add a cost-fetched marker to the model.

@@ -80,18 +80,18 @@ README screenshots, keyset-pagination probe.
 
 | # | Task                                                                                                                                          | Impact | Effort | Category      |
 | - | --------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 1 | Land the one fully-green single-pass gate (23:59 attempt pending)                                                                             | High   | S      | Quality       |
-| 2 | P9 filings: post the five D6 drafts + go-atomic-write ask (owner go)                                                                          | Medium | M      | Quality       |
-| 3 | Sibling module production `-max-age` + `ingest-* -max-age` flags (owner value)                                                                | High   | S      | Feature       |
-| 4 | First release tag v0.1.0 via go-release                                                                                                       | Medium | M      | Feature       |
-| 5 | domain.go split pass to retire file-size advisories                                                                                           | Low    | M      | Cleanup       |
-| 6 | crush-config lessons.md: "sibling repos are the first dependency search path" + "wire tests from existing scaffolding" (by commit, that repo) | Low    | S      | Documentation |
+| ~~1~~ | ~~Land the one fully-green single-pass gate (23:59 attempt pending)~~ done — superseded: full gate green 23:30 (73/0/0) the same evening; more greens 2026-10-12 | ~~High~~ | ~~S~~ | ~~Quality~~ |
+| 2 | P9 filings: post the five D6 drafts + go-atomic-write ask (owner go) **→ owner go; drafts in docs/drafts/** | Medium | M      | Quality       |
+| 3 | Sibling module production `-max-age` + `ingest-* -max-age` flags (owner value) **→ TODO_LIST blocked row (owner picks the window)** | High   | S      | Feature       |
+| 4 | First release tag v0.1.0 via go-release **→ TODO_LIST blocked row (owner release gate)** | Medium | M      | Feature       |
+| ~~5~~ | ~~domain.go split pass to retire file-size advisories~~ done — landed 2026-10-12 (02:34 splits: domain/events/commands/decider) | ~~Low~~ | ~~M~~ | ~~Cleanup~~ |
+| 6 | crush-config lessons.md: "sibling repos are the first dependency search path" + "wire tests from existing scaffolding" (by commit, that repo) **→ crush-config repo, by commit** | Low    | S      | Documentation |
 
 ## g) Top questions I can NOT figure out myself
 
-1. Gate scheduling decision (carry-over, 20:26 §g.2): serial nix-build mode,
-   load-gated invocation, or gates only at idle times?
-2. Release order for v0.1.0: gate precondition is met at step level — is
+1. ~~Gate scheduling decision (carry-over, 20:26 §g.2): serial nix-build mode,~~ done — superseded: gates green 74/74 on 2026-10-12; doctrine documented
+   ~~load-gated invocation, or gates only at idle times?~~
+2. Release order for v0.1.0: gate precondition is met at step level — is **→ owner; TODO_LIST v0.1.0 blocked row**
    that sufficient, or do you want the single clean pass + sibling
    `-max-age` decision first?
 
