@@ -204,19 +204,25 @@ TODO_LIST/ROADMAP — padding to 50 with restatements would be noise.)
 
 ## g) Questions I can NOT figure out myself
 
-1. **What is the parallel process editing this worktree** (auto-fix daemon?
+1. ~~**What is the parallel process editing this worktree** (auto-fix daemon?
    second agent session? pma?), and do you want its edits treated as
    authoritative, or should sessions coordinate/stop it? Its recording.go
    edit broke the `exhaustive` lint and its vendorHash.nix placeholder
-   blocked `nix build` mid-session.
-2. **AGENTS.md 469>220 gate error**: shrink the file (extract gotchas to
+   blocked `nix build` mid-session.~~ done — identified as concurrent agent
+   sessions; the cross-session protocol is documented in the later status
+   reports (23:35/00:08) and the 2026-10-12 docs-health pass.
+2. ~~**AGENTS.md 469>220 gate error**: shrink the file (extract gotchas to
    docs/, my TODO assumes this), or raise go-structure-linter's threshold
    for this repo — i.e., is the cap or the content the mistake? The gotchas
-   ARE the session-critical value; a 220-line ceiling fights that.
-3. **Fix-now policy for small naming remnants**: should
+   ARE the session-critical value; a 220-line ceiling fights that.~~ done —
+   shrink path taken (P1, 19:37 dispatch): 478 → 176-189 lines with the
+   gotchas extracted verbatim into docs/; the 220 cap stays.
+3. ~~**Fix-now policy for small naming remnants**: should
    `mosAvgLabel`→`avgMOSLabel` (+ the 5 report-only nits) land as an
    immediate micro-pass, or freeze naming until the next trigger (T9/v2) to
-   keep this session's diff bounded?
+   keep this session's diff bounded?~~ resolved: `mosAvgLabel`→`avgMOSLabel`
+   landed in the 2026-10-12 docs-health pass; the 5 report-only nits stay
+   frozen until the next naming trigger (2 already closed by P7).
 
 — Session verdict: review complete and green; one self-inflicted masked
 failure (caught), one incomplete rename remnant (found, queued), and real

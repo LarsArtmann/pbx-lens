@@ -33,8 +33,8 @@
 
 1. **Gate reliability = single green sample.** One green run closes dispatch 3's verification item, but tonight's ledger is 2 failures / 1 success. What's missing: a stated reliability bar (N consecutive greens?) and a scheduling policy. Blocker: owner question ②. Effort: S once decided.
 2. **go-generate transient root cause.** What works: step passes standalone and in the final gate; module provably tidy. What's open: the actual mechanism — theory is a race on the SHARED `/mnt/buildcache/go-mod` GOMODCACHE under concurrent sessions; unproven (I did not capture the exact `go` invocation under `--verbose` before it passed). Effort: M with a repro attempt.
-3. **AGENTS.md templ-pin currency.** Stack decisions still say "templ-components v1.21.0 … a-h/templ v0.3.1020" while go.mod now requires v0.3.1070 (40e1a49). Noticed this session; NOT edited because the owner ordered report-then-wait. What remains: confirm the bump is intended, sync the pin note + adoption-map caveat. Effort: S.
-4. **§f harvest into TODO_LIST.** The 50-item list below is the HARVEST input, but the owner's instruction was report-then-wait, so TODO_LIST was not touched this session. Effort: S via docs-health HARVEST on owner go.
+3. ~~**AGENTS.md templ-pin currency.** Stack decisions still say "templ-components v1.21.0 … a-h/templ v0.3.1020" while go.mod now requires v0.3.1070 (40e1a49).~~ done — synced in the 00:08 dispatch (templ drift fix + manual-bump-only note). What remains: ~~confirm the bump is intended, sync the pin note + adoption-map caveat~~ ratified: the doctrine is documented in AGENTS.md. Effort: S.
+4. ~~**§f harvest into TODO_LIST.** The 50-item list below is the HARVEST input, but the owner's instruction was report-then-wait, so TODO_LIST was not touched this session.~~ done — third-pass TODO closure (02:34 session) + the 2026-10-12 docs-health AUDIT pass. Effort: S via ~~docs-health HARVEST on owner go~~ completed.
 
 ## c) NOT STARTED
 
