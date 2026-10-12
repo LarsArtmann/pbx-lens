@@ -67,7 +67,7 @@ func TestExportMemoryBudgetStreamsPastOldCap(t *testing.T) {
 
 	base := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
 
-	var seeded []calls.Observation
+	seeded := make([]calls.Observation, 0, 5)
 
 	for i := range 5 {
 		seeded = append(seeded, webObservation(fmt.Sprintf("row-%d", i), base.Add(time.Duration(i)*time.Minute)))
