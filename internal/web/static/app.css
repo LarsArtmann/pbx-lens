@@ -64,11 +64,30 @@
  * Signal palette — the telecom accent, deliberately AFTER the imports so
  * the override wins the @theme merge. Overriding the tc-* semantic tokens
  * (not raw palette slots) re-skins every library blue: buttons, badges,
- * focus rings, chart bars, StatCard tiles, the nav active state. teal-500
- * carries the dark-mode side via the theme file's tc-info binding.
+ * focus rings, chart bars, StatCard tiles, the nav active state.
+ *
+ * Contrast-audited (plan T11, WCAG 2.1 AA against white/gray-900):
+ *   white on teal-700 #0f766e = 5.47:1 (AA normal text)   — primary buttons/links
+ *   white on teal-800 #115e59 = 7.59:1 (AAA)              — hover states
+ * The previous teal-600 value measured 3.75:1 with white — a fail the
+ * library's default blue-600 (5.17:1) did not have.
+ *
+ * The bridge below re-maps the REMAINING literal blue shades (50–400,
+ * 800–950) that library components emit directly (badge tints, info-alert
+ * backgrounds, dark-mode text) so no component strays off the signal
+ * palette. teal-700 carries the dark-mode button side via tc-info.
  */
 @theme {
-  --color-tc-primary: #0d9488; /* teal-600 */
-  --color-tc-primary-hover: #0f766e; /* teal-700 */
-  --color-tc-info: #14b8a6; /* teal-500 */
+  --color-tc-primary: #0f766e; /* teal-700 */
+  --color-tc-primary-hover: #115e59; /* teal-800 */
+  --color-tc-info: #0f766e; /* teal-700 — dark-mode buttons (blue-500 slot) need 4.5:1 with white */
+
+  --color-blue-50: #f0fdfa;
+  --color-blue-100: #ccfbf1;
+  --color-blue-200: #99f6e4;
+  --color-blue-300: #5eead4;
+  --color-blue-400: #2dd4bf;
+  --color-blue-800: #115e59;
+  --color-blue-900: #134e4a;
+  --color-blue-950: #042f2e;
 }
