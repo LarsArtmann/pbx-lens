@@ -46,13 +46,7 @@ templ listPage(page CallListPage, filters ListCallsQuery) {
 	@display.PageHeader(display.PageHeaderProps{
 		Title:    "Calls",
 		Subtitle: "Every call the PBX ever saw",
-		Action: @display.Button(display.ButtonProps{
-			Text:    "Export CSV",
-			Href:    "/api/export.csv",
-			Variant: display.ButtonSecondary,
-			Icon:    icons.Icon("download", "size-4"),
-			Attrs:   templ.Attributes{"download": true},
-		}),
+		Action:   exportAction(),
 	})
 	@filterForm(filters, "/")
 	if len(page.Rows) == 0 {
@@ -73,6 +67,18 @@ templ listPage(page CallListPage, filters ListCallsQuery) {
 			</div>
 		}
 	}
+}
+
+// exportAction surfaces the existing CSV export route in the page header
+// (download attribute saves the file instead of navigating).
+templ exportAction() {
+	@display.Button(display.ButtonProps{
+		Text:    "Export CSV",
+		Href:    "/api/export.csv",
+		Variant: display.ButtonSecondary,
+		Icon:    icons.Icon("download", "size-4"),
+		Attrs:   templ.Attributes{"download": true},
+	})
 }
 
 // filterForm is the shared filter row (library Form, inline layout): GET

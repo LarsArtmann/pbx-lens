@@ -39,28 +39,34 @@ templ staleLive(staleFor time.Duration, stale bool) {
 templ detailRoute(view calls.CallView) {
 	@shell(callTitle(view), "/") {
 		@display.PageHeader(display.PageHeaderProps{
-			Title: callTitle(view),
-			SubtitleComponent: @display.Badge(display.BadgeProps{
-				Text: string(view.Kind),
-				Type: display.BadgeNeutral,
-				Pill: true,
-			}),
+			Title:             callTitle(view),
+			SubtitleComponent: sourceBadge(view.Kind),
 		})
 		@layout.Split(layout.SplitProps{
-			Main: @layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
-				@detailFacts(view)
-				if len(view.Transcript) > 0 {
-					@transcriptPane(view.Transcript)
-				} else {
-					@display.EmptyState(display.EmptyStateProps{
-						Title:       "No transcript",
-						Description: "This source recorded no transcript (human calls, or the transcript file is not ingested yet).",
-						Icon:        icons.Microphone,
-					})
-				}
-			},
-			Aside: @recordingCard(view),
+			Main:  detailMain(view),
+			Aside: recordingCard(view),
 		})
+	}
+}
+
+// sourceBadge names the originating system as a neutral pill under the title.
+func sourceBadge(kind calls.SourceKind) templ.Component {
+	return display.Badge(display.BadgeProps{Text: string(kind), Type: display.BadgeNeutral, Pill: true})
+}
+
+// detailMain is the Split's primary column: facts card, then transcript.
+templ detailMain(view calls.CallView) {
+	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
+		@detailFacts(view)
+		if len(view.Transcript) > 0 {
+			@transcriptPane(view.Transcript)
+		} else {
+			@display.EmptyState(display.EmptyStateProps{
+				Title:       "No transcript",
+				Description: "This source recorded no transcript (human calls, or the transcript file is not ingested yet).",
+				Icon:        icons.Microphone,
+			})
+		}
 	}
 }
 

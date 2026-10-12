@@ -65,16 +65,26 @@ templ dashboardLive(stats DashboardStats, now time.Time, fragURL string) {
 	}) {
 		@statCards(stats, now)
 		@layout.Split(layout.SplitProps{
-			Main: @layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
-				@volumeCard(stats)
-				@durationCard(stats)
-			},
-			Aside: @layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
-				@aiHumanCard(stats)
-				@trendCard(stats)
-				@mosCard(stats)
-			},
+			Main:  dashboardMain(stats),
+			Aside: dashboardAside(stats),
 		})
+	}
+}
+
+// dashboardMain is the Split's wide column: volume, then durations.
+templ dashboardMain(stats DashboardStats) {
+	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
+		@volumeCard(stats)
+		@durationCard(stats)
+	}
+}
+
+// dashboardAside is the Split's narrow column: mix, trend, quality.
+templ dashboardAside(stats DashboardStats) {
+	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
+		@aiHumanCard(stats)
+		@trendCard(stats)
+		@mosCard(stats)
 	}
 }
 

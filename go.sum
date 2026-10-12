@@ -229,8 +229,6 @@ github.com/larsartmann/go-sse v0.6.2 h1:a1f/EnjhWlsNnxo0U1DygpYMy2XbUfyGBuKMWhwQ
 github.com/larsartmann/go-sse v0.6.2/go.mod h1:PVVDLkzjkTR2MvqcqL3/XmWY8cdSUpEe8YWaouHVVz4=
 github.com/larsartmann/httputil v1.4.1 h1:sTHWwKY4eNmJzRkEmVU4Gi5on7klDqwBMCeEUq8pfsQ=
 github.com/larsartmann/httputil v1.4.1/go.mod h1:6SUXrarIpc/qJ9paJfcV4tPrO8bI3ZtzOYwIxKwnLoE=
-github.com/larsartmann/httputil/server_timing v1.0.1 h1:9T2YwZfrj71F1NFblFwIDsJZ7rnLU8K1BYlxBmrwfn8=
-github.com/larsartmann/httputil/server_timing v1.0.1/go.mod h1:QumWlp/L8NhkwNXZkN/IeLjtE5Y97axZ9LCK9NzSVck=
 github.com/larsartmann/httputil/server_timing v1.0.2 h1:x2J4vLsqHDYi9VbeMabLKlTXFnBgcKFV7LKdNXuMfG0=
 github.com/larsartmann/httputil/server_timing v1.0.2/go.mod h1:cUEEFxKMtKtSXsNDr0dRtWrso+Ch/U/gLN3QeR5Gf0g=
 github.com/larsartmann/templ-components v1.21.0 h1:i1kEJSnkZCkAcZCvxhpPHz2KGqpsrbTZMsrBjcmNeUU=

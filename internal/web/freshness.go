@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
+	"github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -21,15 +22,21 @@ type Freshness struct {
 
 // freshness serves the freshness probe as JSON.
 func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
+	stop := servertiming.MeasureServerTiming(r.Context(), "query")
 	page, err := ListCalls(r.Context(), s.sys, ListCallsQuery{})
+	stop()
+
 	if err != nil {
 		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
+	countStop := servertiming.MeasureServerTiming(r.Context(), "count")
 	total, err := metaengine.NewReader[calls.CallView](s.sys.MetaEngine(), calls.Collection).
 		Count(r.Context(), metaengine.WithLimit(0))
+	countStop()
+
 	if err != nil {
 		http.Error(w, "counting calls failed: "+err.Error(), http.StatusInternalServerError)
 

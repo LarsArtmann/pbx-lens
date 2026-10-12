@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -28,7 +29,10 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	stop := servertiming.MeasureServerTiming(r.Context(), "fts")
 	hits, err := s.search.Query(r.Context(), query, search.DefaultLimit)
+	stop()
+
 	if err != nil {
 		http.Error(w, "search failed: "+err.Error(), http.StatusBadRequest)
 
