@@ -99,7 +99,7 @@ func TestExportMemoryBudgetStreamsPastOldCap(t *testing.T) {
 // (plan T10.3): the stall semantics render as visible text under the table
 // (the button tooltip hides), naming the marker code and the stall class.
 func TestExportHonestyNoteVisibleOnListPage(t *testing.T) {
-	mux := newTestServer(t, webObservation("conv-out", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)))
+	mux := newTestServer(t, webObservation("conv-out", testCallStarted()))
 
 	_, body := getBody(t, mux, "/")
 

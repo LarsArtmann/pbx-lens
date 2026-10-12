@@ -176,3 +176,14 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   intentional structure, not debt, so the rule is off (integer codes:
   `disabled = [20]`) rather than restyling a sealed document. If a real
   repeated-keys smell shows up elsewhere, revisit this file first.
+- **The auto-commit daemon races the gate's repair steps (paid for,
+  2026-10-12)**: go-mod-normalize rewrote go.mod mid-run, the daemon
+  committed the rewrite seconds later, and go-generate then failed with
+  "go: updates to go.mod needed; go mod tidy" against a tree that was
+  tidy again by the time anyone looked. Same class: a gate run that
+  starts on a dirty tree builds `-dirty` derivations, so every daemon
+  sweep re-dirties and forces a rebuild (the repeated nix-build
+  OOM/timeout kills during a concurrent session's bursts are this,
+  amplified). Triage rule: after a gate failure, check `git status` and
+  `git log -1` FIRST — if a daemon commit landed mid-run, re-run the
+  failed step on the settled tree before diagnosing deeper.

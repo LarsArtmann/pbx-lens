@@ -15,7 +15,7 @@ import (
 // composes, exercised in the order an operator walks them. Auth gating is
 // layered on at the end (one middleware wraps the same mux).
 func TestOneFlowFromSeedToDetail(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 
 	inbound := webObservation("conv-in", started.Add(time.Minute))
 	inbound.Direction = calls.DirectionInbound

@@ -8,7 +8,7 @@ import (
 )
 
 func TestFreshnessReportsIndexState(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServer(t,
 		webObservation("conv-a", started),
 		webObservation("conv-b", started.Add(time.Minute)),

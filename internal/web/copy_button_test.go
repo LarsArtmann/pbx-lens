@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 )
 
 // TestDetailCopyButtons verifies the T20 copy affordances: the native id
@@ -12,7 +11,7 @@ import (
 // elements — the library's href/anchor variant is deliberately unused here,
 // so any anchor carrying the attribute is a regression.
 func TestDetailCopyButtons(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServerWithSearch(t, webObservation("conv-copy", started))
 
 	status, body := getBody(t, mux, "/calls/telnyx-conversation/conv-copy")

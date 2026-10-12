@@ -13,7 +13,7 @@ import (
 )
 
 func TestExportJSONLStreamsOneObjectPerCall(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServer(t,
 		webObservation("conv-a", started),
 		webObservation("conv-b", started.Add(time.Minute)),
@@ -42,7 +42,7 @@ func TestExportJSONLStreamsOneObjectPerCall(t *testing.T) {
 }
 
 func TestExportCSVHasHeaderAndRows(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServer(t,
 		webObservation("conv-a", started),
 		webObservation("conv-b", started.Add(time.Minute)),
@@ -68,7 +68,7 @@ func TestExportCSVHasHeaderAndRows(t *testing.T) {
 }
 
 func TestExportHonorsDirectionFilter(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	outbound := webObservation("conv-out", started)
 
 	inbound := webObservation("conv-in", started.Add(time.Minute))
@@ -98,7 +98,7 @@ func TestExportRejectsGarbageFilter(t *testing.T) {
 }
 
 func TestExportPIIHashModeReplacesParticipants(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	call := webObservation("conv-pii", started)
 	call.FromNumber = "+17287289311"
 	call.ToNumber = "garbled-cdr-party"
@@ -147,7 +147,7 @@ func getResp(t *testing.T, mux *http.ServeMux, path string) *http.Response {
 func TestExportSetsPIIModeHeader(t *testing.T) {
 	// The X-PII-Mode header makes the mode visible to every consumer (and
 	// to curl-less probes): a "hashed" dump must never masquerade as plain.
-	mux := newTestServer(t, webObservation("conv-a", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)))
+	mux := newTestServer(t, webObservation("conv-a", testCallStarted()))
 
 	for _, path := range []string{"/api/export.jsonl", "/api/export.csv"} {
 		resp := getResp(t, mux, path)

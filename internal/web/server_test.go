@@ -14,6 +14,13 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
+// testCallStarted is the shared seeded call time (plan T11.1): one fixed
+// instant every test derives from, so changing the corpus seed is one line
+// instead of 28 scattered literals.
+func testCallStarted() time.Time {
+	return time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+}
+
 func webObservation(nativeID string, started time.Time) calls.Observation {
 	return calls.Observation{
 		NativeID:     calls.NativeID(nativeID),
@@ -70,7 +77,7 @@ func TestListEmptyExplainsHowToFill(t *testing.T) {
 }
 
 func TestListShowsIngestedCalls(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServer(t,
 		webObservation("conv-a", started),
 		webObservation("conv-b", started.Add(time.Minute)),
@@ -108,7 +115,7 @@ func TestListFilterRejectsGarbage(t *testing.T) {
 }
 
 func TestListFilterHonorsDirection(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	outbound := webObservation("conv-out", started)
 
 	inbound := webObservation("conv-in", started.Add(time.Minute))
@@ -131,7 +138,7 @@ func TestListFilterHonorsDirection(t *testing.T) {
 }
 
 func TestDetailShowsFactsAndTranscript(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServer(t, webObservation("conv-a", started))
 
 	status, body := getBody(t, mux, "/calls/telnyx-conversation/conv-a")
@@ -239,7 +246,7 @@ func TestListToDateIncludesThatDay(t *testing.T) {
 func TestStalenessBannerOnlyOnUnfilteredPage(t *testing.T) {
 	// 2026-10-09 is far past the 6h threshold; the banner belongs on the
 	// unfiltered first page, never on a deliberate filtered slice.
-	mux := newTestServer(t, webObservation("conv-old", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)))
+	mux := newTestServer(t, webObservation("conv-old", testCallStarted()))
 
 	status, body := getBody(t, mux, "/")
 	if status != http.StatusOK {
@@ -261,7 +268,7 @@ func TestStalenessBannerOnlyOnUnfilteredPage(t *testing.T) {
 }
 
 func TestEveryRegisteredRouteAnswers(t *testing.T) {
-	mux := newTestServer(t, webObservation("conv-a", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)))
+	mux := newTestServer(t, webObservation("conv-a", testCallStarted()))
 
 	routes := []string{
 		"/",
@@ -343,7 +350,7 @@ func TestFreshnessMidWriteFailureLogsInsteadOfCorrupting(t *testing.T) {
 // real sqlite index, probed on all four surfaces. Index wiring rides the
 // shared newTestServerWithSearch helper (the one-flow pattern).
 func TestLiveServerEndToEnd(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	seeded := []calls.Observation{
 		webObservation("conv-e2e", started),
 		webObservation("conv-e2e-b", started.Add(time.Minute)),

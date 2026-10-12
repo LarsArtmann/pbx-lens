@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/search"
@@ -46,7 +45,7 @@ func newTestServerWithSearch(t *testing.T, observations ...calls.Observation) *h
 }
 
 func TestSearchAnswersFromSqliteIndex(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	observation := webObservation("conv-a", started)
 
 	mux := newTestServerWith(t,
@@ -101,7 +100,7 @@ func TestSearchWithoutIndexExplainsItself(t *testing.T) {
 func TestSearchPartialNumberEndToEnd(t *testing.T) {
 	// R6 through the UI: a mid-number digit run finds the call whose party
 	// number carries it, and the snippet highlights the number itself.
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	observation := webObservation("conv-a", started)
 	observation.FromNumber = "+17287289311"
 

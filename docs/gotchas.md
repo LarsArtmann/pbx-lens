@@ -232,3 +232,12 @@ invariants summary; this file keeps the war stories.
   plain 200 render with marks — pinned by
   `TestDetailQueryTamperedAtRendersNoJump`. Do not "simplify" the param
   away and do not start parsing it.
+- **Goldens must never pin wall-clock-coupled structure (paid for,
+  2026-10-12)**: the golden suite captured whichever staleness-banner
+  state 09:00-UTC seed data produced at capture time and silently broke
+  for any run after 17:00 local (banner crosses the 6h staleAfter), and
+  pinned the dashboard's bare ISO bucket labels that shift at midnight
+  Berlin. The scrubber reduces runtime-coupled structure to placeholders
+  (STALENESS_REGION, bare dates → DATE) while fixed-seed
+  `datetime="…T…"` row attributes stay pinned; see
+  `goldenVolatile` in golden_pages_test.go before adding any new golden.

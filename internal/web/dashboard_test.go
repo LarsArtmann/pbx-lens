@@ -500,7 +500,7 @@ func TestDashboardRangePickerFiltersAndCarriesRange(t *testing.T) {
 func TestStalenessFragmentRechecksBanner(t *testing.T) {
 	// The polled staleness region renders the banner server-side, so the
 	// noscript fallback and the polled markup are the same contract (m9.4).
-	old := webObservation("conv-old", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC))
+	old := webObservation("conv-old", testCallStarted())
 	mux := newTestServer(t, old)
 
 	status, body := getBody(t, mux, "/frag/staleness")

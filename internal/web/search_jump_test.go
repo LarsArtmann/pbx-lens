@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
@@ -13,7 +12,7 @@ import (
 // TestSearchHitCarriesQuery pins the T21 hop: search hit hrefs carry ?q= so
 // the detail page can mark the matched turns.
 func TestSearchHitCarriesQuery(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServerWithSearch(t, webObservation("conv-out", started))
 
 	_, body := getBody(t, mux, "/search?q=hello")
@@ -26,7 +25,7 @@ func TestSearchHitCarriesQuery(t *testing.T) {
 // matching turn 302s once to the same URL with at=<n>#turn-<n>; the at
 // param breaks the loop (the second request renders).
 func TestDetailQueryRedirectLandsAtFirstMatch(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServerWithSearch(t, webObservation("conv-out", started))
 
 	recorder := httptestGet(t, mux, "/calls/telnyx-conversation/conv-out?q=help")
@@ -64,7 +63,7 @@ func TestDetailQueryRedirectLandsAtFirstMatch(t *testing.T) {
 // renders without redirect and without marks (FTS may match on fields the
 // substring rule cannot see — honest, not broken).
 func TestDetailQueryNoMatchRendersUnmarked(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServerWithSearch(t, webObservation("conv-out", started))
 
 	recorder := httptestGet(t, mux, "/calls/telnyx-conversation/conv-out?q=zzz-nothing")
@@ -107,7 +106,7 @@ func TestTurnMatches(t *testing.T) {
 // no redirect, no marks, and the transcript card anchor (the fallback
 // target) stands in both paths.
 func TestDetailWithoutQueryKeepsPlainPath(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 	mux := newTestServerWithSearch(t, webObservation("conv-out", started))
 
 	recorder := httptestGet(t, mux, "/calls/telnyx-conversation/conv-out")
@@ -135,7 +134,7 @@ func TestDetailWithoutQueryKeepsPlainPath(t *testing.T) {
 // out-of-range number and non-numeric garbage take the same path (the
 // handler only checks the param's presence).
 func TestDetailQueryTamperedAtRendersNoJump(t *testing.T) {
-	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	started := testCallStarted()
 
 	for _, at := range []string{"999", "abc"} {
 		mux := newTestServerWithSearch(t, webObservation("conv-out", started))

@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -41,7 +40,7 @@ func authedServer(t *testing.T, htpasswdPath string) http.Handler {
 		t.Fatalf("HtpasswdMiddleware: %v", err)
 	}
 
-	return middleware(newTestServer(t, webObservation("conv-a", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC))))
+	return middleware(newTestServer(t, webObservation("conv-a", testCallStarted())))
 }
 
 // getWithBasicAuth drives one request through handler and returns the
