@@ -10,6 +10,7 @@
 | `2026-10-12_buildflow-gomod-update-tool-timeout.md`              | BuildFlow#45            | FILED — OPEN upstream                                               |
 | `2026-10-12_dependabot-gomod-unrelated-bump-deletes-requires.md` | dependabot-core#16538   | FILED — OPEN upstream (owner watches for maintainer questions)      |
 | `2026-10-12_v0.1.0-release-notes.md`                             | —                       | local artifact (release notes, not a filing)                        |
+| `2026-10-12_v0.2.0-release-notes.md`                             | —                       | local artifact (release notes + tag checklist, tag owner-gated)     |
 | `go-appkit-testkit-drain-delay-cost.md`                          | go-appkit#26            | FILED — OPEN upstream                                               |
 | `go-atomic-write-commit-primitive.md`                            | —                       | LIVE — unfiled, owner review box unchecked by design                |
 | `go-cqrs-lite-cqrs-lint-c009-e005.md`                            | go-cqrs-lite#64         | FILED — OPEN upstream (C009 half; E005 superseded by ADR-0123 note) |
