@@ -127,6 +127,22 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   1.27.2). Full mode needs `--max-time ≥ 15m`: at the previous session's
   5 m cap, nix-build was killed by the budget, not by OOM. Remaining
   findings are the documented advisories above.
+- **Gate closed green, post-lint-zero (2026-10-12 11:36, run #5)**: full
+  `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode
+  dev` = 75 success, 0 failed, 0 skipped (+3 via config) in 55.3s —
+  launched at load 6.5/8.6/13.4 (1/5/15-min), tree committed and
+  UNTOUCHED for the duration; test-race ✔ (after the startProjections
+  stop-and-wait fix above), test-coverage ✔ (web 72.8%), nix-build ✔
+  (40.3s), nix-flake-check ✔ ("all checks passed": pre-commit, treefmt,
+  vendor-hash incl.). Findings remaining are exactly the documented
+  advisories. This green closed R1 and unlocked R4 (v0.1.0).
+- **Gate load policy (evidence, 2026-10-12)**: full gate ONLY when 1-min
+  load < 15 AND 15-min < 40; otherwise scoped-verify the suspect steps
+  individually and defer the full run. Paid for: runs #1/#2 starved at
+  1-min ~47-54 (DIFFERENT steps each time — go-mod-update+lychee, then
+  test-coverage+1); run #4 died in nix-build after a mid-run tree edit
+  doubled the dirty derivations beside running tests. At/under the
+  thresholds, three consecutive runs (23:30, 00:45, 11:36) closed green.
 - **oxfmt/oxlint un-minify vendored `*.min.js` (PAID FOR, 2026-10-12)**:
   BuildFlow's JS formatter provider `oxfmt` triggers on `**/*.js`
   (`webFilePatterns`) with NO `*.min.js` exclude — the `*.min.js` default

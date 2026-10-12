@@ -3,9 +3,13 @@
 All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
-No version has been tagged yet; everything lives under Unreleased.
+v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased.
 
 ## [Unreleased]
+
+Nothing yet.
+
+## [v0.1.0] — 2026-10-12
 
 ### Fixed — 2026-10-12 (cdr ingest vs vanilla mod_cdr_csv output)
 
