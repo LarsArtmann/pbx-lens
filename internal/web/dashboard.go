@@ -151,27 +151,33 @@ func (s DashboardStats) AIRatio() float64 {
 
 // DashboardStatsQuery computes the dashboard aggregates over the read
 // model, narrowed by the given filters (the date-range picker feeds
-// from/to). The day window always ends "today" in the dashboard zone, so
-// an idle index shows its volume drifting out of the chart instead of
-// freezing.
+// from/to) over the given chart window in days (the 7/30-day presets;
+// clamp to a sane minimum so garbage can't produce an empty chart). The
+// day window always ends "today" in the dashboard zone, so an idle index
+// shows its volume drifting out of the chart instead of freezing.
 func DashboardStatsQuery(
 	ctx context.Context,
 	sys *system.System,
 	now time.Time,
 	filters ListCallsQuery,
+	windowDays int,
 ) (DashboardStats, error) {
+	if windowDays <= 0 {
+		windowDays = dashboardWindowDays
+	}
+
 	stats := DashboardStats{
-		WindowDays: dashboardWindowDays,
+		WindowDays: windowDays,
 		Durations:  make([]DurationBucket, len(durationBuckets)),
 		rangeFrom:  filters.From,
 		rangeTo:    filters.To,
 	}
 
 	today := dayKey(now)
-	windowStart := startOfDay(now).AddDate(0, 0, -(dashboardWindowDays - 1))
-	dayIndex := make(map[string]int, dashboardWindowDays)
+	windowStart := startOfDay(now).AddDate(0, 0, -(windowDays - 1))
+	dayIndex := make(map[string]int, windowDays)
 
-	for offset := range dashboardWindowDays {
+	for offset := range windowDays {
 		day := windowStart.AddDate(0, 0, offset).Format(dayFormat)
 		dayIndex[day] = len(stats.ByDay)
 		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})
