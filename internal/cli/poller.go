@@ -33,6 +33,9 @@ type PollConfig struct {
 	Telnyx    *telnyx.Client
 	SinceAgo  time.Duration
 	Direction calls.Direction
+	// AIDIDs is the deployment's AI-facing DID set; non-empty switches the
+	// mapper to DID-based direction resolution (docs/did-direction-design.md).
+	AIDIDs map[string]bool
 
 	// CDRFile re-parses a FreeSWITCH Master.csv (idempotent re-ingest).
 	CDRFile string
@@ -279,6 +282,7 @@ func pollTelnyx(
 	observations, seeds, rejects, err := FetchTelnyxObservations(ctx, cfg.Telnyx, TelnyxOptions{
 		Since:     since,
 		Direction: cfg.Direction,
+		AIDIDs:    cfg.AIDIDs,
 	})
 	if err != nil {
 		log("poll telnyx", "err", err)

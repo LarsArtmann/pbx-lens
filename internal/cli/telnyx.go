@@ -21,6 +21,10 @@ type TelnyxOptions struct {
 	// Direction is caller-declared: Telnyx conversation metadata exposes no
 	// direction field (docs read 2026-10-10).
 	Direction calls.Direction
+	// AIDIDs is the deployment's AI-facing DID set (docs/did-direction-design.md):
+	// a conversation touching one of these numbers is inbound regardless of the
+	// declared Direction. Empty/nil keeps the declared direction everywhere.
+	AIDIDs map[string]bool
 	// Limit caps conversations fetched; 0 means all.
 	Limit int
 	// RecordingsLookback caps the recordings list pulled for correlation;
@@ -105,7 +109,12 @@ func FetchTelnyxObservations(
 			rec = &r
 		}
 
-		obs, mapErr := telnyx.MapConversation(conv, msgs, rec, telnyx.MapOptions{Direction: opts.Direction})
+		mapOpts := telnyx.MapOptions{Direction: opts.Direction}
+		if len(opts.AIDIDs) > 0 {
+			mapOpts.ResolveDirection = telnyx.DIDDirectionResolver(opts.AIDIDs, opts.Direction)
+		}
+
+		obs, mapErr := telnyx.MapConversation(conv, msgs, rec, mapOpts)
 		if mapErr != nil {
 			rejected = append(rejected, conv.ID+": "+mapErr.Error())
 

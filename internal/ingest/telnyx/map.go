@@ -15,10 +15,51 @@ const DefaultExcerptMax = calls.DefaultExcerptMax
 type MapOptions struct {
 	Direction  calls.Direction
 	ExcerptMax int
+
+	// ResolveDirection, when set, overrides Direction per conversation:
+	// it receives the mapped party numbers (from = agent target, to = end
+	// user target) and returns the direction the observation carries. Nil
+	// keeps the caller-declared Direction for everything (today's
+	// behavior).
+	ResolveDirection func(from, to string) calls.Direction
 }
 
 func DefaultMapOptions() MapOptions {
 	return MapOptions{Direction: calls.DirectionOutbound, ExcerptMax: DefaultExcerptMax}
+}
+
+// DIDDirectionResolver marks a conversation inbound when either party's
+// number is a known AI DID: the sibling dialplan routes AI DIDs to the
+// agent runtime, so the dialed number is the deployment-side DID (metadata
+// key telnyx_agent_target, surfaced as the mapper's from), and DIDs do not
+// originate calls, so an end-user-side match is not a real shape.
+// Everything else keeps the declared direction.
+func DIDDirectionResolver(
+	aiDIDs map[string]bool,
+	declared calls.Direction,
+) func(from, to string) calls.Direction {
+	return func(from, to string) calls.Direction {
+		if aiDIDs[from] || aiDIDs[to] {
+			return calls.DirectionInbound
+		}
+
+		return declared
+	}
+}
+
+// ParseAIDIDs turns a comma-separated -ai-did flag value into the lookup
+// set, trimming whitespace and dropping empties (same shape as cdr's
+// ParseAIDestinations).
+func ParseAIDIDs(flag string) map[string]bool {
+	out := map[string]bool{}
+
+	for part := range strings.SplitSeq(flag, ",") {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			out[trimmed] = true
+		}
+	}
+
+	return out
 }
 
 func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts MapOptions) (calls.Observation, error) {
@@ -31,14 +72,22 @@ func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts Map
 	// TestExcerptOrderIndependent).
 	turns := turnsByTime(msgs)
 
+	from := conv.MetadataString("telnyx_agent_target")
+	to := conv.MetadataString("telnyx_end_user_target")
+
+	direction := opts.Direction
+	if opts.ResolveDirection != nil {
+		direction = opts.ResolveDirection(from, to)
+	}
+
 	obs := calls.Observation{
 		NativeID:          calls.NativeID(conv.ID),
 		Kind:              calls.SourceTelnyxConversation,
-		Direction:         opts.Direction,
+		Direction:         direction,
 		StartedAt:         conv.CreatedAt.Truncate(time.Second).UTC(),
 		DurationSecs:      durationSecs(conv, rec),
-		FromNumber:        conv.MetadataString("telnyx_agent_target"),
-		ToNumber:          conv.MetadataString("telnyx_end_user_target"),
+		FromNumber:        from,
+		ToNumber:          to,
 		IsAI:              conv.MetadataString("assistant_id") != "",
 		TranscriptExcerpt: calls.Excerpt(turns, opts.ExcerptMax),
 		Transcript:        turns,
