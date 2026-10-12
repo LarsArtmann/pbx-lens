@@ -131,12 +131,23 @@ func (i *Index) Rebuild(ctx context.Context, views []calls.CallView) error {
 
 	defer func() { _ = tx.Rollback() }()
 
-	insert, insertDigit, err := resetSearchTables(ctx, tx)
-	if err != nil {
+	if err := resetSearchTables(ctx, tx); err != nil {
 		return err
 	}
 
+	insert, err := tx.PrepareContext(ctx,
+		"INSERT INTO "+tableName+"(body, kind, native_id, started_at) VALUES (?, ?, ?, ?)")
+	if err != nil {
+		return errorfamily.NewTransient("lens.search.prepare", err.Error())
+	}
+
 	defer func() { _ = insert.Close() }()
+
+	insertDigit, err := tx.PrepareContext(ctx,
+		"INSERT INTO "+digitsTableName+"(kind, native_id, started_at, number, digits) VALUES (?, ?, ?, ?, ?)")
+	if err != nil {
+		return errorfamily.NewTransient("lens.search.prepare_digits", err.Error())
+	}
 
 	defer func() { _ = insertDigit.Close() }()
 
@@ -170,43 +181,29 @@ func (i *Index) Rebuild(ctx context.Context, views []calls.CallView) error {
 }
 
 // resetSearchTables drops and recreates the FTS and digits tables inside
-// tx, returning their prepared INSERT statements.
-func resetSearchTables(ctx context.Context, tx *sql.Tx) (*sql.Stmt, *sql.Stmt, error) {
+// tx.
+func resetSearchTables(ctx context.Context, tx *sql.Tx) error {
 	if _, err := tx.ExecContext(ctx, "DROP TABLE IF EXISTS "+tableName); err != nil {
-		return nil, nil, errorfamily.NewTransient("lens.search.drop", err.Error())
+		return errorfamily.NewTransient("lens.search.drop", err.Error())
 	}
 
 	if _, err := tx.ExecContext(ctx, "DROP TABLE IF EXISTS "+digitsTableName); err != nil {
-		return nil, nil, errorfamily.NewTransient("lens.search.drop_digits", err.Error())
+		return errorfamily.NewTransient("lens.search.drop_digits", err.Error())
 	}
 
 	create := "CREATE VIRTUAL TABLE " + tableName +
 		" USING fts5(body, kind UNINDEXED, native_id UNINDEXED, started_at UNINDEXED)"
 	if _, err := tx.ExecContext(ctx, create); err != nil {
-		return nil, nil, errorfamily.NewTransient("lens.search.create", err.Error())
+		return errorfamily.NewTransient("lens.search.create", err.Error())
 	}
 
 	createDigits := "CREATE TABLE " + digitsTableName +
 		" (kind TEXT NOT NULL, native_id TEXT NOT NULL, started_at TEXT NOT NULL, number TEXT NOT NULL, digits TEXT NOT NULL)"
 	if _, err := tx.ExecContext(ctx, createDigits); err != nil {
-		return nil, nil, errorfamily.NewTransient("lens.search.create_digits", err.Error())
+		return errorfamily.NewTransient("lens.search.create_digits", err.Error())
 	}
 
-	insert, err := tx.PrepareContext(ctx,
-		"INSERT INTO "+tableName+"(body, kind, native_id, started_at) VALUES (?, ?, ?, ?)")
-	if err != nil {
-		return nil, nil, errorfamily.NewTransient("lens.search.prepare", err.Error())
-	}
-
-	insertDigit, err := tx.PrepareContext(ctx,
-		"INSERT INTO "+digitsTableName+"(kind, native_id, started_at, number, digits) VALUES (?, ?, ?, ?, ?)")
-	if err != nil {
-		defer func() { _ = insert.Close() }()
-
-		return nil, nil, errorfamily.NewTransient("lens.search.prepare_digits", err.Error())
-	}
-
-	return insert, insertDigit, nil
+	return nil
 }
 
 // searchBody is the indexed text: parties, excerpt, and every transcript
@@ -251,7 +248,7 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 
 	for rows.Next() {
 		var (
-			hit             Hit
+			hit              Hit
 			started, snippet string
 		)
 

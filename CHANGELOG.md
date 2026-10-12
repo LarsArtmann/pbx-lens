@@ -23,8 +23,6 @@ No version has been tagged yet; everything lives under Unreleased.
 
 ### Added — 2026-10-12 (SUPERB pareto plan execution)
 
-### Added — 2026-10-12 (SUPERB pareto plan execution)
-
 - Dashboard day buckets follow Europe/Berlin (R2, owner decision): the
   "Calls today" window, `todayHref`, and bare YYYY-MM-DD filters all resolve
   in the operator's zone; `time/tzdata` is embedded so the hermetic binary
