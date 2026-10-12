@@ -142,9 +142,10 @@ templ filterForm(filters ListCallsQuery, action string) {
 			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@forms.DatePicker(forms.DatePickerProps{
-			Name:  "to",
-			Label: "To",
-			Value: dateValue(filters.To),
+			Name:      "to",
+			Label:     "To",
+			Value:     dateValue(filters.To),
+			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@display.Button(display.ButtonProps{Text: "Apply", Type: display.ButtonHTMLSubmit})
 		if hasFilters(filters) {
