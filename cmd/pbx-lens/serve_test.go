@@ -119,9 +119,38 @@ func TestServeStackEndToEnd(t *testing.T) {
 		t.Errorf("/version body %q does not carry the build version %q", body, version)
 	}
 
-	status, _, _ = get(t, client, ts.FullChainURL, "/metrics", nil)
+	status, _, metricsBody := get(t, client, ts.FullChainURL, "/metrics", nil)
 	if status != http.StatusOK {
 		t.Fatalf("GET /metrics status = %d, want 200", status)
+	}
+
+	assertPrometheusScrape(t, metricsBody)
+}
+
+// assertPrometheusScrape is the scrape smoke (plan T14): a real scraper
+// (Prometheus or Gatus) must be able to parse the surface, so the body has
+// to be text format version 0.0.4 — # HELP / # TYPE commentary lines plus
+// at least one sample line per family — and carry the appkit_build_info
+// gauge a host dashboard pins its version panel to.
+func assertPrometheusScrape(t *testing.T, body string) {
+	t.Helper()
+
+	if !strings.Contains(body, "# HELP") || !strings.Contains(body, "# TYPE") {
+		t.Errorf("/metrics body is not Prometheus text format (missing # HELP/# TYPE), got:\n%.200s", body)
+	}
+
+	if !strings.Contains(body, "appkit_build_info") {
+		t.Errorf("/metrics missing appkit_build_info (host version panels read it), got:\n%.200s", body)
+	}
+
+	for i, line := range strings.Split(body, "\n") {
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+
+		if !strings.Contains(line, "{") && !strings.Contains(line, " ") {
+			t.Errorf("metrics line %d is not a sample (<name>{labels} <value>): %q", i+1, line)
+		}
 	}
 }
 
