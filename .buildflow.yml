@@ -1,1 +1,6 @@
 default_step_timeout: 10m
+# Vendored browser assets must never be reformatted or linted: oxfmt's
+# webFilePatterns has no *.min.js exclude and pretty-printed htmx.min.js
+# (1 line -> 3415) on two gate runs (2026-10-12). Global exclude wins.
+exclude:
+  - "*.min.js"
