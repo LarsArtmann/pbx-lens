@@ -116,8 +116,8 @@ webphone later gets a read-only deep link, never a data dependency.
   ServiceConfig{Addr, `Version` → `/version`, `Metrics` → `/metrics`
   (explicit `AllowUnauthenticated` opt-in; both beside the appkit
   `/health{,/live,/ready}` routes), `WriteTimeout: NoTimeout` — exports and
-  the recording WAV stream are unbounded and the former 30 s deadline
-  truncated both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`;
+  the recording audio stream (WAV, else MP3 fallback) are unbounded and the
+  former 30 s deadline truncated both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`;
   READY/STOPPING/WATCHDOG under the manager) + htpasswd auth. The
   ExtraMiddlewares chain (auth → Server-Timing → Compression → ETag; the
   ordering doctrine, the ETag skip policy, the render-buffering trap, and
@@ -206,8 +206,10 @@ Invariants summary — read the full doc BEFORE touching its area:
 - **docs/telnyx-live-api.md** — live-verified API truths (field-as-param
   filters, unstable timestamp precision, client-side recording
   correlation, enrichment endpoint shapes); re-verify the cluster
-  quarterly (last live verify blocked on a key 2026-10-12; next attempt
-  window opens 2027-01 — calendar entry, m27.9).
+  quarterly (recordings cluster live-verified 2026-10-12 — assistant
+  recordings are MP3-ONLY: empty `download_urls.wav`, populated mp3 — see
+  the doc; enrichment endpoints still spec-verified only; next window
+  opens 2027-01 — calendar entry, m27.9).
 - **docs/cqrs-lint-policy.md** — every surviving cqrs-lint warning/info as
   a documented decision (E003 flat-domain HOLD + pre-agreed seam).
 - **docs/buildflow-dev-gate.md** — gate environment traps (run inside the

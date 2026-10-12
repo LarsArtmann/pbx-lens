@@ -34,6 +34,9 @@ const (
 //nolint:gochecknoglobals // injectable so tests can pin the zone (save/restore)
 var dashboardLocation = mustZone("Europe/Berlin")
 
+// daysPerWeek keeps the Mon-first weekday arithmetic self-describing.
+const daysPerWeek = 7
+
 func mustZone(name string) *time.Location {
 	loc, err := time.LoadLocation(name)
 	if err != nil {
@@ -277,7 +280,7 @@ func (a statsAccumulator) view(view calls.CallView) {
 	// zone conversion is the DST story — Go's zone logic maps each instant
 	// to the local wall clock that was in effect.
 	local := view.StartedAt.In(dashboardLocation)
-	weekday := (int(local.Weekday()) + 6) % 7 // Mon-first
+	weekday := (int(local.Weekday()) + daysPerWeek - int(time.Monday)) % daysPerWeek
 	stats.HourDay[weekday][local.Hour()]++
 
 	if idx, ok := a.dayIndex[day]; ok {
