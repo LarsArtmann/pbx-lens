@@ -110,6 +110,10 @@
               deadnix.enable = true;
               statix.enable = true;
             };
+            # The draft module is a sealed design record (superseded by the
+            # landed NixOS module in nix-international-telephony) — statix's
+            # repeated-keys style hints on it are noise, not debt.
+            settings.formatter.statix.excludes = [ "deploy/nixos/module-draft.nix" ];
             # treefmt-nix's templ program wraps templ with pkgs.go — the
             # nixpkgs DEFAULT go (1.26.8 at this lock), older than this
             # repo's go.mod floor (1.27.1). templ fmt shells out to that go

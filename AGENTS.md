@@ -174,25 +174,21 @@ buildflow --build-mode dev            # the quality gate (lint+format+test)
 nix build                             # ships result/bin/pbx-lens (fixed 2026-10-11)
 nix run . -- version                  # run the built binary
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
-                                      # UI e2e: then probe /, /dashboard, /search,
-                                      # /api/freshness with a Go http probe (curl banned);
-                                      # -recording-timeout bounds proxy upstream hops
-                                      # (default web.DefaultUpstreamTimeout, 30 s)
-                                      # CLEAN CHECKOUT FIRST: regen the gitignored
-                                      # stylesheet or /app.css 404s text/plain (a
-                                      # browser MIME refusal, NOT a visible 404) —
-                                      # `nix develop -c tailwindcss -i internal/web/static/app.css \
-                                      #   -o internal/web/static/styles.css --minify`
-                                      # (flake-pinned tailwindcss_4, same as preBuild;
-                                      # buildflow's tailwind-build is deferred here by
-                                      # design) — then REBUILD: go:embed is compile-time
+                                      # UI e2e: probe /, /dashboard, /search, /api/freshness with a
+                                      # Go http probe (curl banned); -recording-timeout bounds proxy
+                                      # upstream hops (default web.DefaultUpstreamTimeout, 30 s).
+                                      # CLEAN CHECKOUT FIRST: regen the gitignored stylesheet or
+                                      # /app.css 404s as text/plain (browser MIME refusal, not a
+                                      # visible 404) — `nix develop -c tailwindcss -i
+                                      # internal/web/static/app.css -o internal/web/static/styles.css
+                                      # --minify` (flake-pinned tailwindcss_4, same as preBuild;
+                                      # buildflow's tailwind-build is deferred here by design) — then
+                                      # REBUILD: go:embed is compile-time
 nix develop                           # devShell: go, golangci-lint, gopls,
                                       # govulncheck, dprint, cqrs-lint
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
-                                      # changes (buildflow -s nix-hash-fix
-                                      # --fix does the same)
-./scripts/...                         # (none yet)
+                                      # changes (buildflow -s nix-hash-fix --fix does the same)
 ```
 
 ## Deep context (extracted to docs/ 2026-10-11 — 220-line limit)
@@ -209,10 +205,10 @@ Invariants summary — read the full doc BEFORE touching its area:
 - **docs/telnyx-live-api.md** — live-verified API truths (field-as-param
   filters, unstable timestamp precision, client-side recording
   correlation, enrichment endpoint shapes); re-verify the cluster
-  quarterly (recordings cluster live-verified 2026-10-12 — assistant
-  recordings are MP3-ONLY: empty `download_urls.wav`, populated mp3 — see
-  the doc; enrichment endpoints still spec-verified only; next window
-  opens 2027-01 — calendar entry, m27.9).
+  quarterly (recordings live-verified 2026-10-12 — assistant recordings
+  are MP3-ONLY: empty `download_urls.wav`, populated mp3, see the doc;
+  enrichment still spec-verified only; next window opens 2027-01 —
+  calendar entry, m27.9).
 - **docs/cqrs-lint-policy.md** — every surviving cqrs-lint warning/info as
   a documented decision (E003 flat-domain HOLD + pre-agreed seam).
 - **docs/buildflow-dev-gate.md** — gate environment traps (run inside the
