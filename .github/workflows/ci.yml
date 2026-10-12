@@ -120,7 +120,7 @@ jobs:
         # Same master rev the flake devShell pins (flake.nix cqrs-lint);
         # the module has no stable tags. Errors fail the lane; the
         # documented warning/info decisions live in docs/cqrs-lint-policy.md.
-        run: go install github.com/LarsArtmann/go-cqrs-lite/cmd/cqrs-lint/v4@afaffa19105b2422ef0722f156bca6d92169c529
+        run: go install github.com/larsartmann/go-cqrs-lite/cmd/cqrs-lint/v4@afaffa19105b2422ef0722f156bca6d92169c529
 
       - name: Run cqrs-lint
         run: "$(go env GOPATH)/bin/cqrs-lint ."
