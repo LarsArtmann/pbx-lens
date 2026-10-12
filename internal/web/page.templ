@@ -22,7 +22,22 @@ templ shell(title string, currentPath string) {
 	}
 }
 
-// footer anchors the page and states the tool's read-only contract.
+// footer anchors the page and states the tool's read-only contract plus the
+// running build (plan T16): the version comes from Go build info — present
+// for git builds, "(devel)" for nix store builds, where the footer simply
+// omits it rather than lying.
 templ footer() {
-	@navigation.Footer(navigation.FooterProps{BrandText: "pbx-lens"})
+	@navigation.Footer(navigation.FooterProps{
+		BrandText: "pbx-lens",
+		BottomBar: footerBottomBar(),
+	})
+}
+
+templ footerBottomBar() {
+	<div class="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500 dark:text-gray-400">
+		<span>Read-only index — every source stays authoritative; this DB is disposable.</span>
+		if v := buildVersion(); v != "" {
+			<span class="font-mono">{ v }</span>
+		}
+	</div>
 }

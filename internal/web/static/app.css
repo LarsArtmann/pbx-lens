@@ -91,3 +91,31 @@
   --color-blue-900: #134e4a;
   --color-blue-950: #042f2e;
 }
+
+/*
+ * Print (plan T16): the detail page prints facts + transcript cleanly —
+ * chrome (nav, footer, buttons) drops, the shell widens, and charts don't
+ * print. scoped by @media print only.
+ */
+/*
+ * Clickable table rows are tabindex=0 role=link rows with NO visible focus
+ * style in the library markup (plan T18 finding; upstream filing candidate).
+ * Give keyboard users the standard focus ring, inset so it hugs the row.
+ */
+tr[role="link"]:focus-visible {
+	outline: 2px solid var(--color-tc-primary);
+	outline-offset: -2px;
+}
+
+@media print {
+	nav,
+	footer,
+	button {
+		display: none !important;
+	}
+
+	main {
+		max-width: none;
+		padding: 0;
+	}
+}

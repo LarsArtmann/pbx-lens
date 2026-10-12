@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"net/url"
+	"runtime/debug"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
@@ -17,6 +18,10 @@ import (
 func pageProps(title string) layout.PageProps {
 	props := layout.DefaultPageProps()
 	props.Title = title
+	// Signal palette in the mobile browser chrome (plan T16); the library
+	// default is indigo. The dark variant is a library constant — not
+	// prop-overridable in v1.21.0.
+	props.ThemeColor = "#0f766e"
 	// Self-host the htmx runtime (R9): polled regions need it, and the LAN
 	// tool must not depend on a public CDN. Served at /static/htmx.min.js.
 	props.HTMXSrc = "/static/htmx.min.js"
@@ -55,6 +60,8 @@ templ listPage(page CallListPage, filters ListCallsQuery) {
 			Title:       "No calls match",
 			Description: "No indexed call matches these filters. Widen them, or run an ingest command (ingest-cdr, ingest-telnyx, ingest-webhook, ingest-agent) against this DB and reload.",
 			Icon:        icons.Inbox,
+			ActionText:  "Clear filters",
+			ActionHref:  "/",
 		})
 	} else {
 		@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(page.Rows)})
@@ -354,4 +361,35 @@ func compactDuration(d time.Duration) string {
 	}
 
 	return fmt.Sprintf("%dh%02dm", int(rounded.Hours()), minutes%60)
+}
+
+// buildVersion extracts an honest short version from Go build info: the
+// module version when built as a dependency-style binary, otherwise the
+// vcs revision; empty when neither exists (nix store builds without VCS
+// stamping) so the footer never shows a placeholder lie.
+func buildVersion() string {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return ""
+	}
+
+	if info.Main.Version != "" && info.Main.Version != "(devel)" {
+		return "v" + info.Main.Version
+	}
+
+	var revision string
+
+	for _, setting := range info.Settings {
+		if setting.Key == "vcs.revision" {
+			revision = setting.Value
+
+			break
+		}
+	}
+
+	if len(revision) >= 7 {
+		return revision[:7]
+	}
+
+	return ""
 }

@@ -129,7 +129,11 @@ func detailItems(view calls.CallView) []display.DefinitionItem {
 // transcript is reading content, not a replay animation.
 templ transcriptPane(turns []calls.TranscriptTurn) {
 	@display.Card(display.CardProps{Title: "Transcript"}) {
+		// AriaLabel: the library renders the block aria-hidden by default —
+		// without the label a screen reader gets an empty transcript (plan
+		// T18).
 		@display.Scrollback(display.ScrollbackProps{
+			AriaLabel: "Call transcript",
 			Stagger: false,
 			Lines:   transcriptLines(turns),
 		})

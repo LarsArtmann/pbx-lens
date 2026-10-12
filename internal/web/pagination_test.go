@@ -227,3 +227,18 @@ func pollURLOf(body string) string {
 
 	return url
 }
+
+// TestEmptyFilteredHasClearFilters pins the honest empty-state CTA (plan
+// T17): a filtered view with no rows offers an in-app way out.
+func TestEmptyFilteredHasClearFilters(t *testing.T) {
+	mux := newTestServer(t)
+
+	_, body := getBody(t, mux, "/?direction=inbound")
+	if !strings.Contains(body, "No calls match") {
+		t.Fatal("filtered empty view should render the empty state")
+	}
+
+	if !strings.Contains(body, "Clear filters") {
+		t.Error("empty state missing the Clear filters action")
+	}
+}
