@@ -167,8 +167,7 @@ buildflow --build-mode dev            # the quality gate (lint+format+test);
                                       # (`cat /proc/loadavg` third field), else
                                       # verify casualties individually
                                       # (docs/buildflow-dev-gate.md)
-nix build                             # ships result/bin/pbx-lens (fixed 2026-10-11)
-nix run . -- version                  # run the built binary
+nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
                                       # UI e2e: probe /, /dashboard, /search, /api/freshness with a
                                       # Go http probe (curl banned); -recording-timeout bounds proxy
