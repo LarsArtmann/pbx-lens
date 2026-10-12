@@ -133,3 +133,20 @@ Remaining raw idea:
   entries + fresh mtimes before any gate/commit) and ship-state verification
   (test what HEAD contains, e.g. `git stash -u` the foreign delta or probe a
   clean worktree of the commit). (docs/status/2026-10-12_13-49 §e/§g.3)
+- **Multi-match transcript navigation** (2026-10-12, from the ?q= jump
+  follow-ups): the deep link lands on the FIRST matching turn; when several
+  turns match, prev/next match buttons (or a match counter) inside the
+  transcript card would let an operator walk the evidence. Needs the
+  ScrollbackLine hook (templ-components#51) or the hand-rolled log growing
+  nav affordances; goldens pin today's shape first.
+- **Scroll-margin on fragment targets** (2026-10-12): `#turn-N` lands the
+  matched line at the viewport's very top edge; `scroll-margin-top` (a few
+  rem, sticky-header aware) would give the jump breathing room. Pure CSS,
+  one line — candidate for the next UI pass, eyeball via
+  scripts/screenshot-probe.js.
+- **Search "filtered for" chip** (2026-10-12): the list page URL carries
+  filters (direction/AI/dates) but nothing on the page names the active
+  filter set once you scroll or share a link; a dismissible chip row
+  ("filtered: inbound · AI · last 7 days — clear") would make the state
+  visible and one-click clearable. Pairs with the existing EmptyState
+  "Clear filters" CTA.
