@@ -140,6 +140,8 @@ never a wrong call.
 - `internal/ingest/` — source parsers/mappers (`cdr`, `telnyx`, `webhook`, `agent`)
 - `internal/web/` — templ UI: list/detail/search/dashboard, recording proxy, auth, freshness, export
 - `internal/search/` — FTS5 index over transcripts
+- `internal/app/` — the ADR-0123 composition root (`system.New` wiring)
+- `internal/retention/` — retention policy + tombstone purge
 - `internal/backup/` — live-safe index DB backup command
 - `internal/wire/` — shared wire-decoding helpers (`FlexTime`)
 - `deploy/` — systemd unit + NixOS module drafts (the sibling repo owns the module)

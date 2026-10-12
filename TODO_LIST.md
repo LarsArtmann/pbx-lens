@@ -30,10 +30,10 @@
 
 ## Blocked (owner / external gates)
 
-| Task                                                                                            | Status       | Impact | Effort | Evidence                                                                                                                                                           |
-| ----------------------------------------------------------------------------------------------- | ------------ | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Task                                                                                            | Status       | Impact | Effort | Evidence                                                                                                                                                                                |
+| ----------------------------------------------------------------------------------------------- | ------------ | ------ | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Production re-ingest for ContentHash v2 (one-time; the live DB still hashes v1 fields)          | 🔵 `BLOCKED` | High   | 60min  | needs the prod deploy path (owner); CHANGELOG domain-redesign entry; docs/status/archived 2026-10-11_18-21 §c.1; docs/status/2026-10-12_02-34 §c                                        |
-| First release tag v0.1.0 (go-release flow; CHANGELOG is ready)                                  | 🔵 `BLOCKED` | Medium | 30min  | owner ratifies the release gate (ROADMAP open question); step-level green gate evidence in docs/status 2026-10-12_01-16 §a.1                                       |
+| First release tag v0.1.0 (go-release flow; CHANGELOG is ready)                                  | 🔵 `BLOCKED` | Medium | 30min  | owner ratifies the release gate (ROADMAP open question); step-level green gate evidence in docs/status 2026-10-12_01-16 §a.1                                                            |
 | Sibling NixOS module: production `-max-age` window value + `-recording-timeout` option exposure | 🔵 `BLOCKED` | High   | 30min  | owner picks the value (e.g. 720h vs 2160h); `modules/telephony/lens.nix` in nix-international-telephony; docs/status/archived/2026-10-11_19-37 §f.14; docs/status/2026-10-12_02-34 §b.3 |
 
 ## Low impact
