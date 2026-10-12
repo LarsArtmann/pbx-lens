@@ -15,55 +15,60 @@
 //
 // Run from the repo root on every templ-components version bump:
 //   node scripts/gen-tc-classes.js
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
 const MODULES = [
-	'/home/lars/go/pkg/mod/github.com/larsartmann/templ-components@v1.21.0',
-	'/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/htmx@v1.21.0',
-	'/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/icons@v1.21.0',
-	'/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/utils@v1.21.0',
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components@v1.21.0",
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/htmx@v1.21.0",
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/icons@v1.21.0",
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/utils@v1.21.0",
 ];
 
-const OUT = 'internal/web/static/templ-components-classes.txt';
+const OUT = "internal/web/static/templ-components-classes.txt";
 
 // Tailwind-ish token: letters/digits plus the punctuation utilities and
 // variants use; must contain a letter; not a URL or go identifier with caps.
 function looksLikeClass(tok) {
-	if (tok.length < 2 || tok.length > 120) return false;
-	if (!/^[a-z0-9@:[\]()./#%_-]+$/.test(tok)) return false;
-	if (!/[a-z]/.test(tok)) return false;
-	if (tok.includes('//')) return false;
-	if (/^@?(sm|md|lg|xl|2xl)$/.test(tok)) return false;
-	// needs a variant colon, a dash, or to be a bare utility word
-	return /[:_-]/.test(tok) || /^(hidden|block|flex|grid|border|italic|underline|capitalize|uppercase|truncate|contents|isolate|antialiased)$/.test(tok);
+  if (tok.length < 2 || tok.length > 120) return false;
+  if (!/^[a-z0-9@:[\]()./#%_-]+$/.test(tok)) return false;
+  if (!/[a-z]/.test(tok)) return false;
+  if (tok.includes("//")) return false;
+  if (/^@?(sm|md|lg|xl|2xl)$/.test(tok)) return false;
+  // needs a variant colon, a dash, or to be a bare utility word
+  return (
+    /[:_-]/.test(tok) ||
+    /^(hidden|block|flex|grid|border|italic|underline|capitalize|uppercase|truncate|contents|isolate|antialiased)$/.test(
+      tok,
+    )
+  );
 }
 
 function walk(dir, acc = []) {
-	if (!fs.existsSync(dir)) return acc;
-	for (const entry of fs.readdirSync(dir)) {
-		const p = path.join(dir, entry);
-		const st = fs.statSync(p);
-		if (st.isDirectory()) walk(p, acc);
-		else if (/\.(templ|go|css)$/.test(entry)) acc.push(p);
-	}
-	return acc;
+  if (!fs.existsSync(dir)) return acc;
+  for (const entry of fs.readdirSync(dir)) {
+    const p = path.join(dir, entry);
+    const st = fs.statSync(p);
+    if (st.isDirectory()) walk(p, acc);
+    else if (/\.(templ|go|css)$/.test(entry)) acc.push(p);
+  }
+  return acc;
 }
 
 const classes = new Set();
 let files = 0;
 for (const root of MODULES) {
-	for (const f of walk(root)) {
-		files++;
-		const src = fs.readFileSync(f, 'utf8');
-		for (const tok of src.split(/[\s"'`{}(),;=]+/)) {
-			if (looksLikeClass(tok)) classes.add(tok);
-		}
-	}
+  for (const f of walk(root)) {
+    files++;
+    const src = fs.readFileSync(f, "utf8");
+    for (const tok of src.split(/[\s"'`{}(),;=]+/)) {
+      if (looksLikeClass(tok)) classes.add(tok);
+    }
+  }
 }
 
 const sorted = [...classes].sort();
-fs.writeFileSync(OUT, sorted.join('\n') + '\n');
+fs.writeFileSync(OUT, sorted.join("\n") + "\n");
 console.log(`scanned ${files} files, wrote ${sorted.length} classes to ${OUT}`);

@@ -11,6 +11,7 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/layout"
 	"github.com/larsartmann/templ-components/navigation"
+	"github.com/larsartmann/templ-components/utils"
 )
 
 func pageProps(title string) layout.PageProps {
@@ -97,6 +98,7 @@ templ filterForm(filters ListCallsQuery, action string) {
 				{Value: "inbound", Label: "Inbound", Selected: filters.Direction == "inbound"},
 				{Value: "outbound", Label: "Outbound", Selected: filters.Direction == "outbound"},
 			},
+			BaseProps: utils.BaseProps{Class: "w-36"},
 		})
 		@forms.Select(forms.SelectProps{
 			Name:  "ai",
@@ -105,11 +107,13 @@ templ filterForm(filters ListCallsQuery, action string) {
 				{Value: "yes", Label: "AI", Selected: aiValue(filters.AI) == "yes"},
 				{Value: "no", Label: "Human", Selected: aiValue(filters.AI) == "no"},
 			},
+			BaseProps: utils.BaseProps{Class: "w-36"},
 		})
 		@forms.DatePicker(forms.DatePickerProps{
-			Name:  "from",
-			Label: "From",
-			Value: dateValue(filters.From),
+			Name:      "from",
+			Label:     "From",
+			Value:     dateValue(filters.From),
+			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@forms.DatePicker(forms.DatePickerProps{
 			Name:  "to",

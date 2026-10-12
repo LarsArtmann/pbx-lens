@@ -11,6 +11,7 @@ import (
 	"github.com/larsartmann/templ-components/htmx"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/layout"
+	"github.com/larsartmann/templ-components/utils"
 )
 
 // dashboardRoute is the quality-dashboard page (T25): a date-range picker,
@@ -41,11 +42,13 @@ templ rangeForm(stats DashboardStats) {
 			Name:  "from",
 			Label: "From",
 			Value: dateValue(stats.rangeFrom),
+			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@forms.DatePicker(forms.DatePickerProps{
 			Name:  "to",
 			Label: "To",
 			Value: dateValue(stats.rangeTo),
+			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@display.Button(display.ButtonProps{Text: "Apply", Type: display.ButtonHTMLSubmit})
 		@display.Button(display.ButtonProps{Text: "Reset", Href: "/dashboard", Variant: display.ButtonGhost})
@@ -126,8 +129,13 @@ templ statCards(stats DashboardStats, now time.Time) {
 templ volumeCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays)}) {
 		@display.BarChart(display.BarChartProps{
-			Bars:         volumeBars(stats.ByDay),
-			Orient:       display.BarVertical,
+			Bars: volumeBars(stats.ByDay),
+			Orient:      display.BarVertical,
+			// Height + !items-stretch: without them the bar wrapper has no
+			// definite height and every vertical bar collapses to 0 px
+			// (verified in-browser; upstream file candidate).
+			Height:       "h-40",
+			Class:        "!items-stretch",
 			MinBarWidth:  "min-w-1",
 			Gap:          "gap-px",
 			ShowValues:   false,
@@ -146,8 +154,10 @@ templ volumeCard(stats DashboardStats) {
 templ durationCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call durations"}) {
 		@display.BarChart(display.BarChartProps{
-			Bars:         durationBars(stats.Durations),
-			Orient:       display.BarVertical,
+			Bars: durationBars(stats.Durations),
+			Orient:      display.BarVertical,
+			Height:      "h-40",
+			Class:       "!items-stretch",
 			ShowValues:   true,
 			EmptyMessage: "No calls indexed yet",
 		})
@@ -237,8 +247,10 @@ templ mosCard(stats DashboardStats) {
 			if hasWindowMOS(stats.ByDay) {
 				<div class="mt-3">
 					@display.BarChart(display.BarChartProps{
-						Bars:         mosBars(stats.ByDay),
-						Orient:       display.BarVertical,
+						Bars:  mosBars(stats.ByDay),
+						Orient: display.BarVertical,
+						Height: "h-24",
+						Class:  "!items-stretch",
 						MinBarWidth:  "min-w-1",
 						Gap:          "gap-px",
 						ShowValues:   false,
@@ -260,7 +272,7 @@ templ mosCard(stats DashboardStats) {
 func mosBars(days []DayVolume) []display.BarChartBar {
 	bars := make([]display.BarChartBar, 0, len(days))
 	for _, day := range days {
-		bar := display.BarChartBar{Label: day.Day[5:], Value: day.AvgMOS()}
+		bar := display.BarChartBar{Value: day.AvgMOS()}
 		if day.MOSKnown == 0 {
 			bar.Tooltip = day.Day + ": no MOS data"
 		} else {
@@ -302,11 +314,12 @@ func scoredCallsLabel(known int) string {
 }
 
 // volumeBars maps the day series onto chart bars (oldest → newest).
+// Labels stay empty on this dense 30-bar axis — a date clipped to a 4 px
+// column reads as litter; the tooltip carries the full date instead.
 func volumeBars(days []DayVolume) []display.BarChartBar {
 	bars := make([]display.BarChartBar, 0, len(days))
 	for _, day := range days {
 		bars = append(bars, display.BarChartBar{
-			Label:   day.Day[5:], // MM-DD keeps the dense axis readable
 			Value:   float64(day.Calls),
 			Tooltip: day.Day + ": " + strconv.Itoa(day.Calls),
 		})
