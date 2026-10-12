@@ -27,6 +27,19 @@ var goldenVolatile = []*regexp.Regexp{
 	regexp.MustCompile(`\b\d+ (?:second|minute|hour|day|week)s? ago\b`),
 	// Staleness banner age ("Newest indexed call is 2h5m old").
 	regexp.MustCompile(`call is \S+( \S+)? old`),
+	// Staleness poll-region CONTENT: the banner renders only once the
+	// newest indexed call crosses staleAfter, so its presence flips with
+	// the wall clock (the page_calls golden silently captured the
+	// under-6h state and broke at 17:00 local). The region's attributes
+	// stay pinned; the banner itself is covered by the staleness handler
+	// tests, not the goldens.
+	regexp.MustCompile(`(?s)(<div hx-get="/frag/staleness"[^>]*>).*?(</div>\s*<div class="mb-6">)`),
+	// Bare calendar dates: the dashboard's day-bucket labels and
+	// today-relative filter links carry whichever date "today" resolved
+	// to, so they shift at midnight Europe/Berlin. Only BARE dates scrub
+	// — the next character guard spares the fixed-seed rows'
+	// datetime="…T…" attributes, which stay pinned.
+	regexp.MustCompile(`(20\d{2}-\d{2}-\d{2})([^T0-9-]|$)`),
 }
 
 var goldenReplacements = []string{
@@ -35,6 +48,8 @@ var goldenReplacements = []string{
 	"RELATIVE_TIME",
 	"RELATIVE_TIME",
 	"call is AGE old",
+	`${1}STALENESS_REGION${2}`,
+	`DATE$2`,
 }
 
 func scrubVolatileTime(body string) string {
