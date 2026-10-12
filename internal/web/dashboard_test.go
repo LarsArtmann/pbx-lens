@@ -29,7 +29,7 @@ func TestDashboardRendersStatsAndCharts(t *testing.T) {
 	for _, want := range []string{
 		"Dashboard", "Calls indexed", "Calls today", "AI share", "Avg duration",
 		"AI vs human", "30-day trend", "Call quality (MOS)", "Not available yet",
-		"50.0% AI",
+		"50.0%",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("dashboard missing %q", want)
@@ -50,8 +50,9 @@ func TestDashboardCountsMatchFixture(t *testing.T) {
 	_, body := getBody(t, mux, "/dashboard")
 
 	// Totals cover the whole index (3), not just the chart window (2
-	// in-window); the legend carries the exact AI/human split.
-	for _, want := range []string{"AI 1 · Human 2", "33.3% AI"} {
+	// in-window); the donut legend carries the exact AI/human split and the
+	// center label the share.
+	for _, want := range []string{"AI · 1", "Human · 2", "33.3%"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("dashboard missing %q", want)
 		}

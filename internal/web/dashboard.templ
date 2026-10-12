@@ -185,8 +185,8 @@ templ aiHumanCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "AI vs human"}) {
 		@display.PieChart(display.PieChartProps{
 			Slices: []display.PieChartSlice{
-				{Label: "AI", Value: float64(stats.AICalls), Color: "text-teal-600 dark:text-teal-400"},
-				{Label: "Human", Value: float64(stats.HumanCalls), Color: "text-gray-400 dark:text-gray-500"},
+				{Label: "AI · " + strconv.Itoa(stats.AICalls), Value: float64(stats.AICalls), Color: "text-teal-600 dark:text-teal-400"},
+				{Label: "Human · " + strconv.Itoa(stats.HumanCalls), Value: float64(stats.HumanCalls), Color: "text-gray-400 dark:text-gray-500"},
 			},
 			Donut:       true,
 			CenterLabel: aiShare(stats),
