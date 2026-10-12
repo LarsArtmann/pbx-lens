@@ -29,13 +29,13 @@ func TestMicrosFromCost(t *testing.T) {
 	}
 }
 
-func TestCostEnrichmentCarriesCurrency(t *testing.T) {
-	micros, currency, ok := CostEnrichment(DetailRecord{Cost: "0.0123", Currency: "USD"})
-	if !ok || micros != 12_300 || currency != "USD" {
-		t.Fatalf("CostEnrichment = (%d, %q, %t), want (12300, USD, true)", micros, currency, ok)
+func TestCostOfCarriesCurrency(t *testing.T) {
+	cost, ok := CostOf(DetailRecord{Cost: "0.0123", Currency: "USD"})
+	if !ok || cost.Micros != 12_300 || cost.Currency != "USD" {
+		t.Fatalf("CostOf = (%+v, %t), want ({12300 USD}, true)", cost, ok)
 	}
 
-	if _, _, ok := CostEnrichment(DetailRecord{Cost: "n/a"}); ok {
+	if _, ok := CostOf(DetailRecord{Cost: "n/a"}); ok {
 		t.Error("unparseable cost must report not-ok")
 	}
 }

@@ -18,7 +18,7 @@ import (
 // importing the concrete *telnyx.Client so tests and future sources can
 // stand in with a fake — telnyx.Client satisfies it as-is.
 type RecordingFetcher interface {
-	Recording(ctx context.Context, recordingID string) (telnyx.Recording, error)
+	FetchRecording(ctx context.Context, recordingID string) (telnyx.Recording, error)
 }
 
 // DefaultUpstreamTimeout bounds each upstream hop of the recording proxy
@@ -99,7 +99,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 	metaCtx, cancel := context.WithTimeout(r.Context(), s.recTimeout)
 	defer cancel()
 
-	recording, err := s.recordings.Telnyx.Recording(metaCtx, recordingID)
+	recording, err := s.recordings.Telnyx.FetchRecording(metaCtx, recordingID)
 	if err != nil {
 		if metaCtx.Err() != nil {
 			http.Error(w, "recording metadata fetch exceeded the upstream timeout", http.StatusGatewayTimeout)

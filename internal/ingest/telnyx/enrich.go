@@ -29,15 +29,24 @@ func MicrosFromCost(raw string) (int64, bool) {
 	return int64(math.Round(f * calls.MicrosPerUnit)), true
 }
 
-// CostEnrichment maps one correlated detail record to the cost half of an
-// enrichment. ok is false when the record carries no usable cost.
-func CostEnrichment(rec DetailRecord) (int64, string, bool) {
+// RecordCost is the typed cost pair one detail record carries (R18): a
+// named struct cannot swap micros and currency the way a positional tuple
+// can at the call site.
+type RecordCost struct {
+	Micros   int64
+	Currency string
+}
+
+// CostOf maps one correlated detail record to its cost (R18, was the
+// CostEnrichment tuple). ok is false when the record carries no usable
+// cost.
+func CostOf(rec DetailRecord) (RecordCost, bool) {
 	micros, ok := MicrosFromCost(rec.Cost)
 	if !ok {
-		return 0, "", false
+		return RecordCost{}, false
 	}
 
-	return micros, rec.Currency, true
+	return RecordCost{Micros: micros, Currency: rec.Currency}, true
 }
 
 // InsightSummary extracts the enrichment summary from a conversation's

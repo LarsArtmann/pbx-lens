@@ -135,9 +135,9 @@ func (p *enrichPass) targetEnrichment(
 		}
 
 		if rec, ok := telnyx.DetailRecordByCallControl(records, seed.CallControlID); ok {
-			if micros, currency, costOK := telnyx.CostEnrichment(rec); costOK {
-				enr.CostMicros = micros
-				enr.CostCurrency = currency
+			if cost, costOK := telnyx.CostOf(rec); costOK {
+				enr.CostMicros = cost.Micros
+				enr.CostCurrency = cost.Currency
 			}
 		}
 	}

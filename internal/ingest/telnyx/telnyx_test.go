@@ -193,7 +193,7 @@ func TestRecordingFetchShape(t *testing.T) {
 		}})
 	})
 
-	rec, err := c.Recording(context.Background(), "rec-1")
+	rec, err := c.FetchRecording(context.Background(), "rec-1")
 	if err != nil {
 		t.Fatal(err)
 	}

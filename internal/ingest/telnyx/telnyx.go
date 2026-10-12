@@ -73,7 +73,7 @@ func (c *Client) ListMessages(ctx context.Context, conversationID string) ([]Mes
 	)
 }
 
-func (c *Client) Recording(ctx context.Context, recordingID string) (Recording, error) {
+func (c *Client) FetchRecording(ctx context.Context, recordingID string) (Recording, error) {
 	if recordingID == "" {
 		return Recording{}, errorfamily.NewRejection(
 			"telnyx.empty_recording_id",
