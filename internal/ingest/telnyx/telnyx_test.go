@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -356,6 +357,92 @@ func TestMapConversationEggsFixture(t *testing.T) {
 
 	if err := obs.Validate(); err != nil {
 		t.Fatalf("observation must validate: %v", err)
+	}
+}
+
+func TestMapConversationDIDDirection(t *testing.T) {
+	conv := Conversation{
+		ID:        "conv-did",
+		CreatedAt: ft(0),
+		Metadata: map[string]any{
+			"assistant_id":           "a1",
+			"telnyx_agent_target":    "+17287289311",
+			"telnyx_end_user_target": "+14084757593",
+		},
+	}
+
+	tests := []struct {
+		name     string
+		aiDIDs   string
+		declared calls.Direction
+		want     calls.Direction
+	}{
+		{
+			name:     "agent-side DID flips declared outbound to inbound",
+			aiDIDs:   "+17287289311",
+			declared: calls.DirectionOutbound,
+			want:     calls.DirectionInbound,
+		},
+		{
+			name:     "end-user-side DID flips too (DIDs do not originate calls)",
+			aiDIDs:   "+14084757593",
+			declared: calls.DirectionOutbound,
+			want:     calls.DirectionInbound,
+		},
+		{
+			name:     "non-DID conversation keeps declared direction",
+			aiDIDs:   "+19999999999",
+			declared: calls.DirectionOutbound,
+			want:     calls.DirectionOutbound,
+		},
+		{
+			name:     "empty DID flag keeps declared direction",
+			aiDIDs:   "",
+			declared: calls.DirectionOutbound,
+			want:     calls.DirectionOutbound,
+		},
+		{
+			name:     "declared inbound survives an empty DID flag",
+			aiDIDs:   "",
+			declared: calls.DirectionInbound,
+			want:     calls.DirectionInbound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := MapOptions{Direction: tt.declared}
+
+			if dids := ParseAIDIDs(tt.aiDIDs); len(dids) > 0 {
+				opts.ResolveDirection = DIDDirectionResolver(dids, tt.declared)
+			}
+
+			obs, err := MapConversation(conv, nil, nil, opts)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if obs.Direction != tt.want {
+				t.Fatalf("direction wrong: got %s, want %s", obs.Direction, tt.want)
+			}
+		})
+	}
+}
+
+func TestDIDDirectionResolverEmptySetKeepsDeclared(t *testing.T) {
+	resolve := DIDDirectionResolver(map[string]bool{}, calls.DirectionOutbound)
+
+	if got := resolve("+17287289311", "+14084757593"); got != calls.DirectionOutbound {
+		t.Fatalf("empty DID set must keep the declared direction, got %s", got)
+	}
+}
+
+func TestParseAIDIDsTrimsAndDropsEmpties(t *testing.T) {
+	got := ParseAIDIDs(" +17287289311 , ,+14084757593,")
+	want := map[string]bool{"+17287289311": true, "+14084757593": true}
+
+	if !maps.Equal(got, want) {
+		t.Fatalf("parse wrong: %v", got)
 	}
 }
 

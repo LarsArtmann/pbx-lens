@@ -66,6 +66,11 @@ func serve(args []string) {
 		"outbound",
 		"caller-declared direction for polled Telnyx conversations",
 	)
+	aiDID := fs.String(
+		"ai-did",
+		"",
+		"comma-separated AI-facing DIDs: polled conversations touching one are inbound (empty = keep declared direction)",
+	)
 	maxAge := fs.Duration(
 		"max-age",
 		0,
@@ -163,6 +168,7 @@ func serve(args []string) {
 		Telnyx:         telnyxClient,
 		SinceAgo:       *pollSince,
 		Direction:      pollDir,
+		AIDIDs:         telnyx.ParseAIDIDs(*aiDID),
 		CDRFile:        *cdrFile,
 		WebhookLog:     *webhookLog,
 		TranscriptsDir: *transcriptsDir,

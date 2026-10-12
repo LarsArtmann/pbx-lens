@@ -105,6 +105,11 @@ func ingestTelnyx(args []string) {
 		"conversation direction (Telnyx metadata exposes none): outbound|inbound",
 	)
 	limit := fs.Int("limit", 0, "max conversations to fetch (0 = all)")
+	aiDID := fs.String(
+		"ai-did",
+		"",
+		"comma-separated AI-facing DIDs: conversations touching one are inbound (empty = keep declared direction)",
+	)
 	telnyxMaxAge := fs.Duration("max-age", 0, "refuse conversations older than this (0 = keep everything)")
 	_ = fs.Parse(args)
 
@@ -137,6 +142,7 @@ func ingestTelnyx(args []string) {
 	observations, seeds, fetchRejects, err := cli.FetchTelnyxObservations(ctx, client, cli.TelnyxOptions{
 		Since:     sinceAt,
 		Direction: dir,
+		AIDIDs:    telnyx.ParseAIDIDs(*aiDID),
 		Limit:     *limit,
 	})
 	if err != nil {
