@@ -214,7 +214,6 @@ Invariants summary — read the full doc BEFORE touching its area:
   devShell, load-starvation casualties) + advisory-findings rationale.
 - **docs/upstream-filings.md** — D6 filings (go-cqrs-lite#62/#63/#64,
   go-nix-helpers#7, treefmt-nix#545) and their upstream state.
-- **docs/http-stack.md** — serve middleware chain (ordering doctrine), ETag
-  skip policy, render-buffering trap, Cache-Control revalidation contract.
-- **docs/templ-components-adoption.md** — per-component adoption truth for
-  the pinned v1.21.0 (skill docs drift ahead of the tag).
+- **docs/http-stack.md** (middleware chain, ETag skip policy, render
+  buffering, Cache-Control) and **docs/templ-components-adoption.md**
+  (per-component truth for pinned v1.21.0; skill docs drift ahead).
