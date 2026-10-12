@@ -145,6 +145,7 @@
                 builtins.attrValues {
                   inherit go;
                   inherit (pkgs)
+                    dprint
                     golangci-lint
                     gopls
                     govulncheck

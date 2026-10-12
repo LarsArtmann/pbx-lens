@@ -327,11 +327,12 @@ func TestRecordingUpstreamTimeoutBoundsWavHeaders(t *testing.T) {
 		case "/v2/recordings/rec-1":
 			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":"http://%s/v2/audio.wav"}}}`, r.Host)
 		case "/v2/audio.wav":
-			// Sleep far beyond the budget so only the audio hop misses it; the
-			// budget itself stays far above a loaded-machine localhost
-			// roundtrip, so the metadata fetch cannot be the one that trips
-			// (timeout-test hardening: 1ms budgets flake under load).
-			time.Sleep(250 * time.Millisecond)
+			// Block until the client's UpstreamTimeout cancels the request:
+			// headers never arrive inside the budget, so only the audio hop
+			// can trip the 502, while the metadata fetch (instant handler)
+			// still succeeds. No wall-clock sleep, so the test cannot race a
+			// loaded machine.
+			<-r.Context().Done()
 
 			_, _ = w.Write(auditWav)
 		default:

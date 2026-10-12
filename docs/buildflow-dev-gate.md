@@ -84,6 +84,9 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   re-pads every row to the widest cell; content byte-identical, only
   whitespace). Hand-maintained table padding is the failure class — run
   dprint fmt after any manual table edit, don't eyeball it.
+  (2026-10-12: dprint joined the devShell packages, so the documented
+  command works as written; before that it needed
+  `nix shell nixpkgs#dprint --command dprint fmt`.)
 - **go-generate transient "updates to go.mod needed" (2026-10-11 23:27)**:
   one full-gate run failed `go-generate` with `go: updates to go.mod
   needed; to update it: go mod tidy` while `go build` and `go mod tidy`

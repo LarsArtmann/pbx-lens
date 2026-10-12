@@ -50,7 +50,7 @@ func TestRunPurgeDryRunJSONListsCandidates(t *testing.T) {
 	var dry bytes.Buffer
 
 	policy := retention.Policy{MaxAge: 30 * 24 * time.Hour}
-	if err := runPurge(ctx, sys, "unused-dsn", policy, true, true, "720h", &dry); err != nil {
+	if err := runPurge(ctx, sys, "", policy, true, true, "720h", &dry); err != nil {
 		t.Fatalf("runPurge(dry): %v", err)
 	}
 
@@ -73,7 +73,7 @@ func TestRunPurgeDryRunJSONListsCandidates(t *testing.T) {
 	}
 
 	var applied bytes.Buffer
-	if err := runPurge(ctx, sys, "unused-dsn", policy, false, true, "720h", &applied); err != nil {
+	if err := runPurge(ctx, sys, "", policy, false, true, "720h", &applied); err != nil {
 		t.Fatalf("runPurge: %v", err)
 	}
 

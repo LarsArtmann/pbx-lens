@@ -157,17 +157,23 @@ func purgeCmd(args []string) {
 		))
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
-	defer cancel()
-
-	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	ctx, sys, cleanup, err := openIndexSession(*db)
 	if err != nil {
 		fatal(err)
 	}
 
 	defer cleanup()
 
-	if err := runPurge(ctx, sys, *db, retention.Policy{MaxAge: age}, *dryRun, *jsonOut, *maxAge, os.Stdout); err != nil {
+	if err := runPurge(
+		ctx,
+		sys,
+		*db,
+		retention.Policy{MaxAge: age},
+		*dryRun,
+		*jsonOut,
+		*maxAge,
+		os.Stdout,
+	); err != nil {
 		fatal(err)
 	}
 }
@@ -208,13 +214,7 @@ func runPurge(
 			})
 		}
 
-		fmt.Fprintf(out, "purge (dry run): %d call(s) older than %s\n", len(views), maxAgeLabel)
-
-		for _, view := range views {
-			fmt.Fprintf(out, "  %s:%s started %s\n", view.Kind, view.NativeID, view.StartedAt.UTC().Format(time.RFC3339))
-		}
-
-		return nil
+		return writeDryRunList(out, views, maxAgeLabel)
 	}
 
 	report, err := retention.Retire(ctx, sys, policy, time.Now())
@@ -232,16 +232,51 @@ func runPurge(
 
 	if asJSON {
 		return json.NewEncoder(out).Encode(map[string]any{
-			"dry_run":     false,
-			"max_age":     maxAgeLabel,
-			"retired":     report.Retired,
-			"over_age":    report.OverAge,
-			"rejections":  report.Rejections,
+			"dry_run":    false,
+			"max_age":    maxAgeLabel,
+			"retired":    report.Retired,
+			"over_age":   report.OverAge,
+			"rejections": report.Rejections,
 		})
 	}
 
-	fmt.Fprintf(out, "purge: retired %d of %d over-age call(s)\n", report.Retired, report.OverAge)
+	if _, err := fmt.Fprintf(
+		out,
+		"purge: retired %d of %d over-age call(s)\n",
+		report.Retired,
+		report.OverAge,
+	); err != nil {
+		return err
+	}
+
 	printRejected(report.Rejections)
+
+	return nil
+}
+
+// writeDryRunList renders the human dry-run report: a header line plus one
+// line per over-age call.
+func writeDryRunList(out io.Writer, views []calls.CallView, maxAgeLabel string) error {
+	if _, err := fmt.Fprintf(
+		out,
+		"purge (dry run): %d call(s) older than %s\n",
+		len(views),
+		maxAgeLabel,
+	); err != nil {
+		return err
+	}
+
+	for _, view := range views {
+		if _, err := fmt.Fprintf(
+			out,
+			"  %s:%s started %s\n",
+			view.Kind,
+			view.NativeID,
+			view.StartedAt.UTC().Format(time.RFC3339),
+		); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

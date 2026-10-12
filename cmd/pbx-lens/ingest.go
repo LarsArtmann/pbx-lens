@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
@@ -14,6 +15,36 @@ import (
 )
 
 const ingestTimeout = 5 * time.Minute
+
+// openIndexSession boots a one-shot index command: a bounded context plus
+// the composition root, torn down in OpenSystem order (cleanup first,
+// context cancel last).
+func openIndexSession(db string) (context.Context, *system.System, func(), error) {
+	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, db)
+	if err != nil {
+		cancel()
+
+		return nil, nil, nil, err
+	}
+
+	return ctx, sys, func() {
+		cleanup()
+		cancel()
+	}, nil
+}
+
+// finalizeIngest is the shared tail of every ingest verb: catch the read
+// model up, then refresh the search index so file and read model never
+// drift.
+func finalizeIngest(ctx context.Context, sys *system.System, dsn string) error {
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		return err
+	}
+
+	return cli.RebuildSearchIndex(ctx, sys, dsn)
+}
 
 func ingestCDR(args []string) {
 	fs := flag.NewFlagSet("ingest-cdr", flag.ExitOnError)
@@ -42,10 +73,7 @@ func ingestCDR(args []string) {
 		fatal(closeErr)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
-	defer cancel()
-
-	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	ctx, sys, cleanup, err := openIndexSession(*db)
 	if err != nil {
 		fatal(err)
 	}
@@ -54,11 +82,7 @@ func ingestCDR(args []string) {
 
 	stats := cli.GateIngest(ctx, sys, *maxAge, parsed.Observations)
 
-	if err := cli.DrainProjections(ctx, sys); err != nil {
-		fatal(err)
-	}
-
-	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+	if err := finalizeIngest(ctx, sys, *db); err != nil {
 		fatal(err)
 	}
 
@@ -101,10 +125,7 @@ func ingestTelnyx(args []string) {
 		fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
-	defer cancel()
-
-	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	ctx, sys, cleanup, err := openIndexSession(*db)
 	if err != nil {
 		fatal(err)
 	}
@@ -142,11 +163,7 @@ func ingestTelnyx(args []string) {
 		fatal(err)
 	}
 
-	if err := cli.DrainProjections(ctx, sys); err != nil {
-		fatal(err)
-	}
-
-	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+	if err := finalizeIngest(ctx, sys, *db); err != nil {
 		fatal(err)
 	}
 
@@ -192,10 +209,7 @@ func ingestWebhook(args []string) {
 		fatal(closeErr)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
-	defer cancel()
-
-	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	ctx, sys, cleanup, err := openIndexSession(*db)
 	if err != nil {
 		fatal(err)
 	}
@@ -204,11 +218,7 @@ func ingestWebhook(args []string) {
 
 	stats := cli.GateIngest(ctx, sys, *webhookMaxAge, parsed.Observations)
 
-	if err := cli.DrainProjections(ctx, sys); err != nil {
-		fatal(err)
-	}
-
-	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+	if err := finalizeIngest(ctx, sys, *db); err != nil {
 		fatal(err)
 	}
 
@@ -233,10 +243,7 @@ func ingestAgent(args []string) {
 
 	requireDB(fs, *db)
 
-	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
-	defer cancel()
-
-	sys, cleanup, err := cli.OpenSystem(ctx, *db)
+	ctx, sys, cleanup, err := openIndexSession(*db)
 	if err != nil {
 		fatal(err)
 	}
@@ -250,11 +257,7 @@ func ingestAgent(args []string) {
 
 	stats := cli.GateIngest(ctx, sys, *agentMaxAge, observations)
 
-	if err := cli.DrainProjections(ctx, sys); err != nil {
-		fatal(err)
-	}
-
-	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
+	if err := finalizeIngest(ctx, sys, *db); err != nil {
 		fatal(err)
 	}
 

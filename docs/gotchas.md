@@ -125,3 +125,26 @@ invariants summary; this file keeps the war stories.
   `services.telephony.state` in nix-international-telephony is read-only — contribute via
   the central list in `modules/telephony/default.nix`, never by defining the option again
   in a sibling module (even gated, the definition trips the read-only check).
+- **go test green is NOT lint green (paid for, 2026-10-12)**: a full wave shipped six
+  real golangci findings (errcheck on non-test `fmt.Fprintf(out, …)`, two golines
+  >120-col lines, one formatter diff) while "watch the gate" stood in for verification —
+  and the gate could not run (load), so nothing caught it until a scoped
+  `golangci-lint run <touched pkgs>` before the release. Rule: end every wave with a
+  scoped lint of the packages you touched.
+- **The golangci LSP cache goes stale across sessions (2026-10-12)**: it reported
+  findings for code that no longer exists (a `timePtr` ghost) and missed real ones
+  until restart. Verify every LSP lint claim — dismissal AND action — against
+  `golangci-lint run` on the package.
+- **errcheck's blanket exclusion covers only `_test.go`** (`.golangci.yml` rules):
+  non-test report writers must check `fmt.Fprintf` errors — a failed stdout/buffer
+  write must not exit 0 with the report silently lost (`runPurge` now returns them).
+- **A test DSN literal is a real file path (paid for, 2026-10-12)**:
+  `runPurge(ctx, sys, "unused-dsn", …)` made `RebuildSearchIndex` open sqlite at the
+  relative path `unused-dsn`, creating a 28 KiB database in `cmd/pbx-lens/` on every
+  test run — which the auto-commit daemon then committed twice. Memory-mode tests
+  pass `""` (the documented no-op contract), and stray artifacts must be
+  `git rm --cached` + trashed, not left for the daemon.
+- **`golangci-lint fmt --diff <pkg>` is the formatter oracle** (2026-10-12): when gci/
+  golines/gofumpt say "File is not properly formatted", the diff shows the exact
+  expected bytes (one-arg-per-line call wrapping, map-key realignment) — apply it
+  verbatim instead of guessing at the style.

@@ -73,7 +73,7 @@ webphone later gets a read-only deep link, never a data dependency.
   shipped an empty result); treefmt runs nixfmt + deadnix + statix only —
   `enableGofumpt`/`enableGoimports` are OFF because BuildFlow owns Go
   formatting (go-output's house split). The devShell (mkShellNoCC) carries
-  go/golangci-lint/gopls/govulncheck/templ/tailwindcss_4/cqrs-lint with
+  go/golangci-lint/gopls/govulncheck/dprint/templ/tailwindcss_4/cqrs-lint with
   GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2. UI codegen is a package preBuild:
   `templGenerationPolicy = "preBuild"` + a preBuild hook running
   `templ generate ./internal/web/` and `tailwindcss -i internal/web/static/
@@ -178,7 +178,7 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
                                       # -recording-timeout bounds proxy upstream hops
                                       # (default web.DefaultUpstreamTimeout, 30 s)
 nix develop                           # devShell: go, golangci-lint, gopls,
-                                      # govulncheck, cqrs-lint
+                                      # govulncheck, dprint, cqrs-lint
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
                                       # changes (buildflow -s nix-hash-fix
