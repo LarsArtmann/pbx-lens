@@ -42,11 +42,17 @@ func finalizeIngest(ctx context.Context, sys *system.System, dsn string) error {
 }
 
 // gateAndFinalize owns the sequence three of the four ingest verbs share
-// (plan T12): open the index session, age-gate + ingest the observations,
-// then drain and rebuild before teardown. The telnyx verb stays bespoke —
-// its enrichment interleaves between two drains, so the linear shape does
-// not fit it.
-func gateAndFinalize(db string, maxAge time.Duration, observations []calls.Observation) cli.IngestStats {
+// (plan T12): open the index session, fetch the observations, age-gate +
+// ingest them, then drain and rebuild before teardown. Fetch-level
+// rejections (the agent parser's per-file reports) fold into the stats'
+// rejected list after finalize, matching the old per-verb order. The
+// telnyx verb stays bespoke — its enrichment interleaves between two
+// drains, so the linear shape does not fit it.
+func gateAndFinalize(
+	db string,
+	maxAge time.Duration,
+	fetch func(context.Context, *system.System) ([]calls.Observation, []string, error),
+) cli.IngestStats {
 	ctx, sys, cleanup, err := openIndexSession(db)
 	if err != nil {
 		fatal(err)
@@ -54,11 +60,18 @@ func gateAndFinalize(db string, maxAge time.Duration, observations []calls.Obser
 
 	defer cleanup()
 
+	observations, fetchRejects, err := fetch(ctx, sys)
+	if err != nil {
+		fatal(err)
+	}
+
 	stats := cli.GateIngest(ctx, sys, maxAge, observations)
 
 	if err := finalizeIngest(ctx, sys, db); err != nil {
 		fatal(err)
 	}
+
+	stats.Rejected = append(fetchRejects, stats.Rejected...)
 
 	return stats
 }

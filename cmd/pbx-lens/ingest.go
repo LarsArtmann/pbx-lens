@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/ingest/webhook"
@@ -38,7 +42,9 @@ func ingestCDR(args []string) {
 		fatal(closeErr)
 	}
 
-	stats := gateAndFinalize(*db, *maxAge, parsed.Observations)
+	stats := gateAndFinalize(*db, *maxAge, func(context.Context, *system.System) ([]calls.Observation, []string, error) {
+		return parsed.Observations, nil, nil
+	})
 
 	fmt.Printf(
 		"ingest-cdr: %d rows parsed, %d parse-skipped, %d recorded, %d corrected, %d rejected\n",
@@ -169,7 +175,9 @@ func ingestWebhook(args []string) {
 		fatal(closeErr)
 	}
 
-	stats := gateAndFinalize(*db, *webhookMaxAge, parsed.Observations)
+	stats := gateAndFinalize(*db, *webhookMaxAge, func(context.Context, *system.System) ([]calls.Observation, []string, error) {
+		return parsed.Observations, nil, nil
+	})
 
 	fmt.Printf(
 		"ingest-webhook: %d calls aggregated, %d lines skipped, %d recorded, %d corrected, %d rejected\n",
@@ -192,18 +200,16 @@ func ingestAgent(args []string) {
 
 	requireDB(fs, *db)
 
-	observations, rejects, err := cli.FetchAgentObservations(ctx, sys, *dir)
-	if err != nil {
-		fatal(err)
-	}
-
-	stats := gateAndFinalize(*db, *agentMaxAge, observations)
-
-	stats.Rejected = append(rejects, stats.Rejected...)
+	// The fetch needs the live session (the parser joins the CDR view by
+	// call uuid), so the agent verb rides gateAndFinalize's fetch hook;
+	// its per-file rejections fold into the stats inside the helper.
+	stats := gateAndFinalize(*db, *agentMaxAge, func(ctx context.Context, sys *system.System) ([]calls.Observation, []string, error) {
+		return cli.FetchAgentObservations(ctx, sys, *dir)
+	})
 
 	fmt.Printf(
 		"ingest-agent: %d transcripts ingested, %d recorded, %d corrected, %d rejected\n",
-		len(observations), stats.Recorded, stats.Corrected, len(stats.Rejected),
+		stats.Total, stats.Recorded, stats.Corrected, len(stats.Rejected),
 	)
 
 	printRejected(stats.Rejected)
