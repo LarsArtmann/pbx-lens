@@ -185,8 +185,10 @@ webphone later gets a read-only deep link, never a data dependency.
   Europe/Berlin (owner R2 2026-10-12 — bare date filters too), an idle
   index drifts out of the chart. htmx polling (R9): `/frag/dashboard`
   30 s, `/frag/staleness` 60 s, runtime self-hosted at
-  `/static/htmx.min.js` — no CDN. `/api/ops` (R15) serves the poller's
-  per-source counters behind the same auth. The systemd draft lives in
+  `/static/htmx.min.js` — no CDN. `/favicon.svg` (embedded lens mark,
+  served `image/svg+xml`) satisfies layout.Base's default favicon link,
+  which otherwise 404s on every page load. `/api/ops` (R15) serves the
+  poller's per-source counters behind the same auth. The systemd draft lives in
   `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential for the
   Telnyx key + htpasswd); the NixOS module LANDED in
   nix-international-telephony 2026-10-11 (`modules/telephony/lens.nix`,
@@ -229,6 +231,14 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
                                       # /api/freshness with a Go http probe (curl banned);
                                       # -recording-timeout bounds proxy upstream hops
                                       # (default web.DefaultUpstreamTimeout, 30 s)
+                                      # CLEAN CHECKOUT FIRST: regen the gitignored
+                                      # stylesheet or /app.css 404s text/plain (a
+                                      # browser MIME refusal, NOT a visible 404) —
+                                      # `nix develop -c tailwindcss -i internal/web/static/app.css \
+                                      #   -o internal/web/static/styles.css --minify`
+                                      # (flake-pinned tailwindcss_4, same as preBuild;
+                                      # buildflow's tailwind-build is deferred here by
+                                      # design) — then REBUILD: go:embed is compile-time
 nix develop                           # devShell: go, golangci-lint, gopls,
                                       # govulncheck, dprint, cqrs-lint
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
