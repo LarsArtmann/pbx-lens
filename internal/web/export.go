@@ -26,34 +26,43 @@ func exportHeader() []string {
 // (D5). One JSON object per line, newest first, so any consumer can tail or
 // pipe it.
 func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
-	views, ok := s.exportViews(w, r)
+	query, pii, ok := s.beginExport(w, r)
 	if !ok {
 		return
 	}
 
+	w.Header().Set("X-PII-Mode", string(pii))
 	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.jsonl"`)
 
-	for _, view := range views {
+	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+		applyPII(pii, &view)
+
 		line, err := json.Marshal(view)
 		if err != nil {
-			return
+			return err
 		}
 
 		//nolint:gosec // JSON-encoded payload served as an ndjson attachment; never rendered as HTML
-		if _, err := w.Write(append(line, '\n')); err != nil {
-			return
-		}
+		_, err = w.Write(append(line, '\n'))
+
+		return err
+	})
+	if err != nil {
+		// The body may already be streaming, so the only honest move is to
+		// log and let the truncated response stand (see logf).
+		s.logf("export.jsonl stream failed", "err", err.Error())
 	}
 }
 
 // exportCSV streams the filtered call index as CSV (D5).
 func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
-	views, ok := s.exportViews(w, r)
+	query, pii, ok := s.beginExport(w, r)
 	if !ok {
 		return
 	}
 
+	w.Header().Set("X-PII-Mode", string(pii))
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.csv"`)
 
@@ -63,25 +72,26 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, view := range views {
-		if err := writer.Write(exportRecord(view)); err != nil {
-			return
-		}
+	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+		applyPII(pii, &view)
+
+		return writer.Write(exportRecord(view))
+	})
+	if err != nil {
+		s.logf("export.csv stream failed", "err", err.Error())
 	}
 
 	writer.Flush()
 }
 
-// exportViews parses the shared filters and loads the rows; it writes the
-// error response itself and reports whether the caller may proceed. The
-// optional pii=hash mode swaps participants for their participant hashes
-// before anything leaves the server.
-func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.CallView, bool) {
+// beginExport parses the shared filters and the pii mode; it writes the
+// error response itself and reports whether the caller may proceed.
+func (s *server) beginExport(w http.ResponseWriter, r *http.Request) (ListCallsQuery, PIIMode, bool) {
 	query, err := parseFilters(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
-		return nil, false
+		return ListCallsQuery{}, PIIModePlain, false
 	}
 
 	pii := PIIMode(r.URL.Query().Get("pii"))
@@ -98,24 +108,10 @@ func (s *server) exportViews(w http.ResponseWriter, r *http.Request) ([]calls.Ca
 			http.StatusBadRequest,
 		)
 
-		return nil, false
+		return ListCallsQuery{}, PIIModePlain, false
 	}
 
-	views, err := ExportCalls(r.Context(), s.sys, query)
-	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
-
-		return nil, false
-	}
-
-	if pii == PIIModeHash {
-		for i := range views {
-			views[i].FromNumber = piiParticipant(views[i].FromNumber)
-			views[i].ToNumber = piiParticipant(views[i].ToNumber)
-		}
-	}
-
-	return views, true
+	return query, pii, true
 }
 
 // PIIMode selects how participant numbers leave the server in an export.
@@ -126,8 +122,10 @@ const (
 	// (the index stores raw numbers by design — see DOMAIN_LANGUAGE.md).
 	PIIModePlain PIIMode = ""
 	// PIIModeHash is the participant-hash-only export mode (T23): numbers
-	// render as sha256:<16 hex chars>, everything else as a redaction
-	// marker.
+	// render as sha256:<16 hex chars> (or [redacted] when unparseable).
+	// Transcripts, excerpts, and insight summaries stay RAW in this mode —
+	// see the export field-coverage matrix in FEATURES.md; pii=hash bounds
+	// participant identity, not free text.
 	PIIModeHash PIIMode = "hash"
 )
 
@@ -142,6 +140,19 @@ func piiParticipant(number string) string {
 	}
 
 	return piiRedacted
+}
+
+// applyPII rewrites one view in place for the chosen export mode. Hash mode
+// covers participant numbers only; free text (transcript, excerpt,
+// insight summary) is disclosed raw by the export matrix — the operator
+// picks pii=hash knowing exactly what it covers.
+func applyPII(pii PIIMode, view *calls.CallView) {
+	if pii != PIIModeHash {
+		return
+	}
+
+	view.FromNumber = piiParticipant(view.FromNumber)
+	view.ToNumber = piiParticipant(view.ToNumber)
 }
 
 // exportRecord flattens one view into the CSV column order.

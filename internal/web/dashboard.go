@@ -78,29 +78,25 @@ func (s DashboardStats) AIRatio() float64 {
 }
 
 // DashboardStatsQuery computes the dashboard aggregates over the whole
-// read model. The day window always ends "today" (UTC), so an idle index
-// shows its volume drifting out of the chart instead of freezing.
+// read model. The day window always ends "today" in the dashboard zone
+// (dashboardLocation), so an idle index shows its volume drifting out of
+// the chart instead of freezing.
 func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time) (DashboardStats, error) {
-	views, err := ExportCalls(ctx, sys, ListCallsQuery{})
-	if err != nil {
-		return DashboardStats{}, err
-	}
-
 	stats := DashboardStats{WindowDays: dashboardWindowDays}
 
-	today := now.UTC().Format(dayFormat)
-	windowStart := now.UTC().Truncate(utcDay).AddDate(0, 0, -(dashboardWindowDays - 1))
+	today := dayKey(now)
+	windowStart := startOfDay(now).AddDate(0, 0, -(dashboardWindowDays - 1))
 	dayIndex := make(map[string]int, dashboardWindowDays)
 
 	for offset := range dashboardWindowDays {
-		day := windowStart.AddDate(0, 0, offset).Format(dayFormat)
+		day := startOfDay(now).AddDate(0, 0, offset).Format(dayFormat)
 		dayIndex[day] = len(stats.ByDay)
 		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})
 	}
 
 	var totalDuration time.Duration
 
-	for _, view := range views {
+	err := StreamExportCalls(ctx, sys, ListCallsQuery{}, func(view calls.CallView) error {
 		stats.Total++
 		totalDuration += time.Duration(view.DurationSecs) * time.Second
 
@@ -110,7 +106,7 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 			stats.HumanCalls++
 		}
 
-		day := view.StartedAt.UTC().Format(dayFormat)
+		day := dayKey(view.StartedAt)
 		if day == today {
 			stats.Today++
 		}
@@ -128,6 +124,11 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 				stats.ByDay[idx].MOSSum += view.MOS
 			}
 		}
+
+		return nil
+	})
+	if err != nil {
+		return DashboardStats{}, err
 	}
 
 	if stats.Total > 0 {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -159,10 +160,13 @@ func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQ
 		}
 
 		// Newest-first order: the page's last (oldest) row is the next keyset
-		// boundary; its timestamp group rides the seen set across pages.
-		cursor = views[len(views)-1].StartedAt
+		// boundary. When a single timestamp group spans pages the boundary
+		// repeats, and the seen set must survive so those ties stay deduped.
+		if next := views[len(views)-1].StartedAt; cursor.IsZero() || next.Before(cursor) {
+			cursor = next
 
-		clear(seen)
+			clear(seen)
+		}
 	}
 }
 
