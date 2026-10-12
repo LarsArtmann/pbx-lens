@@ -107,3 +107,29 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   1.27.2). Full mode needs `--max-time ≥ 15m`: at the previous session's
   5 m cap, nix-build was killed by the budget, not by OOM. Remaining
   findings are the documented advisories above.
+- **oxfmt/oxlint un-minify vendored `*.min.js` (PAID FOR, 2026-10-12)**:
+  BuildFlow's JS formatter provider `oxfmt` triggers on `**/*.js`
+  (`webFilePatterns`) with NO `*.min.js` exclude — the `*.min.js` default
+  lives in the JS *profile* `DefaultExcludes`, which the provider never
+  consumes; oxlint's `jsFilePatterns` has the same gap. Two gate runs
+  pretty-printed the vendored `internal/web/static/htmx.min.js`
+  (1 line → 3,415, daemon committed one copy at 939f194) and run #3's
+  oxlint reported 1 finding against it. Fix (repo-owned):
+  `.buildflow.yml` now carries a global `exclude: ["*.min.js"]` —
+  `MatchExcludePattern` globs basenames, so the nested path matches —
+  plus the pinned bytes restored from history
+  (`git show bd51d29:internal/web/static/htmx.min.js`). Verified: scoped
+  `buildflow -s oxfmt` / `-s oxlint` report `filesScanned: 0` and the file
+  survives. Rule: vendored browser assets are exclude-pinned, never
+  reformatted in place.
+- **templ fmt import-sort couples the pre-commit check to hand edits
+  (PAID FOR, 2026-10-12)**: the flake's sandboxed pre-commit check runs
+  treefmt → templ fmt in fail-on-change mode, and templ fmt SORTS Go
+  imports inside `.templ` files. `dashboard.templ` carried
+  `forms` before `feedback` after hand edits, so `checks.pre-commit`
+  failed "unexpected changes detected" and took down nix-build +
+  nix-flake-check with it (fast, deterministic — not load starvation).
+  Fix: `nix develop -c templ fmt ./internal/web/`, then
+  `nix build .#checks.x86_64-linux.pre-commit` standalone (exit 0).
+  Rule: run templ fmt after ANY hand edit to a `.templ` import block,
+  before spending a gate run.
