@@ -69,6 +69,34 @@ function repoRoot() {
   return execFileSync("git", ["rev-parse", "--show-toplevel"]).toString().trim();
 }
 
+// The smoke corpus has no transcript turns, so a ?q= detail page would
+// render the honest no-match path — useless for eyeballing the amber
+// match log (plan T1.4). This fixture ingests one turn-bearing agent
+// transcript ("thermostat") whose detail page shows the highlight.
+// Re-ingest is idempotent (same ContentHash replays to zero events).
+function seedAgentTranscript(bin) {
+  const dir = path.join(OUT, "agent-fixture");
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(
+    path.join(dir, "probe-egg-1.jsonl"),
+    [
+      JSON.stringify({ type: "start", ts: 1760041885, uuid: "probe-egg-1", models: ["gpt-rt"] }),
+      JSON.stringify({
+        type: "turn",
+        role: "agent",
+        text: "Hi, this is Woolly calling about your thermostat booking.",
+      }),
+      JSON.stringify({
+        type: "turn",
+        role: "caller",
+        text: "Yes, the thermostat is broken, when can someone come?",
+      }),
+      JSON.stringify({ type: "end", reason: "caller_hungup" }),
+    ].join("\n") + "\n",
+  );
+  execFileSync(bin, ["ingest-agent", "-db", DB, "-dir", dir], { stdio: "ignore" });
+}
+
 // go run wraps a child we cannot signal cleanly; build a throwaway binary.
 function buildAndServe() {
   fs.mkdirSync(OUT, { recursive: true });
@@ -81,6 +109,7 @@ function buildAndServe() {
   if (!fs.existsSync(DB)) {
     execFileSync(bin, ["smoke", "-db", DB], { stdio: "ignore" });
   }
+  seedAgentTranscript(bin);
   const serve = spawn(bin, ["serve", "-db", DB, "-addr", `127.0.0.1:${PORT}`], { stdio: "ignore" });
   const http = require("http");
   const deadline = Date.now() + 20000;
@@ -128,12 +157,27 @@ function buildAndServe() {
     const detail1 = hrefs[0] || "/calls/telnyx-conversation/none";
     const detail2 = hrefs[1] || detail1;
 
+    // Discover the ?q= match-log URL (plan T1.3): scrape the first search
+    // hit for the fixture term; that href + ?q= is the detail page whose
+    // turns carry the amber mark (the server 302s once to at=0#turn-0 and
+    // puppeteer follows it, so the capture shows the post-jump state).
+    const hitPage = await browser.newPage();
+    await hitPage.goto(`${BASE}/search?q=thermostat`, { waitUntil: "networkidle0" });
+    const hitHrefs = await hitPage.$$eval('[data-tc-row-href], a[href^="/calls/"]', (els) => [
+      ...new Set(els.map((el) => el.getAttribute("data-tc-row-href") || el.getAttribute("href"))),
+    ]);
+    await hitPage.close();
+    const detailQ = hitHrefs[0]
+      ? `${hitHrefs[0]}${hitHrefs[0].includes("?") ? "&" : "?"}q=thermostat`
+      : detail1;
+
     const pages = [
       ["calls", "/"],
       ["search", "/search"],
       ["dashboard", "/dashboard"],
       ["detail-a", detail1],
       ["detail-b", detail2],
+      ["detail-q", detailQ],
     ];
     const themes = ["light", "dark"];
     const viewports = [
