@@ -238,7 +238,7 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 
 	for rows.Next() {
 		var (
-			hit              Hit
+			hit             Hit
 			started, snippet string
 		)
 
@@ -290,7 +290,7 @@ func (i *Index) digitHits(ctx context.Context, digits string) ([]Hit, error) {
 
 	for rows.Next() {
 		var (
-			hit              Hit
+			hit             Hit
 			started, number string
 		)
 

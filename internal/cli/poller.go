@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"sync"
 	"time"
@@ -98,9 +99,7 @@ func (c *SourceCounters) Snapshot() (map[string]SourceStat, time.Time) {
 
 	out := make(map[string]SourceStat, len(c.sources))
 
-	for source, stat := range c.sources {
-		out[source] = stat
-	}
+	maps.Copy(out, c.sources)
 
 	return out, c.lastPass
 }
@@ -156,7 +155,10 @@ func PollOnce(
 		cfg.Counters.Record("telnyx-conversation", telnyxStats)
 	}
 
-	stats := mergeStats(mergeStats(mergeStats(mergeStats(IngestStats{}, cdrStats), webhookStats), transcriptStats), telnyxStats)
+	stats := mergeStats(
+		mergeStats(mergeStats(mergeStats(IngestStats{}, cdrStats), webhookStats), transcriptStats),
+		telnyxStats,
+	)
 
 	if err := DrainProjections(ctx, sys); err != nil {
 		log("poll drain", "err", err)

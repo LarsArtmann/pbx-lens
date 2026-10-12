@@ -94,10 +94,12 @@ func TestParseVanillaBareQuoteTail(t *testing.T) {
 	if len(res.Observations) != 2 || res.Skipped != 0 {
 		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
 	}
+
 	for _, in := range res.Observations {
 		if in.ToNumber != "2000" || in.HangupCause != "NORMAL_CLEARING" {
 			t.Fatalf("row wrong: %+v", in)
 		}
+
 		if in.FromNumber != "0000000000" {
 			t.Fatalf("bare-quote residue leaked into participants: %+v", in)
 		}

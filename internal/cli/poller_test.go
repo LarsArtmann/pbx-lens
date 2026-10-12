@@ -20,7 +20,7 @@ func (l *pollTestLog) printf(msg string, args ...any) {
 	var kv strings.Builder
 
 	for i := 0; i+1 < len(args); i += 2 {
-		kv.WriteString(fmt.Sprintf(" %v=%v", args[i], args[i+1]))
+		_, _ = fmt.Fprintf(&kv, " %v=%v", args[i], args[i+1])
 	}
 
 	l.lines = append(l.lines, strings.TrimSpace(msg+kv.String()))
