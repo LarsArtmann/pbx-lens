@@ -7,6 +7,22 @@ No version has been tagged yet; everything lives under Unreleased.
 
 ## [Unreleased]
 
+### Fixed — 2026-10-12 (cdr ingest vs vanilla mod_cdr_csv output)
+
+- CDR polling recorded NOTHING from a real FreeSWITCH: vanilla
+  mod_cdr_csv writes every Master.csv line with `,"", ""` in the
+  compiled-in default template's tail (comma-space before the final
+  empty fields = a bare quote in a non-quoted field), and Go's strict
+  CSV rejected the whole line. The nix-international-telephony
+  telephony-lens VM suite caught it live (`poll cdr:
+  [corruption:cdr.parse.read]`, 0 offered/0 recorded at a 2s cadence
+  against a real placed call). Fix: `csv.Reader.LazyQuotes = true`
+  (normalize already strips the residue) + a regression arm pinning
+  the exact vanilla bytes. Author note: the code landed via auto-commit
+  `e1d9ff7` in a heuristic bundle; this entry is the attribution.
+
+### Added — 2026-10-12 (SUPERB pareto plan execution)
+
 ### Added — 2026-10-12 (SUPERB pareto plan execution)
 
 - Dashboard day buckets follow Europe/Berlin (R2, owner decision): the
