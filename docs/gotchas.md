@@ -218,3 +218,17 @@ invariants summary; this file keeps the war stories.
   the element) — one local pass still leaves the check red. Verify with the
   real thing: `nix build .#checks.x86_64-linux.pre-commit`, not a local
   treefmt run.
+- **An HTTP redirect can never carry the #fragment (paid for, 2026-10-12,
+  templ-UI T21)**: the search deep link `?q=` wants to land the browser on
+  the first matching transcript turn, and the obvious one-shot
+  `http.Redirect(..., "/calls/…?q=…#turn-N")` loops forever — `Location`
+  URLs reach the client whole, but the browser strips the fragment before
+  the NEXT request, so the server sees the same `?q=` every time and
+  redirects again. The fix is a self-imposed one-jump rule: the redirect
+  target carries `&at=N` (plus the fragment for the browser), and the
+  handler redirects only when `at` is ABSENT — its presence means "already
+  jumped", render instead. `at` is never parsed (presence-checked only),
+  so tampered or garbage values (`at=999`, `at=abc`) fall through to a
+  plain 200 render with marks — pinned by
+  `TestDetailQueryTamperedAtRendersNoJump`. Do not "simplify" the param
+  away and do not start parsing it.
