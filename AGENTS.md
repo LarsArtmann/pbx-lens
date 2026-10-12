@@ -122,7 +122,10 @@ webphone later gets a read-only deep link, never a data dependency.
 - **serve/UI:** `serve` composes appkit (`ServiceConfig{Addr}` +
   `systemd.Install` — a no-op without `NOTIFY_SOCKET`, READY/STOPPING/WATCHDOG
   under the manager) around `web.Register`; every UI route is a query or a
-  proxy, never a write. The dashboard aggregates via the same bounded full
+  proxy, never a write. The recording proxy's two upstream hops are bounded
+  by `web.DefaultUpstreamTimeout` (30 s; `serve -recording-timeout`):
+  metadata fetch deadline + WAV response headers, body streams unbounded.
+  The dashboard aggregates via the same bounded full
   scan the export uses (`maxExportRows` cap); its day window always ends
   "today" UTC so an idle index drifts out of the chart. The systemd draft lives in
   `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential for the

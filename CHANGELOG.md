@@ -105,6 +105,19 @@ No version has been tagged yet; everything lives under Unreleased.
 - Shared `newTestServerWithSearch` test helper (search.Open + Rebuild over
   the seeded views); the one-flow test and the live-server e2e test both
   collapsed onto it (was two 15-line copies of the index wiring).
+- Recording-proxy upstream timeout knob: `web.DefaultUpstreamTimeout` (30 s)
+  bounds both upstream hops of the recording route — the Telnyx metadata
+  fetch runs under a hard deadline (504 on expiry) and the WAV stream must
+  deliver response headers within the budget (502), while the audio body
+  itself streams unbounded. Deployment-tunable via `serve
+  -recording-timeout` and `web.RecordingOptions.UpstreamTimeout`; the
+  previously unbounded `http.DefaultClient` ride is gone. Production value
+  still awaits real traffic data.
+- File-size split of the three >350-line files the structure linter kept
+  flagging: `internal/calls/domain.go` (570) into domain/events/commands/
+  decider, `cmd/pbx-lens/main.go` (677) into main/ingest/serve/ops, and
+  `internal/ingest/telnyx/telnyx.go` (379) into client + `dto.go` — zero
+  API or behavior change; every non-test file is now well under the limit.
 
 ### Fixed
 
@@ -170,3 +183,12 @@ No version has been tagged yet; everything lives under Unreleased.
   120 limit).
 - AGENTS.md templ version corrected to the landed v0.3.1070 (manual-bump-only
   dependency since dependabot mangles this go.mod).
+- `apps.update-vendor-hash` in flake.nix carries `meta.description` (and
+  uses `lib.getExe` instead of `pkgs.lib.getExe`), so `nix flake check`
+  stops warning on every gate run.
+- Upstream loop closed for the 2026-10-11/12 findings: all five D6 filings
+  re-verified OPEN (go-cqrs-lite#62/#63/#64, go-nix-helpers#7,
+  treefmt-nix#545); the cqrs-lint C009 bare-`must` gap source-verified as
+  covered by go-cqrs-lite#64; the load-starved compile-gate misattribution
+  in BuildFlow (tool.timeout kill reported as "dependency bump introduced
+  compile errors" + silent go.mod/go.sum revert) filed as BuildFlow#45.

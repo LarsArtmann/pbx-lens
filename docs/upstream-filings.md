@@ -3,7 +3,7 @@
 Extracted from AGENTS.md 2026-10-11 (go-structure-linter size limit).
 Update these notes when upstream lands.
 
-**State check 2026-10-11 ~20:05 (read-only, gh api): all five filings OPEN
+**State check 2026-10-12 (read-only, gh api): all five filings still OPEN
 upstream — no upstream movement to fold in yet.**
 
 - **go-cqrs-lite#62**: sqliteengine binds filter values raw (`filter_clause.go:44`,
@@ -17,4 +17,12 @@ upstream — no upstream movement to fold in yet.**
   wrap (`go-standard.nix:1297`) instead of the module's resolved goPkg (line 665).
 - **numtide/treefmt-nix#545**: already filed upstream 2026-10-02 — corroborating comment
   posted with our independent repro (nixpkgs go 1.26.8 vs floor 1.27.1).
+- **BuildFlow#45** (filed 2026-10-12): go-mod-update misreports a
+  load-starved compile gate (`tool.timeout` kill) as "dependency bump
+  introduced compile errors" and silently reverts go.mod/go.sum;
+  source-verified chain + draft in `docs/drafts/`.
+- C009 verification note (2026-10-12): the `len(name) > 4` guard is
+  confirmed at source (`cmd/cqrs-lint/pkg/rules/correctness/c009.go:95`,
+  same shape for `New` at line 99) and IS covered by go-cqrs-lite#64 — no
+  separate filing.
 - Drafts live in `docs/drafts/` (never /tmp).
