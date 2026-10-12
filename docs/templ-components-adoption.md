@@ -41,6 +41,22 @@
    `GOEXPERIMENT=jsonv2 go test ./internal/web/ -run TestGoldenPages
    -update`, REVIEW the diff, then commit; the plain suite must go green
    without `-update` afterwards.
+
+## Corpus trim decision (T17, 2026-10-12): KEEP the full corpus
+
+Measured: the corpus carries 6,405 class lines (every class string in
+templ-components, used or not); styles.css builds to 104,646 bytes
+minified — 17,291 bytes gzipped on the wire. A corpus trimmed to
+pbx-lens's reachable classes would save roughly that gzip delta, and the
+cost is a second staleness axis: every component adoption AND every bump
+would need a re-trim, and a stale TRIMMED corpus silently drops classes
+exactly like the stale FULL corpus that shipped the 2026-10-12
+hamburger/dark-shade breakage — except the goldens pin markup, not
+pixels, so missing CSS is invisible to the whole test suite. For a
+single-host internal tool whose CSS revalidates at 304s, ~17 KiB on the
+wire once per index change is noise. Revisit only with a real trigger
+(CSS on a billed CDN, or a cold-start budget) AND a reachability test
+that fails the build when a rendered class is missing from the corpus.
    | display.PieChart Donut (AI/human mix) | used 2026-10-12 | Donut+CenterLabel+ShowLegend replaced the hand-rolled flex bar; Slice.Color is a text-* class (fill=currentColor) |
    | display.Grid + StatCard (dashboard stat row) | used | icons (Phone/Calendar/Microphone/Clock) + Tones added 2026-10-12; StatCard.Value is a string; renders `>N </dd>` — assert so |
    | display.BarChart (vertical) + Sparkline (dashboard volume/trend) | used | MinBarWidth `min-w-1` + Gap `gap-px` for dense 30-day series; Tooltip carries the full date |
