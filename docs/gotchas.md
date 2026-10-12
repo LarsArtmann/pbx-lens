@@ -127,10 +127,10 @@ invariants summary; this file keeps the war stories.
   in a sibling module (even gated, the definition trips the read-only check).
 - **go test green is NOT lint green (paid for, 2026-10-12)**: a full wave shipped six
   real golangci findings (errcheck on non-test `fmt.Fprintf(out, …)`, two golines
-  >120-col lines, one formatter diff) while "watch the gate" stood in for verification —
-  and the gate could not run (load), so nothing caught it until a scoped
-  `golangci-lint run <touched pkgs>` before the release. Rule: end every wave with a
-  scoped lint of the packages you touched.
+  > 120-col lines, one formatter diff) while "watch the gate" stood in for verification —
+  > and the gate could not run (load), so nothing caught it until a scoped
+  > `golangci-lint run <touched pkgs>` before the release. Rule: end every wave with a
+  > scoped lint of the packages you touched.
 - **The golangci LSP cache goes stale across sessions (2026-10-12)**: it reported
   findings for code that no longer exists (a `timePtr` ghost) and missed real ones
   until restart. Verify every LSP lint claim — dismissal AND action — against
