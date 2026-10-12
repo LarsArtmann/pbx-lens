@@ -130,7 +130,7 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
 - **oxfmt/oxlint un-minify vendored `*.min.js` (PAID FOR, 2026-10-12)**:
   BuildFlow's JS formatter provider `oxfmt` triggers on `**/*.js`
   (`webFilePatterns`) with NO `*.min.js` exclude — the `*.min.js` default
-  lives in the JS *profile* `DefaultExcludes`, which the provider never
+  lives in the JS _profile_ `DefaultExcludes`, which the provider never
   consumes; oxlint's `jsFilePatterns` has the same gap. Two gate runs
   pretty-printed the vendored `internal/web/static/htmx.min.js`
   (1 line → 3,415, daemon committed one copy at 939f194) and run #3's

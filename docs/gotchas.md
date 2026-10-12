@@ -149,11 +149,17 @@ invariants summary; this file keeps the war stories.
   expected bytes (one-arg-per-line call wrapping, map-key realignment) — apply it
   verbatim instead of guessing at the style.
 - **BuildFlow's oxfmt has no `*.min.js` exclude (paid for, 2026-10-12)**: the JS
-  *profile* defaults exclude minified files, but the oxfmt/oxlint *providers* trigger
+  _profile_ defaults exclude minified files, but the oxfmt/oxlint _providers_ trigger
   on plain `**/*.js` — two gate runs pretty-printed the vendored htmx.min.js
   (1 → 3,415 lines) and oxlint then flagged it. Fix: global
   `exclude: ["*.min.js"]` in `.buildflow.yml` + restore pinned bytes via
   `git show <rev>:path`. Vendored assets are exclude-pinned, never reformatted.
+- **templ fmt sorts Go imports inside `.templ` (paid for, 2026-10-12)**: the flake's
+  pre-commit check runs templ fmt fail-on-change, so a hand-edited import block
+  (feedback/forms out of order) failed the whole nix-build — deterministically, and
+  looking like a code defect. Run `nix develop -c templ fmt ./internal/web/` after
+  any `.templ` import edit; `nix build .#checks.x86_64-linux.pre-commit` verifies
+  standalone in seconds before a 15-minute gate run.
 - **Don't touch the tree during a gate run (paid for, 2026-10-12)**: a mid-run
   docs edit re-dirtied the nix `-dirty` derivations and started a second full
   build beside the running tests; nix-build got killed 8s in. Docs before or
