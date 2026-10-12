@@ -20,13 +20,15 @@ import (
 const pageSize = 50
 
 // ListCallsQuery is the fully-parsed list-page request. Zero fields mean
-// unfiltered; Before is the exclusive keyset cursor (RFC3339).
+// unfiltered; Before is the exclusive keyset cursor for the older walk,
+// After the exclusive cursor for the newer walk (a page's top row timestamp).
 type ListCallsQuery struct {
 	Direction calls.Direction
 	AI        *bool
 	From      time.Time
 	To        time.Time
 	Before    time.Time
+	After     time.Time
 }
 
 // CallRow is the list-page view model — the UI never touches domain types.
@@ -48,10 +50,11 @@ func (r CallRow) Href() string {
 	return fmt.Sprintf("/calls/%s/%s", url.PathEscape(string(r.Kind)), url.PathEscape(r.NativeID))
 }
 
-// CallListPage is one rendered page plus the cursor for the next-older walk.
+// CallListPage is one rendered page plus the cursors for both keyset walks.
 type CallListPage struct {
 	Rows      []CallRow
 	NextOlder string // empty when this page was the last
+	NextNewer string // empty when this page is the head of the walk
 }
 
 // ListCalls runs the query against the read model, newest first.
@@ -84,6 +87,27 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 			IsAI:      view.IsAI,
 			Excerpt:   view.TranscriptExcerpt,
 		})
+	}
+
+	// A newer page exists whenever any row sorts above this page's top row;
+	// the cursor back to it is that top row's timestamp. The probe scan
+	// carries only the typed filters — both walk cursors bound below the top
+	// row and must not narrow the probe.
+	if len(page.Rows) > 0 {
+		top := page.Rows[0].When
+
+		probe := append(scanFilters(query),
+			metaengine.WithFilter("started_at", metaengine.FilterGt, rfc3339Nano(top)),
+			metaengine.WithLimit(1),
+		)
+		newer, err := reader.Scan(ctx, probe...)
+		if err != nil {
+			return CallListPage{}, err
+		}
+
+		if len(newer) > 0 {
+			page.NextNewer = top.UTC().Format(time.RFC3339)
+		}
 	}
 
 	return page, nil
@@ -232,6 +256,10 @@ func listOptions(query ListCallsQuery, limit int) []metaengine.ScanOption {
 	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
 	if !query.Before.IsZero() {
 		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
+	}
+
+	if !query.After.IsZero() {
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterGt, rfc3339Nano(query.After)))
 	}
 
 	return opts

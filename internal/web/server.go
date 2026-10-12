@@ -151,6 +151,7 @@ func parseFilters(r *http.Request) (ListCallsQuery, error) {
 		{name: "from", target: &query.From},
 		{name: "to", target: &query.To},
 		{name: "before", target: &query.Before},
+		{name: "after", target: &query.After},
 	} {
 		v := r.URL.Query().Get(field.name)
 		if v == "" {

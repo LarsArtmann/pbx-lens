@@ -39,15 +39,15 @@ templ rangeForm(stats DashboardStats) {
 		Class:  "mb-6",
 	}) {
 		@forms.DatePicker(forms.DatePickerProps{
-			Name:  "from",
-			Label: "From",
-			Value: dateValue(stats.rangeFrom),
+			Name:      "from",
+			Label:     "From",
+			Value:     dateValue(stats.rangeFrom),
 			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@forms.DatePicker(forms.DatePickerProps{
-			Name:  "to",
-			Label: "To",
-			Value: dateValue(stats.rangeTo),
+			Name:      "to",
+			Label:     "To",
+			Value:     dateValue(stats.rangeTo),
 			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@display.Button(display.ButtonProps{Text: "Apply", Type: display.ButtonHTMLSubmit})
@@ -129,8 +129,8 @@ templ statCards(stats DashboardStats, now time.Time) {
 templ volumeCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays)}) {
 		@display.BarChart(display.BarChartProps{
-			Bars: volumeBars(stats.ByDay),
-			Orient:      display.BarVertical,
+			Bars:   volumeBars(stats.ByDay),
+			Orient: display.BarVertical,
 			// Height + !items-stretch: without them the bar wrapper has no
 			// definite height and every vertical bar collapses to 0 px
 			// (verified in-browser; upstream file candidate).
@@ -154,10 +154,10 @@ templ volumeCard(stats DashboardStats) {
 templ durationCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call durations"}) {
 		@display.BarChart(display.BarChartProps{
-			Bars: durationBars(stats.Durations),
-			Orient:      display.BarVertical,
-			Height:      "10rem",
-			Class:       "!items-stretch",
+			Bars:         durationBars(stats.Durations),
+			Orient:       display.BarVertical,
+			Height:       "10rem",
+			Class:        "!items-stretch",
 			ShowValues:   true,
 			EmptyMessage: "No calls indexed yet",
 		})
@@ -247,10 +247,10 @@ templ mosCard(stats DashboardStats) {
 			if hasWindowMOS(stats.ByDay) {
 				<div class="mt-3">
 					@display.BarChart(display.BarChartProps{
-						Bars:  mosBars(stats.ByDay),
-						Orient: display.BarVertical,
-						Height: "6rem",
-						Class:  "!items-stretch",
+						Bars:         mosBars(stats.ByDay),
+						Orient:       display.BarVertical,
+						Height:       "6rem",
+						Class:        "!items-stretch",
 						MinBarWidth:  "min-w-1",
 						Gap:          "gap-px",
 						ShowValues:   false,
