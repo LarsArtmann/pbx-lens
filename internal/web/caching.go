@@ -25,9 +25,11 @@ func NewCacheCounters() *CacheCounters {
 }
 
 // CacheStats is the /api/ops "cache" section: a point-in-time read of the
-// middleware counters. HitRatio is NotModified over all tag-resolved
-// conditional-capable responses (the share of responses that skipped their
-// body); 0 until the first such response.
+// middleware counters. ETagGenerated counts every tag-resolved response —
+// go-etag resolves the tag on 304 replays too, so it doubles as the
+// conditional-capable request count. HitRatio is NotModified over
+// ETagGenerated (the share of responses that skipped their body); 0 until
+// the first tag is resolved.
 type CacheStats struct {
 	ETagGenerated   uint64  `json:"etag_generated"`
 	NotModified     uint64  `json:"not_modified"`
@@ -43,8 +45,8 @@ func (c *CacheCounters) Snapshot() CacheStats {
 	notModified := c.notModified.Load()
 
 	ratio := 0.0
-	if total := generated + notModified; total > 0 {
-		ratio = float64(notModified) / float64(total)
+	if generated > 0 {
+		ratio = float64(notModified) / float64(generated)
 	}
 
 	return CacheStats{

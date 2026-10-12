@@ -9,7 +9,9 @@ import (
 
 // TestETagMiddlewareCounters proves the hooks observe every outcome the
 // middleware can produce: a fresh tag on the first response, a 304 on the
-// conditional replay, and the derived hit ratio.
+// conditional replay, and the derived hit ratio. The replay also re-fires
+// OnETagGenerated (go-etag resolves the tag on 304s too), which is why
+// ETagGenerated doubles as the tag-resolved request count.
 func TestETagMiddlewareCounters(t *testing.T) {
 	stats := NewCacheCounters()
 
@@ -40,8 +42,8 @@ func TestETagMiddlewareCounters(t *testing.T) {
 
 	snapshot := stats.Snapshot()
 
-	if snapshot.ETagGenerated != 1 {
-		t.Errorf("ETagGenerated = %d, want 1", snapshot.ETagGenerated)
+	if snapshot.ETagGenerated != 2 {
+		t.Errorf("ETagGenerated = %d, want 2 (200 and its 304 replay both resolve a tag)", snapshot.ETagGenerated)
 	}
 
 	if snapshot.NotModified != 1 {
@@ -98,8 +100,8 @@ func TestETagMiddlewareOverflowWarns(t *testing.T) {
 		t.Fatal("overflow did not warn")
 	}
 
-	if len(warnedArgs) != 2 || warnedArgs[0] != "limit_bytes" || warnedArgs[1] != (1<<20)+16 {
-		t.Errorf("overflow warning args = %v, want [limit_bytes %d]", warnedArgs, (1<<20)+16)
+	if len(warnedArgs) != 2 || warnedArgs[0] != "limit_bytes" || warnedArgs[1] != 1<<20 {
+		t.Errorf("overflow warning args = %v, want [limit_bytes %d] (the configured limit)", warnedArgs, 1<<20)
 	}
 }
 

@@ -451,7 +451,7 @@ func TestOpsEndpointServesCacheSection(t *testing.T) {
 		t.Fatalf("GET /api/ops with cache-only counters status = %d, want 200 (body: %s)", status, body)
 	}
 
-	for _, want := range []string{`"etag_generated":1`, `"not_modified":1`, `"hit_ratio":0.5`, `"buffer_overflows":0`} {
+	for _, want := range []string{`"etag_generated":2`, `"not_modified":1`, `"hit_ratio":0.5`, `"buffer_overflows":0`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("/api/ops cache section missing %q (body: %s)", want, body)
 		}
