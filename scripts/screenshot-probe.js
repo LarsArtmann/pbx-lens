@@ -2,26 +2,21 @@
 // screenshot-probe — pixel-truth harness for the pbx-lens UI (plan T3).
 //
 // Captures every operator-facing page at light/dark × 375/1280 px into
-// /tmp/lens-shots as labeled PNGs for the eyeball passes (T3.3–T3.5) and as
-// the visual instrument later tasks read from (T11 contrast, T12/T14
-// verdicts).
+// --out as labeled PNGs for the eyeball passes and as the visual
+// instrument later tasks read from. Pages: calls, search, dashboard, two
+// discovered details, and the ?q= match-log detail (T1.3 — URL scraped
+// from a real search hit; the agent-transcript fixture makes it show the
+// amber marks).
 //
-// Capture tool decision (subtask 3.1): puppeteer-core driving NixOS's
-// chromium. Full chrome CLI flags cannot emulate prefers-color-scheme (the
-// app's theme default), and puppeteer gives deterministic waits + full-page
-// shots. The dependency is dev-tooling only: this script installs
-// puppeteer-core into a scratch prefix on first run — nothing enters the Go
-// module graph, the flake, or package.json.
+// Bootstrap (chromium discovery, puppeteer scratch install, binary build,
+// corpus seeding, serve lifecycle) lives in scripts/lib/ui-probe.js.
 //
-// Requirements: node, npm, nix chromium (auto-located via $CHROMIUM or
-// /nix/store/*-chromium-*/bin/chromium), Go toolchain.
 // Usage: node scripts/screenshot-probe.js [--port 18099] [--out /tmp/lens-shots]
 "use strict";
 
-const { execFileSync, spawn } = require("child_process");
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
+const probe = require("./lib/ui-probe");
 
 const args = process.argv.slice(2);
 const arg = (name, dflt) => {
@@ -33,115 +28,15 @@ const OUT = arg("--out", "/tmp/lens-shots");
 const PORT = arg("--port", "18099");
 const BASE = `http://127.0.0.1:${PORT}`;
 const DB = path.join(OUT, "lens.db");
-const SCRATCH = path.join(os.tmpdir(), "lens-shot-probe");
-
-function findChromium() {
-  if (process.env.CHROMIUM) return process.env.CHROMIUM;
-  const store = "/nix/store";
-  const hits = fs
-    .readdirSync(store)
-    .filter((n) => /^[\w-]+-chromium-\d/.test(n))
-    .map((n) => path.join(store, n, "bin", "chromium"))
-    .filter((p) => fs.existsSync(p))
-    .sort();
-  if (hits.length === 0) {
-    throw new Error("no chromium found; set CHROMIUM=/path/to/chromium");
-  }
-  return hits[hits.length - 1];
-}
-
-function ensurePuppeteer() {
-  const mod = path.join(SCRATCH, "node_modules", "puppeteer-core");
-  if (!fs.existsSync(mod)) {
-    fs.mkdirSync(SCRATCH, { recursive: true });
-    if (!fs.existsSync(path.join(SCRATCH, "package.json"))) {
-      execFileSync("npm", ["init", "-y"], { cwd: SCRATCH, stdio: "ignore" });
-    }
-    execFileSync("npm", ["i", "puppeteer-core@23", "--no-fund", "--no-audit"], {
-      cwd: SCRATCH,
-      stdio: "inherit",
-    });
-  }
-  return require(path.join(mod));
-}
-
-function repoRoot() {
-  return execFileSync("git", ["rev-parse", "--show-toplevel"]).toString().trim();
-}
-
-// The smoke corpus has no transcript turns, so a ?q= detail page would
-// render the honest no-match path — useless for eyeballing the amber
-// match log (plan T1.4). This fixture ingests one turn-bearing agent
-// transcript ("thermostat") whose detail page shows the highlight.
-// Re-ingest is idempotent (same ContentHash replays to zero events).
-function seedAgentTranscript(bin) {
-  const dir = path.join(OUT, "agent-fixture");
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(
-    path.join(dir, "probe-egg-1.jsonl"),
-    [
-      JSON.stringify({ type: "start", ts: 1760041885, uuid: "probe-egg-1", models: ["gpt-rt"] }),
-      JSON.stringify({
-        type: "turn",
-        role: "agent",
-        text: "Hi, this is Woolly calling about your thermostat booking.",
-      }),
-      JSON.stringify({
-        type: "turn",
-        role: "caller",
-        text: "Yes, the thermostat is broken, when can someone come?",
-      }),
-      JSON.stringify({ type: "end", reason: "caller_hungup" }),
-    ].join("\n") + "\n",
-  );
-  execFileSync(bin, ["ingest-agent", "-db", DB, "-dir", dir], { stdio: "ignore" });
-}
-
-// go run wraps a child we cannot signal cleanly; build a throwaway binary.
-function buildAndServe() {
-  fs.mkdirSync(OUT, { recursive: true });
-  const bin = path.join(OUT, "pbx-lens-probe-bin");
-  execFileSync("go", ["build", "-o", bin, "./cmd/pbx-lens"], {
-    cwd: repoRoot(),
-    env: { ...process.env, GOEXPERIMENT: "jsonv2" },
-    stdio: "ignore",
-  });
-  if (!fs.existsSync(DB)) {
-    execFileSync(bin, ["smoke", "-db", DB], { stdio: "ignore" });
-  }
-  seedAgentTranscript(bin);
-  const serve = spawn(bin, ["serve", "-db", DB, "-addr", `127.0.0.1:${PORT}`], { stdio: "ignore" });
-  const http = require("http");
-  const deadline = Date.now() + 20000;
-  return new Promise((resolve, reject) => {
-    (function ping() {
-      http
-        .get(`${BASE}/`, (r) => {
-          // A successful ping against a dead child means an older serve
-          // still owns the port — captures would silently hit a stale
-          // binary + CSS, so fail loudly instead.
-          if (serve.exitCode !== null) {
-            return reject(
-              new Error(`port ${PORT} already in use (stale serve?); kill it or pass --port`),
-            );
-          }
-          return resolve(serve);
-        })
-        .on("error", retry);
-      function retry() {
-        if (Date.now() > deadline) return reject(new Error("serve did not come up"));
-        setTimeout(ping, 250);
-      }
-    })();
-  });
-}
 
 (async () => {
-  const puppeteer = ensurePuppeteer();
-  const serve = await buildAndServe();
+  const puppeteer = probe.ensurePuppeteer();
+  const bin = probe.buildProbeBinary(OUT);
+  probe.seedProbeDB(bin, DB);
+  const serve = await probe.serveProbe(bin, DB, PORT);
   try {
     const browser = await puppeteer.launch({
-      executablePath: findChromium(),
+      executablePath: probe.findChromium(),
       args: ["--no-sandbox", "--disable-gpu"],
     });
 
@@ -208,10 +103,7 @@ function buildAndServe() {
     await browser.close();
     console.log(`DONE: ${n} PNGs in ${OUT}`);
   } finally {
-    serve.kill("SIGTERM");
-    // Graceful drain can hang on a stuck keep-alive; never leave a serve
-    // squatting on the port for the next run.
-    setTimeout(() => serve.kill("SIGKILL"), 3000).unref();
+    probe.stopProbe(serve);
   }
 })().catch((e) => {
   console.error(e);
