@@ -63,7 +63,7 @@ func TestServeStackEndToEnd(t *testing.T) {
 
 	defer cleanup()
 
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "")
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
 	if err != nil {
 		t.Fatalf("build service config: %v", err)
 	}
@@ -186,7 +186,7 @@ func assertGzip(t *testing.T, client *http.Client, base, path string) {
 // unauthenticated mode (auth is the htpasswd middleware or loopback-only
 // dev), and the middleware stack grows by auth + the three web middlewares.
 func TestBuildServiceConfigWiring(t *testing.T) {
-	plain, err := buildServiceConfig("127.0.0.1:0", "")
+	plain, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
 	if err != nil {
 		t.Fatalf("build plain config: %v", err)
 	}
@@ -207,7 +207,7 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		t.Fatalf("plain ExtraMiddlewares = %d, want 3 (timing, compression, etag)", got)
 	}
 
-	authed, err := buildServiceConfig("127.0.0.1:0", writeTempHtpasswd(t))
+	authed, err := buildServiceConfig("127.0.0.1:0", writeTempHtpasswd(t), nil, nil)
 	if err != nil {
 		t.Fatalf("build authed config: %v", err)
 	}

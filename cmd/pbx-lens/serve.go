@@ -123,7 +123,9 @@ func serve(args []string) {
 	// opt-in), and the extras in wire order: auth gates everything,
 	// Server-Timing observes the full handler span, Compression sits outer
 	// of ETag so tags hash identity bodies (go-etag's ordering doctrine).
-	serviceConfig, err := buildServiceConfig(*addr, *htpasswdPath)
+	cacheStats := web.NewCacheCounters()
+
+	serviceConfig, err := buildServiceConfig(*addr, *htpasswdPath, cacheStats, slogLog)
 	if err != nil {
 		fatal(err)
 	}
@@ -152,7 +154,7 @@ func serve(args []string) {
 	web.Register(
 		svc.Mux,
 		sys,
-		web.Options{Recordings: recordings, Search: index, Log: slogLog, Ops: counters.SnapshotAny},
+		web.Options{Recordings: recordings, Search: index, Log: slogLog, Ops: counters.SnapshotAny, Cache: cacheStats},
 	)
 
 	// The poller keeps the index fresh until shutdown; each pass drains
@@ -184,8 +186,14 @@ func serve(args []string) {
 // buildServiceConfig assembles the serve composition. sd_notify (T7/F23)
 // installs first: READY=1 after the listener binds, STOPPING=1 at the
 // drain, WATCHDOG keepalive while serving — a no-op outside systemd, so the
-// same binary serves localhost dev and the service manager unchanged.
-func buildServiceConfig(addr, htpasswdPath string) (appkit.ServiceConfig, error) {
+// same binary serves localhost dev and the service manager unchanged. The
+// cache counters and log hook ride in so the ETag middleware's outcomes
+// surface on /api/ops (R26).
+func buildServiceConfig(
+	addr, htpasswdPath string,
+	cacheStats *web.CacheCounters,
+	log func(msg string, args ...any),
+) (appkit.ServiceConfig, error) {
 	serviceConfig := appkit.ServiceConfig{
 		Addr:    addr,
 		Version: version,
@@ -210,7 +218,7 @@ func buildServiceConfig(addr, htpasswdPath string) (appkit.ServiceConfig, error)
 	serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
 		web.ServerTimingMiddleware(),
 		httputil.Compression(httputil.DefaultCompressionConfig()),
-		web.ETagMiddleware(),
+		web.ETagMiddleware(cacheStats, log),
 	)
 
 	return serviceConfig, nil

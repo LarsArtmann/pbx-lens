@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/json/v2"
 	"io/fs"
+	"maps"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -39,9 +40,15 @@ type Options struct {
 	Log func(msg string, args ...any)
 
 	// Ops serves the poller's per-source ingest counters for /api/ops
-	// (R15). Nil disables the endpoint with an explanatory 503 (one-shot
-	// ingests have no live counters to answer with).
+	// (R15). Nil leaves the poller section out; the endpoint still answers
+	// when Cache is wired.
 	Ops func() any
+
+	// Cache serves the ETag middleware's outcome counters as the "cache"
+	// section of /api/ops (R26): generated tags, 304 revalidations, hit
+	// ratio, buffer overflows. Nil leaves the section out; the endpoint
+	// answers when at least one of Ops and Cache is wired.
+	Cache *CacheCounters
 }
 
 // Searcher is the content-query surface the web UI needs.
@@ -60,6 +67,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		search:     opts.Search,
 		log:        opts.Log,
 		ops:        opts.Ops,
+		cache:      opts.Cache,
 		recTimeout: timeout,
 		upstream:   newUpstreamClient(timeout),
 	}
@@ -86,6 +94,7 @@ type server struct {
 	search     Searcher
 	log        func(msg string, args ...any)
 	ops        func() any
+	cache      *CacheCounters
 	recTimeout time.Duration
 	upstream   *http.Client
 }
@@ -494,22 +503,36 @@ func serveFavicon(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(src)
 }
 
-// ops serves the poller's per-source ingest counters (R15): offered,
-// recorded, corrected, and rejected per source from the latest pass, so
-// ingest health is visible without shelling into the host. The route sits
-// behind the same auth middleware as every other route.
+// ops serves the operator counters (R15 poller per-source ingest health,
+// R26 etag cache outcomes): offered, recorded, corrected, and rejected per
+// source from the latest pass, plus the cache hit ratio and overflow count,
+// so ingest and cache health are visible without shelling into the host.
+// The route sits behind the same auth middleware as every other route.
 func (s *server) opsHandler(w http.ResponseWriter, _ *http.Request) {
-	if s.ops == nil {
+	var poller any
+
+	if s.ops != nil {
+		poller = s.ops()
+	}
+
+	var cache *CacheStats
+
+	if s.cache != nil {
+		snapshot := s.cache.Snapshot()
+		cache = &snapshot
+	}
+
+	if poller == nil && cache == nil {
 		http.Error(
 			w,
-			"ops counters are only served while the poller runs (start serve with polling configured)",
+			"no ops counters are wired: /api/ops needs a running poller or the etag cache middleware behind it",
 			http.StatusServiceUnavailable,
 		)
 
 		return
 	}
 
-	payload, err := json.Marshal(s.ops())
+	payload, err := json.Marshal(composeOpsPayload(poller, cache))
 	if err != nil {
 		http.Error(w, "encoding ops counters failed: "+err.Error(), http.StatusInternalServerError)
 
@@ -519,4 +542,29 @@ func (s *server) opsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
 	_, _ = w.Write(append(payload, '\n'))
+}
+
+// composeOpsPayload merges the independent counter sources into one
+// top-level payload: the poller section keeps the keys it always had
+// (sources, last_pass) and the cache section joins as a sibling, so R15
+// consumers parse unchanged. A non-map poller payload (custom embeds) gets
+// wrapped under "poller" rather than merged.
+func composeOpsPayload(poller any, cache *CacheStats) any {
+	if cache == nil {
+		return poller
+	}
+
+	if pollerMap, ok := poller.(map[string]any); ok {
+		merged := make(map[string]any, len(pollerMap)+1)
+		maps.Copy(merged, pollerMap)
+		merged["cache"] = *cache
+
+		return merged
+	}
+
+	if poller == nil {
+		return map[string]any{"cache": *cache}
+	}
+
+	return map[string]any{"poller": poller, "cache": *cache}
 }
