@@ -5,9 +5,12 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
+	"os"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/backup"
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -134,6 +137,7 @@ func purgeCmd(args []string) {
 		"retention window: Go duration (e.g. 2160h = 90 days); calls observed before now-minus-window are retired (required)",
 	)
 	dryRun := fs.Bool("dry-run", false, "list what would be retired without changing anything")
+	jsonOut := fs.Bool("json", false, "emit the report as JSON (works for both -dry-run and a real purge)")
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -163,36 +167,81 @@ func purgeCmd(args []string) {
 
 	defer cleanup()
 
-	policy := retention.Policy{MaxAge: age}
+	if err := runPurge(ctx, sys, *db, retention.Policy{MaxAge: age}, *dryRun, *jsonOut, *maxAge, os.Stdout); err != nil {
+		fatal(err)
+	}
+}
 
-	if *dryRun {
+// runPurge executes the retire-or-list pass and renders the report, text
+// or JSON (-json, m27.8). Split from the flag wiring so the drill is
+// testable without an os.Exit minefield.
+func runPurge(
+	ctx context.Context,
+	sys *system.System,
+	dsn string,
+	policy retention.Policy,
+	dryRun, asJSON bool,
+	maxAgeLabel string,
+	out io.Writer,
+) error {
+	if dryRun {
 		views, err := retention.OldViews(ctx, sys, policy, time.Now())
 		if err != nil {
-			fatal(err)
+			return err
 		}
 
-		fmt.Printf("purge (dry run): %d call(s) older than %s\n", len(views), *maxAge)
+		if asJSON {
+			candidates := make([]map[string]string, 0, len(views))
+			for _, view := range views {
+				candidates = append(candidates, map[string]string{
+					"kind":       string(view.Kind),
+					"native_id":  string(view.NativeID),
+					"started_at": view.StartedAt.UTC().Format(time.RFC3339),
+				})
+			}
+
+			return json.NewEncoder(out).Encode(map[string]any{
+				"dry_run":      true,
+				"max_age":      maxAgeLabel,
+				"over_age":     len(views),
+				"would_retire": candidates,
+			})
+		}
+
+		fmt.Fprintf(out, "purge (dry run): %d call(s) older than %s\n", len(views), maxAgeLabel)
 
 		for _, view := range views {
-			fmt.Printf("  %s:%s started %s\n", view.Kind, view.NativeID, view.StartedAt.UTC().Format(time.RFC3339))
+			fmt.Fprintf(out, "  %s:%s started %s\n", view.Kind, view.NativeID, view.StartedAt.UTC().Format(time.RFC3339))
 		}
 
-		return
+		return nil
 	}
 
 	report, err := retention.Retire(ctx, sys, policy, time.Now())
 	if err != nil {
-		fatal(err)
+		return err
 	}
 
 	if err := cli.DrainProjections(ctx, sys); err != nil {
-		fatal(err)
+		return err
 	}
 
-	if err := cli.RebuildSearchIndex(ctx, sys, *db); err != nil {
-		fatal(err)
+	if err := cli.RebuildSearchIndex(ctx, sys, dsn); err != nil {
+		return err
 	}
 
-	fmt.Printf("purge: retired %d of %d over-age call(s)\n", report.Retired, report.OverAge)
+	if asJSON {
+		return json.NewEncoder(out).Encode(map[string]any{
+			"dry_run":     false,
+			"max_age":     maxAgeLabel,
+			"retired":     report.Retired,
+			"over_age":    report.OverAge,
+			"rejections":  report.Rejections,
+		})
+	}
+
+	fmt.Fprintf(out, "purge: retired %d of %d over-age call(s)\n", report.Retired, report.OverAge)
 	printRejected(report.Rejections)
+
+	return nil
 }

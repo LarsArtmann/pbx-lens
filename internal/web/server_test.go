@@ -2,6 +2,7 @@ package web
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -379,5 +380,65 @@ func TestOpsEndpointServesCounters(t *testing.T) {
 
 	if !strings.Contains(body, "poller") {
 		t.Error("the 503 should name the poller as the fix")
+	}
+}
+
+func TestListKeysetWalksBeyondPageOne(t *testing.T) {
+	// m27.7: the older-calls cursor must walk the whole index — 55 calls
+	// (pageSize+5) arrive complete across two pages, newest first, with no
+	// duplicates and a clean stop at the end.
+	started := time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
+
+	observations := make([]calls.Observation, 0, 55)
+
+	for i := range 55 {
+		observations = append(observations, webObservation(
+			fmt.Sprintf("conv-%02d", i),
+			started.Add(-time.Duration(i)*time.Minute),
+		))
+	}
+
+	mux := newTestServer(t, observations...)
+
+	seen := make(map[string]bool, 55)
+	path := "/"
+
+	for page := 0; ; page++ {
+		status, body := getBody(t, mux, path)
+		if status != 200 {
+			t.Fatalf("GET %s status = %d, want 200", path, status)
+		}
+
+		for i := range 55 {
+			id := fmt.Sprintf("conv-%02d", i)
+			if strings.Contains(body, id) {
+				if seen[id] {
+					t.Errorf("call %s rendered on two pages", id)
+				}
+
+				seen[id] = true
+			}
+		}
+
+		hrefStart := strings.Index(body, `href="/?before=`)
+		if hrefStart < 0 {
+			break
+		}
+
+		rest := body[hrefStart+len(`href="`):]
+		end := strings.Index(rest, `"`)
+		if end < 0 {
+			t.Fatalf("malformed cursor href on page %d", page)
+		}
+
+		if page > 5 {
+			t.Fatal("keyset walk exceeded two pages: the cursor is looping")
+		}
+
+		path = rest[:end]
+	}
+
+	if len(seen) != 55 {
+		t.Errorf("keyset walk delivered %d of 55 calls", len(seen))
 	}
 }
