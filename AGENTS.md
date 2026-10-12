@@ -179,8 +179,7 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
                                       # --minify` (flake-pinned tailwindcss_4, same as preBuild;
                                       # buildflow's tailwind-build is deferred here by design) — then
                                       # REBUILD: go:embed is compile-time
-nix develop                           # devShell: go, golangci-lint, gopls,
-                                      # govulncheck, dprint, cqrs-lint
+nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
 node scripts/verify-ui-contract.js    # browser-level UI contracts (T20 copy
                                       # swap, T21 ?q= jump + real fragment
                                       # scroll); self-contained build+seed+serve;
