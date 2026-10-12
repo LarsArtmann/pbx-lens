@@ -168,6 +168,7 @@ func TestHtpasswdReloadPicksUpNewEntries(t *testing.T) {
 
 	writeFile := func(content string) {
 		t.Helper()
+
 		if werr := os.WriteFile(path, []byte(content), 0o600); werr != nil {
 			t.Fatalf("write htpasswd: %v", werr)
 		}
@@ -236,6 +237,7 @@ func TestPerIPThrottlerSeparatesBuckets(t *testing.T) {
 	throttler := newPerIPThrottler(8)
 
 	first := throttler.bucket("203.0.113.10:4432")
+
 	second := throttler.bucket("198.51.100.7:9")
 	if first == nil || second == nil {
 		t.Fatal("both peers must get buckets")
@@ -270,6 +272,7 @@ func TestPerIPThrottlerFallbackBucketForHostlessPeers(t *testing.T) {
 	throttler := newPerIPThrottler(8)
 
 	first := throttler.bucket("bogus")
+
 	second := throttler.bucket("")
 	if first == nil || first != second {
 		t.Error("hostless peers must share the fallback bucket")

@@ -155,10 +155,14 @@ func TestExportSetsPIIModeHeader(t *testing.T) {
 			t.Errorf("%s X-PII-Mode = %q, want plain", path, got)
 		}
 
+		_ = resp.Body.Close()
+
 		resp = getResp(t, mux, path+"?pii=hash")
 		if got := resp.Header.Get("X-PII-Mode"); got != "hash" {
 			t.Errorf("%s?pii=hash X-PII-Mode = %q, want hash", path, got)
 		}
+
+		_ = resp.Body.Close()
 	}
 }
 
@@ -168,6 +172,7 @@ func TestExportStreamsAcrossKeysetPages(t *testing.T) {
 	// and filters plus pii=hash hold on every page (R7).
 	saved := exportBatchSize
 	exportBatchSize = 2
+
 	t.Cleanup(func() { exportBatchSize = saved })
 
 	started := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
@@ -224,6 +229,7 @@ func TestExportKeysetStallFailsLoudly(t *testing.T) {
 	// silently.
 	saved := exportBatchSize
 	exportBatchSize = 2
+
 	t.Cleanup(func() { exportBatchSize = saved })
 
 	sameInstant := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)

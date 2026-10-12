@@ -93,6 +93,8 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 // stays at one batch however large the index grows, and dumps past the old
 // maxExportRows cap stream fully instead of truncating. A var so tests can
 // shrink the page and walk the loop's seams deterministically.
+//
+//nolint:gochecknoglobals // test-shrinkable page size (keyset seam tests)
 var exportBatchSize = 5_000
 
 // StreamExportCalls walks every view matching the same filters as the list
@@ -109,22 +111,7 @@ func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQ
 	seen := make(map[string]struct{})
 
 	for {
-		opts := append([]metaengine.ScanOption{
-			metaengine.WithSort("started_at", true),
-			metaengine.WithLimit(exportBatchSize),
-		}, scanFilters(query)...)
-
-		// The keyset cursor binds inclusively so rows sharing the cursor's
-		// timestamp reappear and get skipped by key; on the first page the
-		// caller's own Before (a plain exclusive bound) applies instead.
-		switch {
-		case !cursor.IsZero():
-			opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(cursor)))
-		case !query.Before.IsZero():
-			opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
-		}
-
-		views, err := reader.Scan(ctx, opts...)
+		views, err := reader.Scan(ctx, streamPageOptions(cursor, query)...)
 		if err != nil {
 			return err
 		}
@@ -133,8 +120,7 @@ func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQ
 
 		for _, view := range views {
 			if !cursor.IsZero() && view.StartedAt.Equal(cursor) {
-				key := string(view.Kind) + "\x00" + string(view.NativeID)
-				if _, done := seen[key]; done {
+				if _, done := seen[dedupeKey(view)]; done {
 					continue
 				}
 			}
@@ -158,24 +144,55 @@ func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQ
 			)
 		}
 
-		// Newest-first order: the page's last (oldest) row is the next keyset
-		// boundary. On a strict advance the seen set restarts; when a single
-		// timestamp group spans pages the boundary repeats and the seen set
-		// must survive so those ties stay deduped.
-		if next := views[len(views)-1].StartedAt; cursor.IsZero() || next.Before(cursor) {
-			cursor = next
+		cursor = advanceCursor(cursor, views, seen)
+	}
+}
 
-			clear(seen)
-		}
+// streamPageOptions binds one keyset page: inclusively at the live cursor
+// (rows sharing the cursor's timestamp reappear and get skipped by key);
+// on the first page the caller's own Before (a plain exclusive bound)
+// applies instead.
+func streamPageOptions(cursor time.Time, query ListCallsQuery) []metaengine.ScanOption {
+	opts := append([]metaengine.ScanOption{
+		metaengine.WithSort("started_at", true),
+		metaengine.WithLimit(exportBatchSize),
+	}, scanFilters(query)...)
 
-		// The boundary row itself was emitted on THIS page and sits exactly
-		// on the cursor: record it (and any ties) so the next page skips it.
-		for _, view := range views {
-			if view.StartedAt.Equal(cursor) {
-				seen[string(view.Kind)+"\x00"+string(view.NativeID)] = struct{}{}
-			}
+	switch {
+	case !cursor.IsZero():
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(cursor)))
+	case !query.Before.IsZero():
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
+	}
+
+	return opts
+}
+
+// dedupeKey identifies a stream across the page boundary tie set.
+func dedupeKey(view calls.CallView) string {
+	return string(view.Kind) + "\x00" + string(view.NativeID)
+}
+
+// advanceCursor moves the keyset to the page's last (oldest) row and
+// maintains the tie set: on a strict advance the seen set restarts; when a
+// single timestamp group spans pages the boundary repeats and the set must
+// survive so those ties stay deduped. The boundary row itself was emitted
+// on THIS page and sits exactly on the cursor, so it (and any ties) is
+// recorded for the next page to skip.
+func advanceCursor(cursor time.Time, views []calls.CallView, seen map[string]struct{}) time.Time {
+	if next := views[len(views)-1].StartedAt; cursor.IsZero() || next.Before(cursor) {
+		cursor = next
+
+		clear(seen)
+	}
+
+	for _, view := range views {
+		if view.StartedAt.Equal(cursor) {
+			seen[dedupeKey(view)] = struct{}{}
 		}
 	}
+
+	return cursor
 }
 
 // ExportCalls collects the full matching set into one slice. Tests and

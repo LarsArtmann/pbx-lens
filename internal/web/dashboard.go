@@ -20,11 +20,18 @@ const dashboardWindowDays = 30
 // builds, and renders directly in the chart tooltip.
 const dayFormat = "2006-01-02"
 
+const (
+	weekDays      = 7  // one WeekDelta half-window
+	percentScale  = 100 // ratio to percent
+)
+
 // dashboardLocation buckets dashboard days (R2, owner decision 2026-10-12):
 // the operator's wall clock, Europe/Berlin — a German PBX's "Calls today"
 // must agree with its own day, not drift an hour behind after 22:00 UTC.
 // The embedded tzdata database keeps the zone resolvable in the hermetic
 // nix binary with no system zoneinfo dependency.
+//
+//nolint:gochecknoglobals // injectable so tests can pin the zone (save/restore)
 var dashboardLocation = mustZone("Europe/Berlin")
 
 func mustZone(name string) *time.Location {
@@ -78,6 +85,8 @@ type DurationBucket struct {
 
 // durationBuckets is the histogram shape (R8/M20.2): inclusive upper
 // bounds in seconds; every duration lands in exactly one bucket.
+//
+//nolint:gochecknoglobals // declarative histogram table, read-only
 var durationBuckets = []struct {
 	maxSecs int
 	label   string
@@ -145,7 +154,12 @@ func (s DashboardStats) AIRatio() float64 {
 // from/to). The day window always ends "today" in the dashboard zone, so
 // an idle index shows its volume drifting out of the chart instead of
 // freezing.
-func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time, filters ListCallsQuery) (DashboardStats, error) {
+func DashboardStatsQuery(
+	ctx context.Context,
+	sys *system.System,
+	now time.Time,
+	filters ListCallsQuery,
+) (DashboardStats, error) {
 	stats := DashboardStats{
 		WindowDays: dashboardWindowDays,
 		Durations:  make([]DurationBucket, len(durationBuckets)),
@@ -224,17 +238,17 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time,
 // weekDelta compares the newest 7 day buckets with the previous 7. The
 // window is always 30 days, so both weeks exist whenever the window does.
 func weekDelta(days []DayVolume) WeekDelta {
-	if len(days) < 14 {
+	if len(days) < 2*weekDays {
 		return WeekDelta{}
 	}
 
 	thisWeek, lastWeek := 0, 0
 
-	for _, day := range days[len(days)-7:] {
+	for _, day := range days[len(days)-weekDays:] {
 		thisWeek += day.Calls
 	}
 
-	for _, day := range days[len(days)-14 : len(days)-7] {
+	for _, day := range days[len(days)-2*weekDays : len(days)-weekDays] {
 		lastWeek += day.Calls
 	}
 
@@ -243,7 +257,7 @@ func weekDelta(days []DayVolume) WeekDelta {
 	}
 
 	return WeekDelta{
-		Pct:         float64(thisWeek-lastWeek) / float64(lastWeek) * 100,
+		Pct:         float64(thisWeek-lastWeek) / float64(lastWeek) * percentScale,
 		HasBaseline: true,
 	}
 }
