@@ -2,10 +2,11 @@
 
 Extracted from AGENTS.md 2026-10-11 (go-structure-linter size limit). The
 core cluster was verified against the live API 2026-10-10 — unit fixtures
-alone missed all three findings. **Re-verify this whole cluster quarterly**
-(the enrichment endpoints were only spec-verified 2026-10-11; live
-verification still pending — no key at implementation time — so they fold
-into the next quarterly pass). Upstream filing status lives in
+alone missed all three findings. The recordings cluster joined it live
+2026-10-12 (first key-in-hand pass). **Re-verify this whole cluster
+quarterly** (the enrichment endpoints were only spec-verified 2026-10-11;
+live verification still pending — no key at implementation time — so they
+fold into the next quarterly pass). Upstream filing status lives in
 [upstream-filings.md](upstream-filings.md).
 
 ## Live-verified 2026-10-10
@@ -48,6 +49,23 @@ in-process (`RecordingByCallControl`) — the recordings list filter's
 supported keys are undocumented, so no server-side filter is trusted.
 Detail Records correlation works the same way
 (`DetailRecordByCallControl`).
+
+## Recordings are MP3-only on the AI assistant connection (live 2026-10-12)
+
+Verified against the live API with the real key: EVERY recording on the
+assistant connection (9/9, all `status=completed`) carries an EMPTY
+`download_urls.wav` and a populated `download_urls.mp3` — the WAV
+rendition does not exist for these calls, so a WAV-only proxy 404s every
+playback. The REST object's `download_urls` is confirmed `{mp3, wav}`
+(the `recording_urls` spelling belongs to the `call.recording.saved`
+webhook, not the REST resource). Other live-verified recording fields:
+`source=call`, `channels=dual`, `duration_millis`, offset-less
+`recording_started_at`/`recording_ended_at`, and `initiated_by`
+(distinguishes OutboundAPI dials). The recording proxy streams WAV when
+present and falls back to MP3 (`proxyTelnyxRecording`); neither means a
+real 404. A `processing` recording can also serve empty URLs — media
+transcoding is asynchronous — so empty-on-both is not necessarily
+permanent (not yet observed live; the fallback order handles it).
 
 ## Enrichment endpoints (spec-verified 2026-10-11; LIVE verification pending)
 

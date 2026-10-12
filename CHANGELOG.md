@@ -55,6 +55,25 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 Nothing else yet.
 
+### Fixed — 2026-10-12 (recording proxy vs MP3-only AI-assistant recordings)
+
+- Every AI-assistant recording 404'd in the player: live-verified
+  (2026-10-12, first key-in-hand pass) that Telnyx stores these calls
+  MP3-ONLY — all nine `status=completed` recordings on the assistant
+  connection carry an empty `download_urls.wav` and a populated
+  `download_urls.mp3` — while the proxy hard-required WAV. Fix: WAV stays
+  preferred, MP3 is the fallback rendition (the content-type default
+  follows the chosen rendition), and a recording with neither answers 404
+  naming both. The shape is recorded in docs/telnyx-live-api.md.
+
+### Added — 2026-10-12 (deterministic browser revalidation)
+
+- `Cache-Control: no-cache` on every HTML response (pages and htmx
+  fragments): browsers and polls must revalidate — ETag → 304 when
+  unchanged — instead of silently serving stale HTML. The header survives
+  into 304 responses and is asserted end-to-end on the dashboard fragment
+  (200 + 304) and the ETag-less staleness fragment.
+
 ## [v0.1.0] — 2026-10-12
 
 ### Fixed — 2026-10-12 (cdr ingest vs vanilla mod_cdr_csv output)
