@@ -2,6 +2,7 @@ package web
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -41,7 +42,11 @@ templ staleLive(filters ListCallsQuery, staleFor time.Duration, stale bool) {
 
 // detailRoute is the per-call page: metadata, transcript, recording player.
 // Everything is read from the one CallView snapshot.
-templ detailRoute(view calls.CallView) {
+// detailRoute is the per-call page: metadata, transcript, recording player.
+// Everything is read from the one CallView snapshot. query carries the
+// search deep link (?q=, plan T21): it turns the transcript into a
+// match-marked log with per-turn anchors.
+templ detailRoute(view calls.CallView, query string) {
 	@shell(callTitle(view), "/") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:             callTitle(view),
@@ -50,7 +55,7 @@ templ detailRoute(view calls.CallView) {
 			Action:            nativeIDCopy(view),
 		})
 		@layout.Split(layout.SplitProps{
-			Main:  detailMain(view),
+			Main:  detailMain(view, query),
 			Aside: recordingCard(view),
 		})
 	}
@@ -100,11 +105,11 @@ func sourceBadge(kind calls.SourceKind) templ.Component {
 }
 
 // detailMain is the Split's primary column: facts card, then transcript.
-templ detailMain(view calls.CallView) {
+templ detailMain(view calls.CallView, query string) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@detailFacts(view)
 		if len(view.Transcript) > 0 {
-			@transcriptPane(view.Transcript)
+			@transcriptPane(view.Transcript, query)
 		} else {
 			@display.EmptyState(display.EmptyStateProps{
 				Title:       "No transcript",
@@ -160,20 +165,51 @@ func copyDetail(value, label string) templ.Component {
 }
 
 // transcriptPane renders the role-split transcript as a terminal-style
-// voice log (library Scrollback): the caller's words and the assistant's
-// replies read top-down with tone-colored role tags. No stagger — a
-// transcript is reading content, not a replay animation.
-templ transcriptPane(turns []calls.TranscriptTurn) {
-	@display.Card(display.CardProps{Title: "Transcript"}) {
+// voice log: the caller's words and the assistant's replies read top-down
+// with tone-colored role tags. No stagger — a transcript is reading
+// content, not a replay animation. With a search query (T21) the lines
+// hand-roll instead (thin piece, SegmentBar precedent): the library line
+// has no id/class hook in v1.21.0, and the match view needs per-turn
+// anchors plus a visible mark. Visual parity is pinned by the goldens.
+templ transcriptPane(turns []calls.TranscriptTurn, query string) {
+	@display.Card(display.CardProps{Title: "Transcript", ID: "transcript"}) {
 		// AriaLabel: the library renders the block aria-hidden by default —
 		// without the label a screen reader gets an empty transcript (plan
 		// T18).
-		@display.Scrollback(display.ScrollbackProps{
-			AriaLabel: "Call transcript",
-			Stagger: false,
-			Lines:   transcriptLines(turns),
-		})
+		if query == "" {
+			@display.Scrollback(display.ScrollbackProps{
+				AriaLabel: "Call transcript",
+				Stagger: false,
+				Lines:   transcriptLines(turns),
+			})
+		} else {
+			@transcriptMatchLog(turns, query)
+		}
 	}
+}
+
+// transcriptMatchLog hand-rolls the scrollback line loop for the ?q= path:
+// same block and line classes as the library component, plus a turn-N id
+// on every line (the redirect's fragment target) and an amber mark on
+// matches. Match rule is all-terms case-insensitive substring — FTS
+// tokenizes differently, so a hit whose terms only match the FTS index
+// still renders (no highlight, redirect skipped).
+templ transcriptMatchLog(turns []calls.TranscriptTurn, query string) {
+	<div class="tc-log text-start border-y border-gray-200 py-3 font-mono text-[0.8125rem] leading-relaxed text-gray-600 dark:border-gray-700 dark:text-gray-400" role="log" aria-label="Call transcript">
+		for _, line := range transcriptMatchViews(turns, query) {
+			if line.Matched {
+				<div id={ "turn-" + strconv.Itoa(line.Index) } class="tc-log-line tc-log-line-still rounded bg-amber-100 dark:bg-amber-900/40">
+					<span class={ turnTagClass(line.Role) }>{ string(line.Role) }</span>
+					{ line.Text }
+				</div>
+			} else {
+				<div class="tc-log-line tc-log-line-still">
+					<span class={ turnTagClass(line.Role) }>{ string(line.Role) }</span>
+					{ line.Text }
+				</div>
+			}
+		}
+	</div>
 }
 
 // transcriptLines maps conversation turns onto scrollback lines. The role
@@ -195,6 +231,70 @@ func transcriptLines(turns []calls.TranscriptTurn) []display.ScrollbackLine {
 	}
 
 	return lines
+}
+
+// transcriptMatchView is one turn in the ?q= rendering: the turn itself,
+// its transcript position (the turn-N anchor), and whether it matches.
+type transcriptMatchView struct {
+	calls.TranscriptTurn
+	Index   int
+	Matched bool
+}
+
+// transcriptMatchViews pairs every turn with its match state once, so the
+// templ loop stays declarative.
+func transcriptMatchViews(turns []calls.TranscriptTurn, query string) []transcriptMatchView {
+	views := make([]transcriptMatchView, 0, len(turns))
+	for index, turn := range turns {
+		views = append(views, transcriptMatchView{
+			TranscriptTurn: turn,
+			Index:          index,
+			Matched:        turnMatches(turn, query),
+		})
+	}
+
+	return views
+}
+
+// firstMatchedTurn reports the transcript position of the first matching
+// turn — the redirect's fragment target (plan T21).
+func firstMatchedTurn(turns []calls.TranscriptTurn, query string) (int, bool) {
+	for index, turn := range turns {
+		if turnMatches(turn, query) {
+			return index, true
+		}
+	}
+
+	return 0, false
+}
+
+// turnMatches applies the highlight rule: every whitespace-separated term
+// must appear in the turn text, case-insensitively. Substring, not token —
+// partial numbers and mid-word snippets behave like the search page's
+// digits-only hint promises.
+func turnMatches(turn calls.TranscriptTurn, query string) bool {
+	if query == "" {
+		return false
+	}
+
+	text := strings.ToLower(turn.Text)
+	for _, term := range strings.Fields(query) {
+		if !strings.Contains(text, strings.ToLower(term)) {
+			return false
+		}
+	}
+
+	return true
+}
+
+// turnTagClass mirrors the library's scrollback tone colors for the
+// hand-rolled match log (user=info blue, assistant=success green).
+func turnTagClass(role calls.TurnRole) string {
+	if role == calls.TurnRoleUser {
+		return "me-2 inline-block min-w-12 font-medium text-blue-600 dark:text-blue-400"
+	}
+
+	return "me-2 inline-block min-w-12 font-medium text-green-700 dark:text-green-400"
 }
 
 // recordingCard offers playback. The audio src is the proxy route — the
