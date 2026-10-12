@@ -101,10 +101,13 @@ function buildAndServe() {
 			args: ['--no-sandbox', '--disable-gpu'],
 		});
 
-		// Discover two detail URLs (telnyx + freeswitch shape) from the list page.
+		// Discover two detail URLs (telnyx + freeswitch shape) from the list
+		// page. Rows are library clickable rows: <tr data-tc-row-href=…>, not
+		// anchors — scrape the attribute (a[href] kept as fallback).
 		const seedPage = await browser.newPage();
 		await seedPage.goto(`${BASE}/`, { waitUntil: 'networkidle0' });
-		const hrefs = await seedPage.$$eval('a[href^="/calls/"]', (as) => [...new Set(as.map((a) => a.getAttribute('href')))]);
+		const hrefs = await seedPage.$$eval('[data-tc-row-href], a[href^="/calls/"]',
+			(els) => [...new Set(els.map((el) => el.getAttribute('data-tc-row-href') || el.getAttribute('href')))]);
 		await seedPage.close();
 		const detail1 = hrefs[0] || '/calls/telnyx-conversation/none';
 		const detail2 = hrefs[1] || detail1;
