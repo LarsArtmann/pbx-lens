@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/templ-components/display"
 )
 
 // TestDashboardWindowPresets pins plan T12: ?window=7|30 changes the chart
@@ -68,5 +70,34 @@ func TestSearchHintChip(t *testing.T) {
 
 	if !strings.Contains(body, "Matches transcript words and phone numbers") {
 		t.Error("search prose hint missing")
+	}
+}
+
+// TestWeekChangeRendering pins the StatCard Change/Trend contract (plan
+// T13): the delta renders library-native with an explicit sign and the
+// trend arrow follows the percentage, not the baseline flag alone.
+func TestWeekChangeRendering(t *testing.T) {
+	if got := weekChangeLabel(WeekDelta{Pct: 12.4, HasBaseline: true}); got != "+12% vs last week" {
+		t.Errorf("weekChangeLabel(up) = %q", got)
+	}
+
+	if got := weekChangeLabel(WeekDelta{Pct: -3.6, HasBaseline: true}); got != "-4% vs last week" {
+		t.Errorf("weekChangeLabel(down) = %q", got)
+	}
+
+	cases := []struct {
+		delta WeekDelta
+		want  display.TrendDirection
+	}{
+		{WeekDelta{Pct: 5, HasBaseline: true}, display.TrendUp},
+		{WeekDelta{Pct: -5, HasBaseline: true}, display.TrendDown},
+		{WeekDelta{Pct: 0, HasBaseline: true}, display.TrendNone},
+		{WeekDelta{Pct: 5, HasBaseline: false}, display.TrendNone},
+	}
+
+	for _, tc := range cases {
+		if got := weekTrend(tc.delta); got != tc.want {
+			t.Errorf("weekTrend(%+v) = %q, want %q", tc.delta, got, tc.want)
+		}
 	}
 }

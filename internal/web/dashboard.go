@@ -189,42 +189,11 @@ func DashboardStatsQuery(
 
 	var totalDuration time.Duration
 
+	acc := statsAccumulator{stats: &stats, dayIndex: dayIndex, today: today}
+
 	err := StreamExportCalls(ctx, sys, filters, func(view calls.CallView) error {
-		stats.Total++
+		acc.view(view)
 		totalDuration += time.Duration(view.DurationSecs) * time.Second
-
-		if view.IsAI {
-			stats.AICalls++
-		} else {
-			stats.HumanCalls++
-		}
-
-		day := dayKey(view.StartedAt)
-		if day == today {
-			stats.Today++
-		}
-
-		if idx, ok := dayIndex[day]; ok {
-			stats.ByDay[idx].Calls++
-		}
-
-		for i, bucket := range durationBuckets {
-			if view.DurationSecs <= bucket.maxSecs {
-				stats.Durations[i].Calls++
-
-				break
-			}
-		}
-
-		if view.MOS > 0 {
-			stats.MOSKnown++
-			stats.MOSSum += view.MOS
-
-			if idx, ok := dayIndex[day]; ok {
-				stats.ByDay[idx].MOSKnown++
-				stats.ByDay[idx].MOSSum += view.MOS
-			}
-		}
 
 		return nil
 	})
@@ -273,4 +242,53 @@ func (s DashboardStats) todayHref(now time.Time) string {
 	today := dayKey(now)
 
 	return fmt.Sprintf("/?from=%s&to=%s", today, today)
+}
+
+// statsAccumulator folds one call view into the dashboard aggregates. The
+// day buckets index by YYYY-MM-DD in the dashboard zone; a call outside the
+// chart window still counts toward totals (the charts show the window, the
+// headline cards show everything).
+type statsAccumulator struct {
+	stats    *DashboardStats
+	dayIndex map[string]int
+	today    string
+}
+
+func (a statsAccumulator) view(view calls.CallView) {
+	stats := a.stats
+
+	stats.Total++
+
+	if view.IsAI {
+		stats.AICalls++
+	} else {
+		stats.HumanCalls++
+	}
+
+	day := dayKey(view.StartedAt)
+	if day == a.today {
+		stats.Today++
+	}
+
+	if idx, ok := a.dayIndex[day]; ok {
+		stats.ByDay[idx].Calls++
+	}
+
+	for i, bucket := range durationBuckets {
+		if view.DurationSecs <= bucket.maxSecs {
+			stats.Durations[i].Calls++
+
+			break
+		}
+	}
+
+	if view.MOS > 0 {
+		stats.MOSKnown++
+		stats.MOSSum += view.MOS
+
+		if idx, ok := a.dayIndex[day]; ok {
+			stats.ByDay[idx].MOSKnown++
+			stats.ByDay[idx].MOSSum += view.MOS
+		}
+	}
 }

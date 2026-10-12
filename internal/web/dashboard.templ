@@ -117,10 +117,12 @@ templ dashboardAside(stats DashboardStats) {
 templ statCards(stats DashboardStats, now time.Time) {
 	@display.Grid(display.GridProps{Cols: display.GridCols4}) {
 		@display.StatCard(display.StatCardProps{
-			Value: strconv.Itoa(stats.Total),
-			Label: "Calls indexed",
-			Href:  "/",
-			Icon:  icons.Phone,
+			Value:  strconv.Itoa(stats.Total),
+			Label:  "Calls indexed",
+			Href:   "/",
+			Icon:   icons.Phone,
+			Change: weekChangeLabel(stats.Week),
+			Trend:  weekTrend(stats.Week),
 		})
 		@display.StatCard(display.StatCardProps{
 			Value: strconv.Itoa(stats.Today),
@@ -162,11 +164,6 @@ templ volumeCard(stats DashboardStats) {
 			ShowValues:   false,
 			EmptyMessage: "No calls in the last " + strconv.Itoa(stats.WindowDays) + " days",
 		})
-		if stats.Week.HasBaseline {
-			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-				{ weekDeltaLabel(stats.Week) }
-			</p>
-		}
 	}
 }
 
@@ -199,14 +196,28 @@ func durationBars(buckets []DurationBucket) []display.BarChartBar {
 	return bars
 }
 
-// weekDeltaLabel renders the week-over-week movement with an explicit sign.
-func weekDeltaLabel(delta WeekDelta) string {
+// weekChangeLabel renders the week-over-week movement as a StatCard Change
+// line (plan T13); the library renders the trend arrow.
+func weekChangeLabel(delta WeekDelta) string {
 	sign := "+"
 	if delta.Pct < 0 {
 		sign = ""
 	}
 
-	return fmt.Sprintf("This week %s%.0f%% vs last week", sign, delta.Pct)
+	return fmt.Sprintf("%s%.0f%% vs last week", sign, delta.Pct)
+}
+
+// weekTrend maps the delta onto the library's trend arrow.
+func weekTrend(delta WeekDelta) display.TrendDirection {
+	switch {
+	case !delta.HasBaseline || delta.Pct == 0:
+		return display.TrendNone
+	case delta.Pct > 0:
+		return display.TrendUp
+
+	default:
+		return display.TrendDown
+	}
 }
 
 // aiHumanCard is the AI-vs-human proportion: a donut chart (library
