@@ -79,7 +79,7 @@ Quick stats: **8 fully done · 4 partially done · 15+ not started · 0 repo-sta
 7. art-dupl (20+) / branching-flow (~69 infos) dedicated dedup/branching passes.
 8. statix findings (15) on `deploy/nixos/module-draft.nix` — the superseded design
    record; delete or fix.
-9. `nix-flake-check`: `update-vendor-hash` app lacks `meta.description`.
+9. ~~`nix-flake-check`: `update-vendor-hash` app lacks `meta.description`~~ done at the 02:34 session (flake `meta.description` landed; `nix flake check` warning count 0)..
 10. nix-store CVE advisories (vulnix, 22 findings: binutils 2.46/2.47, bison, coreutils,
     gcc 10.4) — nixpkgs bump territory, advisory-class.
 11. Inbound AI calls / DID interception path (direction is caller-declared today).
@@ -137,11 +137,12 @@ Gate & environment:
    gates share state?) — possible upstream filing.
 9. Decide GITHUB_TOKEN vs lychee-exclude for private-repo link checks (documented
    undecided fleet policy).
-10. Add `meta.description` to the `update-vendor-hash` app.
+10. ~~Add `meta.description` to the `update-vendor-hash` app.~~ done at the 02:34 session.
 11. Bump nixpkgs for the vulnix CVE set (binutils/bison/coreutils/gcc) or document
     acceptance.
-12. Delete `deploy/nixos/module-draft.nix` (superseded design record) to zero the
-    statix findings, or annotate it as a record.
+12. ~~Delete `deploy/nixos/module-draft.nix` (superseded design record) to zero the
+    statix findings, or annotate it as a record.~~ resolved: annotated as the SUPERSEDED
+    historical design record (header note, LANDED 2026-10-11 in the sibling).
 
 Code quality:
 13. Dedicated art-dupl pass (20+ findings; commands.go mixins, Observation/CallView
@@ -152,17 +153,19 @@ Code quality:
 17. Cyclop headroom check on `proxyTelnyxRecording` (now 10; fine, but note it).
 
 Docs:
-18. HARVEST this report's (f) into TODO_LIST.md/ROADMAP.md.
+18. ~~HARVEST this report's (f) into TODO_LIST.md/ROADMAP.md.~~ done — third-pass TODO
+    closure (02:34) + the 2026-10-12 docs-health AUDIT pass (TODO_LIST/ROADMAP rebuilt).
 19. Record the `-test.shuffle` seed-replay trick in the session-status pattern for
 future gate triage (done in buildflow-dev-gate.md; cross-link from TODO_LIST).
 20. Update the CI lane docs if golangci-lint pin policy changes.
 
 Upstream (D6 cluster):
-21. Check status of go-cqrs-lite#62 (sqlite time binding) — close in-repo note if fixed.
-22. Check go-cqrs-lite#63 (memory engine field-name filters).
-23. Check go-cqrs-lite#64 (cqrs-lint C009/E005).
-24. Check go-nix-helpers#7 (templ formatter go wrap).
-25. Follow treefmt-nix#545 corroborating comment.
+21. ~~Check status of go-cqrs-lite#62 (sqlite time binding) — close in-repo note if fixed.~~
+    done at the 02:34 session: all five filings re-verified OPEN (docs/upstream-filings.md).
+22. ~~Check go-cqrs-lite#63 (memory engine field-name filters).~~ done at the 02:34 session (OPEN).
+23. ~~Check go-cqrs-lite#64 (cqrs-lint C009/E005).~~ done at the 02:34 session (OPEN; covers the C009 bare-`must` gap).
+24. ~~Check go-nix-helpers#7 (templ formatter go wrap).~~ done at the 02:34 session (OPEN).
+25. ~~Follow treefmt-nix#545 corroborating comment.~~ done at the 02:34 session (OPEN).
 26. File the `-test.shuffle` + load observation upstream IF it reproduces outside this
 box (low confidence, needs evidence first).
 

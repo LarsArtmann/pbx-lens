@@ -91,7 +91,7 @@ _Ranked by impact. Items 1–10 are the commitment core; 11–40 are brainstorm 
 | ~~1~~  | ~~Fix nix package: wire flakeModule output to `cmd/pbx-lens`; verify `nix run . -- version` works~~ done (docs-health pass 2026-10-12) | ~~Critical~~ | ~~M (30-60min)~~ | ~~Bug~~ |
 | ~~2~~  | ~~Fix excerpt order-dependence: define semantics, implement, pin with test (`internal/ingest/telnyx/map.go:70`)~~ done (docs-health pass 2026-10-12) | ~~Critical~~ | ~~S (15min)~~ | ~~Bug~~ |
 | ~~3~~  | ~~Run the verification battery this session skipped: `go build`, `go test`, binary `version`+`smoke`, artifact check~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~S~~ | ~~Quality~~ |
-| 4  | Add artifact-level guard: after `nix build`, assert `result/bin/pbx-lens` exists (kills the silent-empty-exit-0 class) **→ ROADMAP open question** | High     | S            | Quality       |
+| 4  | ~~Add artifact-level guard: after `nix build`, assert `result/bin/pbx-lens` exists (kills the silent-empty-exit-0 class)~~ done — artifact checks are standard practice (AGENTS.md; 04:58+ sessions) | High     | S            | Quality       |
 | ~~5~~  | ~~T6: implement `serve` command skeleton (http.Server, addr/db flags)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
 | ~~6~~  | ~~T6: adopt templ-components in go.mod; wire `templ generate` into buildflow/flake; update vendor hash via `buildflow -s nix-hash-fix --fix`~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
 | ~~7~~  | ~~T6: calls list page — one table, all calls (templ-components)~~ done (docs-health pass 2026-10-12) | ~~High~~ | ~~M~~ | ~~Feature~~ |
@@ -114,7 +114,7 @@ _Ranked by impact. Items 1–10 are the commitment core; 11–40 are brainstorm 
 | 24 | Schedule the quarterly Telnyx live-API re-verification cluster (due ~2027-01) **→ TODO_LIST blocked row (needs a real API key)** | Med      | S            | Maintenance   |
 | 25 | E003 owner decision: split `internal/calls` or keep flat domain (revisit when T9 lands) **→ documented HOLD (AGENTS.md, docs/cqrs-lint-policy.md)** | Med      | S            | Decision      |
 | ~~26~~ | ~~Record F005 obligation: schema upcasters become mandatory work at v2~~ done (docs-health pass 2026-10-12) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
-| 27 | Decide templ+Tailwind asset pipeline details (codegen, CSP-safety, dark mode) before T6 coding starts **→ ROADMAP open question** | Med      | M            | Decision      |
+| 27 | ~~Decide templ+Tailwind asset pipeline details (codegen, CSP-safety, dark mode) before T6 coding starts~~ done — decided by the 01:32 frontend plan + the F4 pipeline (templ preBuild + tailwindcss_4) | Med      | M            | Decision      |
 | ~~28~~ | ~~Verify ContentHash replay idempotency is covered across BOTH ingest paths (cdr + telnyx), not just one~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
 | ~~29~~ | ~~Verify `FlexTime` regression test covers the offset-less (`2006-01-02T15:04:05`) decode case~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |
 | ~~30~~ | ~~Re-run `smoke` after the nix fix to keep the CLI path green end-to-end~~ done (docs-health pass 2026-10-12) | ~~Med~~ | ~~S~~ | ~~Quality~~ |

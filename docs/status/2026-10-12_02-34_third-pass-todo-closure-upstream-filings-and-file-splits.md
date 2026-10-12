@@ -40,7 +40,7 @@ untracked status report was dprint-formatted by this session after the gate flag
 | 2 | `usage()` one-liner | `-recording-timeout` NOT added (consistent: no serve flag except `-db`/`-addr` appears there). Deliberate, reversible |
 | 3 | Sibling NixOS module | `nix-international-telephony` `modules/telephony/lens.nix` does not expose the new flag — handoff incomplete by design (untouched sibling) |
 | 4 | Timeout-test robustness | 1 ms budgets + a 50 ms sleep are timing-sensitive; the concurrent session already logged them as expected `-test.shuffle` flake candidates under load (buildflow-dev-gate.md 2026-10-12) |
-| 5 | Docs residuals | `docs/cqrs-lint-policy.md` C009/E005 entries lack upstream pointers (#64); AGENTS.md Commands block doesn't show the new flag; old status reports (23-35, 00-08) whose TODO items this session closed are NOT annotated (docs-health ANNOTATE skipped — TODO_LIST treated as the canonical tracker) |
+| 5 | ~~Docs residuals~~ | ~~`docs/cqrs-lint-policy.md` C009/E005 entries lack upstream pointers (#64); AGENTS.md Commands block doesn't show the new flag; old status reports (23-35, 00-08) whose TODO items this session closed are NOT annotated~~ all three closed by the 2026-10-12 docs-health pass: policy doc carries the #64 pointers, AGENTS.md Commands shows `-recording-timeout`, and the status reports are annotated + archived |
 | 6 | Untracked artifacts | `docs/drafts/2026-10-12_...md` and the prior session's `docs/status/2026-10-12_01-16_...md` are untracked — left for the auto-commit daemon per harness contract (anti-pattern: don't assume it committed; not yet verified post-report) |
 
 ## c) NOT STARTED
@@ -76,15 +76,15 @@ No data loss, no broken main, no wrongly-reverted work — but honest process fa
 1. **Fix BuildFlow#45 in the BuildFlow repo** (classify `tool.timeout`, no revert, honest message + test) — own repo, direct fix possible.
 2. **Expose `-recording-timeout` in the sibling NixOS module** (`services.telephony.pbx-lens.recordingTimeout`) + wire into ExecStart.
 3. **Harden the timeout tests** — injected deadlines/fake clock; kill the 1 ms/50 ms load flakes flagged in buildflow-dev-gate.md.
-4. **HARVEST this report's (f) list** into TODO_LIST.md/ROADMAP.md (docs-health).
-5. **ANNOTATE the 23-35 and 00-08 status reports** — mark their harvested items done inline (docs-health ANNOTATE).
-6. **Add upstream pointers to docs/cqrs-lint-policy.md** (C009 → #64; E005 class → #64) so the policy doc and the filings ledger agree.
-7. **AGENTS.md Commands block**: add `-recording-timeout` to the serve example line.
+4. ~~**HARVEST this report's (f) list** into TODO_LIST.md/ROADMAP.md (docs-health).~~ done — the 2026-10-12 docs-health AUDIT pass (TODO_LIST fourth pass + ROADMAP rebuild).
+5. ~~**ANNOTATE the 23-35 and 00-08 status reports** — mark their harvested items done inline (docs-health ANNOTATE).~~ done — the 2026-10-12 docs-health pass annotated all 21 superseded reports inline and archived them to docs/status/archived/.
+6. ~~**Add upstream pointers to docs/cqrs-lint-policy.md** (C009 → #64; E005 class → #64) so the policy doc and the filings ledger agree.~~ done — 2026-10-12 docs-health pass.
+7. ~~**AGENTS.md Commands block**: add `-recording-timeout` to the serve example line.~~ done — 2026-10-12 docs-health pass.
 8. **Decide usage()-one-liner policy** for serve flags (list all, or keep minimal — pick one and make it consistent).
 9. **Run `buildflow doctor`** and chase the "9 tools unavailable (health check failed)" warning to ground.
 10. **Ops visibility for upstream-budget expiries**: log a line (with the recording id + elapsed) when metadata 504 / WAV 502 fire, via the existing `Options.Log` hook.
 11. **Add the no-total-timeout invariant test** for `newUpstreamClient` (body unbounded is load-bearing for long recordings — pin it).
-12. **README**: one sentence that recording playback bounds its upstream hops (user-facing trust).
+12. ~~**README**: one sentence that recording playback bounds its upstream hops (user-facing trust).~~ done — 2026-10-12 docs-health pass.
 13. **Verify the auto-commit daemon actually committed** today's doc diff + the 2 untracked files (skill anti-pattern: never assume).
 14. **`cmd/pbx-lens/ingest.go` (269 lines)**: extract the shared open-system → age-gate → drain → rebuild sequence before it re-approaches 350.
 15. **Telnyx live DTO verification** when an API key exists (quarterly cluster per AGENTS).

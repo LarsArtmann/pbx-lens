@@ -273,7 +273,7 @@ via Validate).
 33. Extract `telnyxtest` shared fake server package. **→ ROADMAP theme 2**
 34. ~~`fetchAll` options struct refactor.~~ done (docs-health pass 2026-10-12)
 35. Enrichment duration logging in pollTelnyx. **→ ROADMAP theme 2**
-36. Structured logging (key-value) for poller passes. **→ ROADMAP open question**
+36. Structured logging (key-value) for poller passes. **→ ROADMAP theme 2**
 37. art-dupl pass over the new code (warning-only gate). **→ advisory; documented non-fix class**
 38. ~~`govulncheck` local run (CI covers; local gate parity).~~ done (docs-health pass 2026-10-12)
 39. ~~DOMAIN_LANGUAGE.md: glossary TelnyxSeed, EnrichStats, Enrichment~~ done — partial: TurnRole/Age-gate/Tombstone landed; EnrichmentSeed/EnrichStats unglossed

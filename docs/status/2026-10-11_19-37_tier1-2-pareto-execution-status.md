@@ -35,7 +35,7 @@ new), gofmt clean, go vet clean, templ regenerated.**
 | ------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | **P1.6 full gate re-run**       | Targeted `go-structure-linter` step: 0 errors | The full 73-step `buildflow --build-mode dev` gate has NOT been re-run this session (expected: zero ERROR findings for the first time since the size limit landed). Not run to keep the dispatch fast and avoid parallel-nix OOM | S      |
 | **TODO_LIST.md harvest**        | FEATURES/CHANGELOG/README updated             | TODO_LIST rows for P1-P8 still say TODO; pareto plan file's own status column not annotated                                                                                                                                      | S      |
-~~| **Tier 3 rest (P12, P16)**      | —                                             | P12 (sibling draft annotation) and P16 (RecordingFetcher) untouched                                                                                                                                                              | S each |~~ done — module-draft.nix header annotated SUPERSEDED
+~~| **Tier 3 rest (P12, P16)**      | —                                             | P12 (sibling draft annotation) and P16 (RecordingFetcher) untouched                                                                                                                                                              | S each |~~ done — P12: module-draft.nix header annotated SUPERSEDED; P16: landed (20:26 typed boundary models)
 | **AGENTS.md wording precision** | Core rewritten                                | The Structure bullet still says "every source mapper caps with it" — since P7 the mappers call `calls.Excerpt`; wording is true in spirit, stale in mechanism                                                                    | S      |
 
 ## c) NOT STARTED
@@ -44,10 +44,10 @@ new), gofmt clean, go vet clean, templ regenerated.**
 | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 ~~| **P9 — upstream filings** (go-cqrs-lite#62/#63/#64 exist? verify, plus treefmt templ go) | External repos; needs verify-before-filing + github-voice flow and Lars's GitHub session | Yes — drafts exist in docs/drafts/, upstream state tracked in docs/upstream-filings.md |~~ done — filed (11:48): #62/#63/#64, go-nix-helpers#7, treefmt-nix#545; state in docs/upstream-filings.md
 ~~| **P10 — rebuild BuildFlow binary** (5aaf336 → HEAD)                                      | Single atomic external action; license-check skew note stays valid until done            | Yes                                                                                    |~~ done — binary rebuilt 2026-10-11; license-check green 22:31
-| **P13 — Telnyx live DTO verify**                                                         | BLOCKED: needs real API key                                                              | Yes, quarterly cluster                                                                 |
-| **P14 — ContentHash v2 encoding**                                                        | BLOCKED: owner SCHEDULED at v2                                                           | Yes                                                                                    |
+~~| **P13 — Telnyx live DTO verify**                                                         | BLOCKED: needs real API key                                                              | Yes, quarterly cluster                                                                 |~~ **→ TODO_LIST blocked row (needs a real API key)**
+~~| **P14 — ContentHash v2 encoding**                                                        | BLOCKED: owner SCHEDULED at v2                                                           | Yes                                                                                    |~~ **→ TODO_LIST blocked row (schema v2 gate)**
 ~~| **P15 — proxy timeout knob**                                                             | BLOCKED: owner DEFERRED until traffic data                                               | Yes                                                                                    |~~ done — landed 2026-10-12 (web.DefaultUpstreamTimeout); production value still deferred
-| **P17 — SegmentBar swap**                                                                | BLOCKED: unreleased upstream templ-components                                            | Yes                                                                                    |
+~~| **P17 — SegmentBar swap**                                                                | BLOCKED: unreleased upstream templ-components                                            | Yes                                                                                    |~~ **→ TODO_LIST blocked row (unreleased upstream)**
 | **UI e2e probe as a checked-in artifact**                                                | Ran ad-hoc from /tmp, deleted after                                                      | Yes — see (e)                                                                          |
 | **cross-project lessons.md entry** ("verify-compile after every edit batch")             | Belongs in crush-config repo by commit                                                   | Yes                                                                                    |
 
@@ -114,48 +114,48 @@ green — but the honest list of what went wrong **during this dispatch**:
 
 | #  | Task                                                                                                                                     | Impact | Effort | Category      |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 1  | Re-run the full buildflow gate; expect ZERO error findings; retire the "only gate ERROR" wording in TODO_LIST/plan                       | High   | S      | Quality       |
-| 2  | Mark TODO_LIST rows P1-P8 done + annotate the pareto plan's status column                                                                | Medium | S      | Documentation |
-| 3  | Commit this batch as structured commits (subject to g1) before further edits                                                             | Medium | S      | Cleanup       |
-| 4  | Check in the UI e2e probe as `scripts/ui-probe/main.go` (or a listener-binding e2e test) and wire into CI                                | Medium | S      | Quality       |
-| 5  | Fix AGENTS.md Structure bullet: "mappers cap via calls.Excerpt" wording                                                                  | Low    | S      | Documentation |
-| 6  | Add `TurnRole` + `calls.Excerpt` to docs/DOMAIN_LANGUAGE.md                                                                              | Low    | S      | Documentation |
-| 7  | P9.1: verify go-cqrs-lite#62/63/64 state at source; post or update with repro evidence                                                   | Medium | M      | Quality       |
-| 8  | P9.4: treefmt-nix templ formatter goPkg — corroborate #545 or file on go-nix-helpers                                                     | Low    | M      | Quality       |
-| 9  | P10: rebuild BuildFlow binary from HEAD; re-run gate; delete the stale license-check note in docs/buildflow-dev-gate.md                  | Low    | S      | Cleanup       |
-| 10 | P12: diff deploy/nixos/module-draft.nix vs sibling lens.nix; annotate the draft as a historical design record in its header              | Low    | S      | Cleanup       |
+| ~~1~~  | ~~Re-run the full buildflow gate; expect ZERO error findings; retire the "only gate ERROR" wording in TODO_LIST/plan~~ done — full gate green 23:30 (23:41 report) and twice on 2026-10-12 | ~~High~~ | ~~S~~ | ~~Quality~~ |
+| ~~2~~  | ~~Mark TODO_LIST rows P1-P8 done + annotate the pareto plan's status column~~ done — rows flipped in the 20:26 dispatch; plan annotated by P3 | ~~Medium~~ | ~~S~~ | ~~Documentation~~ |
+| ~~3~~  | ~~Commit this batch as structured commits (subject to g1) before further edits~~ **Won't implement — daemon history accepted as-is.** | ~~Medium~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~4~~  | ~~Check in the UI e2e probe as `scripts/ui-probe/main.go` (or a listener-binding e2e test) and wire into CI~~ done — landed as TestLiveServerEndToEnd (20:26) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
+| ~~5~~  | ~~Fix AGENTS.md Structure bullet: "mappers cap via calls.Excerpt" wording~~ done — rewritten in the 20:26 docs closure | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| ~~6~~  | ~~Add `TurnRole` + `calls.Excerpt` to docs/DOMAIN_LANGUAGE.md~~ done — TurnRole + Age-gate rows landed in docs/DOMAIN_LANGUAGE.md | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
+| ~~7~~  | ~~P9.1: verify go-cqrs-lite#62/63/64 state at source; post or update with repro evidence~~ done — state re-verified in docs/upstream-filings.md (2026-10-12) | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
+| ~~8~~  | ~~P9.4: treefmt-nix templ formatter goPkg — corroborate #545 or file on go-nix-helpers~~ done — go-nix-helpers#7 + treefmt-nix#545 tracked in docs/upstream-filings.md | ~~Low~~ | ~~M~~ | ~~Quality~~ |
+| ~~9~~  | ~~P10: rebuild BuildFlow binary from HEAD; re-run gate; delete the stale license-check note in docs/buildflow-dev-gate.md~~ done — rebuilt 2026-10-11; license-check green | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~10~~ | ~~P12: diff deploy/nixos/module-draft.nix vs sibling lens.nix; annotate the draft as a historical design record in its header~~ done — header annotated SUPERSEDED | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
 ~~| 11 | P16: `RecordingFetcher` consumer-side interface + swap `RecordingOptions.Telnyx`                                                         | Low    | S      | Feature       |~~ done — landed (20:26 typed boundary models)
-| 12 | Generalize `ingestAdmitted`/seed filtering so all four poller sources share one admission path                                           | Low    | S      | Cleanup       |
-| 13 | Decide + implement whether `ingest-*` one-shot commands gain `-max-age` (currently deliberately ungated; live e2e exposed the asymmetry) | Medium | S      | Feature       |
-| 14 | Sibling repo: set the production `-max-age` window in `services.telephony.pbx-lens` (needs g3)                                           | High   | S      | Feature       |
-| 15 | backup: fsync the parent directory after rename for full crash durability (the file fsync alone does not guarantee the rename persists)  | Medium | S      | Bug           |
-| 16 | Add a stale=true freshness test path if missing (freshness tests cover the fresh/empty cases — verify the stale branch has a pin)        | Low    | S      | Quality       |
-| 17 | Auth: add failed-attempt rate limiting (none today; basic auth brute-force is unthrottled)                                               | Medium | M      | Feature       |
-| 18 | Auth: htpasswd reload on SIGHUP or mtime watch (restart required today)                                                                  | Low    | M      | Feature       |
-| 19 | Export: document/verify streaming behavior near the maxExportRows cap                                                                    | Low    | S      | Documentation |
-| 20 | Poller: surface per-source rejection counters on an ops endpoint (today they live only in log lines)                                     | Low    | M      | Feature       |
-| 21 | Adopt slog structured logging for the poller/serve logs (std log.Printf today)                                                           | Low    | M      | Quality       |
-| 22 | CI: add a cqrs-lint lane so the findings policy is enforced off-box too                                                                  | Low    | S      | Quality       |
-| 23 | Re-run art-dupl after `calls.Excerpt` extraction; revisit the 20-findings advisory with fresh data                                       | Low    | S      | Quality       |
-| 24 | README: add UI screenshots of the four surfaces                                                                                          | Low    | S      | Documentation |
-| 25 | Keyset pagination e2e: probe "Older calls" beyond page 1 with >page-size data                                                            | Low    | S      | Quality       |
-| 26 | templ-components: watch for the next published version beyond v1.21.0 (SegmentBar unblock = P17)                                         | Low    | S      | Feature       |
-| 27 | Tag the first release (v0.1.0) via go-release once gate is green (CHANGELOG is release-ready)                                            | Medium | M      | Feature       |
-| 28 | Search page: e2e-verify the FTS full-token hint renders for a mid-number query                                                           | Low    | S      | Quality       |
-| 29 | Record "verify-compile after every batch" in crush-config references/lessons.md (by commit, not in-session)                              | Low    | S      | Documentation |
-| 30 | Quarterly Telnyx live re-verify cluster (P13) — schedule the first run once an API key exists                                            | Medium | S      | Quality       |
+| ~~12~~ | ~~Generalize `ingestAdmitted`/seed filtering so all four poller sources share one admission path~~ done — unified as AgeGate/GateIngest (20:26) | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| ~~13~~ | ~~Decide + implement whether `ingest-*` one-shot commands gain `-max-age` (currently deliberately ungated; live e2e exposed the asymmetry)~~ done — landed (20:26 AgeGate on all four commands) | ~~Medium~~ | ~~S~~ | ~~Feature~~ |
+| 14 | Sibling repo: set the production `-max-age` window in `services.telephony.pbx-lens` (needs g3) **→ TODO_LIST blocked row (owner picks the window)** | High   | S      | Feature       |
+| ~~15~~ | ~~backup: fsync the parent directory after rename for full crash durability (the file fsync alone does not guarantee the rename persists)~~ done — landed (CHANGELOG: parent directory flushed after rename) | ~~Medium~~ | ~~S~~ | ~~Bug~~ |
+| ~~16~~ | ~~Add a stale=true freshness test path if missing (freshness tests cover the fresh/empty cases — verify the stale branch has a pin)~~ done — freshness tests cover fresh/stale branches | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| ~~17~~ | ~~Auth: add failed-attempt rate limiting (none today; basic auth brute-force is unthrottled)~~ done — landed (20:26 x/time/rate throttle) | ~~Medium~~ | ~~M~~ | ~~Feature~~ |
+| 18 | Auth: htpasswd reload on SIGHUP or mtime watch (restart required today) **→ ROADMAP theme 2** | Low    | M      | Feature       |
+| 19 | Export: document/verify streaming behavior near the maxExportRows cap **→ ROADMAP theme 1 (export streaming)** | Low    | S      | Documentation |
+| 20 | Poller: surface per-source rejection counters on an ops endpoint (today they live only in log lines) **→ ROADMAP theme 2** | Low    | M      | Feature       |
+| 21 | Adopt slog structured logging for the poller/serve logs (std log.Printf today) **→ ROADMAP theme 2** | Low    | M      | Quality       |
+| ~~22~~ | ~~CI: add a cqrs-lint lane so the findings policy is enforced off-box too~~ done — landed (20:26 CI job) | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| 23 | Re-run art-dupl after `calls.Excerpt` extraction; revisit the 20-findings advisory with fresh data **→ advisory; documented non-fix class** | Low    | S      | Quality       |
+| 24 | README: add UI screenshots of the four surfaces **→ ROADMAP theme 2 (public presence)** | Low    | S      | Documentation |
+| 25 | Keyset pagination e2e: probe "Older calls" beyond page 1 with >page-size data **→ ROADMAP theme 1** | Low    | S      | Quality       |
+| 26 | templ-components: watch for the next published version beyond v1.21.0 (SegmentBar unblock = P17) **→ TODO_LIST blocked row (unreleased upstream)** | Low    | S      | Feature       |
+| 27 | Tag the first release (v0.1.0) via go-release once gate is green (CHANGELOG is release-ready) **→ TODO_LIST blocked row (owner release gate)** | Medium | M      | Feature       |
+| ~~28~~ | ~~Search page: e2e-verify the FTS full-token hint renders for a mid-number query~~ done — landed (11:31 search hint + locking test) | ~~Low~~ | ~~S~~ | ~~Quality~~ |
+| 29 | Record "verify-compile after every batch" in crush-config references/lessons.md (by commit, not in-session) **→ crush-config repo, by commit** | Low    | S      | Documentation |
+| 30 | Quarterly Telnyx live re-verify cluster (P13) — schedule the first run once an API key exists **→ TODO_LIST blocked row (needs a real API key)** | Medium | S      | Quality       |
 
 ## g) Top questions I can NOT figure out myself
 
-1. **Commit boundaries:** the auto-commit daemon has absorbed tiers 1-2 as
-   ~10 heuristic "chore:" commits. Do you want a deliberate structured
-   commit (or a few per-task commits) for this batch going forward — and
-   should I squash/reword the chore commits covering P1-P11, or let
-   history stay as the daemon wrote it?
-2. **P9 upstream filings:** post the D6 filings live now (verify-before-
+1. ~~**Commit boundaries:** the auto-commit daemon has absorbed tiers 1-2 as~~ **Won't implement — daemon history accepted as-is.**
+   ~~~10 heuristic "chore:" commits. Do you want a deliberate structured~~
+   ~~commit (or a few per-task commits) for this batch going forward — and~~
+   ~~should I squash/reword the chore commits covering P1-P11, or let~~
+   ~~history stay as the daemon wrote it?~~
+2. **P9 upstream filings:** post the D6 filings live now (verify-before- **→ owner go; drafts verified OPEN (docs/upstream-filings.md)**
    filing → github-voice flow, using your GitHub auth), or keep them as
    drafts in docs/drafts/ until you've reviewed?
-3. **Production retention window:** what `-max-age` should the NixOS
+3. **Production retention window:** what `-max-age` should the NixOS **→ TODO_LIST blocked row (owner picks the window)**
    module set for the two hosts (e.g. 720h = 30 days? 2160h = 90?), and
    should the `ingest-*` one-shot commands gain the same gate so CLI
    backfills can't silently re-import over-age rows?

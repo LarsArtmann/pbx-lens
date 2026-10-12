@@ -51,11 +51,17 @@ move (drop + re-poll), as AGENTS.md always said.
   prod re-ingest + `pbx-prod` enablement decision (module is demo-enabled only); Telnyx
   live probe of the enrich path (no API key on this machine); SegmentBar swap when
   templ-components publishes it (unchanged).
-- **Enhancement (not a gap)**: wire `retention.Policy.Admits` as an ingest-side cutoff in
-  the poller so re-ingest converges to the retention window without a purge pass.
+  **→ still owner-gated: filings review tracked in docs/upstream-filings.md (re-checked
+  2026-10-12); prod re-ingest + the Telnyx live probe are TODO_LIST blocked rows (2026-10-12);
+  SegmentBar stays blocked upstream.**
+- ~~**Enhancement (not a gap)**: wire `retention.Policy.Admits` as an ingest-side cutoff in
+  the poller so re-ingest converges to the retention window without a purge pass.~~ done —
+  landed as the ingest-side age gate (P2, 19:37 dispatch: `serve -max-age` + all four
+  one-shot `ingest-*` commands).
 - Upstream fixes: when go-cqrs-lite lands #62/#63, the in-repo `rfc3339Nano` binding and
   the sqlite-only test doctrine get revisited; when treefmt-nix lands #545, the flake's
-  templ formatter `mkForce` can be dropped.
+  templ formatter `mkForce` can be dropped. **→ tracked in docs/upstream-filings.md
+  (all five verified OPEN 2026-10-12).**
 
 ## f. Parallel-session coordination (what worked)
 
