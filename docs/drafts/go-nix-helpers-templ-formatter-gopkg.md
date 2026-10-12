@@ -1,4 +1,7 @@
 > [!NOTE]
+> **FILED upstream 2026-10-12 (R12): go-nix-helpers#7 (filed 2026-10-11). Draft historical.**
+>
+> [!NOTE]
 > This filing was drafted by GLM-5.3-flash via Crush from an AI-run investigation, not at my request.
 >
 > - [ ] MANUALLY REVIEWED by `@Lars Artmann` at `[<date-time>]`

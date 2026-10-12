@@ -175,6 +175,14 @@ New from this session (harvest candidates, priority-ordered):
 5. ~~Decide + apply the 5 report-only naming findings (cdr `shape`,~~ done — 3 closed by P7 (calls.Excerpt, search.DefaultLimit, single pii read); rest stand as documented report-only observations
    ~~`ReasonRetention`, `CostEnrichment` shape, `Client.Recording`,~~
    ~~searchResultLimit dedup) — or record them as permanent non-fixes. 30min.~~
+   **R18 final verdicts (2026-10-12):** cdr `shape` → `byColumn` FIX (local
+   rename); `CostEnrichment` tuple → `CostOf(rec) (RecordCost, bool)` FIX
+   (typed pair cannot swap); `Client.Recording` → `FetchRecording` FIX
+   (truthful network-fetch verb, interface updated); `ReasonRetention`
+   ordering → **PERMANENT NON-FIX** — the values are stable audit labels on
+   the event log (exports group by them) and the constants already carry
+   the distinction in their doc comments; renaming would break consumers
+   for zero reading gain.
 6. ~~Push + watch the CI lane (templ generate pin, golangci v2.14, tidy-diff)~~ done — CI green on main
    ~~over the renames. 15min.~~
 7. ~~UI e2e serve probe (/, /dashboard, /search, /api/freshness) post-rename,~~ done — TestLiveServerEndToEnd + the P8 live probe

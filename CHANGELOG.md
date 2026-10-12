@@ -7,6 +7,63 @@ No version has been tagged yet; everything lives under Unreleased.
 
 ## [Unreleased]
 
+### Added — 2026-10-12 (SUPERB pareto plan execution)
+
+- Dashboard day buckets follow Europe/Berlin (R2, owner decision): the
+  "Calls today" window, `todayHref`, and bare YYYY-MM-DD filters all resolve
+  in the operator's zone; `time/tzdata` is embedded so the hermetic binary
+  resolves the zone anywhere. UTC remains available (zone is injectable,
+  tested).
+- Partial phone-number search (R6): a digits shadow table
+  (`lens_digits`) rebuilt alongside FTS answers any 4+ digit run — prefix,
+  suffix, or mid-number — merged after the ranked FTS hits; the search-page
+  hint now tells the truth about it.
+- Streaming exports (R7): `/api/export.jsonl` and `/api/export.csv` walk the
+  index keyset-paginated (5k-row pages, bounded memory, no row cap); views
+  sharing a cursor timestamp dedupe across pages and a nanosecond-collision
+  stall fails loudly instead of truncating.
+- PII export honesty (R3): both export endpoints answer with an explicit
+  `X-PII-Mode` header, and FEATURES.md gains the field-coverage matrix with
+  the raw-free-text disclosure; raw-at-rest is now explicit owner doctrine
+  (R21) — the export gate is the PII boundary.
+- Dashboard completion (R8, owner deliver): date-range picker (M20.1) and a
+  call-duration histogram (M20.2) join the stat cards; week-over-week delta
+  and a Sparkline aria label round the cards out (m27.6).
+- Live auto-refresh (R9, owner decision): dashboard cards poll
+  `/frag/dashboard` every 30 s and the staleness banner re-checks
+  `/frag/staleness` every 60 s via htmx `PolledRegion`; the htmx 2.0.10
+  runtime is self-hosted (no CDN) and the server-rendered page is the
+  no-JS fallback.
+- Auth hardening (R11/R13): SIGHUP reloads the htpasswd file without a
+  restart (a broken file keeps the running table and logs why), and failed
+  logins throttle per client address (bounded FIFO bucket map, shared
+  fallback for hostless peers; X-Forwarded-For deliberately not honored).
+- Ops visibility (R14/R15): poller and serve logs are structured key-value
+  records through `log/slog`, and `GET /api/ops` serves per-source
+  offered/recorded/corrected/rejected counters from the latest pass
+  (auth-gated; 503 with an explanation when no poller runs).
+- Restore drill (R16): snapshot → verify → restore → rows + FTS hits match
+  the source, as a checked-in test (`internal/backup/restore_drill_test.go`).
+- `purge -json` (m27.8): machine-readable reports for both `-dry-run` and an
+  applied purge; the purge logic is extracted behind a testable core.
+- A named end-to-end server probe step in CI (R17): the checked-in
+  `TestLiveServerEndToEnd` loopback lane is now a visible job step.
+- DID-interception direction design note (R22,
+  `docs/did-direction-design.md`) with the bounded implementation row in
+  TODO_LIST.md.
+
+### Changed — 2026-10-12 (SUPERB pareto plan execution)
+
+- Naming closure (R18): cdr's `shape` local reads `byColumn`; the
+  `CostEnrichment` tuple became `CostOf(rec) (RecordCost, bool)`; the
+  `Client.Recording` fetcher is `FetchRecording`. `ReasonRetention` is a
+  recorded permanent non-fix (stable audit label).
+- The dashboard aggregates stream instead of slicing; `ExportCalls` remains
+  as the collecting convenience (tests, retention).
+- Drafts ledger (R12, owner: annotate-and-keep): six filed drafts carry
+  FILED banners naming their upstream issues; go-atomic-write stays the one
+  live draft.
+
 ### Added
 
 - Project scaffold: Go module, Nix flake (go-standard flakeModule), BuildFlow

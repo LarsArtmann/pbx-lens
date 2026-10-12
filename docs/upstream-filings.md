@@ -25,4 +25,8 @@ upstream — no upstream movement to fold in yet.**
   confirmed at source (`cmd/cqrs-lint/pkg/rules/correctness/c009.go:95`,
   same shape for `New` at line 99) and IS covered by go-cqrs-lite#64 — no
   separate filing.
+- R12 pass (2026-10-12, owner: annotate-and-keep): all six filed drafts in
+  `docs/drafts/` now carry a FILED banner naming their issue; they stay as
+  historical write-ups. `go-atomic-write-commit-primitive.md` remains the
+  one LIVE draft (unfiled; owner review box unchecked by design).
 - Drafts live in `docs/drafts/` (never /tmp).

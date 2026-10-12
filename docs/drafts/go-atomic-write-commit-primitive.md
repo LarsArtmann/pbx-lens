@@ -1,4 +1,9 @@
 > [!NOTE]
+> **LIVE DRAFT (R12, owner 2026-10-12): keep as a draft; do NOT file yet.**
+> Owner chose annotate-and-keep for the filings ledger; this upstream ask
+> (exported commit/rename primitive) still needs the owner review box ticked.
+>
+> [!NOTE]
 > This filing was drafted by GLM-5.3-flash via Crush from an AI-run investigation, not at my request.
 >
 > - [ ] MANUALLY REVIEWED by `@Lars Artmann` at `[<date-time>]`
