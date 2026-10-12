@@ -2,10 +2,16 @@ package web
 
 import (
 	"bufio"
+	"context"
+	"log"
+	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
+	"syscall"
 	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
@@ -18,13 +24,18 @@ import (
 const basicAuthRealm = `Basic realm="pbx-lens"`
 
 // authFailureInterval and authFailureBurst throttle failed basic-auth
-// attempts with one shared token bucket: bcrypt comparisons are the
-// expensive path, so capping the FAILURE rate caps brute-force throughput
-// without a per-IP bookkeeping map (personal-PBX scale, one realm).
-// Successful logins never wait.
+// attempts. bcrypt comparisons are the expensive path, so capping the
+// FAILURE rate caps brute-force throughput. Successful logins never wait.
+// Since R13 the cap is per client address (bounded bucket map, shared
+// fallback for peers without a host part).
 const (
 	authFailureInterval = 6 * time.Second
 	authFailureBurst    = 5
+
+	// authIPBucketCap bounds the per-address bucket map: eviction keeps a
+	// spoofed-source flood from ballooning memory (FIFO — the oldest peer
+	// loses its bucket and would start a fresh one on return).
+	authIPBucketCap = 1024
 )
 
 // timingPadSeed seeds the dummy hash compared against unknown users so the
@@ -35,8 +46,33 @@ const timingPadSeed = "pbx-lens-timing-pad"
 // HtpasswdMiddleware gates every route behind HTTP Basic auth (D1/T24):
 // call metadata must not be readable without operator credentials. The
 // file is an htpasswd file with BCRYPT entries only (`htpasswd -B`); weaker
-// schemes reject at startup, not at first login.
+// schemes reject at startup, not at first login. SIGHUP re-reads the file
+// (R11) so credential rotation never needs a restart; a broken file keeps
+// the previous table and logs why.
 func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
+	auth, err := newHtpasswdAuth(path)
+	if err != nil {
+		return nil, err
+	}
+
+	go auth.watchSIGHUP()
+
+	return auth.middleware(), nil
+}
+
+// htpasswdAuth is the mutable credential state behind the middleware: the
+// table and its timing pad swap atomically under the mutex on reload.
+type htpasswdAuth struct {
+	path string
+
+	mu        sync.RWMutex
+	users     map[string][]byte
+	dummyHash []byte
+
+	failures *perIPThrottler
+}
+
+func newHtpasswdAuth(path string) (*htpasswdAuth, error) {
 	users, err := parseHtpasswd(path)
 	if err != nil {
 		return nil, err
@@ -55,8 +91,20 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 		)
 	}
 
-	failures := rate.NewLimiter(rate.Every(authFailureInterval), authFailureBurst)
+	return &htpasswdAuth{
+		path:      path,
+		users:     users,
+		dummyHash: dummyHash,
+		failures:  newPerIPThrottler(authIPBucketCap),
+	}, nil
+}
 
+// middleware is the auth gate. The bcrypt comparison always runs — known
+// user or not — so response timing does not enumerate valid usernames. A
+// failed attempt then waits for the peer's throttle token before answering:
+// an attacker's guesses cost wall-clock time, not just CPU. A canceled
+// context still answers 401 (best effort).
+func (a *htpasswdAuth) middleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, password, ok := r.BasicAuth()
@@ -66,18 +114,17 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 				return
 			}
 
-			hash, known := users[user]
+			a.mu.RLock()
+
+			hash, known := a.users[user]
 			if !known {
-				hash = dummyHash
+				hash = a.dummyHash
 			}
 
-			// The bcrypt comparison always runs — known user or not — so
-			// response timing does not enumerate valid usernames. A failed
-			// attempt then waits for a throttle token before answering: an
-			// attacker's guesses cost wall-clock time, not just CPU. A
-			// canceled context still answers 401 (best effort).
+			a.mu.RUnlock()
+
 			if bcrypt.CompareHashAndPassword(hash, []byte(password)) != nil {
-				_ = failures.Wait(r.Context())
+				a.failures.wait(r.Context(), r.RemoteAddr)
 
 				unauthorized(w)
 
@@ -86,7 +133,126 @@ func HtpasswdMiddleware(path string) (func(http.Handler) http.Handler, error) {
 
 			next.ServeHTTP(w, r)
 		})
-	}, nil
+	}
+}
+
+// watchSIGHUP re-reads the htpasswd file on every SIGHUP until the process
+// ends. Reload failures keep the running table — a half-written rotation
+// must never lock the operator out — and are logged for the operator.
+func (a *htpasswdAuth) watchSIGHUP() {
+	notifications := make(chan os.Signal, 1)
+	signal.Notify(notifications, syscall.SIGHUP)
+
+	for range notifications {
+		if err := a.reload(); err != nil {
+			log.Printf("pbx-lens: htpasswd reload failed, keeping the previous credentials: %v", err)
+		}
+	}
+}
+
+// reload re-reads the file and atomically swaps table and timing pad.
+func (a *htpasswdAuth) reload() error {
+	users, err := parseHtpasswd(a.path)
+	if err != nil {
+		return err
+	}
+
+	dummyHash, err := bcrypt.GenerateFromPassword([]byte(timingPadSeed), padCost(users))
+	if err != nil {
+		return errorfamily.NewRejection(
+			"lens.web.htpasswd_timing_pad",
+			"preparing timing pad hash: "+err.Error(),
+		)
+	}
+
+	a.mu.Lock()
+
+	a.users = users
+	a.dummyHash = dummyHash
+
+	a.mu.Unlock()
+
+	return nil
+}
+
+// known reports whether a username exists in the current table (test seam
+// for reload semantics).
+func (a *htpasswdAuth) known(user string) bool {
+	a.mu.RLock()
+	defer a.mu.RUnlock()
+
+	_, found := a.users[user]
+
+	return found
+}
+
+// perIPThrottler rate-limits failed logins per client address. X-Forwarded-For
+// is deliberately NOT honored: behind the systemd socket or a local reverse
+// proxy every peer is the proxy itself, and a forgeable header would let an
+// attacker mint fresh buckets at will. Peers without a parseable host share
+// one fallback bucket, so the throttle degrades to the old global behavior
+// instead of disabling itself.
+type perIPThrottler struct {
+	mu       sync.Mutex
+	buckets  map[string]*rate.Limiter
+	order    []string
+	capacity int
+	fallback *rate.Limiter
+}
+
+func newPerIPThrottler(capacity int) *perIPThrottler {
+	return &perIPThrottler{
+		buckets:  make(map[string]*rate.Limiter),
+		capacity: capacity,
+		fallback: rate.NewLimiter(rate.Every(authFailureInterval), authFailureBurst),
+	}
+}
+
+// wait blocks until the peer's bucket has a token (or the context ends).
+func (p *perIPThrottler) wait(ctx context.Context, remoteAddr string) {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil || host == "" {
+		_ = p.fallback.Wait(ctx)
+
+		return
+	}
+
+	p.mu.Lock()
+
+	limiter, known := p.buckets[host]
+	if !known {
+		if len(p.buckets) >= p.capacity {
+			oldest := p.order[0]
+			p.order = p.order[1:]
+			delete(p.buckets, oldest)
+		}
+
+		limiter = rate.NewLimiter(rate.Every(authFailureInterval), authFailureBurst)
+		p.buckets[host] = limiter
+		p.order = append(p.order, host)
+	}
+
+	p.mu.Unlock()
+
+	_ = limiter.Wait(ctx)
+}
+
+// bucket returns the live limiter for an address (test seam: identity of
+// the per-IP bookkeeping, not its timing).
+func (p *perIPThrottler) bucket(remoteAddr string) *rate.Limiter {
+	host, _, err := net.SplitHostPort(remoteAddr)
+	if err != nil || host == "" {
+		return p.fallback
+	}
+
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if limiter, known := p.buckets[host]; known {
+		return limiter
+	}
+
+	return nil
 }
 
 // padCost reads the bcrypt work factor the loaded entries use, so the

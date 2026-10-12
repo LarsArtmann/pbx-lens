@@ -149,3 +149,129 @@ func TestPadCostReadsLoadedEntriesCost(t *testing.T) {
 		})
 	}
 }
+
+func TestHtpasswdReloadPicksUpNewEntries(t *testing.T) {
+	// SIGHUP rotation (R11): after the file changes, the new credential
+	// works and the old one stops — without dropping the throttler state.
+	dir := t.TempDir()
+	path := filepath.Join(dir, "htpasswd")
+
+	oldHash, err := bcrypt.GenerateFromPassword([]byte("old-secret"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash: %v", err)
+	}
+
+	newHash, err := bcrypt.GenerateFromPassword([]byte("new-secret"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash: %v", err)
+	}
+
+	writeFile := func(content string) {
+		t.Helper()
+		if werr := os.WriteFile(path, []byte(content), 0o600); werr != nil {
+			t.Fatalf("write htpasswd: %v", werr)
+		}
+	}
+
+	writeFile("olduser:" + string(oldHash))
+
+	auth, err := newHtpasswdAuth(path)
+	if err != nil {
+		t.Fatalf("newHtpasswdAuth: %v", err)
+	}
+
+	throttler := auth.failures
+
+	writeFile("newuser:" + string(newHash))
+
+	if rerr := auth.reload(); rerr != nil {
+		t.Fatalf("reload: %v", rerr)
+	}
+
+	if !auth.known("newuser") || auth.known("olduser") {
+		t.Error("reload must swap the credential table atomically")
+	}
+
+	if auth.failures != throttler {
+		t.Error("reload must not reset the failure throttler")
+	}
+}
+
+func TestHtpasswdBadFileKeepsOldTable(t *testing.T) {
+	// A broken rotation must never lock the operator out: a rejected file
+	// keeps the running credentials and reports the error (R11).
+	dir := t.TempDir()
+	path := filepath.Join(dir, "htpasswd")
+
+	hash, err := bcrypt.GenerateFromPassword([]byte("secret"), bcrypt.MinCost)
+	if err != nil {
+		t.Fatalf("hash: %v", err)
+	}
+
+	if werr := os.WriteFile(path, []byte("user:"+string(hash)), 0o600); werr != nil {
+		t.Fatalf("write htpasswd: %v", werr)
+	}
+
+	auth, err := newHtpasswdAuth(path)
+	if err != nil {
+		t.Fatalf("newHtpasswdAuth: %v", err)
+	}
+
+	if werr := os.WriteFile(path, []byte("garbage-without-colon\n"), 0o600); werr != nil {
+		t.Fatalf("write htpasswd: %v", werr)
+	}
+
+	if rerr := auth.reload(); rerr == nil {
+		t.Error("reload of a malformed file must fail loudly")
+	}
+
+	if !auth.known("user") {
+		t.Error("a failed reload must keep the previous table")
+	}
+}
+
+func TestPerIPThrottlerSeparatesBuckets(t *testing.T) {
+	// Two peers must never share a bucket (R13): one IP's exhaustion must
+	// not tax another's first failure.
+	throttler := newPerIPThrottler(8)
+
+	first := throttler.bucket("203.0.113.10:4432")
+	second := throttler.bucket("198.51.100.7:9")
+	if first == nil || second == nil {
+		t.Fatal("both peers must get buckets")
+	}
+
+	if first == second {
+		t.Error("distinct peers share a bucket")
+	}
+
+	if again := throttler.bucket("203.0.113.10:4432"); again != first {
+		t.Error("the same peer must keep its bucket across calls")
+	}
+}
+
+func TestPerIPThrottlerEvictsOldestUnderCap(t *testing.T) {
+	// A spoofed-source flood must not balloon the map: the oldest bucket
+	// yields (FIFO) once the cap is reached.
+	throttler := newPerIPThrottler(2)
+
+	a := throttler.bucket("10.0.0.1:1")
+	throttler.bucket("10.0.0.2:2")
+	throttler.bucket("10.0.0.3:3")
+
+	if returned := throttler.bucket("10.0.0.1:1"); returned == a {
+		t.Error("evicted peer must not keep its old bucket")
+	}
+}
+
+func TestPerIPThrottlerFallbackBucketForHostlessPeers(t *testing.T) {
+	// Peers without a parseable host share the fallback bucket — the
+	// throttle degrades to global, it does not disable itself.
+	throttler := newPerIPThrottler(8)
+
+	first := throttler.bucket("bogus")
+	second := throttler.bucket("")
+	if first == nil || first != second {
+		t.Error("hostless peers must share the fallback bucket")
+	}
+}
