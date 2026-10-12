@@ -170,3 +170,32 @@ invariants summary; this file keeps the war stories.
   caught it under package-wide shuffle + load, never with `-run` alone.
   Helpers that start background hosts must return a waitable stop and the
   caller must run it before every Close.
+- **`go:embed static` snapshots at COMPILE time — an unbuilt stylesheet reads
+  as a browser MIME error, not a 404 (paid for, 2026-10-12)**:
+  `internal/web/static/styles.css` is a gitignored tailwind artifact; a
+  checkout without it produces serve binaries whose `/app.css` answers the
+  explanatory 404 (`http.Error` → `text/plain`), which Chrome reports as
+  "Refused to apply style ... MIME type ('text/plain')" — no 404 in the
+  console, so it looks like a broken Content-Type, not a missing artifact.
+  BuildFlow's `tailwind-build` step is DELIBERATELY deferred in this repo
+  (the CSS output is owned by the flake-pinned tailwindcss; a PATH tailwind
+  would clobber the pinned bundle), so regenerate with the same pinned
+  binary as the flake preBuild hook —
+  `nix develop -c tailwindcss -i internal/web/static/app.css -o
+  internal/web/static/styles.css --minify` — then REBUILD the binary
+  (restarting an old one changes nothing: the embed already happened).
+  `nix build` is immune (the package preBuild regenerates inside the
+  sandbox). `TestStylesServed` locks both legitimate states: 200 +
+  `text/css` when built, explanatory 404 when not.
+- **Two templs disagree about struct-literal alignment (paid for, 2026-10-12)**:
+  go.mod's tool-directive templ (v0.3.1070, what `go tool templ` and CI
+  codegen use) formats `.templ` struct literals differently than the flake's
+  `pkgs.templ` (v0.3.1020, what the devShell and the sandboxed pre-commit
+  check enforce). A tree formatted by the newer templ fails
+  `checks.x86_64-linux.pre-commit` with "unexpected changes detected" on
+  alignment alone — no import disorder, no hand edits needed. The nix-side
+  formatter is the arbiter: after any session that ran `go tool templ fmt`,
+  finish with `nix develop -c templ fmt ./internal/web/`. Until the flake
+  pins a templ matching go.mod (upstream fix belongs in go-nix-helpers'
+  templ program), buildflow's `templ-fmt` accepts both layouts, so it will
+  NOT catch the drift — only the nix check does.

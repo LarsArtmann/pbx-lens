@@ -23,11 +23,11 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 			Class:  "mb-2 max-w-xl",
 		}) {
 			@forms.Input(forms.InputProps{
-				Type:        forms.InputSearch,
-				Name:        "q",
-				Value:       query,
-				Label:       "Search transcripts",
-				Placeholder: "e.g. woolly invoice or +17287289311",
+				Type:         forms.InputSearch,
+				Name:         "q",
+				Value:        query,
+				Label:        "Search transcripts",
+				Placeholder:  "e.g. woolly invoice or +17287289311",
 				EnterKeyHint: "search",
 			})
 			@display.Button(display.ButtonProps{Text: "Search", Type: display.ButtonHTMLSubmit})
