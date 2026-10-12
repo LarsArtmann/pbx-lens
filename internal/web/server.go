@@ -433,11 +433,8 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	// the would-be redirect loop — its presence means "already jumped".
 	if query != "" && !r.URL.Query().Has("at") {
 		if first, ok := firstMatchedTurn(view.Transcript, query); ok {
-			target := detailURL(calls.SourceKind(r.PathValue("kind")), calls.NativeID(r.PathValue("id"))) +
-				"?q=" + url.QueryEscape(query) +
-				"&at=" + strconv.Itoa(first) +
-				"#turn-" + strconv.Itoa(first)
-			http.Redirect(w, r, target, http.StatusFound)
+			//nolint:gosec // same-origin by construction: fixed /calls/ prefix, escaped identity + query (TestSearchJumpTargetSameOrigin)
+			http.Redirect(w, r, searchJumpTarget(view, query, first), http.StatusFound)
 
 			return
 		}

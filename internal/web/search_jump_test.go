@@ -36,6 +36,7 @@ func TestDetailQueryRedirectLandsAtFirstMatch(t *testing.T) {
 
 	location := recorder.Header().Get("Location")
 	want := "/calls/telnyx-conversation/conv-out?q=help&at=1#turn-1"
+
 	if location != want {
 		t.Errorf("redirect Location = %q, want %q", location, want)
 	}
@@ -128,6 +129,23 @@ func TestDetailWithoutQueryKeepsPlainPath(t *testing.T) {
 	}
 }
 
+// TestSearchJumpTargetSameOrigin pins the redirect builder's shape: fixed
+// /calls/ prefix with escaped segments and query — the property that makes
+// the handler's http.Redirect honest.
+func TestSearchJumpTargetSameOrigin(t *testing.T) {
+	view := calls.CallView{Kind: calls.SourceTelnyxConversation, NativeID: "conv/odd?id"}
+	got := searchJumpTarget(view, "hello there", 2)
+
+	want := "/calls/telnyx-conversation/conv%2Fodd%3Fid?q=hello+there&at=2#turn-2"
+	if got != want {
+		t.Fatalf("searchJumpTarget = %q, want %q", got, want)
+	}
+
+	if !strings.HasPrefix(got, "/calls/") {
+		t.Error("redirect target must stay same-origin")
+	}
+}
+
 func httptestGet(t *testing.T, mux *http.ServeMux, path string) *httptest.ResponseRecorder {
 	t.Helper()
 
@@ -141,8 +159,8 @@ func extractHrefs(body string) string {
 	var hrefs []string
 
 	for chunk := range strings.SplitSeq(body, "href=\"") {
-		if end := strings.Index(chunk, "\""); end >= 0 {
-			hrefs = append(hrefs, chunk[:end])
+		if href, _, found := strings.Cut(chunk, "\""); found {
+			hrefs = append(hrefs, href)
 		}
 	}
 

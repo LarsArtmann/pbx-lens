@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 
 	servertiming "github.com/larsartmann/httputil/server_timing"
@@ -61,4 +62,15 @@ func hitHref(hit search.Hit, query string) string {
 	}
 
 	return path + "?q=" + url.QueryEscape(query)
+}
+
+// searchJumpTarget is the one redirect the search deep link produces: the
+// detail page re-served with the query plus the first match's turn anchor.
+// Same-origin by construction — fixed /calls/ prefix, path-escaped identity,
+// query-escaped search text — and unit-tested on exactly that property.
+func searchJumpTarget(view calls.CallView, query string, firstTurn int) string {
+	return detailURL(view.Kind, view.NativeID) +
+		"?q=" + url.QueryEscape(query) +
+		"&at=" + strconv.Itoa(firstTurn) +
+		"#turn-" + strconv.Itoa(firstTurn)
 }
