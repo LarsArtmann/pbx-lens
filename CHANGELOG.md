@@ -118,6 +118,12 @@ No version has been tagged yet; everything lives under Unreleased.
   decider, `cmd/pbx-lens/main.go` (677) into main/ingest/serve/ops, and
   `internal/ingest/telnyx/telnyx.go` (379) into client + `dto.go` — zero
   API or behavior change; every non-test file is now well under the limit.
+- Internal naming pass (2026-10-11): 9 renames for verb consistency and
+  split-brain closure (`ListMessages`/`ListDetailRecords`/
+  `ListConversationInsights`, `agent.MapTranscript`, `stats.AvgMOS`,
+  `cli.RebuildOpenIndex`, `EnrichmentSeed`, `enrichConversation`,
+  `streamLabel`, `hasStart`) — internal Go identifiers only; no JSON tags,
+  wire fields, CLI flags, or DB columns changed.
 
 ### Fixed
 
@@ -192,3 +198,8 @@ No version has been tagged yet; everything lives under Unreleased.
   covered by go-cqrs-lite#64; the load-starved compile-gate misattribution
   in BuildFlow (tool.timeout kill reported as "dependency bump introduced
   compile errors" + silent go.mod/go.sum revert) filed as BuildFlow#45.
+- flake.nix cqrs-lint pin hashes repaired (an earlier session had pasted
+  the pbx-lens module vendor hash into both pins, leaving the devShell
+  unbuildable on any cold cache) and a stranded `vendorHash.nix` AAAA…
+  placeholder restored via `nix run .#update-vendor-hash` (2026-10-11
+  naming-review session).

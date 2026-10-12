@@ -16,11 +16,16 @@ DECISION.
 - **C009 (fixed via `mustRegister`)**: the panic-in-production rule exempts
   functions named `must*`/`Must*` with `len(name) > 4` — a helper literally
   named `must` is NOT exempt. The composition root uses `mustRegister`.
+  Verified at source (`cmd/cqrs-lint/pkg/rules/correctness/c009.go:95`, same
+  shape for `New` at :99) and covered by the open upstream filing
+  [go-cqrs-lite#64](https://github.com/LarsArtmann/go-cqrs-lite/issues/64)
+  (2026-10-12); if that lands, `mustRegister` can return to bare `must`.
 - **E005 (false positive)**: "RecordCallCmd has no registered handler" —
   the handler IS registered, in `internal/app` via
   `system.RegisterCommand` (ADR-0123 composition root); the lint analyzes
   one package at a time and cannot see the wiring. Non-fix. Same class
-  covers the 2026-10-11 `EnrichCallCmd` warning.
+  covers the 2026-10-11 `EnrichCallCmd` warning; also tracked in
+  [go-cqrs-lite#64](https://github.com/LarsArtmann/go-cqrs-lite/issues/64).
 - **E014 (false positive, same package-blindness class)**: "uses
   projectionhost but has no projection drain/sync/flush call" — the drain
   lives in `internal/cli.DrainProjections` and EVERY dispatcher (one-shot

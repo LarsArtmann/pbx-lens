@@ -159,7 +159,9 @@ nix build                             # ships result/bin/pbx-lens (fixed 2026-10
 nix run . -- version                  # run the built binary
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
                                       # UI e2e: then probe /, /dashboard, /search,
-                                      # /api/freshness with a Go http probe (curl banned)
+                                      # /api/freshness with a Go http probe (curl banned);
+                                      # -recording-timeout bounds proxy upstream hops
+                                      # (default web.DefaultUpstreamTimeout, 30 s)
 nix develop                           # devShell: go, golangci-lint, gopls,
                                       # govulncheck, cqrs-lint
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md

@@ -73,7 +73,9 @@ pbx-lens serve -db /var/lib/pbx-lens/calls.db -addr 127.0.0.1:8300
 ```
 
 A read-only web UI over the index: the calls list with direction/AI/date
-filters, per-call detail with transcript and recording playback, FTS5
+filters, per-call detail with transcript and recording playback (the proxy
+bounds each upstream hop to 30 s by default, `-recording-timeout`; the audio
+body itself streams unbounded), FTS5
 search, a freshness banner, and a quality dashboard. Ingest keeps working
 from the same CLI; `serve` also embeds an optional poll loop
 (`-poll-every 15m -cdr-file … -webhook-log … -transcripts-dir …`) so the
