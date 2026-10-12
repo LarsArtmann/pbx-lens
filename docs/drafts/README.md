@@ -8,6 +8,7 @@
 | Draft                                                            | Upstream issue          | State                                                               |
 | ---------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
 | `2026-10-12_buildflow-gomod-update-tool-timeout.md`              | BuildFlow#45            | FILED — OPEN upstream                                               |
+| `buildflow-spawn-starvation-gate.md`                             | BuildFlow#50            | FILED — OPEN upstream                                               |
 | `2026-10-12_dependabot-gomod-unrelated-bump-deletes-requires.md` | dependabot-core#16538   | FILED — OPEN upstream (owner watches for maintainer questions)      |
 | `2026-10-12_v0.1.0-release-notes.md`                             | —                       | local artifact (release notes, not a filing)                        |
 | `2026-10-12_v0.2.0-release-notes.md`                             | —                       | local artifact (release notes + tag checklist, tag owner-gated)     |

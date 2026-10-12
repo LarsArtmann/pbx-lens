@@ -21,6 +21,14 @@ upstream — no upstream movement to fold in yet.**
   load-starved compile gate (`tool.timeout` kill) as "dependency bump
   introduced compile errors" and silently reverts go.mod/go.sum;
   source-verified chain + draft in `docs/drafts/`.
+- **BuildFlow#50** (filed 2026-10-12, plan T15): the general gate-level
+  behavior under #45 — spawn starvation (`errorfamily.Transient` +
+  `tool.timeout`, `cmdrun_streaming.go:86`) still exits error with a
+  `step_failure` verdict; the error registry's fix advice ("increase
+  the timeout") is wrong for the starvation flavor. Ask: one retry for
+  no-output spawn kills + an environment exit class for all-transient
+  runs + load average in the summary. Draft:
+  `docs/drafts/buildflow-spawn-starvation-gate.md`.
 - C009 verification note (2026-10-12): the `len(name) > 4` guard is
   confirmed at source (`cmd/cqrs-lint/pkg/rules/correctness/c009.go:95`,
   same shape for `New` at line 99) and IS covered by go-cqrs-lite#64 — no
