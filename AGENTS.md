@@ -56,25 +56,23 @@ webphone later gets a read-only deep link, never a data dependency.
   var(--color-tc-primary)`, so one override re-skins every library blue).
   Never hand-write `bg-blue-*` in pbx-lens .templ files — the library's own
   classes re-skin through the token chain.
-- **templ-components v1.21.0 adoption map:** the per-component truth for
-  THIS repo lives in docs/templ-components-adoption.md — the skill docs
-  drift ahead of the pinned tag; several components are ABSENT in v1.21.0,
-  so check the map before importing anything new. The same doc carries the
-  version-bump watchlist (gen-tc-classes → map re-audit → hand-rolled
-  re-check → filings re-read → golden `-update`) — run it in order on
-  every templ-components bump.
+- **templ-components v1.21.0 adoption map:** per-component truth for THIS
+  repo lives in docs/templ-components-adoption.md (skill docs drift ahead
+  of the pinned tag; several components are ABSENT in v1.21.0 — check the
+  map before importing anything new; it also carries the version-bump
+  watchlist: gen-tc-classes → map re-audit → hand-rolled re-check →
+  filings re-read → golden `-update`, run in order on every bump).
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's
   pattern): `subPackages = ["./cmd/pbx-lens"]` wires the package to the
   real binary (the default `["."]` built the package-less root and shipped
   an empty result); treefmt runs nixfmt + deadnix + statix only (BuildFlow
-  owns Go formatting). The devShell (mkShellNoCC) carries go/golangci-lint/
-  gopls/govulncheck/dprint/templ/tailwindcss_4/cqrs-lint with
-  GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2. UI codegen is a package preBuild
-  (`templGenerationPolicy = "preBuild"`: `templ generate ./internal/web/` +
+  owns Go formatting). DevShell (mkShellNoCC): go/golangci-lint/gopls/
+  govulncheck/dprint/templ/tailwindcss_4/cqrs-lint, GOTOOLCHAIN=local +
+  GOEXPERIMENT=jsonv2. UI codegen is a package preBuild
+  (`templGenerationPolicy = "preBuild"`: templ generate ./internal/web/ +
   tailwindcss → styles.css; both gitignored, regenerated inside nix).
   `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
-  break with `buildflow -s nix-hash-fix --fix` or `nix run
-  .#update-vendor-hash` — never paste hashes by hand.
+  break with `buildflow -s nix-hash-fix --fix` — never paste hashes by hand.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
   govulncheck, art-dupl (warning-only). Dependabot watches github-actions +
@@ -98,23 +96,22 @@ webphone later gets a read-only deep link, never a data dependency.
   `ingest.Result` directly (no per-package Result alias — one type, no split
   brain); `agent.Result` keeps its own shape (Transcripts, not Observations).
   CDR keeps its own scan loop (semicolon-trimming CSV semantics), but through
-  `ingest.NewScanner`. Support packages: `internal/wire` (FlexTime + shared
-  wire-decoding helpers; directly unit-tested since 2026-10-11),
-  `internal/backup` (VACUUM INTO snapshot + integrity verify), and
-  `internal/retention` (Policy/OldViews/Retire behind the `purge` command;
-  `Policy.Admits` also gates ingest-side age via the serve poller's
-  `-max-age`, 0 = keep everything). The projection record key is ALWAYS
-  derived via `obs.StreamID().String()` — the last hand-built
-  `"StreamMarker:..."` literal (cli/agent.go CDR join) was found and removed
-  by the 2026-10-11 four-lens review; do not re-introduce one.
-  `calls.DefaultExcerptMax` (200 runes) is the domain-owned excerpt
-  ceiling; every source mapper selects via `calls.Excerpt` (first user
-  turn, fallback first turn). The serve htpasswd timing pad hashes at the
-  LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
-  when touching auth.go; SIGHUP reloads the file (a broken reload keeps the
-  running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
-  FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
-  deliberately not honored).
+  `ingest.NewScanner`. Support: `internal/wire` (FlexTime + shared decode
+  helpers; directly unit-tested), `internal/backup` (VACUUM INTO snapshot
+  - integrity verify), `internal/retention` (Policy/OldViews/Retire behind
+    `purge`; `Policy.Admits` also gates serve-poller `-max-age`, 0 = keep
+    everything). The projection record key is ALWAYS
+    derived via `obs.StreamID().String()` — the last hand-built
+    `"StreamMarker:..."` literal (cli/agent.go CDR join) was found and removed
+    by the 2026-10-11 four-lens review; do not re-introduce one.
+    `calls.DefaultExcerptMax` (200 runes) is the domain-owned excerpt
+    ceiling; every source mapper selects via `calls.Excerpt` (first user
+    turn, fallback first turn). The serve htpasswd timing pad hashes at the
+    LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
+    when touching auth.go; SIGHUP reloads the file (a broken reload keeps the
+    running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
+    FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
+    deliberately not honored).
 - **serve/UI:** `serve` composes appkit around `web.Register`:
   ServiceConfig{Addr, `Version` → `/version`, `Metrics` → `/metrics`
   (explicit `AllowUnauthenticated` opt-in; both beside the appkit
@@ -165,11 +162,10 @@ webphone later gets a read-only deep link, never a data dependency.
 ```console
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
-buildflow --build-mode dev            # the quality gate (lint+format+test)
-                                      # LOAD DOCTRINE (m27.9): run the FULL gate
-                                      # only when the 15-min load average is < 40
-                                      # (`cat /proc/loadavg` third field); above
-                                      # that, verify casualties individually
+buildflow --build-mode dev            # the quality gate (lint+format+test);
+                                      # FULL gate only when 15-min load < 40
+                                      # (`cat /proc/loadavg` third field), else
+                                      # verify casualties individually
                                       # (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens (fixed 2026-10-11)
 nix run . -- version                  # run the built binary
