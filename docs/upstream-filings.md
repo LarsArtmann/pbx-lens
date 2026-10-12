@@ -29,4 +29,8 @@ upstream — no upstream movement to fold in yet.**
   `docs/drafts/` now carry a FILED banner naming their issue; they stay as
   historical write-ups. `go-atomic-write-commit-primitive.md` remains the
   one LIVE draft (unfiled; owner review box unchecked by design).
+- **dependabot-core#16538** (filed 2026-10-12, owner-approved R24): gomod
+  bump of an unrelated module deleted all four templ-components requires
+  (evidence: this repo's PR #1 diff + commit `40e1a49`); mechanism class of
+  closed #3617. Draft + repro shape in `docs/drafts/2026-10-12_dependabot-gomod-unrelated-bump-deletes-requires.md`.
 - Drafts live in `docs/drafts/` (never /tmp).
