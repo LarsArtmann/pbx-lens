@@ -53,6 +53,45 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   exactly the old behavior. The NixOS module option lands in
   nix-international-telephony.
 
+- Dashboard density + honesty pass (templ-UI Pareto plan T13–T19, plan:
+  docs/planning/2026-10-12_13-32_SUPERB-templ-ui-pareto-plan.md):
+  weekday×hour call-density heatmap (Mon-first rows in the dashboard
+  zone, peak highlight, honest empty state), 7/30-day window presets
+  with a `windowDays`-parameterized stats query (bare date filters and
+  chart labels follow the window), StatCard change/trend deltas,
+  volume/duration bars fixed at a real height (the library's vertical
+  BarChart computes 0px bars without a CSS-value Height AND
+  `!items-stretch` — filed upstream as templ-components#48 with
+  measurements), htmx ErrorHandlingConfig + runtime self-hosting, and
+  the density card verified light/dark × desktop/mobile by screenshot.
+
+- Detail-page operator affordances (T20/T21 + T15/T18): CopyButton on
+  the native id (PageHeader action) and both phone numbers (facts rows,
+  button variant only); the search deep link now carries `?q=` into the
+  detail page, marks matching transcript turns (amber), and redirects
+  once to the first match's anchor so the click lands at the evidence
+  without JS (`?q=…&at=N#turn-N`, at-breaks-the-redirect-loop);
+  breadcrumbs on the detail header; the transcript is screen-reader
+  reachable (`AriaLabel` — the library defaults the block to
+  aria-hidden); keyboard-focusable table rows got the missing
+  focus-visible ring (filed upstream as templ-components#49); and the
+  page prints facts + transcript cleanly (`@media print` drops nav,
+  footer, buttons).
+
+- List/export honesty (T8/T11/T12): the pager is two honest numberless
+  buttons (a TotalPages pager would fabricate totals over keyset
+  cursors — rationale lives in `pagerRow`), the export endpoints emit
+  an explicit `EXPORT_INCOMPLETE` terminal marker when the cursor
+  stalls (CSV row / JSONL object, loud on every consumer), and the
+  EmptyState offers a "Clear filters" way back.
+
+- Golden-HTML regression net (T22): the five operator pages are pinned
+  by `.golden` files (`go test ./internal/web/ -run TestGoldenPages`,
+  refresh via `-update` then review the diff), a palette gate bans raw
+  blue classes in pbx-lens templates (the theme bridge owns blue), and
+  a templ-generate sync test keeps codegen honest. Contrast-audited
+  palette tokens and the extended blue→teal bridge landed in `app.css`.
+
 Nothing else yet.
 
 ### Fixed — 2026-10-12 (recording proxy vs MP3-only AI-assistant recordings)
