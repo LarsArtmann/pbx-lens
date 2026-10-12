@@ -95,6 +95,11 @@ whole index (keyset-paginated, bounded memory — no row cap). The response's
 `X-PII-Mode` header names what left: `?pii=hash` swaps participant numbers
 for their salted hashes before anything leaves the server.
 
+For machine checks, `GET /api/ops` (same basic auth) serves the latest poll
+pass's per-source offered/recorded/corrected/rejected counters — the numbers
+the serve log prints, without grepping the journal. When `serve` runs without
+a poll loop it answers 503 with an explanation instead of faking zeros.
+
 **PII disclosure (R3):** `pii=hash` bounds participant identity ONLY.
 Transcripts, excerpts, and insight summaries stay raw in every mode — see
 the field-coverage matrix in FEATURES.md. If you need free text scrubbed
