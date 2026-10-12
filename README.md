@@ -76,7 +76,13 @@ A read-only web UI over the index: the calls list with direction/AI/date
 filters, per-call detail with transcript and recording playback (the proxy
 bounds each upstream hop to 30 s by default, `-recording-timeout`; the audio
 body itself streams unbounded), FTS5
-search, a freshness banner, and a quality dashboard. Ingest keeps working
+search (partial phone numbers match too: any run of 4+ digits finds the
+call), a freshness banner, and a quality dashboard whose day buckets follow
+the operator's wall clock (Europe/Berlin — "Calls today" means today, not
+UTC's version of it; owner decision R2). Dashboard cards poll for updates
+every 30 s and the staleness banner re-checks itself every minute (htmx,
+self-hosted, so a JS-less browser gets the same page rendered server-side).
+Ingest keeps working
 from the same CLI; `serve` also embeds an optional poll loop
 (`-poll-every 15m -cdr-file … -webhook-log … -transcripts-dir …`) so the
 index stays fresh without external timers. `-max-age 720h` refuses polled
@@ -84,9 +90,15 @@ observations older than the window at ingest (`0`, the default, keeps
 everything) — the ingest-side half of retention.
 
 Every row is also exportable without the UI: `/api/export.jsonl` and
-`/api/export.csv` accept the same filters as the list page, and
-`?pii=hash` swaps participant numbers for their salted hashes before
-anything leaves the server.
+`/api/export.csv` accept the same filters as the list page and stream the
+whole index (keyset-paginated, bounded memory — no row cap). The response's
+`X-PII-Mode` header names what left: `?pii=hash` swaps participant numbers
+for their salted hashes before anything leaves the server.
+
+**PII disclosure (R3):** `pii=hash` bounds participant identity ONLY.
+Transcripts, excerpts, and insight summaries stay raw in every mode — see
+the field-coverage matrix in FEATURES.md. If you need free text scrubbed
+too, that is a separate feature; do not assume hash mode covers it.
 
 Protect it with bcrypt basic auth for anything beyond loopback:
 
@@ -102,14 +114,15 @@ listener binds and feeds the watchdog.
 ### Purge old calls
 
 ```console
-pbx-lens purge -db /var/lib/pbx-lens/calls.db -max-age 2160h [-dry-run]
+pbx-lens purge -db /var/lib/pbx-lens/calls.db -max-age 2160h [-dry-run] [-json]
 ```
 
 Retention is tombstone-based: over-age calls get a `call.retired` event and
 disappear from every read surface (list, search, export, dashboard), while
 the event log stays append-only. Re-polling a purged call is a no-op, so
 the view stays purged. Full erasure remains the disposable-DB move: drop
-the file and re-ingest.
+the file and re-ingest. `-json` turns both the dry run and the applied
+purge into machine-readable reports for automation.
 
 ### Back up the index
 
@@ -121,6 +134,13 @@ The snapshot is a consistent copy (`VACUUM INTO`) taken while `serve` keeps
 writing, fsynced before it is renamed into place, and verified readable
 afterwards. `deploy/systemd/pbx-lens-backup.{service,timer}` stage it
 nightly; retention and off-host shipping stay with the host backup tool.
+
+**Restore drill (R16):** restoring = placing a verified snapshot at a fresh
+DSN path and pointing `serve` at it — the serve startup rebuild recreates
+the search index. The full chain (snapshot → verify → restore → rows and
+FTS hits match the source) is a checked-in test,
+`internal/backup/restore_drill_test.go`, so "backups work" stays a proven
+claim instead of a hope.
 
 ### Deep-link contract (for webphone and friends)
 

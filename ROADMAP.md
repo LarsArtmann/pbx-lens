@@ -20,24 +20,22 @@
 
 One index is only worth building if every question about a call is answerable
 from it. Shipped: list, detail, search, dashboard, export, cost, insights,
-MOS. The remaining raw ideas:
+MOS. Everything this theme's raw ideas named landed 2026-10-12 (partial
+number search, date-range picker, duration histogram, streaming export) —
+the remaining follow-on idea:
 
-- Substring phone-number search (FTS5 tokenizes `+1728…` as ONE token; a
-  trigram/prefix index over E.164 would lift the documented limitation)
-- Dashboard enrichment: date-range picker, duration histogram, cost panel
-  (both M20.1/M20.2 were descoped in 2026-10-11 without an owner decision —
-  see open questions)
-- Export streaming beyond the `maxExportRows` cap (keyset pagination loop)
+- Cost panel on the dashboard (the data is in `CostMicros`; the histogram
+  card pattern is there to copy)
 
 ### 2. Autonomy and operations (plan phase 3 — hardening)
 
 Shipped: in-process poller, freshness banner, sd_notify, NixOS module,
-nightly backup staging, purge timers. Raw ideas:
+nightly backup staging, purge timers — and 2026-10-12: htpasswd SIGHUP
+reload, per-IP failure throttling, the `/api/ops` counters endpoint,
+structured slog records, the restore-drill test. Remaining raw ideas:
 
-- htpasswd reload on SIGHUP/mtime (restart required today)
-- Per-IP rate limiting (the shared bucket is global)
-- Poller ops endpoint: per-source rejection counters (log lines only today)
-- Structured logging (`log/slog`) for poller/serve passes
+- Backup rotation/shipping policy (host backup tool owns it today; a lens
+  opinion would be a new decision)
 - v0.1.0 release + the production `-max-age` / `-recording-timeout` module
   values are owner-blocked rows in TODO_LIST (not repeated here)
 
@@ -51,12 +49,16 @@ The index is a consumer; the ecosystem reads from it.
 ### 4. Trust and safety (plan phase 4)
 
 The index concentrates call metadata; it must age gracefully and respect PII.
+Raw-at-rest is now explicit doctrine (owner decision 2026-10-12, R21): the
+index stores raw numbers because real CDRs carry garbled parties, and the
+EXPORT gate (`?pii=hash` + the FEATURES coverage matrix) is the PII boundary.
+Remaining raw idea:
 
-- PII policy on stored rows: `E164`/`ParticipantHash` exist and are tested
-  but nothing enforces them on storage (the hash gate is export-boundary only)
 - Direction auto-detection for inbound AI calls (DID interception path);
   today direction is caller-declared because Telnyx conversation metadata
-  exposes none
+  exposes none. Design note: `docs/did-direction-design.md` (2026-10-12,
+  R22) — the mapping rule and its ingestion plug-point are sketched there
+  as a TODO_LIST row
 
 ## Non-goals
 
@@ -82,15 +84,27 @@ The index concentrates call metadata; it must age gracefully and respect PII.
 - **Keep the flat `internal/calls` package or split it?** Documented policy is
   flat (one aggregate, one projection); the natural revisit trigger is T9
   landing a second concern. (report 2026-10-10_06-57 §g.3, cqrs-lint E003)
-- **Dashboard day buckets: UTC or Europe/Berlin?** "Calls today" and the
-  30-day chart are UTC (documented); for a German PBX a 23:30 CET call counts
-  toward the next day's bucket. Asked three times (2026-10-11), still open —
-  changes `DashboardStatsQuery` window math and its tests.
-- **Descoped dashboard micro-features:** the plan's date-range picker
-  (M20.1) and duration histogram (M20.2) were shipped neither nor struck —
-  decide deliver-vs-strike.
-- **Release gate for v0.1.0:** step-level green gate evidence exists; is that
-  sufficient, or must the single clean full pass + the sibling `-max-age`
-  decision land first?
-- **Live SSE / auto-refresh** for the dashboard (FEATURES PLANNED row) —
-  needs the same owner decision as the static-banner replacement.
+- ~~**Dashboard day buckets: UTC or Europe/Berlin?**~~ **Resolved 2026-10-12
+  (owner, R2): Europe/Berlin.** `DashboardStatsQuery`, `todayHref`, and bare
+  date filters all bucket in the operator's zone; DST-stable via zone logic;
+  the zone is injectable and UTC coverage is tested.
+- ~~**Descoped dashboard micro-features:**~~ **Resolved 2026-10-12 (owner,
+  R8): both DELIVERED** — date-range picker (M20.1) and duration histogram
+  (M20.2) shipped with tests.
+- ~~**Release gate for v0.1.0:**~~ **Resolved 2026-10-12 (owner, R4): the
+  release goes once the tree gates green at load < 40** — the single clean
+  full pass IS the gate; the sibling `-max-age` defaults to forever (owner,
+  R5), which unblocks the module option too.
+- ~~**Live SSE / auto-refresh**~~ **Resolved 2026-10-12 (owner, R9): htmx
+  polling on dashboard + staleness banner**, self-hosted runtime; SSE
+  upgrade path stays open if poll volume ever matters.
+- **RetireCallCmd decision** (m27.9): the `call.retired` tombstone exists;
+  an owner-facing `RetireCallCmd` (single-call retire via CLI/API) has no
+  operator demand yet — recorded here so it does not fossilize in a plan.
+- **Status-report format policy** (m27.9): reports are hand-written .md
+  today; HTML default came from tooling, not from the owner. Standing
+  default: .md + mermaid unless the owner says otherwise.
+- **Machine-hygiene norm** (m27.9): the full gate only runs at 15-min load
+  < 40; below that, casualties verify individually
+  (docs/buildflow-dev-gate.md). Recorded as the standing norm so future
+  sessions do not re-derive it.

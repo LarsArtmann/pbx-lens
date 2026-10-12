@@ -55,9 +55,9 @@ func TestRunPurgeDryRunJSONListsCandidates(t *testing.T) {
 	}
 
 	var dryReport struct {
-		DryRun      bool     `json:"dry_run"`
-		OverAge     int      `json:"over_age"`
-		WouldRetire []any    `json:"would_retire"`
+		DryRun      bool  `json:"dry_run"`
+		OverAge     int   `json:"over_age"`
+		WouldRetire []any `json:"would_retire"`
 	}
 
 	if err := json.Unmarshal(dry.Bytes(), &dryReport); err != nil {
@@ -72,21 +72,21 @@ func TestRunPurgeDryRunJSONListsCandidates(t *testing.T) {
 		t.Errorf("candidate list must name only the over-age call: %s", dry.String())
 	}
 
-	var real bytes.Buffer
-	if err := runPurge(ctx, sys, "unused-dsn", policy, false, true, "720h", &real); err != nil {
+	var applied bytes.Buffer
+	if err := runPurge(ctx, sys, "unused-dsn", policy, false, true, "720h", &applied); err != nil {
 		t.Fatalf("runPurge: %v", err)
 	}
 
-	var realReport struct {
+	var appliedReport struct {
 		Retired int `json:"retired"`
 		OverAge int `json:"over_age"`
 	}
 
-	if err := json.Unmarshal(real.Bytes(), &realReport); err != nil {
-		t.Fatalf("purge JSON invalid: %v (%s)", err, real.String())
+	if err := json.Unmarshal(applied.Bytes(), &appliedReport); err != nil {
+		t.Fatalf("purge JSON invalid: %v (%s)", err, applied.String())
 	}
 
-	if realReport.Retired != 1 || realReport.OverAge != 1 {
-		t.Fatalf("purge report = %+v, want retired=1 over_age=1", realReport)
+	if appliedReport.Retired != 1 || appliedReport.OverAge != 1 {
+		t.Fatalf("purge report = %+v, want retired=1 over_age=1", appliedReport)
 	}
 }
