@@ -207,3 +207,14 @@ invariants summary; this file keeps the war stories.
   renders into a `bytes.Buffer` and writes ONCE, which is what makes the
   304 contract work at all; keep every HTML handler on it and never switch
   to a direct `component.Render(w, ...)` streaming call for a cached page.
+- **templ fmt is per-file only and not idempotent on first pass (2026-10-12):**
+  the sandboxed pre-commit check runs treefmt PER FILE (pre-commit feeds it
+  one file per invocation), which hits templ's single-file formatting path —
+  that path reformats what the BATCH path (`templ fmt a.templ b.templ …`)
+  leaves untouched. Running treefmt directly on the whole tree therefore
+  reports "0 changed" while the check fails with alignment diffs. Worse,
+  templ's single-file fmt needs TWO passes to converge on some files (e.g.
+  an inline `<span>@icons…</span>` first splits the closing tag, then splits
+  the element) — one local pass still leaves the check red. Verify with the
+  real thing: `nix build .#checks.x86_64-linux.pre-commit`, not a local
+  treefmt run.
