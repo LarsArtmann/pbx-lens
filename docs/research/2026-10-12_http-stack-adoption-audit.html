@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>HTTP-stack adoption audit — pbx-lens</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -848,223 +848,329 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>STACK AUDIT</span>
+      <span>2026-10-12</span>
+      <span>pbx-lens &middot; Lars Artmann</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
           <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
+          <a href="#strengths">What pulled weight</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#proposal">Shipped order</a>
           <a href="#appendix">Appendix</a>
         </nav>
       </aside>
 
-      <!-- Main content -->
       <main class="main">
-        <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">LIBRARY DEEP-DIVE &middot; 2026-10-12</div>
+          <h1>The HTTP stack, adopted to the max</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            pbx-lens carried four HTTP-stack modules in its graph and used one
+            of them. This audit verified every capability at the pinned
+            versions, adopted what paid, and refused the rest with doctrine.
+            All of it shipped the same day.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Scope: go-appkit v0.8.0 &middot; httputil v1.4.1 &middot; server_timing v1.0.2 &middot; go-etag v0.6.1</span>
+            <span class="tag">Repo: pbx-lens</span>
+            <span class="tag teal">Status: EXECUTED (fd0e082)</span>
           </div>
         </header>
 
-        <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+            <div class="score">6</div>
+            <div class="label">Capabilities adopted</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">7</div>
+            <div class="label">Candidates refused, doctrine on record</div>
           </div>
           <div class="score-card score-bad">
             <div class="score">1</div>
-            <div class="label">Blockers</div>
+            <div class="label">Latent bug found and fixed</div>
           </div>
           <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+            <div class="score">4</div>
+            <div class="label">Modules audited at the pin</div>
           </div>
         </section>
 
-        <!-- Summary -->
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            Before the audit, pbx-lens reached go-etag and httputil only
+            through go-appkit&rsquo;s default middleware; server_timing sat in
+            go.sum as a test dependency; nothing answered a conditional GET,
+            carried a Server-Timing header, or compressed a body. The audit
+            read all four modules at their pinned versions (module cache, not
+            HEAD), mapped every unused knob, and executed the Pareto plan:
+            conditional GET everywhere with a per-route skip policy,
+            Server-Timing on every route, gzip ordered outside the ETag,
+            <code>/version</code> and <code>/metrics</code> turned on, and
+            &mdash; the real find &mdash; a 30-second request deadline that
+            silently truncated the no-row-cap exports and long recording
+            downloads.
           </p>
-          <div class="callout callout-amber">
+          <div class="callout callout-teal">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            The stack is now used to the max at the pinned versions: every
+            shipped page, poll fragment, and asset revalidates with 304s;
+            every route names its cost in a Server-Timing header; and the
+            stream contracts hold because <code>WriteTimeout:
+            NoTimeout</code> removed the default deadline. Everything the
+            audit considered and did NOT adopt is doctrine-checked in the
+            appendix &mdash; do not re-litigate casually.
           </div>
         </section>
 
-        <!-- Strengths -->
         <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
-          <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
-          </p>
-
+          <h2><span class="num">&#9670;</span>What pulled weight after the pass</h2>
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>go-etag/server: body-hash 304s with a skip policy</strong>
+                <span
+                  >Pages, htmx poll fragments, and static assets answer
+                  If-None-Match with zero body bytes; the ever-changing
+                  staleness/freshness bodies and the unbounded export and
+                  recording streams are deliberately skipped
+                  (internal/web/caching.go).</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
+                <strong>server_timing: a named cost per route</strong>
                 <span
-                  >Reference files, metrics, or patterns where possible.</span
+                  >query/stats/fts/count on the read paths, metadata/headers
+                  on the recording proxy &mdash; the released wiring primitive
+                  is WrapServerTiming + MeasureServerTiming (no middleware
+                  constructor exists at any released version), which shaped
+                  the internal/web/timing.go design.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>httputil Compression, ordered outer of the ETag</strong>
+                <span
+                  >q-value negotiation (br &gt; zstd &gt; gzip) with an
+                  incompressible skip list; sitting outside the ETag is the
+                  library&rsquo;s ordering doctrine, so tags hash identity
+                  bodies and pages drop ~4&ndash;6&times; on the wire.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>go-appkit knobs that were set to zero</strong>
+                <span
+                  >Version (GET /version + appkit_build_info), Metrics
+                  (Prometheus /metrics, unauthenticated by explicit opt-in),
+                  and WriteTimeout: NoTimeout &mdash; the library&rsquo;s own
+                  answer for stream services.</span
                 >
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Findings -->
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <p>
+            The audit found one real bug and two design constraints worth
+            recording. All findings are closed; they stay here because the
+            reasoning is the reusable part.
+          </p>
 
-          <!-- Issue 1 -->
           <div class="issue issue-critical" id="issue-1">
             <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
+              >Found &middot; fixed same day</span
             >
-            <h3>Critical issue title</h3>
+            <h3>
+              The appkit default 30&thinsp;s WriteTimeout truncated every
+              unbounded stream
+            </h3>
             <div class="where">
-              path/to/file.go:42-58 &middot; short context
+              cmd/pbx-lens/serve.go &middot; ServiceConfig{Addr} left
+              WriteTimeout at the default
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              The default deadline sat on every request context.
+              <code>/api/export.{jsonl,csv}</code> honor
+              <code>r.Context()</code> and stream with no row cap, so a large
+              index truncated at 30&thinsp;s into a silently short file; the
+              recording proxy built its upstream WAV request on the same
+              context, so &ldquo;body streams unbounded&rdquo; died mid-song
+              for any slow transfer. Two shipped contracts violated by one
+              forgotten knob.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Fix (shipped)</strong>
+              <code>WriteTimeout: appkit.NoTimeout</code> in
+              <code>buildServiceConfig</code> &mdash; drops the Timeout
+              middleware while ReadHeaderTimeout and the per-route recording
+              upstream bound (30&thinsp;s, <code>-recording-timeout</code>)
+              stay.
             </div>
           </div>
 
-          <!-- Issue 2 -->
           <div class="issue issue-important" id="issue-2">
             <span class="severity severity-important"
-              >Important &middot; Medium impact</span
+              >Constraint &middot; shaped the design</span
             >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+            <h3>server_timing has no middleware constructor &mdash; and loses
+              metrics after the first flush</h3>
+            <div class="where">
+              server_timing v1.0.2, released surface
+            </div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              No released version ships a middleware constructor; the
+              primitive is <code>WrapServerTiming(w, r)</code> plus
+              <code>MeasureServerTiming(ctx, name)</code>. Header values flush
+              at first write, so metrics recorded after the first write are
+              lost &mdash; streaming routes can only instrument pre-first-write
+              hops. pbx-lens wraps this in internal/web/timing.go once and
+              instruments the named hops at each handler.
             </p>
           </div>
 
-          <!-- Issue 3 -->
           <div class="issue issue-nice" id="issue-3">
             <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
+              >Doctrine &middot; graph honesty</span
             >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+            <h3>Three modules were one flag away, not one rewrite away</h3>
+            <div class="where">
+              go.mod &middot; httputil, server_timing, go-etag/server promoted
+              to direct
+            </div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              All three were already in the module graph via go-appkit;
+              promoting them to direct dependencies added no new module &mdash;
+              the same precedent as <code>x/crypto</code> and
+              <code>x/time</code>. The graph now tells the truth about what
+              the code imports.
             </p>
           </div>
         </section>
 
-        <!-- Proposal -->
         <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+          <h2><span class="num">02</span>The shipped middleware order</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            The target state the audit proposed is the state that shipped:
+            one constructor, documented order, every knob justified.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
+          <pre><code>// cmd/pbx-lens/serve.go — buildServiceConfig
+ServiceConfig{
+    Addr:         addr,
+    Version:      version,          // GET /version + build_info
+    Metrics:      MetricsConfig{AllowUnauthenticated: metricsOptIn},
+    WriteTimeout: appkit.NoTimeout, // stream contracts
+    ExtraMiddlewares: append(extras,
+        authMiddleware,                       // htpasswd
+        web.ServerTimingMiddleware(),         // named per-route costs
+        httputil.Compression(compressCfg),    // OUTER of etag (doctrine)
+        web.ETagMiddleware(cacheStats, log),  // body-hash 304s + skip policy
+    ),
 }</code></pre>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>Why this order holds</strong>
+            Compression outside the ETag is the go-etag README doctrine: tags
+            must hash identity bodies, not encodings. Auth outermost keeps
+            /metrics behind an explicit opt-in (SECURITY.md). The buffered
+            templ render (web.render) is what makes bodies hashable at all
+            &mdash; a streaming flush silently disables the 304 contract.
           </div>
         </section>
 
-        <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+          <h2><span class="num">03</span>Appendix &mdash; considered and NOT adopted</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            Methodology: every capability verified at the pinned version in
+            the module cache (never HEAD); every refusal carries its doctrine
+            so the decision survives refactors. Full reasoning lives in
+            docs/planning/2026-10-12_12-47_SUPERB-httputil-go-etag-go-appkit-max-adoption.md.
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
+                <th>Candidate</th>
+                <th>Verdict</th>
+                <th>Doctrine</th>
                 <th>Status</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>appkit errorpages</td>
+                <td class="no">Not adoptable</td>
+                <td>Needs HEAD-only appkit AND an absent templ-components errorpage</td>
+                <td class="no">Refused</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>appkit security (CSRF, RateLimit profiles)</td>
+                <td class="no">Not available</td>
+                <td>Absent at v0.8.0; CSRF is N/A on a read-only GET surface</td>
+                <td class="no">Refused</td>
+              </tr>
+              <tr>
+                <td>KeyedRateLimiter on exports</td>
+                <td class="no">Hold</td>
+                <td>No failure mode: auth throttle + bounded queries cover it</td>
+                <td class="yes">Revisit on abuse</td>
+              </tr>
+              <tr>
+                <td>appkit realtime SSE hub</td>
+                <td class="no">Hold</td>
+                <td>Rewrites shipped R9 polling for zero operator pain</td>
+                <td class="yes">Revisit on poll volume</td>
+              </tr>
+              <tr>
+                <td>go-etag client (conditional GET for Telnyx)</td>
+                <td class="no">Hold</td>
+                <td>Telnyx ETag emission unverified; live-verify window 2027-01</td>
+                <td class="yes">Blocked on live verify</td>
+              </tr>
+              <tr>
+                <td>Data-fingerprint fast-304 on /frag/dashboard</td>
+                <td class="no">Deferred</td>
+                <td>Body-hash 304 already removes the transfer; saves ~ms</td>
+                <td class="yes">YAGNI at this index size</td>
+              </tr>
+              <tr>
+                <td>httputil v1.4.2+ / appkit &gt;v0.8.0</td>
+                <td class="no">Hold</td>
+                <td>No needed feature in the delta; stay on vetted pins</td>
+                <td class="yes">Watchlist</td>
               </tr>
             </tbody>
           </table>
         </section>
 
-        <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-12 &middot; Audited against go-appkit v0.8.0,
+            httputil v1.4.1, server_timing v1.0.2, go-etag/server v0.6.1
+            &middot; All claims verified against the pinned module cache and
+            linked repo docs
           </p>
         </footer>
       </main>
