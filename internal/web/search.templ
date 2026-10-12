@@ -70,7 +70,8 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 								<time datetime={ hit.Started.Format("2006-01-02T15:04:05") }>{ hit.Started.Local().Format("Jan 2, 2006 15:04") }</time>
 								@display.Badge(display.BadgeProps{Text: string(hit.Kind), Type: display.BadgeNeutral, Pill: true})
 								<span class="font-mono">{ string(hit.NativeID) }</span>
-								<span class="ms-auto text-gray-400 dark:text-gray-600">@icons.Icon("chevron-right", "size-4")</span>
+								<span class="ms-auto text-gray-400 dark:text-gray-600">@icons.Icon("chevron-right", "size-4")
+</span>
 							</div>
 							<p class="mt-2 text-sm leading-relaxed">
 								for _, part := range hit.Parts {

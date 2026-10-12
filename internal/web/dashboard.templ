@@ -116,7 +116,7 @@ templ heatmapCard(stats DashboardStats) {
 			</p>
 		} else {
 			@display.Heatmap(display.HeatmapProps{
-				Rows: heatmapRows(stats),
+				Rows:          heatmapRows(stats),
 				ColumnLabels:  heatmapColumnLabels(),
 				HighlightPeak: true,
 				AriaLabel:     "Call density by weekday and hour (" + strconv.Itoa(stats.WindowDays) + "-day window, dashboard zone)",
