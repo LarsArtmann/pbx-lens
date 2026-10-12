@@ -362,3 +362,14 @@ func mergeStats(into, from IngestStats) IngestStats {
 
 	return into
 }
+
+// SnapshotAny exposes the counters as the untyped payload the web layer
+// serves at /api/ops (cli stays decoupled from the web package).
+func (c *SourceCounters) SnapshotAny() any {
+	sources, lastPass := c.Snapshot()
+
+	return map[string]any{
+		"sources":   sources,
+		"last_pass": lastPass,
+	}
+}

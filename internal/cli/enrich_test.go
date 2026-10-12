@@ -142,7 +142,7 @@ func TestEnrichTelnyxCallsFillsCostAndSummary(t *testing.T) {
 	joined := strings.Join(logs.lines, "\n")
 	if !strings.Contains(
 		joined,
-		"poll telnyx enrich: 1 considered, 1 enriched, 0 unchanged, 0 missing, 0 rejected",
+		"poll telnyx enrich considered=1 enriched=1 unchanged=0 missing=0 rejected=0",
 	) {
 		t.Fatalf("first pass enrichment log wrong:\n%s", joined)
 	}
@@ -161,7 +161,7 @@ func TestEnrichTelnyxCallsFillsCostAndSummary(t *testing.T) {
 	joined = strings.Join(logs.lines, "\n")
 	if !strings.Contains(
 		joined,
-		"poll telnyx enrich: 1 considered, 0 enriched, 1 unchanged, 0 missing, 0 rejected",
+		"poll telnyx enrich considered=1 enriched=0 unchanged=1 missing=0 rejected=0",
 	) {
 		t.Fatalf("second pass must replay to zero:\n%s", joined)
 	}

@@ -346,3 +346,38 @@ func TestLiveServerEndToEnd(t *testing.T) {
 		}
 	}
 }
+
+func TestOpsEndpointServesCounters(t *testing.T) {
+	// R15: /api/ops answers with the injected counters; without a poller
+	// (nil Ops) it explains itself with a 503 instead of lying empty.
+	mux := newTestServerWith(t, Options{
+		Ops: func() any {
+			return map[string]any{
+				"sources": map[string]any{
+					"webhook-log": map[string]any{"offered": 2, "recorded": 2, "rejected": []string{}},
+				},
+				"last_pass": "2026-10-12T04:00:00Z",
+			}
+		},
+	})
+
+	status, body := getBody(t, mux, "/api/ops")
+	if status != 200 {
+		t.Fatalf("GET /api/ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{`"webhook-log"`, `"offered":2`, `"last_pass":"2026-10-12T04:00:00Z"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/api/ops missing %q (body: %s)", want, body)
+		}
+	}
+
+	status, body = getBody(t, newTestServer(t), "/api/ops")
+	if status != http.StatusServiceUnavailable {
+		t.Fatalf("GET /api/ops without counters status = %d, want 503", status)
+	}
+
+	if !strings.Contains(body, "poller") {
+		t.Error("the 503 should name the poller as the fix")
+	}
+}

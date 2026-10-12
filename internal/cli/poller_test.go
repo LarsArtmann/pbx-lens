@@ -12,11 +12,18 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
-// pollTestLog records poller output for assertions.
+// pollTestLog records poller output for assertions. Structured key-value
+// args (R14) render as space-joined k=v pairs.
 type pollTestLog struct{ lines []string }
 
 func (l *pollTestLog) printf(msg string, args ...any) {
-	l.lines = append(l.lines, strings.TrimSpace(fmt.Sprintf(msg, args...)))
+	var kv strings.Builder
+
+	for i := 0; i+1 < len(args); i += 2 {
+		kv.WriteString(fmt.Sprintf(" %v=%v", args[i], args[i+1]))
+	}
+
+	l.lines = append(l.lines, strings.TrimSpace(msg+kv.String()))
 }
 
 func TestPollOnceIngestsAndRebuildsSearch(t *testing.T) {
@@ -221,4 +228,45 @@ func webhookPollLine(callID string, at time.Time, from, to string) string {
 	return `{"received_at":"` + stamp + `","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.initiated","occurred_at":"` + stamp + `","payload":` +
 		`{"call_control_id":"` + callID + `","direction":"incoming","from":"` + from + `","to":"` + to + `"}}}}`
+}
+
+func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
+	// R15: a pass folds each source's stats into the counter set the ops
+	// endpoint serves — latest pass wins, sources without data stay zeroed.
+	ctx := context.Background()
+
+	sys, cleanup, err := OpenSystem(ctx, "")
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
+
+	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
+		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
+		`{"call_control_id":"ops-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
+		"\n"
+	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
+		t.Fatalf("write webhook log: %v", err)
+	}
+
+	counters := NewSourceCounters()
+	PollOnce(ctx, sys, nil, PollConfig{WebhookLog: webhookLog, Counters: counters}, func(string, ...any) {})
+
+	sources, lastPass := counters.Snapshot()
+
+	webhook := sources["webhook-log"]
+	if webhook.Offered != 1 || webhook.Recorded != 1 {
+		t.Errorf("webhook counters = %+v, want offered=1 recorded=1", webhook)
+	}
+
+	if lastPass.IsZero() {
+		t.Error("lastPass must be stamped after a pass")
+	}
+
+	if _, exists := sources["telnyx-conversation"]; !exists {
+		t.Error("unconfigured sources must still appear (zeroed), so ops sees the whole picture")
+	}
 }
