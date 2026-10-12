@@ -169,3 +169,10 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   `nix build .#checks.x86_64-linux.pre-commit` standalone (exit 0).
   Rule: run templ fmt after ANY hand edit to a `.templ` import block,
   before spending a gate run.
+- **statix rule 20 disabled repo-wide via root `statix.toml`
+  (2026-10-12)**: the repeated-attribute-set-keys hint fired 15× on
+  `deploy/nixos/module-draft.nix` — the sealed design record superseded by
+  the landed NixOS module in nix-international-telephony. The repeats are
+  intentional structure, not debt, so the rule is off (integer codes:
+  `disabled = [20]`) rather than restyling a sealed document. If a real
+  repeated-keys smell shows up elsewhere, revisit this file first.

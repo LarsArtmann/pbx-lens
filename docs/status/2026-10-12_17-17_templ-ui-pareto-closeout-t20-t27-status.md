@@ -16,18 +16,18 @@ gate allowed throughout).
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| ---- | -------- |
-| Repo-state re-verify after handoff | In-flight diffs were formatter-only (concurrent session); build+web tests green before starting |
-| T19 eyeball | Fresh 20-PNG probe run; light/dark × desktop/mobile dashboards viewed; mobile heatmap clipping is scroll-reachable (library wraps in `overflow-x-auto`) |
-| T20 CopyButton | `detail.templ`: `nativeIDCopy` (PageHeader.Action) + `copyableValue`/`copyDetail` (facts rows, nil fallback keeps the dash); button variant only; `copy_button_test.go` (3 buttons + anchor-variant regression scan); goldens regenerated; **browser-verified**: 3 buttons in DOM, click swaps to "Copied!" |
-| T21 search jump | `hitHref(hit, query)` carries `?q=`; detail handler single redirect to `?q=…&at=N#turn-N` (`at` breaks the fragment-invisible redirect loop); `transcriptMatchLog` hand-rolled line loop (no id/class hook on `ScrollbackLine` at v1.21.0), all-terms case-insensitive substring matching, amber marks, `.tc-tag-user/assistant` colors in app.css (palette-gate-safe); 7 tests incl. `TestSearchJumpTargetSameOrigin`; goldens regenerated; **browser-verified end-to-end**: search → 302 → fragment → mark → real viewport scroll |
-| T24 filings | Verified-before-filing against the v1.21.0 module cache; filed to the owner repo: **templ-components#48** (vertical BarChart 0px bars; live before/after: Height-only 0/0/0px vs +`!items-stretch` 46/108/15px — the Height field doc says "essential", `items-end` defeats it), **#49** (focusable table rows ship no focus indicator, WCAG 2.4.7; activation exists at `shared.go:217`), **#50** (skill/docs vs the pin: FilterBar/SegmentedControl/utils/format absent at v1.21.0; SegmentBar+utils/format on master unreleased). All three drafts voice-checked 0 FAIL/0 WARN, FILED-banned, in `docs/drafts/`; links in `docs/upstream-filings.md` |
-| T23 adopt/reject | LineChart (fixed-pixel SVG, no per-point tooltips, spike series renders flatline+jump), DataTable (sort links need server-side sort keyset pagination deliberately lacks), AppShell (3 destinations don't justify a sidebar) — rows with adopt triggers in `docs/templ-components-adoption.md`; LineChart-vs-BarChart spike rendered + screenshotted |
-| T25 watchlist | `docs/templ-components-adoption.md` §Version-bump watchlist (5 ordered steps: gen-tc-classes → map re-audit → hand-rolled re-check → filings re-read → golden `-update`); one AGENTS.md bullet wires it. Also closes **T22.3** (golden `-update` doc row) |
-| T26 harvest | CHANGELOG Unreleased folded (4 new entries: density pass, detail affordances, list/export honesty, golden net); TODO_LIST eighth pass (preamble + 4 rows closed + templ-components fold-in row added); DOMAIN_LANGUAGE + voice log + signal palette; `docs/nolint-ledger.md` (all 7 nolints with why); `docs/drafts/README.md` table (14 drafts, file/issue/state) |
-| T27 deploy readiness | `nix build` green; packaged binary probed over HTTP on a scratch DB: `/app.css` carries `.tc-tag-user` + teal token + focus ring; detail page serves `Copy ID` + `data-tc-copy`; dashboard renders the populated density heatmap. Remaining gaps = owner-blocked rows already in TODO_LIST (host deploy path, prod re-ingest) |
-| Plan annotation | EXECUTED section appended to the 13-32 plan: per-task outcome table + evidence pointers + the open §g questions; plan text otherwise untouched |
+| Item                               | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repo-state re-verify after handoff | In-flight diffs were formatter-only (concurrent session); build+web tests green before starting                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| T19 eyeball                        | Fresh 20-PNG probe run; light/dark × desktop/mobile dashboards viewed; mobile heatmap clipping is scroll-reachable (library wraps in `overflow-x-auto`)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| T20 CopyButton                     | `detail.templ`: `nativeIDCopy` (PageHeader.Action) + `copyableValue`/`copyDetail` (facts rows, nil fallback keeps the dash); button variant only; `copy_button_test.go` (3 buttons + anchor-variant regression scan); goldens regenerated; **browser-verified**: 3 buttons in DOM, click swaps to "Copied!"                                                                                                                                                                                                                                                                                                                                             |
+| T21 search jump                    | `hitHref(hit, query)` carries `?q=`; detail handler single redirect to `?q=…&at=N#turn-N` (`at` breaks the fragment-invisible redirect loop); `transcriptMatchLog` hand-rolled line loop (no id/class hook on `ScrollbackLine` at v1.21.0), all-terms case-insensitive substring matching, amber marks, `.tc-tag-user/assistant` colors in app.css (palette-gate-safe); 7 tests incl. `TestSearchJumpTargetSameOrigin`; goldens regenerated; **browser-verified end-to-end**: search → 302 → fragment → mark → real viewport scroll                                                                                                                     |
+| T24 filings                        | Verified-before-filing against the v1.21.0 module cache; filed to the owner repo: **templ-components#48** (vertical BarChart 0px bars; live before/after: Height-only 0/0/0px vs +`!items-stretch` 46/108/15px — the Height field doc says "essential", `items-end` defeats it), **#49** (focusable table rows ship no focus indicator, WCAG 2.4.7; activation exists at `shared.go:217`), **#50** (skill/docs vs the pin: FilterBar/SegmentedControl/utils/format absent at v1.21.0; SegmentBar+utils/format on master unreleased). All three drafts voice-checked 0 FAIL/0 WARN, FILED-banned, in `docs/drafts/`; links in `docs/upstream-filings.md` |
+| T23 adopt/reject                   | LineChart (fixed-pixel SVG, no per-point tooltips, spike series renders flatline+jump), DataTable (sort links need server-side sort keyset pagination deliberately lacks), AppShell (3 destinations don't justify a sidebar) — rows with adopt triggers in `docs/templ-components-adoption.md`; LineChart-vs-BarChart spike rendered + screenshotted                                                                                                                                                                                                                                                                                                    |
+| T25 watchlist                      | `docs/templ-components-adoption.md` §Version-bump watchlist (5 ordered steps: gen-tc-classes → map re-audit → hand-rolled re-check → filings re-read → golden `-update`); one AGENTS.md bullet wires it. Also closes **T22.3** (golden `-update` doc row)                                                                                                                                                                                                                                                                                                                                                                                               |
+| T26 harvest                        | CHANGELOG Unreleased folded (4 new entries: density pass, detail affordances, list/export honesty, golden net); TODO_LIST eighth pass (preamble + 4 rows closed + templ-components fold-in row added); DOMAIN_LANGUAGE + voice log + signal palette; `docs/nolint-ledger.md` (all 7 nolints with why); `docs/drafts/README.md` table (14 drafts, file/issue/state)                                                                                                                                                                                                                                                                                      |
+| T27 deploy readiness               | `nix build` green; packaged binary probed over HTTP on a scratch DB: `/app.css` carries `.tc-tag-user` + teal token + focus ring; detail page serves `Copy ID` + `data-tc-copy`; dashboard renders the populated density heatmap. Remaining gaps = owner-blocked rows already in TODO_LIST (host deploy path, prod re-ingest)                                                                                                                                                                                                                                                                                                                           |
+| Plan annotation                    | EXECUTED section appended to the 13-32 plan: per-task outcome table + evidence pointers + the open §g questions; plan text otherwise untouched                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ## b) PARTIALLY DONE
 
@@ -118,6 +118,7 @@ gate allowed throughout).
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
 Owner-blocked (from TODO_LIST, unchanged):
+
 1. Deploy both hosts with the current lens module (deploy path = owner).
 2. Production re-ingest for ContentHash v2 after that deploy.
 3. Cut v0.2.0 (Unreleased carries the HTTP stack + this UI pass).
@@ -128,7 +129,7 @@ Owner-blocked (from TODO_LIST, unchanged):
 7. Browser-level 304 revalidation spot-check on a real host.
 8. Live-verify Telnyx Detail Records/insights DTOs (needs API key).
 9. ContentHash v2 length-prefixed encoding (scheduled at schema v2).
-10. >1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).
+10. 1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).
 11. Confirm next dependabot run proposes the newly-direct deps.
 
 Bounded TODO rows still open:
@@ -149,54 +150,54 @@ Bounded TODO rows still open:
 This session's residue (highest-leverage first):
 25. Golden for the `?q=` match-log path (close §b1).
 26. Re-run the screenshot probe + a `?q=` page variant after T20/T21 for
-    mobile+dark captures (close §b2).
+mobile+dark captures (close §b2).
 27. Annotate T22.4 explicitly (close §b3).
 28. Promote the verify script into `scripts/verify-ui-contract.js` (or fold
-    its assertions into the probe) (close §c3).
+its assertions into the probe) (close §c3).
 29. File the ScrollbackLine id/class-hook gap as templ-components (close §c1).
 30. Investigate the vtsls parse errors on `scripts/screenshot-probe.js`.
 31. Run one full `buildflow --build-mode dev` over the tree (close §c2).
 32. art-dupl pass over the new code (the matched/unmatched line-div pair in
-    `transcriptMatchLog` is a duplication candidate).
+`transcriptMatchLog` is a duplication candidate).
 33. Preserve the LineChart spike + T20/T21 captures (or a docs/assets
-    convention decision).
+convention decision).
 34. Tampered-`at` param test (`at=999` renders, no crash) — one-liner.
 35. Dark-mode eyeball of CopyButton + match log (library dark classes
-    unverified visually).
+unverified visually).
 36. Multi-match jump UX: every matched turn gets an id but only the first is
-    a target; consider prev/next-match links once real corpora have long
-    transcripts.
+a target; consider prev/next-match links once real corpora have long
+transcripts.
 
 Hygiene / noticed in passing:
 37. Extract the repeated `time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)`
-    test seed (7+ test files) into one helper.
+test seed (7+ test files) into one helper.
 38. Deduplicate the chromium auto-locate + puppeteer bootstrap between
-    `screenshot-probe.js` and any hardened verify script.
+`screenshot-probe.js` and any hardened verify script.
 39. Decide a `docs/assets/` (or similar) convention for durable UI evidence.
 40. gen-tc-classes.js over-captures (6405 classes) — trim to reachable
-    classes for a smaller styles.css (measure first).
+classes for a smaller styles.css (measure first).
 41. The auto-daemon committed the throwaway `tmprepro/main.go` mid-session
-    (deletion landed later) — a scratch-dir convention (.gitignore'd) would
-    keep one-off repro scaffolds out of history.
+(deletion landed later) — a scratch-dir convention (.gitignore'd) would
+keep one-off repro scaffolds out of history.
 42. FEATURES.md UI rows may lag the T13–T21 features (T26 scope didn't
-    include FEATURES) — one pass to confirm.
+include FEATURES) — one pass to confirm.
 43. Update the 13-32 plan's mermaid graph nodes with completion ticks
-    (cosmetic; the EXECUTED table already carries the state).
+(cosmetic; the EXECUTED table already carries the state).
 44. When #48 folds upstream, drop `!items-stretch` from BOTH BarChart call
-    sites and re-eyeball; when #49 folds, delete the app.css focus ring.
+sites and re-eyeball; when #49 folds, delete the app.css focus ring.
 45. Consider scroll-margin-top on `#turn-N` targets if a page header ever
-    becomes sticky.
+becomes sticky.
 46. The nolint-ledger should be greppable in CI (a test that fails when a
-    nolint lacks a ledger row) — mirrors the palette-gate pattern.
+nolint lacks a ledger row) — mirrors the palette-gate pattern.
 47. Search page: the `?q=` input value is reflected in the form (good); the
-    detail page's q is invisible in the UI — consider a small "filtered for
-    '…'" chip with a clear link.
+detail page's q is invisible in the UI — consider a small "filtered for
+'…'" chip with a clear link.
 48. README sales page could use two of the verify captures once durable (#33).
 49. Quarterly re-verify cluster for templ-components filings — add #48/#49/
-    #50 to the calendar entry next to the Telnyx one.
+#50 to the calendar entry next to the Telnyx one.
 50. Harvest the T21 redirect-loop design (at-param pattern) into
-    docs/gotchas.md — it's a paid-for war story (fragment-invisible-to-
-    server) worth a paragraph.
+docs/gotchas.md — it's a paid-for war story (fragment-invisible-to-
+server) worth a paragraph.
 
 ## g) THREE QUESTIONS ONLY YOU CAN ANSWER
 

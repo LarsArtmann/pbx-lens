@@ -1,0 +1,5 @@
+# statix rule 20 (repeated attribute-set keys) fires only on the sealed
+# design record deploy/nixos/module-draft.nix, superseded by the landed
+# NixOS module in nix-international-telephony; the repeats there are
+# intentional structure, not debt.
+disabled = [20]

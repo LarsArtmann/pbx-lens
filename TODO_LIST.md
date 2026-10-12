@@ -81,7 +81,6 @@
 
 None right now — remaining work is blocked or low-impact (below).
 
-
 ## Blocked (owner / external gates)
 
 | Task                                                                                                                                                                                                           | Status       | Impact | Effort | Evidence                                                                                                                                                         |
