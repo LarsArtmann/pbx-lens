@@ -19,20 +19,27 @@ import (
 // goldens pin STRUCTURE, not the minute.
 
 var goldenVolatile = []*regexp.Regexp{
+	// PolledRegion footer: now-based datetime attribute + rendered time.
+	regexp.MustCompile(`datetime="[^"]*"( tabindex="-1")?>Updated `),
 	regexp.MustCompile(`Updated [0-9:]+`),
+	// RelativeTime renderings (seeded times, humanized against time.Now).
 	regexp.MustCompile(`\bjust now\b`),
 	regexp.MustCompile(`\b\d+ (?:second|minute|hour|day|week)s? ago\b`),
-	regexp.MustCompile(`\b\d+d \d+h\b`),
-	regexp.MustCompile(`\b\d+h \d+m\b`),
-	regexp.MustCompile(`\b\d+m\b`),
-	regexp.MustCompile(`\b\d+s\b`),
+	// Staleness banner age ("Newest indexed call is 2h5m old").
+	regexp.MustCompile(`call is \S+( \S+)? old`),
+}
+
+var goldenReplacements = []string{
+	`datetime="SCRUBBED">Updated `,
+	"Updated HH:MM:SS",
+	"RELATIVE_TIME",
+	"RELATIVE_TIME",
+	"call is AGE old",
 }
 
 func scrubVolatileTime(body string) string {
-	replacements := []string{"Updated HH:MM:SS", "RELATIVE_TIME", "RELATIVE_TIME", "AGE", "AGE", "AGE", "AGE"}
-
 	for i, re := range goldenVolatile {
-		body = re.ReplaceAllString(body, replacements[i])
+		body = re.ReplaceAllString(body, goldenReplacements[i])
 	}
 
 	return body
@@ -77,12 +84,20 @@ func TestGoldenPages(t *testing.T) {
 // The scrubber itself stays honest: it must neutralize every wall-clock
 // string the seeded pages can render, or the goldens flake by the minute.
 func TestGoldenScrubberCoversVolatileStrings(t *testing.T) {
-	sample := "Updated 14:03:09 just now 5 minutes ago 2 hours ago 3d 4h 2h 5m 43m 9s"
+	sample := `Updated 14:03:09 datetime="2026-10-12T14:03:09+02:00" tabindex="-1">Updated ` +
+		`just now 5 minutes ago 2 hours ago call is 2h5m old every 30s &lt; 30s 30-60s`
 	out := scrubVolatileTime(sample)
 
-	for _, leaked := range []string{"Updated 14", "just now", "minutes ago", "hours ago", "3d 4h", "2h 5m", "43m", "9s"} {
+	for _, leaked := range []string{"Updated 14", "just now", "minutes ago", "hours ago", "call is 2h5m old", "2026-10-12T14:03"} {
 		if strings.Contains(out, leaked) {
 			t.Errorf("scrubber leaked %q -> %q", leaked, out)
+		}
+	}
+
+	// Structural timings and chart labels must survive untouched.
+	for _, kept := range []string{"every 30s", "&lt; 30s", "30-60s"} {
+		if !strings.Contains(out, kept) {
+			t.Errorf("scrubber ate structural text %q -> %q", kept, out)
 		}
 	}
 }

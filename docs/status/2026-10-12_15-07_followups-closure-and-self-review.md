@@ -1,0 +1,99 @@
+<!-- docs/status/2026-10-12_15-07_followups-closure-and-self-review.md -->
+<!-- Point-in-time status + brutal self-review of the 2026-10-12 ~14:00→15:07
+     follow-up session (13-49 closure: harvest, Cache-Control, AGENTS budget,
+     gate, push). Snapshot only — bring current via ANNOTATE, never rewrite. -->
+
+# Status + self-review: 13-49 follow-up closure — green tip, one avoidable red X, five gate lessons
+
+**Session:** 2026-10-12 ~14:00 → 15:07 · **Report:** 15:07 · **Prior reports:** 13-28, 13-49, 14-30 (mine, all stay as-is) · **Concurrent session:** templ/pagination/export workstream active the ENTIRE session and still landing commits at 15:06
+
+**One-line verdict:** Every actionable loose end from the 13-49 report is closed, the full buildflow gate is green for the first time since B1 was filed, and the final tip is CI-green — but I still shipped one avoidable CI red X by trusting the wrong workflow's green checkmark, exactly the verification-discipline failure the last session swore off.
+
+---
+
+## a) FULLY DONE
+
+| # | Work | Evidence |
+|---|---|---|
+| A1 | **Harvest of all 50 §f items** from 13-49: 12 TODO_LIST rows (7 TODO + 5 BLOCKED, 7th-pass header), 8 deferred-trigger ideas + the multi-agent question into ROADMAP, 2 lessons into crush-config (pinned-version research trap → references/lessons.md; daemon index.lock hardening → its TODO_LIST, commit verified 43 min ago), done/decided/duplicates dropped with citations | TODO_LIST.md, ROADMAP.md, crush-config@04c5f87; ledger in the 14-30 report §d |
+| A2 | **`Cache-Control: no-cache` on every HTML response** (all pages + fragments funnel through `web.render`); asserted on the fragment 200 AND the 304 AND the ETag-less staleness fragment; go-etag's 304 preserves handler-set headers (verified in etag.go source) | `internal/web/render.go`; `cmd/pbx-lens/serve_test.go` `assertConditionalGET(wantNoCache)`; tests green; CHANGELOG + FEATURES rows updated |
+| A3 | **AGENTS.md 273→219 lines** with zero fact loss: adoption map → `docs/templ-components-adoption.md`, HTTP-stack doctrine → `docs/http-stack.md` (both wired into Deep context), six bullets condensed | `wc -l` = 219; commit `cd1047f` |
+| A4 | **The three §g questions answered with evidence:** Q1 disjoint-files-last-writer-wins (proven all session, zero collisions once respected); Q2 safe half shipped (A2) + browser check parked as BLOCKED row; Q3 ROADMAP open question with interim norm recorded | 14-30 report §c; ROADMAP.md |
+| A5 | **12-47 plan annotated** EXECUTING → EXECUTED + `fd0e082` + heal chain (inline strikethrough, historical doc untouched otherwise) | plan line 3 |
+| A6 | **Upstream watch:** go-etag#2 + go-appkit#26 both OPEN, 0 comments — nothing to fold; ledger untouched | `gh issue view` both repos |
+| A7 | **go-etag pinned-version truth:** `OnETagGenerated`/`On304`/`OnBufferOverflow` EXIST in pinned v0.6.1 (etag.go:67-88) — the /api/ops hit-ratio row is actionable, not upstream-blocked (13-49 §c implied unknown) | module-cache grep |
+| A8 | **Markdown hygiene:** TODO_LIST/FEATURES tables column-aligned via repo dprint; dprint's incidental reformat of two docs/status files REVERTED before commit (historical snapshot + foreign file protected); `buildflow -s markdown-lint` = not-applicable (no .markdownlint config — deliberate non-fix, dprint owns markdown) | `git diff` history |
+| A9 | **Cosmetics:** `/tmp/pbxlens-probe` trashed; the `modernize` LSP warning disproven against the binary; one real golines issue in my own test code fixed via `golangci-lint fmt`; stale prunable `/tmp/pbx-baseline` worktree metadata pruned (dir already gone) | session log |
+| A10 | **B1 CLOSED — full `buildflow --build-mode dev` gate GREEN** (77 steps success / 0 failed, exit 0; remaining findings are the documented advisory set) at `7404b05`, run in a **detached git worktree** — the method that finally made gating possible on a tree a second session never stops editing | gate log, 14-30 report §b annotation |
+| A11 | **Three REAL repo breaks found + fixed on the gate's path:** (1) HEAD's dashboard.templ carried a templ-fmt violation reddening the flake pre-commit check → `templ fmt` (landed `824efaa`); (2) go-structure-linter counts the trailing newline, 220 wc = 221 counted → 219 (`cd1047f`); (3) go.mod drift (templ-components/utils went direct un-tidied) breaking govalid/go-generate → tidy + `nix run .#update-vendor-hash` green (`7404b05`) | gate iterations 05D→089 |
+| A12 | **Ship-state verification institutionalized:** final push (`84fd629`) only after lint/build of the COMMITTED state in a fresh worktree — HEAD-clean proven, not assumed | /tmp/pbxlens-verify run |
+
+## b) PARTIALLY DONE
+
+| # | Item | State |
+|---|---|---|
+| B1 | CI-green streak on main | Final tip `84fd629` green (run 38253006615, full CI workflow). But see §d.1: the streak was broken TWICE by an avoidable miss, and the concurrent session keeps landing uncommitted work — the green tip is a moment, not a state |
+| B2 | Multi-agent co-existence | Worked end-to-end THIS session (disjoint files, no clobbered edits, one deliberate cross-fix of their templ-fmt), but the protocol is still just my interim norm — unwritten as an owner decision (ROADMAP open question), and we twice chased each other's half-landed commits (their pagination test-before-impl; their export.go snapshot red) |
+| B3 | Wrap report 14-30 completeness | Its §b annotation records the gate outcome but NOT the §d.1 CI-red incident (it happened after writing); this report is now the record — a small ANNOTATE pointer on 14-30 remains undone |
+
+## c) NOT STARTED (all deliberate, all now tracked in TODO_LIST/ROADMAP — nothing new parked here)
+
+- The 12 harvested TODO rows (go-etag hooks wiring, e2e cache-semantics hardening, README ops notes, gotchas entry, coverage pass, hash-cost probe, SECURITY.md) and 5 BLOCKED rows (browser check, upstream fold-in, v0.2.0 cut, >1MiB policy, dependabot confirm) — none started, by design: this session was closure, not feature work.
+- ROADMAP deferrals (gzip-at-prod-size, errorpages revisit, data-fingerprint, hashed assets, entitytag-direct, middleware-file consolidation, appkit_* ratios) — trigger-gated, untouched.
+
+## d) TOTALLY FUCKED UP
+
+1. **I repeated the fd0e082 failure class — shipped a red X by checking the wrong green — and then misreported it.** After pushing `590e3d3`, I read run 38251852804 "success" and moved on; that was the **Dependency Graph** workflow, not CI. The actual CI run on `590e3d3` (38251845315) FAILED (the concurrent session's daemon-committed export.go gosec snapshot), and `53662bf` (my docs-only wrap commit on top) failed identically. In my closing message I said "CI flashed red once (53662bf)" — **wrong twice over: the red started one commit earlier, and I did not catch EITHER because I never verified that the workflow I was reading was the gate workflow.** My own §e.2 lesson from 13-49 ("push ≠ done — watch CI to completion") was applied sloppily: I watched A run to completion, not THE run. Both reds healed via the final verified push, but the public history carries two red Xs that a 10-second `--jq '.workflowName'` read would have prevented.
+2. **I verified the AGENTS.md budget with the wrong oracle, twice.** First I trimmed to 220 wc-lines and declared victory — the enforcing linter counts the trailing newline (221) and failed the gate. Then my first "fix" was a no-op (replaced 4 lines with 4 lines; caught only because I re-measured). The correct oracle (`go-structure-linter`) was named in the very failure I was fixing.
+3. **I ran repo-wide `dprint fmt` without scoping it** — it reformatted two docs/status files (one historical, one the concurrent session's fresh report) that I then had to revert. The revert was checked and safe, but the risk window (daemon committing mid-revert) was avoidable by formatting exactly the file I meant to format (`dprint fmt TODO_LIST.md`).
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **CI-watch discipline, concretely:** `gh run list` output MUST be filtered to the gate workflow by name (or all runs for the sha enumerated to conclusion) before "green" is claimed. "A green run exists" ≠ "the run is green." This is now the second session in a row burned by a verification shortcut on exactly this step.
+2. **Verify against the enforcing oracle, never a proxy:** wc -l ≠ the linter's count; the LSP ≠ golangci-lint; the Dependency Graph workflow ≠ CI. Every "X passes" claim in a wrap-up should name the tool that ENFORCES X.
+3. **Scope every format/fix command to the files you mean.** Repo-wide formatters on a shared tree are a foreign-file-edit machine with extra steps.
+4. **The worktree-gate recipe is now proven but lives only in my head** — it took 5 iterations to stabilize (templ regen, result-cache replay bypass, dirty-tree nix). It belongs in `docs/buildflow-dev-gate.md` next to the other gate traps so the next session starts at iteration 5, not 1.
+5. **Drill the persistent "9 tools unavailable (health check failed)"** — it appeared in EVERY gate run this session and I never once ran it down with `--verbose`. The gate passed without them, which is exactly how blind spots stay invisible. (buildflow skill step 7: every observation ends fixed, filed, or deliberate — these 9 are none of the three yet.)
+6. **The daemon's snapshot-red pattern now has three data points** (fd0e082, 590e3d3, 53662bf): an auto-committed mid-edit Go file from ANY session reddens main until someone notices. The pre-push HEAD-verify habit fixes the pushing side; the daemon side (only commit when the tree builds?) is a crush-config/BuildFlow question, not a pbx-lens one.
+
+## f) NEXT — up to 50 (this session's genuinely-open items; NOT re-listing the 12 TODO_LIST rows harvested at 14:0x — those ARE the backlog, see TODO_LIST.md)
+
+| # | Task | Why now |
+|---|---|---|
+| 1 | Annotate 14-30 report §b with a one-line pointer to §d.1 here (the CI-red it doesn't know about) | closes B3 |
+| 2 | Write the worktree-gate recipe into docs/buildflow-dev-gate.md (templ regen, BUILDFLOW_NO_RESULT_CACHE=1, dirty-tree nix note, 219-wc budget gotcha) | §e.4; next session's iteration-1 |
+| 3 | Drill the 9 unavailable buildflow tools (`buildflow doctor` + `--verbose`) → fix, file, or document each | §e.5; loop-closure rule |
+| 4 | Fix TODO_LIST structural wart: the go-etag hooks row (Impact: Medium) sits under the "Low impact" heading | my harvest sloppiness |
+| 5 | Add "verify the WORKFLOW NAME, not just conclusion" to the CI-watch line in AGENTS.md Commands (219→220 lines — headroom is ONE line; if it doesn't fit, docs/buildflow-dev-gate.md) | §e.1 |
+| 6 | gopls/golangci_lint_ls stale-diagnostic recurrence: 3 stale warnings this session (modernize ×2, cyclop post-fix) — file or document as known-lag; candidate crush-config lesson | §a9/§a11 friction |
+| 7 | File the daemon-snapshot-red pattern upstream (crush-config: pma daemon) — commit-only-if-builds or pre-commit build hook; 3 data points now | §e.6 |
+| 8 | Consider `buildflow explain`/timings review of the 5-iteration gate: are govalid/go-generate cache replays a BuildFlow bug worth filing? (the NO_RESULT_CACHE bypass matched the documented triage row, but a cache that replays a FIXED failure across HEADs is a cache-key gap) | §a11 |
+| 9 | Verify next dependabot cycle proposes server_timing/httputil/go-etag bumps (BLOCKED row exists; this is the reminder it's cyclical) | harvested row |
+| 10 | Watch go-etag#2 / go-appkit#26 (BLOCKED row; quarterly) | harvested row |
+| 11 | Browser-level 304 + DOM-churn check (owner) | BLOCKED row |
+| 12 | Wire go-etag hooks → /api/ops (Medium, 45min — the one harvested row with real impact) | harvested row |
+| 13 | v0.2.0 cut decision (CHANGELOG Unreleased now carries mine + their MP3/pagination work) | BLOCKED row |
+| 14 | e2e cache-semantics hardening row (Vary-on-304, Content-Length, HEAD/query variants, recording timing asserts) | harvested row |
+| 15 | README ops notes row + gotchas templ-flush row | harvested rows |
+| 16 | SECURITY.md /metrics posture row | harvested row |
+| 17 | Coverage pass on caching_test/serve_test | harvested row |
+| 18 | Hash-cost probe row | harvested row |
+| 19 | >1MiB transcript policy row (pairs with #12) | harvested row |
+| 20 | ROADMAP deferral triggers unchanged — no action until triggered | routed items |
+| 21 | Ask/confirm: does the owner want the interim multi-agent norm promoted to a written AGENTS claim-line or branch-per-agent? (§g.1) | Q3 legacy |
+| 22 | HTML research report row (Low, standing) | harvested row |
+| 23 | /api/ops stale-pass + staleness-filter rows (pre-existing) | TODO_LIST |
+| 24 | Backup-drill CI lane row (pre-existing, Unblocked section) | TODO_LIST |
+| 25 | If the concurrent session's session-report lands, ANNOTATE-not-rewrite any cross-references between their report and this one | history hygiene |
+
+(26–50: intentionally not padded — every remaining open item already lives in TODO_LIST.md/ROADMAP.md; minting duplicates here would create the exact split brain docs-health exists to prevent.)
+
+## g) THREE QUESTIONS I CANNOT FIGURE OUT MYSELF
+
+1. **Push policy on a shared tree:** twice today an auto-committed mid-edit Go file made main red between verified pushes. Should pushes from THIS repo henceforth require a fresh worktree-verify of HEAD (my new habit, costs ~1 min per push), or is post-hoc watch-and-heal acceptable while two sessions share main? (This is the concrete form of the still-open multi-agent protocol question — the interim norm works, but you're paying for it in red Xs.)
+2. **Priority sequencing:** the go-etag hooks → `/api/ops` hit-ratio row is the one Medium-impact item I parked. Wire it before the v0.2.0 cut (it's user-visible ops value and the hooks are already in the pinned version), or cut v0.2.0 first with the Unreleased set as-is? Your release-cadence call.
+3. **The 9 health-check-failed buildflow tools:** if `buildflow doctor` shows them failing for an environmental reason (nix/path), do you want that chased as a BuildFlow issue (fleet-wide value) or documented as a known-local non-fix in docs/buildflow-dev-gate.md (repo-local)? I can diagnose but can't judge how much of your machine's quirks belong upstream.
+
+---
+
+*Snapshot only. Next actions live in TODO_LIST.md (the 12 rows) + §f above; bring this file current only via ANNOTATE. Now waiting for instructions.*
