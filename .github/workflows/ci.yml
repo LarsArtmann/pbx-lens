@@ -34,6 +34,12 @@ jobs:
       - name: Test
         run: go test -v -race -timeout 120s -coverprofile=cover.out ./...
 
+      - name: End-to-end server probe
+        # R17: the checked-in e2e (real listener over the registered mux on
+        # loopback, all four surfaces) gets its own named step so the route
+        # contract is a visible lane, not an implicit byproduct of ./...
+        run: go test -race -timeout 60s -v -run 'TestLiveServerEndToEnd' ./internal/web
+
       - name: Check coverage threshold
         run: |
           MIN_COVERAGE=50

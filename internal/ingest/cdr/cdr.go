@@ -129,25 +129,25 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 
 		fields := normalize(row)
 
-		var shape map[string]string
+		var byColumn map[string]string
 
 		var mosRaw string
 
 		switch len(fields) {
 		case len(fields13):
-			shape = zip(fields13, fields)
+			byColumn = zip(fields13, fields)
 		case len(fields18):
-			shape = zip(fields18, fields)
+			byColumn = zip(fields18, fields)
 		case len(fields13) + 1:
 			// mod_cdr_csv appends extra configured fields AFTER the template;
 			// this deployment's only extra field is rtp_audio_in_mos. The
 			// parse below rejects anything outside the MOS scale, so a
 			// different extra field degrades to "no MOS" rather than a bad
 			// value.
-			shape = zip(fields13, fields[:len(fields13)])
+			byColumn = zip(fields13, fields[:len(fields13)])
 			mosRaw = fields[len(fields13)]
 		case len(fields18) + 1:
-			shape = zip(fields18, fields[:len(fields18)])
+			byColumn = zip(fields18, fields[:len(fields18)])
 			mosRaw = fields[len(fields18)]
 		default:
 			res.Skipped++
@@ -155,7 +155,7 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 			continue
 		}
 
-		obs, err := observation(shape, opts, mosRaw)
+		obs, err := observation(byColumn, opts, mosRaw)
 		if err != nil {
 			res.Skipped++
 
@@ -208,24 +208,24 @@ func parseMOS(raw string) float64 {
 	return v
 }
 
-func observation(shape map[string]string, opts ParseOptions, mosRaw string) (calls.Observation, error) {
-	started, err := time.Parse(stampLayout, shape["start_stamp"])
+func observation(byColumn map[string]string, opts ParseOptions, mosRaw string) (calls.Observation, error) {
+	started, err := time.Parse(stampLayout, byColumn["start_stamp"])
 	if err != nil {
-		return calls.Observation{}, fmt.Errorf("start_stamp %q: %w", shape["start_stamp"], err)
+		return calls.Observation{}, fmt.Errorf("start_stamp %q: %w", byColumn["start_stamp"], err)
 	}
 
-	billsec := max(atoi(shape["billsec"]), 0)
+	billsec := max(atoi(byColumn["billsec"]), 0)
 
 	obs := calls.Observation{
-		NativeID:     calls.NativeID(shape["uuid"]),
+		NativeID:     calls.NativeID(byColumn["uuid"]),
 		Kind:         calls.SourceFreeSwitchCDR,
-		Direction:    direction(shape["context"]),
+		Direction:    direction(byColumn["context"]),
 		StartedAt:    started.UTC(),
 		DurationSecs: billsec,
-		FromNumber:   shape["caller_id_number"],
-		ToNumber:     shape["destination_number"],
-		HangupCause:  shape["hangup_cause"],
-		IsAI:         opts.isAI(shape["destination_number"]),
+		FromNumber:   byColumn["caller_id_number"],
+		ToNumber:     byColumn["destination_number"],
+		HangupCause:  byColumn["hangup_cause"],
+		IsAI:         opts.isAI(byColumn["destination_number"]),
 		MOS:          parseMOS(mosRaw),
 	}
 
