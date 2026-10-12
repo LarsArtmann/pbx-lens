@@ -88,16 +88,99 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 	return page, nil
 }
 
-// maxExportRows bounds one export dump. Personal-PBX volumes are far below
-// this; the cap only stops a runaway query from exhausting memory.
-const maxExportRows = 100_000
+// exportBatchSize is one keyset page of a streaming export (R7): memory
+// stays at one batch however large the index grows, and dumps past the old
+// maxExportRows cap stream fully instead of truncating.
+const exportBatchSize = 5_000
 
-// ExportCalls returns the raw views matching the same filters as the list
-// page, newest first, for the JSONL/CSV dump (D5).
-func ExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery) ([]calls.CallView, error) {
+// StreamExportCalls walks every view matching the same filters as the list
+// page, newest first, calling fn per view (D5). Pagination is a started_at
+// keyset; views sharing the cursor timestamp are carried across pages via a
+// seen-key set, so a page boundary inside a timestamp group cannot drop rows.
+// A group so large it stalls the cursor (more than one batch of calls inside
+// a single nanosecond) fails loudly instead of truncating silently.
+func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery, fn func(calls.CallView) error) error {
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
-	return reader.Scan(ctx, listOptions(query, maxExportRows)...)
+	var cursor time.Time
+
+	seen := make(map[string]struct{})
+
+	for {
+		opts := append([]metaengine.ScanOption{
+			metaengine.WithSort("started_at", true),
+			metaengine.WithLimit(exportBatchSize),
+		}, scanFilters(query)...)
+
+		// The keyset cursor binds inclusively so rows sharing the cursor's
+		// timestamp reappear and get skipped by key; on the first page the
+		// caller's own Before (a plain exclusive bound) applies instead.
+		switch {
+		case !cursor.IsZero():
+			opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(cursor)))
+		case !query.Before.IsZero():
+			opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
+		}
+
+		views, err := reader.Scan(ctx, opts...)
+		if err != nil {
+			return err
+		}
+
+		emitted := 0
+
+		for _, view := range views {
+			if !cursor.IsZero() && view.StartedAt.Equal(cursor) {
+				key := string(view.Kind) + "\x00" + string(view.NativeID)
+				if _, done := seen[key]; done {
+					continue
+				}
+
+				seen[key] = struct{}{}
+			}
+
+			if err := fn(view); err != nil {
+				return err
+			}
+
+			emitted++
+		}
+
+		if len(views) < exportBatchSize {
+			return nil
+		}
+
+		if emitted == 0 {
+			return errorfamily.NewRejection(
+				"lens.web.export_cursor_stalled",
+				"more than one page of calls share started_at "+rfc3339Nano(cursor)+
+					"; narrow the export with from/to filters",
+			)
+		}
+
+		// Newest-first order: the page's last (oldest) row is the next keyset
+		// boundary; its timestamp group rides the seen set across pages.
+		cursor = views[len(views)-1].StartedAt
+
+		clear(seen)
+	}
+}
+
+// ExportCalls collects the full matching set into one slice. Tests and
+// callers that need random access use it; the HTTP export streams instead.
+func ExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery) ([]calls.CallView, error) {
+	var views []calls.CallView
+
+	err := StreamExportCalls(ctx, sys, query, func(view calls.CallView) error {
+		views = append(views, view)
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return views, nil
 }
 
 // listOptions builds the shared scan options for the list page and the
