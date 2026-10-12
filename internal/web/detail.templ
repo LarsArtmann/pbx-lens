@@ -179,8 +179,8 @@ templ transcriptPane(turns []calls.TranscriptTurn, query string) {
 		if query == "" {
 			@display.Scrollback(display.ScrollbackProps{
 				AriaLabel: "Call transcript",
-				Stagger: false,
-				Lines:   transcriptLines(turns),
+				Stagger:   false,
+				Lines:     transcriptLines(turns),
 			})
 		} else {
 			@transcriptMatchLog(turns, query)

@@ -8,12 +8,12 @@ Consumers following the skill hit "undefined: display.FilterBar" against the pub
 
 The consumer skill (`skill/SKILL.md`, shipped in this repo) documents components as current API. Consumers pinned to v1.21.0 (latest tag) compile against the module cache and find they do not exist:
 
-| Claim in `skill/SKILL.md`              | v1.21.0 (latest tag)                  | master                                    |
-| -------------------------------------- | ------------------------------------- | ----------------------------------------- |
-| `FilterBar` (`:44`, `:128`)            | absent (`display/filter_bar.templ` no such file) | absent (only `docs/recipes/horizontal-filter-bar.md`, a forms.Form pattern) |
-| `SegmentedControl` (`:44`, `:130`)     | absent (`display/segmented_control.templ` no such file) | absent                    |
-| `utils/format` (`:250`)                | absent (`utils@v1.21.0` has no `format/`) | present (`utils/format/` on master, unreleased) |
-| `SegmentBar` (referenced in docs)      | absent                                | present (`display/segment_bar.templ`, unreleased) |
+| Claim in `skill/SKILL.md`          | v1.21.0 (latest tag)                                    | master                                                                      |
+| ---------------------------------- | ------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `FilterBar` (`:44`, `:128`)        | absent (`display/filter_bar.templ` no such file)        | absent (only `docs/recipes/horizontal-filter-bar.md`, a forms.Form pattern) |
+| `SegmentedControl` (`:44`, `:130`) | absent (`display/segmented_control.templ` no such file) | absent                                                                      |
+| `utils/format` (`:250`)            | absent (`utils@v1.21.0` has no `format/`)               | present (`utils/format/` on master, unreleased)                             |
+| `SegmentBar` (referenced in docs)  | absent                                                  | present (`display/segment_bar.templ`, unreleased)                           |
 
 Verified against the module cache at `templ-components@v1.21.0` / `utils@v1.21.0` (2026-10-12) and `gh api repos/larsartmann/templ-components/contents/...` for master.
 

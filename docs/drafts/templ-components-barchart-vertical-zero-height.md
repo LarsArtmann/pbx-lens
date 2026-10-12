@@ -10,10 +10,10 @@ A vertical `BarChart` with `Height` set — exactly what the field doc says to d
 
 Measured in headless chromium 152, library markup rendered by the pinned v1.21.0 module, Tailwind CSS active:
 
-| Variant                                                       | bar heights       |
-| ------------------------------------------------------------- | ----------------- |
-| `Orient: BarVertical, Height: "8rem"` (per the field doc)     | 0px, 0px, 0px     |
-| same + `Class: "!items-stretch"`                              | 46px, 108px, 15px |
+| Variant                                                   | bar heights       |
+| --------------------------------------------------------- | ----------------- |
+| `Orient: BarVertical, Height: "8rem"` (per the field doc) | 0px, 0px, 0px     |
+| same + `Class: "!items-stretch"`                          | 46px, 108px, 15px |
 
 Reproducer: render `display.BarChart(display.BarChartProps{Orient: display.BarVertical, Bars: three bars, Height: "8rem"})`, serve, measure `div[style*='%']` offsetHeight. First variant measures all zeros.
 
