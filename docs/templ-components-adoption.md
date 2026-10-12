@@ -57,12 +57,12 @@ single-host internal tool whose CSS revalidates at 304s, ~17 KiB on the
 wire once per index change is noise. Revisit only with a real trigger
 (CSS on a billed CDN, or a cold-start budget) AND a reachability test
 that fails the build when a rendered class is missing from the corpus.
-   | display.PieChart Donut (AI/human mix) | used 2026-10-12 | Donut+CenterLabel+ShowLegend replaced the hand-rolled flex bar; Slice.Color is a text-* class (fill=currentColor) |
-   | display.Grid + StatCard (dashboard stat row) | used | icons (Phone/Calendar/Microphone/Clock) + Tones added 2026-10-12; StatCard.Value is a string; renders `>N </dd>` — assert so |
-   | display.BarChart (vertical) + Sparkline (dashboard volume/trend) | used | MinBarWidth `min-w-1` + Gap `gap-px` for dense 30-day series; Tooltip carries the full date |
-   | forms.Select/DatePicker + Form(FormGet, FormLayoutInline) | used 2026-10-12 | FormLayoutInline == the old hand-rolled `flex flex-wrap items-end gap-3` row; Form renders the `<form>`, Apply/Reset are Button |
-   | forms.Input (InputSearch) | used 2026-10-12 | replaced the raw search input on /search |
-   | feedback.Alert + CircularProgress | used | Alert: staleness + MOS placeholder; CircularProgress: MOS gauge ((MOS-1)/4*100, aria-valuenow asserted in tests) |
-   | icons | used 2026-10-12 | EmptyState.Icon takes `icons.Name`; Button.Icon takes a rendered `icons.Icon(name, class)`; ~100 names in icon_names.go |
-   | htmx.PolledRegion | used | dashboard cards 30s, staleness banner 60s |
-   | display.SegmentBar / utils/format / errorpage / FilterBar / SegmentedControl | ABSENT in v1.21.0 | feedback.ProgressBar EXISTS (contrary to earlier note) — SegmentBar alone is unreleased upstream; the rest stays unimported |
+| display.PieChart Donut (AI/human mix) | used 2026-10-12 | Donut+CenterLabel+ShowLegend replaced the hand-rolled flex bar; Slice.Color is a text-* class (fill=currentColor) |
+| display.Grid + StatCard (dashboard stat row) | used | icons (Phone/Calendar/Microphone/Clock) + Tones added 2026-10-12; StatCard.Value is a string; renders `>N </dd>` — assert so |
+| display.BarChart (vertical) + Sparkline (dashboard volume/trend) | used | MinBarWidth `min-w-1` + Gap `gap-px` for dense 30-day series; Tooltip carries the full date |
+| forms.Select/DatePicker + Form(FormGet, FormLayoutInline) | used 2026-10-12 | FormLayoutInline == the old hand-rolled `flex flex-wrap items-end gap-3` row; Form renders the `<form>`, Apply/Reset are Button |
+| forms.Input (InputSearch) | used 2026-10-12 | replaced the raw search input on /search |
+| feedback.Alert + CircularProgress | used | Alert: staleness + MOS placeholder; CircularProgress: MOS gauge ((MOS-1)/4*100, aria-valuenow asserted in tests) |
+| icons | used 2026-10-12 | EmptyState.Icon takes `icons.Name`; Button.Icon takes a rendered `icons.Icon(name, class)`; ~100 names in icon_names.go |
+| htmx.PolledRegion | used | dashboard cards 30s, staleness banner 60s |
+| display.SegmentBar / utils/format / errorpage / FilterBar / SegmentedControl | ABSENT in v1.21.0 | feedback.ProgressBar EXISTS (contrary to earlier note) — SegmentBar alone is unreleased upstream; the rest stays unimported |

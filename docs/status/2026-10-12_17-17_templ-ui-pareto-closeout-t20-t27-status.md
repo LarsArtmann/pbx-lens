@@ -32,43 +32,43 @@ gate allowed throughout).
 ## b) PARTIALLY DONE
 
 ~~1. **Golden coverage of the T21 match log** — the `?q=` path's hand-rolled~~ done at `a89adea` (page_detail_q.golden)
-   markup is covered by unit tests (ids, amber class, no-marks-when-empty)
-   but has NO `.golden` snapshot (detail goldens render without `q`). The
-   "goldens protect T21" claim from the handoff is only true for the no-query
-   path.
+markup is covered by unit tests (ids, amber class, no-marks-when-empty)
+but has NO `.golden` snapshot (detail goldens render without `q`). The
+"goldens protect T21" claim from the handoff is only true for the no-query
+path.
 ~~2. **Visual verification of the new features** — CopyButton and match log~~ done at `b90b743` — probe ?q= page; 24-PNG run eyeballed dark+mobile 2026-10-12
-   were browser-verified at desktop-light only. No dark-mode or mobile
-   captures exist of T20/T21 rendering (the screenshot probe predates them;
-   its page list has no `?q=` variant).
+were browser-verified at desktop-light only. No dark-mode or mobile
+captures exist of T20/T21 rendering (the screenshot probe predates them;
+its page list has no `?q=` variant).
 ~~3. **T22.4 drift-detection proof** — demonstrated organically (both golden~~ done at `0ac2a82`
-   regenerations went red→review→update) but never explicitly annotated as
-   the 22.4 exit criterion; the plan annotation covers T22 generically.
+regenerations went red→review→update) but never explicitly annotated as
+the 22.4 exit criterion; the plan annotation covers T22 generically.
 ~~4. **Durable evidence** — T20/T21 verify PNGs and the LineChart spike PNG~~ done at `09eb780` (docs/assets convention)
-   live in `/tmp/lens-shots/` (volatile). The repo has no docs/assets
-   convention, so the adoption-map/plan references are numeric (measurements)
-   rather than linked artifacts; the spike is reproducible but not preserved.
+live in `/tmp/lens-shots/` (volatile). The repo has no docs/assets
+convention, so the adoption-map/plan references are numeric (measurements)
+rather than linked artifacts; the spike is reproducible but not preserved.
 
 ## c) NOT STARTED
 
 ~~1. **ScrollbackLine hook filing** — the T21 hand-roll exists because~~ done at `ac027a4` — filed as templ-components#51
-   `ScrollbackLine` has no per-line id/class hook at v1.21.0. I verified that
-   limitation in detail but did NOT file it upstream (a 4th templ-components
-   filing was in reach); it's only recorded in the adoption map's hand-rolled
-   row.
+`ScrollbackLine` has no per-line id/class hook at v1.21.0. I verified that
+limitation in detail but did NOT file it upstream (a 4th templ-components
+filing was in reach); it's only recorded in the adoption map's hand-rolled
+row.
 ~~2. **Full `buildflow --build-mode dev` gate** — I ran the equivalent pieces~~ done 2026-10-12 evening — full gate exit=0 post flake-hash repair
-   individually (build/test/lint/nix/templ) but not the named local gate
-   itself, so BuildFlow's own steps (e.g. its formatter pass) never ran over
-   the new files as a unit.
+individually (build/test/lint/nix/templ) but not the named local gate
+itself, so BuildFlow's own steps (e.g. its formatter pass) never ran over
+the new files as a unit.
 ~~3. **Hardening the throwaway verify script** — `/tmp/verify-copy-jump.js`~~ done at `f306cfa` (scripts/verify-ui-contract.js)
-   (copy buttons + redirect + fragment scroll + marked turn) proved its worth
-   (caught the wrong-corpus and no-transcript traps) but lives in /tmp; not
-   promoted into `scripts/` next to `screenshot-probe.js`.
+(copy buttons + redirect + fragment scroll + marked turn) proved its worth
+(caught the wrong-corpus and no-transcript traps) but lives in /tmp; not
+promoted into `scripts/` next to `screenshot-probe.js`.
 ~~4. **vtsls parse errors on `scripts/screenshot-probe.js`** (lines 148+,~~ routed — adjudicated vtsls false positive; node --check is the arbiter, documented in scripts/README.md
-   "Declaration or statement expected") — noticed in diagnostics, dismissed
-   because node runs the file fine; not investigated (may be a formatter/
-   LSP disagreement worth 5 minutes).
+"Declaration or statement expected") — noticed in diagnostics, dismissed
+because node runs the file fine; not investigated (may be a formatter/
+LSP disagreement worth 5 minutes).
 5. Everything owner-blocked (host deploy, prod re-ingest, v0.2.0 cut, the
-   three §g questions) — unchanged, correctly untouched.
+three §g questions) — unchanged, correctly untouched.
 
 ## d) TOTALLY FUCKED UP (all caught + fixed in-session; listed honestly)
 
