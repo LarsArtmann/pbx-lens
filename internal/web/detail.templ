@@ -273,12 +273,13 @@ func firstMatchedTurn(turns []calls.TranscriptTurn, query string) (int, bool) {
 // partial numbers and mid-word snippets behave like the search page's
 // digits-only hint promises.
 func turnMatches(turn calls.TranscriptTurn, query string) bool {
-	if query == "" {
+	terms := strings.Fields(query)
+	if len(terms) == 0 {
 		return false
 	}
 
 	text := strings.ToLower(turn.Text)
-	for _, term := range strings.Fields(query) {
+	for _, term := range terms {
 		if !strings.Contains(text, strings.ToLower(term)) {
 			return false
 		}
@@ -288,13 +289,16 @@ func turnMatches(turn calls.TranscriptTurn, query string) bool {
 }
 
 // turnTagClass mirrors the library's scrollback tone colors for the
-// hand-rolled match log (user=info blue, assistant=success green).
+// hand-rolled match log. The colors themselves live in app.css
+// (.tc-tag-user/.tc-tag-assistant) — raw palette classes are banned in
+// .templ sources (palette gate), so the tags ride the same bridged vars
+// the library tones resolve through and the one-block re-skin holds.
 func turnTagClass(role calls.TurnRole) string {
 	if role == calls.TurnRoleUser {
-		return "me-2 inline-block min-w-12 font-medium text-blue-600 dark:text-blue-400"
+		return "me-2 inline-block min-w-12 font-medium tc-tag-user"
 	}
 
-	return "me-2 inline-block min-w-12 font-medium text-green-700 dark:text-green-400"
+	return "me-2 inline-block min-w-12 font-medium tc-tag-assistant"
 }
 
 // recordingCard offers playback. The audio src is the proxy route — the

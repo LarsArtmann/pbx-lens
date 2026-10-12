@@ -107,6 +107,28 @@ tr[role="link"]:focus-visible {
   outline-offset: -2px;
 }
 
+/*
+ * Match-log role tags (T21): the hand-rolled ?q= transcript loop mirrors
+ * the library Scrollback tone mapping through the same bridged vars, so
+ * the one-block re-skin keeps holding (raw palette classes are banned in
+ * .templ sources by the palette gate).
+ */
+.tc-tag-user {
+  color: var(--color-blue-600);
+}
+
+.dark .tc-tag-user {
+  color: var(--color-blue-400);
+}
+
+.tc-tag-assistant {
+  color: var(--color-green-700);
+}
+
+.dark .tc-tag-assistant {
+  color: var(--color-green-400);
+}
+
 @media print {
   nav,
   footer,
