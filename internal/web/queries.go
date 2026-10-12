@@ -103,7 +103,12 @@ var exportBatchSize = 5_000
 // seen-key set, so a page boundary inside a timestamp group cannot drop rows.
 // A group so large it stalls the cursor (more than one batch of calls inside
 // a single nanosecond) fails loudly instead of truncating silently.
-func StreamExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery, fn func(calls.CallView) error) error {
+func StreamExportCalls(
+	ctx context.Context,
+	sys *system.System,
+	query ListCallsQuery,
+	fn func(calls.CallView) error,
+) error {
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
 	var cursor time.Time

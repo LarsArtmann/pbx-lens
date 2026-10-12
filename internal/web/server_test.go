@@ -426,6 +426,7 @@ func TestListKeysetWalksBeyondPageOne(t *testing.T) {
 		}
 
 		rest := body[hrefStart+len(`href="`):]
+
 		end := strings.Index(rest, `"`)
 		if end < 0 {
 			t.Fatalf("malformed cursor href on page %d", page)

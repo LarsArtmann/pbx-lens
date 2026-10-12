@@ -384,7 +384,6 @@ func serveHtmx(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 
-	//nolint:gosec // pinned vendored asset, served same-origin
 	_, _ = w.Write(src)
 }
 
@@ -412,6 +411,5 @@ func (s *server) opsHandler(w http.ResponseWriter, _ *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 
-	//nolint:gosec // JSON payload served over the authed API; never rendered as HTML
 	_, _ = w.Write(append(payload, '\n'))
 }

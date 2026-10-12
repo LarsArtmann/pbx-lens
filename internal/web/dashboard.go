@@ -21,8 +21,8 @@ const dashboardWindowDays = 30
 const dayFormat = "2006-01-02"
 
 const (
-	weekDays      = 7  // one WeekDelta half-window
-	percentScale  = 100 // ratio to percent
+	weekDays     = 7   // one WeekDelta half-window
+	percentScale = 100 // ratio to percent
 )
 
 // dashboardLocation buckets dashboard days (R2, owner decision 2026-10-12):

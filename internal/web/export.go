@@ -43,7 +43,6 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		//nolint:gosec // JSON-encoded payload served as an ndjson attachment; never rendered as HTML
 		_, err = w.Write(append(line, '\n'))
 
 		return err

@@ -283,7 +283,12 @@ func TestDashboardBerlinDayBoundary(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC), ListCallsQuery{})
+	stats, err := DashboardStatsQuery(
+		t.Context(),
+		sys,
+		time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC),
+		ListCallsQuery{},
+	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
@@ -302,6 +307,7 @@ func TestDashboardStatsQueryZoneIsInjectable(t *testing.T) {
 	// on the 9th — the zone decides the bucket, not the data.
 	saved := dashboardLocation
 	dashboardLocation = time.UTC
+
 	t.Cleanup(func() { dashboardLocation = saved })
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -323,7 +329,12 @@ func TestDashboardStatsQueryZoneIsInjectable(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC), ListCallsQuery{})
+	stats, err := DashboardStatsQuery(
+		t.Context(),
+		sys,
+		time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC),
+		ListCallsQuery{},
+	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
