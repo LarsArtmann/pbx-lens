@@ -65,8 +65,10 @@ func TestETagMiddlewareCounters(t *testing.T) {
 func TestETagMiddlewareOverflowWarns(t *testing.T) {
 	stats := NewCacheCounters()
 
-	var warnedMsg string
-	var warnedArgs []any
+	var (
+		warnedMsg  string
+		warnedArgs []any
+	)
 
 	handler := ETagMiddleware(stats, func(msg string, args ...any) {
 		warnedMsg = msg
