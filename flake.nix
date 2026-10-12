@@ -187,7 +187,7 @@
                   cp "$hash_file" "$hash_file.bak"
                   restore() { mv "$hash_file.bak" "$hash_file"; }
                   trap restore ERR
-                  fake="sha256-Z7yp53LzffljsqsLBL9mV+Ah44X2bIhgyR9s5fCbSns="
+                  fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
                   printf '"%s"\n' "$fake" > "$hash_file"
                   out="$(nix build "$root#default" --no-link 2>&1 || true)"
                   got="$(printf '%s' "$out" | grep -oP 'got:\s+\Ksha256-[A-Za-z0-9+/=]+' | head -1 || true)"
