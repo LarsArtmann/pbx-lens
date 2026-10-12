@@ -91,6 +91,7 @@ func TestParseVanillaBareQuoteTail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("vanilla Master.csv tail must parse: %v", err)
 	}
+
 	if len(res.Observations) != 2 || res.Skipped != 0 {
 		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
 	}
