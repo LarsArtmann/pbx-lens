@@ -422,6 +422,60 @@ func TestOpsEndpointServesCounters(t *testing.T) {
 	}
 }
 
+func TestOpsEndpointServesCacheSection(t *testing.T) {
+	// R26: the cache counters answer /api/ops on their own (the etag
+	// middleware runs in every serve composition, poller or not), and with
+	// poller counters wired both sections share the top level — the R15
+	// keys stay where they always were, so existing consumers parse
+	// unchanged.
+	stats := NewCacheCounters()
+
+	generate := ETagMiddleware(stats, nil)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("stable body"))
+	}))
+
+	first := httptest.NewRecorder()
+	generate.ServeHTTP(first, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	replay := httptest.NewRecorder()
+	conditional := httptest.NewRequest(http.MethodGet, "/", nil)
+	conditional.Header.Set("If-None-Match", first.Header().Get("ETag"))
+	generate.ServeHTTP(replay, conditional)
+
+	if replay.Code != http.StatusNotModified {
+		t.Fatalf("conditional replay status = %d, want 304", replay.Code)
+	}
+
+	status, body := getBody(t, newTestServerWith(t, Options{Cache: stats}), "/api/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /api/ops with cache-only counters status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{`"etag_generated":1`, `"not_modified":1`, `"hit_ratio":0.5`, `"buffer_overflows":0`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/api/ops cache section missing %q (body: %s)", want, body)
+		}
+	}
+
+	both := newTestServerWith(t, Options{
+		Cache: stats,
+		Ops: func() any {
+			return map[string]any{"sources": map[string]any{}, "last_pass": "2026-10-12T15:00:00Z"}
+		},
+	})
+
+	status, body = getBody(t, both, "/api/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /api/ops with both counters status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{`"sources"`, `"last_pass"`, `"cache"`, `"etag_generated"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/api/ops merged payload missing %q (body: %s)", want, body)
+		}
+	}
+}
+
 func TestListKeysetWalksBeyondPageOne(t *testing.T) {
 	// m27.7: the older-calls cursor must walk the whole index — 55 calls
 	// (pageSize+5) arrive complete across two pages, newest first, with no

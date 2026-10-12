@@ -1,10 +1,107 @@
 package web
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
+
+// TestETagMiddlewareCounters proves the hooks observe every outcome the
+// middleware can produce: a fresh tag on the first response, a 304 on the
+// conditional replay, and the derived hit ratio.
+func TestETagMiddlewareCounters(t *testing.T) {
+	stats := NewCacheCounters()
+
+	handler := ETagMiddleware(stats, nil)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("stable body"))
+	}))
+
+	first := httptest.NewRecorder()
+	handler.ServeHTTP(first, httptestRequest(t, "/"))
+
+	if first.Code != http.StatusOK {
+		t.Fatalf("first response status = %d, want 200", first.Code)
+	}
+
+	tag := first.Header().Get("ETag")
+	if tag == "" {
+		t.Fatal("first response missing ETag")
+	}
+
+	replay := httptest.NewRecorder()
+	conditional := httptestRequest(t, "/")
+	conditional.Header.Set("If-None-Match", tag)
+	handler.ServeHTTP(replay, conditional)
+
+	if replay.Code != http.StatusNotModified {
+		t.Fatalf("conditional replay status = %d, want 304", replay.Code)
+	}
+
+	snapshot := stats.Snapshot()
+
+	if snapshot.ETagGenerated != 1 {
+		t.Errorf("ETagGenerated = %d, want 1", snapshot.ETagGenerated)
+	}
+
+	if snapshot.NotModified != 1 {
+		t.Errorf("NotModified = %d, want 1", snapshot.NotModified)
+	}
+
+	if snapshot.HitRatio != 0.5 {
+		t.Errorf("HitRatio = %v, want 0.5", snapshot.HitRatio)
+	}
+
+	if snapshot.BufferOverflows != 0 {
+		t.Errorf("BufferOverflows = %d, want 0", snapshot.BufferOverflows)
+	}
+}
+
+// TestETagMiddlewareOverflowWarns pins the degradation signal: a body past
+// the buffer streams without an ETag, the counter ticks once, and the log
+// hook receives the warning with the limit that was exceeded.
+func TestETagMiddlewareOverflowWarns(t *testing.T) {
+	stats := NewCacheCounters()
+
+	var warnedMsg string
+	var warnedArgs []any
+
+	handler := ETagMiddleware(stats, func(msg string, args ...any) {
+		warnedMsg = msg
+		warnedArgs = args
+	})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write(bytes.Repeat([]byte("a"), (1<<20)+16))
+	}))
+
+	overflow := httptest.NewRecorder()
+	handler.ServeHTTP(overflow, httptestRequest(t, "/"))
+
+	if overflow.Code != http.StatusOK {
+		t.Fatalf("overflow response status = %d, want 200", overflow.Code)
+	}
+
+	if overflow.Header().Get("ETag") != "" {
+		t.Error("overflow response carries an ETag; want untagged streaming")
+	}
+
+	snapshot := stats.Snapshot()
+
+	if snapshot.BufferOverflows != 1 {
+		t.Errorf("BufferOverflows = %d, want 1", snapshot.BufferOverflows)
+	}
+
+	if snapshot.ETagGenerated != 0 {
+		t.Errorf("ETagGenerated = %d, want 0 (overflowed bodies get no tag)", snapshot.ETagGenerated)
+	}
+
+	if warnedMsg == "" {
+		t.Fatal("overflow did not warn")
+	}
+
+	if len(warnedArgs) != 2 || warnedArgs[0] != "limit_bytes" || warnedArgs[1] != (1<<20)+16 {
+		t.Errorf("overflow warning args = %v, want [limit_bytes %d]", warnedArgs, (1<<20)+16)
+	}
+}
 
 // TestSkipBodyCaching locks the ETag Skip policy: the two exports and the
 // recording proxy stream unbounded (the body buffer must never engage),
