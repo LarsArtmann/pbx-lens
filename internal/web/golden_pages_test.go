@@ -94,6 +94,32 @@ func TestGoldenPages(t *testing.T) {
 	goldenPage(t, mux, "page_search", "/search?q=hello")
 	goldenPage(t, mux, "page_dashboard", "/dashboard")
 	goldenPage(t, mux, "page_detail", "/calls/telnyx-conversation/conv-in")
+	goldenPage(t, mux, "page_detail_q", "/calls/telnyx-conversation/conv-in?q=how&at=1")
+}
+
+// The ?q= golden pins the match log's affordances beyond its markup: the
+// first matching turn carries its anchor id and the amber highlight, and
+// unmatched turns stay unmarked (plan T1.2 — the hand-rolled branch had
+// unit tests but no structural snapshot).
+func TestGoldenDetailQueryCarriesMatchLog(t *testing.T) {
+	mux := newTestServerWithSearch(t, goldenSeed()...)
+
+	status, body := getBody(t, mux, "/calls/telnyx-conversation/conv-in?q=how&at=1")
+	if status != http.StatusOK {
+		t.Fatalf("detail?q status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, `id="turn-1"`) {
+		t.Error("matched turn missing its anchor id in the ?q= rendering")
+	}
+
+	if !strings.Contains(body, "bg-amber-100") {
+		t.Error("matched turn missing the highlight mark in the ?q= rendering")
+	}
+
+	if strings.Contains(body, `id="turn-0"`) {
+		t.Error("unmatched turn must not carry an anchor id")
+	}
 }
 
 // The scrubber itself stays honest: it must neutralize every wall-clock

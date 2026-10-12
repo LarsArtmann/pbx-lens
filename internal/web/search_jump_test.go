@@ -129,6 +129,35 @@ func TestDetailWithoutQueryKeepsPlainPath(t *testing.T) {
 	}
 }
 
+// TestDetailQueryTamperedAtRendersNoJump pins the tampered-at path (plan
+// T1.6): a hand-edged or stale ?q=…&at=… deep link must neither loop nor
+// crash nor re-jump — the page just renders with its marks. Both an
+// out-of-range number and non-numeric garbage take the same path (the
+// handler only checks the param's presence).
+func TestDetailQueryTamperedAtRendersNoJump(t *testing.T) {
+	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+
+	for _, at := range []string{"999", "abc"} {
+		mux := newTestServerWithSearch(t, webObservation("conv-out", started))
+
+		recorder := httptestGet(t, mux, "/calls/telnyx-conversation/conv-out?q=help&at="+at)
+		if recorder.Code != http.StatusOK {
+			t.Errorf("detail with at=%s status = %d, want 200 (no redirect)", at, recorder.Code)
+		}
+
+		if loc := recorder.Header().Get("Location"); loc != "" {
+			t.Errorf("at=%s must not redirect, got Location %q", at, loc)
+		}
+	}
+
+	mux := newTestServerWithSearch(t, webObservation("conv-out", started))
+
+	_, body := getBody(t, mux, "/calls/telnyx-conversation/conv-out?q=help&at=999")
+	if !strings.Contains(body, `id="turn-1"`) {
+		t.Error("tampered at lost the matched-turn anchor")
+	}
+}
+
 // TestSearchJumpTargetSameOrigin pins the redirect builder's shape: fixed
 // /calls/ prefix with escaped segments and query — the property that makes
 // the handler's http.Redirect honest.
