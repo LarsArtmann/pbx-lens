@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/larsartmann/templ-components/utils/golden"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/templ-components/utils/golden"
 )
 
 // Golden-HTML snapshots for the operator-facing pages (plan T22): copy

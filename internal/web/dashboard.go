@@ -119,9 +119,12 @@ type DashboardStats struct {
 	MOSKnown    int     // calls whose source reported a MOS score
 	MOSSum      float64 // sum of reported scores; AvgMOS divides by MOSKnown
 	WindowDays  int
-	ByDay       []DayVolume
-	Durations   []DurationBucket
-	Week        WeekDelta
+	// HourDay buckets call starts by weekday (Mon-first) x hour of day in
+	// the dashboard zone — the "when do calls happen" heatmap (plan T19).
+	HourDay   [7][24]int
+	ByDay     []DayVolume
+	Durations []DurationBucket
+	Week      WeekDelta
 
 	// rangeFrom/rangeTo echo the picker's active range back into the form
 	// (zero when unset).
@@ -269,6 +272,13 @@ func (a statsAccumulator) view(view calls.CallView) {
 	if day == a.today {
 		stats.Today++
 	}
+
+	// Heatmap bucket: weekday x hour in the dashboard zone (plan T19). The
+	// zone conversion is the DST story — Go's zone logic maps each instant
+	// to the local wall clock that was in effect.
+	local := view.StartedAt.In(dashboardLocation)
+	weekday := (int(local.Weekday()) + 6) % 7 // Mon-first
+	stats.HourDay[weekday][local.Hour()]++
 
 	if idx, ok := a.dayIndex[day]; ok {
 		stats.ByDay[idx].Calls++

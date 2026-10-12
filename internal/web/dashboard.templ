@@ -95,12 +95,72 @@ templ dashboardLive(stats DashboardStats, now time.Time, fragURL string) {
 	}
 }
 
-// dashboardMain is the Split's wide column: volume, then durations.
+// dashboardMain is the Split's wide column: volume, durations, then the
+// hour-by-weekday density heatmap.
 templ dashboardMain(stats DashboardStats) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@volumeCard(stats)
 		@durationCard(stats)
+		@heatmapCard(stats)
 	}
+}
+
+// heatmapCard is the "when do calls happen" density grid (plan T19):
+// weekday rows x hour columns in the dashboard zone. A quiet window renders
+// the honest empty message instead of a wall of near-invisible cells.
+templ heatmapCard(stats DashboardStats) {
+	@display.Card(display.CardProps{Title: "Call density (weekday × hour)"}) {
+		if stats.Total == 0 {
+			<p class="text-sm text-gray-500 dark:text-gray-400">
+				No calls in the last { strconv.Itoa(stats.WindowDays) } days.
+			</p>
+		} else {
+			@display.Heatmap(display.HeatmapProps{
+				Rows: heatmapRows(stats),
+				ColumnLabels:  heatmapColumnLabels(),
+				HighlightPeak: true,
+				AriaLabel:     "Call density by weekday and hour (" + strconv.Itoa(stats.WindowDays) + "-day window, dashboard zone)",
+				CellSize:      "w-3",
+			})
+		}
+	}
+}
+
+// heatmapRows maps the accumulator buckets onto Heatmap rows, Mon-first.
+func heatmapRows(stats DashboardStats) []display.HeatmapRow {
+	weekdays := []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
+	rows := make([]display.HeatmapRow, 0, len(weekdays))
+
+	for wd, label := range weekdays {
+		cells := make([]display.HeatmapCell, 0, 24)
+
+		for hour, count := range stats.HourDay[wd] {
+			cells = append(cells, display.HeatmapCell{
+				Value: float64(count),
+				Label: fmt.Sprintf("%s %02d:00 · %d call(s)", label, hour, count),
+			})
+		}
+
+		rows = append(rows, display.HeatmapRow{Label: label, Cells: cells})
+	}
+
+	return rows
+}
+
+// heatmapColumnLabels labels every third hour; a 24-column axis only stays
+// readable with sparse labels.
+func heatmapColumnLabels() []string {
+	labels := make([]string, 0, 24)
+
+	for hour := range 24 {
+		if hour%3 == 0 {
+			labels = append(labels, fmt.Sprintf("%02d", hour))
+		} else {
+			labels = append(labels, "")
+		}
+	}
+
+	return labels
 }
 
 // dashboardAside is the Split's narrow column: mix, trend, quality.
