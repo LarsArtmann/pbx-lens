@@ -6,8 +6,10 @@
      explicit operator demand (pareto-planning skill's HTML default overridden). -->
 
 # SUPERB Plan — pbx-lens Open Work After the Docs-Health Pass (Pareto)
+
 > **EXECUTION STATUS (annotated 2026-10-12, docs-health ANNOTATE — this plan
 > is a snapshot, never rewritten):**
+>
 > - DONE: R1-partial (all per-task verification green; the single clean
 >   full-gate sample lands in docs/buildflow-dev-gate.md when load < 40),
 >   R2, R3, R6, R7, R8, R9, R11, R13, R14, R15, R16, R17, R18, R19, R22,
@@ -18,7 +20,6 @@
 >   filing, owner yes).
 > - RELEASED: R4 v0.1.0 after the clean gate (owner yes).
 > - STILL BLOCKED: R20 (API key), R25 (upstream release), R26 (v2 gate).
-
 
 Date: 2026-10-12 03:43 CEST · Baseline: working tree clean at `48a350e`
 (the 03:39 status-report commit), 13/13 test packages green, race green,
