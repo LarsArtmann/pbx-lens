@@ -4,28 +4,57 @@ import (
 	"context"
 	"fmt"
 	"time"
+	_ "time/tzdata"
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
 // dashboardWindowDays is the chart window: the volume charts cover the last
-// N days ending today (UTC), zero days included — a quiet stretch must show
-// as a gap, not vanish.
+// N days ending today, zero days included — a quiet stretch must show as a
+// gap, not vanish.
 const dashboardWindowDays = 30
-
-// utcDay is the UTC day boundary used to bucket and truncate timestamps.
-const utcDay = 24 * time.Hour
 
 // dayFormat is the dashboard's day key: the exact "2006-01-02" string is
 // load-bearing — it keys ByDay buckets, matches the URL filters todayHref
 // builds, and renders directly in the chart tooltip.
 const dayFormat = "2006-01-02"
 
+// dashboardLocation buckets dashboard days (R2, owner decision 2026-10-12):
+// the operator's wall clock, Europe/Berlin — a German PBX's "Calls today"
+// must agree with its own day, not drift an hour behind after 22:00 UTC.
+// The embedded tzdata database keeps the zone resolvable in the hermetic
+// nix binary with no system zoneinfo dependency.
+var dashboardLocation = mustZone("Europe/Berlin")
+
+func mustZone(name string) *time.Location {
+	loc, err := time.LoadLocation(name)
+	if err != nil {
+		panic(fmt.Sprintf("dashboard zone %q unavailable: %v", name, err))
+	}
+
+	return loc
+}
+
+// dayKey buckets a timestamp into its dashboard-zone day (YYYY-MM-DD).
+func dayKey(t time.Time) string {
+	return t.In(dashboardLocation).Format(dayFormat)
+}
+
+// startOfDay returns midnight of t's dashboard-zone day. DST-safe: time.Date
+// normalizes through zone transitions instead of misadding fixed hours.
+func startOfDay(t time.Time) time.Time {
+	local := t.In(dashboardLocation)
+	year, month, day := local.Date()
+
+	return time.Date(year, month, day, 0, 0, 0, 0, dashboardLocation)
+}
+
 // DayVolume is one day's call count in the dashboard window. MOSKnown is
 // the subset of that day's calls whose source reported a quality score;
 // MOSSum feeds AvgMOS.
 type DayVolume struct {
-	Day      string // YYYY-MM-DD, UTC
+	Day      string // YYYY-MM-DD, dashboard zone
 	Calls    int
 	MOSKnown int
 	MOSSum   float64
@@ -41,10 +70,38 @@ func (d DayVolume) AvgMOS() float64 {
 	return d.MOSSum / float64(d.MOSKnown)
 }
 
+// DurationBucket is one histogram slot of call durations.
+type DurationBucket struct {
+	Label string
+	Calls int
+}
+
+// durationBuckets is the histogram shape (R8/M20.2): inclusive lower bounds
+// in seconds; every duration lands in exactly one bucket.
+var durationBuckets = []struct {
+	maxSecs int
+	label   string
+}{
+	{30, "< 30s"},
+	{60, "30-60s"},
+	{120, "1-2m"},
+	{300, "2-5m"},
+	{900, "5-15m"},
+	{3600, "15-60m"},
+	{1 << 62, "> 1h"},
+}
+
+// WeekDelta compares the last 7 days' call volume with the previous 7.
+// HasBaseline is false until a full previous week exists in the window.
+type WeekDelta struct {
+	Pct         float64
+	HasBaseline bool
+}
+
 // DashboardStats is the quality-dashboard view model (T25): totals, AI
-// share, average duration, and the per-day volume series. Aggregation is
-// in-process over the same bounded full scan the export uses — personal-PBX
-// volumes are far below the cap, and the index is re-derivable.
+// share, average duration, and the per-day volume series. Aggregation
+// streams over the same filtered scan the export uses — memory stays at
+// one keyset page, and the index is re-derivable.
 type DashboardStats struct {
 	Total       int
 	Today       int
@@ -55,6 +112,8 @@ type DashboardStats struct {
 	MOSSum      float64 // sum of reported scores; AvgMOS divides by MOSKnown
 	WindowDays  int
 	ByDay       []DayVolume
+	Durations   []DurationBucket
+	Week        WeekDelta
 }
 
 // AvgMOS is the mean MOS across every scored call in the index, or 0 when
@@ -77,12 +136,16 @@ func (s DashboardStats) AIRatio() float64 {
 	return float64(s.AICalls) / float64(s.Total)
 }
 
-// DashboardStatsQuery computes the dashboard aggregates over the whole
-// read model. The day window always ends "today" in the dashboard zone
-// (dashboardLocation), so an idle index shows its volume drifting out of
-// the chart instead of freezing.
-func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time) (DashboardStats, error) {
-	stats := DashboardStats{WindowDays: dashboardWindowDays}
+// DashboardStatsQuery computes the dashboard aggregates over the read
+// model, narrowed by the given filters (the date-range picker feeds
+// from/to). The day window always ends "today" in the dashboard zone, so
+// an idle index shows its volume drifting out of the chart instead of
+// freezing.
+func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time, filters ListCallsQuery) (DashboardStats, error) {
+	stats := DashboardStats{
+		WindowDays: dashboardWindowDays,
+		Durations:  make([]DurationBucket, len(durationBuckets)),
+	}
 
 	today := dayKey(now)
 	windowStart := startOfDay(now).AddDate(0, 0, -(dashboardWindowDays - 1))
@@ -94,9 +157,13 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})
 	}
 
+	for i, bucket := range durationBuckets {
+		stats.Durations[i] = DurationBucket{Label: bucket.label}
+	}
+
 	var totalDuration time.Duration
 
-	err := StreamExportCalls(ctx, sys, ListCallsQuery{}, func(view calls.CallView) error {
+	err := StreamExportCalls(ctx, sys, filters, func(view calls.CallView) error {
 		stats.Total++
 		totalDuration += time.Duration(view.DurationSecs) * time.Second
 
@@ -113,6 +180,14 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 
 		if idx, ok := dayIndex[day]; ok {
 			stats.ByDay[idx].Calls++
+		}
+
+		for i, bucket := range durationBuckets {
+			if view.DurationSecs < bucket.maxSecs {
+				stats.Durations[i].Calls++
+
+				break
+			}
 		}
 
 		if view.MOS > 0 {
@@ -135,12 +210,41 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time)
 		stats.AvgDuration = totalDuration / time.Duration(stats.Total)
 	}
 
+	stats.Week = weekDelta(stats.ByDay)
+
 	return stats, nil
+}
+
+// weekDelta compares the newest 7 day buckets with the previous 7. The
+// window is always 30 days, so both weeks exist whenever the window does.
+func weekDelta(days []DayVolume) WeekDelta {
+	if len(days) < 14 {
+		return WeekDelta{}
+	}
+
+	thisWeek, lastWeek := 0, 0
+
+	for _, day := range days[len(days)-7:] {
+		thisWeek += day.Calls
+	}
+
+	for _, day := range days[len(days)-14 : len(days)-7] {
+		lastWeek += day.Calls
+	}
+
+	if lastWeek == 0 {
+		return WeekDelta{HasBaseline: false}
+	}
+
+	return WeekDelta{
+		Pct:         float64(thisWeek-lastWeek) / float64(lastWeek) * 100,
+		HasBaseline: true,
+	}
 }
 
 // todayHref deep-links the "Calls today" stat card into the filtered list.
 func (s DashboardStats) todayHref(now time.Time) string {
-	today := now.UTC().Format(dayFormat)
+	today := dayKey(now)
 
 	return fmt.Sprintf("/?from=%s&to=%s", today, today)
 }
