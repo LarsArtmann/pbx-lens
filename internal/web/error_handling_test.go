@@ -23,12 +23,12 @@ func TestShellCarriesGlobalErrorHandling(t *testing.T) {
 		}
 
 		for _, want := range []string{
-			`id="tc-toast-container"`,          // feedback.ToastContainer — visible toasts
-			`id="tc-error-announcer"`,          // GlobalErrorHandling announcer (aria-live)
-			"htmx:sendError",                   // network-level failures (server gone mid-poll)
-			"htmx:responseError",               // 4xx/5xx responses on polled fragments
-			"aria-live=\"polite\"",             // announced accessibly
-			`src="/static/htmx.min.js"`,        // runtime the listeners bind to
+			`id="tc-toast-container"`,   // feedback.ToastContainer — visible toasts
+			`id="tc-error-announcer"`,   // GlobalErrorHandling announcer (aria-live)
+			"htmx:sendError",            // network-level failures (server gone mid-poll)
+			"htmx:responseError",        // 4xx/5xx responses on polled fragments
+			"aria-live=\"polite\"",      // announced accessibly
+			`src="/static/htmx.min.js"`, // runtime the listeners bind to
 		} {
 			if !strings.Contains(body, want) {
 				t.Errorf("%s missing %q", path, want)
