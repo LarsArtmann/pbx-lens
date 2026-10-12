@@ -172,3 +172,58 @@ func TestDetailBreadcrumbs(t *testing.T) {
 		t.Error("kind crumb missing")
 	}
 }
+
+// TestStalenessFragmentCarriesQuery pins plan T9: the polled fragment URL
+// reproduces the page's own query, and walk cursors no longer suppress the
+// banner (pagination is not filtering) while typed filters still do.
+func TestStalenessFragmentCarriesQuery(t *testing.T) {
+	seeded := seedCalls(pageSize+5, time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
+	mux := newTestServerWithSearch(t, seeded...)
+
+	// Head page: stale (old seed), plain poll URL.
+	_, head := getBody(t, mux, "/")
+	if !strings.Contains(head, "Index may be stale") {
+		t.Fatal("stale head page should carry the banner")
+	}
+
+	if !strings.Contains(head, `hx-get="/frag/staleness"`) {
+		t.Errorf("head page poll URL = unfiltered /frag/staleness, got: %s",
+			pollURLOf(head))
+	}
+
+	// Walked page: still the unfiltered view — banner + cursor-carrying poll.
+	olderHref := extractHref(t, head, "Older calls")
+
+	_, deep := getBody(t, mux, olderHref)
+	if !strings.Contains(deep, "Index may be stale") {
+		t.Error("walked page is the same unfiltered view; banner must survive the cursor")
+	}
+
+	beforeParam := strings.TrimPrefix(olderHref, "/?")
+	if !strings.Contains(deep, `hx-get="/frag/staleness?`+beforeParam+`"`) {
+		t.Errorf("walked page poll URL must carry %q, got: %s", beforeParam, pollURLOf(deep))
+	}
+
+	// Typed filter: a deliberate slice — no global banner, filtered poll URL.
+	_, filtered := getBody(t, mux, "/?direction=inbound")
+	if strings.Contains(filtered, "Index may be stale") {
+		t.Error("typed-filtered view must not carry the global staleness banner")
+	}
+
+	if !strings.Contains(filtered, `hx-get="/frag/staleness?direction=inbound"`) {
+		t.Errorf("filtered page poll URL must carry the filter, got: %s", pollURLOf(filtered))
+	}
+}
+
+func pollURLOf(body string) string {
+	marker := `hx-get="`
+
+	_, after, ok := strings.Cut(body, marker)
+	if !ok {
+		return "(no poll region)"
+	}
+
+	rest := after
+
+	return rest[:strings.Index(rest, `"`)]
+}

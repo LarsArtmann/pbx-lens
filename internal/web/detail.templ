@@ -18,15 +18,19 @@ import (
 // the server-rendered fallback stands unchanged.
 templ listRoute(page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
 	@shell("Calls — pbx-lens", "/") {
-		@staleLive(staleFor, stale)
+		@staleLive(filters, staleFor, stale)
 		@listPage(page, filters)
 	}
 }
 
-// staleLive is the self-polling staleness-banner wrapper.
-templ staleLive(staleFor time.Duration, stale bool) {
+// staleLive is the self-polling staleness-banner wrapper. The poll URL
+// carries the page's own query (plan T9): the fragment re-runs the same
+// ListCalls so its banner state always describes the view on screen —
+// typed filters and walk cursors alike — instead of silently re-checking
+// an unfiltered head page.
+templ staleLive(filters ListCallsQuery, staleFor time.Duration, stale bool) {
 	@htmx.PolledRegion(htmx.PolledRegionProps{
-		URL:   "/frag/staleness",
+		URL:   "/frag/staleness" + filtersQueryString(filters),
 		Every: "60s",
 	}) {
 		if stale {

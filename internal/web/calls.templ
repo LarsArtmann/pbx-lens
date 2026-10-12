@@ -272,6 +272,42 @@ func listPageHref(filters ListCallsQuery, param string, value string) string {
 	return "/?" + query.Encode()
 }
 
+// filtersQueryString serializes the full typed query (filters + walk
+// cursors) as a fragment-URL suffix: "" or "?…". Used by the staleness
+// poll region so the fragment re-checks the view actually on screen.
+func filtersQueryString(filters ListCallsQuery) string {
+	query := make(url.Values)
+	if filters.Direction != "" {
+		query.Set("direction", string(filters.Direction))
+	}
+
+	if v := aiValue(filters.AI); v != "" {
+		query.Set("ai", v)
+	}
+
+	if !filters.From.IsZero() {
+		query.Set("from", dateValue(filters.From))
+	}
+
+	if !filters.To.IsZero() {
+		query.Set("to", dateValue(filters.To))
+	}
+
+	if !filters.Before.IsZero() {
+		query.Set("before", filters.Before.UTC().Format(time.RFC3339))
+	}
+
+	if !filters.After.IsZero() {
+		query.Set("after", filters.After.UTC().Format(time.RFC3339))
+	}
+
+	if len(query) == 0 {
+		return ""
+	}
+
+	return "?" + query.Encode()
+}
+
 // stringOrDash renders an empty participant/excerpt as an em dash — real
 // CDRs carry unknown parties and the table must say so honestly.
 func stringOrDash(s string) string {

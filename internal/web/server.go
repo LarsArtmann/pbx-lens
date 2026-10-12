@@ -215,16 +215,26 @@ func parseDateParam(v string) (time.Time, bool, error) {
 // staleness reports the age of the newest indexed call and whether it
 // crosses the threshold. It rides ONLY the unfiltered first page, where
 // "newest" is what the page itself already shows — no second scan, and a
-// filtered view (a deliberate slice) never carries a global-freshness
-// warning. An empty index is never stale (the empty state explains itself).
+// typed-filtered view (a deliberate slice) never carries a global-freshness
+// warning. Walk cursors are pagination, not filtering: a walked page is
+// still the unfiltered view, so its banner survives (plan T9). An empty
+// index is never stale (the empty state explains itself).
 func staleness(filters ListCallsQuery, page CallListPage) (time.Duration, bool) {
-	if filters != (ListCallsQuery{}) || len(page.Rows) == 0 {
+	if hasTypedFilters(filters) || len(page.Rows) == 0 {
 		return 0, false
 	}
 
 	age := time.Since(page.Rows[0].When)
 
 	return age, age > staleAfter
+}
+
+// hasTypedFilters reports whether the query narrows the SLICE (as opposed
+// to walking it): direction/ai/from/to change what the list means;
+// before/after only change where in the same list you stand.
+func hasTypedFilters(filters ListCallsQuery) bool {
+	return filters.Direction != "" || filters.AI != nil ||
+		!filters.From.IsZero() || !filters.To.IsZero()
 }
 
 // dashboard serves the quality-dashboard page (T25). The from/to picker
@@ -350,7 +360,7 @@ func (s *server) stalenessFragment(w http.ResponseWriter, r *http.Request) {
 
 	staleFor, stale := staleness(filters, page)
 
-	render(w, r, staleLive(staleFor, stale))
+	render(w, r, staleLive(filters, staleFor, stale))
 }
 
 func (s *server) detail(w http.ResponseWriter, r *http.Request) {
