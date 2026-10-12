@@ -240,13 +240,13 @@ func hasTypedFilters(filters ListCallsQuery) bool {
 // dashboard serves the quality-dashboard page (T25). The from/to picker
 // narrows the underlying scan; the cards region polls for updates (R9).
 func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
-	filters, fragURL, ok := parseRange(w, r)
+	filters, fragURL, window, ok := parseRange(w, r)
 	if !ok {
 		return
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters)
+	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters, window)
 
 	stop()
 
@@ -262,13 +262,13 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 // dashboardFragment is the polled region payload (R9): the same live cards
 // the page renders, without the shell — the region replaces itself.
 func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
-	filters, fragURL, ok := parseRange(w, r)
+	filters, fragURL, window, ok := parseRange(w, r)
 	if !ok {
 		return
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters)
+	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters, window)
 
 	stop()
 
@@ -283,10 +283,25 @@ func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
 
 // parseRange reads the dashboard's date-range picker (from/to only — list
 // filters like direction/ai are not dashboard concepts and stay ignored)
-// and derives the polled-region URL carrying the same range. Garbage dates
-// reject with a 400, house style.
-func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string, bool) {
+// and derives the polled-region URL carrying the same range, plus the chart
+// window preset (?window=7|30), which rides the fragment URL so the polled
+// region re-renders the same chart span the page chose. Garbage dates or
+// windows reject with a 400, house style.
+func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string, int, bool) {
 	var filters ListCallsQuery
+
+	window := dashboardWindowDays
+
+	if v := r.URL.Query().Get("window"); v != "" {
+		parsed, err := strconv.Atoi(v)
+		if err != nil || (parsed != 7 && parsed != 30) {
+			http.Error(w, "window must be 7 or 30, got "+strconv.Quote(v), http.StatusBadRequest)
+
+			return ListCallsQuery{}, "", 0, false
+		}
+
+		window = parsed
+	}
 
 	for _, field := range []struct {
 		name   string
@@ -304,7 +319,7 @@ func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string,
 		if err != nil || !dateOnly {
 			http.Error(w, field.name+" must be YYYY-MM-DD, got "+strconv.Quote(v), http.StatusBadRequest)
 
-			return ListCallsQuery{}, "", false
+			return ListCallsQuery{}, "", 0, false
 		}
 
 		// A bare upper bound covers the whole day it names (same semantics
@@ -318,23 +333,27 @@ func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string,
 
 	fragURL := "/frag/dashboard"
 
-	if !filters.From.IsZero() || !filters.To.IsZero() {
-		query := url.Values{}
+	query := url.Values{}
 
-		if !filters.From.IsZero() {
-			query.Set("from", filters.From.Format(dayFormat))
-		}
+	if window != dashboardWindowDays {
+		query.Set("window", strconv.Itoa(window))
+	}
 
-		if !filters.To.IsZero() {
-			// To was widened to end-of-day; the date format drops the time,
-			// so the picker echo shows the day the operator picked.
-			query.Set("to", filters.To.Format(dayFormat))
-		}
+	if !filters.From.IsZero() {
+		query.Set("from", filters.From.Format(dayFormat))
+	}
 
+	if !filters.To.IsZero() {
+		// To was widened to end-of-day; the date format drops the time,
+		// so the picker echo shows the day the operator picked.
+		query.Set("to", filters.To.Format(dayFormat))
+	}
+
+	if len(query) > 0 {
 		fragURL += "?" + query.Encode()
 	}
 
-	return filters, fragURL, true
+	return filters, fragURL, window, true
 }
 
 // stalenessFragment re-checks the freshness banner (R9): the polled region
