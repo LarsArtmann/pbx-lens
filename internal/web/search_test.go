@@ -80,11 +80,10 @@ func TestSearchEmptyQueryShowsForm(t *testing.T) {
 		t.Error("search page should render the query input")
 	}
 
-	// The FTS tokenizer keeps a phone number as one token, so partial
-	// numbers can never match; the page must say so instead of letting
-	// users conclude the call is not indexed (AGENTS gotcha).
-	if !strings.Contains(body, "Partial numbers") {
-		t.Error("search page should hint that partial numbers never match")
+	// Partial numbers match since R6 (digits shadow table): the hint must
+	// say so, with the 4-digit minimum spelled out.
+	if !strings.Contains(body, "Partial numbers match") {
+		t.Error("search page should hint that partial numbers now match")
 	}
 }
 
@@ -96,5 +95,28 @@ func TestSearchWithoutIndexExplainsItself(t *testing.T) {
 
 	if !strings.Contains(body, "-db") {
 		t.Error("503 should name the -db fix")
+	}
+}
+
+func TestSearchPartialNumberEndToEnd(t *testing.T) {
+	// R6 through the UI: a mid-number digit run finds the call whose party
+	// number carries it, and the snippet highlights the number itself.
+	started := time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	observation := webObservation("conv-a", started)
+	observation.FromNumber = "+17287289311"
+
+	mux := newTestServerWithSearch(t, observation)
+
+	status, body := getBody(t, mux, "/search?q=8931")
+	if status != http.StatusOK {
+		t.Fatalf("GET /search?q=8931 status = %d, want 200 (body: %s)", status, body)
+	}
+
+	if !strings.Contains(body, "/calls/telnyx-conversation/conv-a") {
+		t.Errorf("partial number search must find the call (body: %s)", body)
+	}
+
+	if !strings.Contains(body, "+17287289311") {
+		t.Error("the matching number should appear highlighted in the snippet")
 	}
 }

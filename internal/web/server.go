@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"embed"
+	"encoding/json/v2"
 	"io/fs"
 	"net/http"
 	"net/url"
@@ -32,8 +33,13 @@ type Options struct {
 
 	// Log receives mid-response failures the handler cannot turn into an
 	// HTTP error (the body has already started). Nil logs nothing; serve
-	// passes the process logger.
+	// passes the process logger (slog-compatible shape: msg + kv args).
 	Log func(msg string, args ...any)
+
+	// Ops serves the poller's per-source ingest counters for /api/ops
+	// (R15). Nil disables the endpoint with an explanatory 503 (one-shot
+	// ingests have no live counters to answer with).
+	Ops func() any
 }
 
 // Searcher is the content-query surface the web UI needs.
@@ -51,6 +57,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		recordings: opts.Recordings,
 		search:     opts.Search,
 		log:        opts.Log,
+		ops:        opts.Ops,
 		recTimeout: timeout,
 		upstream:   newUpstreamClient(timeout),
 	}
@@ -61,6 +68,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /frag/staleness", web.stalenessFragment)
 	mux.HandleFunc("GET /search", web.searchPage)
 	mux.HandleFunc("GET /api/freshness", web.freshness)
+	mux.HandleFunc("GET /api/ops", web.ops)
 	mux.HandleFunc("GET /api/export.jsonl", web.exportJSONL)
 	mux.HandleFunc("GET /api/export.csv", web.exportCSV)
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
@@ -74,6 +82,7 @@ type server struct {
 	recordings RecordingOptions
 	search     Searcher
 	log        func(msg string, args ...any)
+	ops        func() any
 	recTimeout time.Duration
 	upstream   *http.Client
 }
@@ -377,4 +386,32 @@ func serveHtmx(w http.ResponseWriter, _ *http.Request) {
 
 	//nolint:gosec // pinned vendored asset, served same-origin
 	_, _ = w.Write(src)
+}
+
+// ops serves the poller's per-source ingest counters (R15): offered,
+// recorded, corrected, and rejected per source from the latest pass, so
+// ingest health is visible without shelling into the host. The route sits
+// behind the same auth middleware as every other route.
+func (s *server) ops(w http.ResponseWriter, _ *http.Request) {
+	if s.ops == nil {
+		http.Error(
+			w,
+			"ops counters are only served while the poller runs (start serve with polling configured)",
+			http.StatusServiceUnavailable,
+		)
+
+		return
+	}
+
+	payload, err := json.Marshal(s.ops())
+	if err != nil {
+		http.Error(w, "encoding ops counters failed: "+err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	//nolint:gosec // JSON payload served over the authed API; never rendered as HTML
+	_, _ = w.Write(append(payload, '\n'))
 }

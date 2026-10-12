@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"log"
+	"log/slog"
 	"time"
 
 	appkit "github.com/larsartmann/go-appkit"
@@ -18,6 +18,13 @@ const (
 	defaultAddr  = "127.0.0.1:8300"
 	serveTimeout = 5 * time.Minute
 )
+
+// slogLog adapts slog's record shape to the injected log func (R14): the
+// structured key-value calls in the poller and web layers come out as
+// greppable text records instead of printf lines.
+func slogLog(msg string, args ...any) {
+	slog.Info(msg, args...)
+}
 
 // serve runs the read-only web UI until SIGINT/SIGTERM (appkit Run owns the
 // signal handling and the graceful drain). One drain at startup catches the
@@ -123,6 +130,8 @@ func serve(args []string) {
 		fatal(err)
 	}
 
+	counters := cli.NewSourceCounters()
+
 	recordings := web.RecordingOptions{RecordingsDir: *recordingsDir, UpstreamTimeout: *recTimeout}
 
 	var telnyxClient *telnyx.Client
@@ -137,7 +146,7 @@ func serve(args []string) {
 		recordings.Telnyx = telnyxClient
 	}
 
-	web.Register(svc.Mux, sys, web.Options{Recordings: recordings, Search: index, Log: log.Printf})
+	web.Register(svc.Mux, sys, web.Options{Recordings: recordings, Search: index, Log: slogLog, Ops: counters.SnapshotAny})
 
 	// The poller keeps the index fresh until shutdown; each pass drains
 	// projections and rebuilds the FTS index so / and /search never serve
@@ -154,7 +163,8 @@ func serve(args []string) {
 		WebhookLog:     *webhookLog,
 		TranscriptsDir: *transcriptsDir,
 		MaxAge:         *maxAge,
-	}, log.Printf)
+		Counters:       counters,
+	}, slogLog)
 
 	// The serve lifetime is signal-owned (Run handles SIGINT/SIGTERM) — no
 	// timeout context here, or the server would die with it.

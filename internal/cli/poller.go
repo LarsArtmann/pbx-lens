@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
@@ -47,6 +48,61 @@ type PollConfig struct {
 	// purge already cleaned. Zero keeps everything — retention is opt-in,
 	// never silent.
 	MaxAge time.Duration
+
+	// Counters accumulates per-source ingest health for the /api/ops
+	// endpoint (R15). Nil (tests, one-shot ingests) records nothing.
+	Counters *SourceCounters
+}
+
+// SourceCounters accumulates the latest pass's per-source ingest health
+// (R15): offered/recorded/corrected/rejected per source, served at
+// /api/ops so ingest health is visible without shelling into the host.
+type SourceCounters struct {
+	mu       sync.Mutex
+	sources  map[string]SourceStat
+	lastPass time.Time
+}
+
+// SourceStat is one source's latest-pass ingest counters.
+type SourceStat struct {
+	Offered   int
+	Recorded  int
+	Corrected int
+	Rejected  []string
+}
+
+// NewSourceCounters builds an empty counter set.
+func NewSourceCounters() *SourceCounters {
+	return &SourceCounters{sources: make(map[string]SourceStat)}
+}
+
+// Record folds one pass's stats into the source's slot (latest pass wins;
+// the ops endpoint answers "what did the poller last see").
+func (c *SourceCounters) Record(source string, stats IngestStats) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.sources[source] = SourceStat{
+		Offered:   stats.Total,
+		Recorded:  stats.Recorded,
+		Corrected: stats.Corrected,
+		Rejected:  stats.Rejected,
+	}
+	c.lastPass = time.Now().UTC()
+}
+
+// Snapshot copies the counters for serving.
+func (c *SourceCounters) Snapshot() (map[string]SourceStat, time.Time) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	out := make(map[string]SourceStat, len(c.sources))
+
+	for source, stat := range c.sources {
+		out[source] = stat
+	}
+
+	return out, c.lastPass
 }
 
 // PollLoop runs poll passes on the configured cadence until ctx ends. The
@@ -79,7 +135,8 @@ func PollLoop(
 	}
 }
 
-// PollOnce refreshes every configured source once.
+// PollOnce refreshes every configured source once. Logs are structured
+// key-value records (R14) so an operator can grep the serve log.
 func PollOnce(
 	ctx context.Context,
 	sys *system.System,
@@ -87,30 +144,37 @@ func PollOnce(
 	cfg PollConfig,
 	log func(msg string, args ...any),
 ) {
-	var stats IngestStats
+	cdrStats := pollCDR(ctx, sys, cfg, log)
+	webhookStats := pollWebhook(ctx, sys, cfg, log)
+	transcriptStats := pollTranscripts(ctx, sys, cfg, log)
+	telnyxStats := pollTelnyx(ctx, sys, cfg, log)
 
-	stats = mergeStats(stats, pollCDR(ctx, sys, cfg, log))
-	stats = mergeStats(stats, pollWebhook(ctx, sys, cfg, log))
-	stats = mergeStats(stats, pollTranscripts(ctx, sys, cfg, log))
-	stats = mergeStats(stats, pollTelnyx(ctx, sys, cfg, log))
+	if cfg.Counters != nil {
+		cfg.Counters.Record("freeswitch-cdr", cdrStats)
+		cfg.Counters.Record("webhook-log", webhookStats)
+		cfg.Counters.Record("agent-transcript", transcriptStats)
+		cfg.Counters.Record("telnyx-conversation", telnyxStats)
+	}
+
+	stats := mergeStats(mergeStats(mergeStats(mergeStats(IngestStats{}, cdrStats), webhookStats), transcriptStats), telnyxStats)
 
 	if err := DrainProjections(ctx, sys); err != nil {
-		log("poll drain: %v", err)
+		log("poll drain", "err", err)
 
 		return
 	}
 
 	if index != nil {
 		if err := RebuildOpenIndex(ctx, sys, index); err != nil {
-			log("poll search rebuild: %v", err)
+			log("poll search rebuild", "err", err)
 		}
 	}
 
-	log("poll pass: %d offered, %d recorded, %d corrected, %d rejected",
-		stats.Total, stats.Recorded, stats.Corrected, len(stats.Rejected))
+	log("poll pass", "offered", stats.Total, "recorded", stats.Recorded,
+		"corrected", stats.Corrected, "rejected", len(stats.Rejected))
 
 	for _, reason := range stats.Rejected {
-		log("  rejected: %s", reason)
+		log("poll rejected", "reason", reason)
 	}
 }
 
@@ -135,7 +199,7 @@ func pollCDR(
 		return GateIngest(ctx, sys, cfg.MaxAge, parsed.Observations), nil
 	})
 	if err != nil {
-		log("poll cdr: %v", err)
+		log("poll cdr", "err", err)
 
 		return IngestStats{}
 	}
@@ -163,7 +227,7 @@ func pollWebhook(
 		return GateIngest(ctx, sys, cfg.MaxAge, parsed.Observations), nil
 	})
 	if err != nil {
-		log("poll webhook log: %v", err)
+		log("poll webhook", "err", err)
 
 		return IngestStats{}
 	}
@@ -184,7 +248,7 @@ func pollTranscripts(
 
 	observations, rejects, err := FetchAgentObservations(ctx, sys, cfg.TranscriptsDir)
 	if err != nil {
-		log("poll transcripts: %v", err)
+		log("poll transcripts", "err", err)
 
 		return IngestStats{}
 	}
@@ -215,7 +279,7 @@ func pollTelnyx(
 		Direction: cfg.Direction,
 	})
 	if err != nil {
-		log("poll telnyx: %v", err)
+		log("poll telnyx", "err", err)
 
 		return IngestStats{}
 	}
@@ -235,23 +299,23 @@ func pollTelnyx(
 	// projected before it runs; the pass-end drain then covers the
 	// enrichment events themselves.
 	if err := DrainProjections(ctx, sys); err != nil {
-		log("poll telnyx drain: %v", err)
+		log("poll telnyx drain", "err", err)
 
 		return pass
 	}
 
 	estats, err := EnrichTelnyxCalls(ctx, sys, cfg.Telnyx, keptSeeds, since)
 	if err != nil {
-		log("poll telnyx enrich: %v", err)
+		log("poll telnyx enrich", "err", err)
 
 		return pass
 	}
 
-	log("poll telnyx enrich: %d considered, %d enriched, %d unchanged, %d missing, %d rejected",
-		estats.Considered, estats.Enriched, estats.Unchanged, estats.Missing, len(estats.Rejected))
+	log("poll telnyx enrich", "considered", estats.Considered, "enriched", estats.Enriched,
+		"unchanged", estats.Unchanged, "missing", estats.Missing, "rejected", len(estats.Rejected))
 
 	for _, reason := range estats.Rejected {
-		log("  enrichment rejected: %s", reason)
+		log("poll telnyx enrichment rejected", "reason", reason)
 	}
 
 	return pass

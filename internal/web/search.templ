@@ -31,9 +31,9 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 			</button>
 		</form>
 		<p class="mb-6 max-w-xl text-xs text-gray-500 dark:text-gray-400">
-			Matches transcript words and whole phone numbers (+…). Partial numbers
-			never match — the index tokenizes a number as one word, so search the
-			full +number or filter the list instead.
+			Matches transcript words and phone numbers. Partial numbers match
+			too: any run of 4+ digits finds the call (+49…, 0728…, or a
+			mid-number snippet all work).
 		</p>
 		if errMessage != "" {
 			@feedback.Alert(feedback.AlertProps{
