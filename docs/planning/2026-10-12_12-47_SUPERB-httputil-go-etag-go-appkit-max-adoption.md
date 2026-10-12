@@ -1,6 +1,6 @@
 # SUPERB: httputil + go-etag + go-appkit — adopt the module graph to the max
 
-**Date:** 2026-10-12 12:47 · **Repo:** pbx-lens · **Status:** EXECUTING
+**Date:** 2026-10-12 12:47 · **Repo:** pbx-lens · **Status:** ~~EXECUTING~~ EXECUTED — shipped as `fd0e082` (CI green since the `6bb7d17` heal); follow-ups (Cache-Control: no-cache, AGENTS extraction to docs/http-stack.md) landed later the same day
 **Trigger:** "Make sure we use them superbly to the max" (library-deep-dive + pareto-planning)
 
 ## Question under audit
