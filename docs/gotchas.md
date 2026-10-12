@@ -148,3 +148,19 @@ invariants summary; this file keeps the war stories.
   golines/gofumpt say "File is not properly formatted", the diff shows the exact
   expected bytes (one-arg-per-line call wrapping, map-key realignment) — apply it
   verbatim instead of guessing at the style.
+- **BuildFlow's oxfmt has no `*.min.js` exclude (paid for, 2026-10-12)**: the JS
+  *profile* defaults exclude minified files, but the oxfmt/oxlint *providers* trigger
+  on plain `**/*.js` — two gate runs pretty-printed the vendored htmx.min.js
+  (1 → 3,415 lines) and oxlint then flagged it. Fix: global
+  `exclude: ["*.min.js"]` in `.buildflow.yml` + restore pinned bytes via
+  `git show <rev>:path`. Vendored assets are exclude-pinned, never reformatted.
+- **Don't touch the tree during a gate run (paid for, 2026-10-12)**: a mid-run
+  docs edit re-dirtied the nix `-dirty` derivations and started a second full
+  build beside the running tests; nix-build got killed 8s in. Docs before or
+  after, never during.
+- **A bare `go sys.Start(ctx)` goroutine races `System.Close` (paid for,
+  2026-10-12)**: `defer sys2.Close()` runs before `t.Cleanup(stop)`, so
+  `Host.Stop()` overlapped the still-running `Start` — the race detector only
+  caught it under package-wide shuffle + load, never with `-run` alone.
+  Helpers that start background hosts must return a waitable stop and the
+  caller must run it before every Close.

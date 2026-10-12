@@ -100,6 +100,26 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   dev` = 73 success, 0 failed, 0 skipped; nix-build ✔ (737 ms, FOD cached
   via the vendor-hash verification build). All remaining findings are the
   documented advisories above.
+- **NEVER edit the tree while a gate run is in flight (PAID FOR,
+  2026-10-12 run #4)**: a mid-run docs edit re-dirtied the source, nix
+  re-evaluated the `-dirty` derivations mid-run and started a SECOND
+  go-modules + full build next to the still-running test steps; nix-build
+  was killed 8s in ("OOM or timeout"). The DAG runs heavy steps in
+  PARALLEL — every extra dirty rebuild competes with them. Rule: write
+  docs BEFORE launching the gate or after it exits; the tree is frozen
+  for the duration.
+- **test-race exposed a REAL test teardown race (PAID FOR, 2026-10-12
+  run #4)**: `TestSqliteEndToEndAndReplay` fired `Start(hostCtx)` in a
+  bare goroutine and never waited for it — `defer sys2.Close()` runs
+  BEFORE `t.Cleanup(stop)`, so `Host.Stop()` (spawned by `System.Close`)
+  wrote host state while `Start` was still reading it; the race detector
+  caught it only under package-wide shuffle + parallel load (not
+  reproducible with `-run` alone, 3 attempts). Fix: `startProjections`
+  returns `stopAndWait` (cancel + `<-stopped`), called explicitly before
+  EVERY `System.Close`, with `t.Cleanup` as the fatal-path net.
+  Rule: any test that starts a background host must own a waitable stop,
+  and the gate's shuffle seed in the step log is the reproduction tool
+  for order-dependent flakes.
 - **Gate closed green in FULL mode (2026-10-12 00:45)**: first full-mode
   devShell pass — `buildflow --fix --build-mode full --max-time 15m` =
   74/74 steps, 0 failed (test-race ✔, test-coverage ✔ incl. -race -cover,

@@ -29,13 +29,26 @@ func sampleObservation() calls.Observation {
 	}
 }
 
-func startProjections(t *testing.T, ctx context.Context, sys *system.System) {
+func startProjections(t *testing.T, ctx context.Context, sys *system.System) func() {
 	t.Helper()
 
 	hostCtx, stop := context.WithCancel(ctx)
-	t.Cleanup(stop)
+	stopped := make(chan struct{})
 
-	go func() { _ = sys.ProjectionHost().Start(hostCtx) }()
+	stopAndWait := func() {
+		stop()
+		<-stopped
+	}
+
+	t.Cleanup(stopAndWait)
+
+	go func() {
+		defer close(stopped)
+
+		_ = sys.ProjectionHost().Start(hostCtx)
+	}()
+
+	return stopAndWait
 }
 
 func awaitView(t *testing.T, ctx context.Context, sys *system.System, key string) calls.CallView {
@@ -73,7 +86,7 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	startProjections(t, ctx, sys)
+	stopProjections := startProjections(t, ctx, sys)
 
 	cmd, err := calls.NewRecordCommand(sampleObservation())
 	if err != nil {
@@ -101,6 +114,8 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 		t.Fatalf("view content hash mismatch: %q", view.ContentHash)
 	}
 
+	stopProjections()
+
 	if err := sys.Close(); err != nil {
 		t.Fatal(err)
 	}
@@ -109,9 +124,13 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer sys2.Close()
 
-	startProjections(t, ctx, sys2)
+	stopProjections2 := startProjections(t, ctx, sys2)
+	defer func() {
+		stopProjections2()
+
+		_ = sys2.Close()
+	}()
 
 	replayed := awaitView(t, ctx, sys2, cmd.StreamID().String())
 	if !reflect.DeepEqual(replayed, view) {
