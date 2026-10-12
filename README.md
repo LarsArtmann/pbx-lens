@@ -72,6 +72,12 @@ excerpt and the recording reference.
 pbx-lens serve -db /var/lib/pbx-lens/calls.db -addr 127.0.0.1:8300
 ```
 
+![Dashboard: stat cards, 30-day volume, duration histogram, weekday×hour
+density heatmap, AI/human donut, MOS card](docs/assets/dashboard-light.png)
+
+![Call detail on mobile: copy-to-clipboard on the id and phone numbers, the
+amber search-jump match log](docs/assets/detail-match-log-mobile.png)
+
 A read-only web UI over the index: the calls list with direction/AI/date
 filters, per-call detail with transcript and recording playback (the proxy
 bounds each upstream hop to 30 s by default, `-recording-timeout`; the audio
