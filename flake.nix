@@ -100,7 +100,7 @@
             # The monorepo root carries a go.work; without this, `go mod
             # vendor` in the modules FOD runs in workspace mode and dies.
             env.GOWORK = "off";
-            vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            vendorHash = "sha256-Z7yp53LzffljsqsLBL9mV+Ah44X2bIhgyR9s5fCbSns=";
           };
         in
         {
@@ -187,7 +187,7 @@
                   cp "$hash_file" "$hash_file.bak"
                   restore() { mv "$hash_file.bak" "$hash_file"; }
                   trap restore ERR
-                  fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+                  fake="sha256-Z7yp53LzffljsqsLBL9mV+Ah44X2bIhgyR9s5fCbSns="
                   printf '"%s"\n' "$fake" > "$hash_file"
                   out="$(nix build "$root#default" --no-link 2>&1 || true)"
                   got="$(printf '%s' "$out" | grep -oP 'got:\s+\Ksha256-[A-Za-z0-9+/=]+' | head -1 || true)"

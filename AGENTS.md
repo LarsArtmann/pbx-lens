@@ -67,8 +67,8 @@ webphone later gets a read-only deep link, never a data dependency.
   real binary (the default `["."]` built the package-less root and shipped
   an empty result); treefmt runs nixfmt + deadnix + statix only (BuildFlow
   owns Go formatting). DevShell (mkShellNoCC): go/golangci-lint/gopls/
-  govulncheck/dprint/templ/tailwindcss_4/cqrs-lint, GOTOOLCHAIN=local +
-  GOEXPERIMENT=jsonv2. UI codegen is a package preBuild
+  govulncheck/dprint/templ/tailwindcss_4/cqrs-lint, GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2.
+  UI codegen is a package preBuild
   (`templGenerationPolicy = "preBuild"`: templ generate ./internal/web/ +
   tailwindcss → styles.css; both gitignored, regenerated inside nix).
   `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
