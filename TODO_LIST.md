@@ -60,6 +60,14 @@
 > gained the bump watchlist. Plan annotation + evidence pointers live
 > in the plan file; the three 13-32 §g questions stay with the owner.
 
+> Ninth pass 2026-10-12 (cache observability + drill lane, same day): the
+> backup restore drill became a named CI lane; `/api/ops` gained the
+> go-etag cache section (hit ratio + overflow warn); the README ops
+> surfaces, SECURITY.md `/metrics` posture (its stale "no tagged
+> releases" claim fixed on sight), and the templ-flush gotcha landed; and
+> the golden suite's wall-clock bombs (staleness banner presence,
+> dashboard bucket dates) were scrubbed, goldens regenerated.
+
 ## Status legend
 
 | Status           | Meaning                                                 |
@@ -71,9 +79,8 @@
 
 ## Unblocked (owner answered, work remains)
 
-| Task                                                                                                                                                   | Status    | Impact | Effort | Evidence                                                                                                |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- | ------ | ------ | ------------------------------------------------------------------------------------------------------- |
-| Backup drill as a named CI step (the restore drill runs today only inside Build & Test; a visible lane proves the nightly snapshot path on every push) | 🔴 `TODO` | Medium | 30min  | `internal/backup/restore_drill_test.go`; `.github/workflows/ci.yml`; docs/status/2026-10-12_10-33 §f.36 |
+None right now — remaining work is blocked or low-impact (below).
+
 
 ## Blocked (owner / external gates)
 
@@ -105,13 +112,9 @@
 | ANNOTATE + archive the 2026-10-11/12 status reports once their items are resolved; re-annotate the SUPERB plan post-release                                                                      | 🔴 `TODO`    | Low    | 45min  | docs/status/2026-10-12_10-33 §f.38/§f.25; docs-health ANNOTATE mode                                                                                                                |
 | Watch dependabot-core#16538 and answer maintainer questions; owner decides gomod pinning afterward                                                                                               | 🔵 `BLOCKED` | Low    | 10min  | owner call pending (#16538 context); docs/status/2026-10-12_10-33 §f.29/§f.30                                                                                                      |
 | R27.x advisory residue pass: art-dupl, branching-flow, nix-checker cleanup, README screenshots, vulnix re-triage (all documented advisories)                                                     | 🔵 `BLOCKED` | Low    | 60min  | docs/buildflow-dev-gate.md advisory list; docs/status/2026-10-12_10-33 §f.40                                                                                                       |
-| Wire the go-etag cache hooks into `/api/ops`: `OnETagGenerated`+`On304` counters → hit ratio, `OnBufferOverflow` → slog warn (hooks exist in pinned v0.6.1)                                      | 🔴 `TODO`    | Medium | 45min  | `internal/web/caching.go` `ETagConfig`; go-etag `server@v0.6.1/etag.go:67-88`; docs/status/2026-10-12_13-49 §f.10/11                                                               |
 | E2E cache-semantics hardening: `Vary: Accept-Encoding` on 304s, `Content-Length` on buffered renders, HEAD/query-string/trailing-slash skip-policy variants, recording timing-hop budget asserts | 🔴 `TODO`    | Low    | 45min  | `cmd/pbx-lens/serve_test.go`; `internal/web/recording_test.go`; docs/status/2026-10-12_13-49 §f.15/16/25/46                                                                        |
-| README ops notes: `/version`, `/metrics`, ETag/304 + Server-Timing behavior, auth posture                                                                                                        | 🔴 `TODO`    | Low    | 30min  | README.md; docs/status/2026-10-12_13-49 §f.17                                                                                                                                      |
-| `docs/gotchas.md` entry: templ's streaming flush silently disables go-etag — buffer the render (`internal/web/render.go` pattern)                                                                | 🔴 `TODO`    | Low    | 15min  | `internal/web/render.go`; docs/status/2026-10-12_13-49 §f.18                                                                                                                       |
 | Coverage pass on `caching_test.go` + `serve_test.go` (assert the hot path — fragment conditional GET — not static stand-ins)                                                                     | 🔴 `TODO`    | Low    | 30min  | `internal/web/caching_test.go`; `cmd/pbx-lens/serve_test.go`; docs/status/2026-10-12_13-49 §f.43                                                                                   |
 | Concurrent-poll hash-cost sanity probe: overlapping 30s/60s fragment polls under one ETag middleware (CPU ceiling check)                                                                         | 🔴 `TODO`    | Low    | 30min  | `internal/web` poller wiring; docs/status/2026-10-12_13-49 §f.26                                                                                                                   |
-| SECURITY.md: document the `/metrics` auth posture (`AllowUnauthenticated: true` is deliberate — loopback/htpasswd-gated deployment context)                                                      | 🔴 `TODO`    | Low    | 20min  | `cmd/pbx-lens/serve.go` MetricsConfig; docs/status/2026-10-12_13-49 §f.35                                                                                                          |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
      per docs-health harvest-guide: the ledger records the pass, it is not a

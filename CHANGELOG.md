@@ -92,6 +92,28 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   a templ-generate sync test keeps codegen honest. Contrast-audited
   palette tokens and the extended blue→teal bridge landed in `app.css`.
 
+- `/api/ops` cache section (R26): go-etag's outcome hooks are wired —
+  `etag_generated` / `not_modified` counters with the derived `hit_ratio`
+  (how many conditional-capable responses skipped their body) and
+  `buffer_overflows`; an overflow also logs an immediate warning naming
+  the limit exceeded. The endpoint answers when either counter source is
+  wired (the etag middleware runs in every serve composition, poller or
+  not); a 503 with an explanation remains for neither.
+
+- Backup restore drill as a named CI lane: the R16 end-to-end proof
+  (VACUUM INTO snapshot → integrity verify → restore into a fresh DSN →
+  serve-startup FTS rebuild) runs as its own visible Build & Test step on
+  every push, matching the e2e server probe's precedent, instead of an
+  implicit byproduct of `./...`.
+
+- README operational surfaces notes (version/metrics/health, the
+  ETag→304 + Server-Timing + `Cache-Control: no-cache` contract), a
+  SECURITY.md entry documenting the `/metrics` unauthenticated opt-in as
+  deliberate (perimeter = bind address/firewall; appkit mounts the
+  endpoint outside the htpasswd chain), and a gotchas entry: templ's
+  streaming flush silently disables go-etag — buffered `render` is what
+  makes the 304 contract work.
+
 Nothing else yet.
 
 ### Fixed — 2026-10-12 (recording proxy vs MP3-only AI-assistant recordings)
@@ -104,6 +126,16 @@ Nothing else yet.
   preferred, MP3 is the fallback rendition (the content-type default
   follows the chosen rendition), and a recording with neither answers 404
   naming both. The shape is recorded in docs/telnyx-live-api.md.
+
+- The golden-HTML suite was a time bomb: `page_calls` pinned whichever
+  staleness-banner state the wall clock produced (the seed sits at a
+  fixed 09:00 UTC, so the golden silently captured the under-6h state
+  and every run after 17:00 local failed), and `page_dashboard` pinned
+  bare ISO bucket labels that shift at midnight Europe/Berlin. The
+  scrubber now reduces both runtime-coupled structures to placeholders —
+  the staleness region's attributes stay pinned (banner behavior keeps
+  its dedicated handler tests) and fixed-seed `datetime="…T…"` row
+  attributes remain exact — goldens regenerated and verified stable.
 
 ### Added — 2026-10-12 (deterministic browser revalidation)
 
