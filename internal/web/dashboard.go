@@ -76,16 +76,15 @@ type DurationBucket struct {
 	Calls int
 }
 
-// durationBuckets is the histogram shape (R8/M20.2): inclusive lower bounds
-// in seconds; every duration lands in exactly one bucket.
+// durationBuckets is the histogram shape (R8/M20.2): inclusive upper
+// bounds in seconds; every duration lands in exactly one bucket.
 var durationBuckets = []struct {
 	maxSecs int
 	label   string
 }{
-	{30, "< 30s"},
+	{29, "< 30s"},
 	{60, "30-60s"},
-	{120, "1-2m"},
-	{300, "2-5m"},
+	{300, "1-5m"},
 	{900, "5-15m"},
 	{3600, "15-60m"},
 	{1 << 62, "> 1h"},
@@ -190,7 +189,7 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time,
 		}
 
 		for i, bucket := range durationBuckets {
-			if view.DurationSecs < bucket.maxSecs {
+			if view.DurationSecs <= bucket.maxSecs {
 				stats.Durations[i].Calls++
 
 				break

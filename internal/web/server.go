@@ -292,7 +292,9 @@ func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string,
 		}
 
 		if !filters.To.IsZero() {
-			query.Set("to", filters.To.Add(time.Second).Format(dayFormat))
+			// To was widened to end-of-day; the date format drops the time,
+			// so the picker echo shows the day the operator picked.
+			query.Set("to", filters.To.Format(dayFormat))
 		}
 
 		fragURL += "?" + query.Encode()

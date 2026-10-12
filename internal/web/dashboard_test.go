@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"net/http"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -247,5 +248,258 @@ func TestDashboardStatsQueryWindowMath(t *testing.T) {
 
 	if stats.AICalls != 3 || stats.HumanCalls != 1 {
 		t.Errorf("AI/Human = %d/%d, want 3/1", stats.AICalls, stats.HumanCalls)
+	}
+}
+
+func TestDashboardBerlinDayBoundary(t *testing.T) {
+	// A call at 22:30 UTC is 00:30 CEST: the dashboard counts it on the
+	// operator's Berlin day (R2), so "Calls today" on the 10th includes it.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "dashboard-berlin-test.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	nightCall := webObservation("conv-night", time.Date(2026, 10, 9, 22, 30, 0, 0, time.UTC))
+	if stats := cli.Ingest(ctx, sys, []calls.Observation{nightCall}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC), ListCallsQuery{})
+	if err != nil {
+		t.Fatalf("DashboardStatsQuery: %v", err)
+	}
+
+	if stats.Today != 1 {
+		t.Errorf("Today = %d, want 1 (the call crossed Berlin midnight into the 10th)", stats.Today)
+	}
+
+	if got := stats.ByDay[len(stats.ByDay)-1]; got.Day != "2026-10-10" || got.Calls != 1 {
+		t.Errorf("newest bucket = %s/%d calls, want 2026-10-10/1", got.Day, got.Calls)
+	}
+}
+
+func TestDashboardStatsQueryZoneIsInjectable(t *testing.T) {
+	// UTC coverage (m2.2): pointing the zone at UTC puts the same call back
+	// on the 9th — the zone decides the bucket, not the data.
+	saved := dashboardLocation
+	dashboardLocation = time.UTC
+	t.Cleanup(func() { dashboardLocation = saved })
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "dashboard-utc-test.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	nightCall := webObservation("conv-night", time.Date(2026, 10, 9, 22, 30, 0, 0, time.UTC))
+	if stats := cli.Ingest(ctx, sys, []calls.Observation{nightCall}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	stats, err := DashboardStatsQuery(t.Context(), sys, time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC), ListCallsQuery{})
+	if err != nil {
+		t.Fatalf("DashboardStatsQuery: %v", err)
+	}
+
+	if stats.Today != 0 {
+		t.Errorf("Today = %d, want 0 under UTC (the call stayed on the 9th)", stats.Today)
+	}
+
+	found := false
+
+	for _, day := range stats.ByDay {
+		if day.Day == "2026-10-09" {
+			found = day.Calls == 1
+		}
+	}
+
+	if !found {
+		t.Error("UTC bucketing must land the call on 2026-10-09 with 1 call")
+	}
+}
+
+func TestDashboardDurationHistogramAndWeekDelta(t *testing.T) {
+	// M20.2 + R27: durations land in exactly one bucket, and a full previous
+	// week yields a signed week-over-week delta on the volume card.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "dashboard-hist-test.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	now := time.Date(2026, 10, 10, 12, 0, 0, 0, time.UTC)
+
+	short := webObservation("conv-short", now)
+	short.DurationSecs = 10
+	medium := webObservation("conv-medium", now.Add(-time.Hour))
+	medium.DurationSecs = 45
+	long := webObservation("conv-long", now.Add(-2*time.Hour))
+	long.DurationSecs = 200
+
+	lastWeek := webObservation("conv-lastweek", now.AddDate(0, 0, -10))
+	lastWeek.DurationSecs = 60
+
+	if stats := cli.Ingest(ctx, sys, []calls.Observation{short, medium, long, lastWeek}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	stats, err := DashboardStatsQuery(t.Context(), sys, now, ListCallsQuery{})
+	if err != nil {
+		t.Fatalf("DashboardStatsQuery: %v", err)
+	}
+
+	wantCalls := map[string]int{"< 30s": 1, "30-60s": 2, "1-5m": 1}
+	total := 0
+
+	for _, bucket := range stats.Durations {
+		total += bucket.Calls
+
+		if want, ok := wantCalls[bucket.Label]; ok && bucket.Calls != want {
+			t.Errorf("bucket %s = %d calls, want %d", bucket.Label, bucket.Calls, want)
+		}
+	}
+
+	if total != 4 {
+		t.Errorf("histogram must place every call exactly once, got %d placements for 4 calls", total)
+	}
+
+	if !stats.Week.HasBaseline {
+		t.Fatal("a call 10 days back must give the window a previous-week baseline")
+	}
+
+	if stats.Week.Pct <= 0 {
+		t.Errorf("3 this week vs 1 last week = +%v%%, got %v", stats.Week.Pct, stats.Week.Pct)
+	}
+}
+
+func TestDashboardPageCarriesPollingAndHistogram(t *testing.T) {
+	// R9/M20.2 page-level: the live region polls the fragment URL, the
+	// duration card renders, and the sparkline carries its aria label (R27).
+	mux := newTestServer(t, webObservation("conv-a", time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)))
+
+	status, body := getBody(t, mux, "/dashboard")
+	if status != 200 {
+		t.Fatalf("GET /dashboard status = %d, want 200", status)
+	}
+
+	for _, want := range []string{
+		`hx-get="/frag/dashboard"`,
+		`hx-trigger="every 30s"`,
+		`src="/static/htmx.min.js"`,
+		"Call durations",
+		"30-60s",
+		"aria-label=",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard missing %q", want)
+		}
+	}
+}
+
+func TestDashboardFragmentRendersRegionOnly(t *testing.T) {
+	// The polled payload must be the region alone: no shell, no doctype —
+	// otherwise the outerHTML swap would nest whole documents.
+	mux := newTestServer(t, webObservation("conv-a", time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)))
+
+	status, body := getBody(t, mux, "/frag/dashboard")
+	if status != 200 {
+		t.Fatalf("GET /frag/dashboard status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "Calls indexed") {
+		t.Error("fragment must carry the stat cards")
+	}
+
+	if strings.Contains(strings.ToLower(body), "<!doctype") || strings.Contains(body, "<nav") {
+		t.Error("fragment must not carry the page shell")
+	}
+}
+
+func TestDashboardRangePickerFiltersAndCarriesRange(t *testing.T) {
+	day := time.Date(2026, 10, 9, 12, 0, 0, 0, time.UTC)
+	inRange := webObservation("conv-in", day)
+	outOfRange := webObservation("conv-out", day.AddDate(0, 0, -20))
+
+	mux := newTestServer(t, inRange, outOfRange)
+
+	status, body := getBody(t, mux, "/dashboard?from=2026-10-08&to=2026-10-10")
+	if status != 200 {
+		t.Fatalf("GET /dashboard?range status = %d, want 200 (body: %s)", status, body)
+	}
+
+	if !strings.Contains(body, `hx-get="/frag/dashboard?from=2026-10-08&amp;to=2026-10-10"`) &&
+		!strings.Contains(body, `hx-get="/frag/dashboard?from=2026-10-08&to=2026-10-10"`) {
+		t.Errorf("polled region must carry the picker range (body: %s)", body[:400])
+	}
+
+	// The picker value echoes back into the form.
+	if !strings.Contains(body, `value="2026-10-08"`) {
+		t.Error("from input should echo the active range")
+	}
+
+	// Garbage and non-date-bounds reject with 400 (house style).
+	for _, bad := range []string{"from=nope", "from=2026-10-01T00:00:00Z"} {
+		status, _ = getBody(t, mux, "/dashboard?"+bad)
+		if status != http.StatusBadRequest {
+			t.Errorf("GET /dashboard?%s status = %d, want 400", bad, status)
+		}
+	}
+}
+
+func TestStalenessFragmentRechecksBanner(t *testing.T) {
+	// The polled staleness region renders the banner server-side, so the
+	// noscript fallback and the polled markup are the same contract (m9.4).
+	old := webObservation("conv-old", time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC))
+	mux := newTestServer(t, old)
+
+	status, body := getBody(t, mux, "/frag/staleness")
+	if status != 200 {
+		t.Fatalf("GET /frag/staleness status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "Index may be stale") {
+		t.Error("freshness fragment must render the stale banner")
+	}
+
+	if !strings.Contains(body, `hx-get="/frag/staleness"`) {
+		t.Error("fragment must keep the poll alive across swaps")
+	}
+}
+
+func TestHtmxAssetServed(t *testing.T) {
+	// The self-hosted runtime must exist in the build (R9): a missing asset
+	// silently kills every polled region.
+	status, body := getBody(t, newTestServer(t), "/static/htmx.min.js")
+	if status != 200 {
+		t.Fatalf("GET /static/htmx.min.js status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "htmx") {
+		t.Error("htmx asset should carry the runtime")
 	}
 }
