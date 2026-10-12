@@ -53,7 +53,9 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 		// terminal marker line in the file (machine-readable) and the log.
 		marker, merr := json.Marshal(exportErrorMarker(err))
 		if merr == nil {
-			_, _ = w.Write(append(marker, '\n')) //nolint:gosec // JSON-encoded ndjson attachment; never rendered as HTML
+			_, _ = w.Write(
+				append(marker, '\n'),
+			) //nolint:gosec // JSON-encoded ndjson attachment; never rendered as HTML
 		}
 
 		s.logf("export.jsonl stream failed", "err", err.Error())

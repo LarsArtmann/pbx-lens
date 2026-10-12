@@ -95,14 +95,16 @@ templ pagerRow(filters ListCallsQuery, page CallListPage) {
 }
 
 // exportAction surfaces the existing CSV export route in the page header
-// (download attribute saves the file instead of navigating).
+// (download attribute saves the file instead of navigating). The title is
+// the export contract (plan T10): a stream that cannot make progress ends
+// with a visible marker inside the file, never a silently truncated one.
 templ exportAction() {
 	@display.Button(display.ButtonProps{
 		Text:    "Export CSV",
 		Href:    "/api/export.csv",
 		Variant: display.ButtonSecondary,
 		Icon:    icons.Icon("download", "size-4"),
-		Attrs:   templ.Attributes{"download": true},
+		Attrs:   templ.Attributes{"download": true, "title": "Streams every matching call. An export that cannot make progress ends with an EXPORT_INCOMPLETE marker row in the file."},
 	})
 }
 
