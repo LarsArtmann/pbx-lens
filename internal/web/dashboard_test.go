@@ -146,6 +146,7 @@ func TestDashboardStatsQueryMOSAggregation(t *testing.T) {
 		sys,
 		time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC),
 		ListCallsQuery{},
+		dashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -222,6 +223,7 @@ func TestDashboardStatsQueryWindowMath(t *testing.T) {
 		sys,
 		time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC),
 		ListCallsQuery{},
+		dashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -289,6 +291,7 @@ func TestDashboardBerlinDayBoundary(t *testing.T) {
 		sys,
 		time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC),
 		ListCallsQuery{},
+		dashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -335,6 +338,7 @@ func TestDashboardStatsQueryZoneIsInjectable(t *testing.T) {
 		sys,
 		time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC),
 		ListCallsQuery{},
+		dashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -390,7 +394,7 @@ func TestDashboardDurationHistogramAndWeekDelta(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, now, ListCallsQuery{})
+	stats, err := DashboardStatsQuery(t.Context(), sys, now, ListCallsQuery{}, dashboardWindowDays)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}

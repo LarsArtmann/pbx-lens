@@ -23,9 +23,30 @@ templ dashboardRoute(stats DashboardStats, now time.Time, fragURL string) {
 			Title:    "Dashboard",
 			Subtitle: "Index health and call quality at a glance",
 		})
+		@windowPresets(stats)
 		@rangeForm(stats)
 		@dashboardLive(stats, now, fragURL)
 	}
+}
+
+// windowPresets is the 7/30-day quick pick (plan T12): links re-query the
+// dashboard with the preset window; the active one renders filled so the
+// chart span is never ambiguous.
+templ windowPresets(stats DashboardStats) {
+	<div class="mb-3 flex items-center gap-2">
+		@display.Button(display.ButtonProps{
+			Text:    "Last 7 days",
+			Href:    "/dashboard?window=7",
+			Variant: utils.Ternary(stats.WindowDays == 7, display.ButtonPrimary, display.ButtonGhost),
+			Size:    display.ButtonSizeSM,
+		})
+		@display.Button(display.ButtonProps{
+			Text:    "Last 30 days",
+			Href:    "/dashboard?window=30",
+			Variant: utils.Ternary(stats.WindowDays == 30, display.ButtonPrimary, display.ButtonGhost),
+			Size:    display.ButtonSizeSM,
+		})
+	</div>
 }
 
 // rangeForm narrows the whole dashboard to a date range (R8/M20.1).

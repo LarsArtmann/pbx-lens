@@ -32,6 +32,13 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 			})
 			@display.Button(display.ButtonProps{Text: "Search", Type: display.ButtonHTMLSubmit})
 		}
+		<div class="mb-2">
+			@display.Badge(display.BadgeProps{
+				Text: "digits-only finds numbers",
+				Type: display.BadgeInfo,
+				Pill: true,
+			})
+		</div>
 		<p class="mb-6 max-w-xl text-xs text-gray-500 dark:text-gray-400">
 			Matches transcript words and phone numbers. Partial numbers match
 			too: any run of 4+ digits finds the call (+49…, 0728…, or a

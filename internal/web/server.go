@@ -290,45 +290,13 @@ func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
 func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string, int, bool) {
 	var filters ListCallsQuery
 
-	window := dashboardWindowDays
-
-	if v := r.URL.Query().Get("window"); v != "" {
-		parsed, err := strconv.Atoi(v)
-		if err != nil || (parsed != 7 && parsed != 30) {
-			http.Error(w, "window must be 7 or 30, got "+strconv.Quote(v), http.StatusBadRequest)
-
-			return ListCallsQuery{}, "", 0, false
-		}
-
-		window = parsed
+	window, ok := parseWindowParam(w, r)
+	if !ok {
+		return ListCallsQuery{}, "", 0, false
 	}
 
-	for _, field := range []struct {
-		name   string
-		target *time.Time
-	}{
-		{name: "from", target: &filters.From},
-		{name: "to", target: &filters.To},
-	} {
-		v := r.URL.Query().Get(field.name)
-		if v == "" {
-			continue
-		}
-
-		parsed, dateOnly, err := parseDateParam(v)
-		if err != nil || !dateOnly {
-			http.Error(w, field.name+" must be YYYY-MM-DD, got "+strconv.Quote(v), http.StatusBadRequest)
-
-			return ListCallsQuery{}, "", 0, false
-		}
-
-		// A bare upper bound covers the whole day it names (same semantics
-		// as the list filters).
-		if field.name == "to" {
-			parsed = parsed.AddDate(0, 0, 1).Add(-time.Second)
-		}
-
-		*field.target = parsed
+	if !parseRangeDates(w, r, &filters) {
+		return ListCallsQuery{}, "", 0, false
 	}
 
 	fragURL := "/frag/dashboard"
@@ -354,6 +322,59 @@ func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string,
 	}
 
 	return filters, fragURL, window, true
+}
+
+// parseWindowParam reads the chart-window preset (?window=7|30); anything
+// else rejects with a 400 and reports false.
+func parseWindowParam(w http.ResponseWriter, r *http.Request) (int, bool) {
+	window := dashboardWindowDays
+
+	if v := r.URL.Query().Get("window"); v != "" {
+		parsed, err := strconv.Atoi(v)
+		if err != nil || (parsed != 7 && parsed != 30) {
+			http.Error(w, "window must be 7 or 30, got "+strconv.Quote(v), http.StatusBadRequest)
+
+			return 0, false
+		}
+
+		window = parsed
+	}
+
+	return window, true
+}
+
+// parseRangeDates fills from/to from the picker params; garbage rejects
+// with a 400 and reports false.
+func parseRangeDates(w http.ResponseWriter, r *http.Request, filters *ListCallsQuery) bool {
+	for _, field := range []struct {
+		name   string
+		target *time.Time
+	}{
+		{name: "from", target: &filters.From},
+		{name: "to", target: &filters.To},
+	} {
+		v := r.URL.Query().Get(field.name)
+		if v == "" {
+			continue
+		}
+
+		parsed, dateOnly, err := parseDateParam(v)
+		if err != nil || !dateOnly {
+			http.Error(w, field.name+" must be YYYY-MM-DD, got "+strconv.Quote(v), http.StatusBadRequest)
+
+			return false
+		}
+
+		// A bare upper bound covers the whole day it names (same semantics
+		// as the list filters).
+		if field.name == "to" {
+			parsed = parsed.AddDate(0, 0, 1).Add(-time.Second)
+		}
+
+		*field.target = parsed
+	}
+
+	return true
 }
 
 // stalenessFragment re-checks the freshness banner (R9): the polled region
