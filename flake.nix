@@ -89,7 +89,7 @@
               owner = "LarsArtmann";
               repo = "go-cqrs-lite";
               rev = "5a08b0ead55cd923b3b08cd45aba07d425aa193e";
-              hash = "sha256-AAAA";
+              hash = "sha256-2NQB4h2XHgFEnmCRDu/6TZfziINXcgUyXncKg8gLXVY=";
             };
             sourceRoot = "source/cmd/cqrs-lint";
             # cqrs-lint's own tests run fixture projects through `go`, which

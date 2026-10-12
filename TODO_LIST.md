@@ -26,6 +26,16 @@
 > (docs/did-direction-design.md) spawned the bounded implementation row
 > below. The timeout-test hardening row shrank to the injected-deadline
 > refactor only (budgets are load-safe already).
+>
+> Sixth pass 2026-10-12 (release + post-release, harvest of the 10:33
+> report §f): v0.1.0 tagged on a CI-green commit and published; the local
+> gate closed green (75/75) and the evidence-based load policy is recorded
+> in docs/buildflow-dev-gate.md; DID-direction shipped (mapper
+> DirectionResolver + `-ai-did` on ingest-telnyx/serve + fixture tests);
+> the sibling module gained `services.telephony.pbx-lens.aiDids` (flake
+> check green, pushed). The old "expose -max-age/-recording-timeout"
+> sibling row resolved against code: both options existed and were wired
+> already — only the host deploy remains (blocked on the deploy path).
 
 ## Status legend
 
@@ -38,15 +48,16 @@
 
 ## Unblocked (owner answered, work remains)
 
-| Task                                                                                                                                                            | Status    | Impact | Effort | Evidence                                                                                                                                                                      |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Sibling NixOS module: expose `-max-age` (default: unset = keep everything, owner R5) + `-recording-timeout` in `modules/telephony/lens.nix`, re-eval both hosts | 🔴 `TODO` | High   | 30min  | owner set the doctrine 2026-10-12 (R5); module lives in nix-international-telephony; docs/status/archived/2026-10-11_19-37 §f.14                                              |
+| Task                                                                                                                                                   | Status    | Impact | Effort | Evidence                                                                                                |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------- | ------ | ------ | ------------------------------------------------------------------------------------------------------- |
+| Backup drill as a named CI step (the restore drill runs today only inside Build & Test; a visible lane proves the nightly snapshot path on every push) | 🔴 `TODO` | Medium | 30min  | `internal/backup/restore_drill_test.go`; `.github/workflows/ci.yml`; docs/status/2026-10-12_10-33 §f.36 |
 
 ## Blocked (owner / external gates)
 
-| Task                                                                                   | Status       | Impact | Effort | Evidence                                                                                                                                         |
-| -------------------------------------------------------------------------------------- | ------------ | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Production re-ingest for ContentHash v2 (one-time; the live DB still hashes v1 fields) | 🔵 `BLOCKED` | High   | 60min  | needs the prod deploy path (owner); CHANGELOG domain-redesign entry; docs/status/archived 2026-10-11_18-21 §c.1; docs/status/2026-10-12_02-34 §c |
+| Task                                                                                                                                                  | Status       | Impact | Effort | Evidence                                                                                                                                         |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Production re-ingest for ContentHash v2 (one-time; the live DB still hashes v1 fields)                                                                | 🔵 `BLOCKED` | High   | 60min  | needs the prod deploy path (owner); CHANGELOG domain-redesign entry; docs/status/archived 2026-10-11_18-21 §c.1; docs/status/2026-10-12_02-34 §c |
+| Deploy both hosts with the current lens module options (`aiDids` newly available; `-max-age`/`-recording-timeout` verified already exposed and wired) | 🔵 `BLOCKED` | High   | 30min  | needs the host deploy path (owner); `modules/telephony/lens.nix` (nix-international-telephony e7c0f8b); sibling flake check green 2026-10-12     |
 
 ## Low impact
 
@@ -57,6 +68,17 @@
 | At schema v2: length-prefixed ContentHash field encoding (newline-separated concatenation can alias crafted field pairs; format frozen at v1)      | 🔵 `BLOCKED` | Low    | 60min  | SCHEDULED at v2 (owner decision 2026-10-11); data-model review in docs/reviews; hash change = one-time correction wave, needs the v2 gate                                          |
 | Harden the recording-proxy timeout tests: injected deadlines instead of budget+sleep pairs (expected `-test.shuffle` flake candidates under load)  | 🔴 `TODO`    | Low    | 45min  | `internal/web/recording_test.go`; budgets raised to load-safe 50 ms/250 ms 2026-10-12 (the 1 ms flake is gone); the injected-deadline refactor remains; docs/buildflow-dev-gate.md |
 | `cmd/pbx-lens/ingest.go` (269 lines): extract the shared open-system → age-gate → drain → rebuild sequence before it re-approaches 350             | 🔴 `TODO`    | Low    | 30min  | `cmd/pbx-lens/ingest.go`; docs/status 2026-10-12_02-34 §f.14                                                                                                                       |
+| Move the three gochecknoglobals nolint rationales (dashboardLocation/durationBuckets/exportBatchSize) into docs/ so they survive refactors         | 🔴 `TODO`    | Low    | 15min  | `internal/web/dashboard.go` / `queries.go` nolint lines; docs/cqrs-lint-policy.md pattern; docs/status/2026-10-12_10-33 §f.15                                                      |
+| Surface `export_cursor_stalled` in the export UI (the loud-fail path is server-side only today)                                                    | 🔴 `TODO`    | Low    | 30min  | `internal/web/export.go` `advanceCursor`; docs/status/2026-10-12_10-33 §f.16                                                                                                       |
+| Dashboard range-picker presets (7/30-day buttons) and a digits-only search hint chip                                                               | 🔴 `TODO`    | Low    | 45min  | `internal/web/dashboard.templ` date picker; calls/search page hint; docs/status/2026-10-12_10-33 §f.17/§f.19                                                                       |
+| Carry the active filters into the staleness fragment so the banner links stay honest on filtered pages                                             | 🔴 `TODO`    | Low    | 30min  | `internal/web` staleness fragment handlers; docs/status/2026-10-12_10-33 §f.21                                                                                                     |
+| Export memory-budget test: pin `exportBatchSize` page behavior under a bounded allocation (streaming contract guard)                               | 🔴 `TODO`    | Low    | 30min  | `internal/web/queries.go` `exportBatchSize`; docs/status/2026-10-12_10-33 §f.22                                                                                                    |
+| `/api/ops`: warn when the reported poller pass is stale (age the lastPass timestamp)                                                               | 🔴 `TODO`    | Low    | 20min  | `internal/web` ops endpoint + `SourceCounters`; docs/status/2026-10-12_10-33 §f.35                                                                                                 |
+| `docs/drafts/` README table (one row per draft: file, upstream issue, state)                                                                       | 🔴 `TODO`    | Low    | 15min  | `docs/drafts/`; docs/status/2026-10-12_10-33 §f.28                                                                                                                                 |
+| File the BuildFlow spawn-starvation failure mode upstream (tools killed at spawn under load; propose pre-flight load check or spawn retry)         | 🔴 `TODO`    | Low    | 30min  | docs/buildflow-dev-gate.md starvation entries (runs #1/#2); sibling filing BuildFlow#45; docs/status/2026-10-12_10-33 §f.6                                                         |
+| ANNOTATE + archive the 2026-10-11/12 status reports once their items are resolved; re-annotate the SUPERB plan post-release                        | 🔴 `TODO`    | Low    | 45min  | docs/status/2026-10-12_10-33 §f.38/§f.25; docs-health ANNOTATE mode                                                                                                                |
+| Watch dependabot-core#16538 and answer maintainer questions; owner decides gomod pinning afterward                                                 | 🔵 `BLOCKED` | Low    | 10min  | owner call pending (#16538 context); docs/status/2026-10-12_10-33 §f.29/§f.30                                                                                                      |
+| R27.x advisory residue pass: art-dupl, branching-flow, nix-checker cleanup, README screenshots, vulnix re-triage (all documented advisories)       | 🔵 `BLOCKED` | Low    | 60min  | docs/buildflow-dev-gate.md advisory list; docs/status/2026-10-12_10-33 §f.40                                                                                                       |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
      per docs-health harvest-guide: the ledger records the pass, it is not a

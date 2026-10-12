@@ -148,7 +148,10 @@ webphone later gets a read-only deep link, never a data dependency.
 
 - `Observation` = one source row. `SourceKind`:
   freeswitch-cdr | telnyx-conversation | webhook-log | agent-transcript.
-  `Direction`: inbound | outbound. Numbers are stored raw as observed (real
+  `Direction`: inbound | outbound; a Telnyx conversation touching a
+  configured AI DID (`-ai-did`, `telnyx.DIDDirectionResolver`) indexes
+  inbound regardless of the declared direction — the DID set is deployment
+  config, not state. Numbers are stored raw as observed (real
   CDRs carry unknown/empty parties); `E164` + `ParticipantHash` exist for the
   planned PII policy (see TODO_LIST.md) and are NOT enforced on stored fields
   yet.
