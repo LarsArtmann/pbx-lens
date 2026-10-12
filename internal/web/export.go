@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -48,8 +49,13 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	if err != nil {
-		// The body may already be streaming, so the only honest move is to
-		// log and let the truncated response stand (see logf).
+		// The body may already be streaming, so the only honest moves are a
+		// terminal marker line in the file (machine-readable) and the log.
+		marker, merr := json.Marshal(exportErrorMarker(err))
+		if merr == nil {
+			_, _ = w.Write(append(marker, '\n')) //nolint:gosec // JSON-encoded ndjson attachment; never rendered as HTML
+		}
+
 		s.logf("export.jsonl stream failed", "err", err.Error())
 	}
 }
@@ -77,10 +83,36 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		return writer.Write(exportRecord(view))
 	})
 	if err != nil {
+		// The body may already be streaming, so the only honest moves are a
+		// terminal marker row in the file (visible in any spreadsheet) and
+		// the log.
+		_ = writer.Write(exportErrorRow(err))
+
 		s.logf("export.csv stream failed", "err", err.Error())
 	}
 
 	writer.Flush()
+}
+
+// exportIncompleteCode is the marker code the export endpoints emit when a
+// stream cannot make progress; exportErrorRow/exportErrorMarker render it
+// into the artifact so a truncated download announces itself (plan T10).
+const exportIncompleteCode = "EXPORT_INCOMPLETE"
+
+// exportErrorRow renders a stream failure as one terminal CSV row.
+func exportErrorRow(err error) []string {
+	return []string{"# " + exportIncompleteCode, errorfamily.Code(err), err.Error()}
+}
+
+// exportErrorMarker renders a stream failure as one terminal JSONL object.
+func exportErrorMarker(err error) exportError {
+	return exportError{ExportIncomplete: exportIncompleteCode, Code: errorfamily.Code(err), Message: err.Error()}
+}
+
+type exportError struct {
+	ExportIncomplete string `json:"export_incomplete"`
+	Code             string `json:"code"`
+	Message          string `json:"message"`
 }
 
 // beginExport parses the shared filters and the pii mode; it writes the

@@ -223,7 +223,7 @@ func pollURLOf(body string) string {
 		return "(no poll region)"
 	}
 
-	rest := after
+	url, _, _ := strings.Cut(after, `"`)
 
-	return rest[:strings.Index(rest, `"`)]
+	return url
 }
