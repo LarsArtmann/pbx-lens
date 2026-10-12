@@ -96,9 +96,22 @@ whole index (keyset-paginated, bounded memory — no row cap). The response's
 for their salted hashes before anything leaves the server.
 
 For machine checks, `GET /api/ops` (same basic auth) serves the latest poll
-pass's per-source offered/recorded/corrected/rejected counters — the numbers
-the serve log prints, without grepping the journal. When `serve` runs without
-a poll loop it answers 503 with an explanation instead of faking zeros.
+pass's per-source offered/recorded/corrected/rejected counters plus the
+response-cache section (`etag_generated`, `not_modified`, `hit_ratio`,
+`buffer_overflows`) — the numbers the serve log prints, without grepping
+the journal. Without a poll loop the poller section is simply absent (the
+cache section always answers); a 503 with an explanation means neither
+counter source is wired.
+
+Other operational surfaces, all behind the same auth unless noted:
+`GET /version` reports the build; `GET /metrics` serves Prometheus text
+exposition (without basic auth by deliberate opt-in — the perimeter is the
+bind address or firewall, see SECURITY.md); `/health`, `/health/live`, and
+`/health/ready` are appkit-owned readiness probes. Every surface answers
+conditional GETs with `ETag` → `304 Not Modified`, so htmx polls and
+revisits cost zero body bytes while unchanged, and reports handler spans
+as `Server-Timing`; HTML responses carry `Cache-Control: no-cache` so
+browsers revalidate instead of silently serving stale pages.
 
 **PII disclosure (R3):** `pii=hash` bounds participant identity ONLY.
 Transcripts, excerpts, and insight summaries stay raw in every mode — see

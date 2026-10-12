@@ -66,4 +66,12 @@ upstream — no upstream movement to fold in yet.**
   unreleased; FilterBar/SegmentedControl exist only as a recipe + plan).
   Ask: version-stamp the skill / mark unreleased components. Draft:
   `docs/drafts/templ-components-skill-docs-drift-v1.21.0.md`.
+- **templ-components#51** (filed 2026-10-12, plan T2): `ScrollbackLine`
+  has only Timestamp/Tag/Text/Tone (v1.21.0 `scrollback.templ:25-30`,
+  same on master 2026-10-12) — no per-line id/class hook, so anchor links
+  and highlight marks on individual lines are impossible; the container's
+  `BaseProps` (lines 67-78) doesn't help. This is the gap that forced
+  pbx-lens's hand-rolled `transcriptMatchLog` (T21); fold-in retires it
+  (owner-gated, TODO_LIST). Draft:
+  `docs/drafts/templ-components-scrollback-line-hook.md`.
 - Drafts live in `docs/drafts/` (never /tmp).

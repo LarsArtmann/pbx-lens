@@ -1,3 +1,5 @@
+> **FILED as templ-components#51 (2026-10-12).** Kept as the historical write-up; upstream state lives in `docs/upstream-filings.md`.
+
 # display.ScrollbackLine: no per-line id/class hook — line anchors and highlights are impossible without re-rolling the component
 
 `Scrollback` carries `BaseProps` on the container, but the line struct has no `ID`/`Class` escape hatch, so a consumer cannot anchor or style a single line. We hand-rolled a copy of the loop in pbx-lens for the search-jump deep link; a per-line hook would retire it.

@@ -199,3 +199,11 @@ invariants summary; this file keeps the war stories.
   pins a templ matching go.mod (upstream fix belongs in go-nix-helpers'
   templ program), buildflow's `templ-fmt` accepts both layouts, so it will
   NOT catch the drift — only the nix check does.
+- **templ's streaming flush silently disables go-etag (learned, 2026-10-12)**:
+  templ's component writer flushes per section, and a response that has
+  already flushed can never be hashed and revalidated — the ETag middleware
+  stands down, no tag is emitted, and every poll pays full body bytes with
+  nothing in the logs. The `render` helper (`internal/web/render.go`)
+  renders into a `bytes.Buffer` and writes ONCE, which is what makes the
+  304 contract work at all; keep every HTML handler on it and never switch
+  to a direct `component.Render(w, ...)` streaming call for a cached page.

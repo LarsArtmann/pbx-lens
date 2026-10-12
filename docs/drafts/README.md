@@ -18,6 +18,7 @@
 | `go-etag-server-flush-no-observability.md`                       | go-etag#2               | FILED — OPEN upstream                                               |
 | `go-nix-helpers-templ-formatter-gopkg.md`                        | go-nix-helpers#7        | FILED — OPEN upstream                                               |
 | `templ-components-barchart-vertical-zero-height.md`              | templ-components#48     | FILED — OPEN upstream (own repo)                                    |
+| `templ-components-scrollback-line-hook.md`                       | templ-components#51     | FILED — OPEN upstream (own repo)                                    |
 | `templ-components-skill-docs-drift-v1.21.0.md`                   | templ-components#50     | FILED — OPEN upstream (own repo)                                    |
 | `templ-components-tablerow-focus-indicator.md`                   | templ-components#49     | FILED — OPEN upstream (own repo)                                    |
 | `treefmt-nix-545-comment.md`                                     | numtide/treefmt-nix#545 | FILED — filed upstream 2026-10-02; corroborating comment posted     |
