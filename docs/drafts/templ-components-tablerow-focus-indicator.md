@@ -1,3 +1,5 @@
+> **FILED as templ-components#49 (2026-10-12).** Kept as the historical write-up; upstream state lives in `docs/upstream-filings.md`.
+
 # display.Table: keyboard-focusable clickable rows have no visible focus indicator (WCAG 2.4.7)
 
 Clickable rows are focusable and activatable by keyboard, but nothing on screen shows where focus is. Consumer patch below.

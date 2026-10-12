@@ -46,4 +46,24 @@ upstream — no upstream movement to fold in yet.**
   5.0s of a 5.0s package. Ask: `ServeConfig` constructor with
   `NoDrainDelay` default or a doc line. Draft:
   `docs/drafts/go-appkit-testkit-drain-delay-cost.md`.
+- **templ-components#48** (filed 2026-10-12, T24): vertical BarChart — the
+  documented `Height` field ("Essential for vertical charts",
+  v1.21.0 `display/bar_chart.go:93-96`) is necessary but NOT sufficient:
+  the container's `items-end` (`bar_chart.templ:77`) stops columns
+  stretching into the definite height, so bars compute 0px. Live
+  before/after: Height-only = 0/0/0px; + `Class: "!items-stretch"` =
+  46/108/15px. Local workaround stays until the fix lands. Draft:
+  `docs/drafts/templ-components-barchart-vertical-zero-height.md`.
+- **templ-components#49** (filed 2026-10-12, T24): clickable table rows
+  are focusable + Enter-activatable (`table.templ:281-289`,
+  `shared.go:217-224`) but ship no focus-visible styling — keyboard users
+  can't see which row is active (WCAG 2.4.7). Local ring in
+  `static/app.css` (`tr[role="link"]:focus-visible`). Draft:
+  `docs/drafts/templ-components-tablerow-focus-indicator.md`.
+- **templ-components#50** (filed 2026-10-12, T24): the consumer skill
+  documents `FilterBar`/`SegmentedControl`/`utils/format` as current API;
+  all three are absent at the v1.21.0 pin (utils/format exists on master,
+  unreleased; FilterBar/SegmentedControl exist only as a recipe + plan).
+  Ask: version-stamp the skill / mark unreleased components. Draft:
+  `docs/drafts/templ-components-skill-docs-drift-v1.21.0.md`.
 - Drafts live in `docs/drafts/` (never /tmp).

@@ -1,3 +1,5 @@
+> **FILED as templ-components#50 (2026-10-12).** Kept as the historical write-up; upstream state lives in `docs/upstream-filings.md`.
+
 # skill/docs vs the v1.21.0 pin: FilterBar, SegmentedControl, utils/format presented as current but absent from the released module
 
 Consumers following the skill hit "undefined: display.FilterBar" against the published tag. Ask: version-stamp the skill, or mark unreleased components.

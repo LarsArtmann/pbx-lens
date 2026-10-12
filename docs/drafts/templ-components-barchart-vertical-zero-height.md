@@ -1,3 +1,5 @@
+> **FILED as templ-components#48 (2026-10-12).** Kept as the historical write-up; upstream state lives in `docs/upstream-filings.md`.
+
 # display.BarChart (vertical): documented `Height` alone still renders 0px bars — `items-end` defeats the definite height
 
 Repro below. Filed from the v1.21.0 pin; same code on master (`display/bar_chart.templ` unchanged there for this block).
