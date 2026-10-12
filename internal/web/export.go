@@ -23,16 +23,33 @@ func exportHeader() []string {
 	}
 }
 
+// beginExportWithPII is the shared preamble of both export formats: the
+// gate plus the X-Pii-Mode response header (art-dupl clone pair, plan
+// T5.2). The format-specific Content-Type/Disposition stay at the call
+// sites.
+func (s *server) beginExportWithPII(
+	w http.ResponseWriter,
+	r *http.Request,
+) (ListCallsQuery, PIIMode, bool) {
+	query, pii, ok := s.beginExport(w, r)
+	if !ok {
+		return query, pii, false
+	}
+
+	w.Header().Set("X-Pii-Mode", piiHeaderValue(pii))
+
+	return query, pii, true
+}
+
 // exportJSONL streams the filtered call index as newline-delimited JSON
 // (D5). One JSON object per line, newest first, so any consumer can tail or
 // pipe it.
 func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
-	query, pii, ok := s.beginExport(w, r)
+	query, pii, ok := s.beginExportWithPII(w, r)
 	if !ok {
 		return
 	}
 
-	w.Header().Set("X-Pii-Mode", piiHeaderValue(pii))
 	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.jsonl"`)
 
@@ -63,12 +80,11 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 // exportCSV streams the filtered call index as CSV (D5).
 func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
-	query, pii, ok := s.beginExport(w, r)
+	query, pii, ok := s.beginExportWithPII(w, r)
 	if !ok {
 		return
 	}
 
-	w.Header().Set("X-Pii-Mode", piiHeaderValue(pii))
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.csv"`)
 

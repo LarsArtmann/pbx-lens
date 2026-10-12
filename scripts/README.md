@@ -22,3 +22,10 @@ What only these scripts prove (the Go tests pin the server-side rules —
 `internal/web/search_jump_test.go`, `copy_button_test.go`): click-time label
 swap, real fragment scroll into the viewport, and pixel truth (dark/mobile
 rendering). `node --check scripts/*.js` parses without a browser.
+
+Editor note (plan T5.3, adjudicated 2026-10-12): vtsls may report
+"Declaration or statement expected" parse errors on these files — they are
+false positives (repo has no jsconfig/tsconfig, and the shebang +
+CommonJS + async-IIFE combo trips its project inference). The arbiter is
+`node --check`, which passes on every script here; do not "fix" the JS to
+silence the editor.

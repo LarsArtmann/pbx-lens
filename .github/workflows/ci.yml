@@ -89,6 +89,11 @@ jobs:
         with:
           version: ${{ env.GOLANGCI_LINT_VERSION }}
 
+      - name: Nolint ledger check
+        # Every //nolint: needs a why row in docs/nolint-ledger.md (matched
+        # by file); keeps suppression rationale from silently rotting.
+        run: bash scripts/check-nolint-ledger.sh
+
   govulncheck:
     name: Vulnerability Check
     runs-on: ubuntu-latest
