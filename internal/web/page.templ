@@ -1,13 +1,24 @@
 package web
 
-import "github.com/larsartmann/templ-components/layout"
+import (
+	"github.com/larsartmann/templ-components/layout"
+	"github.com/larsartmann/templ-components/navigation"
+)
 
-// shell is the shared page frame: nav, theme toggle, htmx error handling.
+// shell is the shared page frame: nav, container, footer, theme toggle.
+// Base already emits the <main> landmark — the body is layout.Container
+// (library gutter + width defaults) plus a restrained footer.
 templ shell(title string, currentPath string) {
 	@layout.Base(pageProps(title)) {
 		@nav(currentPath)
-		<main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
+		@layout.Container(layout.ContainerProps{Class: "flex-1 py-8"}) {
 			{ children... }
-		</main>
+		}
+		@footer()
 	}
+}
+
+// footer anchors the page and states the tool's read-only contract.
+templ footer() {
+	@navigation.Footer(navigation.FooterProps{BrandText: "pbx-lens"})
 }
