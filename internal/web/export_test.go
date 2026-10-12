@@ -151,14 +151,14 @@ func TestExportSetsPIIModeHeader(t *testing.T) {
 
 	for _, path := range []string{"/api/export.jsonl", "/api/export.csv"} {
 		resp := getResp(t, mux, path)
-		if got := resp.Header.Get("X-PII-Mode"); got != "plain" {
+		if got := resp.Header.Get("X-Pii-Mode"); got != "plain" {
 			t.Errorf("%s X-PII-Mode = %q, want plain", path, got)
 		}
 
 		_ = resp.Body.Close()
 
 		resp = getResp(t, mux, path+"?pii=hash")
-		if got := resp.Header.Get("X-PII-Mode"); got != "hash" {
+		if got := resp.Header.Get("X-Pii-Mode"); got != "hash" {
 			t.Errorf("%s?pii=hash X-PII-Mode = %q, want hash", path, got)
 		}
 

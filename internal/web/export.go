@@ -31,7 +31,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("X-PII-Mode", piiHeaderValue(pii))
+	w.Header().Set("X-Pii-Mode", piiHeaderValue(pii))
 	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.jsonl"`)
 
@@ -43,7 +43,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		_, err = w.Write(append(line, '\n'))
+		_, err = w.Write(append(line, '\n')) //nolint:gosec // JSON-encoded ndjson attachment; never rendered as HTML
 
 		return err
 	})
@@ -61,7 +61,7 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("X-PII-Mode", piiHeaderValue(pii))
+	w.Header().Set("X-Pii-Mode", piiHeaderValue(pii))
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.csv"`)
 
