@@ -6,11 +6,11 @@ graph, the flake, or package.json). Shared bootstrap lives in
 `lib/ui-probe.js` (chromium discovery, scratch install, probe-binary build,
 corpus seeding, serve lifecycle).
 
-| Script                  | What it proves / captures                                                                                                                              | When to run                                              |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| `screenshot-probe.js`   | 24 PNGs (light/dark × mobile/desktop × calls/search/dashboard/2 details/?q= match-log detail) into `--out` for eyeball passes                          | After any visual change; before tagging                  |
+| Script                  | What it proves / captures                                                                                                                                         | When to run                                               |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| `screenshot-probe.js`   | 24 PNGs (light/dark × mobile/desktop × calls/search/dashboard/2 details/?q= match-log detail) into `--out` for eyeball passes                                     | After any visual change; before tagging                   |
 | `verify-ui-contract.js` | Browser-level contract check: 3 copy buttons + label swap (T20); search hit `?q=` → 302 → `#turn-N` → amber mark → real fragment scroll (T21). Exit 1 on any FAIL | After changes to detail/search/copy paths; before tagging |
-| `gen-tc-classes.js`     | Regenerates the library class inventory (`templ-components-classes.txt`) used by the palette gate and the version-bump watchlist                        | On templ-components version bumps                        |
+| `gen-tc-classes.js`     | Regenerates the library class inventory (`templ-components-classes.txt`) used by the palette gate and the version-bump watchlist                                  | On templ-components version bumps                         |
 
 Both browser scripts are self-contained: they build the binary, seed the
 corpus (smoke + one agent transcript so the `?q=` match log has turns),

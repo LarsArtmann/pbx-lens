@@ -186,6 +186,11 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
                                       # REBUILD: go:embed is compile-time
 nix develop                           # devShell: go, golangci-lint, gopls,
                                       # govulncheck, dprint, cqrs-lint
+node scripts/verify-ui-contract.js    # browser-level UI contracts (T20 copy
+                                      # swap, T21 ?q= jump + real fragment
+                                      # scroll); self-contained build+seed+serve;
+                                      # sibling screenshot-probe.js captures the
+                                      # 24-PNG eyeball set — see scripts/README.md
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
                                       # changes (buildflow -s nix-hash-fix --fix does the same)
