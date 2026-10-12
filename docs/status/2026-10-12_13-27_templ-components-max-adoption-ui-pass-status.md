@@ -54,8 +54,8 @@ other session (see d1).
    `download` attr) surfacing the previously-unlinked `/api/export.csv`;
    EmptyState icon.
 9. **Search page.** `forms.Form` + `forms.Input(InputSearch, EnterKeyHint)`
-   + `display.Button` replace the raw input/button; EmptyState icon; honest
-   helper copy unchanged.
+   - `display.Button` replace the raw input/button; EmptyState icon; honest
+     helper copy unchanged.
 10. **Dashboard.** Range form on library Form+Button; StatCards get icons
     (Phone/Calendar/Microphone/Clock) + Tones (blue/green/purple/yellow);
     `layout.Split(1-3)` + `layout.Stack(LG)` replace hand-rolled grid/space-y
@@ -208,10 +208,11 @@ session ended, but each was avoidable:
 
 ## f) Up to 50 things to get done next
 
-*Braintorm, sorted roughly by impact × ease. UI items first (session
-context); the tail is ROADMAP fuel. Not commitments.*
+_Braintorm, sorted roughly by impact × ease. UI items first (session
+context); the tail is ROADMAP fuel. Not commitments._
 
 **Verify/correct this session's work:**
+
 1. Screenshot pass: 5 pages × light/dark × 375px/1280px; fix what looks wrong.
 2. Donut center-label overflow probe ("100.0%", 4+ char strings).
 3. Teal-600/500 contrast audit (AA) in light and dark, buttons + badges +
@@ -233,16 +234,16 @@ context); the tail is ROADMAP fuel. Not commitments.*
 
 **UI polish (library affordances still unused):**
 14. `navigation.Pagination` (or LoadMore) instead of the single "Older calls"
-    button.
+button.
 15. `navigation.Breadcrumbs` on detail (Calls / {kind} / {id}).
 16. Dashboard range presets (7/30-day buttons; SegmentedControl when
-    published).
+published).
 17. Digits-only search hint chip under the search form.
 18. Search hit cards: hover transition, chevron-right icon, focus ring.
 19. `display.Eyebrow` over page titles for hierarchy personality.
 20. `CopyButton` for phone numbers / native IDs on the detail page.
 21. `display.Heatmap` (hour × day call density) as the dashboard's next
-    signature chart.
+signature chart.
 22. `LineChart` trial vs BarChart for the volume trend.
 23. `DataTable` evaluation (sorting) for the calls table.
 24. Scrollback timestamps if transcript turns ever carry timing.
@@ -251,46 +252,46 @@ context); the tail is ROADMAP fuel. Not commitments.*
 27. Footer: binary version string + "read-only index" note.
 28. Favicon + theme-color meta.
 29. EmptyState ActionText on the calls page (point at the ingest commands or
-    docs).
+docs).
 30. Staleness banner carries active filters (pre-existing TODO).
 31. Surface `export_cursor_stalled` in the export UI (pre-existing TODO).
 32. Print stylesheet for call details (cheap, occasionally useful).
 
 **Upstream/docs hygiene:**
 33. File the v1.21.0-vs-skill-docs drift upstream (verify-before-filing
-    first): skill lists FilterBar/SegmentedControl/errorpage as existing;
-    ProgressBar/format absence claimed in consumer AGENTS files.
+first): skill lists FilterBar/SegmentedControl/errorpage as existing;
+ProgressBar/format absence claimed in consumer AGENTS files.
 34. Re-verify whole adoption map at the next templ-components bump
-    (SegmentBar/errorpage/utils/format candidates).
+(SegmentBar/errorpage/utils/format candidates).
 35. Extract dashboard.go/queries.go nolint rationales into docs (pre-existing
-    TODO).
+TODO).
 36. Consider `docs/DOMAIN_LANGUAGE.md` entries: "observation", "stream",
-    "voice log" (Scrollback), "signal palette".
+"voice log" (Scrollback), "signal palette".
 37. Move this report's section (f) harvestables into TODO_LIST/ROADMAP
-    (docs-health HARVEST mode).
+(docs-health HARVEST mode).
 38. CHANGELOG: fold the "Changed" test-copy bullet into the UI-pass Added
-    entry if a release is cut before then (avoid a one-line section).
+entry if a release is cut before then (avoid a one-line section).
 
 **Deeper bets (ROADMAP fuel):**
 39. Golden-HTML snapshot tests for the five pages (library-style goldens).
 40. Visual regression CI job (screenshots) if the LAN tool keeps growing UI.
 41. `errorpage`/`NotFound404` adoption when templ-components publishes it.
 42. `utils/format` adoption when published (delete local duration/percent
-    helpers — mind the split brain).
+helpers — mind the split brain).
 43. `SegmentBar` if the donut reads wrong (blocked upstream).
 44. `AppShell` evaluation if the nav grows past three links.
 45. webphone read-only deep link (SUPERB plan sibling) — detail-page
-    affordance, data stays one-way.
+affordance, data stays one-way.
 46. nix-international-telephony module: verify the packaged binary ships the
-    new styles (preBuild codegen) on a real host deploy (pre-existing BLOCKED
-    deploy task).
+new styles (preBuild codegen) on a real host deploy (pre-existing BLOCKED
+deploy task).
 47. Per-source filter chips on the calls list (FilterChips absent in pin;
-    hand-roll only if operators actually need it).
+hand-roll only if operators actually need it).
 48. Dashboard "quiet index" honesty: idle-index drift note in the chart card
-    (design, not code).
+(design, not code).
 49. Accessibility sweep with a real screen reader on the transcript pane.
 50. Upstream contribution: consumer-tip adoption-map example in the
-    templ-components skill could cite pbx-lens as the worked example.
+templ-components skill could cite pbx-lens as the worked example.
 
 ## g) Questions I cannot figure out myself
 
@@ -308,5 +309,5 @@ context); the tail is ROADMAP fuel. Not commitments.*
 
 ---
 
-*Point-in-time snapshot; goes stale. HARVEST section (f) into
-TODO_LIST.md/ROADMAP.md per docs-health if acted on later.*
+_Point-in-time snapshot; goes stale. HARVEST section (f) into
+TODO_LIST.md/ROADMAP.md per docs-health if acted on later._

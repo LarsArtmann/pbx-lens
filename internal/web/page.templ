@@ -1,6 +1,8 @@
 package web
 
 import (
+	"github.com/larsartmann/templ-components/feedback"
+	"github.com/larsartmann/templ-components/htmx"
 	"github.com/larsartmann/templ-components/layout"
 	"github.com/larsartmann/templ-components/navigation"
 )
@@ -10,11 +12,13 @@ import (
 // (library gutter + width defaults) plus a restrained footer.
 templ shell(title string, currentPath string) {
 	@layout.Base(pageProps(title)) {
+		@feedback.ToastContainer("")
 		@nav(currentPath)
 		@layout.Container(layout.ContainerProps{Class: "flex-1 py-8"}) {
 			{ children... }
 		}
 		@footer()
+		@htmx.GlobalErrorHandling(htmx.DefaultErrorHandlingConfig())
 	}
 }
 
