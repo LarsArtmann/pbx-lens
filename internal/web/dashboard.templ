@@ -1,25 +1,65 @@
 package web
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/forms"
 	"github.com/larsartmann/templ-components/feedback"
+	"github.com/larsartmann/templ-components/htmx"
 )
 
-// dashboardRoute is the quality-dashboard page (T25): stat cards, volume
-// chart, AI/human split, trend, and the MOS card.
-templ dashboardRoute(stats DashboardStats, now time.Time) {
+// dashboardRoute is the quality-dashboard page (T25): a date-range picker,
+// then the live cards region (stat cards, volume, AI/human split, trend,
+// durations, MOS).
+templ dashboardRoute(stats DashboardStats, now time.Time, fragURL string) {
 	@shell("Dashboard — pbx-lens", "/dashboard") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Dashboard",
 			Subtitle: "Index health and call quality at a glance",
 		})
+		@rangeForm(stats)
+		@dashboardLive(stats, now, fragURL)
+	}
+}
+
+// rangeForm narrows the whole dashboard to a date range (R8/M20.1). Plain
+// GET form: the noscript world submits it like the list filters.
+templ rangeForm(stats DashboardStats) {
+	<form method="get" action="/dashboard" class="mb-6 flex flex-wrap items-end gap-3">
+		@forms.DatePicker(forms.DatePickerProps{
+			Name:  "from",
+			Label: "From",
+			Value: dateValue(stats.rangeFrom),
+		})
+		@forms.DatePicker(forms.DatePickerProps{
+			Name:  "to",
+			Label: "To",
+			Value: dateValue(stats.rangeTo),
+		})
+		<button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Apply</button>
+		<a href="/dashboard" class="text-sm text-gray-600 underline dark:text-gray-400">Reset</a>
+	</form>
+}
+
+// dashboardLive is the polled cards region (R9): htmx re-fetches fragURL
+// every 30s and swaps the whole region, so the numbers go stale for at
+// most one interval. The timestamp footer is the liveness pill — when it
+// freezes, polling has stalled. Without JS the server-rendered content is
+// the same fallback the page always had.
+templ dashboardLive(stats DashboardStats, now time.Time, fragURL string) {
+	@htmx.PolledRegion(htmx.PolledRegionProps{
+		URL:           fragURL,
+		Every:         "30s",
+		ShowTimestamp: true,
+	}) {
 		@statCards(stats, now)
 		<div class="grid items-start gap-6 lg:grid-cols-3">
-			<div class="lg:col-span-2">
+			<div class="space-y-6 lg:col-span-2">
 				@volumeCard(stats)
+				@durationCard(stats)
 			</div>
 			<div class="space-y-6">
 				@aiHumanCard(stats)
@@ -56,7 +96,8 @@ templ statCards(stats DashboardStats, now time.Time) {
 	}
 }
 
-// volumeCard is the calls-per-day bar chart over the dashboard window.
+// volumeCard is the calls-per-day bar chart over the dashboard window,
+// with the week-over-week delta underneath (R27).
 templ volumeCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays)}) {
 		@display.BarChart(display.BarChartProps{
@@ -67,7 +108,49 @@ templ volumeCard(stats DashboardStats) {
 			ShowValues:   false,
 			EmptyMessage: "No calls in the last " + strconv.Itoa(stats.WindowDays) + " days",
 		})
+		if stats.Week.HasBaseline {
+			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+				{ weekDeltaLabel(stats.Week) }
+			</p>
+		}
 	}
+}
+
+// durationCard buckets call durations (R8/M20.2): how long calls actually
+// run, independent of when they happened.
+templ durationCard(stats DashboardStats) {
+	@display.Card(display.CardProps{Title: "Call durations"}) {
+		@display.BarChart(display.BarChartProps{
+			Bars:         durationBars(stats.Durations),
+			Orient:       display.BarVertical,
+			ShowValues:   true,
+			EmptyMessage: "No calls indexed yet",
+		})
+	}
+}
+
+// durationBars maps the histogram buckets onto chart bars.
+func durationBars(buckets []DurationBucket) []display.BarChartBar {
+	bars := make([]display.BarChartBar, 0, len(buckets))
+	for _, bucket := range buckets {
+		bars = append(bars, display.BarChartBar{
+			Label:   bucket.Label,
+			Value:   float64(bucket.Calls),
+			Tooltip: bucket.Label + ": " + strconv.Itoa(bucket.Calls) + " calls",
+		})
+	}
+
+	return bars
+}
+
+// weekDeltaLabel renders the week-over-week movement with an explicit sign.
+func weekDeltaLabel(delta WeekDelta) string {
+	sign := "+"
+	if delta.Pct < 0 {
+		sign = ""
+	}
+
+	return fmt.Sprintf("This week %s%.0f%% vs last week", sign, delta.Pct)
 }
 
 // aiHumanCard is the AI-vs-human proportion. templ-components v1.21 has no
@@ -94,10 +177,11 @@ templ aiHumanCard(stats DashboardStats) {
 templ trendCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "30-day trend"}) {
 		@display.Sparkline(display.SparklineProps{
-			Values: volumeValues(stats.ByDay),
-			Filled: true,
-			Width:  260,
-			Height: 60,
+			Values:    volumeValues(stats.ByDay),
+			Filled:    true,
+			Width:     260,
+			Height:    60,
+			AriaLabel: "Calls per day over the last " + strconv.Itoa(stats.WindowDays) + " days",
 		})
 	}
 }

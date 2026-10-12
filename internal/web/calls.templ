@@ -15,6 +15,9 @@ import (
 func pageProps(title string) layout.PageProps {
 	props := layout.DefaultPageProps()
 	props.Title = title
+	// Self-host the htmx runtime (R9): polled regions need it, and the LAN
+	// tool must not depend on a public CDN. Served at /static/htmx.min.js.
+	props.HTMXSrc = "/static/htmx.min.js"
 
 	return props
 }

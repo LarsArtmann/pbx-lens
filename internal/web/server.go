@@ -5,6 +5,7 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -56,6 +57,8 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 
 	mux.HandleFunc("GET /{$}", web.list)
 	mux.HandleFunc("GET /dashboard", web.dashboard)
+	mux.HandleFunc("GET /frag/dashboard", web.dashboardFragment)
+	mux.HandleFunc("GET /frag/staleness", web.stalenessFragment)
 	mux.HandleFunc("GET /search", web.searchPage)
 	mux.HandleFunc("GET /api/freshness", web.freshness)
 	mux.HandleFunc("GET /api/export.jsonl", web.exportJSONL)
@@ -63,6 +66,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
 	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
 	mux.HandleFunc("GET /app.css", serveStyles)
+	mux.HandleFunc("GET /static/htmx.min.js", serveHtmx)
 }
 
 type server struct {
@@ -178,10 +182,12 @@ func parseAIFilter(v string, query *ListCallsQuery) error {
 	return nil
 }
 
-// parseDateParam accepts a bare YYYY-MM-DD (flagged dateOnly, so callers
-// can widen the bound to the whole day) or an RFC3339 timestamp.
+// parseDateParam accepts a bare YYYY-MM-DD in the dashboard zone (flagged
+// dateOnly, so callers can widen the bound to the whole day) or an RFC3339
+// timestamp in whatever zone it carries. Bare dates mean the operator's
+// own day (R2): ?from=2026-10-12 is the Berlin day, not UTC midnight.
 func parseDateParam(v string) (time.Time, bool, error) {
-	if t, err := time.Parse("2006-01-02", v); err == nil {
+	if t, err := time.ParseInLocation("2006-01-02", v, dashboardLocation); err == nil {
 		return t, true, nil
 	}
 
@@ -205,16 +211,116 @@ func staleness(filters ListCallsQuery, page CallListPage) (time.Duration, bool) 
 	return age, age > staleAfter
 }
 
-// dashboard serves the quality-dashboard page (T25).
+// dashboard serves the quality-dashboard page (T25). The from/to picker
+// narrows the underlying scan; the cards region polls for updates (R9).
 func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now())
+	filters, fragURL, ok := parseRange(w, r)
+	if !ok {
+		return
+	}
+
+	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters)
 	if err != nil {
 		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
 
 		return
 	}
 
-	render(w, r, dashboardRoute(stats, time.Now()))
+	render(w, r, dashboardRoute(stats, time.Now(), fragURL))
+}
+
+// dashboardFragment is the polled region payload (R9): the same live cards
+// the page renders, without the shell — the region replaces itself.
+func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
+	filters, fragURL, ok := parseRange(w, r)
+	if !ok {
+		return
+	}
+
+	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters)
+	if err != nil {
+		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	render(w, r, dashboardLive(stats, time.Now(), fragURL))
+}
+
+// parseRange reads the dashboard's date-range picker (from/to only — list
+// filters like direction/ai are not dashboard concepts and stay ignored)
+// and derives the polled-region URL carrying the same range. Garbage dates
+// reject with a 400, house style.
+func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string, bool) {
+	var filters ListCallsQuery
+
+	for _, field := range []struct {
+		name   string
+		target *time.Time
+	}{
+		{name: "from", target: &filters.From},
+		{name: "to", target: &filters.To},
+	} {
+		v := r.URL.Query().Get(field.name)
+		if v == "" {
+			continue
+		}
+
+		parsed, dateOnly, err := parseDateParam(v)
+		if err != nil || !dateOnly {
+			http.Error(w, field.name+" must be YYYY-MM-DD, got "+strconv.Quote(v), http.StatusBadRequest)
+
+			return ListCallsQuery{}, "", false
+		}
+
+		// A bare upper bound covers the whole day it names (same semantics
+		// as the list filters).
+		if field.name == "to" {
+			parsed = parsed.AddDate(0, 0, 1).Add(-time.Second)
+		}
+
+		*field.target = parsed
+	}
+
+	fragURL := "/frag/dashboard"
+
+	if !filters.From.IsZero() || !filters.To.IsZero() {
+		query := url.Values{}
+
+		if !filters.From.IsZero() {
+			query.Set("from", filters.From.Format(dayFormat))
+		}
+
+		if !filters.To.IsZero() {
+			query.Set("to", filters.To.Add(time.Second).Format(dayFormat))
+		}
+
+		fragURL += "?" + query.Encode()
+	}
+
+	return filters, fragURL, true
+}
+
+// stalenessFragment re-checks the freshness banner (R9): the polled region
+// re-renders the banner, or nothing once the index is fresh again.
+func (s *server) stalenessFragment(w http.ResponseWriter, r *http.Request) {
+	filters, err := parseFilters(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+
+		return
+	}
+
+	page, err := ListCalls(r.Context(), s.sys, filters)
+	if err != nil {
+		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+
+		return
+	}
+
+	staleFor, stale := staleness(filters, page)
+
+	render(w, r, staleLive(staleFor, stale))
 }
 
 func (s *server) detail(w http.ResponseWriter, r *http.Request) {
@@ -250,4 +356,23 @@ func serveStyles(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "text/css; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	_, _ = w.Write(styles)
+}
+
+// serveHtmx serves the self-hosted htmx runtime (R9): the polled regions
+// need it, and a LAN-bound ops tool must not reach a public CDN for its
+// JavaScript. Pinned at htmx.org 2.0.10 — the exact version templ-components
+// layout.DefaultPageProps pins upstream.
+func serveHtmx(w http.ResponseWriter, _ *http.Request) {
+	src, err := fs.ReadFile(staticFS, "static/htmx.min.js")
+	if err != nil {
+		http.Error(w, "htmx runtime missing from the build", http.StatusNotFound)
+
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+
+	//nolint:gosec // pinned vendored asset, served same-origin
+	_, _ = w.Write(src)
 }

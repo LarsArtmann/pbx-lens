@@ -114,6 +114,11 @@ type DashboardStats struct {
 	ByDay       []DayVolume
 	Durations   []DurationBucket
 	Week        WeekDelta
+
+	// rangeFrom/rangeTo echo the picker's active range back into the form
+	// (zero when unset).
+	rangeFrom time.Time
+	rangeTo   time.Time
 }
 
 // AvgMOS is the mean MOS across every scored call in the index, or 0 when
@@ -145,6 +150,8 @@ func DashboardStatsQuery(ctx context.Context, sys *system.System, now time.Time,
 	stats := DashboardStats{
 		WindowDays: dashboardWindowDays,
 		Durations:  make([]DurationBucket, len(durationBuckets)),
+		rangeFrom:  filters.From,
+		rangeTo:    filters.To,
 	}
 
 	today := dayKey(now)
