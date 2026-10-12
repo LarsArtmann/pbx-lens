@@ -83,9 +83,13 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   cursors — rationale lives in `pagerRow`), the export endpoints emit
   an explicit `EXPORT_INCOMPLETE` terminal marker when the cursor
   stalls (CSV row / JSONL object, loud on every consumer), and the
-  EmptyState offers a "Clear filters" way back.
+  EmptyState offers a "Clear filters" way back. The contract is also
+  visible text now: a note under the calls table names the marker, the
+  `lens.web.export_cursor_stalled` rejection id, and the no-row-cap
+  property (a memory-budget test pins the streaming walk past the old
+  cap).
 
-- Golden-HTML regression net (T22): the five operator pages are pinned
+- Golden-HTML regression net (T22): the six operator pages are pinned
   by `.golden` files (`go test ./internal/web/ -run TestGoldenPages`,
   refresh via `-update` then review the diff), a palette gate bans raw
   blue classes in pbx-lens templates (the theme bridge owns blue), and
