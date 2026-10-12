@@ -8,6 +8,7 @@ import (
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/feedback"
 	"github.com/larsartmann/templ-components/forms"
+	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/layout"
 	"github.com/larsartmann/templ-components/navigation"
 )
@@ -45,12 +46,20 @@ templ listPage(page CallListPage, filters ListCallsQuery) {
 	@display.PageHeader(display.PageHeaderProps{
 		Title:    "Calls",
 		Subtitle: "Every call the PBX ever saw",
+		Action: @display.Button(display.ButtonProps{
+			Text:    "Export CSV",
+			Href:    "/api/export.csv",
+			Variant: display.ButtonSecondary,
+			Icon:    icons.Icon("download", "size-4"),
+			Attrs:   templ.Attributes{"download": true},
+		}),
 	})
-	@filterForm(filters)
+	@filterForm(filters, "/")
 	if len(page.Rows) == 0 {
 		@display.EmptyState(display.EmptyStateProps{
 			Title:       "No calls match",
 			Description: "No indexed call matches these filters. Widen them, or run an ingest command (ingest-cdr, ingest-telnyx, ingest-webhook, ingest-agent) against this DB and reload.",
+			Icon:        icons.Inbox,
 		})
 	} else {
 		@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(page.Rows)})
@@ -66,11 +75,15 @@ templ listPage(page CallListPage, filters ListCallsQuery) {
 	}
 }
 
-// filterForm is a plain GET form (templ-components v1.21 has no FilterBar
-// yet): selects and date pickers submit server-side; the noscript world
-// gets an Apply button.
-templ filterForm(filters ListCallsQuery) {
-	<form method="get" action="/" class="mb-6 flex flex-wrap items-end gap-3">
+// filterForm is the shared filter row (library Form, inline layout): GET
+// submits server-side; the noscript world gets the Apply button.
+templ filterForm(filters ListCallsQuery, action string) {
+	@forms.Form(forms.FormProps{
+		Action: action,
+		Method: forms.FormGet,
+		Layout: forms.FormLayoutInline,
+		Class:  "mb-6",
+	}) {
 		@forms.Select(forms.SelectProps{
 			Name:  "direction",
 			Label: "Direction",
@@ -97,11 +110,11 @@ templ filterForm(filters ListCallsQuery) {
 			Label: "To",
 			Value: dateValue(filters.To),
 		})
-		<button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Apply</button>
+		@display.Button(display.ButtonProps{Text: "Apply", Type: display.ButtonHTMLSubmit})
 		if hasFilters(filters) {
-			<a href="/" class="text-sm text-gray-600 underline dark:text-gray-400">Reset</a>
+			@display.Button(display.ButtonProps{Text: "Reset", Href: action, Variant: display.ButtonGhost})
 		}
-	</form>
+	}
 }
 
 // staleBanner is the freshness alert (T12): warning when the newest indexed

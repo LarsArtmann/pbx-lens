@@ -4,6 +4,8 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/search"
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/feedback"
+	"github.com/larsartmann/templ-components/forms"
+	"github.com/larsartmann/templ-components/icons"
 )
 
 // searchRoute is the content-search page: one input, ranked hits with the
@@ -14,22 +16,22 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 			Title:    "Search",
 			Subtitle: "Find any conversation by content",
 		})
-		<form method="get" action="/search" class="mb-2 flex max-w-xl gap-2">
-			<input
-				type="search"
-				name="q"
-				value={ query }
-				placeholder="e.g. woolly invoice or +17287289311"
-				aria-label="Search transcripts"
-				class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-700 dark:bg-gray-900"
-			/>
-			<button
-				type="submit"
-				class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-			>
-				Search
-			</button>
-		</form>
+		@forms.Form(forms.FormProps{
+			Action: "/search",
+			Method: forms.FormGet,
+			Layout: forms.FormLayoutInline,
+			Class:  "mb-2 max-w-xl",
+		}) {
+			@forms.Input(forms.InputProps{
+				Type:        forms.InputSearch,
+				Name:        "q",
+				Value:       query,
+				Label:       "Search transcripts",
+				Placeholder: "e.g. woolly invoice or +17287289311",
+				EnterKeyHint: "search",
+			})
+			@display.Button(display.ButtonProps{Text: "Search", Type: display.ButtonHTMLSubmit})
+		}
 		<p class="mb-6 max-w-xl text-xs text-gray-500 dark:text-gray-400">
 			Matches transcript words and phone numbers. Partial numbers match
 			too: any run of 4+ digits finds the call (+49…, 0728…, or a
@@ -47,6 +49,7 @@ templ searchRoute(query string, hits []search.Hit, errMessage string) {
 				@display.EmptyState(display.EmptyStateProps{
 					Title:       "No matches",
 					Description: "Nothing in the index matches these terms. Check spelling, or run an ingest command — only indexed calls are searchable.",
+					Icon:        icons.Search,
 				})
 			} else {
 				@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(hits)})

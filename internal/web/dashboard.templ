@@ -9,6 +9,8 @@ import (
 	"github.com/larsartmann/templ-components/feedback"
 	"github.com/larsartmann/templ-components/forms"
 	"github.com/larsartmann/templ-components/htmx"
+	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/templ-components/layout"
 )
 
 // dashboardRoute is the quality-dashboard page (T25): a date-range picker,
@@ -25,10 +27,16 @@ templ dashboardRoute(stats DashboardStats, now time.Time, fragURL string) {
 	}
 }
 
-// rangeForm narrows the whole dashboard to a date range (R8/M20.1). Plain
-// GET form: the noscript world submits it like the list filters.
+// rangeForm narrows the whole dashboard to a date range (R8/M20.1).
+// Library Form in inline layout: GET submits server-side; the noscript
+// world submits it like the list filters.
 templ rangeForm(stats DashboardStats) {
-	<form method="get" action="/dashboard" class="mb-6 flex flex-wrap items-end gap-3">
+	@forms.Form(forms.FormProps{
+		Action: "/dashboard",
+		Method: forms.FormGet,
+		Layout: forms.FormLayoutInline,
+		Class:  "mb-6",
+	}) {
 		@forms.DatePicker(forms.DatePickerProps{
 			Name:  "from",
 			Label: "From",
@@ -39,9 +47,9 @@ templ rangeForm(stats DashboardStats) {
 			Label: "To",
 			Value: dateValue(stats.rangeTo),
 		})
-		<button type="submit" class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600">Apply</button>
-		<a href="/dashboard" class="text-sm text-gray-600 underline dark:text-gray-400">Reset</a>
-	</form>
+		@display.Button(display.ButtonProps{Text: "Apply", Type: display.ButtonHTMLSubmit})
+		@display.Button(display.ButtonProps{Text: "Reset", Href: "/dashboard", Variant: display.ButtonGhost})
+	}
 }
 
 // dashboardLive is the polled cards region (R9): htmx re-fetches fragURL
@@ -56,17 +64,17 @@ templ dashboardLive(stats DashboardStats, now time.Time, fragURL string) {
 		ShowTimestamp: true,
 	}) {
 		@statCards(stats, now)
-		<div class="grid items-start gap-6 lg:grid-cols-3">
-			<div class="space-y-6 lg:col-span-2">
+		@layout.Split(layout.SplitProps{
+			Main: @layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 				@volumeCard(stats)
 				@durationCard(stats)
-			</div>
-			<div class="space-y-6">
+			},
+			Aside: @layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 				@aiHumanCard(stats)
 				@trendCard(stats)
 				@mosCard(stats)
-			</div>
-		</div>
+			},
+		})
 	}
 }
 
@@ -78,20 +86,27 @@ templ statCards(stats DashboardStats, now time.Time) {
 			Value: strconv.Itoa(stats.Total),
 			Label: "Calls indexed",
 			Href:  "/",
+			Icon:  icons.Phone,
 		})
 		@display.StatCard(display.StatCardProps{
 			Value: strconv.Itoa(stats.Today),
 			Label: "Calls today",
 			Href:  stats.todayHref(now),
+			Icon:  icons.Calendar,
+			Tone:  display.StatToneGreen,
 		})
 		@display.StatCard(display.StatCardProps{
 			Value: aiShare(stats),
 			Label: "AI share",
 			Href:  "/?ai=yes",
+			Icon:  icons.Microphone,
+			Tone:  display.StatTonePurple,
 		})
 		@display.StatCard(display.StatCardProps{
 			Value: clockDuration(stats.AvgDuration),
 			Label: "Avg duration",
+			Icon:  icons.Clock,
+			Tone:  display.StatToneYellow,
 		})
 	}
 }
@@ -153,23 +168,21 @@ func weekDeltaLabel(delta WeekDelta) string {
 	return fmt.Sprintf("This week %s%.0f%% vs last week", sign, delta.Pct)
 }
 
-// aiHumanCard is the AI-vs-human proportion. templ-components v1.21 has no
-// SegmentBar yet (it exists unreleased upstream), so this is the minimal
-// native flex bar with exact counts in the legend — swap in SegmentBar when
-// the next version publishes.
+// aiHumanCard is the AI-vs-human proportion: a donut chart (library
+// PieChart, Donut mode) with the AI share in the center and an exact-count
+// legend. Empty indexes get the chart's own honest empty message.
 templ aiHumanCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "AI vs human"}) {
-		if stats.Total == 0 {
-			@display.SimpleEmptyState("No calls indexed yet.")
-		} else {
-			<div class="flex h-4 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
-				<div class="h-full bg-blue-600 dark:bg-blue-400" style={ proportion(stats.AICalls, stats.Total) }></div>
-				<div class="h-full bg-emerald-600 dark:bg-emerald-400" style={ proportion(stats.HumanCalls, stats.Total) }></div>
-			</div>
-			<p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-				AI { strconv.Itoa(stats.AICalls) } · Human { strconv.Itoa(stats.HumanCalls) } · { aiShare(stats) } AI
-			</p>
-		}
+		@display.PieChart(display.PieChartProps{
+			Slices: []display.PieChartSlice{
+				{Label: "AI", Value: float64(stats.AICalls), Color: "text-teal-600 dark:text-teal-400"},
+				{Label: "Human", Value: float64(stats.HumanCalls), Color: "text-gray-400 dark:text-gray-500"},
+			},
+			Donut:       true,
+			CenterLabel: aiShare(stats),
+			ShowLegend:  true,
+			EmptyMessage: "No calls indexed yet.",
+		})
 	}
 }
 
@@ -198,10 +211,19 @@ templ mosCard(stats DashboardStats) {
 				Message: "MOS scores land with the CDR Detail-Records poller (T15). This card will show the quality trend once that data flows.",
 			})
 		} else {
-			<p class="text-2xl font-semibold">{ avgMOSLabel(stats) }</p>
-			<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-				mean of { scoredCallsLabel(stats.MOSKnown) }
-			</p>
+			<div class="flex items-center gap-4">
+				@feedback.CircularProgress(feedback.CircularProgressProps{
+					Value:     mosGaugePercent(stats.AvgMOS()),
+					Size:      feedback.CircularProgressLG,
+					ShowLabel: false,
+				})
+				<div>
+					<p class="text-2xl font-semibold">{ avgMOSLabel(stats) }</p>
+					<p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
+						mean of { scoredCallsLabel(stats.MOSKnown) }
+					</p>
+				</div>
+			</div>
 			if hasWindowMOS(stats.ByDay) {
 				<div class="mt-3">
 					@display.BarChart(display.BarChartProps{
@@ -312,11 +334,15 @@ func percent(ratio float64) string {
 	return strconv.FormatFloat(ratio*100, 'f', 1, 64) + "%"
 }
 
-// proportion renders one segment's width as a CSS percentage string.
-func proportion(part, total int) string {
-	if total == 0 {
-		return "width:0%"
-	}
+// mosGaugePercent maps MOS (1–5) onto the 0–100 gauge: 1.0 bottoms out at
+// 0%, 5.0 fills the ring. Values outside the scale clamp at the rails.
+func mosGaugePercent(mos float64) int {
+	const (
+		mosFloor = 1.0
+		mosCeil  = 5.0
+	)
 
-	return "width:" + strconv.FormatFloat(float64(part)/float64(total)*100, 'f', 2, 64) + "%"
+	clamped := min(max(mos, mosFloor), mosCeil)
+
+	return int((clamped - mosFloor) / (mosCeil - mosFloor) * percentScale)
 }
