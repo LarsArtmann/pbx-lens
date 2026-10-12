@@ -23,6 +23,7 @@ func TestTemplGeneratedInSync(t *testing.T) {
 
 	cmd := exec.Command("go", "tool", "templ", "generate", "-check", "./internal/web/")
 	cmd.Dir = root
+
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		t.Fatalf("generated code is stale; run: go tool templ generate ./internal/web/\n%s", out)

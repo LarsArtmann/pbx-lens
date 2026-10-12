@@ -24,7 +24,7 @@ type RecordingFetcher interface {
 
 // DefaultUpstreamTimeout bounds each upstream hop of the recording proxy
 // when RecordingOptions.UpstreamTimeout is unset: the metadata fetch runs
-// under this deadline and the WAV stream must deliver its response headers
+// under this deadline and the audio stream must deliver its response headers
 // within it. The body itself never carries a total timeout — long
 // recordings must not be cut mid-download — and there is deliberately no
 // "unbounded" setting: an upstream that never answers must not pin a
@@ -38,7 +38,7 @@ type RecordingOptions struct {
 	// and the WAV stream's response-header budget. Zero or negative selects
 	// DefaultUpstreamTimeout.
 	UpstreamTimeout time.Duration
-	// Telnyx serves kind telnyx-conversation: the fresh signed WAV URL is
+	// Telnyx serves kind telnyx-conversation: the fresh signed audio URL is
 	// fetched SERVER-SIDE with the API key and the bytes stream through
 	// this process — neither key nor signed URL ever reaches the browser.
 	Telnyx RecordingFetcher
@@ -117,14 +117,18 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 		return
 	}
 
-	wav := recording.DownloadURLs.WAV
-	if wav == "" {
-		http.Error(w, "Telnyx reports no WAV download for this recording", http.StatusNotFound)
+	audio, audioType := recording.DownloadURLs.WAV, "audio/wav"
+	if audio == "" {
+		audio, audioType = recording.DownloadURLs.MP3, "audio/mpeg"
+	}
+
+	if audio == "" {
+		http.Error(w, "Telnyx reports no WAV or MP3 download for this recording", http.StatusNotFound)
 
 		return
 	}
 
-	upstream, err := http.NewRequestWithContext(r.Context(), http.MethodGet, wav, nil)
+	upstream, err := http.NewRequestWithContext(r.Context(), http.MethodGet, audio, nil)
 	if err != nil {
 		http.Error(w, "building the upstream request failed: "+err.Error(), http.StatusInternalServerError)
 
@@ -155,13 +159,14 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 		return
 	}
 
-	copyRecordingResponse(w, response)
+	copyRecordingResponse(w, response, audioType)
 }
 
 // copyRecordingResponse streams an upstream recording response to the
-// client, passing through the audio headers (defaulting the content type)
-// and forcing the response uncacheable since signed URLs expire.
-func copyRecordingResponse(w http.ResponseWriter, response *http.Response) {
+// client, passing through the audio headers (defaulting the content type to
+// the rendition the proxy requested) and forcing the response uncacheable
+// since signed URLs expire.
+func copyRecordingResponse(w http.ResponseWriter, response *http.Response, fallbackContentType string) {
 	for _, header := range []string{"Content-Type", "Content-Length", "Content-Range", "Accept-Ranges"} {
 		if value := response.Header.Get(header); value != "" {
 			w.Header().Set(header, value)
@@ -169,7 +174,7 @@ func copyRecordingResponse(w http.ResponseWriter, response *http.Response) {
 	}
 
 	if w.Header().Get("Content-Type") == "" {
-		w.Header().Set("Content-Type", "audio/wav")
+		w.Header().Set("Content-Type", fallbackContentType)
 	}
 
 	w.Header().Set("Cache-Control", "no-store")

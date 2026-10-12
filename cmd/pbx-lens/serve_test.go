@@ -97,7 +97,10 @@ func TestServeStackEndToEnd(t *testing.T) {
 	}
 
 	if cc := headers.Get("Cache-Control"); cc != "no-cache" {
-		t.Errorf("staleness fragment Cache-Control = %q, want no-cache (revalidate every poll even without an ETag)", cc)
+		t.Errorf(
+			"staleness fragment Cache-Control = %q, want no-cache (revalidate every poll even without an ETag)",
+			cc,
+		)
 	}
 
 	_, headers, _ = get(t, client, ts.FullChainURL, "/dashboard", nil)

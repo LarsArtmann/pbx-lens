@@ -21,6 +21,8 @@ const auditAPIKey = "KEYsuper-secret-never-in-browser"
 
 var auditWav = []byte("RIFF-fake-wav-bytes-0123456789")
 
+var auditMP3 = []byte("ID3-fake-mp3-bytes-0123456789")
+
 // fakeTelnyxState records what the fake API saw, for the audit assertions.
 type fakeTelnyxState struct {
 	authOnMetadata string
@@ -29,6 +31,9 @@ type fakeTelnyxState struct {
 
 // fakeTelnyx stands in for the Telnyx v2 API: recording metadata at
 // /v2/recordings/{id}, the signed WAV at /v2/audio.wav (Range-aware).
+// rec-mp3 mirrors the live-verified AI-assistant shape (empty wav, mp3
+// only) and serves its audio WITHOUT a Content-Type so the proxy's
+// rendition default is exercised.
 func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 	t.Helper()
 
@@ -40,6 +45,17 @@ func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":%q}}}`, wavURL)
+		case "/v2/recordings/rec-mp3":
+			state.authOnMetadata = r.Header.Get("Authorization")
+			mp3URL := "http://" + r.Host + "/v2/audio.mp3"
+
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintf(w, `{"data":{"id":"rec-mp3","download_urls":{"wav":"","mp3":%q}}}`, mp3URL)
+		case "/v2/recordings/rec-none":
+			state.authOnMetadata = r.Header.Get("Authorization")
+
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"data":{"id":"rec-none","download_urls":{"wav":"","mp3":""}}}`))
 		case "/v2/audio.wav":
 			state.rangeHeader = r.Header.Get("Range")
 			w.Header().Set("Content-Type", "audio/wav")
@@ -53,6 +69,8 @@ func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 			}
 
 			_, _ = w.Write(auditWav)
+		case "/v2/audio.mp3":
+			_, _ = w.Write(auditMP3)
 		default:
 			http.NotFound(w, r)
 		}
@@ -64,6 +82,13 @@ func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 }
 
 func telnyxRecordingObservation() calls.Observation {
+	return telnyxRecordingObservationWithRef("rec-1")
+}
+
+// telnyxRecordingObservationWithRef builds a telnyx-conversation view
+// pointing at one of the fake's recording ids; every test registers it in
+// its own mux, so the native id stays the canonical conv-rec.
+func telnyxRecordingObservationWithRef(recordingRef string) calls.Observation {
 	return calls.Observation{
 		NativeID:     "conv-rec",
 		Kind:         calls.SourceTelnyxConversation,
@@ -72,7 +97,7 @@ func telnyxRecordingObservation() calls.Observation {
 		DurationSecs: 5,
 		FromNumber:   "+17287289311",
 		ToNumber:     "+15555550123",
-		RecordingRef: "rec-1",
+		RecordingRef: recordingRef,
 	}
 }
 
@@ -123,6 +148,51 @@ func TestRecordingProxyStreamsTelnyxWav(t *testing.T) {
 
 	if state.authOnMetadata != "Bearer "+auditAPIKey {
 		t.Errorf("upstream Authorization = %q, want the server-side Bearer key", state.authOnMetadata)
+	}
+}
+
+// TestRecordingProxyFallsBackToMP3 is the live-verified shape (2026-10-12):
+// AI-assistant recordings carry an empty download_urls.wav and MP3-only
+// audio, so the proxy must stream the MP3 rendition instead of 404ing.
+func TestRecordingProxyFallsBackToMP3(t *testing.T) {
+	api := fakeTelnyx(t, &fakeTelnyxState{})
+
+	mux := newTestServerWith(t, Options{
+		Recordings: RecordingOptions{Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2")},
+	}, telnyxRecordingObservationWithRef("rec-mp3"))
+
+	status, body, header := getWithHeaders(t, mux, "/calls/telnyx-conversation/conv-rec/recording")
+	if status != http.StatusOK {
+		t.Fatalf("recording status = %d, want 200 (body: %s)", status, body)
+	}
+
+	if body != string(auditMP3) {
+		t.Errorf("body = %q, want the proxied MP3 bytes", body)
+	}
+
+	if got := header.Get("Content-Type"); got != "audio/mpeg" {
+		t.Errorf("Content-Type = %q, want the audio/mpeg rendition default", got)
+	}
+
+	if got := header.Get("Cache-Control"); got != "no-store" {
+		t.Errorf("Cache-Control = %q, want no-store (signed URLs expire)", got)
+	}
+}
+
+func TestRecordingProxyWithoutAnyRenditionAnswers404(t *testing.T) {
+	api := fakeTelnyx(t, &fakeTelnyxState{})
+
+	mux := newTestServerWith(t, Options{
+		Recordings: RecordingOptions{Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2")},
+	}, telnyxRecordingObservationWithRef("rec-none"))
+
+	status, body, _ := getWithHeaders(t, mux, "/calls/telnyx-conversation/conv-rec/recording")
+	if status != http.StatusNotFound {
+		t.Fatalf("recording status = %d, want 404 (body: %s)", status, body)
+	}
+
+	if !strings.Contains(body, "WAV or MP3") {
+		t.Errorf("404 body should name both renditions: %q", body)
 	}
 }
 
