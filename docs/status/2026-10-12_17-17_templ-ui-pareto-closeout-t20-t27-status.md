@@ -31,39 +31,39 @@ gate allowed throughout).
 
 ## b) PARTIALLY DONE
 
-1. **Golden coverage of the T21 match log** — the `?q=` path's hand-rolled
+~~1. **Golden coverage of the T21 match log** — the `?q=` path's hand-rolled~~ done at `a89adea` (page_detail_q.golden)
    markup is covered by unit tests (ids, amber class, no-marks-when-empty)
    but has NO `.golden` snapshot (detail goldens render without `q`). The
    "goldens protect T21" claim from the handoff is only true for the no-query
    path.
-2. **Visual verification of the new features** — CopyButton and match log
+~~2. **Visual verification of the new features** — CopyButton and match log~~ done at `b90b743` — probe ?q= page; 24-PNG run eyeballed dark+mobile 2026-10-12
    were browser-verified at desktop-light only. No dark-mode or mobile
    captures exist of T20/T21 rendering (the screenshot probe predates them;
    its page list has no `?q=` variant).
-3. **T22.4 drift-detection proof** — demonstrated organically (both golden
+~~3. **T22.4 drift-detection proof** — demonstrated organically (both golden~~ done at `0ac2a82`
    regenerations went red→review→update) but never explicitly annotated as
    the 22.4 exit criterion; the plan annotation covers T22 generically.
-4. **Durable evidence** — T20/T21 verify PNGs and the LineChart spike PNG
+~~4. **Durable evidence** — T20/T21 verify PNGs and the LineChart spike PNG~~ done at `09eb780` (docs/assets convention)
    live in `/tmp/lens-shots/` (volatile). The repo has no docs/assets
    convention, so the adoption-map/plan references are numeric (measurements)
    rather than linked artifacts; the spike is reproducible but not preserved.
 
 ## c) NOT STARTED
 
-1. **ScrollbackLine hook filing** — the T21 hand-roll exists because
+~~1. **ScrollbackLine hook filing** — the T21 hand-roll exists because~~ done at `ac027a4` — filed as templ-components#51
    `ScrollbackLine` has no per-line id/class hook at v1.21.0. I verified that
    limitation in detail but did NOT file it upstream (a 4th templ-components
    filing was in reach); it's only recorded in the adoption map's hand-rolled
    row.
-2. **Full `buildflow --build-mode dev` gate** — I ran the equivalent pieces
+~~2. **Full `buildflow --build-mode dev` gate** — I ran the equivalent pieces~~ done 2026-10-12 evening — full gate exit=0 post flake-hash repair
    individually (build/test/lint/nix/templ) but not the named local gate
    itself, so BuildFlow's own steps (e.g. its formatter pass) never ran over
    the new files as a unit.
-3. **Hardening the throwaway verify script** — `/tmp/verify-copy-jump.js`
+~~3. **Hardening the throwaway verify script** — `/tmp/verify-copy-jump.js`~~ done at `f306cfa` (scripts/verify-ui-contract.js)
    (copy buttons + redirect + fragment scroll + marked turn) proved its worth
    (caught the wrong-corpus and no-transcript traps) but lives in /tmp; not
    promoted into `scripts/` next to `screenshot-probe.js`.
-4. **vtsls parse errors on `scripts/screenshot-probe.js`** (lines 148+,
+~~4. **vtsls parse errors on `scripts/screenshot-probe.js`** (lines 148+,~~ routed — adjudicated vtsls false positive; node --check is the arbiter, documented in scripts/README.md
    "Declaration or statement expected") — noticed in diagnostics, dismissed
    because node runs the file fine; not investigated (may be a formatter/
    LSP disagreement worth 5 minutes).
@@ -133,69 +133,69 @@ Owner-blocked (from TODO_LIST, unchanged):
 11. Confirm next dependabot run proposes the newly-direct deps.
 
 Bounded TODO rows still open:
-12. Backup drill as a named CI step.
-13. Recording-proxy tests: injected deadlines instead of budget+sleep.
-14. `cmd/pbx-lens/ingest.go`: extract the shared open→gate→drain→rebuild seq.
-15. Surface `export_cursor_stalled` in the export UI.
-16. Export memory-budget test (bounded allocation under `exportBatchSize`).
+~~12. Backup drill as a named CI step.~~ done — named ci.yml step live (concurrent session); drill test green locally
+~~13. Recording-proxy tests: injected deadlines instead of budget+sleep.~~ done — tests already context-blocking; verified race-clean 2026-10-12
+~~14. `cmd/pbx-lens/ingest.go`: extract the shared open→gate→drain→rebuild seq.~~ done at `83fe566` (gateAndFinalize + indexsession.go)
+~~15. Surface `export_cursor_stalled` in the export UI.~~ done at `ba6ec8f` (visible honesty note on the list page)
+~~16. Export memory-budget test (bounded allocation under `exportBatchSize`).~~ done at `ba6ec8f` (TestExportMemoryBudgetStreamsPastOldCap)
 17. `/api/ops`: warn when the reported poller pass is stale.
-18. go-etag cache hooks into `/api/ops` (hit-ratio + overflow warn).
+~~18. go-etag cache hooks into `/api/ops` (hit-ratio + overflow warn).~~ done — CacheCounters + ETagMiddleware wired and tested (concurrent session; verified green)
 19. E2E cache-semantics hardening (Vary/Content-Length/HEAD variants).
-20. Render the HTTP-stack audit as the HTML research report.
-21. `/metrics` scrape + smoke from the sibling NixOS module.
-22. File BuildFlow spawn-starvation upstream.
-23. ANNOTATE + archive the 2026-10-11/12 status reports.
-24. R27.x advisory residue pass (art-dupl, branching-flow, nix-checker…).
+~~20. Render the HTTP-stack audit as the HTML research report.~~ done at `399fd50` (docs/research/)
+~~21. `/metrics` scrape + smoke from the sibling NixOS module.~~ done — sibling scrapeJobs option + lens scrape.enable (hosts eval green); text-format smoke green in serve_test.go
+~~22. File BuildFlow spawn-starvation upstream.~~ done at `a061fbb` — filed as BuildFlow#50
+~~23. ANNOTATE + archive the 2026-10-11/12 status reports.~~ routed — this annotate pass (2026-10-12); owner-gated items keep this file open
+~~24. R27.x advisory residue pass (art-dupl, branching-flow, nix-checker…).~~ done — advisory classes dispositioned in docs/buildflow-dev-gate.md; T5 gate run green
 
 This session's residue (highest-leverage first):
-25. Golden for the `?q=` match-log path (close §b1).
-26. Re-run the screenshot probe + a `?q=` page variant after T20/T21 for
+~~25. Golden for the `?q=` match-log path (close §b1).~~ done at `a89adea`
+~~26. Re-run the screenshot probe + a `?q=` page variant after T20/T21 for~~ done at `b90b743`
 mobile+dark captures (close §b2).
-27. Annotate T22.4 explicitly (close §b3).
-28. Promote the verify script into `scripts/verify-ui-contract.js` (or fold
+~~27. Annotate T22.4 explicitly (close §b3).~~ done at `0ac2a82`
+~~28. Promote the verify script into `scripts/verify-ui-contract.js` (or fold~~ done at `f306cfa`
 its assertions into the probe) (close §c3).
-29. File the ScrollbackLine id/class-hook gap as templ-components (close §c1).
-30. Investigate the vtsls parse errors on `scripts/screenshot-probe.js`.
-31. Run one full `buildflow --build-mode dev` over the tree (close §c2).
-32. art-dupl pass over the new code (the matched/unmatched line-div pair in
+~~29. File the ScrollbackLine id/class-hook gap as templ-components (close §c1).~~ done at `ac027a4` (templ-components#51)
+~~30. Investigate the vtsls parse errors on `scripts/screenshot-probe.js`.~~ routed — adjudicated false positive, documented in scripts/README.md
+~~31. Run one full `buildflow --build-mode dev` over the tree (close §c2).~~ done 2026-10-12 evening — gate exit=0
+~~32. art-dupl pass over the new code (the matched/unmatched line-div pair in~~ done at `e3c7db6` (export.go pair deduplicated)
 `transcriptMatchLog` is a duplication candidate).
-33. Preserve the LineChart spike + T20/T21 captures (or a docs/assets
+~~33. Preserve the LineChart spike + T20/T21 captures (or a docs/assets~~ done at `09eb780`
 convention decision).
-34. Tampered-`at` param test (`at=999` renders, no crash) — one-liner.
-35. Dark-mode eyeball of CopyButton + match log (library dark classes
+~~34. Tampered-`at` param test (`at=999` renders, no crash) — one-liner.~~ done at `a89adea`
+~~35. Dark-mode eyeball of CopyButton + match log (library dark classes~~ done 2026-10-12 — dark captures eyeballed, no defects
 unverified visually).
-36. Multi-match jump UX: every matched turn gets an id but only the first is
+~~36. Multi-match jump UX: every matched turn gets an id but only the first is~~ routed at `8438eca` — ROADMAP row
 a target; consider prev/next-match links once real corpora have long
 transcripts.
 
 Hygiene / noticed in passing:
-37. Extract the repeated `time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)`
+~~37. Extract the repeated `time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)`~~ done at `4e246f6` (testCallStarted)
 test seed (7+ test files) into one helper.
-38. Deduplicate the chromium auto-locate + puppeteer bootstrap between
+~~38. Deduplicate the chromium auto-locate + puppeteer bootstrap between~~ done at `f306cfa` (scripts/lib/ui-probe.js)
 `screenshot-probe.js` and any hardened verify script.
-39. Decide a `docs/assets/` (or similar) convention for durable UI evidence.
+~~39. Decide a `docs/assets/` (or similar) convention for durable UI evidence.~~ done at `09eb780`
 40. gen-tc-classes.js over-captures (6405 classes) — trim to reachable
 classes for a smaller styles.css (measure first).
 41. The auto-daemon committed the throwaway `tmprepro/main.go` mid-session
 (deletion landed later) — a scratch-dir convention (.gitignore'd) would
 keep one-off repro scaffolds out of history.
-42. FEATURES.md UI rows may lag the T13–T21 features (T26 scope didn't
+~~42. FEATURES.md UI rows may lag the T13–T21 features (T26 scope didn't~~ done at `8438eca`
 include FEATURES) — one pass to confirm.
-43. Update the 13-32 plan's mermaid graph nodes with completion ticks
+~~43. Update the 13-32 plan's mermaid graph nodes with completion ticks~~ done at `8438eca`
 (cosmetic; the EXECUTED table already carries the state).
 44. When #48 folds upstream, drop `!items-stretch` from BOTH BarChart call
 sites and re-eyeball; when #49 folds, delete the app.css focus ring.
-45. Consider scroll-margin-top on `#turn-N` targets if a page header ever
+~~45. Consider scroll-margin-top on `#turn-N` targets if a page header ever~~ routed at `8438eca` — ROADMAP row
 becomes sticky.
-46. The nolint-ledger should be greppable in CI (a test that fails when a
+~~46. The nolint-ledger should be greppable in CI (a test that fails when a~~ done at `06384d0` (scripts/check-nolint-ledger.sh + ci.yml step)
 nolint lacks a ledger row) — mirrors the palette-gate pattern.
-47. Search page: the `?q=` input value is reflected in the form (good); the
+~~47. Search page: the `?q=` input value is reflected in the form (good); the~~ routed at `8438eca` — ROADMAP row (filtered-for chip)
 detail page's q is invisible in the UI — consider a small "filtered for
 '…'" chip with a clear link.
-48. README sales page could use two of the verify captures once durable (#33).
+~~48. README sales page could use two of the verify captures once durable (#33).~~ done at `09eb780`
 49. Quarterly re-verify cluster for templ-components filings — add #48/#49/
 #50 to the calendar entry next to the Telnyx one.
-50. Harvest the T21 redirect-loop design (at-param pattern) into
+~~50. Harvest the T21 redirect-loop design (at-param pattern) into~~ done at `8438eca` (gotchas.md)
 docs/gotchas.md — it's a paid-for war story (fragment-invisible-to-
 server) worth a paragraph.
 
