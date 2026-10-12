@@ -33,4 +33,17 @@ upstream — no upstream movement to fold in yet.**
   bump of an unrelated module deleted all four templ-components requires
   (evidence: this repo's PR #1 diff + commit `40e1a49`); mechanism class of
   closed #3617. Draft + repro shape in `docs/drafts/2026-10-12_dependabot-gomod-unrelated-bump-deletes-requires.md`.
+- **go-etag#2** (filed 2026-10-12): server middleware — a handler-initiated
+  `Flush`/`Hijack` abandons ETag generation silently; `OnBufferOverflow`
+  explicitly excludes flushes (v0.6.1 `etag.go:83-88,382-419`), no hook or
+  log on the path. Real consumer proof: templ's per-section flush gave
+  every pbx-lens HTML page zero ETags. Ask: `OnFlushed` hook or debug log.
+  Draft: `docs/drafts/go-etag-server-flush-no-observability.md`.
+- **go-appkit#26** (filed 2026-10-12): testkit cleanup runs the full
+  production drain, so every `Serve` test pays the 5s default `DrainDelay`
+  (v0.8.0 `testkit.go:80,179-181`, `config.go:18`) and the
+  `Serve(tb, *Service)` shape gives tests no way to avoid it. Measured:
+  5.0s of a 5.0s package. Ask: `ServeConfig` constructor with
+  `NoDrainDelay` default or a doc line. Draft:
+  `docs/drafts/go-appkit-testkit-drain-delay-cost.md`.
 - Drafts live in `docs/drafts/` (never /tmp).
