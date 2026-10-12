@@ -12,15 +12,15 @@ user's gate run: `buildflow --fix --build-mode=full` exiting 69 with 3 failed st
 
 1. **Pre-commit check (the root cause of the original gate failure)** — the sandboxed
    pre-commit hook runs treefmt **per file** (pre-commit feeds it one file per
-   invocation), which hits templ's *single-file* formatting path. That path reformats
-   content the *batch* path leaves untouched, and needs **two passes** to converge on
+   invocation), which hits templ's _single-file_ formatting path. That path reformats
+   content the _batch_ path leaves untouched, and needs **two passes** to converge on
    some files (an inline `<span>@icons…</span>` first splits the closing tag, then the
    element). Fixed by iterating `templ fmt` per file to a fixpoint, regenerating
    `*_templ.go`, and re-running `nix build .#checks.x86_64-linux.pre-commit` → green.
    The trap is recorded in `docs/gotchas.md` (templ fmt per-file/batch divergence +
    non-idempotent first pass).
 2. **Vendor hash repair after a concurrent-session collision** — another live session's
-   interrupted hash-repair had (a) written the *main package's* real vendor hash into
+   interrupted hash-repair had (a) written the _main package's_ real vendor hash into
    `flake.nix`'s **cqrs-lint** `src.hash` and `vendorHash` slots, (b) left the fake
    `sha256-AAAA…` sentinel in `vendorHash.nix`, and (c) clobbered the
    `update-vendor-hash` script's `fake=` probe template with the real hash (which
@@ -41,7 +41,7 @@ user's gate run: `buildflow --fix --build-mode=full` exiting 69 with 3 failed st
    session's 5 added lines (verify-ui-contract.js command block) were preserved.
 5. **Toolchain-skew diagnosis and recovery** — gate steps (go-generate, golangci-lint,
    govalid-generate) failed with "go-appkit requires go ≥ 1.27.1 (running go 1.27.0)"
-   when the gate runs *outside* the devShell. Confirmed against
+   when the gate runs _outside_ the devShell. Confirmed against
    `docs/buildflow-dev-gate.md` (documented trap, 2026-10-11): the devShell ships
    nixpkgs `go_1_27` = 1.27.2 with GOTOOLCHAIN=local. Gate re-run inside
    `nix develop -c` → those steps pass.
@@ -55,7 +55,7 @@ user's gate run: `buildflow --fix --build-mode=full` exiting 69 with 3 failed st
 
 ## b) PARTIALLY DONE
 
-1. **AGENTS.md headroom = zero.** 219 wc / 220 linter-count is *at* the limit, not
+1. **AGENTS.md headroom = zero.** 219 wc / 220 linter-count is _at_ the limit, not
    under it. The file was over-limit twice today and a live concurrent session keeps
    adding to it — the next addition re-trips an error-level finding. Needs a real trim
    to ~215.
@@ -101,7 +101,7 @@ user's gate run: `buildflow --fix --build-mode=full` exiting 69 with 3 failed st
 1. **Ran the gate outside the devShell — twice.** The exact trap
    `docs/buildflow-dev-gate.md` documents (with the fix!) from 2026-10-11. I reproduced
    a known environmental failure and initially treated it as a fresh regression. The
-   doc should have been read *before* the first gate invocation.
+   doc should have been read _before_ the first gate invocation.
 2. **Hand-typed nix store hashes repeatedly.** Multiple command failures from /nix/store
    hash typos before extracting the path into a variable. Wasted cycles, zero value.
 3. **Theorized before pulling the evidence.** For the templ-fmt divergence I cycled
@@ -215,10 +215,10 @@ user's gate run: `buildflow --fix --build-mode=full` exiting 69 with 3 failed st
 
 ## g) Questions I cannot answer myself
 
-1. **Who/what wrote the hash-slot collision?** The cqrs-lint `src.hash`/`vendorHash` slots carrying the *main package's* vendor hash, the AAAA sentinel left in `vendorHash.nix`, and the clobbered `fake=` template — was that your concurrent session's `update-vendor-hash` run misbehaving (tool bug → I should fix the tool) or manual hash pasting (process issue)? This decides whether item 3 above is a tool fix or unnecessary.
+1. **Who/what wrote the hash-slot collision?** The cqrs-lint `src.hash`/`vendorHash` slots carrying the _main package's_ vendor hash, the AAAA sentinel left in `vendorHash.nix`, and the clobbered `fake=` template — was that your concurrent session's `update-vendor-hash` run misbehaving (tool bug → I should fix the tool) or manual hash pasting (process issue)? This decides whether item 3 above is a tool fix or unnecessary.
 2. **Gate invocation standard:** should the gate ALWAYS run inside the devShell via a wrapper (flake app `.#gate` / `scripts/gate.sh`), or do you want the bare `buildflow` host invocation to work too (which would mean fixing the host-go path, e.g. pinning go ≥ 1.27.1 outside nix)?
 3. **lychee policy:** authenticate private-repo link checks with GITHUB_TOKEN, or exclude `github.com/larsartmann/*` from link checks? (Fleet-level decision explicitly marked undecided in the preflight; I can implement either in minutes once you pick.)
 
 ---
 
-*Point-in-time snapshot; goes stale. Section (f) is docs-health HARVEST input.*
+_Point-in-time snapshot; goes stale. Section (f) is docs-health HARVEST input._

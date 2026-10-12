@@ -42,9 +42,13 @@ func ingestCDR(args []string) {
 		fatal(closeErr)
 	}
 
-	stats := gateAndFinalize(*db, *maxAge, func(context.Context, *system.System) ([]calls.Observation, []string, error) {
-		return parsed.Observations, nil, nil
-	})
+	stats := gateAndFinalize(
+		*db,
+		*maxAge,
+		func(context.Context, *system.System) ([]calls.Observation, []string, error) {
+			return parsed.Observations, nil, nil
+		},
+	)
 
 	fmt.Printf(
 		"ingest-cdr: %d rows parsed, %d parse-skipped, %d recorded, %d corrected, %d rejected\n",
@@ -175,9 +179,13 @@ func ingestWebhook(args []string) {
 		fatal(closeErr)
 	}
 
-	stats := gateAndFinalize(*db, *webhookMaxAge, func(context.Context, *system.System) ([]calls.Observation, []string, error) {
-		return parsed.Observations, nil, nil
-	})
+	stats := gateAndFinalize(
+		*db,
+		*webhookMaxAge,
+		func(context.Context, *system.System) ([]calls.Observation, []string, error) {
+			return parsed.Observations, nil, nil
+		},
+	)
 
 	fmt.Printf(
 		"ingest-webhook: %d calls aggregated, %d lines skipped, %d recorded, %d corrected, %d rejected\n",
@@ -203,9 +211,13 @@ func ingestAgent(args []string) {
 	// The fetch needs the live session (the parser joins the CDR view by
 	// call uuid), so the agent verb rides gateAndFinalize's fetch hook;
 	// its per-file rejections fold into the stats inside the helper.
-	stats := gateAndFinalize(*db, *agentMaxAge, func(ctx context.Context, sys *system.System) ([]calls.Observation, []string, error) {
-		return cli.FetchAgentObservations(ctx, sys, *dir)
-	})
+	stats := gateAndFinalize(
+		*db,
+		*agentMaxAge,
+		func(ctx context.Context, sys *system.System) ([]calls.Observation, []string, error) {
+			return cli.FetchAgentObservations(ctx, sys, *dir)
+		},
+	)
 
 	fmt.Printf(
 		"ingest-agent: %d transcripts ingested, %d recorded, %d corrected, %d rejected\n",

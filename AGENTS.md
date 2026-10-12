@@ -217,6 +217,4 @@ Invariants summary — read the full doc BEFORE touching its area:
 - **docs/http-stack.md** (middleware chain, ETag skip policy, render
   buffering, Cache-Control) and **docs/templ-components-adoption.md**
   (per-component truth for pinned v1.21.0; skill docs drift ahead).
-- **docs/research/2026-10-12_http-stack-adoption-audit.html** — the
-  library-deep-dive snapshot behind the HTTP-stack pass (12-47 plan);
-  carries the considered-NOT-adopted doctrine table.
+- **docs/research/2026-10-12_http-stack-adoption-audit.html** — deep-dive snapshot of the 12-47 pass, incl. the NOT-adopted table.
