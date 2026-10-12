@@ -7,7 +7,18 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- DID-interception direction auto-detect (R22, post-release slice of the
+  design note): `-ai-did` (comma-separated AI-facing DIDs) on both
+  `ingest-telnyx` and `serve`; conversations touching a known AI DID
+  index as inbound regardless of the declared `-poll-direction`/
+  `-direction`, via a mapper-side `DirectionResolver` — no migration,
+  ContentHash and idempotent re-ingest unchanged. Empty flag keeps
+  exactly the old behavior. The NixOS module option lands in
+  nix-international-telephony.
+
+Nothing else yet.
 
 ## [v0.1.0] — 2026-10-12
 

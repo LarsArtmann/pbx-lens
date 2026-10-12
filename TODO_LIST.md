@@ -40,9 +40,7 @@
 
 | Task                                                                                                                                                            | Status    | Impact | Effort | Evidence                                                                                                                                                                      |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------ | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Cut v0.1.0: annotated tag + GitHub release notes + install-path verification                                                                                    | 🔴 `TODO` | Medium | 30min  | owner ratified the release 2026-10-12 (R4); precondition = one clean full gate at load < 40; CHANGELOG current; docs/status/2026-10-12_01-16 §a.1 has the step-level evidence |
 | Sibling NixOS module: expose `-max-age` (default: unset = keep everything, owner R5) + `-recording-timeout` in `modules/telephony/lens.nix`, re-eval both hosts | 🔴 `TODO` | High   | 30min  | owner set the doctrine 2026-10-12 (R5); module lives in nix-international-telephony; docs/status/archived/2026-10-11_19-37 §f.14                                              |
-| Direction auto-detect: implement the DID-interception resolver from docs/did-direction-design.md (mapper option + `-ai-did` flag + fixtures)                    | 🔴 `TODO` | Medium | 90min  | design note 2026-10-12 (R22); plugs into `internal/ingest/telnyx/map.go`; NixOS module option is the follow-up                                                                |
 
 ## Blocked (owner / external gates)
 
