@@ -87,7 +87,20 @@ func goldenSeed() []calls.Observation {
 }
 
 func TestGoldenPages(t *testing.T) {
-	mux := newTestServerWithSearch(t, goldenSeed()...)
+	seeds := goldenSeed()
+
+	// The dashboard buckets by the wall clock (today-count, day-bucket
+	// position, trend peak), so the clock is FROZEN here: the original
+	// golden captured the seeds as "today" on 2026-10-12 and flipped at
+	// midnight Berlin. The frozen now sits the day AFTER the seeds —
+	// deterministic forever, staleness banner predictably visible.
+	mux := newTestServerWith(t,
+		Options{
+			Search: sqliteSearcher(t, seeds...),
+			Now:    func() time.Time { return time.Date(2026, 10, 13, 10, 0, 0, 0, time.UTC) },
+		},
+		seeds...,
+	)
 
 	goldenPage(t, mux, "page_calls", "/")
 	goldenPage(t, mux, "page_calls_filtered_empty", "/?direction=inbound")

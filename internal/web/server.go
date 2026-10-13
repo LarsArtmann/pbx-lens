@@ -49,6 +49,11 @@ type Options struct {
 	// ratio, buffer overflows. Nil leaves the section out; the endpoint
 	// answers when at least one of Ops and Cache is wired.
 	Cache *CacheCounters
+
+	// Now overrides the wall clock the dashboard buckets by (T22: the
+	// today-count and day-bucket position are wall-clock-relative, so the
+	// golden test pins them with a frozen clock; nil uses time.Now).
+	Now func() time.Time
 }
 
 // Searcher is the content-query surface the web UI needs.
@@ -70,6 +75,11 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		cache:      opts.Cache,
 		recTimeout: timeout,
 		upstream:   newUpstreamClient(timeout),
+		now:        opts.Now,
+	}
+
+	if web.now == nil {
+		web.now = time.Now
 	}
 
 	mux.HandleFunc("GET /{$}", web.list)
@@ -97,6 +107,7 @@ type server struct {
 	cache      *CacheCounters
 	recTimeout time.Duration
 	upstream   *http.Client
+	now        func() time.Time
 }
 
 // logf reports a failure that surfaces after the response body started —
@@ -256,7 +267,7 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters, window)
+	stats, err := DashboardStatsQuery(r.Context(), s.sys, s.now(), filters, window)
 
 	stop()
 
@@ -266,7 +277,7 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, dashboardRoute(nonce(r), stats, time.Now(), fragURL))
+	render(w, r, dashboardRoute(nonce(r), stats, s.now(), fragURL))
 }
 
 // dashboardFragment is the polled region payload (R9): the same live cards
@@ -278,7 +289,7 @@ func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, time.Now(), filters, window)
+	stats, err := DashboardStatsQuery(r.Context(), s.sys, s.now(), filters, window)
 
 	stop()
 
@@ -288,7 +299,7 @@ func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, dashboardLive(stats, time.Now(), fragURL))
+	render(w, r, dashboardLive(stats, s.now(), fragURL))
 }
 
 // parseRange reads the dashboard's date-range picker (from/to only — list
