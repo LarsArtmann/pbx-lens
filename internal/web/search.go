@@ -6,17 +6,24 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
+
+// nonce pulls the per-request CSP nonce for template rendering; empty when
+// nonce mode is off (CSP_NONCE unset).
+func nonce(r *http.Request) string {
+	return httputil.NonceFromRequest(r)
+}
 
 // searchPage serves the FTS content-search page (B3/m28-m29). The page size
 // is search.DefaultLimit — one source of truth for what one result page is.
 func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	if query == "" {
-		render(w, r, searchRoute("", nil, ""))
+		render(w, r, searchRoute(nonce(r), "", nil, ""))
 
 		return
 	}
@@ -42,7 +49,7 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, searchRoute(query, hits, ""))
+	render(w, r, searchRoute(nonce(r), query, hits, ""))
 }
 
 // detailURL is the canonical detail deep link for one indexed call — the

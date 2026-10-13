@@ -14,7 +14,6 @@ import (
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
-	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/search"
@@ -131,7 +130,7 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 
 	staleFor, stale := staleness(filters, page)
 
-	render(w, r, listRoute(httputil.NonceFromRequest(r), page, filters, staleFor, stale))
+	render(w, r, listRoute(nonce(r), page, filters, staleFor, stale))
 }
 
 // parseFilters turns query parameters into the typed query; garbage values
@@ -267,7 +266,7 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, dashboardRoute(httputil.NonceFromRequest(r), stats, time.Now(), fragURL))
+	render(w, r, dashboardRoute(nonce(r), stats, time.Now(), fragURL))
 }
 
 // dashboardFragment is the polled region payload (R9): the same live cards
@@ -432,7 +431,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
 
-		render(w, r, notFoundPage(httputil.NonceFromRequest(r), "No indexed call with that id."))
+		render(w, r, notFoundPage(nonce(r), "No indexed call with that id."))
 
 		return
 	}
@@ -450,7 +449,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	render(w, r, detailRoute(httputil.NonceFromRequest(r), view, query))
+	render(w, r, detailRoute(nonce(r), view, query))
 }
 
 // serveStyles serves the Tailwind-built stylesheet (styles.css, produced by

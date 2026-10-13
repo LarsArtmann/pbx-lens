@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"log/slog"
+	"os"
 	"time"
 
 	appkit "github.com/larsartmann/go-appkit"
@@ -215,6 +216,16 @@ func buildServiceConfig(
 		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares, auth)
 	}
 
+	// CSP nonce mode (opt-in): a per-request nonce replaces 'unsafe-inline'
+	// in script-src. Every inline script (theme, htmx self-host marker,
+	// toast container, theme toggle, mobile menu, global error handling)
+	// carries the nonce via the template shell.
+	if os.Getenv("CSP_NONCE") == "1" {
+		slog.Info("CSP nonce mode enabled", "flag", "CSP_NONCE")
+		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
+			httputil.Nonce(httputil.NonceConfig{CSPBuilder: nonceCSP}))
+	}
+
 	serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
 		web.ServerTimingMiddleware(),
 		httputil.Compression(httputil.DefaultCompressionConfig()),
@@ -222,4 +233,12 @@ func buildServiceConfig(
 	)
 
 	return serviceConfig, nil
+}
+
+// nonceCSP is the CSP header used in nonce mode: inline scripts execute only
+// with the per-request nonce; the htmx runtime, styles, images, and the
+// recording proxy are all same-origin. Inline style ATTRIBUTES (blur-up
+// placeholders) keep 'unsafe-inline' in style-src.
+func nonceCSP(nonce string) string {
+	return "default-src 'self'; script-src 'self' 'nonce-" + nonce + "'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 }
