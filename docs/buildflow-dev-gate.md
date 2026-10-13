@@ -22,8 +22,13 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   `go mod tidy -diff`, `buildflow -s golangci-lint`. The go-mod-update
   flavor of this (a starved compile gate reported as "dependency bump
   introduced compile errors" + silent go.mod/go.sum revert, 2026-10-11
-  23:59) is FILED as BuildFlow#45 (2026-10-12) — until it lands, treat that
-  message under load as an environment casualty and rerun the step.
+  23:59) was FILED as BuildFlow#45 and is FIXED (2026-10-13, BuildFlow
+  v0.8.0): starved steps now get one automatic transient retry, an
+  all-starvation run exits 75 (EX_TEMPFAIL, `pipeline.environment_starvation`,
+  with the 15-minute load average in the message) instead of 69, and the
+  summary names "N lost to starvation". After bumping the fleet binary:
+  exit 75 = rerun when the machine is quieter (or `--max-concurrency N`),
+  never a code regression; exit 69 keeps meaning code/findings.
   `vulnix` exits 1
   persistently (buildflow-internal CVE scan, network/advisory-class; not in
   the devShell — CI's govulncheck lane is the trusted one).
