@@ -17,8 +17,8 @@ import (
 // dashboardRoute is the quality-dashboard page (T25): a date-range picker,
 // then the live cards region (stat cards, volume, AI/human split, trend,
 // durations, MOS).
-templ dashboardRoute(stats DashboardStats, now time.Time, fragURL string) {
-	@shell("Dashboard — pbx-lens", "/dashboard") {
+templ dashboardRoute(nonce string, stats DashboardStats, now time.Time, fragURL string) {
+	@shell(nonce, "Dashboard — pbx-lens", "/dashboard") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Dashboard",
 			Subtitle: "Index health and call quality at a glance",

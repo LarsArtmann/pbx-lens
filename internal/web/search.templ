@@ -10,8 +10,8 @@ import (
 
 // searchRoute is the content-search page: one input, ranked hits with the
 // matched terms highlighted, every hit deep-linked to its call page.
-templ searchRoute(query string, hits []search.Hit, errMessage string) {
-	@shell("Search — pbx-lens", "/search") {
+templ searchRoute(nonce string, query string, hits []search.Hit, errMessage string) {
+	@shell(nonce, "Search — pbx-lens", "/search") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Search",
 			Subtitle: "Find any conversation by content",

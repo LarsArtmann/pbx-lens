@@ -17,8 +17,8 @@ import (
 // calls table. The banner lives in a polled region (R9): with htmx running
 // it re-checks itself every minute and disappears on recovery; without JS
 // the server-rendered fallback stands unchanged.
-templ listRoute(page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
-	@shell("Calls — pbx-lens", "/") {
+templ listRoute(nonce string, page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
+	@shell(nonce, "Calls — pbx-lens", "/") {
 		@staleLive(filters, staleFor, stale)
 		@listPage(page, filters)
 	}
@@ -46,8 +46,8 @@ templ staleLive(filters ListCallsQuery, staleFor time.Duration, stale bool) {
 // Everything is read from the one CallView snapshot. query carries the
 // search deep link (?q=, plan T21): it turns the transcript into a
 // match-marked log with per-turn anchors.
-templ detailRoute(view calls.CallView, query string) {
-	@shell(callTitle(view), "/") {
+templ detailRoute(nonce string, view calls.CallView, query string) {
+	@shell(nonce, callTitle(view), "/") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:             callTitle(view),
 			SubtitleComponent: sourceBadge(view.Kind),
@@ -315,8 +315,8 @@ templ recordingCard(view calls.CallView) {
 	}
 }
 
-templ notFoundPage(message string) {
-	@shell("Not found — pbx-lens", "/") {
+templ notFoundPage(nonce string, message string) {
+	@shell(nonce, "Not found — pbx-lens", "/") {
 		@display.EmptyState(display.EmptyStateProps{
 			Title:       "Not found",
 			Description: message,

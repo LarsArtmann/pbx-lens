@@ -10,15 +10,19 @@ import (
 // shell is the shared page frame: nav, container, footer, theme toggle.
 // Base already emits the <main> landmark — the body is layout.Container
 // (library gutter + width defaults) plus a restrained footer.
-templ shell(title string, currentPath string) {
-	@layout.Base(pageProps(title)) {
-		@feedback.ToastContainer("")
-		@nav(currentPath)
+// nonce is the per-request CSP nonce (httputil.NonceFromRequest); empty
+// means nonce mode is off and the library helpers omit the attribute.
+templ shell(nonce string, title string, currentPath string) {
+	@layout.Base(pageProps(nonce, title)) {
+		@feedback.ToastContainer(nonce)
+		@nav(nonce, currentPath)
 		@layout.Container(layout.ContainerProps{Class: "flex-1 py-8"}) {
 			{ children... }
 		}
 		@footer()
-		@htmx.GlobalErrorHandling(htmx.DefaultErrorHandlingConfig())
+		@htmx.GlobalErrorHandling(htmx.ErrorHandlingConfig{
+			Nonce: nonce,
+		})
 	}
 }
 

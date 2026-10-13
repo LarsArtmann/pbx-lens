@@ -15,9 +15,12 @@ import (
 	"github.com/larsartmann/templ-components/utils"
 )
 
-func pageProps(title string) layout.PageProps {
+func pageProps(nonce string, title string) layout.PageProps {
 	props := layout.DefaultPageProps()
 	props.Title = title
+	// Per-request CSP nonce: Base stamps it on the theme script and the
+	// self-hosted htmx script. Empty (nonce mode off) omits the attribute.
+	props.Nonce = nonce
 	// Signal palette in the mobile browser chrome (plan T16); the library
 	// default is indigo. The dark variant is a library constant — not
 	// prop-overridable in v1.21.0.
@@ -29,11 +32,12 @@ func pageProps(title string) layout.PageProps {
 	return props
 }
 
-func nav(currentPath string) templ.Component {
+func nav(nonce string, currentPath string) templ.Component {
 	return navigation.SimpleNav(navigation.SimpleNavProps{
+		BaseProps:   utils.BaseProps{Nonce: nonce},
 		BrandText:   "pbx-lens",
 		Links:       navLinks(),
-		RightItems:  layout.ThemeToggle("Toggle theme", ""),
+		RightItems:  layout.ThemeToggle("Toggle theme", nonce),
 		CurrentPath: currentPath,
 	})
 }
