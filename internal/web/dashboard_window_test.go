@@ -58,23 +58,19 @@ func TestDashboardWindowPresets(t *testing.T) {
 	}
 }
 
-// TestSearchHintHelpText pins the digits-only affordance (plan T12, vehicle
-// changed 2026-10-15): the search page advertises the phone-number shortcut
-// as the input's accessible help text, not as a floating chip beside the form.
-func TestSearchHintHelpText(t *testing.T) {
+// TestSearchHintProse pins the digits-only affordance (plan T12, trimmed
+// 2026-10-15): the search page advertises the phone-number shortcut as one
+// prose hint under the form — no floating chip beside it.
+func TestSearchHintProse(t *testing.T) {
 	mux := newTestServer(t)
 
 	_, body := getBody(t, mux, "/search")
-	if !strings.Contains(body, `aria-describedby="q-help"`) {
-		t.Error("search input must reference its help text for screen readers")
-	}
-
-	if !strings.Contains(body, `id="q-help"`) {
-		t.Error("search help text missing its accessible anchor id")
-	}
-
 	if !strings.Contains(body, "Matches transcript words and phone numbers") {
-		t.Error("search help text missing the phone-number shortcut")
+		t.Error("search page missing the phone-number shortcut hint")
+	}
+
+	if strings.Contains(body, "digits-only finds numbers") {
+		t.Error("search page still renders the redundant hint chip")
 	}
 }
 

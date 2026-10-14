@@ -20,7 +20,7 @@ templ searchRoute(nonce string, query string, hits []search.Hit, errMessage stri
 			Action: "/search",
 			Method: forms.FormGet,
 			Layout: forms.FormLayoutInline,
-			Class:  "mb-6 max-w-xl",
+			Class:  "mb-3 max-w-xl",
 		}) {
 			@forms.Input(forms.InputProps{
 				Type:         forms.InputSearch,
@@ -28,11 +28,15 @@ templ searchRoute(nonce string, query string, hits []search.Hit, errMessage stri
 				Value:        query,
 				Label:        "Search transcripts",
 				Placeholder:  "e.g. woolly invoice or +17287289311",
-				HelpText:     "Matches transcript words and phone numbers. Partial numbers match too: any run of 4+ digits finds the call (+49…, 0728…, or a mid-number snippet all work).",
 				EnterKeyHint: "search",
 			})
 			@display.Button(display.ButtonProps{Text: "Search", Type: display.ButtonHTMLSubmit})
 		}
+		<p class="mb-6 max-w-xl text-xs text-gray-500 dark:text-gray-400">
+			Matches transcript words and phone numbers. Partial numbers match
+			too: any run of 4+ digits finds the call (+49…, 0728…, or a
+			mid-number snippet all work).
+		</p>
 		if errMessage != "" {
 			@feedback.Alert(feedback.AlertProps{
 				Type:    feedback.FeedbackWarning,
