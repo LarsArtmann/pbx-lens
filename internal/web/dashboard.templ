@@ -232,11 +232,14 @@ templ volumeCard(stats DashboardStats) {
 templ durationCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call durations"}) {
 		@display.BarChart(display.BarChartProps{
-			Bars:         durationBars(stats.Durations),
-			Orient:       display.BarVertical,
-			Height:       "10rem",
-			Class:        "!items-stretch",
-			ShowValues:   true,
+			Bars:   durationBars(stats.Durations),
+			Orient: display.BarVertical,
+			Height: "10rem",
+			Class:  "!items-stretch",
+			// No printed values: five "0"s over empty buckets drown the one
+			// number that matters, and the volume chart next to it reads
+			// shape without values too — the tooltip carries the exact count.
+			ShowValues:   false,
 			EmptyMessage: "No calls indexed yet",
 		})
 	}
@@ -320,7 +323,7 @@ templ mosCard(stats DashboardStats) {
 			@feedback.Alert(feedback.AlertProps{
 				Type:    feedback.FeedbackInfo,
 				Title:   "Not available yet",
-				Message: "MOS scores land with the CDR Detail-Records poller (T15). This card will show the quality trend once that data flows.",
+				Message: "No indexed call has reported a quality score yet. Once calls carry MOS data, this card shows the mean score and its trend.",
 			})
 		} else {
 			<div class="flex items-center gap-4">

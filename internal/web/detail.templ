@@ -134,8 +134,10 @@ func detailItems(view calls.CallView) []display.DefinitionItem {
 		{Term: "To", Detail: stringOrDash(view.ToNumber), DetailComponent: copyDetail(view.ToNumber, "to number")},
 		{Term: "Started", Detail: view.StartedAt.Local().Format("Jan 2, 2006 15:04:05")},
 		{Term: "Duration", Detail: clockDuration(time.Duration(view.DurationSecs) * time.Second)},
-		{Term: "Direction", Detail: string(view.Direction)},
-		{Term: "Who", Detail: whoText(view.IsAI)},
+		// Direction/Who ride the same badges the calls table uses — one
+		// vocabulary across pages.
+		{Term: "Direction", Detail: string(view.Direction), DetailComponent: directionBadge(string(view.Direction))},
+		{Term: "Who", Detail: whoText(view.IsAI), DetailComponent: whoBadge(view.IsAI)},
 		{Term: "Hangup cause", Detail: stringOrDash(view.HangupCause)},
 	}
 	if view.CostMicros != 0 {

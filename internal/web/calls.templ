@@ -147,7 +147,10 @@ templ filterForm(filters ListCallsQuery, action string) {
 		@forms.Select(forms.SelectProps{
 			Name:  "direction",
 			Label: "Direction",
+			// "All" (value "") is the unfiltered state the browser would
+			// otherwise fake by rendering the first option as chosen.
 			Options: []forms.SelectOption{
+				{Value: "", Label: "All", Selected: filters.Direction == ""},
 				{Value: "inbound", Label: "Inbound", Selected: filters.Direction == "inbound"},
 				{Value: "outbound", Label: "Outbound", Selected: filters.Direction == "outbound"},
 			},
@@ -157,6 +160,7 @@ templ filterForm(filters ListCallsQuery, action string) {
 			Name:  "ai",
 			Label: "Who",
 			Options: []forms.SelectOption{
+				{Value: "", Label: "All", Selected: aiValue(filters.AI) == ""},
 				{Value: "yes", Label: "AI", Selected: aiValue(filters.AI) == "yes"},
 				{Value: "no", Label: "Human", Selected: aiValue(filters.AI) == "no"},
 			},
