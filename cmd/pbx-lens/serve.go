@@ -222,6 +222,7 @@ func buildServiceConfig(
 	// carries the nonce via the template shell.
 	if os.Getenv("CSP_NONCE") == "1" {
 		slog.Info("CSP nonce mode enabled", "flag", "CSP_NONCE")
+
 		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
 			httputil.Nonce(httputil.NonceConfig{CSPBuilder: nonceCSP}))
 	}

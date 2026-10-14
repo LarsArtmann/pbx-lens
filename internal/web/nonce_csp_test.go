@@ -29,6 +29,7 @@ func nonceScriptAttrs(t *testing.T, html, nonce string) {
 		}
 
 		scripts++
+
 		if !strings.Contains(part[:min(90, len(part))], `nonce="`+nonce+`"`) {
 			t.Errorf("inline <script> without nonce=%q: %.90s", nonce, strings.ReplaceAll(part, "\n", " "))
 		}
@@ -84,13 +85,14 @@ func TestNonceModeOff(t *testing.T) {
 
 // extractNonce pulls the base64url nonce value out of the CSP header.
 func extractNonce(csp string) string {
-	i := strings.Index(csp, "'nonce-")
-	if i < 0 {
+	_, after, ok := strings.Cut(csp, "'nonce-")
+	if !ok {
 		return ""
 	}
-	rest := csp[i+len("'nonce-"):]
-	if j := strings.Index(rest, "'"); j >= 0 {
-		return rest[:j]
+
+	rest := after
+	if before, _, ok := strings.Cut(rest, "'"); ok {
+		return before
 	}
 
 	return rest
