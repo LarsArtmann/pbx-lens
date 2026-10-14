@@ -36,6 +36,13 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 		}
 	}
 
+	// Browsers render the first <option> as chosen, so the unfiltered state
+	// must BE an option: both selects say All when no filter is set, instead
+	// of faking "Inbound"/"AI" while the table shows every direction.
+	if got := strings.Count(body, `<option value="" selected>All</option>`); got != 2 {
+		t.Errorf("unfiltered list All-option count = %d, want 2 (Direction and Who)", got)
+	}
+
 	// 2. Direction filter narrows the same data.
 	status, body = getBody(t, mux, "/?direction=inbound")
 	if status != http.StatusOK {

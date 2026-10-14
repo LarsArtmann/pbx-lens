@@ -241,5 +241,8 @@ func buildServiceConfig(
 // recording proxy are all same-origin. Inline style ATTRIBUTES (blur-up
 // placeholders) keep 'unsafe-inline' in style-src.
 func nonceCSP(nonce string) string {
-	return "default-src 'self'; script-src 'self' 'nonce-" + nonce + "'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; media-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+	return "default-src 'self'; script-src 'self' 'nonce-" + nonce + "';" +
+		" style-src 'self' 'unsafe-inline'; img-src 'self' data:;" +
+		" connect-src 'self'; media-src 'self'; frame-ancestors 'none';" +
+		" base-uri 'self'; form-action 'self'"
 }
