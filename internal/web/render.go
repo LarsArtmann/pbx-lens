@@ -3,6 +3,7 @@ package web
 import (
 	"bytes"
 	"net/http"
+	"strconv"
 
 	"github.com/a-h/templ"
 )
@@ -29,6 +30,12 @@ func render(w http.ResponseWriter, r *http.Request, component templ.Component) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
+	// The body is known upfront, so say so: Go's implicit Content-Length
+	// only survives responses under its 2 KiB write buffer, and pages far
+	// exceed that — without the explicit header every HTML response ships
+	// chunked. The compression middleware rewrites (or drops) the header
+	// when it actually encodes, so identity responses keep the exact value.
+	w.Header().Set("Content-Length", strconv.Itoa(page.Len()))
 
 	_, _ = w.Write(page.Bytes())
 }

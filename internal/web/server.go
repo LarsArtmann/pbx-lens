@@ -91,10 +91,13 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 
 	mux.HandleFunc("GET /{$}", web.list)
 	mux.HandleFunc("GET /dashboard", web.dashboard)
+	mux.HandleFunc("GET /dashboard/{$}", redirectTrailingSlash("/dashboard"))
 	mux.HandleFunc("GET /ops", web.opsPage)
+	mux.HandleFunc("GET /ops/{$}", redirectTrailingSlash("/ops"))
 	mux.HandleFunc("GET /frag/dashboard", web.dashboardFragment)
 	mux.HandleFunc("GET /frag/staleness", web.stalenessFragment)
 	mux.HandleFunc("GET /search", web.searchPage)
+	mux.HandleFunc("GET /search/{$}", redirectTrailingSlash("/search"))
 	mux.HandleFunc("GET /api/freshness", web.freshness)
 	mux.HandleFunc("GET /api/ops", web.opsHandler)
 	mux.HandleFunc("GET /api/export.jsonl", web.exportJSONL)
@@ -104,6 +107,16 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /app.css", serveStyles)
 	mux.HandleFunc("GET /static/htmx.min.js", serveHtmx)
 	mux.HandleFunc("GET /favicon.svg", serveFavicon)
+}
+
+// redirectTrailingSlash answers /name/ with a permanent redirect to the
+// canonical /name: the mux only auto-redirects the other direction (a subtree
+// root missing its slash), so without this a trailing-slash bookmark 404s
+// instead of reaching the canonical document's ETag chain.
+func redirectTrailingSlash(canonical string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, canonical, http.StatusMovedPermanently)
+	}
 }
 
 type server struct {

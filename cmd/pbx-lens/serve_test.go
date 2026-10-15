@@ -364,12 +364,12 @@ func TestCacheSemanticsHardening(t *testing.T) {
 		t.Errorf("/ Content-Length = %q, want %d (buffered render, single write)", cl, len(pageBody))
 	}
 
-	// The trailing-slash form is not a second cacheable document: the
-	// mux registers exact patterns, so "/dashboard/" 404s (verified under
-	// appkit v0.8 and v0.9 — there was never a canonical redirect).
+	// The trailing-slash form is not a second cacheable document: it
+	// 301s to the canonical path (web.redirectTrailingSlash), whose ETag
+	// chain then serves the document.
 	status, _, _ = get(t, client, ts.FullChainURL, "/dashboard/", nil)
-	if status != http.StatusNotFound {
-		t.Errorf("GET /dashboard/ status = %d, want 404 (exact-pattern mux, no duplicate document)", status)
+	if status != http.StatusMovedPermanently {
+		t.Errorf("GET /dashboard/ status = %d, want 301 (trailing-slash canonical redirect)", status)
 	}
 }
 
