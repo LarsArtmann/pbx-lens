@@ -10,6 +10,11 @@ env:
   GO_VERSION: "1.27"
   GOLANGCI_LINT_VERSION: v2.14
   GOEXPERIMENT: jsonv2
+  # Operator-zone determinism (R2): dashboard buckets and display renders
+  # resolve Europe/Berlin; the golden snapshots were captured there, so CI
+  # must render in the same zone or every Local() render diffs (the v0.2.0
+  # CI red: 09:01 UTC vs 11:01 Berlin in page_detail.golden).
+  TZ: Europe/Berlin
 
 jobs:
   build-and-test:
