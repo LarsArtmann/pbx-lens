@@ -223,6 +223,51 @@ Nothing else yet.
   into 304 responses and is asserted end-to-end on the dashboard fragment
   (200 + 304) and the ETag-less staleness fragment.
 
+### Added — 2026-10-15 (security hardening bundle)
+
+- `robots.txt` answers the one honest policy for a private call index
+  (`User-agent: * / Disallow: /`), intentionally public and cached a day —
+  a robots file only bites if fetchable. Every page also carries a
+  `noindex` meta (the UI library's `SEOMeta{NoIndex}`), and the route sits
+  outside the auth chain by design.
+- The recording stream now rate-limits per client address: over the limit
+  answers `429` with `Retry-After` instead of multiplying upstream Telnyx
+  fetches; loopback is exempt (tests and local use throttle nothing).
+- `CSP_REPORT_ONLY=1` switches the Content-Security-Policy to its
+  report-only twin for a dry run: the page loads exactly as today while
+  the console surfaces what enforcement would block — the collect step of
+  the enforce/adjust decision (the enforcement flip itself is still
+  pending that sweep).
+
+### Fixed — 2026-10-15 (version footer)
+
+- The footer rendered `vv0.1.1-0.2026…`: Go's `debug.Main.Version` is
+  already semver, and the footer prepended a second `v` on top. The
+  version formatting is extracted and regression-tested (`v`-prefixed,
+  bare-semver, and devel inputs all render exactly once).
+
+### Changed — 2026-10-15 (dark favicon + print)
+
+- `favicon.svg` adapts to dark browser chrome via an in-SVG
+  `prefers-color-scheme` media query (teal-700 → teal-400) — no second
+  file, no layout prop.
+- Printed transcript turns no longer split across page boundaries
+  (`break-inside: avoid` on each log line; the print block already drops
+  nav/footer/buttons).
+
+### Added — 2026-10-15 (browser-contract lane)
+
+- `scripts/verify-all.sh`: one command runs all four browser probe suites
+  (UI contracts, style contracts, staleness-live, the 41-PNG sweep) —
+  sequential on free ports, first failure fails the lane, extra arguments
+  pass through to the screenshot probe.
+- The screenshot probe gained `--only <surfaces>` (capture a subset,
+  unknown names rejected before the slow bootstrap) and an alert-only
+  pixel diff (`--diff`/`--save-baseline`/`--tolerance`, pixelmatch via
+  scratch-installed deps): visual regressions are REPORTED, never
+  red — the dashboard's live footer stamp (~0.04% of pixels) is absorbed
+  by the default tolerance by design.
+
 ## [v0.1.0] — 2026-10-12
 
 ### Fixed — 2026-10-12 (cdr ingest vs vanilla mod_cdr_csv output)

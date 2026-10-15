@@ -54,6 +54,11 @@ revisit trigger — not commitments):
 - consolidate `timing.go`/`caching.go` when a fourth middleware arrives
 - etag/gzip ratios surfaced as `appkit_*` metrics (needs appkit metric
   plumbing; `/api/ops` hook wiring is the TODO_LIST near-term)
+- CSP `report-uri` collector endpoint (2026-10-15): the CSP_REPORT_ONLY dry
+  run currently surfaces violations console-side only; a collector endpoint
+  would aggregate browser reports during the enforcement evaluation
+- Screenshot corpus compression (2026-10-15): 41 PNGs per sweep → webp or
+  on-demand capture, for eyeball-pass ergonomics
 
 ### 3. Ecosystem integration (plan phase 4)
 
@@ -61,6 +66,10 @@ The index is a consumer; the ecosystem reads from it.
 
 - Webphone read-only deep link INTO `/calls/{kind}/{id}` — the lens side is
   done; the link itself lands in the sibling repo (never a data dependency)
+- Templ codegen staleness semantics (2026-10-15): the probe inputHash work
+  found templ skips rewriting unchanged outputs (preserving stale mtimes) —
+  a possible upstream finding; evaluate via verify-before-filing before any
+  filing
 
 ### 4. Trust and safety (plan phase 4)
 
@@ -89,6 +98,8 @@ versions):
   decide-once pass, not open-ended polish
 - Date/number vocabulary (US vs EU) — decided in the owner decision pack
   (D1); the change itself is one central helper, all surfaces
+- i18n note (2026-10-15): the UI copy is English-only; the D1 EU-format
+  decision may reopen the copy-language question for the operator audience
 
 ## Non-goals
 
@@ -164,3 +175,15 @@ versions):
   ("filtered: inbound · AI · last 7 days — clear") would make the state
   visible and one-click clearable. Pairs with the existing EmptyState
   "Clear filters" CTA.
+- **Trailing-slash canonical form** (2026-10-15, 05-40 M11): `/dashboard/`
+  currently 301s to `/dashboard` (`redirectTrailingSlash`, friendlier to
+  stale bookmarks, one registration per page) vs exact-pattern 404 (simpler
+  route table, honest "path does not exist"). Two sessions fought the test
+  assertion to a draw; it is deliberately UNPINNED until one owner taste
+  call, then the test gets re-pinned (or the redirect deleted) to match.
+  (docs/status/2026-10-15_16-32_superb-0540-m11-m19-execution-multi-session.md §g.1)
+- **Pixel-diff baseline strategy** (2026-10-15): commit a light-theme
+  baseline corpus (~1-2 MB PNGs — cross-session/cross-machine alerts at
+  repo-weight cost) or keep baselines machine-local in /tmp (repo lean;
+  baseline dies with the machine). Tooling itself is live and verified;
+  only the storage trade is open. (same report §g.3)
