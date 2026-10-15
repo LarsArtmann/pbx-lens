@@ -115,7 +115,8 @@ func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
 	defer stop()
 
 	policy := retention.Policy{MaxAge: s.retention}
-	views, err := retention.OldViews(ctx, s.sys, policy, time.Now())
+
+	views, err := retention.OldViews(ctx, s.sys, policy, s.now())
 	if err != nil {
 		s.logf("retention over-age count failed: %v", err)
 

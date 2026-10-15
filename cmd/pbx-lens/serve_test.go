@@ -246,6 +246,131 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 	}
 }
 
+// TestCacheSemanticsHardening pins the conditional-GET corner cases the
+// 2026-10-15 hardening pass owed the HTTP-stack doctrine (05-40 M11):
+// content negotiation must Vary, query strings must never cross-revalidate,
+// HEAD rides the same tags, and buffered renders carry exact lengths.
+func TestCacheSemanticsHardening(t *testing.T) {
+	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
+	if err != nil {
+		t.Fatalf("open memory index: %v", err)
+	}
+
+	defer cleanup()
+
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	if err != nil {
+		t.Fatalf("build service config: %v", err)
+	}
+
+	svc, err := appkit.NewService(serviceConfig)
+	if err != nil {
+		t.Fatalf("new service: %v", err)
+	}
+
+	web.Register(svc.Mux, sys, web.Options{})
+
+	ts := testkit.Serve(t, svc)
+	client := noAutoGzip()
+
+	// Vary: the compression layer sits OUTER of the ETag layer, so tags
+	// hash identity bodies — but any cache between here and the browser
+	// must still be told the representation varies with Accept-Encoding,
+	// on the 200 AND on the 304.
+	status, headers, _ := get(t, client, ts.FullChainURL, "/frag/dashboard", map[string]string{"Accept-Encoding": "gzip"})
+	if status != http.StatusOK {
+		t.Fatalf("GET /frag/dashboard status = %d, want 200", status)
+	}
+
+	if vary := headers.Get("Vary"); !strings.Contains(vary, "Accept-Encoding") {
+		t.Errorf("200 Vary = %q, want it to name Accept-Encoding", vary)
+	}
+
+	etag := headers.Get("ETag")
+	if etag == "" {
+		t.Fatal("fragment served without an ETag")
+	}
+
+	status, headers304, _ := get(
+		t, client, ts.FullChainURL, "/frag/dashboard",
+		map[string]string{"If-None-Match": etag, "Accept-Encoding": "gzip"},
+	)
+	if status != http.StatusNotModified {
+		t.Fatalf("gzip conditional replay status = %d, want 304", status)
+	}
+
+	if vary := headers304.Get("Vary"); !strings.Contains(vary, "Accept-Encoding") {
+		t.Errorf("304 Vary = %q, want it to name Accept-Encoding (a shared cache must re-key on encoding)", vary)
+	}
+
+	// Identity replay with the SAME tag: because the tag hashes the
+	// identity body (compression is outer), an identity client revalidates
+	// too — the ordering doctrine's whole point.
+	status, _, body := get(t, client, ts.FullChainURL, "/frag/dashboard", map[string]string{"If-None-Match": etag})
+	if status != http.StatusNotModified {
+		t.Errorf("identity conditional replay status = %d, want 304 (tags hash identity bodies)", status)
+	}
+
+	if body != "" {
+		t.Errorf("identity 304 carried %d body bytes, want empty", len(body))
+	}
+
+	// Query strings must never cross-revalidate: the filtered page is a
+	// different document, and /'s tag must not stand in for it.
+	_, rootHeaders, _ := get(t, client, ts.FullChainURL, "/", nil)
+	rootTag := rootHeaders.Get("ETag")
+
+	if rootTag == "" {
+		t.Fatal("/ served without an ETag")
+	}
+
+	status, _, body = get(t, client, ts.FullChainURL, "/?direction=inbound", map[string]string{"If-None-Match": rootTag})
+	if status != http.StatusOK {
+		t.Errorf("filtered page replayed with /'s tag = %d, want 200 (distinct documents, no false 304)", status)
+	}
+
+	// HEAD rides the same validators: a conditional HEAD answers 304 with
+	// no body, so a HEAD-based monitor gets the same revalidation economy.
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, ts.FullChainURL+"/frag/dashboard", nil)
+	if err != nil {
+		t.Fatalf("build HEAD request: %v", err)
+	}
+
+	req.Header.Set("If-None-Match", etag)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("HEAD /frag/dashboard: %v", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	headBody, _ := io.ReadAll(resp.Body)
+
+	if resp.StatusCode != http.StatusNotModified || len(headBody) != 0 {
+		t.Errorf("conditional HEAD = %d with %d body bytes, want 304 with none", resp.StatusCode, len(headBody))
+	}
+
+	// Buffered renders carry an exact Content-Length: render() writes the
+	// whole page in one Write, and a missing/_chunked length would break
+	// progress UX on slow LAN links for zero streaming benefit.
+	status, pageHeaders, pageBody := get(t, client, ts.FullChainURL, "/", nil)
+	if status != http.StatusOK {
+		t.Fatalf("GET / status = %d, want 200", status)
+	}
+
+	if cl := pageHeaders.Get("Content-Length"); cl == "" || cl != strconv.Itoa(len(pageBody)) {
+		t.Errorf("/ Content-Length = %q, want %d (buffered render, single write)", cl, len(pageBody))
+	}
+
+	// The trailing-slash form is the mux's canonical redirect, not a
+	// second cacheable document.
+	status, _, _ = get(t, client, ts.FullChainURL, "/dashboard/", nil)
+	if status != http.StatusMovedPermanently {
+		t.Errorf("GET /dashboard/ status = %d, want 301 (mux canonical redirect)", status)
+	}
+}
+
 // writeTempHtpasswd materializes a one-user bcrypt htpasswd file (the
 // middleware loads entries eagerly at construction).
 func writeTempHtpasswd(t *testing.T) string {
