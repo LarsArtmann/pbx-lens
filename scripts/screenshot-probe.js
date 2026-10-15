@@ -189,7 +189,14 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
       await probe.stopProbe(serve);
       const emptyDB = path.join(OUT, "empty.db");
       if (fs.existsSync(emptyDB)) fs.rmSync(emptyDB);
-      const emptyServe = await probe.serveProbe(bin, emptyDB, PORT);
+      // Own free port: the drained serve holds PORT through its 5s
+      // graceful shutdown, so a same-port phase server either fails to
+      // bind or its ping is answered by the DYING server (2026-10-15:
+      // long-excerpt captures rendered the previous phase's DB exactly
+      // this way). A phase-local port removes the race entirely.
+      const emptyPort = await probe.findFreePort();
+      const emptyServe = await probe.serveProbe(bin, emptyDB, emptyPort);
+      const emptyBase = `http://127.0.0.1:${emptyPort}`;
       try {
         const emptyPages = [
           ["empty-calls", "/"],
@@ -203,7 +210,7 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
           for (const vp of [viewports[1]]) {
             await page.setViewport({ width: vp.w, height: vp.h });
             for (const [name, urlPath] of emptyPages.filter(([n]) => wanted(n))) {
-              const resp = await page.goto(`${BASE}${urlPath}`, {
+              const resp = await page.goto(`${emptyBase}${urlPath}`, {
                 waitUntil: "networkidle0",
                 timeout: 20000,
               });
@@ -250,14 +257,16 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
       );
       const { execFileSync } = require("child_process");
       execFileSync(bin, ["ingest-agent", "-db", longDB, "-dir", longDir], { stdio: "ignore" });
-      const longServe = await probe.serveProbe(bin, longDB, PORT);
+      const longPort = await probe.findFreePort();
+      const longServe = await probe.serveProbe(bin, longDB, longPort);
+      const longBase = `http://127.0.0.1:${longPort}`;
       try {
         for (const theme of themes) {
           const ctx = await browser.createBrowserContext();
           const page = await ctx.newPage();
           await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
           await page.setViewport({ width: viewports[1].w, height: viewports[1].h });
-          await page.goto(`${BASE}/`, { waitUntil: "networkidle0", timeout: 20000 });
+          await page.goto(`${longBase}/`, { waitUntil: "networkidle0", timeout: 20000 });
           const file = path.join(OUT, `long-excerpt-${theme}.png`);
           await page.screenshot({ path: file, fullPage: true });
           n++;

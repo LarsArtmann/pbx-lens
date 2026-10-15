@@ -29,8 +29,8 @@ go build -o pbx-lens ./cmd/pbx-lens                              # from a checko
 nix build                                                         # from a checkout (flake)
 ```
 
-No version has been tagged yet; `go install ...@latest` will work once a
-release exists.
+v0.1.0 is tagged; `go install github.com/larsartmann/pbx-lens/cmd/pbx-lens@v0.1.0`
+works from a module proxy.
 
 ## Quick start
 
@@ -74,6 +74,12 @@ pbx-lens serve -db /var/lib/pbx-lens/calls.db -addr 127.0.0.1:8300
 
 ![Dashboard: stat cards, 30-day volume, duration histogram, weekday×hour
 density heatmap, AI/human donut, MOS card](docs/assets/dashboard-light.png)
+
+The UI re-skins the component library's blues to the signal teal through one
+design-token override — including the density heatmap, which is pinned to
+`rgb(15, 118, 110)` by a built-CSS gate test and a browser-level style
+contract (`scripts/verify-style-contract.js`), so the brand can't silently
+drift back to the library violet.
 
 ![Call detail on mobile: copy-to-clipboard on the id and phone numbers, the
 amber search-jump match log](docs/assets/detail-match-log-mobile.png)
