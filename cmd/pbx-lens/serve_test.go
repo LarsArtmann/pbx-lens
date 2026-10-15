@@ -248,6 +248,35 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 	}
 }
 
+// TestBuildServiceConfigCSPNonceWiring covers the env-gated half of the CSP
+// rollout: with CSP_NONCE=1 the nonce middleware joins the chain (the
+// middleware's own behavior is pinned in internal/web), and the builder's
+// policy keeps the inline-style escape hatch and framing lockout.
+func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
+	t.Setenv("CSP_NONCE", "1")
+
+	nonced, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	if err != nil {
+		t.Fatalf("build nonced config: %v", err)
+	}
+
+	if got := len(nonced.ExtraMiddlewares); got != 4 {
+		t.Errorf("CSP_NONCE=1 ExtraMiddlewares = %d, want 4 (nonce first, then timing, compression, etag)", got)
+	}
+
+	csp := nonceCSP("abc123")
+
+	for _, want := range []string{"'nonce-abc123'", "style-src 'self' 'unsafe-inline'", "frame-ancestors 'none'"} {
+		if !strings.Contains(csp, want) {
+			t.Errorf("nonceCSP output missing %q: %s", want, csp)
+		}
+	}
+
+	if _, err := buildServiceConfig("127.0.0.1:0", t.TempDir()+"/absent-htpasswd", nil, nil); err == nil {
+		t.Error("buildServiceConfig with a missing htpasswd file must fail, want load error")
+	}
+}
+
 // TestCacheSemanticsHardening pins the conditional-GET corner cases the
 // 2026-10-15 hardening pass owed the HTTP-stack doctrine (05-40 M11):
 // content negotiation must Vary, query strings must never cross-revalidate,
