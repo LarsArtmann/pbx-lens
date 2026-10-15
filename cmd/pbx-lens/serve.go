@@ -231,6 +231,26 @@ func buildServiceConfig(
 			httputil.Nonce(httputil.NonceConfig{CSPBuilder: nonceCSP}))
 	}
 
+	// CSP report-only dry run (opt-in, plan 05-40 M15/F47): stamps the same
+	// nonce-based policy as CSP_NONCE, but as Report-Only — the browser
+	// logs would-be violations in its console without enforcing anything.
+	// The nonce middleware runs outer (appended above), so the per-request
+	// nonce is already in the request context here; a run needs
+	// CSP_REPORT_ONLY=1 (alone or with CSP_NONCE=1) and a console sweep of
+	// / and a detail page — zero violations means the enforced rollout is
+	// safe to flip.
+	if os.Getenv("CSP_REPORT_ONLY") == "1" {
+		slog.Info("CSP report-only dry run enabled", "flag", "CSP_REPORT_ONLY")
+
+		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
+			func(next http.Handler) http.Handler {
+				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.Header().Set("Content-Security-Policy-Report-Only", nonceCSP(httputil.NonceFromRequest(r)))
+					next.ServeHTTP(w, r)
+				})
+			})
+	}
+
 	serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
 		web.ServerTimingMiddleware(),
 		httputil.Compression(httputil.DefaultCompressionConfig()),

@@ -107,6 +107,18 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /app.css", serveStyles)
 	mux.HandleFunc("GET /static/htmx.min.js", serveHtmx)
 	mux.HandleFunc("GET /favicon.svg", serveFavicon)
+	mux.HandleFunc("GET /robots.txt", serveRobots)
+}
+
+// serveRobots answers the one honest robots.txt (M15/F46): everything is
+// disallowed. The pages are auth-gated operator data on a private host;
+// crawlers have no business here, and the file is cheaper than robots
+// meta alone (which the pages ALSO carry via BaseProps SEO.NoIndex). It
+// is intentionally public — robots.txt must be fetchable to be honored.
+func serveRobots(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	_, _ = w.Write([]byte("User-agent: *\nDisallow: /\n"))
 }
 
 // redirectTrailingSlash answers /name/ with a permanent redirect to the

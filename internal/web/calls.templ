@@ -30,6 +30,9 @@ func pageProps(nonce string, title string) layout.PageProps {
 	// Self-host the htmx runtime (R9): polled regions need it, and the LAN
 	// tool must not depend on a public CDN. Served at /static/htmx.min.js.
 	props.HTMXSrc = "/static/htmx.min.js"
+	// Operator tool on a private host (M15/F46): noindex everywhere — the
+	// pages are auth-gated call data; no crawler has business here.
+	props.SEO.NoIndex = true
 
 	return props
 }
