@@ -7,7 +7,18 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
-Nothing yet.
+### Added — 2026-10-15 (test hardening)
+
+- The `internal/web` package pins its clock: a `TestMain` sets `time.Local`
+  to Europe/Berlin (zones embedded via `time/tzdata`), so golden snapshots
+  and staleness fixtures render the operator zone on every machine — the
+  v0.2.0 CI red (a golden diffing 09:01 UTC vs 11:01 Berlin) was the class
+  this removes from the environment for good.
+- The full-chain revalidation contract now covers `/ops` too: the page
+  answers 200 with ETag + `Cache-Control: no-cache` and revalidates to an
+  empty 304, pinned beside the dashboard fragment in the e2e suite.
+
+Nothing else yet.
 
 ## [v0.2.0] — 2026-10-15
 
