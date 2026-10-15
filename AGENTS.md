@@ -179,15 +179,13 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
                                       # /app.css MIME trap: docs/gotchas.md); -recording-timeout bounds
                                       # proxy upstream hops (default web.DefaultUpstreamTimeout, 30 s)
 nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
-node scripts/verify-ui-contract.js    # browser-level UI contracts (T20 copy swap,
-                                      # T21 ?q= jump); self-contained codegen+build+
-                                      # seed+serve; --port optional (free OS port);
-                                      # screenshot-probe.js eyeball set — scripts/README.md
-node scripts/verify-style-contract.js   # browser-level style contracts (M1: ds-brand
-                                        # teal, heatmap pixel, All-option selects);
-                                        # Go twin: TestCSSGateBridgesHeatmapBrandToTeal
-node scripts/verify-staleness-live.js   # live staleness banner transition (M3/F11)
-bash scripts/golden-pretty-diff.sh      # readable word-diff of golden changes (M4/F12)
+bash scripts/verify-all.sh            # THE browser lane: all four probe suites
+                                      # (sequential, free ports, first-red-wins)
+GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/
+                                      # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
+node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd --save-baseline /tmp/pd
+                                      # alert-only pixel diff vs baseline; footer stamp ≈0.04% px absorbed
+individual probes: verify-ui-contract.js (T20/T21), verify-style-contract.js (M1), verify-staleness-live.js, golden-pretty-diff.sh — scripts/README.md
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
                                       # changes (buildflow -s nix-hash-fix --fix does the same)

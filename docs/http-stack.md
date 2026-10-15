@@ -54,6 +54,14 @@ untagged streaming on any Flush — without the buffer, HTML pages got ZERO
 ETags. Found by live probe, not by tests. A future gotchas.md entry tracks
 this (TODO_LIST).
 
+Exact `Content-Length` on buffered identity renders (2026-10-15, plan
+M11/F29): the buffer alone still shipped chunked at 25k+ bytes — Go's
+implicit 2 KiB sniffing buffer overshoots on big bodies — so `render` states
+the length explicitly before writing. The compression middleware then owns
+it: `httputil` v1.5.0 DELETES the handler-set length when it actually
+gzip-encodes and PRESERVES it on identity responses (verified in the module
+source before wiring). `TestCacheSemanticsHardening` pins both directions.
+
 ## Cache-Control: no-cache (2026-10-12)
 
 Every HTML response (pages AND fragments — all funnel through `render`)
@@ -89,6 +97,13 @@ Fragment Server-Timing budget (2026-10-15, empty-ish index, M8/F29):
 `/frag/dashboard` total ≈ 1.2 ms, `/frag/staleness` ≈ 0.5 ms — both orders
 of magnitude under the 30 s/60 s poll intervals; polling cost is negligible
 per pass.
+
+Concurrent-poll ceiling (2026-10-15, M11/F31, `BenchmarkConcurrentPoll`
+through the real middleware chain, parallel, dev box): 304 revalidation
+≈ 82 µs/op, full 200 ≈ 101 µs/op → ~12k polls/s per box. At the 30 s
+dashboard poll a viewer costs ~0.033 req/s; the cache contract, not CPU, is
+the scaling story. (The raw FNV-64a tag hash alone is µs-scale, sized by
+body: ≈22 µs @ 25 KB, ≈104 µs @ 122 KB — measured 2026-10-15.)
 
 ## Version and metrics
 
