@@ -118,6 +118,11 @@
             # Wrap with OUR resolved go instead. Upstream fix pending in
             # go-nix-helpers: the templ formatter should use the module's
             # goPkg when enableTempl.
+            #
+            # pkgs.templ is FMT-ONLY and DRIFTS behind the go.mod pin
+            # (v0.3.1020 vs the module's v0.3.1070): codegen MUST go through
+            # `GOEXPERIMENT=jsonv2 go tool templ generate ./internal/web/`
+            # (the go.mod tool directive), never the devShell binary.
             settings.formatter.templ.command = lib.mkForce (
               pkgs.writeShellApplication {
                 name = "templ";
