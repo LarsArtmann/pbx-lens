@@ -252,7 +252,7 @@ func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
 		t.Fatalf("write webhook log: %v", err)
 	}
 
-	counters := NewSourceCounters()
+	counters := NewSourceCounters(DefaultPollEvery)
 	PollOnce(ctx, sys, nil, PollConfig{WebhookLog: webhookLog, Counters: counters}, func(string, ...any) {})
 
 	sources, lastPass := counters.Snapshot()

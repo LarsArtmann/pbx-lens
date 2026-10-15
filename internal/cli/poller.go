@@ -61,10 +61,15 @@ type PollConfig struct {
 // SourceCounters accumulates the latest pass's per-source ingest health
 // (R15): offered/recorded/corrected/rejected per source, served at
 // /api/ops so ingest health is visible without shelling into the host.
+// Every carries the poll cadence so the snapshot can say whether the
+// reported pass is stale instead of leaving every consumer to derive it
+// from a timestamp and out-of-band knowledge of the interval.
 type SourceCounters struct {
 	mu       sync.Mutex
 	sources  map[string]SourceStat
 	lastPass time.Time
+	every    time.Duration
+	now      func() time.Time
 }
 
 // SourceStat is one source's latest-pass ingest counters.
@@ -75,9 +80,35 @@ type SourceStat struct {
 	Rejected  []string
 }
 
-// NewSourceCounters builds an empty counter set.
-func NewSourceCounters() *SourceCounters {
-	return &SourceCounters{sources: make(map[string]SourceStat)}
+// NewSourceCounters builds an empty counter set. every is the poll cadence
+// the staleness verdict is measured against; zero or negative falls back to
+// DefaultPollEvery.
+func NewSourceCounters(every time.Duration) *SourceCounters {
+	return &SourceCounters{sources: make(map[string]SourceStat), every: every, now: time.Now}
+}
+
+// staleAfterPasses is the staleness threshold in cadences: a pass older
+// than two intervals means the poller missed a tick — hung, crashed, or
+// the host slept. One missed tick is tolerated; two is a verdict.
+const staleAfterPasses = 2
+
+// stalePass is the pass-age verdict behind the ops payload's stale flag:
+// how long ago the latest pass ran and whether that is already past the
+// tolerated miss count. A zero lastPass (no pass ever recorded) is stale
+// by definition — an ops endpoint answering before the first pass means
+// the poller has not proven itself yet.
+func stalePass(lastPass time.Time, every time.Duration, now time.Time) (age time.Duration, stale bool) {
+	if every <= 0 {
+		every = DefaultPollEvery
+	}
+
+	if lastPass.IsZero() {
+		return -1, true
+	}
+
+	age = now.Sub(lastPass)
+
+	return age, age > every*staleAfterPasses
 }
 
 // Record folds one pass's stats into the source's slot (latest pass wins;
@@ -370,12 +401,24 @@ func mergeStats(into, from IngestStats) IngestStats {
 }
 
 // SnapshotAny exposes the counters as the untyped payload the web layer
-// serves at /api/ops (cli stays decoupled from the web package).
+// serves at /api/ops (cli stays decoupled from the web package). The age
+// and stale keys carry the pass-health verdict so consumers get an honest
+// answer instead of deriving one from the timestamp: age is -1 when no
+// pass has ever been recorded (and stale is then true by definition).
 func (c *SourceCounters) SnapshotAny() any {
-	sources, lastPass := c.Snapshot()
+	c.mu.Lock()
+
+	sources := make(map[string]SourceStat, len(c.sources))
+	maps.Copy(sources, c.sources)
+	lastPass, every, now := c.lastPass, c.every, c.now
+	c.mu.Unlock()
+
+	age, stale := stalePass(lastPass, every, now())
 
 	return map[string]any{
-		"sources":   sources,
-		"last_pass": lastPass,
+		"sources":                sources,
+		"last_pass":              lastPass,
+		"last_pass_age_seconds":  age.Seconds(),
+		"stale":                  stale,
 	}
 }

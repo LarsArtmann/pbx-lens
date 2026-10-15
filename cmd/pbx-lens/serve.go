@@ -136,7 +136,7 @@ func serve(args []string) {
 		fatal(err)
 	}
 
-	counters := cli.NewSourceCounters()
+	counters := cli.NewSourceCounters(*pollEvery)
 
 	recordings := web.RecordingOptions{RecordingsDir: *recordingsDir, UpstreamTimeout: *recTimeout}
 
