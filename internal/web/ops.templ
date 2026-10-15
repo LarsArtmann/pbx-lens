@@ -28,6 +28,7 @@ templ opsRoute(nonce string, snap opsSnapshot) {
 			})
 		} else {
 			@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
+				@opsRetentionCard(snap.Retention)
 				if snap.Poller != nil {
 					@opsPollerCard(*snap.Poller)
 				}
@@ -36,6 +37,47 @@ templ opsRoute(nonce string, snap opsSnapshot) {
 				}
 			}
 		}
+	}
+}
+
+// opsRetentionCard is the age-posture card (05-40 M10): the configured
+// window, the live would-retire count, and where the audit trail lives.
+// The purge itself runs out-of-band (a timer or manual `pbx-lens purge`),
+// and the call.retired tombstones in the event log are what was retired —
+// the card says so instead of inventing an execution record it does not
+// have.
+templ opsRetentionCard(r retentionSnapshot) {
+	@display.Card(display.CardProps{Title: "Retention"}) {
+		if !r.Active {
+			@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
+				{Term: "Window", Detail: "off — keeping everything"},
+				{Term: "Past the window", Detail: "nothing; set -max-age to bound the index"},
+			}})
+		} else {
+			if r.CountKnown && r.OverAge > 0 {
+				@feedback.Alert(feedback.AlertProps{
+					Type:    feedback.FeedbackWarning,
+					Title:   strconv.Itoa(r.OverAge) + " call(s) past the retention window",
+					Message: "They leave the index on the next purge run (a timer or manual `pbx-lens purge`). Preview with `purge -dry-run -json`.",
+				})
+			}
+			@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
+				{Term: "Window", Detail: format.CompactDuration(r.MaxAge)},
+				{Term: "Past the window now", Detail: opsOverAgeText(r)},
+				{Term: "Audit trail", Detail: "the event log's call.retired tombstones"},
+			}})
+		}
+	}
+}
+
+func opsOverAgeText(r retentionSnapshot) string {
+	switch {
+	case !r.CountKnown:
+		return "count unavailable"
+	case r.OverAge == 0:
+		return "none"
+	default:
+		return strconv.Itoa(r.OverAge)
 	}
 }
 

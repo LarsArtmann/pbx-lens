@@ -50,6 +50,12 @@ type Options struct {
 	// answers when at least one of Ops and Cache is wired.
 	Cache *CacheCounters
 
+	// RetentionMaxAge is the age window the ops page reports on (05-40
+	// M10): the serve poller's ingest gate, shown alongside a live count of
+	// indexed calls currently past it. Zero renders "off — keeping
+	// everything"; retention must be opted into, never silent.
+	RetentionMaxAge time.Duration
+
 	// Now overrides the wall clock the dashboard buckets by (T22: the
 	// today-count and day-bucket position are wall-clock-relative, so the
 	// golden test pins them with a frozen clock; nil uses time.Now).
@@ -73,6 +79,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		log:        opts.Log,
 		ops:        opts.Ops,
 		cache:      opts.Cache,
+		retention:  opts.RetentionMaxAge,
 		recTimeout: timeout,
 		upstream:   newUpstreamClient(timeout),
 		now:        opts.Now,
@@ -106,6 +113,7 @@ type server struct {
 	log        func(msg string, args ...any)
 	ops        func() any
 	cache      *CacheCounters
+	retention  time.Duration
 	recTimeout time.Duration
 	upstream   *http.Client
 	now        func() time.Time

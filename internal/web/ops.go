@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"encoding/json/v2"
 	"net/http"
 	"slices"
@@ -8,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	servertiming "github.com/larsartmann/httputil/server_timing"
+	"github.com/larsartmann/pbx-lens/internal/retention"
 	"github.com/larsartmann/templ-components/utils/format"
 )
 
@@ -21,7 +24,22 @@ import (
 type opsSnapshot struct {
 	Poller *opsPoller
 	Cache  *CacheStats
-	Wired  bool
+	// Retention is the age-posture card: always present — "off" is a fact
+	// the operator should see, not an absence to guess at.
+	Retention retentionSnapshot
+	Wired     bool
+}
+
+// retentionSnapshot is the /ops retention card's view: the configured
+// window, whether it is active, and how many indexed calls currently
+// violate it (the would-retire count a purge would act on).
+type retentionSnapshot struct {
+	MaxAge time.Duration
+	Active bool
+	// OverAge is the live would-retire count; CountKnown is false when the
+	// scan failed (the card then says so instead of showing a fake zero).
+	OverAge    int
+	CountKnown bool
 }
 
 // opsPoller is the decoded poller section: per-source counters plus the
@@ -64,9 +82,12 @@ type opsWireSource struct {
 	Rejected  []string `json:"rejected"`
 }
 
-// collectOps gathers and decodes both counter sections for the page.
-func (s *server) collectOps() opsSnapshot {
-	snap := opsSnapshot{Wired: s.ops != nil || s.cache != nil}
+// collectOps gathers and decodes every counter section for the page.
+func (s *server) collectOps(ctx context.Context) opsSnapshot {
+	snap := opsSnapshot{
+		Wired:     s.ops != nil || s.cache != nil,
+		Retention: s.collectRetention(ctx),
+	}
 
 	if s.ops != nil {
 		snap.Poller = decodeOpsPoller(s.ops())
@@ -76,6 +97,33 @@ func (s *server) collectOps() opsSnapshot {
 		cache := s.cache.Snapshot()
 		snap.Cache = &cache
 	}
+
+	return snap
+}
+
+// collectRetention counts the indexed calls past the age window (the
+// would-retire set a purge would act on). The scan is the same bounded
+// read the purge's own -dry-run uses — read-only over the disposable
+// index, never over a source.
+func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
+	snap := retentionSnapshot{MaxAge: s.retention, Active: s.retention > 0}
+	if !snap.Active {
+		return snap
+	}
+
+	stop := servertiming.MeasureServerTiming(ctx, "retention")
+	defer stop()
+
+	policy := retention.Policy{MaxAge: s.retention}
+	views, err := retention.OldViews(ctx, s.sys, policy, time.Now())
+	if err != nil {
+		s.logf("retention over-age count failed: %v", err)
+
+		return snap
+	}
+
+	snap.OverAge = len(views)
+	snap.CountKnown = true
 
 	return snap
 }
@@ -133,7 +181,7 @@ func decodeOpsPoller(poller any) *opsPoller {
 // opsPage serves the human /ops page: the same counters /api/ops serves,
 // rendered for a glance instead of a scrape.
 func (s *server) opsPage(w http.ResponseWriter, r *http.Request) {
-	render(w, r, opsRoute(nonce(r), s.collectOps()))
+	render(w, r, opsRoute(nonce(r), s.collectOps(r.Context())))
 }
 
 // totalRejected sums a source row's rejection reasons for the table cell.

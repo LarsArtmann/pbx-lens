@@ -155,7 +155,11 @@ func serve(args []string) {
 	web.Register(
 		svc.Mux,
 		sys,
-		web.Options{Recordings: recordings, Search: index, Log: slogLog, Ops: counters.SnapshotAny, Cache: cacheStats},
+		web.Options{
+			Recordings: recordings, Search: index, Log: slogLog,
+			Ops: counters.SnapshotAny, Cache: cacheStats,
+			RetentionMaxAge: *maxAge,
+		},
 	)
 
 	// The poller keeps the index fresh until shutdown; each pass drains
