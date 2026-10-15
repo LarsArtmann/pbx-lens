@@ -76,6 +76,20 @@ Remaining raw idea:
   R22) — the mapping rule and its ingestion plug-point are sketched there
   as a TODO_LIST row
 
+UI long-tail raw ideas (2026-10-15 UI-contract plan M11/M17/M19 harvest;
+each parked on its own trigger — the rows in TODO_LIST carry the actionable
+versions):
+
+- SegmentBar / FilterBar adoption re-evals on the next templ-components
+  bump (absent at v1.21.0; the bump watchlist in
+  docs/templ-components-adoption.md is the trigger)
+- Mobile card-list for the calls table vs the current horizontal scroll
+  (owner taste call gates the sketch)
+- Dashboard SectionHeading trial and hit-card hover consistency — one
+  decide-once pass, not open-ended polish
+- Date/number vocabulary (US vs EU) — decided in the owner decision pack
+  (D1); the change itself is one central helper, all surfaces
+
 ## Non-goals
 
 - **Writing to any source.** Read-only over FreeSWITCH, Telnyx, and the
