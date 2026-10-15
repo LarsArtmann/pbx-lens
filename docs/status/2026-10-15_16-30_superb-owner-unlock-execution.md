@@ -45,8 +45,8 @@
 - **M16 perf rails:** `BenchmarkListCalls10k` (36.3 ms/op, 95 KB,
   677 allocs @ load-74), `TestDetail500TurnTranscriptRenders` (far-end
   ?q= anchor lands, no duplication), `TestParseMalformedJSONLNeverPanics`
-  + over-ceiling scanner error pin, `BenchmarkETagHashCost` (FNV-64a
-  22 µs @ 25 KB / 104 µs @ 122 KB — thousands of pollers per core).
+  - over-ceiling scanner error pin, `BenchmarkETagHashCost` (FNV-64a
+    22 µs @ 25 KB / 104 µs @ 122 KB — thousands of pollers per core).
 - **M13 hygiene:** AGENTS.md PNG-count wording made rot-proof, README
   teal-evidence line, TestSearchHintProse tripwire decision recorded,
   long-excerpt fixture folded into screenshot-probe as a permanent phase
@@ -74,7 +74,7 @@ wording.
 
 ## e. Gate receipt (F7/M6)
 
-- Individual: `go build`, full `go test ./...` (15 packages), 
+- Individual: `go build`, full `go test ./...` (15 packages),
   `golangci-lint run ./...` (0 issues), `nix build` (exit 0) — all green
   on the tagged tree; all four browser probes ALL PASS
   (`verify-all.sh`); dark dashboard + long-excerpt + 768px tablet
