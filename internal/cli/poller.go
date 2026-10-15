@@ -96,14 +96,15 @@ const staleAfterPasses = 2
 // how long ago the latest pass ran and whether that is already past the
 // tolerated miss count. A zero lastPass (no pass ever recorded) is stale
 // by definition — an ops endpoint answering before the first pass means
-// the poller has not proven itself yet.
+// the poller has not proven itself yet. The sentinel is -1s so it
+// survives the payload's Seconds() conversion as exactly -1.
 func stalePass(lastPass time.Time, every time.Duration, now time.Time) (age time.Duration, stale bool) {
 	if every <= 0 {
 		every = DefaultPollEvery
 	}
 
 	if lastPass.IsZero() {
-		return -1, true
+		return -1 * time.Second, true
 	}
 
 	age = now.Sub(lastPass)
@@ -123,7 +124,7 @@ func (c *SourceCounters) Record(source string, stats IngestStats) {
 		Corrected: stats.Corrected,
 		Rejected:  stats.Rejected,
 	}
-	c.lastPass = time.Now().UTC()
+	c.lastPass = c.now().UTC()
 }
 
 // Snapshot copies the counters for serving.

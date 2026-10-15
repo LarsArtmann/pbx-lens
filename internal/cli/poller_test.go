@@ -270,3 +270,107 @@ func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
 		t.Error("unconfigured sources must still appear (zeroed), so ops sees the whole picture")
 	}
 }
+
+func TestStalePass(t *testing.T) {
+	// The pass-age verdict behind the ops payload's stale flag: one missed
+	// tick is tolerated, two is a verdict, and "never ran" is stale now.
+	now := time.Date(2026, 10, 15, 5, 0, 0, 0, time.UTC)
+	every := 15 * time.Minute
+
+	tests := []struct {
+		name      string
+		lastPass  time.Time
+		every     time.Duration
+		wantAge   time.Duration
+		wantStale bool
+	}{
+		{
+			name:      "never recorded is stale with sentinel age",
+			lastPass:  time.Time{},
+			wantAge:   -1 * time.Second,
+			wantStale: true,
+		},
+		{
+			name:      "fresh pass inside one cadence is healthy",
+			lastPass:  now.Add(-5 * time.Minute),
+			wantAge:   5 * time.Minute,
+			wantStale: false,
+		},
+		{
+			name:      "one missed tick is tolerated",
+			lastPass:  now.Add(-2*every + time.Minute),
+			wantAge:   2*every - time.Minute,
+			wantStale: false,
+		},
+		{
+			name:      "two cadences is a verdict",
+			lastPass:  now.Add(-2 * every),
+			wantAge:   2 * every,
+			wantStale: false,
+		},
+		{
+			name:      "past two cadences is stale",
+			lastPass:  now.Add(-2*every - time.Second),
+			wantAge:   2*every + time.Second,
+			wantStale: true,
+		},
+		{
+			name:      "zero cadence falls back to the default",
+			lastPass:  now.Add(-2*DefaultPollEvery - time.Minute),
+			every:     0,
+			wantAge:   2*DefaultPollEvery + time.Minute,
+			wantStale: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			age, stale := stalePass(tt.lastPass, tt.every, now)
+			if age != tt.wantAge {
+				t.Errorf("age = %v, want %v", age, tt.wantAge)
+			}
+
+			if stale != tt.wantStale {
+				t.Errorf("stale = %v, want %v", stale, tt.wantStale)
+			}
+		})
+	}
+}
+
+func TestSnapshotAnyReportsStaleVerdict(t *testing.T) {
+	// The payload answers "is the poller alive" directly, so a monitor
+	// never re-derives staleness from the timestamp and a cadence it has
+	// to know out of band. The clock is injected — no sleeps.
+	counters := NewSourceCounters(15 * time.Minute)
+	freeze := time.Date(2026, 10, 15, 5, 0, 0, 0, time.UTC)
+	counters.now = func() time.Time { return freeze }
+
+	payload := counters.SnapshotAny().(map[string]any)
+
+	if stale, ok := payload["stale"].(bool); !ok || !stale {
+		t.Errorf("stale = %v (%T), want true before the first pass", payload["stale"], payload["stale"])
+	}
+
+	if age, ok := payload["last_pass_age_seconds"].(float64); !ok || age != -1 {
+		t.Errorf("last_pass_age_seconds = %v, want -1 before the first pass", payload["last_pass_age_seconds"])
+	}
+
+	counters.Record("webhook-log", IngestStats{Total: 1, Recorded: 1})
+
+	payload = counters.SnapshotAny().(map[string]any)
+
+	if stale, ok := payload["stale"].(bool); !ok || stale {
+		t.Errorf("stale = %v, want false right after a pass", payload["stale"])
+	}
+
+	if _, ok := payload["last_pass"].(time.Time); !ok {
+		t.Errorf("last_pass = %T, want time.Time", payload["last_pass"])
+	}
+
+	counters.lastPass = freeze.Add(-45 * time.Minute)
+	payload = counters.SnapshotAny().(map[string]any)
+
+	if stale, ok := payload["stale"].(bool); !ok || !stale {
+		t.Errorf("stale = %v, want true at three missed cadences", payload["stale"])
+	}
+}
