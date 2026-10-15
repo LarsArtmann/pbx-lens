@@ -331,7 +331,7 @@ func TestCacheSemanticsHardening(t *testing.T) {
 		t.Fatal("/ served without an ETag")
 	}
 
-	status, _, body = get(
+	status, _, _ = get(
 		t, client, ts.FullChainURL, "/?direction=inbound",
 		map[string]string{"If-None-Match": rootTag},
 	)
