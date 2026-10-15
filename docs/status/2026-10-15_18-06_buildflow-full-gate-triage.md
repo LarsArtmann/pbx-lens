@@ -160,6 +160,7 @@
    count was re-checked after the concurrent 17:22 trim.
 
 ## f) Next things (brainstorm — impact-ordered, not commitments; HARVEST
+
 should route these into TODO_LIST.md / ROADMAP.md)
 
 1. Rebuild the BuildFlow binary from a clean checkout (BuildFlow#56), then
@@ -261,16 +262,16 @@ should route these into TODO_LIST.md / ROADMAP.md)
 
 ## Verification appendix (what was actually run)
 
-| Check | Result |
-| --- | --- |
-| `GOEXPERIMENT=jsonv2 go test -race -shuffle=on ./...` (devShell) | 14/14 packages ok |
-| `buildflow -s test-race` (scoped, no result cache) | exit 0, all packages ok |
-| `buildflow -s go-structure-linter` (scoped, twice: before/after trim) | exit 1 → exit 0 |
-| `go mod tidy -diff` | clean |
-| `nix build` + `./result/bin/pbx-lens version` | exit 0, `pbx-lens 0.2.0` |
-| `nix-instantiate --parse flake.nix` | ok |
-| `dprint fmt` on all edited files | clean |
-| AGENTS.md line count | 219 (`wc -l`), tool-visible ≤220 |
+| Check                                                                 | Result                           |
+| --------------------------------------------------------------------- | -------------------------------- |
+| `GOEXPERIMENT=jsonv2 go test -race -shuffle=on ./...` (devShell)      | 14/14 packages ok                |
+| `buildflow -s test-race` (scoped, no result cache)                    | exit 0, all packages ok          |
+| `buildflow -s go-structure-linter` (scoped, twice: before/after trim) | exit 1 → exit 0                  |
+| `go mod tidy -diff`                                                   | clean                            |
+| `nix build` + `./result/bin/pbx-lens version`                         | exit 0, `pbx-lens 0.2.0`         |
+| `nix-instantiate --parse flake.nix`                                   | ok                               |
+| `dprint fmt` on all edited files                                      | clean                            |
+| AGENTS.md line count                                                  | 219 (`wc -l`), tool-visible ≤220 |
 
 **Files touched this session:** AGENTS.md, docs/gotchas.md,
 docs/buildflow-dev-gate.md, flake.nix (comments/docs only — zero Go/Nix
