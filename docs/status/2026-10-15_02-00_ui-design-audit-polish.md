@@ -15,21 +15,21 @@
 
 ## a) FULLY DONE
 
-| # | Work | Evidence |
-|---|------|----------|
-| 1 | Full page inventory + code read: shell/page, calls list, call detail, search, dashboard, staleness/dashboard fragments, 404 | `internal/web/*.templ`, `server.go` routes |
-| 2 | 24 before-screenshots captured and eyeballed (light/dark × mobile/desktop) | `/tmp/lens-shots-before` |
-| 3 | **Heatmap palette leak closed.** `display.Heatmap` is the one component off the tc-* token chain: it fills cells via `rgba(var(--ds-brand-rgb), α)` and rings its peak cell with `var(--ds-brand)`, both defaulting to violet-600. app.css now re-bridges both onto teal (teal-700 light / teal-400 dark), after the imports so the override wins | `internal/web/static/app.css` `:root`/`.dark` blocks; teal peak cells verified in light+dark screenshots |
-| 4 | **Truthful filter selects.** Direction/Who showed "Inbound"/"AI" while unfiltered (browsers render option 1 as chosen — the control claimed a filter that wasn't set). Explicit `All` options (value `""`, selected when empty) make the control state honest; verified `templ` emits `value=""` literally and `parseFilters` treats `""` as unfiltered (server.go:152-217) | `calls.templ` filterForm; golden diff shows `<option value="" selected>All</option>` ×2 |
-| 5 | **MOS alert de-jargoned.** Removed the internal plan ID "(T15)" from user-facing copy; now states what will make data appear | `dashboard.templ` mosCard |
-| 6 | **Duration histogram noise off.** Five printed "0"s over empty buckets drowned the one real number; `ShowValues: false` matches the volume chart's established pattern, tooltips carry exact counts | `dashboard.templ` durationCard; golden diff drops the spans |
-| 7 | **Search hint trimmed.** Dropped the redundant floating "digits-only finds numbers" chip; the prose hint stays under the one-row form (label + input + Search button) | `search.templ` |
-| 8 | **Detail facts consistency.** Direction/Who on the detail page now render the same badges the calls table uses — one vocabulary across pages | `detail.templ` detailItems reusing `directionBadge`/`whoBadge` |
-| 9 | Test pins updated to the new contracts: `TestSearchHintChip` → `TestSearchHintProse` (pins hint present AND chip absent); new All-option contract pinned in `TestOneFlowFromSeedToDetail` | `dashboard_window_test.go`, `flow_test.go` |
-| 10 | Goldens regenerated (`-update`), diff **reviewed line-by-line via word-diff** (6 files, exactly the intended changes, nothing else) | `internal/web/testdata/*.golden` |
-| 11 | Full verification: `go build ./...` clean, **14/14 packages green**, `golangci-lint run ./...` → **0 issues**, `verify-ui-contract.js` → **ALL PASS** (copy buttons, `?q=` → 302 → `#turn-N` → amber mark → real fragment scroll), 24 after-screenshots eyeballed | session runs |
-| 12 | AGENTS.md palette doctrine updated with the Heatmap bridge contract (incl. the comma-tripplet legacy-rgba constraint); also fixed the drifted teal values in that bullet (said teal-600/teal-500, reality is teal-700/teal-800) | `AGENTS.md` UI theme bullet |
-| 13 | Pre-existing `lll` lint violation in `cmd/pbx-lens/serve.go:244` (224-char CSP line) fixed on sight — CI lane would have failed on it | wrapped string concat; tests re-run green |
+| #  | Work                                                                                                                                                                                                                                                                                                                                                                        | Evidence                                                                                                 |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1  | Full page inventory + code read: shell/page, calls list, call detail, search, dashboard, staleness/dashboard fragments, 404                                                                                                                                                                                                                                                 | `internal/web/*.templ`, `server.go` routes                                                               |
+| 2  | 24 before-screenshots captured and eyeballed (light/dark × mobile/desktop)                                                                                                                                                                                                                                                                                                  | `/tmp/lens-shots-before`                                                                                 |
+| 3  | **Heatmap palette leak closed.** `display.Heatmap` is the one component off the tc-* token chain: it fills cells via `rgba(var(--ds-brand-rgb), α)` and rings its peak cell with `var(--ds-brand)`, both defaulting to violet-600. app.css now re-bridges both onto teal (teal-700 light / teal-400 dark), after the imports so the override wins                           | `internal/web/static/app.css` `:root`/`.dark` blocks; teal peak cells verified in light+dark screenshots |
+| 4  | **Truthful filter selects.** Direction/Who showed "Inbound"/"AI" while unfiltered (browsers render option 1 as chosen — the control claimed a filter that wasn't set). Explicit `All` options (value `""`, selected when empty) make the control state honest; verified `templ` emits `value=""` literally and `parseFilters` treats `""` as unfiltered (server.go:152-217) | `calls.templ` filterForm; golden diff shows `<option value="" selected>All</option>` ×2                  |
+| 5  | **MOS alert de-jargoned.** Removed the internal plan ID "(T15)" from user-facing copy; now states what will make data appear                                                                                                                                                                                                                                                | `dashboard.templ` mosCard                                                                                |
+| 6  | **Duration histogram noise off.** Five printed "0"s over empty buckets drowned the one real number; `ShowValues: false` matches the volume chart's established pattern, tooltips carry exact counts                                                                                                                                                                         | `dashboard.templ` durationCard; golden diff drops the spans                                              |
+| 7  | **Search hint trimmed.** Dropped the redundant floating "digits-only finds numbers" chip; the prose hint stays under the one-row form (label + input + Search button)                                                                                                                                                                                                       | `search.templ`                                                                                           |
+| 8  | **Detail facts consistency.** Direction/Who on the detail page now render the same badges the calls table uses — one vocabulary across pages                                                                                                                                                                                                                                | `detail.templ` detailItems reusing `directionBadge`/`whoBadge`                                           |
+| 9  | Test pins updated to the new contracts: `TestSearchHintChip` → `TestSearchHintProse` (pins hint present AND chip absent); new All-option contract pinned in `TestOneFlowFromSeedToDetail`                                                                                                                                                                                   | `dashboard_window_test.go`, `flow_test.go`                                                               |
+| 10 | Goldens regenerated (`-update`), diff **reviewed line-by-line via word-diff** (6 files, exactly the intended changes, nothing else)                                                                                                                                                                                                                                         | `internal/web/testdata/*.golden`                                                                         |
+| 11 | Full verification: `go build ./...` clean, **14/14 packages green**, `golangci-lint run ./...` → **0 issues**, `verify-ui-contract.js` → **ALL PASS** (copy buttons, `?q=` → 302 → `#turn-N` → amber mark → real fragment scroll), 24 after-screenshots eyeballed                                                                                                           | session runs                                                                                             |
+| 12 | AGENTS.md palette doctrine updated with the Heatmap bridge contract (incl. the comma-tripplet legacy-rgba constraint); also fixed the drifted teal values in that bullet (said teal-600/teal-500, reality is teal-700/teal-800)                                                                                                                                             | `AGENTS.md` UI theme bullet                                                                              |
+| 13 | Pre-existing `lll` lint violation in `cmd/pbx-lens/serve.go:244` (224-char CSP line) fixed on sight — CI lane would have failed on it                                                                                                                                                                                                                                       | wrapped string concat; tests re-run green                                                                |
 
 ## b) PARTIALLY DONE
 
@@ -96,7 +96,7 @@ honestly:
 ## e) WHAT WE SHOULD IMPROVE
 
 1. **CSS has no palette gate.** `TestNoRawPaletteClasses` only scans `.templ`
-   files for `-blue-N`. The ds-brand leak lived in CSS *defaults* and reached
+   files for `-blue-N`. The ds-brand leak lived in CSS _defaults_ and reached
    production-visible pixels for weeks. A companion gate should assert the
    bridge exists (e.g. styles.css contains the teal `--ds-brand-rgb`
    triplets, or a computed-style probe on a rendered peak cell).
@@ -122,11 +122,12 @@ honestly:
 
 ## f) Up to 50 things we should get done next
 
-*Brainstorm ranked roughly by impact, not a commitment list — most items
+_Brainstorm ranked roughly by impact, not a commitment list — most items
 below the first ~10 are ROADMAP fuel. Items marked (pre-existing) were
-noticed, not researched, this session.*
+noticed, not researched, this session._
 
 **UI/UX (this session's domain):**
+
 1. Add a browser-level probe for the All-select: unfiltered list renders
    `All` as the chosen option; `?direction=inbound` renders `Inbound`.
 2. Add a computed-style probe pinning the heatmap bridge (peak-cell
@@ -177,71 +178,71 @@ noticed, not researched, this session.*
 23. Golden pretty-diff helper (see e-3).
 24. Auto-pick a free port in `scripts/lib/ui-probe.js` (see d-3).
 25. Run the FULL buildflow dev gate (lint+format+test) after the next UI
-    session; this session ran only golangci-lint + tests.
+session; this session ran only golangci-lint + tests.
 26. Fix the devShell templ pin drift: nix devShell templ v0.3.1020 vs
-    go.mod tool pin v0.3.1070 — the version warning fires on every regen;
-    either bump the flake input or document `go tool templ` as the only
-    supported regen path.
+go.mod tool pin v0.3.1070 — the version warning fires on every regen;
+either bump the flake input or document `go tool templ` as the only
+supported regen path.
 27. Sweep `cmd/` + `internal/` for other daemon-committed lint drift
-    (serve.go lll was pre-existing; golangci is clean now, confirm the
-    rest of the gate too).
+(serve.go lll was pre-existing; golangci is clean now, confirm the
+rest of the gate too).
 28. Ensure the screenshot/verify scripts regenerate `_templ.go` before
-    building (a stale generated file would build stale markup).
+building (a stale generated file would build stale markup).
 29. Consider alert-only pixel-diff on the 24-PNG set (tolerance-based,
-    not a gate) — catches regressions the goldens cannot see.
+not a gate) — catches regressions the goldens cannot see.
 30. Pin the exact `--port` used by verify/screenshot scripts in AGENTS.md
-    commands so stale-port failures are rarer.
+commands so stale-port failures are rarer.
 
 **Data/domain (noticed, not started):**
 31. (pre-existing) T15 MOS poller — UI is ready; data still never arrives.
 32. (pre-existing) E164/ParticipantHash PII enforcement (TODO_LIST.md).
 33. Re-check `hasFilters`/`aiValue` redundancy now that selects carry All
-    (behavior unchanged; code may simplify).
+(behavior unchanged; code may simplify).
 34. One time-zone vocabulary check: heatmap/day-buckets are Europe/Berlin;
-    RelativeTime and search hits render server-local — confirm the mixed
-    vocabulary is intentional and documented.
+RelativeTime and search hits render server-local — confirm the mixed
+vocabulary is intentional and documented.
 35. `/api/ops` counters: decide whether they deserve a human-visible
-    surface (currently JSON-only behind auth).
+surface (currently JSON-only behind auth).
 36. Verify ETag/304 revalidation behavior after a styles.css regen
-    (http-stack.md contract — never actually exercised after a CSS change).
+(http-stack.md contract — never actually exercised after a CSS change).
 37. Measure fragment Server-Timing (dashboard 30s / staleness 60s pollers)
-    to confirm the polling budget holds with the current stats query.
+to confirm the polling budget holds with the current stats query.
 38. (pre-existing) retention purge surfacing — Policy/OldViews/Retire run
-    behind `purge`; nothing operator-visible reports what was retired.
+behind `purge`; nothing operator-visible reports what was retired.
 
 **Upstream/library leverage:**
 39. Re-run the 5-step version-bump watchlist on the next templ-components
-    bump (gen-tc-classes → map re-audit → hand-rolled re-check → filings
-    re-read → golden `-update`).
+bump (gen-tc-classes → map re-audit → hand-rolled re-check → filings
+re-read → golden `-update`).
 40. When SegmentBar ships upstream (ABSENT in v1.21.0), re-evaluate the
-    AI/human donut against a segment bar with real mixed data.
+AI/human donut against a segment bar with real mixed data.
 41. When FilterBar ships upstream, re-evaluate the hand-rolled filter row
-    and the mobile stacking complaint (c-3).
+and the mobile stacking complaint (c-3).
 42. Check the three open filings' upstream state (#48/#49/#51) quarterly
-    per docs/upstream-filings.md.
+per docs/upstream-filings.md.
 
 **Docs/process:**
 43. Harvest this report's section (f) into TODO_LIST.md / ROADMAP.md via
-    docs-health HARVEST (the skill flags the loop as not closed until then
-    — pending your go-ahead, see below).
+docs-health HARVEST (the skill flags the loop as not closed until then
+— pending your go-ahead, see below).
 44. Re-render the T23 LineChart-vs-BarChart spike comparison per
-    docs/assets/README.md evidence convention (the render "was not
-    preserved" — noted in the adoption map).
+docs/assets/README.md evidence convention (the render "was not
+preserved" — noted in the adoption map).
 45. Check AGENTS.md still respects its 220-line budget after the palette
-    bullet grew (it absorbed an overwrite, net +8 lines).
+bullet grew (it absorbed an overwrite, net +8 lines).
 46. Record the devShell templ drift as a TODO_LIST entry (or fix in flake)
-    so the next session does not repeat d-2.
+so the next session does not repeat d-2.
 47. Add a one-line note to docs/templ-components-adoption.md that Heatmap
-    rides the ds-brand bridge (the map is the component truth table; the
-    bridge currently lives only in app.css comments + AGENTS.md).
+rides the ds-brand bridge (the map is the component truth table; the
+bridge currently lives only in app.css comments + AGENTS.md).
 48. Consider a session lessons entry: "UI todos are not done until the
-    after-screenshot is eyeballed" — it generalizes (per the global memory
-    rules this goes in the project where learned, i.e. here).
+after-screenshot is eyeballed" — it generalizes (per the global memory
+rules this goes in the project where learned, i.e. here).
 49. Re-verify the full 24-PNG dark sweep after the next color-token change
-    (make the sampled dark check exhaustive for color-only diffs).
+(make the sampled dark check exhaustive for color-only diffs).
 50. Schedule the quarterly Telnyx live-API re-verify window (next opens
-    2027-01 per docs/telnyx-live-api.md — calendar entry already exists;
-    confirm it is actually on the calendar).
+2027-01 per docs/telnyx-live-api.md — calendar entry already exists;
+confirm it is actually on the calendar).
 
 ## g) Questions I cannot figure out myself
 
@@ -263,7 +264,7 @@ noticed, not researched, this session.*
 
 ---
 
-*Report written per the status-report skill; `.md` format at the explicitly
+_Report written per the status-report skill; `.md` format at the explicitly
 demanded path (user instruction overrides the HTML default). No manual
 commit: the auto-commit daemon picks this file up (Crush harness forbids
-unrequested commits).*
+unrequested commits)._

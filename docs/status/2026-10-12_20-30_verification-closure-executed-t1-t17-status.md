@@ -73,7 +73,7 @@ Owner-gated (the T18 roster, unchanged):
 6. Watch dependabot-core#16538; answer maintainer questions.
 7. Browser-level 304 revalidation spot-check on a real host.
 8. Telnyx Detail-Records/insights DTO live-verify (window opens 2027-01).
-9. >1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).
+9. 1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).
 10. ContentHash v2 length-prefixed encoding at the schema-v2 gate.
 11. Confirm the next dependabot run proposes the newly-direct deps.
 12. Ratify (or override) the three defaulted §g answers below.

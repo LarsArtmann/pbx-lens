@@ -156,7 +156,11 @@ function seedFreshAgentTurn(bin, dbPath, outDir) {
     path.join(dir, "probe-fresh-1.jsonl"),
     [
       JSON.stringify({ type: "start", ts: now, uuid, models: ["gpt-rt"] }),
-      JSON.stringify({ type: "turn", role: "agent", text: "Fresh probe turn: the boiler is fixed." }),
+      JSON.stringify({
+        type: "turn",
+        role: "agent",
+        text: "Fresh probe turn: the boiler is fixed.",
+      }),
       JSON.stringify({ type: "end", reason: "normal" }),
     ].join("\n") + "\n",
   );

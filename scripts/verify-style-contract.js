@@ -74,7 +74,8 @@ const VIOLET = ["124, 58, 237", "139, 92, 246"];
 
     const lightVar = await brandVar();
     console.log("light --ds-brand-rgb:", lightVar);
-    if (lightVar !== "15, 118, 110") fail(`light bridge resolves to ${lightVar}, want teal-700 triplet`);
+    if (lightVar !== "15, 118, 110")
+      fail(`light bridge resolves to ${lightVar}, want teal-700 triplet`);
     for (const v of VIOLET) {
       if (lightVar === v) fail(`light bridge is violet (${v})`);
     }
@@ -82,7 +83,8 @@ const VIOLET = ["124, 58, 237", "139, 92, 246"];
     await page.evaluate(() => document.documentElement.classList.add("dark"));
     const darkVar = await brandVar();
     console.log("dark --ds-brand-rgb:", darkVar);
-    if (darkVar !== "45, 212, 191") fail(`dark bridge resolves to ${darkVar}, want teal-400 triplet`);
+    if (darkVar !== "45, 212, 191")
+      fail(`dark bridge resolves to ${darkVar}, want teal-400 triplet`);
     for (const v of VIOLET) {
       if (darkVar === v) fail(`dark bridge is violet (${v})`);
     }
@@ -111,7 +113,12 @@ const VIOLET = ["124, 58, 237", "139, 92, 246"];
         const sel = document.querySelector(`select[name="${name}"]`);
         if (!sel) return null;
         const first = sel.options[0];
-        return { name, value: first.value, label: first.textContent.trim(), selected: first.selected };
+        return {
+          name,
+          value: first.value,
+          label: first.textContent.trim(),
+          selected: first.selected,
+        };
       }),
     );
     console.log("unfiltered selects:", JSON.stringify(unfiltered));
@@ -119,7 +126,8 @@ const VIOLET = ["124, 58, 237", "139, 92, 246"];
       if (!s) return fail("filter select missing from list page");
       if (s.value !== "") fail(`select ${s.name}: first option value=${s.value}, want ""`);
       if (s.label !== "All") fail(`select ${s.name}: first option label=${s.label}, want "All"`);
-      if (!s.selected) fail(`select ${s.name}: the All option is not selected on the unfiltered view`);
+      if (!s.selected)
+        fail(`select ${s.name}: the All option is not selected on the unfiltered view`);
     }
 
     await page.goto(`${BASE}/?direction=inbound`, { waitUntil: "networkidle0" });

@@ -15,9 +15,9 @@ REF="${1:-HEAD}"
 cd "$(git rev-parse --show-toplevel)"
 
 if git diff --quiet "$REF" -- internal/web/testdata/ 2>/dev/null; then
-  echo "golden pages unchanged vs $REF"
-  exit 0
+	echo "golden pages unchanged vs $REF"
+	exit 0
 fi
 
-git diff --word-diff=plain --unified=0 "$REF" -- internal/web/testdata/ \
-  | grep -v '^index ' | grep -v '^--- ' | grep -v '^+++ '
+git diff --word-diff=plain --unified=0 "$REF" -- internal/web/testdata/ |
+	grep -v '^index ' | grep -v '^--- ' | grep -v '^+++ '
