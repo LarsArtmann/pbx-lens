@@ -88,6 +88,7 @@ func TestServeStackEndToEnd(t *testing.T) {
 	assertGzip(t, client, ts.FullChainURL, "/static/htmx.min.js")
 	assertConditionalGET(t, client, ts.FullChainURL, "/frag/dashboard", true)
 	assertGzip(t, client, ts.FullChainURL, "/frag/dashboard")
+	assertConditionalGET(t, client, ts.FullChainURL, "/ops", true)
 
 	status, headers, _ := get(t, client, ts.FullChainURL, "/frag/staleness", nil)
 	if status != http.StatusOK {
