@@ -241,3 +241,16 @@ invariants summary; this file keeps the war stories.
   (STALENESS_REGION, bare dates → DATE) while fixed-seed
   `datetime="…T…"` row attributes stay pinned; see
   `goldenVolatile` in golden_pages_test.go before adding any new golden.
+
+## UI todos are not done until the after-screenshot is eyeballed (paid for, 2026-10-15)
+
+The 2026-10-15 audit's search-hint "improvement" (moving the prose hint into
+`Input.HelpText`) looked right in the diff and made the layout visibly
+WORSE — caught only because the after-screenshot was actually looked at, and
+reverted the same session. Goldens pin markup, not pixels; the eye is the
+review step. Rule: every visual change runs `node scripts/screenshot-probe.js`
+(with `--port`; omitted = free port) and the relevant PNGs are OPENED and
+eyeballed in both themes before the todo closes. The same session's
+empty-dashboard finding (chart cards rendering as silent collapsed-0px-bar
+boxes instead of honest empty messages) was found the same way — no test
+asked for it because no test knew the page could look that broken.
