@@ -143,7 +143,7 @@ TODO_LIST rows with evidence pointers.
 12. Production re-ingest ContentHash v2 (deploy-path blocked).
 13. Host deploys with current module options (deploy-path blocked).
 14. Dependabot confirmation for newly-direct deps.
-15. >1MiB transcript policy decision.
+15. 1MiB transcript policy decision.
 16. E2E cache-semantics hardening (Vary/HEAD/query variants).
 17. Coverage pass on caching/serve hot paths.
 18. Concurrent-poll hash-cost probe.
