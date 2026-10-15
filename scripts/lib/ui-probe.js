@@ -48,6 +48,33 @@ function ensurePuppeteer() {
   return require(path.join(mod));
 }
 
+// ensureScratchDeps installs dev-only npm modules into the same scratch
+// prefix as puppeteer-core (plan 05-40 M19/F59): the pixel-diff alert
+// needs a PNG decoder + differ, and neither enters the repo, the flake,
+// or any lockfile — the scratch prefix is disposable and machine-local.
+function ensureScratchDeps(specs) {
+  fs.mkdirSync(SCRATCH, { recursive: true });
+  if (!fs.existsSync(path.join(SCRATCH, "package.json"))) {
+    execFileSync("npm", ["init", "-y"], { cwd: SCRATCH, stdio: "ignore" });
+  }
+  const missing = specs.filter((s) => {
+    const name = s.split("@")[0];
+    return !fs.existsSync(path.join(SCRATCH, "node_modules", name));
+  });
+  if (missing.length > 0) {
+    execFileSync("npm", ["i", ...missing, "--no-fund", "--no-audit"], {
+      cwd: SCRATCH,
+      stdio: "inherit",
+    });
+  }
+  return Object.fromEntries(
+    specs.map((s) => {
+      const name = s.split("@")[0];
+      return [name, require(path.join(SCRATCH, "node_modules", name))];
+    }),
+  );
+}
+
 function repoRoot() {
   return execFileSync("git", ["rev-parse", "--show-toplevel"]).toString().trim();
 }
@@ -281,6 +308,7 @@ module.exports = {
   buildProbeBinary,
   ensureCodegen,
   ensurePuppeteer,
+  ensureScratchDeps,
   findChromium,
   findFreePort,
   repoRoot,

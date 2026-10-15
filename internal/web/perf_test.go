@@ -1,8 +1,11 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"hash/fnv"
+	"strconv"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -127,4 +130,49 @@ func BenchmarkListCalls10k(b *testing.B) {
 			b.Fatalf("ListCalls: %v", err)
 		}
 	}
+}
+
+// BenchmarkETagHashCost is the concurrent-poll CPU ceiling rail (F31): the
+// ETag middleware body-hashes every cacheable 200, so each conditional
+// poll from each client pays one hash of the body. Recorded at
+// load-average ~74 on the 32-core dev box (2026-10-15):
+//
+//	25 KB page ≈ 22 µs/op    (≈45k polls/s per core)
+//	122 KB page ≈ 104 µs/op  (≈9.6k polls/s per core)
+//
+// The dashboard's 30 s poll and the staleness banner's 60 s poll across a
+// LAN of operators stay orders of magnitude below one core — the hash
+// cost is not a scaling concern at any plausible operator count.
+func BenchmarkETagHashCost(b *testing.B) {
+	small := bytes.Repeat([]byte("x"), 25*1024)
+	large := bytes.Repeat([]byte("x"), 122*1024)
+
+	b.Run("page25KB", func(b *testing.B) {
+		b.SetBytes(int64(len(small)))
+		b.ReportAllocs()
+
+		for b.Loop() {
+			_ = pollHash(small)
+		}
+	})
+
+	b.Run("page122KB", func(b *testing.B) {
+		b.SetBytes(int64(len(large)))
+		b.ReportAllocs()
+
+		for b.Loop() {
+			_ = pollHash(large)
+		}
+	})
+}
+
+// pollHash mirrors go-etag's defaultHashFunc (FNV-64a, lowercase hex;
+// server@v0.6.1 etag.go:107-125) so the benchmark measures the exact
+// per-poll cost the middleware pays without importing an unexported
+// function. A custom HashFunc would change the constant — re-measure.
+func pollHash(data []byte) string {
+	h := fnv.New64a()
+	_, _ = h.Write(data)
+
+	return strconv.FormatUint(h.Sum64(), 16)
 }

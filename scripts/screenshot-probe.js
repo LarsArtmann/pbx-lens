@@ -279,6 +279,70 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
     }
 
     await browser.close();
+
+    // --- Alert-only pixel diff (plan 05-40 M19/F59-F60): compare the
+    // fresh captures against a baseline directory. The report NEVER fails
+    // the run — it is an alert for eyeballs, not a gate. The dashboard
+    // footer carries a live "Updated <time>" stamp, so a few hundred
+    // volatile pixels are expected there every run; the default tolerance
+    // (0.5% of pixels) absorbs them. Deps install into the scratch prefix
+    // (same as puppeteer-core) — nothing enters the repo or flake.
+    if (args.includes("--diff") || args.includes("--save-baseline")) {
+      const captured = fs
+        .readdirSync(OUT)
+        .filter((f) => f.endsWith(".png"))
+        .sort();
+      const saveDir = arg("--save-baseline", null);
+
+      if (saveDir) {
+        fs.mkdirSync(saveDir, { recursive: true });
+        for (const f of captured) fs.copyFileSync(path.join(OUT, f), path.join(saveDir, f));
+        console.log(`baseline saved: ${captured.length} PNGs -> ${saveDir}`);
+      }
+
+      const baselineDir = arg("--diff", null);
+      if (baselineDir) {
+        if (!fs.existsSync(baselineDir)) {
+          console.error(`pixel-diff: baseline dir missing: ${baselineDir} (run --save-baseline first)`);
+          process.exit(1);
+        }
+
+        const tolerancePct = parseFloat(arg("--tolerance", "0.5"));
+        const mods = probe.ensureScratchDeps(["pixelmatch@5", "pngjs@7"]);
+        const pixelmatch = mods.pixelmatch;
+        const { PNG } = mods.pngjs;
+        let flagged = 0;
+
+        for (const f of captured) {
+          const base = path.join(baselineDir, f);
+          if (!fs.existsSync(base)) {
+            console.log(`PIXELDIFF NEW  ${f} (no baseline capture)`);
+            continue;
+          }
+
+          const a = PNG.sync.read(fs.readFileSync(base));
+          const b = PNG.sync.read(fs.readFileSync(path.join(OUT, f)));
+          if (a.width !== b.width || a.height !== b.height) {
+            console.log(`PIXELDIFF SIZE ${f}: ${a.width}x${a.height} -> ${b.width}x${b.height}`);
+            flagged++;
+            continue;
+          }
+
+          const diff = new PNG({ width: a.width, height: a.height });
+          const changed = pixelmatch(a.data, b.data, diff.data, a.width, a.height, { threshold: 0.1 });
+          const pct = (100 * changed) / (a.width * a.height);
+          if (pct > tolerancePct) {
+            console.log(`PIXELDIFF ALERT ${f}: ${changed} px (${pct.toFixed(3)}% > ${tolerancePct}%)`);
+            flagged++;
+          }
+        }
+
+        console.log(
+          `pixel-diff: ${captured.length} compared against ${baselineDir}, ${flagged} alert(s) (alert-only, never a gate)`,
+        );
+      }
+    }
+
     console.log(`DONE: ${n} PNGs in ${OUT}`);
   } finally {
     await probe.stopProbe(serve);
