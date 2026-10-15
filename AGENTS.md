@@ -213,8 +213,7 @@ Invariants summary — read the full doc BEFORE touching its area:
   calendar entry, m27.9).
 - **docs/cqrs-lint-policy.md** — every surviving cqrs-lint warning/info as
   a documented decision (E003 flat-domain HOLD + pre-agreed seam).
-- **docs/buildflow-dev-gate.md** — gate environment traps (run inside the
-  devShell, load-starvation casualties) + advisory-findings rationale.
+- **docs/buildflow-dev-gate.md** — gate traps (devShell requirement, load-starvation casualties) + advisory-findings rationale.
 - **docs/upstream-filings.md** — D6 filings (go-cqrs-lite#62/#63/#64,
   go-nix-helpers#7, treefmt-nix#545) and their upstream state.
 - **docs/http-stack.md**, **docs/templ-components-adoption.md** (living truth for the middleware chain and the component map), **docs/research/2026-10-12_http-stack-adoption-audit.html** (12-47 deep-dive snapshot + NOT-adopted doctrine table).
