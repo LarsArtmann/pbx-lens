@@ -27,6 +27,7 @@ Current contents:
 | `detail-search-jump.png`      | The search deep link landed: URL `?q=thermostat&at=0#turn-0`, matched turns amber-marked (T21)               | templ-UI plan T21/T4 |
 | `dashboard-light.png`         | README screenshot: the quality dashboard (desktop, light)                                                    | plan T6.3            |
 | `detail-match-log-mobile.png` | README screenshot: mobile detail with copy buttons + amber match log                                         | plan T6.3            |
+| `volume-chart-spike-comparison.png` | The T23 one-spike 30-day series through both candidates: BarChart (labeled teal day bar, shipped) vs LineChart (fixed-pixel SVG flatline+jump, rejected) | 02-24 plan M20/F63   |
 
 Regeneration: the two evidence captures come from the verify flow in
 `scripts/verify-ui-contract.js` (the contracts it asserts are these

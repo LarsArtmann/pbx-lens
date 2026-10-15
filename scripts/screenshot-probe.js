@@ -86,7 +86,16 @@ const DB = path.join(OUT, "lens.db");
       ["notfound", "/calls/no-such-stream/none"],
       ["detail-rec", "/calls/telnyx-conversation/smoke-0001"],
     ];
-    const themes = ["light", "dark"];
+    // --themes dark|light|light,dark (plan M21/F64): the exhaustive dark
+    // sweep after a color change is one command without re-capturing light.
+    const themes = (arg("--themes", "light,dark") || "light,dark")
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t === "light" || t === "dark");
+    if (themes.length === 0) {
+      console.error("no valid themes after --themes (use light and/or dark)");
+      process.exit(1);
+    }
     const viewports = [
       { w: 375, h: 812, tag: "mobile" },
       { w: 1280, h: 900, tag: "desktop" },
