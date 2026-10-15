@@ -22,7 +22,7 @@ func TestNavIDIsDeterministic(t *testing.T) {
 	}
 
 	if !strings.Contains(body, `aria-controls="pbx-lens-nav"`) {
-		t.Error("page does not carry the pinned deterministic nav id — ETag revalidation will silently degrade to full 200s")
+		t.Error("pinned nav id missing — ETag revalidation degrades to full 200s")
 	}
 
 	randomID := regexp.MustCompile(`tc-mobile-menu-[0-9a-f]{16}`)

@@ -81,3 +81,22 @@ re-skins every blue but leaves purple untouched.
 **Recommendation:** A — the purple is a deliberate differentiator, not a
 leak; it is recorded in docs/templ-components-adoption.md as a
 known-off-token component so the version-bump watchlist covers it.
+
+---
+
+## Resolved same-session (M11 spot-pass, 2026-10-15) — recorded for the ledger
+
+- **D6 (was F35, dashboard SectionHeading trial): REJECTED without a
+  branch.** The dashboard's five cards carry their own titles and the
+  02-15 audit found no navigation complaint; a SectionHeading layer adds
+  hierarchy noise, not scanability, at this card count. Revisit if the
+  dashboard grows past ~8 cards.
+- **F36 (dark mobile chrome): FIXED.** The dark `theme-color` was the
+  library's indigo-950 default; the "not prop-overridable" comment was
+  stale (`layout` honors `props.DarkThemeColor`). Now `#111827` (the dark
+  header gray), pinned in the goldens.
+- **F37 (theme-toggle aria after htmx swap): VERIFIED PASS.** Real click
+  flips `aria-checked` to true and it survives a forced fragment swap; the
+  library re-syncs on every re-render (theme_templ.go script).
+- **F38 (hit-card hover consistency): FIXED.** Search hit cards used
+  `hover:bg-gray-50/900`, table rows `100/800`; cards now match the rows.
