@@ -136,6 +136,15 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   1.27.2). Full mode needs `--max-time ≥ 15m`: at the previous session's
   5 m cap, nix-build was killed by the budget, not by OOM. Remaining
   findings are the documented advisories above.
+- **agents-md-size line counter over-counts trailing-newline files (source
+  verified, 2026-10-15)**: BuildFlow counts AGENTS.md with
+  `strings.Count(data, "\n") + 1` (discovery/doctor/checks/agents_md.go:51,
+  also feeds go-structure-linter's error finding) — for a POSIX file ending
+  in `\n` that is +1 phantom line, so a 220-line file reports 221 and the
+  gate errors. Repo-side convention until fixed upstream: keep AGENTS.md at
+  ≤219 `wc -l` lines (the tool then sees ≤220). Upstream fix: drop the `+1`
+  when the data ends with `\n` (or scan lines). The 2026-10-15 trim moved
+  the buildflow-dev-gate bullet to one line for this.
 - **Gate closed green, post-lint-zero (2026-10-12 11:36, run #5)**: full
   `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode
   dev` = 75 success, 0 failed, 0 skipped (+3 via config) in 55.3s —
