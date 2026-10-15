@@ -10,6 +10,11 @@
 # fresh clones ran the gate against an empty embed (the v0.2.0 CI red).
 # The nix package preBuild still regenerates it, so the store build can
 # never ship stale CSS; the committed copy is the CI/fresh-clone truth.
+# Regenerate the committed copy ONLY with the flake-pinned tailwindcss
+# (`nix develop -c tailwindcss -i internal/web/static/app.css -o
+# internal/web/static/styles.css --minify`): a foreign tailwind produces a
+# different artifact (unminified, different custom-property spacing) and
+# re-reds the CSS gate (the 2026-10-15 incident this note was sharpened by).
 *_templ.go
 # probe codegen input ledger (scripts/lib/ui-probe.js ensureCodegen)
 internal/web/.codegen-inputs.sha256
