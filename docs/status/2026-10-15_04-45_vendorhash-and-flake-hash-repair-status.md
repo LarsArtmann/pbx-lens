@@ -12,11 +12,11 @@
 A daemon auto-commit (`a61ba8c`, 2026-10-15 04:06) snapshotted a `nix-hash-fix` /
 `update-vendor-hash` probe run **mid-flight** and corrupted two hash sites at once:
 
-| Site | Corrupted value | True value (verified) |
-| --- | --- | --- |
-| `vendorHash.nix` (main project vendor FOD) | `sha256-AAAA…` probe fake | `sha256-eKVz…` (landed 65cbc1e) |
-| `flake.nix:103` cqrs-lint inline `vendorHash` | `sha256-AAAA…` probe fake | `sha256-jTwZn/T…` (pre-daemon value) |
-| `flake.nix:92` cqrs-lint source `hash` | `sha256-eKVz…` ← the WRONG derivation's `got:` | `sha256-BH3IGPq…` (proven by `nix store prefetch-file --unpack`) |
+| Site                                          | Corrupted value                                | True value (verified)                                            |
+| --------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------- |
+| `vendorHash.nix` (main project vendor FOD)    | `sha256-AAAA…` probe fake                      | `sha256-eKVz…` (landed 65cbc1e)                                  |
+| `flake.nix:103` cqrs-lint inline `vendorHash` | `sha256-AAAA…` probe fake                      | `sha256-jTwZn/T…` (pre-daemon value)                             |
+| `flake.nix:92` cqrs-lint source `hash`        | `sha256-eKVz…` ← the WRONG derivation's `got:` | `sha256-BH3IGPq…` (proven by `nix store prefetch-file --unpack`) |
 
 Result before repair: a fresh checkout could build **neither** the main package nor
 the devShell. The working-tree `vendorHash.nix` fix existed but was uncommitted, and
@@ -132,6 +132,7 @@ Grounded in this session's observations; roughly impact-ordered. Items 1–12 ar
 Pareto core; the rest is roadmap fuel (docs-health HARVEST should route accordingly).
 
 **Hash/flake integrity (root cause + tripwires):**
+
 1. Make `apps.update-vendor-hash` daemon-immune (temp file + atomic move, or
    in-memory probe via `nix build --expr`), so no future overlap can commit a fake hash.
 2. Teach `buildflow -s nix-hash-fix` the same lesson (or file it upstream — it probes
@@ -160,97 +161,97 @@ Pareto core; the rest is roadmap fuel (docs-health HARVEST should route accordin
 
 **Gate / environment hygiene:**
 13. Identify the 9 "tools unavailable (health check failed)" gate tools; fix or
-    document each (start: `buildflow --verbose`).
+document each (start: `buildflow --verbose`).
 14. Diagnose the SQLITE_BUSY state-store lock (two concurrent gate runs share one DB?);
-    file to BuildFlow if concurrent sessions can corrupt timing/resume data.
+file to BuildFlow if concurrent sessions can corrupt timing/resume data.
 15. Rebuild the stale BuildFlow binary (doctor: built at `518739c`, repo HEAD
-    `d114f28`); re-run the gate on the fresh binary.
+`d114f28`); re-run the gate on the fresh binary.
 16. Delete the legacy `~/.cache/buildflow/buildflow.db` once the new-binary migration
-    is confirmed (doctor storage-layout warn).
+is confirmed (doctor storage-layout warn).
 17. Triage the 24 vulnix closure findings: check for an existing accepted-risk policy;
-    otherwise open one (doc) and file the actionable CVEs against nixpkgs bumps.
+otherwise open one (doc) and file the actionable CVEs against nixpkgs bumps.
 18. Read the two jscpd clones in scripts/verify-ui-contract.js (13 + 22 lines); either
-    extract a shared probe lib or record the intentional-similarity rationale.
+extract a shared probe lib or record the intentional-similarity rationale.
 19. Extend docs/buildflow-dev-gate.md's casualty table with the 2026-10-15 nix-build
-    starvation entries (load values, timestamps) — the doc exists for exactly this.
+starvation entries (load values, timestamps) — the doc exists for exactly this.
 20. Sharpen the gate's load guidance: the current "15-min < 40" rule still permitted
-    kills at load 35–41 with 6.5k processes; consider a current-load or
-    process-count guard for the nix-heavy steps.
+kills at load 35–41 with 6.5k processes; consider a current-load or
+process-count guard for the nix-heavy steps.
 
 **Concurrent-session coordination:**
 21. Wait for the in-flight `calls.templ` / `nav_id_test.go` session to land, then
-    re-run its full verification set (verify-ui-contract.js, screenshot-probe eyeball
-    set, goldens).
+re-run its full verification set (verify-ui-contract.js, screenshot-probe eyeball
+set, goldens).
 22. Confirm that session's intent for `docs/http-stack.md` (modified in its change
-    set) — my session didn't touch it and doesn't know its plan.
+set) — my session didn't touch it and doesn't know its plan.
 23. After both sessions' work is committed: one full `go test ./...` + dev gate pass to
-    rule out cross-session golden drift.
+rule out cross-session golden drift.
 
 **Docs / memory:**
 24. Cross-link the new gotchas entry from docs/buildflow-dev-gate.md (the two docs
-    now share the "hash repair" topic; avoid split brain).
+now share the "hash repair" topic; avoid split brain).
 25. Add the incident to the flake bullet's reference set in AGENTS.md only if it fits
-    the 220-line budget — otherwise trust the gotchas pointer.
+the 220-line budget — otherwise trust the gotchas pointer.
 26. Check whether the "verify-ui/style/staleness" script commands in AGENTS.md
-    (condensed this session) still match scripts/README.md's pinned-defaults wording.
+(condensed this session) still match scripts/README.md's pinned-defaults wording.
 
 **Origin-tracking / repo hygiene:**
 27. The branch is ahead of origin by 5+ daemon commits and growing — decide when to
-    push (pushing is explicitly not my call; flagging drift only).
+push (pushing is explicitly not my call; flagging drift only).
 28. Consider annotating the four daemon auto-commits involved in the corruption
-    (a61ba8c, 65cbc1e) with a short `git notes` or leave it to gotchas.md as-is.
+(a61ba8c, 65cbc1e) with a short `git notes` or leave it to gotchas.md as-is.
 29. Sanity-check `git fsck`/reflog once after the daemon-race incident (cheap
-    assurance that nothing else was snapshotted mid-write).
+assurance that nothing else was snapshotted mid-write).
 
 **Testing posture (session-adjacent observations):**
 30. Add a regression test asserting `serve`'s binary embeds a non-empty stylesheet
-    when built through the flake (locks the nix-build side of the MIME trap).
+when built through the flake (locks the nix-build side of the MIME trap).
 31. Add a unit test for `update-vendor-hash`'s script logic (it's a shell heredoc in
-    flake.nix — even a `nix run .#update-vendor-hash --dry-run`-style check would do)
-    before/while making it daemon-immune (item 1).
+flake.nix — even a `nix run .#update-vendor-hash --dry-run`-style check would do)
+before/while making it daemon-immune (item 1).
 32. Consider a `nix flake check` run in the weekly/local full-gate rotation (the flake
-    check step surfaced a transient finding mid-edit; a scheduled clean run would
-    separate signal from edit-races).
+check step surfaced a transient finding mid-edit; a scheduled clean run would
+separate signal from edit-races).
 33. When BuildFlow grows an inline-FOD hash provider (f6), drop this repo's manual
-    probe documentation in favor of the tool.
+probe documentation in favor of the tool.
 34. Keep the prefetch-verification trick documented where the next hash incident will
-    be debugged: docs/gotchas.md (done) and the BuildFlow skill's failure-triage
-    reference (upstream candidate).
+be debugged: docs/gotchas.md (done) and the BuildFlow skill's failure-triage
+reference (upstream candidate).
 35. Review whether the `#checks` treefmt/vendor-hash derivations should be part of the
-    dev-gate's nix-build step at all under load, or split into a quieter step class.
+dev-gate's nix-build step at all under load, or split into a quieter step class.
 
 **Speculative / low priority (roadmap fuel):**
 36. Evaluate whether `git status --porcelain` polling by the daemon could honor a
-    lock file (`.buildflow-probe-in-progress`) — cross-repo feature, needs BuildFlow
-    buy-in.
+lock file (`.buildflow-probe-in-progress`) — cross-repo feature, needs BuildFlow
+buy-in.
 37. Explore `nix build --no-link --print-out-paths` in the gate for shorter, greener
-    step logs.
+step logs.
 38. Consider pinning the devShell's `cqrs-lint` to the same derivation the checks use
-    (currently one derivation reused; confirm there's no duplicate build).
+(currently one derivation reused; confirm there's no duplicate build).
 39. Measure whether the dirty-tree `-dirty` suffix (name of the built drv) forces
-    avoidable rebuilds between consecutive gate runs; if yes, a `--build-mode dev`
-    cache warmer might pay for itself.
+avoidable rebuilds between consecutive gate runs; if yes, a `--build-mode dev`
+cache warmer might pay for itself.
 40. Document the `nix store prefetch-file --unpack` trick in the global
-    references/lessons.md (cross-project lesson, commit in crush-config repo).
+references/lessons.md (cross-project lesson, commit in crush-config repo).
 41. Add a lint (statix/custom check) rejecting hash strings equal across `hash =` and
-    `vendorHash =` lines in the same flake (static version of item 4).
+`vendorHash =` lines in the same flake (static version of item 4).
 42. Time-box a review of whether `GOEXPERIMENT=jsonv2` is now load-bearing anywhere
-    (AGENTS.md says not yet; verify during the next dependency sweep).
+(AGENTS.md says not yet; verify during the next dependency sweep).
 43. Confirm the F009 cqrs-lint finding (ticker vs scheduler) is still policy-documented
-    after the concurrent session's edits.
+after the concurrent session's edits.
 44. Re-audit AGENTS.md's Commands block rendering after this session's condensation
-    (alignment/columns) in a Markdown renderer.
+(alignment/columns) in a Markdown renderer.
 45. Sweep docs/ for other "two hash sites" references that may need the same warning.
 46. Consider a `just`-style alias… — explicitly rejected: BuildFlow + flake apps own
-    automation here; no new runner (recorded to prevent re-proposals).
+automation here; no new runner (recorded to prevent re-proposals).
 47. After item 1 lands, simulate the race (run update-vendor-hash with the daemon
-    active) to prove the guard works.
+active) to prove the guard works.
 48. Track BuildFlow upstream for a "refuse to run while an auto-commit daemon holds
-    the tree" doctor check; propose if absent.
+the tree" doctor check; propose if absent.
 49. Verify the two check derivations (treefmt, vendor-hash) are covered by the CI lane
-    or explicitly declared local-only.
+or explicitly declared local-only.
 50. Close the loop on this report: docs-health HARVEST of section (f) into
-    TODO_LIST.md / ROADMAP.md.
+TODO_LIST.md / ROADMAP.md.
 
 ## g) Questions I can NOT figure out myself
 
@@ -268,5 +269,5 @@ Pareto core; the rest is roadmap fuel (docs-health HARVEST should route accordin
 
 ---
 
-*Point-in-time snapshot; goes stale. Bring current later via docs-health → ANNOTATE.
-Section (f) is HARVEST input for TODO_LIST.md / ROADMAP.md.*
+_Point-in-time snapshot; goes stale. Bring current later via docs-health → ANNOTATE.
+Section (f) is HARVEST input for TODO_LIST.md / ROADMAP.md._

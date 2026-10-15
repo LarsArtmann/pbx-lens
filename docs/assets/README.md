@@ -21,12 +21,12 @@ In-repo evidence PNGs only. The convention (plan T6, 2026-10-12):
 
 Current contents:
 
-| File                          | What it proves                                                                                               | Commissioned by      |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------- |
-| `detail-copy-button.png`      | CopyButton on the detail page: "Copy ID" + both numbers, label swapped to "Copied!" after a real click (T20) | templ-UI plan T20/T4 |
-| `detail-search-jump.png`      | The search deep link landed: URL `?q=thermostat&at=0#turn-0`, matched turns amber-marked (T21)               | templ-UI plan T21/T4 |
-| `dashboard-light.png`         | README screenshot: the quality dashboard (desktop, light)                                                    | plan T6.3            |
-| `detail-match-log-mobile.png` | README screenshot: mobile detail with copy buttons + amber match log                                         | plan T6.3            |
+| File                                | What it proves                                                                                                                                           | Commissioned by      |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `detail-copy-button.png`            | CopyButton on the detail page: "Copy ID" + both numbers, label swapped to "Copied!" after a real click (T20)                                             | templ-UI plan T20/T4 |
+| `detail-search-jump.png`            | The search deep link landed: URL `?q=thermostat&at=0#turn-0`, matched turns amber-marked (T21)                                                           | templ-UI plan T21/T4 |
+| `dashboard-light.png`               | README screenshot: the quality dashboard (desktop, light)                                                                                                | plan T6.3            |
+| `detail-match-log-mobile.png`       | README screenshot: mobile detail with copy buttons + amber match log                                                                                     | plan T6.3            |
 | `volume-chart-spike-comparison.png` | The T23 one-spike 30-day series through both candidates: BarChart (labeled teal day bar, shipped) vs LineChart (fixed-pixel SVG flatline+jump, rejected) | 02-24 plan M20/F63   |
 
 Regeneration: the two evidence captures come from the verify flow in
