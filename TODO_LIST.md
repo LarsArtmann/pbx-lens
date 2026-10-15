@@ -78,6 +78,17 @@
 > D1-D5) gates the date-render change and two filings; the big tail rows
 > below (MOS poller, PII enforcement, mobile cards) come from the same
 > plan and stay blocked/low until their window opens.
+>
+> Twelfth pass 2026-10-15 (sweep of the unblocked low rows): four rows
+> DELETED as already done by the 05-18 session per its report §a.11/12 —
+> the F59-F61 simplification row (evaluated: hasFilters/aiValue already
+> minimal, TZ table landed, long-excerpt wraps cleanly), T23 evidence PNG
+> (committed), the single-command dark sweep (`--themes` flag), and the
+> SectionHeading trial (rejected as D6; hover aligned 100/800). This pass
+> executes the remaining unblocked rows (stale-pass warning, /api/ops
+> human surface, retention surfacing, cache-semantics hardening, coverage
+> pass, hash-cost probe, golden normalization audit) and the small
+> hygiene batch from the 05-18 NEXT-50 list.
 
 > Tenth pass 2026-10-12 evening (verification-closure plan, 17-31): seven
 > rows DELETED as done — ingest.go extraction (gateAndFinalize,
@@ -137,10 +148,6 @@ None right now — remaining work is blocked or low-impact (below).
 | Alert-only pixel-diff on the 39-PNG screenshot set (tolerance report, never a gate)                                                                                                                                                                                                                                   | 🔴 `TODO`    | Low    | M      | 02-24 SUPERB plan M14 (F50-F51); status f-29; screenshots are the corpus                                                                  |
 | `/api/ops` human surface (dashboard card vs /ops page; decide, implement, test)                                                                                                                                                                                                                                       | 🔴 `TODO`    | Low    | M      | 02-24 SUPERB plan M15 (F52-F53); status f-35; the JSON endpoint exists                                                                    |
 | Retention surfacing (what was retired, when the last purge ran) in the UI                                                                                                                                                                                                                                             | 🔴 `TODO`    | Low    | M      | 02-24 SUPERB plan M16 (F54-F55); status f-38; `internal/retention` exists                                                                 |
-| Code simplifications from the 02-15 audit: `hasFilters`/`aiValue` after the All-option work, TZ vocabulary doc note, long-excerpt visual fixture                                                                                                                                                                      | 🔴 `TODO`    | Low    | S      | 02-24 SUPERB plan M18 (F59-F61); status f-33/34/18                                                                                        |
-| T23 spike re-render (LineChart-vs-BarChart evidence) per docs/assets/README.md convention                                                                                                                                                                                                                             | 🔴 `TODO`    | Low    | S      | 02-24 SUPERB plan M20 (F63); status f-44                                                                                                  |
-| Exhaustive dark sweep as a single command (all screenshot variants) after color changes                                                                                                                                                                                                                               | 🔴 `TODO`    | Low    | S      | 02-24 SUPERB plan M21 (F64); status f-49                                                                                                  |
-| Dashboard SectionHeading trial (decide once, keep or reject) + hit-card hover consistency check                                                                                                                                                                                                                       | 🔴 `TODO`    | Low    | S      | 02-24 SUPERB plan M11 (F35/F38); status f-12/f-20                                                                                         |
 
 <!-- Harvest ledger for this list lives in the pass report (docs/status/),
      per docs-health harvest-guide: the ledger records the pass, it is not a
