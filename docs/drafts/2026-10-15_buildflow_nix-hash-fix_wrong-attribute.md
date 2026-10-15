@@ -1,5 +1,8 @@
 # BuildFlow filing — nix-hash-fix wrong-attribute write
 
+- **FILED: [BuildFlow#55](https://github.com/LarsArtmann/BuildFlow/issues/55)**
+  (2026-10-15, verified OPEN; checker 0 FAIL/0 WARN before posting)
+
 - **Repo:** LarsArtmann/BuildFlow (own repo, plan-solicited: 05-40 M5/F11)
 - **Kind:** bug report body, AI-drafted (Crush footer)
 - **Cite-at commit:** BuildFlow `d114f28ce`; go-checker-helpers `helpers.go:208`

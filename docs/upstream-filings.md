@@ -93,6 +93,19 @@ upstream — no upstream movement to fold in yet.**
   pinned by `TestNavIDIsDeterministic`. Mechanism re-verified at the pin
   2026-10-15. Draft:
   `docs/drafts/2026-10-15_templ-components_nav-id-etag-volatility.md`.
+- **BuildFlow#55** (filed 2026-10-15, plan 05-40 M5/F11): `nix-hash-fix`
+  matches the stale hash by VALUE only, first lexical hit wins
+  (`modules/nix-checker/stale_hash.go:53-63` at `d114f28ce`), so when the
+  hash text exists on a second line (here: flake.nix's cqrs-lint
+  `fetchFromGitHub` hash, pre-churned by the 2026-10-12 fixes) the
+  corrected hash lands in the WRONG attribute — live corruption a61ba8c
+  wrote the pbx-lens vendor hash into the input hash, restore 48a63df;
+  the fixer also has no dirty-tree guard, and the auto-commit daemon
+  swept the corruption in within minutes. Ask: attribute-aware matching +
+  loud refusal on multi-line matches. Draft:
+  `docs/drafts/2026-10-15_buildflow_nix-hash-fix_wrong-attribute.md`.
+  Until upstream lands: never run the hash fixer on a dirty tree
+  (AGENTS.md, vendorHash.nix provenance comment).
 - Re-verified 2026-10-15 (plan M10/F32-F33): #48/#49/#51 all OPEN, zero
   comments; the #48 mechanism is still present at the pin —
   `display/bar_chart_templ.go:140` (outer `flex items-end` + inline height)
