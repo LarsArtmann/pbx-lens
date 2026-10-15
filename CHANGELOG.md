@@ -7,6 +7,31 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-15 (/ops surface)
+
+- New `/ops` page: the ingest-and-cache health answer at a glance — poller
+  pass freshness with the staleness verdict up top, per-source ingest
+  counters, what retention retired and when it last ran, and the response
+  cache stats (ETag hit ratio, buffer overflows). Read-only like every
+  page; the machine view stays at `/api/ops`. The API also gained
+  `last_pass_age_seconds` so monitors can alert on a silently stopped
+  poller.
+
+### Fixed — 2026-10-15 (chunked HTML pages)
+
+- Every HTML response now carries an explicit `Content-Length`. Pages are
+  rendered into one buffered write, but at 25k+ bytes they overshoot Go's
+  2 KiB implicit-length buffer and shipped chunked; the exact length is
+  now stated upfront (the compression layer rewrites it when it actually
+  encodes).
+
+### Changed — 2026-10-15 (UI trio bump)
+
+- `go-appkit` v0.8.0 → v0.9.0 and `templ-components` v1.21.0 → v1.23.0
+  (go.mod floor moves to go ≥ 1.27.2 with appkit's requirement; templ
+  stays v0.3.1070). Bump watchlist run; goldens regenerated; no
+  user-visible regression.
+
 ### Fixed — 2026-10-15 (nav identity broke the 304 contract)
 
 - Every page's navigation shell carried a random `id` attribute (the UI

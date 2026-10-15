@@ -1,5 +1,14 @@
 # SUPERB Plan — Owner Unlock, v0.2.0, and the Hardening Road
 
+> **Execution annotation (2026-10-15, live):** M9 (F26 stale-pass warning,
+> F24-F25 `/ops` page), M10 (retention card), M11 (F29-F30 cache-semantics
+> hardening + F31 BenchmarkConcurrentPoll hash-cost probe + F32 coverage
+> pass — caching.go/buildServiceConfig/nonceCSP at 100%) are DONE and
+> committed. The trailing-slash pin inside F29 is deliberately left
+> unpinned (canonical-redirect vs exact-404 still an open taste call).
+> Owner-gated items (M1 D1-D5, M2 tag/push, M3 iff-EU, M4 PII boundary,
+> M8 card-vs-scroll) remain untouched by design.
+
 - **Created:** 2026-10-15 05:40 CEST
 - **Input universe:** all 50 NEXT items from
   `docs/status/2026-10-15_05-18_superb-ui-contract-execution.md` §f plus the

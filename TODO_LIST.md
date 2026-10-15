@@ -79,6 +79,17 @@
 > below (MOS poller, PII enforcement, mobile cards) come from the same
 > plan and stay blocked/low until their window opens.
 >
+> Thirteenth pass 2026-10-15 (05-40 M9-M11 closure, verified against code):
+> rows DELETED as done — the `/api/ops` stale-pass warning (verdicts ride
+> `SnapshotAny`), the `/ops` human page (cards + goldens), retention
+> surfacing (live would-retire card), the coverage pass (caching.go,
+> buildServiceConfig, nonceCSP all 100%), and the hash-cost probe
+> (BenchmarkConcurrentPoll: 304 revalidation ≈82 µs/op parallel vs ≈101 µs
+> full-200 on the dev box — thousands of viewers per core at the 30 s poll
+> cadence). The cache-hardening row SHRANK to the recording timing-hop
+> asserts only; the trailing-slash policy is deliberately unpinned (05-40
+> M11) until the canonical-redirect-vs-exact-404 call settles.
+
 > Twelfth pass 2026-10-15 (sweep of the unblocked low rows): four rows
 > DELETED as already done by the 05-18 session per its report §a.11/12 —
 > the F59-F61 simplification row (evaluated: hasFilters/aiValue already
