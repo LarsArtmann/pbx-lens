@@ -49,13 +49,18 @@ webphone later gets a read-only deep link, never a data dependency.
   `a-h/templ` v0.3.1070 (codegen; manual bumps only — a dependabot templ PR
   mangles this go.mod). Stay on the PUBLISHED templ-components version —
   no local replace (breaks hermetic nix); hand-roll missing thin pieces.
-- **UI theme — signal palette (2026-10-12):** app.css overrides
-  `--color-tc-primary` (teal-600), `-hover` (teal-700), `--color-tc-info`
-  (teal-500) in an @theme block placed AFTER the `templ-components-theme.css`
-  import (later @theme wins; the theme binds `--color-blue-600:
-  var(--color-tc-primary)`, so one override re-skins every library blue).
-  Never hand-write `bg-blue-*` in pbx-lens .templ files — the library's own
-  classes re-skin through the token chain.
+- **UI theme — signal palette (2026-10-12; heatmap bridge 2026-10-15):**
+  app.css overrides `--color-tc-primary` (teal-700 #0f766e), `-hover`
+  (teal-800), `--color-tc-info` (teal-700) in an @theme block placed AFTER
+  the `templ-components-theme.css` import (later @theme wins; the theme
+  binds `--color-blue-600: var(--color-tc-primary)`, so one override
+  re-skins every library blue). The one component OFF the token chain is
+  display.Heatmap: it fills via rgba(var(--ds-brand-rgb), α) and rings its
+  peak cell with var(--ds-brand), both defaulting to violet-600 — app.css
+  re-bridges the pair in a :root/.dark block after the imports (teal-700
+  light, teal-400 dark; the rgb triplets must stay comma-separated — legacy
+  rgba contract). Never hand-write `bg-blue-*` in pbx-lens .templ files —
+  the library's own classes re-skin through the token chain.
 - **templ-components v1.21.0 adoption map:** per-component truth for THIS
   repo lives in docs/templ-components-adoption.md (skill docs drift ahead
   of the pinned tag; several components are ABSENT in v1.21.0 — check the
