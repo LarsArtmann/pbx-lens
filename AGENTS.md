@@ -30,19 +30,16 @@ webphone later gets a read-only deep link, never a data dependency.
   when a surface needs it.
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
   (below) + `templ-components/htmx` v1.21.0. No testify (banned; stdlib
-  table-driven tests), no cobra, no ORM. Promotion precedent (applied to
-  `x/crypto` bcrypt, `x/time` rate, `templ-components/htmx`, and the
-  2026-10-12 HTTP-stack trio `httputil` v1.4.1 / `httputil/server_timing`
-  v1.0.2 / `go-etag/server` v0.6.1): a module ALREADY in the graph rides
+  table-driven tests), no cobra, no ORM. Promotion precedent (bcrypt,
+  x/time rate, templ-components/htmx, the 2026-10-12 HTTP-stack trio
+  httputil/server_timing/go-etag): a module ALREADY in the graph rides
   free — promoting it to direct adds no new module. server_timing has NO
-  middleware constructor in any release (wrap manually); `entitytag` stays
-  indirect (`go-etag/server` re-exports everything). Considered and NOT
-  adopted (appkit errorpages/security/realtime — absent in pinned v0.8.0;
-  templ-components errorpage — absent in v1.21.0; export rate-limiting;
-  SSE-hub; Telnyx etag client; data-fingerprint fast-304):
-  docs/planning/2026-10-12_12-47_SUPERB-*.md. `go-atomic-write` evaluated
-  for the backup staging chain and not adopted (sqlite writes the staging
-  file itself; revisit when it grows a commit primitive — docs/drafts/).
+  middleware constructor in any release (wrap manually); `entitytag`
+  stays indirect (`go-etag/server` re-exports everything). Considered
+  and NOT adopted (appkit errorpages/security/realtime, templ-components
+  errorpage, export rate-limiting, SSE-hub, Telnyx etag client,
+  data-fingerprint fast-304, go-atomic-write for backup staging):
+  docs/planning/2026-10-12_12-47_SUPERB-*.md + docs/drafts/.
 - **UI trio (2026-10-11, F3/F4):** `go-appkit` v0.8.0 (HTTP service shell:
   NewService → svc.Mux, svc.Run owns SIGINT/SIGTERM + graceful drain),
   `templ-components` v1.21.0 (display/forms/feedback/layout/navigation),
@@ -174,30 +171,19 @@ buildflow --build-mode dev            # the quality gate (lint+format+test);
                                       # (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
-                                      # UI e2e: probe /, /dashboard, /search, /api/freshness with a
-                                      # Go http probe (curl banned); -recording-timeout bounds proxy
-                                      # upstream hops (default web.DefaultUpstreamTimeout, 30 s).
-                                      # CLEAN CHECKOUT FIRST: regen the gitignored stylesheet or
-                                      # /app.css 404s as text/plain (browser MIME refusal, not a
-                                      # visible 404) — `nix develop -c tailwindcss -i
-                                      # internal/web/static/app.css -o internal/web/static/styles.css
-                                      # --minify` (flake-pinned tailwindcss_4, same as preBuild;
-                                      # buildflow's tailwind-build is deferred here by design) — then
-                                      # REBUILD: go:embed is compile-time
+                                      # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go
+                                      # http probe (curl banned); CLEAN CHECKOUT FIRST — regen the
+                                      # gitignored stylesheet then REBUILD (go:embed is compile-time;
+                                      # /app.css MIME trap: docs/gotchas.md); -recording-timeout bounds
+                                      # proxy upstream hops (default web.DefaultUpstreamTimeout, 30 s)
 nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
-node scripts/verify-ui-contract.js    # browser-level UI contracts (T20 copy
-                                      # swap, T21 ?q= jump + real fragment
-                                      # scroll); self-contained codegen+build+
-                                      # seed+serve; screenshot-probe.js captures
-                                      # the 38-PNG eyeball set (incl. 404, audio
-                                      # card, empty-index ladders) — see
-                                      # scripts/README.md. --port is OPTIONAL:
-                                      # omitted, each probe takes a free OS port;
-                                      # pinned defaults live in scripts/README.md
-node scripts/verify-style-contract.js   # browser-level style contracts (M1):
-                                        # ds-brand teal resolution, heatmap cell
-                                        # pixel, All-option selects; Go twin =
-                                        # TestCSSGateBridgesHeatmapBrandToTeal
+node scripts/verify-ui-contract.js    # browser-level UI contracts (T20 copy swap,
+                                      # T21 ?q= jump); self-contained codegen+build+
+                                      # seed+serve; --port optional (free OS port);
+                                      # screenshot-probe.js 38-PNG set — scripts/README.md
+node scripts/verify-style-contract.js   # browser-level style contracts (M1: ds-brand
+                                        # teal, heatmap pixel, All-option selects);
+                                        # Go twin: TestCSSGateBridgesHeatmapBrandToTeal
 node scripts/verify-staleness-live.js   # live staleness banner transition (M3/F11)
 bash scripts/golden-pretty-diff.sh      # readable word-diff of golden changes (M4/F12)
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
