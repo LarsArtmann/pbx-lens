@@ -30,8 +30,8 @@ const (
 func smoke(args []string) {
 	fs := flag.NewFlagSet("smoke", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (default: in-memory)")
-	age := fs.Duration("age", 0, "backdate the seeded call so staleness surfaces render (probe fixture: scripts/verify-staleness-live.js runs -age 48h)")
-	withRecording := fs.String("with-recording", "", "set the seeded call's recording reference so the audio card renders (probe fixture: screenshot-probe seeds it for the detail-rec capture)")
+	age := fs.Duration("age", 0, "backdate the seeded call so staleness surfaces render (verify-staleness-live.js pairs -age 48h)")
+	withRecording := fs.String("with-recording", "", "seed the recording reference so the audio card renders (screenshot-probe detail-rec fixture)")
 	_ = fs.Parse(args)
 
 	ctx, cancel := context.WithTimeout(context.Background(), smokeTimeout)

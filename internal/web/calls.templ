@@ -407,8 +407,8 @@ func buildVersion() string {
 		return ""
 	}
 
-	if info.Main.Version != "" && info.Main.Version != "(devel)" {
-		return "v" + info.Main.Version
+	if v := formatMainVersion(info.Main.Version); v != "" {
+		return v
 	}
 
 	var revision string
@@ -426,4 +426,19 @@ func buildVersion() string {
 	}
 
 	return ""
+}
+
+// formatMainVersion prefixes the module version with v ONLY when it lacks
+// one: Go's Main.Version is already semver ("v0.1.1-0.…"), and the blind
+// prepend rendered the footer as "vv0.1.1-0.…" in every go-build binary.
+func formatMainVersion(v string) string {
+	if v == "" || v == "(devel)" {
+		return ""
+	}
+
+	if v[0] == 'v' {
+		return v
+	}
+
+	return "v" + v
 }
