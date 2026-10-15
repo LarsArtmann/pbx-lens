@@ -60,7 +60,10 @@ func TestDashboardWindowPresets(t *testing.T) {
 
 // TestSearchHintProse pins the digits-only affordance (plan T12, trimmed
 // 2026-10-15): the search page advertises the phone-number shortcut as one
-// prose hint under the form — no floating chip beside it.
+// prose hint under the form — no floating chip beside it. Deliberate
+// tripwire (05-40 plan M13/F43 decision: keep, no upstream filing) — it
+// pins pbx-lens copy, not library behavior; if a future redesign wants the
+// chip back, change this test and the copy together.
 func TestSearchHintProse(t *testing.T) {
 	mux := newTestServer(t)
 

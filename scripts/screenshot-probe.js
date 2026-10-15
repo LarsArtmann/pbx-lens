@@ -183,6 +183,52 @@ const DB = path.join(OUT, "lens.db");
       probe.stopProbe(emptyServe);
     }
 
+    // --- Long-excerpt phase (plan 05-40 M13/F42, folded from the one-off
+    // /tmp capture): a transcript turn at/past the 200-rune excerpt
+    // ceiling renders in the calls table — the truncation eyeball gets a
+    // permanent corpus page instead of a lost one-off script. Own DB: the
+    // main corpus must stay deterministic for the other captures.
+    {
+      const longDB = path.join(OUT, "long-excerpt.db");
+      for (const suffix of ["", "-shm", "-wal"]) {
+        if (fs.existsSync(longDB + suffix)) fs.rmSync(longDB + suffix);
+      }
+      const longDir = path.join(OUT, "long-fixture");
+      fs.mkdirSync(longDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(longDir, "long-1.jsonl"),
+        [
+          JSON.stringify({ type: "start", ts: Math.floor(Date.now() / 1000), uuid: "probe-long-1", models: ["gpt-rt"] }),
+          JSON.stringify({
+            type: "turn",
+            role: "caller",
+            text:
+              "The customer reported that the heating system in the upstairs unit has been making a loud banging noise every morning around six, and additionally the hot water pressure drops noticeably whenever the kitchen tap is opened at the same time, which suggests a shared pipe issue that needs a plumber's assessment before winter arrives in earnest. We scheduled the earliest available appointment.",
+          }),
+          JSON.stringify({ type: "end", reason: "normal" }),
+        ].join("\n") + "\n",
+      );
+      const { execFileSync } = require("child_process");
+      execFileSync(bin, ["ingest-agent", "-db", longDB, "-dir", longDir], { stdio: "ignore" });
+      const longServe = await probe.serveProbe(bin, longDB, PORT);
+      try {
+        for (const theme of themes) {
+          const ctx = await browser.createBrowserContext();
+          const page = await ctx.newPage();
+          await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
+          await page.setViewport({ width: viewports[1].w, height: viewports[1].h });
+          await page.goto(`${BASE}/`, { waitUntil: "networkidle0", timeout: 20000 });
+          const file = path.join(OUT, `long-excerpt-${theme}.png`);
+          await page.screenshot({ path: file, fullPage: true });
+          n++;
+          console.log("captured", file);
+          await ctx.close();
+        }
+      } finally {
+        probe.stopProbe(longServe);
+      }
+    }
+
     await browser.close();
     console.log(`DONE: ${n} PNGs in ${OUT}`);
   } finally {

@@ -184,7 +184,7 @@ nix develop                           # devShell: go, golangci-lint, gopls, govu
 node scripts/verify-ui-contract.js    # browser-level UI contracts (T20 copy swap,
                                       # T21 ?q= jump); self-contained codegen+build+
                                       # seed+serve; --port optional (free OS port);
-                                      # screenshot-probe.js 38-PNG set — scripts/README.md
+                                      # screenshot-probe.js eyeball set — scripts/README.md
 node scripts/verify-style-contract.js   # browser-level style contracts (M1: ds-brand
                                         # teal, heatmap pixel, All-option selects);
                                         # Go twin: TestCSSGateBridgesHeatmapBrandToTeal

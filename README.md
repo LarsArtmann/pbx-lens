@@ -85,7 +85,9 @@ body itself streams unbounded), FTS5
 search (partial phone numbers match too: any run of 4+ digits finds the
 call), a freshness banner, and a quality dashboard whose day buckets follow
 the operator's wall clock (Europe/Berlin — "Calls today" means today, not
-UTC's version of it; owner decision R2). Dashboard cards poll for updates
+UTC's version of it; owner decision R2). Every chart shares the one teal
+signal theme — the heatmap included — pinned by browser-level style-contract
+probes, so accent colors never drift between pages. Dashboard cards poll for updates
 every 30 s and the staleness banner re-checks itself every minute (htmx,
 self-hosted, so a JS-less browser gets the same page rendered server-side).
 Ingest keeps working
