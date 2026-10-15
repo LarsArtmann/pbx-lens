@@ -63,6 +63,33 @@ header survives into go-etag's 304 because it is set before the first write;
 `assertConditionalGET(..., wantNoCache=true)` pins the contract on the 200
 AND the 304. Streams (export/recording) and the static asset opt out.
 
+### The nav-id volatility trap (found live, 2026-10-15 — plan M8/F28)
+
+The no-cache contract above was DOCUMENTED but never exercised live after a
+real change. The live probe found it silently broken: the shell's
+`SimpleNav` carried no `BaseProps.ID`, so the library's
+`utils.EnsureID("mobile-menu", "")` minted a RANDOM id (crypto/rand, 8
+bytes) into the mobile-menu markup on EVERY render. Page bodies were unique
+per request → ETags never matched → every navigation and fragment poll was a
+full 200 (fragments dodge it only because they embed no nav). Measured:
+three consecutive `/` fetches carried three different ETags.
+
+Fix: the shell pins `BaseProps.ID: "pbx-lens-nav"` (EnsureID returns a
+non-empty id unchanged; it flows SimpleNav → Nav → mobile-menu). Verified
+live after the fix: `/`, `/app.css`, `/frag/dashboard` all 304 on
+If-None-Match, `no-cache` survives into the 304, and the skip policy still
+keeps `/frag/staleness` untagged. Pinned by
+`TestNavIDIsDeterministic` (random `tc-mobile-menu-<16-hex>` ids fail the
+build). UPSTREAM FILING CANDIDATE: the EnsureID-by-default random id makes
+EVERY consumer's page bodies volatile and defeats HTTP caching out of the
+box — deterministic-by-default (or a documented caching note) belongs
+upstream; evidence above.
+
+Fragment Server-Timing budget (2026-10-15, empty-ish index, M8/F29):
+`/frag/dashboard` total ≈ 1.2 ms, `/frag/staleness` ≈ 0.5 ms — both orders
+of magnitude under the 30 s/60 s poll intervals; polling cost is negligible
+per pass.
+
 ## Version and metrics
 
 `ServiceConfig.Version` → `GET /version` + `appkit_build_info`; `Metrics`

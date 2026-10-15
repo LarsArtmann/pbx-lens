@@ -43,6 +43,26 @@
 | Direction    | Caller-declared at ingest (`-direction` flag); no source field                            | Derived: dialplan `context == "public"` means inbound                                                |
 | AI-ness      | `assistant_id` present in conversation metadata                                           | Destination badge: `destination_number` matching an AI extension (`cdr.ParseOptions.AIDestinations`) |
 
+## Time vocabulary (owner R2, 2026-10-12; audited 2026-10-15)
+
+One rule: **the operator's wall clock is Europe/Berlin; the wire and the
+query string are UTC.**
+
+| Surface                                             | Zone          | Why                                                                                    | Code                                                            |
+| --------------------------------------------------- | ------------- | -------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Dashboard day buckets + heatmap hour buckets        | Europe/Berlin | "Calls today" must match the operator's calendar, incl. DST (`dashboardLocation`)       | `internal/web/dashboard.templ`                                  |
+| Bare date filter inputs (`dateValue`)               | Berlin wall date | The operator types their own today/yesterday                                        | `internal/web/calls.templ`                                      |
+| Detail "Started", search-hit `<time>` display text  | Server-local (`Local()`) | Deployment-tz wall clock; server runs Europe/Berlin in prod                  | `detail.templ:135`, `search.templ:63`                           |
+| Calls-table "When" column                           | Relative text (`RelativeTime`) | Scanning recency, not reading clocks                                  | `internal/web/calls.templ`                                      |
+| Walk cursors (`before`/`after` query params)        | UTC RFC3339   | Keyset pagination must be zone-unambiguous and sortable                                | `internal/web/calls.templ` (`listHref`)                         |
+| Wire timestamps (`FlexTime`)                        | UTC at decode | Telnyx precision-unstable; normalized once at the boundary                             | `internal/wire/flextime.go`                                     |
+
+Known mismatch (deliberate): detail/search render `Local()` while buckets
+render Berlin — these coincide in prod (server tz = Berlin) and the split
+keeps buckets DST-correct even when the server is not. Revisit only if the
+deploy tz ever diverges (see owner decision pack D1 for the FORMAT
+question, which is orthogonal to the ZONE rule above).
+
 ## Deprecated terms
 
 | Old term   | Current term | Why changed                                                                                                                                   |

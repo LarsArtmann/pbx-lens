@@ -82,4 +82,21 @@ upstream — no upstream movement to fold in yet.**
   pbx-lens's hand-rolled `transcriptMatchLog` (T21); fold-in retires it
   (owner-gated, TODO_LIST). Draft:
   `docs/drafts/templ-components-scrollback-line-hook.md`.
+- **templ-components#55** (filed 2026-10-15, plan M8/F28 + M10): `EnsureID`
+  mints a crypto/rand id per render when `BaseProps.ID` is empty
+  (`utils/validate.go:32-45`; caller `navigation/nav_templ.go:80`), so every
+  page body is unique and ETag/`no-cache` revalidation can never 304 —
+  measured on pbx-lens: three consecutive `/` fetches carried three
+  different ETags, `If-None-Match` always 200; after pinning the nav id the
+  same probe 304s across `/`, `/app.css`, and polled fragments. Local fix:
+  `BaseProps.ID: "pbx-lens-nav"` in the shell (`internal/web/calls.templ`),
+  pinned by `TestNavIDIsDeterministic`. Mechanism re-verified at the pin
+  2026-10-15. Draft:
+  `docs/drafts/2026-10-15_templ-components_nav-id-etag-volatility.md`.
+- Re-verified 2026-10-15 (plan M10/F32-F33): #48/#49/#51 all OPEN, zero
+  comments; the #48 mechanism is still present at the pin —
+  `display/bar_chart_templ.go:140` (outer `flex items-end` + inline height)
+  and `:286` (hard-coded middle `flex w-full flex-1 items-end`, no definite
+  height) mean percentage bar heights still resolve against auto → 0px
+  without the `!items-stretch` workaround.
 - Drafts live in `docs/drafts/` (never /tmp).

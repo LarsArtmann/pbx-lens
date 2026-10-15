@@ -241,6 +241,20 @@ invariants summary; this file keeps the war stories.
   (STALENESS_REGION, bare dates → DATE) while fixed-seed
   `datetime="…T…"` row attributes stay pinned; see
   `goldenVolatile` in golden_pages_test.go before adding any new golden.
+- **A daemon auto-commit can snapshot a hash-fix run MID-PROBE and corrupt
+  two hash sites at once (paid for, 2026-10-15)**: `update-vendor-hash` /
+  `nix-hash-fix` write the fake `AAAA…` probe value before capturing the
+  real `got:`; the auto-commit daemon snapped that intermediate state
+  (vendorHash.nix AND flake.nix's inline cqrs-lint `vendorHash` = fake) and
+  also pasted the main FOD's `got:` hash into the cqrs-lint SOURCE `hash`
+  — the wrong derivation's hash, which `nix store prefetch-file --unpack
+  --hash-type sha256 <codeload-url>` disproved independently. Result:
+  fresh checkouts could build neither the main package nor the devShell.
+  Repair: verify each hash against the derivation that OWNS it
+  (`nix build` for vendorHash.nix, the devShell for the inline pair);
+  never trust a `got:` line without knowing which FOD printed it. After
+  any hash-fix run, confirm `nix build` + `nix build
+  .#devShells.<system>.default` are green before the daemon can commit.
 
 ## UI todos are not done until the after-screenshot is eyeballed (paid for, 2026-10-15)
 

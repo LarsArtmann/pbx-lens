@@ -34,7 +34,14 @@ func pageProps(nonce string, title string) layout.PageProps {
 
 func nav(nonce string, currentPath string) templ.Component {
 	return navigation.SimpleNav(navigation.SimpleNavProps{
-		BaseProps:   utils.BaseProps{Nonce: nonce},
+		BaseProps: utils.BaseProps{
+			Nonce: nonce,
+			// Deterministic nav id (M8/F28 finding): with it empty, the
+			// library's EnsureID mints a RANDOM id per render, every page
+			// body is unique, and the ETag/no-cache revalidation contract
+			// can never 304 — every poll and navigation is a full 200.
+			ID: "pbx-lens-nav",
+		},
 		BrandText:   "pbx-lens",
 		Links:       navLinks(),
 		RightItems:  layout.ThemeToggle("Toggle theme", nonce),
