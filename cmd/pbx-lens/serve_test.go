@@ -24,8 +24,9 @@ func noAutoGzip() *http.Client {
 }
 
 // get issues a GET against the served chain and returns status plus the
-// response for header inspection.
-func get(t *testing.T, client *http.Client, base, path string, headers map[string]string) (int, http.Header, string) {
+// response for header inspection. It takes testing.TB so benchmarks can
+// share the same round-trip path.
+func get(t testing.TB, client *http.Client, base, path string, headers map[string]string) (int, http.Header, string) {
 	t.Helper()
 
 	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, base+path, nil)
@@ -376,6 +377,90 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	// Trailing-slash policy is intentionally unpinned here: the owning
 	// pass is still deciding between a canonical redirect and the mux's
 	// exact-pattern 404 (05-40 M11) — pin it once that settles.
+}
+
+// benchRoundTrip issues one GET through the served chain and drains the
+// body, returning the status. Separate from get() because the poll probe
+// cares about server-side cost, so the client path must stay allocation-thin
+// (drain, not materialize).
+func benchRoundTrip(b *testing.B, client *http.Client, url, etag string) int {
+	b.Helper()
+
+	req, err := http.NewRequestWithContext(b.Context(), http.MethodGet, url, nil)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	if etag != "" {
+		req.Header.Set("If-None-Match", etag)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+		b.Fatal(err)
+	}
+
+	return resp.StatusCode
+}
+
+// BenchmarkConcurrentPoll turns the R9 poll profile (/frag/dashboard every
+// 30s, htmx, one browser per viewer) into CPU ceiling numbers: parallel
+// conditional GETs through the real middleware chain, steady state being a
+// 304 re-hash-and-compare per poll. Run with:
+//
+//	GOEXPERIMENT=jsonv2 go test ./cmd/pbx-lens -bench BenchmarkConcurrentPoll -benchmem
+func BenchmarkConcurrentPoll(b *testing.B) {
+	sys, cleanup, err := cli.OpenSystem(b.Context(), "")
+	if err != nil {
+		b.Fatalf("open memory index: %v", err)
+	}
+
+	defer cleanup()
+
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	if err != nil {
+		b.Fatalf("build service config: %v", err)
+	}
+
+	svc, err := appkit.NewService(serviceConfig)
+	if err != nil {
+		b.Fatalf("new service: %v", err)
+	}
+
+	web.Register(svc.Mux, sys, web.Options{})
+
+	ts := testkit.Serve(b, svc)
+	client := noAutoGzip()
+
+	_, headers, _ := get(b, client, ts.FullChainURL, "/frag/dashboard", nil)
+
+	tag := headers.Get("ETag")
+
+	if tag == "" {
+		b.Fatal("fragment served without an ETag; probe cannot run")
+	}
+
+	for _, bb := range []struct {
+		name string
+		etag string
+	}{
+		{name: "revalidate-304", etag: tag},
+		{name: "changed-full-200", etag: ""},
+	} {
+		b.Run(bb.name, func(b *testing.B) {
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					benchRoundTrip(b, client, ts.FullChainURL+"/frag/dashboard", bb.etag)
+				}
+			})
+		})
+	}
 }
 
 // writeTempHtpasswd materializes a one-user bcrypt htpasswd file (the
