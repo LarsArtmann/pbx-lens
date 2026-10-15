@@ -25,6 +25,22 @@
    `GOEXPERIMENT=jsonv2 go test -race -shuffle=on ./...` (14/14 packages ok,
    internal/web included), and a scoped
    `buildflow -s test-race` rerun (exit 0, all packages ok).
+
+   > **ADDENDUM 18:26 (follow-up session):** item 1's "healed" state was
+   > invalidated 2 minutes before this report was written — the daemon
+   > committed ANOTHER unminified build as 577b6cb at 18:04:58 (on-disk
+   > mtime 18:03:59), and the 18:12 full-gate run failed on exactly this
+   > gate again (the "failure loop" the binary flagged). Re-healed 18:20:
+   > `go tool templ generate` + pinned `tailwindcss --minify` produced a
+   > build byte-identical to 2b0bcb2; gate green, full `-race -shuffle`
+   > 14/14, `buildflow -s test-race` exit 0. g.1's open question ("who
+   > produced the unminified build?") stands — no tailwind/templ process
+   > was alive at 18:15, so the clobber was a one-shot run without
+   > `--minify` (same v4.3.3, so a flag-less invocation, not version
+   > drift). Guard landed per f.9: flake app `nix run .#update-styles`
+   > (pinned codegen + pinned minify + bridge-token self-verify);
+   > AGENTS.md and docs/gotchas.md now point at it as the single rebuild
+   > entrypoint.
 2. **AGENTS.md size error cleared.** The 17:08 run errored on 221 lines
    (max 220). A concurrent session had already trimmed to 218 by 17:22
    (a7dd1bf); this session added the `--minify` rebuild note (218→220), then

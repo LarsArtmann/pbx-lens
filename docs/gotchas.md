@@ -187,10 +187,13 @@ invariants summary; this file keeps the war stories.
   was already correct.
   BuildFlow's `tailwind-build` step is DELIBERATELY deferred in this repo
   (the CSS output is owned by the flake-pinned tailwindcss; a PATH tailwind
-  would clobber the pinned bundle), so regenerate with the same pinned
-  binary as the flake preBuild hook —
-  `nix develop -c tailwindcss -i internal/web/static/app.css -o
-  internal/web/static/styles.css --minify` — then REBUILD the binary
+  would clobber the pinned bundle). The single sanctioned rebuild is the
+  flake app `nix run .#update-styles` (added 2026-10-15 after TWO
+  unminified clobbers within one hour re-redded the gate: go.mod-pinned
+  templ codegen, then flake-pinned `tailwindcss -i
+  internal/web/static/app.css -o internal/web/static/styles.css --minify`,
+  then a bridge-token verify that fails the app itself on a broken
+  artifact) — then REBUILD the binary
   (restarting an old one changes nothing: the embed already happened).
   `nix build` is immune (the package preBuild regenerates inside the
   sandbox). `TestStylesServed` locks both legitimate states: 200 +
