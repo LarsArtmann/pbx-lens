@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -16,15 +15,6 @@ import (
 
 // Performance sanity rails (plan 05-40 M16/F49-F50): not gates, but the
 // numbers a future "the list feels slow" report gets compared against.
-
-// benchSystemWithCalls seeds a real-sqlite index with n calls spread over
-// 30 days. Benchmarks cannot use the *testing.B TempDir helpers, so the
-// caller owns cleanup.
-func benchSystemWithCalls(b *testing.B, n int) (ctx context.Context, sys interface {
-	DispatcherNeedless
-}, cleanup func()) {
-	panic("unused")
-}
 
 // TestDetail500TurnTranscriptRenders pins the large-transcript render
 // (F50): a 500-turn transcript renders completely, the ?q= redirect lands
@@ -73,7 +63,7 @@ func TestDetail500TurnTranscriptRenders(t *testing.T) {
 		t.Error("far-end matched turn missing its anchor")
 	}
 
-	for _, probe := range []string{"turn 0: routine", "turn 249: routine", "turn 499"} {
+	for _, probe := range []string{"turn 0: routine", "turn 249: routine", "needle: the one matching turn"} {
 		if !strings.Contains(body, probe) {
 			t.Errorf("transcript truncated: %q missing from render", probe)
 		}
