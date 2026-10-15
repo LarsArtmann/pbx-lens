@@ -212,6 +212,53 @@
               }
             );
           };
+
+          # The single sanctioned styles.css rebuild entrypoint (2026-10-15:
+          # two unminified clobbers within one hour re-redded the CSS gate).
+          # Mirrors the package preBuild order exactly — go.mod-pinned templ
+          # codegen first, then the flake-pinned tailwindcss --minify — and
+          # verifies the bridge tokens so a broken artifact fails HERE,
+          # not in test-race. Any other tailwind invocation (PATH tailwind,
+          # missing --minify, a --watch loop) produces a foreign artifact.
+          apps.update-styles = {
+            type = "app";
+            meta.description = "Rebuild the committed styles.css via go.mod-pinned templ codegen + flake-pinned tailwindcss --minify, then verify the ds-brand bridge tokens";
+            program = lib.getExe (
+              pkgs.writeShellApplication {
+                name = "update-styles";
+                runtimeInputs = [
+                  go
+                  pkgs.tailwindcss_4
+                  pkgs.git
+                  pkgs.gnugrep
+                ];
+                text = ''
+                  set -euo pipefail
+                  root="$(git rev-parse --show-toplevel)"
+                  cd "$root"
+                  # Codegen first (preBuild parity): the go.mod tool directive
+                  # pins templ; pkgs.templ is fmt-only and drifts behind it.
+                  GOEXPERIMENT=jsonv2 go tool templ generate ./internal/web/
+                  tailwindcss \
+                    -i internal/web/static/app.css \
+                    -o internal/web/static/styles.css \
+                    --minify
+                  css="internal/web/static/styles.css"
+                  for token in \
+                    '--ds-brand-rgb:15, 118, 110' \
+                    '--ds-brand-rgb:45, 212, 191' \
+                    '--color-tc-primary:#0f766e'
+                  do
+                    if ! grep -qF -- "$token" "$css"; then
+                      echo "ERROR: rebuilt styles.css lost the bridge token: $token" >&2
+                      exit 1
+                    fi
+                  done
+                  echo "styles.css rebuilt (pinned, minified) and bridge-verified."
+                '';
+              }
+            );
+          };
         };
     };
 }
