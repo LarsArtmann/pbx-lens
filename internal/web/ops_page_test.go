@@ -224,6 +224,49 @@ func TestOpsPageNavLinkAndRelativeTimeScrub(t *testing.T) {
 	if !strings.Contains(body, `datetime="2026-10-12T04:00:00Z"`) {
 		t.Error("/ops last-pass RelativeTime must carry the exact datetime attribute")
 	}
+}
 
-	_ = time.Now
+func TestOpsPageRetentionOffSaysSo(t *testing.T) {
+	// Retention must never be silent: with no -max-age the card states the
+	// keep-everything posture instead of omitting the facts.
+	mux := newTestServerWith(t, Options{Ops: opsPollerPayload()})
+
+	status, body := getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "keeping everything") {
+		t.Error("/ops must state the retention-off posture explicitly")
+	}
+
+	if strings.Contains(body, "Past the window now") {
+		t.Error("retention-off must not render the live over-age row")
+	}
+}
+
+func TestOpsPageRetentionCountsOverAge(t *testing.T) {
+	// With a window the card shows the live would-retire count over the
+	// seeded index: the seed's oldest call sits at 2026-10-12 09:00, so a
+	// 24h window ending "now" (frozen clock) puts both seeds past it.
+	seeds := goldenSeed()
+	freeze := time.Date(2026, 10, 14, 9, 0, 0, 0, time.UTC)
+
+	mux := newTestServerWith(t, Options{
+		Search:          sqliteSearcher(t, seeds...),
+		Now:             func() time.Time { return freeze },
+		Ops:             opsPollerPayload(),
+		RetentionMaxAge: 24 * time.Hour,
+	}, seeds...)
+
+	status, body := getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{"Past the window now", "2 call(s) past the retention window", "call.retired"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/ops retention card missing %q (body: %s)", want, body)
+		}
+	}
 }
