@@ -1,0 +1,225 @@
+package web
+
+import (
+	"net/http"
+	"net/http/httptest"
+	"strconv"
+	"strings"
+	"testing"
+	"time"
+)
+
+// opsCounters exercises the ETag middleware once per outcome (tag, 304) so
+// the cache section has real numbers to show.
+func opsCounters(t *testing.T) *CacheCounters {
+	t.Helper()
+
+	stats := NewCacheCounters()
+
+	generate := ETagMiddleware(stats, nil)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("stable body"))
+	}))
+
+	first := httptest.NewRecorder()
+	generate.ServeHTTP(first, httptest.NewRequest(http.MethodGet, "/", nil))
+
+	replay := httptest.NewRecorder()
+	conditional := httptest.NewRequest(http.MethodGet, "/", nil)
+	conditional.Header.Set("If-None-Match", first.Header().Get("ETag"))
+	generate.ServeHTTP(replay, conditional)
+
+	if replay.Code != http.StatusNotModified {
+		t.Fatalf("conditional replay status = %d, want 304", replay.Code)
+	}
+
+	return stats
+}
+
+func opsPollerPayload() func() any {
+	age := 90.0
+	stale := false
+
+	return func() any {
+		return map[string]any{
+			"sources": map[string]any{
+				"webhook-log": map[string]any{
+					"offered": 2, "recorded": 2, "corrected": 0, "rejected": []string{},
+				},
+				"agent-transcript": map[string]any{
+					"offered": 3, "recorded": 2, "corrected": 1,
+					"rejected": []string{"age-cutoff", "parse-error"},
+				},
+				"freeswitch-cdr":      map[string]any{"offered": 7, "recorded": 7, "corrected": 0, "rejected": []string{}},
+				"telnyx-conversation": map[string]any{"offered": 4, "recorded": 4, "corrected": 0, "rejected": []string{}},
+			},
+			"last_pass":             "2026-10-12T04:00:00Z",
+			"last_pass_age_seconds": age,
+			"stale":                 stale,
+		}
+	}
+}
+
+func TestOpsPageRendersCounters(t *testing.T) {
+	// The human surface shows the same counters /api/ops serves: sources in
+	// sorted order (map order would be nondeterministic), the pass verdict,
+	// and the cache section — including the rejection reasons.
+	mux := newTestServerWith(t, Options{Ops: opsPollerPayload(), Cache: opsCounters(t)})
+
+	status, body := getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{
+		"Ingest poller",
+		"Response cache (ETag)",
+		"agent-transcript", "freeswitch", "telnyx", "webhook-log",
+		"healthy",
+		"1m30s ago",
+		"Rejected: age-cutoff · parse-error",
+		"Hit ratio",
+		"50.0%",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/ops missing %q (body: %s)", want, body)
+		}
+	}
+
+	// Sorted sources: agent-transcript must precede webhook-log.
+	if before := strings.Index(body, "agent-transcript"); before == -1 || before > strings.Index(body, "webhook-log") {
+		t.Error("/ops sources must render in sorted order")
+	}
+
+	// Rejection count rides the table cell.
+	if !strings.Contains(body, ">"+strconv.Itoa(2)+"</td>") {
+		t.Errorf("/ops rejection cell missing count 2 (body: %s)", body)
+	}
+}
+
+func TestOpsPageStaleVerdictAlerts(t *testing.T) {
+	// A stale verdict is the page's whole point: the alert names the age
+	// and the fix, the badge turns error-colored.
+	payload := opsPollerPayload()
+
+	mux := newTestServerWith(t, Options{Ops: payload})
+
+	status, body := getBody(t, mux, "/ops")
+
+	if status != http.StatusOK || strings.Contains(body, "Poller pass is stale") {
+		t.Fatalf("healthy payload must not alert (status %d)", status)
+	}
+
+	age := 3 * 15 * 60.0
+
+	payload = func() any {
+		p := opsPollerPayload()()
+		p.(map[string]any)["last_pass_age_seconds"] = age
+
+		p.(map[string]any)["stale"] = true
+
+		return p
+	}
+
+	mux = newTestServerWith(t, Options{Ops: payload})
+
+	status, body = getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200", status)
+	}
+
+	for _, want := range []string{"Poller pass is stale", "stale", "check the serve logs"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/ops stale page missing %q (body: %s)", want, body)
+		}
+	}
+}
+
+func TestOpsPageUnknownVerdictNeverLies(t *testing.T) {
+	// An older payload shape without the verdict keys must render
+	// "unknown", not a fake healthy.
+	mux := newTestServerWith(t, Options{Ops: func() any {
+		return map[string]any{
+			"sources":   map[string]any{},
+			"last_pass": "2026-10-12T04:00:00Z",
+		}
+	}})
+
+	status, body := getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	if got := strings.Count(body, "unknown"); got < 2 {
+		t.Errorf("/ops should render unknown verdict and age (got %d occurrences, body: %s)", got, body)
+	}
+
+	if strings.Contains(body, "Poller pass is stale") {
+		t.Error("unknown verdict must not render the stale alert")
+	}
+}
+
+func TestOpsPageNothingWiredExplains(t *testing.T) {
+	// Without any counters the page stays a 200 with the honest empty
+	// state (the JSON twin 503s with the same guidance).
+	status, body := getBody(t, newTestServer(t), "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{"No counters are wired", "running poller", "/api/ops"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/ops empty state missing %q (body: %s)", want, body)
+		}
+	}
+}
+
+func TestOpsPageCacheOnlyRendersCacheSection(t *testing.T) {
+	// The cache middleware runs in every composition — the page must stand
+	// on it alone, like the JSON endpoint does.
+	mux := newTestServerWith(t, Options{Cache: opsCounters(t)})
+
+	status, body := getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	if !strings.Contains(body, "Response cache (ETag)") {
+		t.Error("/ops cache-only page missing the cache card")
+	}
+
+	if strings.Contains(body, "Ingest poller") {
+		t.Error("/ops cache-only page must not render a poller card")
+	}
+}
+
+func TestOpsPageBodyIsDeterministic(t *testing.T) {
+	// The ETag/no-cache contract dies on any per-render entropy (the nav-id
+	// lesson): two renders of the same counters must be byte-identical.
+	mux := newTestServerWith(t, Options{Ops: opsPollerPayload(), Cache: opsCounters(t)})
+
+	_, first := getBody(t, mux, "/ops")
+	_, second := getBody(t, mux, "/ops")
+
+	if first != second {
+		t.Error("/ops body differs between identical renders — ETag revalidation would never 304")
+	}
+}
+
+func TestOpsPageNavLinkAndRelativeTimeScrub(t *testing.T) {
+	// The nav carries the Ops link on every page (the ops page is the
+	// surface's entry), and the RelativeTime rendering is the only
+	// wall-clock-driven text (the goldens scrub it).
+	mux := newTestServerWith(t, Options{Ops: opsPollerPayload()})
+
+	_, body := getBody(t, mux, "/ops")
+
+	if !strings.Contains(body, `href="/ops"`) {
+		t.Error("/ops nav must link to itself so the active state renders")
+	}
+
+	if !strings.Contains(body, `datetime="2026-10-12T04:00:00Z"`) {
+		t.Error("/ops last-pass RelativeTime must carry the exact datetime attribute")
+	}
+
+	_ = time.Now
+}

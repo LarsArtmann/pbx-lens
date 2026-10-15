@@ -65,7 +65,7 @@ templ opsPollerCard(p opsPoller) {
 func opsPollerItems(p opsPoller) []display.DefinitionItem {
 	verdictType := display.BadgeSuccess
 	if p.Stale {
-		verdictType = display.BadgeDanger
+		verdictType = display.BadgeError
 	} else if !p.StaleKnown {
 		verdictType = display.BadgeNeutral
 	}

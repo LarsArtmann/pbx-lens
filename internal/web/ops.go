@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/templ-components/utils/format"
@@ -194,15 +195,5 @@ func (p opsPoller) rejectedText() string {
 }
 
 func joinReasons(reasons []string) string {
-	out := ""
-
-	for i, reason := range reasons {
-		if i > 0 {
-			out += " · "
-		}
-
-		out += reason
-	}
-
-	return out
+	return strings.Join(reasons, " · ")
 }

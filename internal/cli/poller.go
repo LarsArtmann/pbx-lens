@@ -98,7 +98,7 @@ const staleAfterPasses = 2
 // by definition — an ops endpoint answering before the first pass means
 // the poller has not proven itself yet. The sentinel is -1s so it
 // survives the payload's Seconds() conversion as exactly -1.
-func stalePass(lastPass time.Time, every time.Duration, now time.Time) (age time.Duration, stale bool) {
+func stalePass(lastPass time.Time, every time.Duration, now time.Time) (time.Duration, bool) {
 	if every <= 0 {
 		every = DefaultPollEvery
 	}
@@ -107,7 +107,7 @@ func stalePass(lastPass time.Time, every time.Duration, now time.Time) (age time
 		return -1 * time.Second, true
 	}
 
-	age = now.Sub(lastPass)
+	age := now.Sub(lastPass)
 
 	return age, age > every*staleAfterPasses
 }
@@ -417,9 +417,9 @@ func (c *SourceCounters) SnapshotAny() any {
 	age, stale := stalePass(lastPass, every, now())
 
 	return map[string]any{
-		"sources":                sources,
-		"last_pass":              lastPass,
-		"last_pass_age_seconds":  age.Seconds(),
-		"stale":                  stale,
+		"sources":               sources,
+		"last_pass":             lastPass,
+		"last_pass_age_seconds": age.Seconds(),
+		"stale":                 stale,
 	}
 }
