@@ -26,12 +26,12 @@ func noAutoGzip() *http.Client {
 // get issues a GET against the served chain and returns status plus the
 // response for header inspection. It takes testing.TB so benchmarks can
 // share the same round-trip path.
-func get(t testing.TB, client *http.Client, base, path string, headers map[string]string) (int, http.Header, string) {
-	t.Helper()
+func get(tb testing.TB, client *http.Client, base, path string, headers map[string]string) (int, http.Header, string) {
+	tb.Helper()
 
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, base+path, nil)
+	req, err := http.NewRequestWithContext(tb.Context(), http.MethodGet, base+path, nil)
 	if err != nil {
-		t.Fatalf("build request %s: %v", path, err)
+		tb.Fatalf("build request %s: %v", path, err)
 	}
 
 	for k, v := range headers {
@@ -40,14 +40,14 @@ func get(t testing.TB, client *http.Client, base, path string, headers map[strin
 
 	resp, err := client.Do(req)
 	if err != nil {
-		t.Fatalf("GET %s: %v", path, err)
+		tb.Fatalf("GET %s: %v", path, err)
 	}
 
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		t.Fatalf("read %s body: %v", path, err)
+		tb.Fatalf("read %s body: %v", path, err)
 	}
 
 	return resp.StatusCode, resp.Header, string(body)
