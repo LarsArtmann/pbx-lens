@@ -8,11 +8,12 @@ corpus seeding, serve lifecycle).
 
 | Script                     | What it proves / captures                                                                                                                                                                                                                                                                                       | When to run                                                            |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `screenshot-probe.js`      | 24 PNGs (light/dark × mobile/desktop × calls/search/dashboard/2 details/?q= match-log detail) into `--out` for eyeball passes                                                                                                                                                                                   | After any visual change; before tagging                                |
+| `screenshot-probe.js`      | 24 PNGs (light/dark × mobile/desktop × calls/search/dashboard/2 details/?q= match-log detail) into `--out` for eyeball passes; `--only <name[,name…]>` captures a subset (surface labels: calls, search, dashboard, detail-a/b/q, notfound, detail-rec, print, empty-*, long-excerpt)                                                                                                                                                                                                                             | After any visual change; before tagging                                |
 | `verify-ui-contract.js`    | Browser-level contract check: 3 copy buttons + label swap (T20); search hit `?q=` → 302 → `#turn-N` → amber mark → real fragment scroll (T21). Exit 1 on any FAIL                                                                                                                                               | After changes to detail/search/copy paths; before tagging              |
 | `verify-style-contract.js` | Browser-level style contracts: `--ds-brand-rgb` resolves teal (light `15, 118, 110`, dark `45, 212, 191`, never violet) + a rendered heatmap cell computes to `rgb(15, 118, 110)`; the All-option of both filter selects is `value=""` + selected, and `?direction=inbound` selects Inbound. Exit 1 on any FAIL | After any CSS/theme or filter-form change; before tagging              |
 | `verify-staleness-live.js` | Live staleness watch (M3/F11): a 48 h-old index renders the banner, forcing the htmx poll keeps it while stale, and a fresh ingest + poll makes it disappear on screen WITHOUT a reload. Exit 1 on any FAIL                                                                                                     | After changes to the staleness banner / PolledRegion / freshness logic |
 | `gen-tc-classes.js`        | Regenerates the library class inventory (`templ-components-classes.txt`) used by the palette gate and the version-bump watchlist                                                                                                                                                                                | On templ-components version bumps                                      |
+| `verify-all.sh`            | The one-command lane: runs the three contract probes + the screenshot sweep sequentially, each on its own free port; first red wins. Extra args pass through to screenshot-probe (`--only`, `--themes`, `--out`)                                                                                                  | Before tagging; after any UI or cache-affecting change                 |
 
 Both browser scripts are self-contained: they build the binary, seed the
 corpus (smoke + one agent transcript so the `?q=` match log has turns),
@@ -29,6 +30,25 @@ it regenerates `*_templ.go` when a `.templ` is newer (go.mod-pinned
 `styles.css` when missing (flake-pinned tailwindcss via `nix develop -c`),
 so a clean checkout can't probe against empty or stale assets. `go:embed`
 is compile-time, so this runs BEFORE the binary build.
+
+Codegen bootstrap (M4/F14, hash-primary since 05-40 M12/F36): every probe
+runs `lib.ensureCodegen()` first — it hashes the `.templ` inputs + app.css
+into a ledger file (`.codegen-inputs.sha256`, gitignored) and regenerates
+whenever the hash moves (branch switches with lying mtimes) OR the per-file
+mtime fallback fires (each `*_templ.go` vs its own `.templ`; a missing
+generated file counts as stale). The old global-newest mtime comparison
+never converged — templ skips rewriting unchanged outputs, preserving their
+older mtimes — so every probe paid a no-op `templ generate`. The ledger and
+regeneration run before the binary build (`go:embed` is compile-time).
+
+Probe-merge decision (05-40 M12/F35, 2026-10-15): the four probes stay
+SEPARATE scripts behind the single `verify-all.sh` entry point. The
+contract probes assert different failure domains (DOM copy behavior,
+computed style truth, timed staleness transitions) with different browser
+lifecycles; merging them would couple unrelated failures and bloat each
+run with the others' setup. Shared plumbing (chromium discovery, scratch
+puppeteer, build/seed/serve) already lives in `lib/ui-probe.js`, so the
+duplication cost merging would have removed is already paid once.
 
 Smoke seeding flags (M3): `smoke -age 48h` backdates the seeded call
 (staleness surfaces) and `smoke -with-recording ref` sets the recording
