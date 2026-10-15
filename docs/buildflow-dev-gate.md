@@ -45,11 +45,15 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   tidy-diff; tidy, then re-pin via `nix run .#update-vendor-hash` (the FOD
   hash survived this trim unchanged — it covers the module tree, not go.sum).
 - **go-version-auto-configure (dep-forced, advisory by design)**: go.mod
-  carries `go 1.27.1` because go-appkit v0.8.0's module floor demands it —
-  `go mod tidy` reverts any major.minor downgrade. The checker's own
-  severity policy treats dep-forced patch floors as correct. If a stray
-  `go-mod-*` step ever rewrites the directive to `go 1.27`, restore it
-  (`git restore go.mod`); a 1.27 directive breaks `go list`.
+  carries `go 1.27.2` because go-appkit v0.9.0's module floor demands it
+  (its own go.mod declares 1.27.2) — `go mod tidy` reverts any
+  major.minor downgrade. The checker's own severity policy treats
+  dep-forced patch floors as correct; the 2026-10-15 run still flagged it
+  as a warning from the stale fleet binary (built 518739c, 101 commits
+  behind) — re-verify after a binary rebuild before treating it as a
+  regression. If a stray `go-mod-*` step ever rewrites the directive to
+  `go 1.27`, restore it (`git restore go.mod`); a 1.27 directive breaks
+  `go list`.
 - **go-auto-upgrade encoding/json v1→v2 suggestions**: deliberate — the
   boundary types (metaengine DTOs) are non-stdlib-owned; the v2 swap waits
   for T4 per the stack decisions. samber/lo suggestions ignored (stdlib

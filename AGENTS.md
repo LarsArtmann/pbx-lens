@@ -175,8 +175,10 @@ nix build                             # ships result/bin/pbx-lens; nix run . -- 
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
                                       # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go
                                       # http probe (curl banned); styles.css is committed — after
-                                      # app.css changes REBUILD it (go:embed is compile-time;
-                                      # /app.css MIME trap: docs/gotchas.md); -recording-timeout bounds
+                                      # app.css changes REBUILD it with the pinned tailwindcss
+                                      # --minify (a foreign/unminified build re-reds the CSS gate;
+                                      # go:embed is compile-time; /app.css MIME trap: docs/gotchas.md);
+                                      # -recording-timeout bounds
                                       # proxy upstream hops (default web.DefaultUpstreamTimeout, 30 s)
 nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
 bash scripts/verify-all.sh            # THE browser lane: all four probe suites

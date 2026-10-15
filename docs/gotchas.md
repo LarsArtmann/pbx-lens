@@ -170,13 +170,21 @@ invariants summary; this file keeps the war stories.
   caught it under package-wide shuffle + load, never with `-run` alone.
   Helpers that start background hosts must return a waitable stop and the
   caller must run it before every Close.
-- **`go:embed static` snapshots at COMPILE time — an unbuilt stylesheet reads
-  as a browser MIME error, not a 404 (paid for, 2026-10-12)**:
-  `internal/web/static/styles.css` is a gitignored tailwind artifact; a
+- **`go:embed static` snapshots at COMPILE time — a missing or mis-built
+  stylesheet fails late and confusingly (paid for, 2026-10-12 + 2026-10-15)**:
+  `internal/web/static/styles.css` is COMMITTED since 2026-10-15 (the CSS
+  gate embeds it; the earlier gitignored state red every fresh clone). A
   checkout without it produces serve binaries whose `/app.css` answers the
   explanatory 404 (`http.Error` → `text/plain`), which Chrome reports as
   "Refused to apply style ... MIME type ('text/plain')" — no 404 in the
   console, so it looks like a broken Content-Type, not a missing artifact.
+  An artifact built by anything BUT the flake-pinned tailwindcss --minify
+  (unminified, different custom-property spacing) re-reds
+  `TestCSSGateBridgesHeatmapBrandToTeal` with "lost the ds-brand bridge"
+  even though every token is present — the gate pins the minified token
+  format (`--ds-brand-rgb:15,` not `--ds-brand-rgb: 15,`), so the 17:08
+  gate run failed on an unminified on-disk regen while the committed copy
+  was already correct.
   BuildFlow's `tailwind-build` step is DELIBERATELY deferred in this repo
   (the CSS output is owned by the flake-pinned tailwindcss; a PATH tailwind
   would clobber the pinned bundle), so regenerate with the same pinned

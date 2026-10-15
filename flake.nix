@@ -43,9 +43,11 @@
         # root directory, which holds no Go package — the build then
         # "succeeds" with an empty result and no bin/pbx-lens.
         subPackages = [ "./cmd/pbx-lens" ];
-        # UI codegen: *_templ.go and static/styles.css are build artifacts
-        # (gitignored) regenerated inside the package build — templ via the
-        # module's preBuild policy, tailwind via our preBuild hook below.
+        # UI codegen: *_templ.go is a gitignored codegen artifact, while
+        # static/styles.css is committed (the CSS gate + CI embed the
+        # committed copy) — the package build still regenerates both, so a
+        # store build can never ship stale CSS: templ via the module's
+        # preBuild policy, tailwind via our preBuild hook below.
         enableTempl = true;
         templGenerationPolicy = "preBuild";
         extraBuildAttrs = pkgs: {
