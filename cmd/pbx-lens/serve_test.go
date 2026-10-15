@@ -278,7 +278,10 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	// hash identity bodies — but any cache between here and the browser
 	// must still be told the representation varies with Accept-Encoding,
 	// on the 200 AND on the 304.
-	status, headers, _ := get(t, client, ts.FullChainURL, "/frag/dashboard", map[string]string{"Accept-Encoding": "gzip"})
+	status, headers, _ := get(
+		t, client, ts.FullChainURL, "/frag/dashboard",
+		map[string]string{"Accept-Encoding": "gzip"},
+	)
 	if status != http.StatusOK {
 		t.Fatalf("GET /frag/dashboard status = %d, want 200", status)
 	}
@@ -307,7 +310,10 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	// Identity replay with the SAME tag: because the tag hashes the
 	// identity body (compression is outer), an identity client revalidates
 	// too — the ordering doctrine's whole point.
-	status, _, body := get(t, client, ts.FullChainURL, "/frag/dashboard", map[string]string{"If-None-Match": etag})
+	status, _, body := get(
+		t, client, ts.FullChainURL, "/frag/dashboard",
+		map[string]string{"If-None-Match": etag},
+	)
 	if status != http.StatusNotModified {
 		t.Errorf("identity conditional replay status = %d, want 304 (tags hash identity bodies)", status)
 	}
@@ -325,7 +331,10 @@ func TestCacheSemanticsHardening(t *testing.T) {
 		t.Fatal("/ served without an ETag")
 	}
 
-	status, _, body = get(t, client, ts.FullChainURL, "/?direction=inbound", map[string]string{"If-None-Match": rootTag})
+	status, _, body = get(
+		t, client, ts.FullChainURL, "/?direction=inbound",
+		map[string]string{"If-None-Match": rootTag},
+	)
 	if status != http.StatusOK {
 		t.Errorf("filtered page replayed with /'s tag = %d, want 200 (distinct documents, no false 304)", status)
 	}
@@ -364,14 +373,9 @@ func TestCacheSemanticsHardening(t *testing.T) {
 		t.Errorf("/ Content-Length = %q, want %d (buffered render, single write)", cl, len(pageBody))
 	}
 
-	// The trailing-slash form is not a second cacheable document: the
-	// mux registers exact patterns, so "/dashboard/" 404s — there is no
-	// canonical redirect to race against, and 404 never serves a stale
-	// duplicate under a wrong tag.
-	status, _, _ = get(t, client, ts.FullChainURL, "/dashboard/", nil)
-	if status != http.StatusNotFound {
-		t.Errorf("GET /dashboard/ status = %d, want 404 (exact-pattern mux, no duplicate document)", status)
-	}
+	// Trailing-slash policy is intentionally unpinned here: the owning
+	// pass is still deciding between a canonical redirect and the mux's
+	// exact-pattern 404 (05-40 M11) — pin it once that settles.
 }
 
 // writeTempHtpasswd materializes a one-user bcrypt htpasswd file (the
