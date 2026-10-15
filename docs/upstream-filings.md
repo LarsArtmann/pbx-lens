@@ -106,6 +106,14 @@ upstream — no upstream movement to fold in yet.**
   `docs/drafts/2026-10-15_buildflow_nix-hash-fix_wrong-attribute.md`.
   Until upstream lands: never run the hash fixer on a dirty tree
   (AGENTS.md, vendorHash.nix provenance comment).
+  **RECURRENCE 2026-10-15 18:33** (stale binary `518739c`, tree dirty with
+  doc edits): `buildflow -s nix-hash-fix --fix` re-committed the exact
+  wrong-attribute write (real vendor hash → cqrs-lint `hash`, placeholder →
+  cqrs-lint `vendorHash` AND vendorHash.nix, corruption 62bcca6), and the
+  step still self-reported ✔ verify + "1 fixed". Restored by hand from the
+  probe log's `got:` value; `nix build .` + `nix develop -c true` green.
+  Hardened repo rule: until the binary carries the fix, hash repairs go
+  through `nix run .#update-vendor-hash` on a clean tree, never the step.
 - Re-verified 2026-10-15 (plan M10/F32-F33): #48/#49/#51 all OPEN, zero
   comments; the #48 mechanism is still present at the pin —
   `display/bar_chart_templ.go:140` (outer `flex items-end` + inline height)
