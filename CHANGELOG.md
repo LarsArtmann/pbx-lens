@@ -7,6 +7,51 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-15 (nav identity broke the 304 contract)
+
+- Every page's navigation shell carried a random `id` attribute (the UI
+  library mints one whenever none is set), so two fetches of the same page
+  never had identical bytes — the `Cache-Control: no-cache` + ETag
+  revalidation contract could never answer 304, and every visit and poll
+  silently re-downloaded the full page. The shell now pins a
+  deterministic id: pages and poll fragments revalidate with real 304s
+  (proven live — three consecutive fetches produced three different
+  ETags before the fix, one stable 304 chain after). A regression test
+  rejects any future random-id markup.
+
+### Fixed — 2026-10-15 (dashboard honesty when the window is empty)
+
+- An empty (or all-zero) window rendered two zero-height chart boxes and
+  an all-flat trend line pretending to be data. Volume/duration bars and
+  the trend card now show their honest empty states ("No calls in the
+  window yet.") exactly when there is nothing to chart — matching the
+  heatmap's existing behavior.
+
+### Changed — 2026-10-15 (dark-mode + polish)
+
+- The dark-theme page background uses the palette's dark surface
+  (gray-900) instead of the UI library's indigo-tinted default — the one
+  spot the library color leaked past the teal bridge. Search hit-card
+  hover aligns with the calls-table hover shade.
+
+### Added — 2026-10-15 (browser-contract tooling + probe fixtures)
+
+- `scripts/verify-style-contract.js`: browser-level checks that the teal
+  signal palette actually resolves (`--ds-brand` light/dark triplets,
+  heatmap cells bridged off violet), the Go twin pins the embedded CSS.
+- `scripts/verify-staleness-live.js`: the staleness banner's live
+  lifecycle — appears when the index ages out, survives a forced poll,
+  disappears after fresh ingest without a reload.
+- `scripts/golden-pretty-diff.sh`: readable word-diff when a golden
+  changes, instead of eyeballing wall-of-HTML.
+- Screenshot probe grew to 39 pages including the 404 page, a
+  recording-audio detail card, print rendering, the empty-index ladder
+  (own seeded DB), a `--themes` flag, and an optional `--port` (free OS
+  port when omitted).
+- `smoke` gained `-age <duration>` (backdate the index for staleness
+  states) and `-with-recording <ref>` (attach a recording reference) —
+  additive probe fixtures.
+
 ### Added
 
 - HTTP-stack adoption pass (audit: docs/planning/2026-10-12_12-47_SUPERB-
