@@ -1,5 +1,26 @@
 # SUPERB Plan — UI Contract Hardening & the Pareto Road Ahead
 
+> **EXECUTED 2026-10-15 (same day, 02:30–05:05 CEST).** M1 (contract probes:
+> `verify-style-contract.js`, CSS gate, README wiring), M2/F6 (decision pack
+> `docs/decisions/2026-10-15_ui-owner-decision-pack.md`, D1–D6), M3
+> (unseen-states captures + `verify-staleness-live.js` + the empty-index
+> chart honesty fix), M4 (free-port default, `ensureCodegen` bootstrap,
+> `golden-pretty-diff.sh`, port docs), M5 (keyboard walk contract, print
+> check, badge-AT reasoned pass), M6 (gate + tidy + govulncheck + lint all
+> green individually), M7 (templ drift note, AGENTS budget, adoption-map
+> bridge row, gotchas lesson), M8 (**found + fixed the nav-id ETag
+> volatility bug**, filed templ-components#55; fragment Server-Timing
+> measured), M9 (harvested into TODO_LIST eleventh pass + ROADMAP), M10
+> (#48/#49/#51 re-verified OPEN), M11 (dark theme-color fixed, hit-card
+> hover aligned, aria-swap verified, SectionHeading rejected), M18/M20/M21
+> (TZ vocabulary doc, long-excerpt eyeball pass, T23 evidence PNG,
+> `--themes` sweep flag). F65 (2027-01 calendar) is owner-external — the
+> repo-side truth is docs/telnyx-live-api.md. M12–M17 + M14/M15/M16/M22
+> harvested as TODO_LIST rows (blocked/low), NOT executed here. Verdikt
+> evidence: full suite green, lint 0, all four probes ALL PASS, `nix
+> build` 0, gate 60/70 (only casualty = documented nix-build OOM under
+> load, standalone green).
+
 - **Created:** 2026-10-15 02:24 CEST
 - **Input universe:** all 50 TODOs from
   `docs/status/2026-10-15_02-00_ui-design-audit-polish.md` (section f) —
