@@ -4,4 +4,4 @@
 # hash by hand (AGENTS.md Commands), and never run the hash fixer on a dirty
 # tree: BuildFlow#55 (filed 2026-10-15) is the wrong-attribute write this
 # repo lived through that day (corruption a61ba8c, restore 48a63df).
-"sha256-eKVzgUYm6ayIvHPUJl4L4os6mB15oDOr7KGyLo2DSe8="
+"sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
