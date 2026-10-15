@@ -12,6 +12,7 @@
 // corpus seeding, serve lifecycle) lives in scripts/lib/ui-probe.js.
 //
 // Usage: node scripts/screenshot-probe.js [--port 18099] [--out /tmp/lens-shots]
+//        [--themes light,dark] [--only calls,dashboard,print]
 "use strict";
 
 const fs = require("fs");
@@ -26,6 +27,18 @@ const arg = (name, dflt) => {
 
 const OUT = arg("--out", "/tmp/lens-shots");
 const DB = path.join(OUT, "lens.db");
+
+// --only <name[,name…]> (plan 05-40 M12/F33): capture a subset instead of
+// the full sweep — an eyeball pass on one page shouldn't pay for the whole
+// corpus. Names are the capture labels (calls, dashboard, detail-a,
+// empty-calls, print, …).
+const ONLY = args.includes("--only")
+  ? arg("--only", "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  : null;
+const wanted = (name) => !ONLY || ONLY.includes(name);
 
 (async () => {
   // --port is optional (M4/F13): omit it and the OS hands over a free port.
@@ -96,6 +109,21 @@ const DB = path.join(OUT, "lens.db");
       console.error("no valid themes after --themes (use light and/or dark)");
       process.exit(1);
     }
+    if (ONLY) {
+      const known = new Set([
+        ...pages.map(([n]) => n),
+        "empty-calls",
+        "empty-search",
+        "empty-dashboard",
+        "print",
+        "long-excerpt",
+      ]);
+      const unknown = ONLY.filter((n) => !known.has(n));
+      if (unknown.length > 0) {
+        console.error(`--only: unknown surface(s) ${unknown.join(", ")}; known: ${[...known].sort().join(", ")}`);
+        process.exit(1);
+      }
+    }
     const viewports = [
       { w: 375, h: 812, tag: "mobile" },
       { w: 1280, h: 900, tag: "desktop" },
@@ -108,7 +136,7 @@ const DB = path.join(OUT, "lens.db");
       await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
       for (const vp of viewports) {
         await page.setViewport({ width: vp.w, height: vp.h });
-        for (const [name, urlPath] of pages) {
+        for (const [name, urlPath] of pages.filter(([n]) => wanted(n))) {
           const resp = await page.goto(`${BASE}${urlPath}`, {
             waitUntil: "networkidle0",
             timeout: 20000,
@@ -125,7 +153,7 @@ const DB = path.join(OUT, "lens.db");
     // --- Print check (plan M5/F17): chrome drops, facts stay. The @media
     // print block in app.css hides nav/footer/buttons; this asserts the
     // computed result and leaves a PNG for the eyeball pass.
-    {
+    if (wanted("print")) {
       const ctx = await browser.createBrowserContext();
       const page = await ctx.newPage();
       await page.setViewport({ width: 1280, height: 900 });
@@ -150,37 +178,39 @@ const DB = path.join(OUT, "lens.db");
     // --- Empty-index phase (plan M3/F8): first-run corpus variant. The
     // smoke corpus never shows the "no calls yet" ladders, so restart the
     // serve against a truly empty DB and capture the three index pages.
-    await probe.stopProbe(serve);
-    const emptyDB = path.join(OUT, "empty.db");
-    if (fs.existsSync(emptyDB)) fs.rmSync(emptyDB);
-    const emptyServe = await probe.serveProbe(bin, emptyDB, PORT);
-    try {
-      const emptyPages = [
-        ["empty-calls", "/"],
-        ["empty-search", "/search"],
-        ["empty-dashboard", "/dashboard"],
-      ];
-      for (const theme of themes) {
-        const ctx = await browser.createBrowserContext();
-        const page = await ctx.newPage();
-        await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
-        for (const vp of [viewports[1]]) {
-          await page.setViewport({ width: vp.w, height: vp.h });
-          for (const [name, urlPath] of emptyPages) {
-            const resp = await page.goto(`${BASE}${urlPath}`, {
-              waitUntil: "networkidle0",
-              timeout: 20000,
-            });
-            const file = path.join(OUT, `${theme}-${vp.tag}-${name}.png`);
-            await page.screenshot({ path: file, fullPage: true });
-            n++;
-            console.log("captured", file, `status=${resp.status()}`);
+    if (["empty-calls", "empty-search", "empty-dashboard"].some(wanted)) {
+      await probe.stopProbe(serve);
+      const emptyDB = path.join(OUT, "empty.db");
+      if (fs.existsSync(emptyDB)) fs.rmSync(emptyDB);
+      const emptyServe = await probe.serveProbe(bin, emptyDB, PORT);
+      try {
+        const emptyPages = [
+          ["empty-calls", "/"],
+          ["empty-search", "/search"],
+          ["empty-dashboard", "/dashboard"],
+        ];
+        for (const theme of themes) {
+          const ctx = await browser.createBrowserContext();
+          const page = await ctx.newPage();
+          await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
+          for (const vp of [viewports[1]]) {
+            await page.setViewport({ width: vp.w, height: vp.h });
+            for (const [name, urlPath] of emptyPages.filter(([n]) => wanted(n))) {
+              const resp = await page.goto(`${BASE}${urlPath}`, {
+                waitUntil: "networkidle0",
+                timeout: 20000,
+              });
+              const file = path.join(OUT, `${theme}-${vp.tag}-${name}.png`);
+              await page.screenshot({ path: file, fullPage: true });
+              n++;
+              console.log("captured", file, `status=${resp.status()}`);
+            }
           }
+          await ctx.close();
         }
-        await ctx.close();
+      } finally {
+        probe.stopProbe(emptyServe);
       }
-    } finally {
-      probe.stopProbe(emptyServe);
     }
 
     // --- Long-excerpt phase (plan 05-40 M13/F42, folded from the one-off
@@ -188,7 +218,7 @@ const DB = path.join(OUT, "lens.db");
     // ceiling renders in the calls table — the truncation eyeball gets a
     // permanent corpus page instead of a lost one-off script. Own DB: the
     // main corpus must stay deterministic for the other captures.
-    {
+    if (wanted("long-excerpt")) {
       const longDB = path.join(OUT, "long-excerpt.db");
       for (const suffix of ["", "-shm", "-wal"]) {
         if (fs.existsSync(longDB + suffix)) fs.rmSync(longDB + suffix);

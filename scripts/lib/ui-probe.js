@@ -11,6 +11,7 @@
 // drives NixOS's chromium because CLI chrome flags cannot emulate
 // prefers-color-scheme; steam-run/chrome-headless-shell lack libnss3.
 const { execFileSync, spawn } = require("child_process");
+const crypto = require("crypto");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -51,15 +52,42 @@ function repoRoot() {
   return execFileSync("git", ["rev-parse", "--show-toplevel"]).toString().trim();
 }
 
+// inputHash hashes the codegen INPUTS (sorted .templ sources, app.css) so
+// staleness is content-derived: mtimes lie across branch switches and
+// fresh clones (plan 05-40 M12/F36 — hash primary, mtime stays as the
+// fallback for pre-ledger trees).
+function inputHash(webDir) {
+  const hash = crypto.createHash("sha256");
+  hash.update(
+    ["app.css", ...fs.readdirSync(webDir).filter((n) => n.endsWith(".templ")).sort()]
+      .map((n) => `${n}\n${fs.readFileSync(path.join(webDir, n))}`)
+      .join("\n"),
+  );
+  return hash.digest("hex");
+}
+
 // ensureCodegen regenerates the gitignored UI codegen a clean checkout
-// lacks (plan M4/F14): `*_templ.go` when any .templ is newer (via the
-// go.mod-pinned `go tool templ` — the devShell templ binary drifts), and
-// styles.css when missing (flake-pinned tailwindcss, same command as the
-// package preBuild). go:embed is compile-time, so this MUST run before
-// buildProbeBinary or a fresh clone probes against yesterday's assets.
+// lacks (plan M4/F14): `*_templ.go` when the hashed .templ inputs differ
+// from the ledger (or an input is newer — the mtime fallback), via the
+// go.mod-pinned `go tool templ` (the devShell templ binary drifts), and
+// styles.css when missing or app.css changed (flake-pinned tailwindcss,
+// same command as the package preBuild). go:embed is compile-time, so
+// this MUST run before buildProbeBinary or a fresh clone probes against
+// yesterday's assets.
 function ensureCodegen() {
   const root = repoRoot();
   const webDir = path.join(root, "internal", "web");
+  const ledger = path.join(webDir, ".codegen-inputs.sha256");
+
+  const current = inputHash(webDir);
+  let recorded = null;
+  try {
+    recorded = fs.readFileSync(ledger, "utf8").trim();
+  } catch {
+    // First run after adoption (or after clean): the hash check cannot
+    // veto, so the mtime/exists fallbacks below decide.
+  }
+  const inputsChanged = recorded !== null && recorded !== current;
 
   let newestTempl = 0;
   for (const name of fs.readdirSync(webDir)) {
@@ -73,8 +101,10 @@ function ensureCodegen() {
       templStale = true;
     }
   }
-  if (templStale) {
-    console.log("codegen: .templ newer than generated Go — running go tool templ generate");
+  if (templStale || inputsChanged) {
+    console.log(
+      `codegen: ${inputsChanged ? ".templ inputs changed since the ledger" : ".templ newer than generated Go"} — running go tool templ generate`,
+    );
     execFileSync("go", ["tool", "templ", "generate", "./internal/web/"], {
       cwd: root,
       env: { ...process.env, GOEXPERIMENT: "jsonv2" },
@@ -83,8 +113,10 @@ function ensureCodegen() {
   }
 
   const styles = path.join(webDir, "static", "styles.css");
-  if (!fs.existsSync(styles)) {
-    console.log("codegen: styles.css missing — running flake-pinned tailwindcss");
+  if (!fs.existsSync(styles) || inputsChanged) {
+    console.log(
+      `codegen: styles.css ${!fs.existsSync(styles) ? "missing" : "may predate app.css changes"} — running flake-pinned tailwindcss`,
+    );
     execFileSync(
       "nix",
       [
@@ -100,6 +132,8 @@ function ensureCodegen() {
       { cwd: root, stdio: "inherit" },
     );
   }
+
+  fs.writeFileSync(ledger, `${current}\n`);
 }
 
 // buildProbeBinary compiles ./cmd/pbx-lens to a throwaway path (go run
