@@ -34,7 +34,7 @@ PII option A). Checklist:
 
 1. Announce a maintenance window (the index is disposable; serve can stay
    up — ingest is idempotent and re-runs are safe).
-2. `pbx-lens backup -db … ` (verified snapshot first, always).
+2. `pbx-lens backup -db …` (verified snapshot first, always).
 3. Stop pollers (`systemctl stop pbx-lens-ingest…` or the module timers).
 4. Move the old DSN aside (`calls.db` → `calls.db.v1`), create fresh.
 5. Re-run every ingest command against the sources (CDR Master.csv files,

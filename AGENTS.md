@@ -40,7 +40,7 @@ webphone later gets a read-only deep link, never a data dependency.
   errorpages/security/realtime, templ-components errorpage, export
   rate-limiting, SSE-hub, Telnyx etag client, data-fingerprint fast-304,
   go-atomic-write for backup staging): docs/planning/2026-10-12_12-47_*
-  + docs/drafts/.
+  - docs/drafts/.
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**
   `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
   owns SIGINT/SIGTERM + graceful drain; requires go ≥ 1.27.2 — the go.mod

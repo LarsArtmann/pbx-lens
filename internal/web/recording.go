@@ -11,11 +11,10 @@ import (
 	"sync"
 	"time"
 
-	"golang.org/x/time/rate"
-
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
+	"golang.org/x/time/rate"
 )
 
 // RecordingFetcher is the consumer-side view of a Telnyx client the

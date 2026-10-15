@@ -30,18 +30,18 @@ func TestParseMalformedJSONLNeverPanics(t *testing.T) {
 			b := []byte(valid[0])
 			b[rng.Intn(len(b))] = byte(rng.Intn(256))
 			lines = append(lines, string(b))
-			case 1: // truncate at a random offset
+		case 1: // truncate at a random offset
 			lines = append(lines, valid[0][:rng.Intn(len(valid[0]))])
-			case 2: // raw control bytes / invalid UTF-8
+		case 2: // raw control bytes / invalid UTF-8
 			lines = append(lines, "\x00\xff\xfe{\"body\":\x07\x1b[garbage")
-			case 3: // structurally valid JSON, wrong shape
+		case 3: // structurally valid JSON, wrong shape
 			lines = append(lines, fmt.Sprintf(`{"n":%d,"body":{"data":{"event_type":42}}}`, rng.Int()))
-			case 4: // blanks and whitespace
+		case 4: // blanks and whitespace
 			lines = append(lines, "", "   ", "\t")
 		case 5: // deep nesting bomb (bounded depth)
 			depth := 1 + rng.Intn(64)
 			lines = append(lines, strings.Repeat("[", depth)+strings.Repeat("]", depth))
-			}
+		}
 	}
 
 	res, err := Parse(strings.NewReader(strings.Join(lines, "\n")))

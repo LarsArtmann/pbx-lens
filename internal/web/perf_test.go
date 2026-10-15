@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 	"hash/fnv"
-	"strconv"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -53,7 +53,9 @@ func TestDetail500TurnTranscriptRenders(t *testing.T) {
 		t.Fatalf("detail?q=needle status = %d, want 302", recorder.Code)
 	}
 
-	if got, want := recorder.Header().Get("Location"), "/calls/telnyx-conversation/conv-500?q=needle&at=499#turn-499"; got != want {
+	if got, want := recorder.Header().
+		Get("Location"),
+		"/calls/telnyx-conversation/conv-500?q=needle&at=499#turn-499"; got != want {
 		t.Fatalf("redirect Location = %q, want %q", got, want)
 	}
 

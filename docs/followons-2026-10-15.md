@@ -38,9 +38,10 @@ consumer).
 ## F58 — direction auto-detection: design note closed
 
 The scope slice in `docs/did-direction-design.md` ("mapper option + flag
-+ fixture tests") SHIPPED 2026-10-12 (R22: `-ai-did` +
-`telnyx.DIDDirectionResolver` on ingest-telnyx/serve; CHANGELOG
-Unreleased) and the sibling module option landed (`aiDids`, e7c0f8b).
-The rejected alternative (post-ingest correction wave) stays rejected —
-doctrine: corrections are for SOURCE-owned changes. Nothing open remains
-in that note; it is now a design record, not a plan.
+
+- fixture tests") SHIPPED 2026-10-12 (R22: `-ai-did` +
+  `telnyx.DIDDirectionResolver` on ingest-telnyx/serve; CHANGELOG
+  Unreleased) and the sibling module option landed (`aiDids`, e7c0f8b).
+  The rejected alternative (post-ingest correction wave) stays rejected —
+  doctrine: corrections are for SOURCE-owned changes. Nothing open remains
+  in that note; it is now a design record, not a plan.

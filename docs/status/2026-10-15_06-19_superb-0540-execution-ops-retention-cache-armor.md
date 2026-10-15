@@ -188,19 +188,19 @@ full-gate stamp (needs load < 40; box sat at 39–58 all session).
     hand-rolled row (map rows now say EXIST).
 20. utils/format sweep: CompactCount/ClockDuration anywhere counts or
     durations render raw (search hit cards, detail durations).
-21–50. The plan's remaining tail verbatim: fold-in watch on
-templ-components#48/#49/#51/#55 + BuildFlow#45/#50 + go-etag#2 +
-go-appkit#26 (quarterly re-verify, next window 2027-01); dependabot
-confirmation for newly-direct deps; >1MiB transcript policy decision;
-production re-ingest for ContentHash v2 (deploy-path); host deploys with
-aiDids; Telnyx 2027-01 calendar confirm; phone-number grouping + export
-header i18n behind D1; tablet excerpt audit; print page-breaks; heatmap
-ring spotlight in README; `smoke` help wording; favicon dark variant;
-robots/noindex; CSP dry run; proxy rate-limit; ListCalls benchmark
-(= M16/F49); ingest property test (= M16/F51); `verify-all.sh` runner
-(= M12/F34); NORMALIZED audit (= M12/F37); MOS design (= M7); v0.2.0 cut
-(= M2, owner); D1–D5 answers (= M1, owner); PII boundary (= M4, owner);
-mobile card decision (= M8, owner).
+    21–50. The plan's remaining tail verbatim: fold-in watch on
+    templ-components#48/#49/#51/#55 + BuildFlow#45/#50 + go-etag#2 +
+    go-appkit#26 (quarterly re-verify, next window 2027-01); dependabot
+    confirmation for newly-direct deps; >1MiB transcript policy decision;
+    production re-ingest for ContentHash v2 (deploy-path); host deploys with
+    aiDids; Telnyx 2027-01 calendar confirm; phone-number grouping + export
+    header i18n behind D1; tablet excerpt audit; print page-breaks; heatmap
+    ring spotlight in README; `smoke` help wording; favicon dark variant;
+    robots/noindex; CSP dry run; proxy rate-limit; ListCalls benchmark
+    (= M16/F49); ingest property test (= M16/F51); `verify-all.sh` runner
+    (= M12/F34); NORMALIZED audit (= M12/F37); MOS design (= M7); v0.2.0 cut
+    (= M2, owner); D1–D5 answers (= M1, owner); PII boundary (= M4, owner);
+    mobile card decision (= M8, owner).
 
 ## g) Questions only the owner can answer
 
@@ -221,7 +221,7 @@ mobile card decision (= M8, owner).
 
 ---
 
-*Verification receipts: full suite 14/14, `golangci-lint run ./...` 0
+_Verification receipts: full suite 14/14, `golangci-lint run ./...` 0
 issues, templ fmt clean, goldens green after review-only regen. Uncommitted
 at report time: serve_test.go (TestCacheSemanticsHardening, unrun) and the
-ops.go wsl/clock fix.*
+ops.go wsl/clock fix._
