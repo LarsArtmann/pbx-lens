@@ -153,13 +153,12 @@ webphone later gets a read-only deep link, never a data dependency.
   inbound | outbound; a Telnyx conversation touching a configured AI DID
   (`-ai-did`, `telnyx.DIDDirectionResolver`) indexes inbound regardless of
   the declared direction — the DID set is deployment config, not state.
-  Numbers are stored raw as observed (real CDRs carry unknown/empty
-  parties); `E164` + `ParticipantHash` exist for the planned PII policy
-  (TODO_LIST.md) and are NOT enforced on stored fields yet.
-- Stream id = `<kind>:<native-id>` — deterministic, so re-ingest is the same
-  stream and `call.record` is idempotent (same ContentHash replays to zero
-  events; a different hash on a live stream is a conflict — CDR rows are
-  immutable, so mutation means a parsing bug).
+  Numbers stay raw as observed; `E164` + `ParticipantHash` exist for the
+  planned PII policy and are NOT enforced on stored fields yet.
+- Stream id = `<kind>:<native-id>` — deterministic: re-ingest is the same
+  stream, `call.record` is idempotent (same ContentHash replays to zero
+  events; a changed hash on a live stream = parsing bug, CDR rows are
+  immutable).
 - Read model: `call_views` collection, one `CallView` per stream, folded from
   `call.observed` via `metaengine.OnRecordTyped`.
 
@@ -169,10 +168,8 @@ webphone later gets a read-only deep link, never a data dependency.
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
 buildflow --build-mode dev            # the quality gate (lint+format+test);
-                                      # FULL gate only when 15-min load < 40
-                                      # (`cat /proc/loadavg` third field), else
-                                      # verify casualties individually
-                                      # (docs/buildflow-dev-gate.md)
+                                      # FULL only when loadavg 15-min < 40, else
+                                      # verify casualties (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
                                       # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go
