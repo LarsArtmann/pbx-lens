@@ -113,3 +113,23 @@ upstream — no upstream movement to fold in yet.**
   height) mean percentage bar heights still resolve against auto → 0px
   without the `!items-stretch` workaround.
 - Drafts live in `docs/drafts/` (never /tmp).
+
+## Fold-in watch (quarterly — plan 05-40 M14/F44)
+
+Next scheduled check: **2027-01** (rides the Telnyx live-API re-verify
+window; same session, one pass over the list below). For each filing:
+re-open the issue, check state + maintainer comments, and if it landed
+upstream, execute the local fold-in and delete the workaround + TODO row.
+
+| Filing                                    | Fold-in action when it lands                                                                                     |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| go-cqrs-lite#62/#63                       | re-evaluate the in-repo RFC3339 binding / field-name workarounds for deletion                                     |
+| go-cqrs-lite#64                           | drop any cqrs-lint C009/E005 suppressions this repo carries (docs/cqrs-lint-policy.md)                            |
+| go-nix-helpers#7                          | bump the flake input; drop the local templ-formatter override if any                                              |
+| numtide/treefmt-nix#545                   | confirm the fix, remove the corroborating-comment note                                                            |
+| BuildFlow#45/#50/#55                      | bump BuildFlow; re-run the gate on a load-starved machine (#50); retry a dirty-tree hash fix in a scratch repo (#55) |
+| dependabot-core#16538                     | owner decides gomod pinning; re-check the dependabot PR behavior                                                  |
+| go-etag#2                                 | bump; consider wiring OnFlushed when it exists                                                                    |
+| go-appkit#26                              | bump; adopt the no-drain-delay testkit constructor for tests                                                      |
+| templ-components#48/#49/#51/#55           | bump → run the adoption-map watchlist (docs/templ-components-adoption.md); retire `!items-stretch`, the focus ring CSS, hand-rolled match-log classes, and the pinned nav id + TestNavIDIsDeterministic as each lands |
+

@@ -32,12 +32,34 @@ const DB = path.join(OUT, "lens.db");
 // the full sweep — an eyeball pass on one page shouldn't pay for the whole
 // corpus. Names are the capture labels (calls, dashboard, detail-a,
 // empty-calls, print, …).
+const KNOWN_SURFACES = [
+  "calls",
+  "search",
+  "dashboard",
+  "detail-a",
+  "detail-b",
+  "detail-q",
+  "notfound",
+  "detail-rec",
+  "print",
+  "empty-calls",
+  "empty-search",
+  "empty-dashboard",
+  "long-excerpt",
+];
 const ONLY = args.includes("--only")
   ? arg("--only", "")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean)
   : null;
+if (ONLY) {
+  const unknown = ONLY.filter((n) => !KNOWN_SURFACES.includes(n));
+  if (unknown.length > 0) {
+    console.error(`--only: unknown surface(s) ${unknown.join(", ")}; known: ${KNOWN_SURFACES.join(", ")}`);
+    process.exit(1);
+  }
+}
 const wanted = (name) => !ONLY || ONLY.includes(name);
 
 (async () => {
@@ -108,21 +130,6 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
     if (themes.length === 0) {
       console.error("no valid themes after --themes (use light and/or dark)");
       process.exit(1);
-    }
-    if (ONLY) {
-      const known = new Set([
-        ...pages.map(([n]) => n),
-        "empty-calls",
-        "empty-search",
-        "empty-dashboard",
-        "print",
-        "long-excerpt",
-      ]);
-      const unknown = ONLY.filter((n) => !known.has(n));
-      if (unknown.length > 0) {
-        console.error(`--only: unknown surface(s) ${unknown.join(", ")}; known: ${[...known].sort().join(", ")}`);
-        process.exit(1);
-      }
     }
     const viewports = [
       { w: 375, h: 812, tag: "mobile" },
@@ -219,6 +226,9 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
     // permanent corpus page instead of a lost one-off script. Own DB: the
     // main corpus must stay deterministic for the other captures.
     if (wanted("long-excerpt")) {
+      // The empty phase normally stops the main serve; when --only skipped
+      // it, the main serve still holds the port (stopProbe is idempotent).
+      await probe.stopProbe(serve);
       const longDB = path.join(OUT, "long-excerpt.db");
       for (const suffix of ["", "-shm", "-wal"]) {
         if (fs.existsSync(longDB + suffix)) fs.rmSync(longDB + suffix);

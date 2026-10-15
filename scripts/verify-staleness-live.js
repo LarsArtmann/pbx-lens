@@ -16,6 +16,7 @@
 // Usage: node scripts/verify-staleness-live.js [--port 18116] [--out /tmp/lens-stale]
 "use strict";
 
+const fs = require("fs");
 const path = require("path");
 const probe = require("./lib/ui-probe");
 
@@ -54,6 +55,15 @@ async function forceStalenessPoll(page) {
   probe.ensureCodegen();
   const puppeteer = probe.ensurePuppeteer();
   const bin = probe.buildProbeBinary(OUT);
+  // Fresh DB every run: seedProbeDB keeps existing DBs (stream-identity
+  // no-op), but THIS probe's whole premise is "newest call is 48h old" —
+  // a reused DB carries seedFreshAgentTurn's now-ts turn from the last
+  // run, the 48h seeding silently no-ops, and the banner never renders
+  // (both phases then fail, as observed 2026-10-15). Reset like the
+  // screenshot probe's empty-index phase does.
+  for (const suffix of ["", "-shm", "-wal"]) {
+    if (fs.existsSync(DB + suffix)) fs.rmSync(DB + suffix);
+  }
   probe.seedProbeDB(bin, DB, { smokeArgs: ["-age", "48h"] });
   const serve = await probe.serveProbe(bin, DB, PORT);
   const browser = await puppeteer.launch({

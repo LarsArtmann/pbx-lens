@@ -59,7 +59,7 @@ function repoRoot() {
 function inputHash(webDir) {
   const hash = crypto.createHash("sha256");
   hash.update(
-    ["app.css", ...fs.readdirSync(webDir).filter((n) => n.endsWith(".templ")).sort()]
+    ["static/app.css", ...fs.readdirSync(webDir).filter((n) => n.endsWith(".templ")).sort()]
       .map((n) => `${n}\n${fs.readFileSync(path.join(webDir, n))}`)
       .join("\n"),
   );
