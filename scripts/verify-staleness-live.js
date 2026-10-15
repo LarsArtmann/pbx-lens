@@ -1,0 +1,101 @@
+#!/usr/bin/env node
+// verify-staleness-live — the browser-level live watch for the staleness
+// banner (plan M3/F11). Go tests pin the server-side stale computation; this
+// pins the LIVE transition: the polled region actually recovers on screen
+// when fresh data lands, without a reload.
+//
+// Contract S (staleness live):
+//   1. A serve whose newest call is 48 h old renders "Index may be stale"
+//      on / (seeded via smoke -age 48h).
+//   2. Forcing the htmx poll (htmx.ajax on the PolledRegion, the same GET
+//      the 60 s timer would fire) keeps the banner while the index is stale.
+//   3. Ingesting a fresh turn (new stream, current timestamp) and forcing
+//      the poll again makes the banner DISAPPEAR on screen — the polled
+//      fragment swapped, not the whole page.
+//
+// Usage: node scripts/verify-staleness-live.js [--port 18116] [--out /tmp/lens-stale]
+"use strict";
+
+const path = require("path");
+const probe = require("./lib/ui-probe");
+
+const args = process.argv.slice(2);
+const arg = (name, dflt) => {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : dflt;
+};
+
+const OUT = arg("--out", "/tmp/lens-stale");
+const DB = path.join(OUT, "lens.db");
+
+function fail(msg) {
+  console.error("FAIL:", msg);
+  process.exitCode = 1;
+}
+
+async function forceStalenessPoll(page) {
+  return page.evaluate(async () => {
+    const region = document.querySelector('[hx-get*="/frag/staleness"]');
+    if (!region) return false;
+    await htmx.ajax("GET", region.getAttribute("hx-get"), {
+      target: region,
+      swap: "outerHTML",
+    });
+    return true;
+  });
+}
+
+(async () => {
+  // --port is optional (M4/F13): omit it and the OS hands over a free port.
+  const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
+  const BASE = `http://127.0.0.1:${PORT}`;
+  console.log("port:", PORT);
+
+  probe.ensureCodegen();
+  const puppeteer = probe.ensurePuppeteer();
+  const bin = probe.buildProbeBinary(OUT);
+  probe.seedProbeDB(bin, DB, { smokeArgs: ["-age", "48h"] });
+  const serve = await probe.serveProbe(bin, DB, PORT);
+  const browser = await puppeteer.launch({
+    executablePath: probe.findChromium(),
+    headless: "new",
+    args: ["--no-sandbox", "--disable-dev-shm-usage"],
+  });
+
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 900 });
+    await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
+
+    const staleBefore = await page.evaluate(() =>
+      document.body.textContent.includes("Index may be stale"),
+    );
+    console.log("banner while stale:", staleBefore);
+    if (!staleBefore) fail("48h-old index did not render the staleness banner");
+
+    const polled1 = await forceStalenessPoll(page);
+    const staleAfterPoll = await page.evaluate(() =>
+      document.body.textContent.includes("Index may be stale"),
+    );
+    console.log("polled while stale:", polled1, "banner still up:", staleAfterPoll);
+    if (!polled1) fail("staleness PolledRegion not found on /");
+    if (!staleAfterPoll) fail("banner vanished while the index was still stale");
+
+    probe.seedFreshAgentTurn(bin, DB, OUT);
+    const polled2 = await forceStalenessPoll(page);
+    const staleAfterFresh = await page.evaluate(() =>
+      document.body.textContent.includes("Index may be stale"),
+    );
+    console.log("polled after fresh ingest:", polled2, "banner gone:", !staleAfterFresh);
+    if (!polled2) fail("second poll did not run");
+    if (staleAfterFresh) fail("banner did not disappear after fresh data + poll (no reload)");
+
+    console.log(process.exitCode ? "RESULT: FAILED" : "RESULT: ALL PASS");
+  } finally {
+    await browser.close();
+    await probe.stopProbe(serve);
+  }
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

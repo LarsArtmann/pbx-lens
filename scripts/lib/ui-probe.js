@@ -51,6 +51,57 @@ function repoRoot() {
   return execFileSync("git", ["rev-parse", "--show-toplevel"]).toString().trim();
 }
 
+// ensureCodegen regenerates the gitignored UI codegen a clean checkout
+// lacks (plan M4/F14): `*_templ.go` when any .templ is newer (via the
+// go.mod-pinned `go tool templ` — the devShell templ binary drifts), and
+// styles.css when missing (flake-pinned tailwindcss, same command as the
+// package preBuild). go:embed is compile-time, so this MUST run before
+// buildProbeBinary or a fresh clone probes against yesterday's assets.
+function ensureCodegen() {
+  const root = repoRoot();
+  const webDir = path.join(root, "internal", "web");
+
+  let newestTempl = 0;
+  for (const name of fs.readdirSync(webDir)) {
+    if (name.endsWith(".templ")) {
+      newestTempl = Math.max(newestTempl, fs.statSync(path.join(webDir, name)).mtimeMs);
+    }
+  }
+  let templStale = false;
+  for (const name of fs.readdirSync(webDir)) {
+    if (name.endsWith("_templ.go") && fs.statSync(path.join(webDir, name)).mtimeMs < newestTempl) {
+      templStale = true;
+    }
+  }
+  if (templStale) {
+    console.log("codegen: .templ newer than generated Go — running go tool templ generate");
+    execFileSync("go", ["tool", "templ", "generate", "./internal/web/"], {
+      cwd: root,
+      env: { ...process.env, GOEXPERIMENT: "jsonv2" },
+      stdio: "inherit",
+    });
+  }
+
+  const styles = path.join(webDir, "static", "styles.css");
+  if (!fs.existsSync(styles)) {
+    console.log("codegen: styles.css missing — running flake-pinned tailwindcss");
+    execFileSync(
+      "nix",
+      [
+        "develop",
+        "-c",
+        "tailwindcss",
+        "-i",
+        "internal/web/static/app.css",
+        "-o",
+        "internal/web/static/styles.css",
+        "--minify",
+      ],
+      { cwd: root, stdio: "inherit" },
+    );
+  }
+}
+
 // buildProbeBinary compiles ./cmd/pbx-lens to a throwaway path (go run
 // wraps a child we cannot signal cleanly). Returns the binary path.
 function buildProbeBinary(outDir) {
@@ -92,11 +143,34 @@ function seedAgentTranscript(bin, dbPath, outDir) {
   execFileSync(bin, ["ingest-agent", "-db", dbPath, "-dir", dir], { stdio: "ignore" });
 }
 
+// seedFreshAgentTurn ingests a second turn-bearing transcript whose
+// timestamp is NOW (the primary fixture carries a fixed 2025 ts, which is
+// stale by the staleness probe's standards). The distinct uuid makes it a
+// distinct stream, so re-runs never conflict with the fixed fixture.
+function seedFreshAgentTurn(bin, dbPath, outDir) {
+  const dir = path.join(outDir, "agent-fresh-fixture");
+  fs.mkdirSync(dir, { recursive: true });
+  const uuid = `probe-fresh-${Math.floor(Date.now() / 1000)}`;
+  const now = Math.floor(Date.now() / 1000);
+  fs.writeFileSync(
+    path.join(dir, "probe-fresh-1.jsonl"),
+    [
+      JSON.stringify({ type: "start", ts: now, uuid, models: ["gpt-rt"] }),
+      JSON.stringify({ type: "turn", role: "agent", text: "Fresh probe turn: the boiler is fixed." }),
+      JSON.stringify({ type: "end", reason: "normal" }),
+    ].join("\n") + "\n",
+  );
+  execFileSync(bin, ["ingest-agent", "-db", dbPath, "-dir", dir], { stdio: "ignore" });
+  return uuid;
+}
+
 // seedProbeDB prepares dbPath: smoke corpus on first use (existing DBs are
 // kept — re-seeding is a no-op by stream identity), agent fixture always.
-function seedProbeDB(bin, dbPath) {
+// opts.smokeArgs forwards extra smoke flags (e.g. ["-age", "48h",
+// "-with-recording", "rec-probe-1"]) for the unseen-state probes.
+function seedProbeDB(bin, dbPath, opts = {}) {
   if (!fs.existsSync(dbPath)) {
-    execFileSync(bin, ["smoke", "-db", dbPath], { stdio: "ignore" });
+    execFileSync(bin, ["smoke", "-db", dbPath, ...(opts.smokeArgs || [])], { stdio: "ignore" });
   }
   seedAgentTranscript(bin, dbPath, path.dirname(dbPath));
 }
@@ -133,19 +207,46 @@ function serveProbe(bin, dbPath, port) {
   });
 }
 
-// stopProbe drains the serve; the SIGKILL backstop never leaves one
-// squatting on the port for the next run.
+// stopProbe drains the serve and RESOLVES ON EXIT (the SIGKILL backstop
+// never leaves one squatting on the port). The wait matters for phase
+// switches inside one run: a graceful drain keeps the listener open for a
+// moment, and a caller that rebinds the port immediately would ping the
+// dying process, "succeed", then capture against a corpse.
 function stopProbe(serve) {
-  serve.kill("SIGTERM");
-  setTimeout(() => serve.kill("SIGKILL"), 3000).unref();
+  return new Promise((resolve) => {
+    if (serve.exitCode !== null || serve.signalCode !== null) return resolve();
+    serve.once("exit", () => resolve());
+    serve.kill("SIGTERM");
+    setTimeout(() => {
+      if (serve.exitCode === null && serve.signalCode === null) serve.kill("SIGKILL");
+    }, 3000).unref();
+  });
+}
+
+// findFreePort asks the OS for an unused loopback port (plan M4/F13): the
+// stale-port stumble is the probe suite's most common friction, so callers
+// can default to a free port instead of a pinned one.
+function findFreePort() {
+  const net = require("net");
+  return new Promise((resolve, reject) => {
+    const srv = net.createServer();
+    srv.listen(0, "127.0.0.1", () => {
+      const port = srv.address().port;
+      srv.close(() => resolve(port));
+    });
+    srv.on("error", reject);
+  });
 }
 
 module.exports = {
   SCRATCH,
   buildProbeBinary,
+  ensureCodegen,
   ensurePuppeteer,
   findChromium,
+  findFreePort,
   repoRoot,
+  seedFreshAgentTurn,
   seedProbeDB,
   serveProbe,
   stopProbe,

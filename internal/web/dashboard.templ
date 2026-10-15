@@ -245,8 +245,14 @@ templ durationCard(stats DashboardStats) {
 	}
 }
 
-// durationBars maps the histogram buckets onto chart bars.
+// durationBars maps the histogram buckets onto chart bars. An all-zero
+// bucket set yields nil so the chart's EmptyMessage shows (the empty box of
+// collapsed 0-px bars was an M3 eyeball finding, not an honest ladder).
 func durationBars(buckets []DurationBucket) []display.BarChartBar {
+	if len(buckets) == 0 || seriesAllZero(bucketValues(buckets)) {
+		return nil
+	}
+
 	bars := make([]display.BarChartBar, 0, len(buckets))
 	for _, bucket := range buckets {
 		bars = append(bars, display.BarChartBar{
@@ -257,6 +263,15 @@ func durationBars(buckets []DurationBucket) []display.BarChartBar {
 	}
 
 	return bars
+}
+
+func bucketValues(buckets []DurationBucket) []float64 {
+	values := make([]float64, 0, len(buckets))
+	for _, bucket := range buckets {
+		values = append(values, float64(bucket.Calls))
+	}
+
+	return values
 }
 
 // weekChangeLabel renders the week-over-week movement as a StatCard Change
@@ -302,16 +317,34 @@ templ aiHumanCard(stats DashboardStats) {
 }
 
 // trendCard is the 30-day sparkline over the same series as the bar chart.
+// Empty-index honesty (M3 finding): a flat zero sparkline reads as a broken
+// chart, not as "quiet index" — the all-zero window explains itself instead.
 templ trendCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "30-day trend"}) {
-		@display.Sparkline(display.SparklineProps{
-			Values:    volumeValues(stats.ByDay),
-			Filled:    true,
-			Width:     260,
-			Height:    60,
-			AriaLabel: "Calls per day over the last " + strconv.Itoa(stats.WindowDays) + " days",
-		})
+		if seriesAllZero(volumeValues(stats.ByDay)) {
+			@display.SimpleEmptyState("No calls in the window yet.")
+		} else {
+			@display.Sparkline(display.SparklineProps{
+				Values:    volumeValues(stats.ByDay),
+				Filled:    true,
+				Width:     260,
+				Height:    60,
+				AriaLabel: "Calls per day over the last " + strconv.Itoa(stats.WindowDays) + " days",
+			})
+		}
 	}
+}
+
+// seriesAllZero reports whether every value is 0 (or the series is empty) —
+// the "quiet window" test shared by the chart honesty ladder.
+func seriesAllZero(values []float64) bool {
+	for _, v := range values {
+		if v != 0 {
+			return false
+		}
+	}
+
+	return true
 }
 
 // mosCard renders the mean MOS and per-day trend once any call reports a
@@ -412,6 +445,10 @@ func scoredCallsLabel(known int) string {
 // Labels stay empty on this dense 30-bar axis — a date clipped to a 4 px
 // column reads as litter; the tooltip carries the full date instead.
 func volumeBars(days []DayVolume) []display.BarChartBar {
+	if len(days) == 0 || seriesAllZero(volumeValues(days)) {
+		return nil
+	}
+
 	bars := make([]display.BarChartBar, 0, len(days))
 	for _, day := range days {
 		bars = append(bars, display.BarChartBar{

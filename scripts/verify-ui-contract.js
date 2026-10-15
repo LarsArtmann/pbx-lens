@@ -36,8 +36,6 @@ const arg = (name, dflt) => {
 };
 
 const OUT = arg("--out", "/tmp/lens-verify");
-const PORT = arg("--port", "18107");
-const BASE = `http://127.0.0.1:${PORT}`;
 const DB = path.join(OUT, "lens.db");
 
 function fail(msg) {
@@ -46,6 +44,12 @@ function fail(msg) {
 }
 
 (async () => {
+  // --port is optional (M4/F13): omit it and the OS hands over a free port.
+  const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
+  const BASE = `http://127.0.0.1:${PORT}`;
+  console.log("port:", PORT);
+
+  probe.ensureCodegen();
   const puppeteer = probe.ensurePuppeteer();
   const bin = probe.buildProbeBinary(OUT);
   probe.seedProbeDB(bin, DB);
@@ -60,6 +64,40 @@ function fail(msg) {
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900 });
 
+    // --- Contract D: keyboard walk (plan M5/F16) --------------------------
+    // A keyboard user must reach the clickable table rows by tabbing, and
+    // the row must show the app.css focus ring (inset teal outline) when
+    // focused via keyboard — the library markup has NO visible focus style
+    // of its own (upstream filing candidate #49). The copy affordances live
+    // on the DETAIL page, so the copy reachability leg walks there.
+    async function tabState(page) {
+      await page.keyboard.press("Tab");
+      return page.evaluate(() => {
+        const el = document.activeElement;
+        if (!el) return { isRow: false, isCopy: false };
+        const cs = getComputedStyle(el);
+        return {
+          isRow: el.matches('tr[role="link"]'),
+          isCopy: el.matches("[data-tc-copy]"),
+          outline: `${cs.outlineStyle} ${cs.outlineColor}`,
+        };
+      });
+    }
+
+    {
+      await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
+      let rowOutline = null;
+      for (let i = 0; i < 120 && rowOutline === null; i++) {
+        const st = await tabState(page);
+        if (st.isRow) rowOutline = st.outline;
+      }
+      if (rowOutline === null) fail("tabbing never reached a clickable table row");
+      else if (!/rgb\(15,\s*118,\s*110\)/.test(rowOutline)) {
+        fail(`table-row focus ring is not the teal outline (got ${rowOutline})`);
+      }
+      console.log("row focus outline:", rowOutline);
+    }
+
     // --- Contract A: copy affordances on the detail page ---------------
     await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
     const detailHref = await page.$$eval('[data-tc-row-href], a[href^="/calls/"]', (els) =>
@@ -67,6 +105,18 @@ function fail(msg) {
     );
     console.log("detail href:", detailHref);
     if (!detailHref) fail("no detail link on list page");
+
+    // Contract D, copy leg (M5/F16): the copy affordances are reachable by
+    // keyboard from the top of the detail page.
+    {
+      await page.goto(`${BASE}${detailHref}`, { waitUntil: "networkidle0" });
+      let reachedCopy = false;
+      for (let i = 0; i < 120 && !reachedCopy; i++) {
+        reachedCopy = (await tabState(page)).isCopy;
+      }
+      if (!reachedCopy) fail("tabbing never reached a copy affordance on the detail page");
+      console.log("keyboard walk: row ring + copy reachable OK");
+    }
 
     await page.goto(`${BASE}${detailHref}`, { waitUntil: "networkidle0" });
     const copies = await page.$$eval("[data-tc-copy]", (els) =>
@@ -121,7 +171,7 @@ function fail(msg) {
     console.log(process.exitCode ? "RESULT: FAILED" : "RESULT: ALL PASS");
   } finally {
     await browser.close();
-    probe.stopProbe(serve);
+    await probe.stopProbe(serve);
   }
 })().catch((e) => {
   console.error(e);

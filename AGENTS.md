@@ -187,9 +187,19 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
 nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
 node scripts/verify-ui-contract.js    # browser-level UI contracts (T20 copy
                                       # swap, T21 ?q= jump + real fragment
-                                      # scroll); self-contained build+seed+serve;
-                                      # sibling screenshot-probe.js captures the
-                                      # 24-PNG eyeball set — see scripts/README.md
+                                      # scroll); self-contained codegen+build+
+                                      # seed+serve; screenshot-probe.js captures
+                                      # the 38-PNG eyeball set (incl. 404, audio
+                                      # card, empty-index ladders) — see
+                                      # scripts/README.md. --port is OPTIONAL:
+                                      # omitted, each probe takes a free OS port;
+                                      # pinned defaults live in scripts/README.md
+node scripts/verify-style-contract.js   # browser-level style contracts (M1):
+                                        # ds-brand teal resolution, heatmap cell
+                                        # pixel, All-option selects; Go twin =
+                                        # TestCSSGateBridgesHeatmapBrandToTeal
+node scripts/verify-staleness-live.js   # live staleness banner transition (M3/F11)
+bash scripts/golden-pretty-diff.sh      # readable word-diff of golden changes (M4/F12)
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
                                       # changes (buildflow -s nix-hash-fix --fix does the same)

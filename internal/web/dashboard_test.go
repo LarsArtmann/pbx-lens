@@ -76,6 +76,18 @@ func TestDashboardEmptyIndexIsHonest(t *testing.T) {
 	if !strings.Contains(body, "No calls indexed yet") {
 		t.Error("AI-vs-human card must explain the empty index")
 	}
+
+	// Chart honesty ladder (M3 eyeball finding): volume, duration, and trend
+	// must explain the quiet window instead of rendering collapsed 0-px bars
+	// or a flat zero sparkline.
+	for _, want := range []string{
+		"No calls in the last 30 days",
+		"No calls in the window yet.",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("empty dashboard missing chart explanation %q", want)
+		}
+	}
 }
 
 func TestDashboardMOSSummaryAndTrend(t *testing.T) {

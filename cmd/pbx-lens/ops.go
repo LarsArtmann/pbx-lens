@@ -30,6 +30,8 @@ const (
 func smoke(args []string) {
 	fs := flag.NewFlagSet("smoke", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (default: in-memory)")
+	age := fs.Duration("age", 0, "backdate the seeded call by this duration (probe fixture: staleness surfaces)")
+	withRecording := fs.String("with-recording", "", "set the seeded call's recording reference (probe fixture)")
 	_ = fs.Parse(args)
 
 	ctx, cancel := context.WithTimeout(context.Background(), smokeTimeout)
@@ -46,13 +48,14 @@ func smoke(args []string) {
 		NativeID:          "smoke-0001",
 		Kind:              calls.SourceTelnyxConversation,
 		Direction:         calls.DirectionOutbound,
-		StartedAt:         time.Now().UTC().Truncate(time.Second),
+		StartedAt:         time.Now().UTC().Truncate(time.Second).Add(-*age),
 		DurationSecs:      smokeDurationSecs,
 		FromNumber:        "+17287289311",
 		ToNumber:          "+15555550123",
 		HangupCause:       "normal_clearing",
 		IsAI:              true,
 		TranscriptExcerpt: "Hi Lars! This is Woolly, calling from your own PBX.",
+		RecordingRef:      *withRecording,
 	}
 
 	cmd, err := calls.NewRecordCommand(obs)

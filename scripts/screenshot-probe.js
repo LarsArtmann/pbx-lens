@@ -25,14 +25,20 @@ const arg = (name, dflt) => {
 };
 
 const OUT = arg("--out", "/tmp/lens-shots");
-const PORT = arg("--port", "18099");
-const BASE = `http://127.0.0.1:${PORT}`;
 const DB = path.join(OUT, "lens.db");
 
 (async () => {
+  // --port is optional (M4/F13): omit it and the OS hands over a free port.
+  const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
+  const BASE = `http://127.0.0.1:${PORT}`;
+  console.log("port:", PORT);
+
+  probe.ensureCodegen();
   const puppeteer = probe.ensurePuppeteer();
   const bin = probe.buildProbeBinary(OUT);
-  probe.seedProbeDB(bin, DB);
+  // -with-recording turns the smoke-0001 recording card into the real
+  // <audio> surface (plan M3/F9); -age 0 keeps every other page fresh.
+  probe.seedProbeDB(bin, DB, { smokeArgs: ["-with-recording", "rec-probe-1"] });
   const serve = await probe.serveProbe(bin, DB, PORT);
   try {
     const browser = await puppeteer.launch({
@@ -73,6 +79,12 @@ const DB = path.join(OUT, "lens.db");
       ["detail-a", detail1],
       ["detail-b", detail2],
       ["detail-q", detailQ],
+      // Unseen states (plan M3/F8+F9): the 404 page and the audio card
+      // (smoke-0001 seeded with -with-recording, so the <audio> element
+      // renders instead of the empty state; the player never fetches until
+      // played, so no network error noise lands in the capture).
+      ["notfound", "/calls/no-such-stream/none"],
+      ["detail-rec", "/calls/telnyx-conversation/smoke-0001"],
     ];
     const themes = ["light", "dark"];
     const viewports = [
@@ -100,10 +112,72 @@ const DB = path.join(OUT, "lens.db");
       }
       await ctx.close();
     }
+
+    // --- Print check (plan M5/F17): chrome drops, facts stay. The @media
+    // print block in app.css hides nav/footer/buttons; this asserts the
+    // computed result and leaves a PNG for the eyeball pass.
+    {
+      const ctx = await browser.createBrowserContext();
+      const page = await ctx.newPage();
+      await page.setViewport({ width: 1280, height: 900 });
+      await page.emulateMediaType("print");
+      await page.goto(`${BASE}${detail1}`, { waitUntil: "networkidle0" });
+      await page.screenshot({
+        path: path.join(OUT, "print-detail.png"),
+        fullPage: true,
+      });
+      n++;
+      const hidden = await page.evaluate(() =>
+        ["nav", "footer", "button"].map((sel) => {
+          const el = document.querySelector(sel);
+          return el ? getComputedStyle(el).display === "none" : true;
+        }),
+      );
+      console.log("print chrome hidden (nav/footer/button):", JSON.stringify(hidden));
+      if (hidden.some((h) => !h)) fail("print media did not drop all chrome");
+      await ctx.close();
+    }
+
+    // --- Empty-index phase (plan M3/F8): first-run corpus variant. The
+    // smoke corpus never shows the "no calls yet" ladders, so restart the
+    // serve against a truly empty DB and capture the three index pages.
+    await probe.stopProbe(serve);
+    const emptyDB = path.join(OUT, "empty.db");
+    if (fs.existsSync(emptyDB)) fs.rmSync(emptyDB);
+    const emptyServe = await probe.serveProbe(bin, emptyDB, PORT);
+    try {
+      const emptyPages = [
+        ["empty-calls", "/"],
+        ["empty-search", "/search"],
+        ["empty-dashboard", "/dashboard"],
+      ];
+      for (const theme of themes) {
+        const ctx = await browser.createBrowserContext();
+        const page = await ctx.newPage();
+        await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
+        for (const vp of [viewports[1]]) {
+          await page.setViewport({ width: vp.w, height: vp.h });
+          for (const [name, urlPath] of emptyPages) {
+            const resp = await page.goto(`${BASE}${urlPath}`, {
+              waitUntil: "networkidle0",
+              timeout: 20000,
+            });
+            const file = path.join(OUT, `${theme}-${vp.tag}-${name}.png`);
+            await page.screenshot({ path: file, fullPage: true });
+            n++;
+            console.log("captured", file, `status=${resp.status()}`);
+          }
+        }
+        await ctx.close();
+      }
+    } finally {
+      probe.stopProbe(emptyServe);
+    }
+
     await browser.close();
     console.log(`DONE: ${n} PNGs in ${OUT}`);
   } finally {
-    probe.stopProbe(serve);
+    await probe.stopProbe(serve);
   }
 })().catch((e) => {
   console.error(e);
