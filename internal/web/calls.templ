@@ -22,9 +22,11 @@ func pageProps(nonce string, title string) layout.PageProps {
 	// self-hosted htmx script. Empty (nonce mode off) omits the attribute.
 	props.Nonce = nonce
 	// Signal palette in the mobile browser chrome (plan T16); the library
-	// default is indigo. The dark variant is a library constant — not
-	// prop-overridable in v1.21.0.
+	// default is indigo. Dark matches the dark header (gray-900 #111827) —
+	// the prop IS overridable at v1.21.0 (layout base_templ.go:43); the old
+	// "library constant" comment here was stale (M11/F36 finding).
 	props.ThemeColor = "#0f766e"
+	props.DarkThemeColor = "#111827"
 	// Self-host the htmx runtime (R9): polled regions need it, and the LAN
 	// tool must not depend on a public CDN. Served at /static/htmx.min.js.
 	props.HTMXSrc = "/static/htmx.min.js"
