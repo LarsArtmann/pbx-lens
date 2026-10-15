@@ -89,15 +89,15 @@ function ensureCodegen() {
   }
   const inputsChanged = recorded !== null && recorded !== current;
 
-  let newestTempl = 0;
-  for (const name of fs.readdirSync(webDir)) {
-    if (name.endsWith(".templ")) {
-      newestTempl = Math.max(newestTempl, fs.statSync(path.join(webDir, name)).mtimeMs);
-    }
-  }
+  // Per-file mtime fallback: each generated file against ITS OWN .templ
+  // (the old global-newest comparison never converged, because templ skips
+  // rewriting unchanged outputs and preserved their older mtimes), and a
+  // missing generated file is stale (fresh clone).
   let templStale = false;
   for (const name of fs.readdirSync(webDir)) {
-    if (name.endsWith("_templ.go") && fs.statSync(path.join(webDir, name)).mtimeMs < newestTempl) {
+    if (!name.endsWith(".templ")) continue;
+    const gen = path.join(webDir, `${name.replace(/\.templ$/, "")}_templ.go`);
+    if (!fs.existsSync(gen) || fs.statSync(gen).mtimeMs < fs.statSync(path.join(webDir, name)).mtimeMs) {
       templStale = true;
     }
   }
