@@ -49,8 +49,12 @@ func opsPollerPayload() func() any {
 					"offered": 3, "recorded": 2, "corrected": 1,
 					"rejected": []string{"age-cutoff", "parse-error"},
 				},
-				"freeswitch-cdr":      map[string]any{"offered": 7, "recorded": 7, "corrected": 0, "rejected": []string{}},
-				"telnyx-conversation": map[string]any{"offered": 4, "recorded": 4, "corrected": 0, "rejected": []string{}},
+				"freeswitch-cdr": map[string]any{
+					"offered": 7, "recorded": 7, "corrected": 0, "rejected": []string{},
+				},
+				"telnyx-conversation": map[string]any{
+					"offered": 4, "recorded": 4, "corrected": 0, "rejected": []string{},
+				},
 			},
 			"last_pass":             "2026-10-12T04:00:00Z",
 			"last_pass_age_seconds": age,

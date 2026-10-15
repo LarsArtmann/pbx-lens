@@ -29,23 +29,26 @@ webphone later gets a read-only deep link, never a data dependency.
   Nothing imports encoding/json/v2 yet; the env var becomes load-bearing
   when a surface needs it.
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
-  (below) + `templ-components/htmx` v1.21.0. No testify (banned; stdlib
-  table-driven tests), no cobra, no ORM. Promotion precedent (bcrypt,
-  x/time rate, templ-components/htmx, the 2026-10-12 HTTP-stack trio
-  httputil/server_timing/go-etag): a module ALREADY in the graph rides
-  free — promoting it to direct adds no new module. server_timing has NO
-  middleware constructor in any release (wrap manually); `entitytag`
-  stays indirect (`go-etag/server` re-exports everything). Considered
-  and NOT adopted (appkit errorpages/security/realtime, templ-components
-  errorpage, export rate-limiting, SSE-hub, Telnyx etag client,
-  data-fingerprint fast-304, go-atomic-write for backup staging):
-  docs/planning/2026-10-12_12-47_SUPERB-*.md + docs/drafts/.
-- **UI trio (2026-10-11, F3/F4):** `go-appkit` v0.8.0 (HTTP service shell:
-  NewService → svc.Mux, svc.Run owns SIGINT/SIGTERM + graceful drain),
-  `templ-components` v1.21.0 (display/forms/feedback/layout/navigation),
-  `a-h/templ` v0.3.1070 (codegen; manual bumps only — a dependabot templ PR
-  mangles this go.mod). Stay on the PUBLISHED templ-components version —
-  no local replace (breaks hermetic nix); hand-roll missing thin pieces.
+  (below) + `templ-components/htmx` (rides the root pin). No testify
+  (banned; stdlib table-driven tests), no cobra, no ORM. Promotion
+  precedent (bcrypt, x/time rate, templ-components/htmx, the 2026-10-12
+  HTTP-stack trio httputil/server_timing/go-etag): a module ALREADY in the
+  graph rides free — promoting it to direct adds no new module.
+  server_timing has NO middleware constructor in any release (wrap
+  manually); `entitytag` stays indirect (`go-etag/server` re-exports
+  everything). Considered and NOT adopted (appkit
+  errorpages/security/realtime, templ-components errorpage, export
+  rate-limiting, SSE-hub, Telnyx etag client, data-fingerprint fast-304,
+  go-atomic-write for backup staging): docs/planning/2026-10-12_12-47_*
+  + docs/drafts/.
+- **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**
+  `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
+  owns SIGINT/SIGTERM + graceful drain; requires go ≥ 1.27.2 — the go.mod
+  directive mirrors that floor), `templ-components` v1.23.0
+  (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1070
+  (codegen; manual bumps only — a dependabot templ PR mangles this go.mod).
+  Stay on the PUBLISHED templ-components version — no local replace
+  (breaks hermetic nix); hand-roll missing thin pieces.
 - **UI theme — signal palette (2026-10-12; heatmap bridge 2026-10-15):**
   app.css overrides `--color-tc-primary` (teal-700 #0f766e), `-hover`
   (teal-800), `--color-tc-info` (teal-700) in an @theme block placed AFTER
@@ -58,12 +61,13 @@ webphone later gets a read-only deep link, never a data dependency.
   light, teal-400 dark; the rgb triplets must stay comma-separated — legacy
   rgba contract). Never hand-write `bg-blue-*` in pbx-lens .templ files —
   the library's own classes re-skin through the token chain.
-- **templ-components v1.21.0 adoption map:** per-component truth for THIS
+- **templ-components adoption map:** per-component truth for THIS
   repo lives in docs/templ-components-adoption.md (skill docs drift ahead
-  of the pinned tag; several components are ABSENT in v1.21.0 — check the
-  map before importing anything new; it also carries the version-bump
-  watchlist: gen-tc-classes → map re-audit → hand-rolled re-check →
-  filings re-read → golden `-update`, run in order on every bump).
+  of the pinned tag; check the map before importing anything new; it also
+  carries the version-bump watchlist: gen-tc-classes → map re-audit →
+  hand-rolled re-check → filings re-read → golden `-update`, run in order
+  on every bump — the 2026-10-15 v1.23.0 sweep initially skipped it and
+  the map/corpus were reconciled after the fact).
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's
   pattern): `subPackages = ["./cmd/pbx-lens"]` wires the package to the
   real binary (the default `["."]` built the package-less root and shipped
@@ -215,4 +219,4 @@ Invariants summary — read the full doc BEFORE touching its area:
   devShell, load-starvation casualties) + advisory-findings rationale.
 - **docs/upstream-filings.md** — D6 filings (go-cqrs-lite#62/#63/#64,
   go-nix-helpers#7, treefmt-nix#545) and their upstream state.
-- **docs/http-stack.md**, **docs/templ-components-adoption.md** (living truth for the middleware chain and the v1.21.0 component map), **docs/research/2026-10-12_http-stack-adoption-audit.html** (12-47 deep-dive snapshot + NOT-adopted doctrine table).
+- **docs/http-stack.md**, **docs/templ-components-adoption.md** (living truth for the middleware chain and the component map), **docs/research/2026-10-12_http-stack-adoption-audit.html** (12-47 deep-dive snapshot + NOT-adopted doctrine table).

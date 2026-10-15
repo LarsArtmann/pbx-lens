@@ -110,6 +110,14 @@ func TestGoldenPages(t *testing.T) {
 	goldenPage(t, mux, "page_detail_q", "/calls/telnyx-conversation/conv-in?q=how&at=1")
 }
 
+// page_ops pins the human ops surface (05-40 M9): poller verdict, sorted
+// sources, cache section. The RelativeTime "last pass" is scrubbed like
+// every other wall-clock string.
+func TestGoldenOpsPage(t *testing.T) {
+	mux := newTestServerWith(t, Options{Ops: opsPollerPayload(), Cache: opsCounters(t)})
+	goldenPage(t, mux, "page_ops", "/ops")
+}
+
 // The ?q= golden pins the match log's affordances beyond its markup: the
 // first matching turn carries its anchor id and the amber highlight, and
 // unmatched turns stay unmarked (plan T1.2 — the hand-rolled branch had

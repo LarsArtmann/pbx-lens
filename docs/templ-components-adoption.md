@@ -1,9 +1,12 @@
-# templ-components v1.21.0 adoption map (consumer truth for THIS repo)
+# templ-components v1.23.0 adoption map (consumer truth for THIS repo)
 
 <!-- Extracted from AGENTS.md 2026-10-12 (220-line budget). The skill docs
      drift ahead of the pinned tag — this table is the truth for pbx-lens.
      Stay on the PUBLISHED templ-components version (no local replace —
-     breaks hermetic nix); hand-roll missing thin pieces instead. -->
+     breaks hermetic nix); hand-roll missing thin pieces instead.
+     Re-audited against v1.23.0 on 2026-10-15 (bump landed 9c844ad):
+     SegmentBar, utils/format, FilterBar, and SegmentedControl shipped
+     upstream; ScrollbackLine still has no id/class hook (#51 OPEN). -->
 
 | Component                                                                                   | Status                         | Note                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | ------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -66,4 +69,5 @@ that fails the build when a rendered class is missing from the corpus.
 | feedback.Alert + CircularProgress | used | Alert: staleness + MOS placeholder; CircularProgress: MOS gauge ((MOS-1)/4*100, aria-valuenow asserted in tests) |
 | icons | used 2026-10-12 | EmptyState.Icon takes `icons.Name`; Button.Icon takes a rendered `icons.Icon(name, class)`; ~100 names in icon_names.go |
 | htmx.PolledRegion | used | dashboard cards 30s, staleness banner 60s |
-| display.SegmentBar / utils/format / errorpage / FilterBar / SegmentedControl | ABSENT in v1.21.0 | feedback.ProgressBar EXISTS (contrary to earlier note) — SegmentBar alone is unreleased upstream; the rest stays unimported |
+| display.SegmentBar / utils/format / FilterBar / SegmentedControl | EXIST at v1.23.0, not yet adopted | the 2026-10-15 bump re-audit flipped these rows; adopt on real need (SegmentBar: proportion bars; format: Percent/CompactCount — ops page already uses format.Percent; FilterBar/SegmentedControl: only when the filter form outgrows the hand-rolled row) |
+| errorpage | separate module, not imported | the appkit shell + hand-rolled error responses cover it; revisit if error pages need the family-aware card |
