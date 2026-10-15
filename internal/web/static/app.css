@@ -159,4 +159,11 @@ tr[role="link"]:focus-visible {
     max-width: none;
     padding: 0;
   }
+
+  /* A turn split across a page boundary loses its role tag and reads as
+   * two orphaned lines (plan 05-40 M17/F35); turns stay whole while the
+   * transcript card itself may still span pages. */
+  .tc-log-line {
+    break-inside: avoid;
+  }
 }
