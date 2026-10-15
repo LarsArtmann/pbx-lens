@@ -76,7 +76,9 @@ webphone later gets a read-only deep link, never a data dependency.
   govulncheck/dprint/templ/tailwindcss_4/cqrs-lint, GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2.
   UI codegen is a package preBuild
   (`templGenerationPolicy = "preBuild"`: templ generate ./internal/web/ +
-  tailwindcss → styles.css; both gitignored, regenerated inside nix).
+  tailwindcss → styles.css). styles.css is COMMITTED (CI embeds it;
+  the nix preBuild still regenerates — 2026-10-15 v0.2.0 CI red fixed);
+  *_templ.go stays gitignored.
   `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
   break with `buildflow -s nix-hash-fix --fix` — never paste hashes by hand.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
@@ -173,8 +175,8 @@ buildflow --build-mode dev            # the quality gate (lint+format+test);
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
                                       # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go
-                                      # http probe (curl banned); CLEAN CHECKOUT FIRST — regen the
-                                      # gitignored stylesheet then REBUILD (go:embed is compile-time;
+                                      # http probe (curl banned); styles.css is committed — after
+                                      # app.css changes REBUILD it (go:embed is compile-time;
                                       # /app.css MIME trap: docs/gotchas.md); -recording-timeout bounds
                                       # proxy upstream hops (default web.DefaultUpstreamTimeout, 30 s)
 nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
