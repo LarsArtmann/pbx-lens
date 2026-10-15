@@ -7,6 +7,10 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [v0.2.0] — 2026-10-15
+
 ### Added — 2026-10-15 (/ops surface)
 
 - New `/ops` page: the ingest-and-cache health answer at a glance — poller
