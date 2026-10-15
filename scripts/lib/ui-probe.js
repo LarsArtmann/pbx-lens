@@ -86,7 +86,13 @@ function repoRoot() {
 function inputHash(webDir) {
   const hash = crypto.createHash("sha256");
   hash.update(
-    ["static/app.css", ...fs.readdirSync(webDir).filter((n) => n.endsWith(".templ")).sort()]
+    [
+      "static/app.css",
+      ...fs
+        .readdirSync(webDir)
+        .filter((n) => n.endsWith(".templ"))
+        .sort(),
+    ]
       .map((n) => `${n}\n${fs.readFileSync(path.join(webDir, n))}`)
       .join("\n"),
   );
@@ -124,7 +130,10 @@ function ensureCodegen() {
   for (const name of fs.readdirSync(webDir)) {
     if (!name.endsWith(".templ")) continue;
     const gen = path.join(webDir, `${name.replace(/\.templ$/, "")}_templ.go`);
-    if (!fs.existsSync(gen) || fs.statSync(gen).mtimeMs < fs.statSync(path.join(webDir, name)).mtimeMs) {
+    if (
+      !fs.existsSync(gen) ||
+      fs.statSync(gen).mtimeMs < fs.statSync(path.join(webDir, name)).mtimeMs
+    ) {
       templStale = true;
     }
   }

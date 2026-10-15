@@ -56,7 +56,9 @@ const ONLY = args.includes("--only")
 if (ONLY) {
   const unknown = ONLY.filter((n) => !KNOWN_SURFACES.includes(n));
   if (unknown.length > 0) {
-    console.error(`--only: unknown surface(s) ${unknown.join(", ")}; known: ${KNOWN_SURFACES.join(", ")}`);
+    console.error(
+      `--only: unknown surface(s) ${unknown.join(", ")}; known: ${KNOWN_SURFACES.join(", ")}`,
+    );
     process.exit(1);
   }
 }
@@ -245,12 +247,16 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
       fs.writeFileSync(
         path.join(longDir, "long-1.jsonl"),
         [
-          JSON.stringify({ type: "start", ts: Math.floor(Date.now() / 1000), uuid: "probe-long-1", models: ["gpt-rt"] }),
+          JSON.stringify({
+            type: "start",
+            ts: Math.floor(Date.now() / 1000),
+            uuid: "probe-long-1",
+            models: ["gpt-rt"],
+          }),
           JSON.stringify({
             type: "turn",
             role: "caller",
-            text:
-              "The customer reported that the heating system in the upstairs unit has been making a loud banging noise every morning around six, and additionally the hot water pressure drops noticeably whenever the kitchen tap is opened at the same time, which suggests a shared pipe issue that needs a plumber's assessment before winter arrives in earnest. We scheduled the earliest available appointment.",
+            text: "The customer reported that the heating system in the upstairs unit has been making a loud banging noise every morning around six, and additionally the hot water pressure drops noticeably whenever the kitchen tap is opened at the same time, which suggests a shared pipe issue that needs a plumber's assessment before winter arrives in earnest. We scheduled the earliest available appointment.",
           }),
           JSON.stringify({ type: "end", reason: "normal" }),
         ].join("\n") + "\n",
@@ -303,7 +309,9 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
       const baselineDir = arg("--diff", null);
       if (baselineDir) {
         if (!fs.existsSync(baselineDir)) {
-          console.error(`pixel-diff: baseline dir missing: ${baselineDir} (run --save-baseline first)`);
+          console.error(
+            `pixel-diff: baseline dir missing: ${baselineDir} (run --save-baseline first)`,
+          );
           process.exit(1);
         }
 
@@ -329,10 +337,14 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
           }
 
           const diff = new PNG({ width: a.width, height: a.height });
-          const changed = pixelmatch(a.data, b.data, diff.data, a.width, a.height, { threshold: 0.1 });
+          const changed = pixelmatch(a.data, b.data, diff.data, a.width, a.height, {
+            threshold: 0.1,
+          });
           const pct = (100 * changed) / (a.width * a.height);
           if (pct > tolerancePct) {
-            console.log(`PIXELDIFF ALERT ${f}: ${changed} px (${pct.toFixed(3)}% > ${tolerancePct}%)`);
+            console.log(
+              `PIXELDIFF ALERT ${f}: ${changed} px (${pct.toFixed(3)}% > ${tolerancePct}%)`,
+            );
             flagged++;
           }
         }
