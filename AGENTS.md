@@ -74,10 +74,9 @@ webphone later gets a read-only deep link, never a data dependency.
   an empty result); treefmt runs nixfmt + deadnix + statix only (BuildFlow
   owns Go formatting). DevShell (mkShellNoCC): go/golangci-lint/gopls/
   govulncheck/dprint/templ/tailwindcss_4/cqrs-lint, GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2.
-  UI codegen is a package preBuild
-  (`templGenerationPolicy = "preBuild"`: templ generate ./internal/web/ +
-  tailwindcss → styles.css). styles.css is COMMITTED (CI embeds it;
-  the nix preBuild still regenerates — 2026-10-15 v0.2.0 CI red fixed);
+  UI codegen is a package preBuild (`templGenerationPolicy = "preBuild"`:
+  templ generate + tailwindcss → styles.css). styles.css is COMMITTED (CI
+  embeds it; nix preBuild still regenerates; 2026-10-15 v0.2.0 CI fix);
   *_templ.go stays gitignored.
   `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
   break with `buildflow -s nix-hash-fix --fix` — never paste hashes by hand.
