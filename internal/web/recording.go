@@ -3,10 +3,15 @@ package web
 import (
 	"context"
 	"io"
+	"net"
 	"net/http"
+	"net/netip"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
+
+	"golang.org/x/time/rate"
 
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -52,6 +57,13 @@ type RecordingOptions struct {
 // recording streams a call's audio through the server (B2/m24): the client
 // only ever talks to this route.
 func (s *server) recording(w http.ResponseWriter, r *http.Request) {
+	if !s.recordingThrottle.allow(remoteHost(r)) {
+		w.Header().Set("Retry-After", "1")
+		http.Error(w, "too many recording requests from this address; retry in a moment", http.StatusTooManyRequests)
+
+		return
+	}
+
 	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
 	if err != nil {
 		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
@@ -258,4 +270,63 @@ func localRecordingStems(view calls.CallView) []string {
 	}
 
 	return append(stems, string(view.NativeID))
+}
+
+// recordingThrottle caps how fast one remote address may START recording
+// streams (M15/F48): an explicit backstop behind auth for runaway loops or
+// a scripted audio hoover, at a ceiling an honest operator player never
+// reaches (2 stream starts/s sustained, burst 60 — seek/Range requests
+// included, so aggressive scrubbing still fits). Loopback is exempt: the
+// probes, the e2e lane, and a local operator share 127.0.0.1. The bucket
+// map is bounded (FIFO eviction at maxHosts) so random spoofed addresses
+// cannot grow it without end — the same shape as the auth failure
+// throttle, which stays the authoritative brute-force defense.
+type recordingThrottle struct {
+	mu      sync.Mutex
+	buckets map[string]*rate.Limiter
+	order   []string
+}
+
+const (
+	recordingStartsPerSecond = 2
+	recordingBurst           = 60
+	recordingMaxHosts        = 256
+)
+
+func newRecordingThrottle() recordingThrottle {
+	return recordingThrottle{buckets: make(map[string]*rate.Limiter)}
+}
+
+func (t *recordingThrottle) allow(host string) bool {
+	if ip, err := netip.ParseAddr(host); err == nil && ip.IsLoopback() {
+		return true
+	}
+
+	t.mu.Lock()
+	defer t.mu.Unlock()
+
+	lim, known := t.buckets[host]
+	if !known {
+		if len(t.buckets) >= recordingMaxHosts {
+			delete(t.buckets, t.order[0])
+			t.order = t.order[1:]
+		}
+
+		lim = rate.NewLimiter(recordingStartsPerSecond, recordingBurst)
+		t.buckets[host] = lim
+		t.order = append(t.order, host)
+	}
+
+	return lim.Allow()
+}
+
+// remoteHost extracts the IP part of RemoteAddr (the auth throttle keys
+// the full address; recordings are per-network-host, not per-connection).
+func remoteHost(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return r.RemoteAddr
+	}
+
+	return host
 }

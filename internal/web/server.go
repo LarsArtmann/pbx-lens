@@ -73,16 +73,17 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	timeout := resolveUpstreamTimeout(opts.Recordings.UpstreamTimeout)
 
 	web := &server{
-		sys:        sys,
-		recordings: opts.Recordings,
-		search:     opts.Search,
-		log:        opts.Log,
-		ops:        opts.Ops,
-		cache:      opts.Cache,
-		retention:  opts.RetentionMaxAge,
-		recTimeout: timeout,
-		upstream:   newUpstreamClient(timeout),
-		now:        opts.Now,
+		sys:               sys,
+		recordings:        opts.Recordings,
+		search:            opts.Search,
+		log:               opts.Log,
+		ops:               opts.Ops,
+		cache:             opts.Cache,
+		retention:         opts.RetentionMaxAge,
+		recTimeout:        timeout,
+		upstream:          newUpstreamClient(timeout),
+		now:               opts.Now,
+		recordingThrottle: newRecordingThrottle(),
 	}
 
 	if web.now == nil {
@@ -132,16 +133,17 @@ func redirectTrailingSlash(canonical string) http.HandlerFunc {
 }
 
 type server struct {
-	sys        *system.System
-	recordings RecordingOptions
-	search     Searcher
-	log        func(msg string, args ...any)
-	ops        func() any
-	cache      *CacheCounters
-	retention  time.Duration
-	recTimeout time.Duration
-	upstream   *http.Client
-	now        func() time.Time
+	sys               *system.System
+	recordings        RecordingOptions
+	search            Searcher
+	log               func(msg string, args ...any)
+	ops               func() any
+	cache             *CacheCounters
+	retention         time.Duration
+	recTimeout        time.Duration
+	upstream          *http.Client
+	now               func() time.Time
+	recordingThrottle recordingThrottle
 }
 
 // logf reports a failure that surfaces after the response body started —
