@@ -192,3 +192,18 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   amplified). Triage rule: after a gate failure, check `git status` and
   `git log -1` FIRST — if a daemon commit landed mid-run, re-run the
   failed step on the settled tree before diagnosing deeper.
+
+- **Gate tools trail module toolchain floors (paid for, 2026-10-15)**: the
+  go-appkit v0.9.0 bump moved go.mod's floor to 1.27.2, and the full gate
+  then failed TWO steps — `go` and `govalid` — with "requires go >= 1.27.2
+  (running go 1.27.0)": buildflow's bundled tool binaries are compiled in
+  its own nix closure, which still carried go 1.27.0. The repo's own
+  environments were already fine (devShell go_1_27 = 1.27.2, shell go
+  auto-switches), so `go build/test`, `golangci-lint`, and `nix build`
+  (exit 0, `pbx-lens 0.2.0` printed from the packaged binary) all passed
+  individually — the documented per-casualty fallback. `buildflow upgrade`
+  refuses (dirty-checkout build has no install channel). Fix belongs in
+  the BuildFlow repo (rebuild from a clean checkout so the closure picks
+  up current nixpkgs go); filed as BuildFlow#56. Until it lands: after
+  ANY go.mod floor bump, expect the buildflow gate's go/govalid steps to
+  fail first and verify them individually per this file's doctrine.

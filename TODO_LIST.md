@@ -79,6 +79,20 @@
 > below (MOS poller, PII enforcement, mobile cards) come from the same
 > plan and stay blocked/low until their window opens.
 >
+> Fourteenth pass 2026-10-15 (05-40 release + hardening road): v0.2.0 CUT
+> (CHANGELOG sweep, version const, tag; receipt: build/test/lint/nix green
+> individually — the buildflow gate's go/govalid steps trail the new
+> 1.27.2 toolchain floor, BuildFlow#56); BuildFlow#55 filed (nix-hash-fix
+> wrong-attribute write, the a61ba8c incident) + #56 (stale gate-tool
+> go); M15 security bundle landed (robots.txt, noindex everywhere,
+> CSP_REPORT_ONLY dry-run mode, recording-stream rate limit, loopback
+> exempt); M16 rails (10k benchmark 36 ms/op, 500-turn render, malformed
+> JSONL property test, ETag hash cost 22/104 µs); docs batch (MOS poller
+> design, PII one-pager, process prep + follow-on sketches); probe fixes
+> (staleness DB reset, phase-server port race, inputHash static/ path).
+> Owner-gated rows below stay: D1-D5 answers, PII boundary (one-pager
+> ready), mobile card taste, MOS window, deploy paths.
+
 > Thirteenth pass 2026-10-15 (05-40 M9-M11 closure, verified against code):
 > rows DELETED as done — the `/api/ops` stale-pass warning (verdicts ride
 > `SnapshotAny`), the `/ops` human page (cards + goldens), retention
@@ -132,7 +146,6 @@ None right now — remaining work is blocked or low-impact (below).
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Production re-ingest for ContentHash v2 (one-time; the live DB still hashes v1 fields)                                                                                                                                                                                                                                                                                                                                      | 🔵 `BLOCKED` | High   | 60min  | needs the prod deploy path (owner); CHANGELOG domain-redesign entry; docs/status/archived 2026-10-11_18-21 §c.1; docs/status/2026-10-12_02-34 §c                 |
 | Deploy both hosts with the current lens module options (`aiDids` newly available; `-max-age`/`-recording-timeout` verified already exposed and wired)                                                                                                                                                                                                                                                                       | 🔵 `BLOCKED` | High   | 30min  | needs the host deploy path (owner); `modules/telephony/lens.nix` (nix-international-telephony e7c0f8b); sibling flake check green 2026-10-12                     |
-| Cut v0.2.0: the CHANGELOG Unreleased section carries the whole HTTP-stack adoption set                                                                                                                                                                                                                                                                                                                                      | 🔵 `BLOCKED` | Medium | 30min  | owner release cadence; CHANGELOG.md Unreleased; docs/status/2026-10-12_13-49 §f.41                                                                               |
 | Browser-level check: htmx fragment polls really revalidate to 304 + DOM-churn on cached-body swaps                                                                                                                                                                                                                                                                                                                          | 🔵 `BLOCKED` | Low    | 15min  | owner manual check (no browser in the agent env); server-side 304s + no-cache proven in `cmd/pbx-lens/serve_test.go`; docs/status/2026-10-12_13-49 §f.7/39, §g.2 |
 | Fold in go-etag#2 (Flush observability) and go-appkit#26 (testkit drain cost) when upstream lands them; re-verify the ledger quarterly                                                                                                                                                                                                                                                                                      | 🔵 `BLOCKED` | Low    | 30min  | both OPEN 2026-10-12, zero comments; `docs/upstream-filings.md`; docs/status/2026-10-12_13-49 §f.24/48                                                           |
 | Fold in templ-components#48 (vertical BarChart 0px bars), #49 (TableRow focus ring), #50 (skill version stamping), #51 (ScrollbackLine id/class hook — retires the hand-rolled ?q= match-log classes), #55 (EnsureID random-id default — retire the pinned nav id + determinism gate only if upstream makes ids deterministic) when they land; the bump watchlist in docs/templ-components-adoption.md is the re-check list | 🔵 `BLOCKED` | Low    | 30min  | all three OPEN, filed 2026-10-12; `docs/upstream-filings.md`; local workarounds (`!items-stretch`, focus-visible CSS) retire on fold-in                          |

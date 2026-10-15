@@ -112,6 +112,14 @@ upstream — no upstream movement to fold in yet.**
   and `:286` (hard-coded middle `flex w-full flex-1 items-end`, no definite
   height) mean percentage bar heights still resolve against auto → 0px
   without the `!items-stretch` workaround.
+- **BuildFlow#56** (filed 2026-10-15, 05-40 M6/F17 aftermath): the gate's
+  managed `go`/`govalid` tools execute binaries compiled into BuildFlow's
+  own nix closure (go 1.27.0), so a module toolchain-floor bump (go-appkit
+  v0.9.0 → go.mod 1.27.2) failed those two steps while every repo-side
+  environment was already on 1.27.2 — doctor even prints "go1.27.2 is
+  supported" in the same run. Individual verification is the fallback;
+  root fix = rebuild BuildFlow from a clean checkout. Recorded in
+  docs/buildflow-dev-gate.md.
 - Drafts live in `docs/drafts/` (never /tmp).
 
 ## Fold-in watch (quarterly — plan 05-40 M14/F44)
