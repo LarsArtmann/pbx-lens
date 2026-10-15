@@ -84,6 +84,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 
 	mux.HandleFunc("GET /{$}", web.list)
 	mux.HandleFunc("GET /dashboard", web.dashboard)
+	mux.HandleFunc("GET /ops", web.opsPage)
 	mux.HandleFunc("GET /frag/dashboard", web.dashboardFragment)
 	mux.HandleFunc("GET /frag/staleness", web.stalenessFragment)
 	mux.HandleFunc("GET /search", web.searchPage)

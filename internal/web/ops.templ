@@ -1,0 +1,131 @@
+package web
+
+import (
+	"strconv"
+
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/feedback"
+	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/templ-components/layout"
+	"github.com/larsartmann/templ-components/utils/format"
+)
+
+// opsRoute is the human ops surface (plan 05-40 M9/F24-F25): the /api/ops
+// counters rendered for a glance — poller pass health with the staleness
+// verdict up top, per-source ingest counters, and the response-cache
+// section. Read-only like every page; the machine view stays at /api/ops.
+templ opsRoute(nonce string, snap opsSnapshot) {
+	@shell(nonce, "Ops — pbx-lens", "/ops") {
+		@display.PageHeader(display.PageHeaderProps{
+			Title:    "Ops",
+			Subtitle: "Ingest and cache health for this index",
+		})
+		if !snap.Wired {
+			@display.EmptyState(display.EmptyStateProps{
+				Title:       "No counters are wired",
+				Description: "The ops surfaces need a running poller (serve with at least one ingest source) or the ETag cache middleware behind them. Machine view: /api/ops.",
+				Icon:        icons.Server,
+			})
+		} else {
+			@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
+				if snap.Poller != nil {
+					@opsPollerCard(*snap.Poller)
+				}
+				if snap.Cache != nil {
+					@opsCacheCard(*snap.Cache)
+				}
+			}
+		}
+	}
+}
+
+// opsPollerCard answers "is the poller alive": the pass verdict as a
+// badge, the last pass as a relative time, and the per-source counters.
+templ opsPollerCard(p opsPoller) {
+	@display.Card(display.CardProps{Title: "Ingest poller"}) {
+		if p.StaleKnown && p.Stale {
+			@feedback.Alert(feedback.AlertProps{
+				Type:    feedback.FeedbackError,
+				Title:   "Poller pass is stale",
+				Message: "Latest pass ran " + p.ageText() + " — past two poll intervals. The poller may be hung or stopped; check the serve logs.",
+			})
+		}
+		@display.DefinitionList(display.DefinitionListProps{Items: opsPollerItems(p)})
+		if len(p.Sources) > 0 {
+			@display.Table(opsSourcesTable(p.Sources))
+		}
+		if reasons := p.rejectedText(); reasons != "" {
+			<p class="text-sm text-gray-500 dark:text-gray-400">{ reasons }</p>
+		}
+	}
+}
+
+// opsPollerItems keeps the definition list to facts; the verdict badge in
+// the list carries the color, the stale alert above carries the words.
+func opsPollerItems(p opsPoller) []display.DefinitionItem {
+	verdictType := display.BadgeSuccess
+	if p.Stale {
+		verdictType = display.BadgeDanger
+	} else if !p.StaleKnown {
+		verdictType = display.BadgeNeutral
+	}
+
+	return []display.DefinitionItem{
+		{
+			Term:            "Verdict",
+			Detail:          p.verdictText(),
+			DetailComponent: display.Badge(display.BadgeProps{Text: p.verdictText(), Type: verdictType, Pill: true}),
+		},
+		{
+			Term:            "Last pass",
+			DetailComponent: display.RelativeTime(display.RelativeTimeProps{Time: p.LastPass}),
+		},
+		{Term: "Pass age", Detail: p.ageText()},
+	}
+}
+
+// opsSourcesTable renders the per-source counters in a fixed (sorted)
+// order — map iteration would make the page nondeterministic.
+func opsSourcesTable(rows []opsSourceRow) display.TableProps {
+	out := display.TableProps{
+		Headers:     []string{"Source", "Offered", "Recorded", "Corrected", "Rejected"},
+		Striped:     true,
+		CellPadding: display.TableCellPaddingCompact,
+		LazyRows:    true,
+		Rows:        make([]display.TableRow, 0, len(rows)),
+	}
+
+	for _, row := range rows {
+		out.Rows = append(out.Rows, display.TableRow{
+			Cells: []display.TableCell{
+				{Text: row.Name},
+				{Text: strconv.Itoa(row.Offered)},
+				{Text: strconv.Itoa(row.Recorded)},
+				{Text: strconv.Itoa(row.Corrected)},
+				{Text: strconv.Itoa(row.totalRejected())},
+			},
+		})
+	}
+
+	return out
+}
+
+// opsCacheCard is the response-cache section: whether the ETag middleware
+// is earning its keep, and whether anything streamed past the buffer.
+templ opsCacheCard(c CacheStats) {
+	@display.Card(display.CardProps{Title: "Response cache (ETag)"}) {
+		if c.BufferOverflows > 0 {
+			@feedback.Alert(feedback.AlertProps{
+				Type:    feedback.FeedbackWarning,
+				Title:   "Responses streamed without an ETag",
+				Message: strconv.FormatUint(c.BufferOverflows, 10) + " response(s) exceeded the ETag buffer. Exports and recordings always do; anything else is a body-size surprise worth checking.",
+			})
+		}
+		@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
+			{Term: "Tags generated", Detail: strconv.FormatUint(c.ETagGenerated, 10)},
+			{Term: "304 revalidations", Detail: strconv.FormatUint(c.NotModified, 10)},
+			{Term: "Hit ratio", Detail: format.Percent(c.HitRatio)},
+			{Term: "Buffer overflows", Detail: strconv.FormatUint(c.BufferOverflows, 10)},
+		}})
+	}
+}
