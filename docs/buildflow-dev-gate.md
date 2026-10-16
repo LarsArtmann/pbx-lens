@@ -187,13 +187,20 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   `nix build .#checks.x86_64-linux.pre-commit` standalone (exit 0).
   Rule: run templ fmt after ANY hand edit to a `.templ` import block,
   before spending a gate run.
-- **statix rule 20 disabled repo-wide via root `statix.toml`
-  (2026-10-12)**: the repeated-attribute-set-keys hint fired 15× on
-  `deploy/nixos/module-draft.nix` — the sealed design record superseded by
-  the landed NixOS module in nix-international-telephony. The repeats are
-  intentional structure, not debt, so the rule is off (integer codes:
-  `disabled = [20]`) rather than restyling a sealed document. If a real
-  repeated-keys smell shows up elsewhere, revisit this file first.
+- **statix suppression: file-level `ignore`, after a five-day green-but-dead
+  lane (2026-10-12 → 2026-10-17)**: the repeated-attribute-set-keys hint
+  (W20 `repeated_keys`) fires 15× on `deploy/nixos/module-draft.nix` — the
+  sealed design record superseded by the landed NixOS module in
+  nix-international-telephony. The repeats are intentional structure, not
+  debt, so that ONE file is ignored via root `statix.toml`
+  (`ignore = ["deploy/nixos/module-draft.nix"]`) and the rule stays live
+  everywhere else. The original `disabled = [20]` (integer) was a TOML
+  parse error, and statix exits 0 on a config parse error without linting
+  anything — this gate's statix step read green while the check had been a
+  no-op since the day the config landed (the only clue: the "config error"
+  line on `statix check .`'s stderr). Full statix contract: the statix
+  entry in gotchas.md. If a real repeated-keys smell shows up elsewhere,
+  statix now actually says so.
 - **The auto-commit daemon races the gate's repair steps (paid for,
   2026-10-12)**: go-mod-normalize rewrote go.mod mid-run, the daemon
   committed the rewrite seconds later, and go-generate then failed with

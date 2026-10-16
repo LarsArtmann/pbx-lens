@@ -18,6 +18,16 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   answers 200 with ETag + `Cache-Control: no-cache` and revalidates to an
   empty 304, pinned beside the dashboard fragment in the e2e suite.
 
+### Fixed — 2026-10-17 (lint gate revival)
+
+- The root `statix.toml` used `disabled = [20]` — an integer where statix
+  expects rule-name strings, i.e. a TOML parse error. statix exits 0 on a
+  config parse error, so the BuildFlow statix step (and every manual
+  `statix check`) had silently linted nothing since 2026-10-12. Replaced
+  with a file-level `ignore` of the sealed design record
+  `deploy/nixos/module-draft.nix`, which keeps the repeated-keys rule
+  active everywhere else.
+
 Nothing else yet.
 
 ## [v0.2.0] — 2026-10-15

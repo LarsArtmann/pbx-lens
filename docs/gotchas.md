@@ -279,3 +279,22 @@ eyeballed in both themes before the todo closes. The same session's
 empty-dashboard finding (chart cards rendering as silent collapsed-0px-bar
 boxes instead of honest empty messages) was found the same way — no test
 asked for it because no test knew the page could look that broken.
+
+## statix exits 0 on a config parse error — the check silently no-ops (paid for, 2026-10-17)
+
+`statix check .` printed "config error: unable to parse config file …" and
+exited 0: a broken `statix.toml` does not fail the run, it SKIPS it. The
+repo's config carried `disabled = [20]` (integer where statix wants
+rule-NAME strings, e.g. `disabled = ["repeated_keys"]`) for five days, and
+BuildFlow's statix step read green the whole time — the "config error" line
+on stderr was the only clue that zero files were being linted. Treat ANY
+"config error" output from statix as a red gate. Verified contract (statix
+0.5.8-unstable-2026-07-17): `disabled` takes rule names; top-level `ignore`
+takes path globs but only filters WALKED paths — a direct file target
+(`statix check path/to.nix`) bypasses it (harmless here: W20 has no
+auto-fix, and showing the finding on direct inspection is honest); and
+treefmt's statix formatter never reads the repo `statix.toml` at all —
+treefmt-nix wraps a frozen store copy (`statix fix --config /nix/store/…`)
+per file. The repo config's only real consumer is BuildFlow's bare
+`statix check` (cwd = repo root, default target `.`), which is exactly the
+invocation the `ignore` glob matches.

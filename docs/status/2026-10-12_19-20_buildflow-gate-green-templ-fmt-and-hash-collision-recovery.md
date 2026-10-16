@@ -34,6 +34,16 @@ user's gate run: `buildflow --fix --build-mode=full` exiting 69 with 3 failed st
    Rationale recorded in `docs/buildflow-dev-gate.md`. An earlier treefmt-level exclude
    was added and then removed as redundant (BuildFlow's statix runs `statix check`
    directly and ignores treefmt excludes).
+   **ANNOTATION (2026-10-17):** the claim above is backwards, and its "green"
+   evidence was the bug itself: `disabled = [20]` (integer) is a TOML parse
+   error, and statix EXITS 0 on a config parse error without linting anything —
+   so the string-form test that "did not work" almost certainly ran against a
+   config that failed to parse (defaults active), and the gate's statix step
+   was green-but-dead from this session until 2026-10-17. Rule-name strings
+   (`disabled = ["repeated_keys"]`) and top-level `ignore` globs both work in
+   statix 0.5.8-unstable-2026-07-17; the config now uses a file-level
+   `ignore = ["deploy/nixos/module-draft.nix"]`, keeping W20 live repo-wide.
+   Contract details: docs/gotchas.md (statix entry).
 4. **AGENTS.md size compliance** — trimmed 225→219 lines (the linter counts wc+1, so
    220 linter-count = exactly max) via five content-preserving compressions
    (load-doctrine comment, adoption-map bullet, flake bullet, support-packages lines,
