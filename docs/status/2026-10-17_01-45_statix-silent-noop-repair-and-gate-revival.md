@@ -245,6 +245,14 @@ which was UNDERSTATED:
    full LSP restart (single-server restart did NOT suffice).
 4. Task 26 added to (f): triage `TestCacheSemanticsHardening` flakiness
    (CI-only reproduction so far).
+5. **c5 closed:** `nix flake check` → all checks passed (treefmt, pre-commit,
+   build, vendor-hash) on the settled tree.
+6. **b5 closed, with one honest casualty:** the first clean-tree gate run hit
+   the `nix-build` step's 47 s execution deadline — the daemon had committed
+   this report's postscript mid-pass (new source hash → cold nix rebuilds),
+   the documented daemon-race class, not a build failure. After warming the
+   derivations with plain `nix build`, the gate re-ran clean: **exit 0,
+   58 success / 0 failed / 0 skipped (+3 via config)**.
 
 ---
 
