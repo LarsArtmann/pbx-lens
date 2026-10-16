@@ -1,5 +1,9 @@
-# statix rule 20 (repeated attribute-set keys) fires only on the sealed
-# design record deploy/nixos/module-draft.nix, superseded by the landed
-# NixOS module in nix-international-telephony; the repeats there are
-# intentional structure, not debt.
-disabled = [20]
+# deploy/nixos/module-draft.nix is a sealed design record, superseded by
+# the landed NixOS module in nix-international-telephony; its repeated
+# systemd keys are intentional structure, not debt. W20 (repeated_keys)
+# stays active everywhere else. Traps (2026-10-17): `disabled` takes
+# rule-NAME strings — the integer `[20]` form was a TOML parse error, and
+# statix exits 0 on a config parse error, silently skipping the whole
+# check (it did, 2026-10-12 to 2026-10-17). `ignore` filters walked
+# paths only (`statix check .`); direct file targets bypass it.
+ignore = ["deploy/nixos/module-draft.nix"]
