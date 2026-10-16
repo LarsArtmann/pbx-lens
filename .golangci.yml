@@ -1,7 +1,7 @@
 version: "2"
 run:
   timeout: 10m
-  go: 1.27.1
+  go: "1.27"
   build-tags:
     - goexperiment.arenas
     - goexperiment.goroutineleakprofile
@@ -53,6 +53,7 @@ linters:
     - godot
     - godox
     - goheader
+    - gohumanize
     - gomoddirectives
     - gomodguard_v2
     - goprintffuncname
@@ -66,7 +67,6 @@ linters:
     - intrange
     - iotamixing
     - ireturn
-    - lll
     - loggercheck
     - maintidx
     - makezero
@@ -176,8 +176,6 @@ linters:
     tagliatelle:
       case:
         rules:
-          # Project convention: JSON wire and storage tags are snake_case
-          # (matches the deployed sqlite JSON columns and the export API).
           json: snake
     testifylint:
       disable:
@@ -220,11 +218,8 @@ linters:
       min-name-length: 2
     wrapcheck:
       ignore-package-globs:
-        # Own packages already classify errors via errorfamily; wrapping
-        # again only buries the family code.
         - github.com/larsartmann/pbx-lens
         - github.com/larsartmann/pbx-lens/*
-        # The cqrs stack's constructors return fully-contextualized errors.
         - github.com/larsartmann/go-cqrs-lite/*
         - github.com/larsartmann/go-error-family*
       ignore-sig-regexps:
@@ -273,12 +268,7 @@ linters:
           - recvcheck
           - contextcheck
           - exhaustive
-          # httptest.NewRequest without ctx is the stdlib test pattern;
-          # context.Background() is implicit anyway.
           - noctx
-          # Fleet precedent (go-output): table-driven stdlib tests gain
-          # nothing from t.Parallel plumbing; fixtures are long CSV/JSON
-          # literals; helper params are intentionally terse.
           - paralleltest
           - lll
           - unparam
@@ -287,24 +277,12 @@ linters:
         text: unused
         linters:
           - unused
-      # The CLI's product IS terminal output (fleet precedent: go-output
-      # exempts its examples/ the same way); internal/ stays print-free.
       - path: ^cmd/
         linters:
           - forbidigo
-      # godoclint counts the "// templ: version:" header above `package X`
-      # in every generated *_templ.go as an extra package doc (fleet
-      # precedent: samber-do-auditlog hit the same false positive). The
-      # package doc lives in queries.go; path exclusion cannot help because
-      # the finding is reported on the doc-carrying file, not the generated
-      # one.
       - text: package has more than one godoc
         linters:
           - godoclint
-      # templ-generated component closures do not thread r.Context() into
-      # child Render calls (the templ runtime owns that); contextcheck
-      # reports the gap at the handler's render() call site. Framework
-      # false positive — the ctx IS passed via render's r.Context().
       - path: ^internal/web/
         linters:
           - contextcheck
