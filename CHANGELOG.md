@@ -27,6 +27,10 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   with a file-level `ignore` of the sealed design record
   `deploy/nixos/module-draft.nix`, which keeps the repeated-keys rule
   active everywhere else.
+- The `.golangci.yml` enabled `gohumanize`, a linter that does not exist
+  in any golangci-lint release (added 2026-10-16; both the devShell and
+  CI pin v2.14, which rejects it as unknown), so every lint run aborted
+  with "unknown linters". Removed the phantom entry; lint runs again.
 
 Nothing else yet.
 

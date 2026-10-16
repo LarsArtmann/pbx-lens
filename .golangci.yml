@@ -54,7 +54,6 @@ linters:
     - godot
     - godox
     - goheader
-    - gohumanize
     - gomoddirectives
     - gomodguard_v2
     - goprintffuncname
