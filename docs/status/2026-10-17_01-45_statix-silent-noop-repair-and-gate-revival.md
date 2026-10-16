@@ -215,6 +215,39 @@ auto-commit daemon (db18c22, f48b722, d403cd2, 0f99144).
 
 ---
 
+## Postscript — remote CI investigated (read-only, same session ~01:50)
+
+The follow-up pass closed b1/b3 and corrected this report's own CI claim,
+which was UNDERSTATED:
+
+1. **Remote main is red on 6 consecutive CI runs — since 18:11 CEST
+   2026-10-15**, not "probably red since gohumanize" (b1/d4). Last green
+   run: 38765780762 (18:03 CEST). Nothing was pushed since; every local fix
+   (d403cd2 styles.css, 0f99144 phantom linter) is still unpushed.
+2. **Failure causes, mapped per run (`gh run view --log-failed`):**
+   - 18:11 / 18:13 / 18:17 CEST — `TestCSSGateBridgesHeatmapBrandToTeal`:
+     styles.css was mid **flip-flop**. A concurrent session alternated the
+     file FIVE times on Oct 15 (17:05 unmin → 17:12 min → 18:04 unmin →
+     18:22 min → 19:51 unmin; commits f1fbaaa/2b0bcb2/577b6cb/ad10482/
+     450a75e) between the 1-line minified form and a 5413-line UNMINIFIED
+     build. Every unminified window redden CI. Section (a)5's "a foreign
+     unminified rebuild (Oct 15 19:50)" was the LAST wrong landing of that
+     fight, not the whole story; the interleaved minified commit (ad10482)
+     carried the correct tokens.
+   - 19:48 CEST — `TestCacheSemanticsHardening` (5.06 s): a DIFFERENT,
+     flaky-looking failure on a CSS-clean tree (no cache-code change since;
+     the suite is green locally twice tonight). **New finding: candidate
+     flaky test** — real-time-dependent timing worth a look (→ task 26).
+   - 20:14 CEST — TestCSSGate again (450a75e unminified — the state this
+     session repaired via `nix run .#update-styles`).
+   - Oct 16 04:44 CEST — Build & Test (CSS) + **Lint (gohumanize)**.
+3. **b3 closed:** the stale `gohumanize` LSP diagnostics cleared after a
+   full LSP restart (single-server restart did NOT suffice).
+4. Task 26 added to (f): triage `TestCacheSemanticsHardening` flakiness
+   (CI-only reproduction so far).
+
+---
+
 _Format note: written as Markdown at the operator's explicit path/format
 demand; the status-report skill's canonical HTML output and the
 brutal-self-review skill's `docs/reviews/` HTML convention were folded into
