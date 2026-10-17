@@ -47,7 +47,7 @@ templ opsRoute(nonce string, snap opsSnapshot) {
 // the card says so instead of inventing an execution record it does not
 // have.
 templ opsRetentionCard(r retentionSnapshot) {
-	@display.Card(display.CardProps{Title: "Retention"}) {
+	@display.Card(display.CardProps{Title: "Retention", TitleTag: display.HeadingTagH2}) {
 		if !r.Active {
 			@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
 				{Term: "Window", Detail: "off — keeping everything"},
@@ -84,7 +84,7 @@ func opsOverAgeText(r retentionSnapshot) string {
 // opsPollerCard answers "is the poller alive": the pass verdict as a
 // badge, the last pass as a relative time, and the per-source counters.
 templ opsPollerCard(p opsPoller) {
-	@display.Card(display.CardProps{Title: "Ingest poller"}) {
+	@display.Card(display.CardProps{Title: "Ingest poller", TitleTag: display.HeadingTagH2}) {
 		if p.StaleKnown && p.Stale {
 			@feedback.Alert(feedback.AlertProps{
 				Type:    feedback.FeedbackError,
@@ -155,7 +155,7 @@ func opsSourcesTable(rows []opsSourceRow) display.TableProps {
 // opsCacheCard is the response-cache section: whether the ETag middleware
 // is earning its keep, and whether anything streamed past the buffer.
 templ opsCacheCard(c CacheStats) {
-	@display.Card(display.CardProps{Title: "Response cache (ETag)"}) {
+	@display.Card(display.CardProps{Title: "Response cache (ETag)", TitleTag: display.HeadingTagH2}) {
 		if c.BufferOverflows > 0 {
 			@feedback.Alert(feedback.AlertProps{
 				Type:    feedback.FeedbackWarning,

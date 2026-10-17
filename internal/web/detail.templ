@@ -123,7 +123,7 @@ templ detailMain(nonce string, view calls.CallView, query string) {
 }
 
 templ detailFacts(nonce string, view calls.CallView) {
-	@display.Card(display.CardProps{Title: "Call facts"}) {
+	@display.Card(display.CardProps{Title: "Call facts", TitleTag: display.HeadingTagH2}) {
 		@display.DefinitionList(display.DefinitionListProps{Items: detailItems(nonce, view)})
 	}
 }
@@ -176,7 +176,7 @@ func copyDetail(nonce string, value, label string) templ.Component {
 // has no id/class hook in v1.21.0, and the match view needs per-turn
 // anchors plus a visible mark. Visual parity is pinned by the goldens.
 templ transcriptPane(turns []calls.TranscriptTurn, query string) {
-	@display.Card(display.CardProps{Title: "Transcript", ID: "transcript"}) {
+	@display.Card(display.CardProps{Title: "Transcript", ID: "transcript", TitleTag: display.HeadingTagH2}) {
 		// AriaLabel: the library renders the block aria-hidden by default —
 		// without the label a screen reader gets an empty transcript (plan
 		// T18).
@@ -309,7 +309,7 @@ func turnTagClass(role calls.TurnRole) string {
 // Telnyx signed URL never reaches the browser; local recordings stream from
 // the same route when the file exists on disk.
 templ recordingCard(view calls.CallView) {
-	@display.Card(display.CardProps{Title: "Recording"}) {
+	@display.Card(display.CardProps{Title: "Recording", TitleTag: display.HeadingTagH2}) {
 		if view.RecordingRef == "" {
 			@display.SimpleEmptyState("No recording reference indexed for this call.")
 		} else {

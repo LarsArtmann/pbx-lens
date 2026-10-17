@@ -109,7 +109,7 @@ templ dashboardMain(stats DashboardStats) {
 // weekday rows x hour columns in the dashboard zone. A quiet window renders
 // the honest empty message instead of a wall of near-invisible cells.
 templ heatmapCard(stats DashboardStats) {
-	@display.Card(display.CardProps{Title: "Call density (weekday × hour)"}) {
+	@display.Card(display.CardProps{Title: "Call density (weekday × hour)", TitleTag: display.HeadingTagH2}) {
 		if stats.Total == 0 {
 			<p class="text-sm text-gray-500 dark:text-gray-400">
 				No calls in the last { strconv.Itoa(stats.WindowDays) } days.
@@ -210,7 +210,7 @@ templ statCards(stats DashboardStats, now time.Time) {
 // volumeCard is the calls-per-day bar chart over the dashboard window,
 // with the week-over-week delta underneath (R27).
 templ volumeCard(stats DashboardStats) {
-	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays)}) {
+	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays), TitleTag: display.HeadingTagH2}) {
 		@display.BarChart(display.BarChartProps{
 			Bars:   volumeBars(stats.ByDay),
 			Orient: display.BarVertical,
@@ -230,7 +230,7 @@ templ volumeCard(stats DashboardStats) {
 // durationCard buckets call durations (R8/M20.2): how long calls actually
 // run, independent of when they happened.
 templ durationCard(stats DashboardStats) {
-	@display.Card(display.CardProps{Title: "Call durations"}) {
+	@display.Card(display.CardProps{Title: "Call durations", TitleTag: display.HeadingTagH2}) {
 		@display.BarChart(display.BarChartProps{
 			Bars:   durationBars(stats.Durations),
 			Orient: display.BarVertical,
@@ -302,7 +302,7 @@ func weekTrend(delta WeekDelta) display.TrendDirection {
 // PieChart, Donut mode) with the AI share in the center and an exact-count
 // legend. Empty indexes get the chart's own honest empty message.
 templ aiHumanCard(stats DashboardStats) {
-	@display.Card(display.CardProps{Title: "AI vs human"}) {
+	@display.Card(display.CardProps{Title: "AI vs human", TitleTag: display.HeadingTagH2}) {
 		@display.PieChart(display.PieChartProps{
 			Slices: []display.PieChartSlice{
 				{Label: "AI · " + strconv.Itoa(stats.AICalls), Value: float64(stats.AICalls), Color: "text-teal-600 dark:text-teal-400"},
@@ -320,7 +320,7 @@ templ aiHumanCard(stats DashboardStats) {
 // Empty-index honesty (M3 finding): a flat zero sparkline reads as a broken
 // chart, not as "quiet index" — the all-zero window explains itself instead.
 templ trendCard(stats DashboardStats) {
-	@display.Card(display.CardProps{Title: "30-day trend"}) {
+	@display.Card(display.CardProps{Title: "30-day trend", TitleTag: display.HeadingTagH2}) {
 		if seriesAllZero(volumeValues(stats.ByDay)) {
 			@display.SimpleEmptyState("No calls in the window yet.")
 		} else {
@@ -351,7 +351,7 @@ func seriesAllZero(values []float64) bool {
 // score; before the first MOS arrives it stays the honest placeholder so a
 // quiet index never fakes a measurement.
 templ mosCard(stats DashboardStats) {
-	@display.Card(display.CardProps{Title: "Call quality (MOS)"}) {
+	@display.Card(display.CardProps{Title: "Call quality (MOS)", TitleTag: display.HeadingTagH2}) {
 		if stats.MOSKnown == 0 {
 			@feedback.Alert(feedback.AlertProps{
 				Type:    feedback.FeedbackInfo,
