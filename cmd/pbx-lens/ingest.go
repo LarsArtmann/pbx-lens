@@ -51,7 +51,10 @@ func ingestCDR(args []string) {
 
 		fmt.Printf(
 			"ingest-cdr (dry-run): %d rows parsed, %d parse-skipped, %d would-record, %d age-refused — nothing written\n",
-			len(parsed.Observations), parsed.Skipped, len(admitted), len(refusals),
+			len(parsed.Observations),
+			parsed.Skipped,
+			len(admitted),
+			len(refusals),
 		)
 
 		printRejected(refusals)

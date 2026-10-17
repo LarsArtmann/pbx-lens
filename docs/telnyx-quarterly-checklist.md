@@ -8,8 +8,8 @@ recordings 2026-10-12). The truths under test live in
 [telnyx-live-api.md](telnyx-live-api.md); this file is the run order.
 
 - [ ] **Owner: confirm the 2027-01 calendar entry exists** (AGENTS.md
-  quarterly cluster says "calendar entry, m27.9"). Without the reminder
-  this file never runs.
+      quarterly cluster says "calendar entry, m27.9"). Without the reminder
+      this file never runs.
 
 ## 0. Setup
 

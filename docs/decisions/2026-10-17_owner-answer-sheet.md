@@ -59,3 +59,27 @@ A is the zero-risk default._
 ---
 
 **Answered on (date):** ____________ · **Recorded into TODO_LIST + AGENTS by:** ____________
+
+## 8. CI coverage floor → ANSWER: 70 (implemented by default)
+
+Floor raised 50→70 in `.github/workflows/ci.yml` on 2026-10-17 (measured
+total 73.0% after the cmd wiring tests). Chase-to-80 stays open as the
+TODO_LIST owner row; say "chase" to reopen the work.
+
+## 9. BuildFlow#56 binary rebuild → superseded upstream
+
+BuildFlow#56 (gate tools trail the module go floor) CLOSED 2026-10-17 —
+the fix landed. The open question shrinks to bookkeeping: does the LOCAL
+buildflow binary still want the manual `nix build . && nix run
+.#reinstall` pass? → ANSWER:
+
+## 10. Pixel-baseline home → ANSWER:
+
+Baseline v2 saved 2026-10-17 at `/home/lars/lens-baselines/v2`
+(machine-local, post-h2-change, diffs clean 0 alerts / 41 PNGs). Options:
+A stay machine-local (re-save per machine) ·
+B commit the corpus under `docs/assets/baselines/` (reviewable diffs,
+repo weight ~10-20MB) ·
+C artifact-store per CI run.
+**Recommendation: A** for a single-host internal tool; revisit if a
+second operator machine starts touching the UI.
