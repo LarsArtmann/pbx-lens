@@ -25,7 +25,7 @@ Every label answers ONE question: does working code exist — and if not, why no
 
 | Feature                 | Status                | Evidence                                            | Notes                                                                     |
 | ----------------------- | --------------------- | --------------------------------------------------- | ------------------------------------------------------------------------- |
-| `version` subcommand    | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/main.go:25`; `cmd/pbx-lens/ops.go`    | Prints `pbx-lens 0.1.0` (dev placeholder; no release tagged yet)          |
+| `version` subcommand    | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/main.go:12`; `cmd/pbx-lens/ops.go`    | Prints `pbx-lens 0.2.0` (version const tracks the release; v0.2.0 tagged 2026-10-15) |
 | `smoke` subcommand      | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/ops.go:28`; exercised this audit      | In-memory pipeline demo: dispatch, idempotent re-dispatch, read back view |
 | `ingest-cdr` subcommand | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/ingest.go:19`; `cdr_test.go`          | Parses Master.csv into Observations, dispatches, reports skip/reject      |
 | `ingest-telnyx`         | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/ingest.go:74`; `telnyx_test.go`       | Live-proven: 8 real conversations, double-ingest = zero duplicate events  |

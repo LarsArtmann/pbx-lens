@@ -34,10 +34,11 @@ nightly backup staging, purge timers — and 2026-10-12: htpasswd SIGHUP
 reload, per-IP failure throttling, the `/api/ops` counters endpoint,
 structured slog records, the restore-drill test. Remaining raw ideas:
 
-- Backup rotation/shipping policy (host backup tool owns it today; a lens
-  opinion would be a new decision)
-- v0.1.0 release + the production `-max-age` / `-recording-timeout` module
-  values are owner-blocked rows in TODO_LIST (not repeated here)
+- Backup rotation/shipping policy (host backup tool owns it today; the
+  app's opinion is recorded in docs/backup-rotation-opinion.md; folding it
+  into the sibling module is a blocked TODO_LIST row)
+- Next release + the production deploy are owner-blocked rows in TODO_LIST
+  (not repeated here); v0.1.0/v0.2.0 are tagged
 
 HTTP-stack follow-ons (2026-10-12 adoption wrap; each parked on its own
 revisit trigger — not commitments):

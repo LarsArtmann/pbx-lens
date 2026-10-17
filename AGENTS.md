@@ -79,7 +79,7 @@ webphone later gets a read-only deep link, never a data dependency.
   embeds it; nix preBuild still regenerates; 2026-10-15 v0.2.0 CI fix);
   *_templ.go stays gitignored.
   `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
-  break with `buildflow -s nix-hash-fix --fix` — never paste hashes by hand.
+  break via `nix run .#update-vendor-hash` on a CLEAN tree — never the nix-hash-fix step (BuildFlow#55 corrupts) and never paste hashes by hand.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
   govulncheck, art-dupl (warning-only). Dependabot watches github-actions +
@@ -190,7 +190,7 @@ node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd --save-baseline
 individual probes: verify-ui-contract.js (T20/T21), verify-style-contract.js (M1), verify-staleness-live.js, golden-pretty-diff.sh — scripts/README.md
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
-                                      # changes (buildflow -s nix-hash-fix --fix does the same)
+                                      # changes; CLEAN tree only — never nix-hash-fix (BuildFlow#55)
 ```
 
 ## Deep context (extracted to docs/ 2026-10-11 — 220-line limit)
