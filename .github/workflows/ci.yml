@@ -166,3 +166,34 @@ jobs:
           else
             echo "No harmful duplication detected (t=4 production gate)."
           fi
+
+  styles-freshness:
+    name: Styles Freshness Guard
+    runs-on: ubuntu-latest
+    env:
+      # Pinned to the nixpkgs tailwindcss_4 version the flake builds with;
+      # cross-builder byte-determinism proven 2026-10-17 (npm 4.3.3 ==
+      # nixpkgs 4.3.3, byte-identical, twice-run stable). When the flake
+      # lock moves the nix version, bump this pin in the same change.
+      TAILWIND_VERSION: "4.3.3"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Regenerate styles.css with the pinned Tailwind
+        # The committed styles.css must be byte-reproducible from the pinned
+        # builder — the 2026-10-15 incident shipped a copy the pinned nix
+        # builder never produced (foreign/unminified build). app.css resolves
+        # `@import "tailwindcss"` from node_modules, so a scratch install is
+        # symlinked at the repo root for the build and removed right after.
+        run: |
+          npm i --prefix /tmp/tw "tailwindcss@${TAILWIND_VERSION}" "@tailwindcss/cli@${TAILWIND_VERSION}" --no-fund --no-audit
+          ln -sfn /tmp/tw/node_modules node_modules
+          /tmp/tw/node_modules/.bin/tailwindcss -i internal/web/static/app.css -o /tmp/styles-regen.css --minify
+          rm node_modules
+
+      - name: Diff against the committed copy
+        run: |
+          diff internal/web/static/styles.css /tmp/styles-regen.css || {
+            echo "::error::styles.css drifted from the pinned-builder output. Rebuild ONLY via 'nix run .#update-styles' and commit the result — never a foreign/unminified build (go:embed is compile-time)."
+            exit 1
+          }

@@ -18,8 +18,7 @@ import (
 func TestCSSGateBridgesHeatmapBrandToTeal(t *testing.T) {
 	css, err := staticFS.ReadFile("static/styles.css")
 	if err != nil {
-		t.Fatalf("styles.css missing from embed — regenerate it (tailwindcss -i internal/web/static/app.css "+
-			"-o internal/web/static/styles.css --minify): %v", err)
+		t.Fatalf("styles.css missing from embed — regenerate it ONLY via 'nix run .#update-styles' (the pinned nixpkgs builder; foreign/unminified builds fail the freshness guard): %v", err)
 	}
 
 	built := string(css)
@@ -30,7 +29,7 @@ func TestCSSGateBridgesHeatmapBrandToTeal(t *testing.T) {
 		"--color-tc-primary:#0f766e",  // the token the bridge and tc-* chain hang on
 	} {
 		if !strings.Contains(built, want) {
-			t.Errorf("built styles.css lost the ds-brand bridge: %q not found", want)
+			t.Errorf("built styles.css lost the ds-brand bridge: %q not found — if a regen caused this, rebuild ONLY via 'nix run .#update-styles'", want)
 		}
 	}
 
