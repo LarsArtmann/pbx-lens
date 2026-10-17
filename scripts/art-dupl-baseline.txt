@@ -1,0 +1,10 @@
+found 4 clones:
+  ./cmd/pbx-lens/serve_test.go:61-81  | sys, cleanup, err := cli.OpenSystem(t.Context(), "")
+  ./cmd/pbx-lens/serve_test.go:294-314  | sys, cleanup, err := cli.OpenSystem(t.Context(), "")
+  ./cmd/pbx-lens/serve_test.go:376-396  | sys, cleanup, err := cli.OpenSystem(t.Context(), "")
+  ./cmd/pbx-lens/serve_test.go:539-559  | sys, cleanup, err := cli.OpenSystem(b.Context(), "")
+found 2 clones:
+  ./internal/web/export.go:48-54  | query, pii, ok := s.beginExportWithPII(w, r)
+  ./internal/web/export.go:83-89  | query, pii, ok := s.beginExportWithPII(w, r)
+
+Detected 34 clone groups, 2 shown (13 non-actionable, 19 filtered suppressed). [art-dupl 0.9.0-4198011]

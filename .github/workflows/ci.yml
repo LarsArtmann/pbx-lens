@@ -157,14 +157,28 @@ jobs:
         run: go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@v0.6.2
 
       - name: Check for harmful code duplication
+        # Warning-only at t=4 (the fleet production gate): duplication here
+        # surfaces for review instead of failing the lane. The checked-in
+        # baseline (scripts/art-dupl-baseline.txt) holds the accepted
+        # verdict — a diff means the verdict CHANGED (new clone, moved
+        # lines, or an art-dupl bump), which deserves eyes even when the
+        # count alone stays quiet. Refresh after a reviewed change with:
+        #   find . -name '*.go' -not -path './vendor/*' -not -name '*_templ.go' \
+        #     | LC_ALL=C sort | xargs art-dupl -t 4 > scripts/art-dupl-baseline.txt
         run: |
-          # Warning-only at t=4 (the fleet production gate): duplication here
-          # surfaces for review instead of failing the lane.
-          RESULT=$(find . -name '*.go' -not -path './vendor/*' | xargs art-dupl -t 4 2>/dev/null | wc -l)
+          FRESH="$(find . -name '*.go' -not -path './vendor/*' -not -name '*_templ.go' \
+            | LC_ALL=C sort | xargs art-dupl -t 4 2>/dev/null)"
+          echo "$FRESH" > /tmp/dupl-fresh.txt
+          RESULT=$(echo "$FRESH" | wc -l)
           if [ "$RESULT" -gt 0 ]; then
             echo "::warning::Found $RESULT lines of duplication (t=4). Review needed."
           else
             echo "No harmful duplication detected (t=4 production gate)."
+          fi
+          if ! diff -u scripts/art-dupl-baseline.txt /tmp/dupl-fresh.txt; then
+            echo "::warning::art-dupl verdict drifted from scripts/art-dupl-baseline.txt (accepted verdict: 2 shown clone groups / 34 detected at pin 0.9.0). If the change is reviewed-and-accepted (or the art-dupl pin moved), refresh the baseline with the command in ci.yml."
+          else
+            echo "art-dupl verdict matches the accepted baseline."
           fi
 
   styles-freshness:

@@ -84,9 +84,22 @@ if [ "${1:-}" = "--baseline" ]; then
 fi
 
 if [ -n "$BASELINE_FLAG" ]; then
-	set -- "$@" --diff "$BASELINE_FLAG"
+	DIFF_BASELINE="$BASELINE_FLAG"
 elif [ -n "${LENS_DIFF_BASELINE:-}" ]; then
-	set -- "$@" --diff "$LENS_DIFF_BASELINE"
+	DIFF_BASELINE="$LENS_DIFF_BASELINE"
+	set -- "$@" --diff "$DIFF_BASELINE"
+fi
+
+if [ -n "${DIFF_BASELINE:-}" ] && [ -d "$DIFF_BASELINE" ]; then
+	if find internal/web -newer "$DIFF_BASELINE" \( -name '*.templ' -o -name 'app.css' \) 2>/dev/null | grep -q .; then
+		echo "verify-all: WARNING — internal/web markup is newer than baseline $DIFF_BASELINE;" >&2
+		echo "  the pixel diff may flag drift that is really baseline staleness. Save a fresh" >&2
+		echo "  baseline with: node scripts/screenshot-probe.js --save-baseline $DIFF_BASELINE" >&2
+	fi
+fi
+
+if [ -n "$BASELINE_FLAG" ]; then
+	set -- "$@" --diff "$BASELINE_FLAG"
 fi
 node scripts/screenshot-probe.js "$@"
 
