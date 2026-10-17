@@ -157,7 +157,10 @@ func BenchmarkExportStream10k(b *testing.B) {
 	seeded := make([]calls.Observation, 0, 10000)
 
 	for i := range 10000 {
-		seeded = append(seeded, webObservation(fmt.Sprintf("bench-%05d", i), base.Add(time.Duration(i)*time.Millisecond)))
+		seeded = append(
+			seeded,
+			webObservation(fmt.Sprintf("bench-%05d", i), base.Add(time.Duration(i)*time.Millisecond)),
+		)
 	}
 
 	if stats := cli.Ingest(ctx, sys, seeded); len(stats.Rejected) > 0 {

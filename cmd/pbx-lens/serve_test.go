@@ -245,7 +245,10 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 	}
 
 	if got := len(authed.ExtraMiddlewares); got != 5 {
-		t.Errorf("authed ExtraMiddlewares = %d, want 5 (auth first, then security headers, timing, compression, etag)", got)
+		t.Errorf(
+			"authed ExtraMiddlewares = %d, want 5 (auth first, then security headers, timing, compression, etag)",
+			got,
+		)
 	}
 }
 
@@ -262,7 +265,10 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 	}
 
 	if got := len(nonced.ExtraMiddlewares); got != 5 {
-		t.Errorf("CSP_NONCE=1 ExtraMiddlewares = %d, want 5 (nonce first, then security headers, timing, compression, etag)", got)
+		t.Errorf(
+			"CSP_NONCE=1 ExtraMiddlewares = %d, want 5 (nonce first, then security headers, timing, compression, etag)",
+			got,
+		)
 	}
 
 	csp := nonceCSP("abc123")

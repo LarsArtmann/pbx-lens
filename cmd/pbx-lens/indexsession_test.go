@@ -105,9 +105,13 @@ func TestGateIngestAgeGateRejects(t *testing.T) {
 		StartedAt: time.Now().UTC().Add(-72 * time.Hour),
 	}
 
-	stats := gateAndFinalize(db, 24*time.Hour, func(context.Context, *system.System) ([]calls.Observation, []string, error) {
-		return []calls.Observation{old}, nil, nil
-	})
+	stats := gateAndFinalize(
+		db,
+		24*time.Hour,
+		func(context.Context, *system.System) ([]calls.Observation, []string, error) {
+			return []calls.Observation{old}, nil, nil
+		},
+	)
 
 	if stats.Recorded != 0 {
 		t.Errorf("stats = %+v, want the over-age observation refused", stats)

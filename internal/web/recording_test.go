@@ -53,6 +53,7 @@ func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 			fmt.Fprintf(w, `{"data":{"id":"rec-mp3","download_urls":{"wav":"","mp3":%q}}}`, mp3URL)
 		case "/v2/recordings/rec-500":
 			state.authOnMetadata = r.Header.Get("Authorization")
+
 			w.WriteHeader(http.StatusInternalServerError)
 		case "/v2/recordings/rec-expired":
 			state.authOnMetadata = r.Header.Get("Authorization")
