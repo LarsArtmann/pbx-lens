@@ -73,29 +73,29 @@ module option, and harvested the 10:33 report into TODO_LIST (sixth pass).
 
 ## b. Partially done
 
-1. **Sibling CI on `e7c0f8b`: in_progress** at write time (run
+~~1. **Sibling CI on `e7c0f8b`: in_progress** at write time (run~~ done — sibling CI green; e7c0f8b pushed
    38233052109, ~27 min — longer than its usual lane; earlier sibling
    pushes also still in flight). Local `nix flake check` is green; the CI
    verdict is the open tail.
-2. **§g answers (10:33 report): effectively executed, not ratified.** All
+~~2. **§g answers (10:33 report): effectively executed, not ratified.** All~~ done — ratified as the standing norm (buildflow-dev-gate load policy + ROADMAP machine-hygiene)
    three questions resolved by action (R4 proceeded on the standing
    approval; htmx restored pre-tag; load policy recorded from evidence) —
    but you have not explicitly ratified the policy wording.
-3. **Harvest routing done, source reports untouched.** The 10:33/07:56
+~~3. **Harvest routing done, source reports untouched.** The 10:33/07:56~~ done — this 2026-10-17 sweep annotates + archives them
    reports are not yet annotated/archived (rowed: §f.38) — HARVEST by
    design never edits the source.
-4. **Host deploys:** the `aiDids` option exists but no host consumes it —
+~~4. **Host deploys:** the `aiDids` option exists but no host consumes it —~~ → routed: host deploy row (TODO_LIST)
    blocked on the deploy path (owner).
 
 ## c. Not started
 
-- The seven new Low rows (gochecknoglobals rationale docs, keyset-stall
+~~- The seven new Low rows (gochecknoglobals rationale docs, keyset-stall~~ done — all seven dispositioned in §f below (landed, superseded, or NOT-DO)
   UX, range presets + digits hint chip, staleness filter carry, export
   memory-budget test, `/api/ops` staleness warning, drafts README).
-- Backup drill as a named CI step (the one Unblocked Medium).
-- Upstream filings: BuildFlow spawn-starvation failure mode; NEW from this
+~~- Backup drill as a named CI step (the one Unblocked Medium).~~ done — named ci.yml step live
+~~- Upstream filings: BuildFlow spawn-starvation failure mode; NEW from this~~ done — BuildFlow#50 filed; the oxfmt min.js gap NOT filed (repo-side exclude shipped; §f4)
   session — the oxfmt/oxlint `*.min.js` provider gap.
-- Injected-deadline refactor of the recording timeout tests; ingest.go
+~~- Injected-deadline refactor of the recording timeout tests; ingest.go~~ → routed: timeout-test row; the ingest extraction landed (83fe566)
   (269-line) extraction — both pre-existing rows, untouched today.
 
 ## d. Totally fucked up (honest)
@@ -143,54 +143,54 @@ module option, and harvested the 10:33 report into TODO_LIST (sixth pass).
 
 ## f. Next tasks (ranked; ledger = TODO_LIST sixth pass)
 
-1. Watch the sibling CI verdict on `e7c0f8b` (in flight).
-2. Backup drill as a named CI step (Unblocked Medium).
-3. Owner: deploy hosts with `aiDids` (needs DID values + deploy path).
-4. File BuildFlow upstream: oxfmt/oxlint `*.min.js` provider gap (with the
+~~1. Watch the sibling CI verdict on `e7c0f8b` (in flight).~~ done — sibling CI green on e7c0f8b
+~~2. Backup drill as a named CI step (Unblocked Medium).~~ done — named ci.yml step live
+~~3. Owner: deploy hosts with `aiDids` (needs DID values + deploy path).~~ → routed: host deploy row (TODO_LIST)
+~~4. File BuildFlow upstream: oxfmt/oxlint `*.min.js` provider gap (with the~~ NOT-DO — never filed; the `.buildflow.yml` global exclude shipped instead (buildflow-dev-gate oxfmt bullet)
    `.buildflow.yml` global-exclude workaround).
-5. File BuildFlow upstream: spawn-starvation failure mode (runs #1/#2
+~~5. File BuildFlow upstream: spawn-starvation failure mode (runs #1/#2~~ done — BuildFlow#50 filed (a061fbb)
    evidence).
-6. ANNOTATE + archive the two 2026-10-12 status reports (§f.38).
-7. Re-annotate the SUPERB plan post-release (§f.25).
-8. gochecknoglobals rationale docs (§f.15).
-9. Keyset-stall UX in the export UI (§f.16).
-10. Range-picker presets + digits-only search hint chip (§f.17/19).
-11. Staleness fragment filter carry (§f.21).
-12. Export memory-budget test for `exportBatchSize` (§f.22).
-13. `/api/ops` lastPass age warning (§f.35).
-14. `docs/drafts/` README table (§f.28).
-15. Injected-deadline refactor, recording timeout tests (pre-existing row).
-16. `cmd/pbx-lens/ingest.go` extraction (pre-existing row).
-17. Split `telnyx_test.go` (836 lines; grew this session).
-18. Prod re-ingest ContentHash v2 (Blocked, owner).
-19. Watch dependabot-core#16538; answer maintainer (Blocked).
-20. R27.x advisory residue pass (Blocked).
-21. Telnyx live DTO re-verify (window opens 2027-01).
-22. SegmentBar swap when templ-components publishes it.
-23. ContentHash length-prefix encoding at schema v2.
-24. Owner: tick or drop the go-atomic-write draft review.
-25. Check whether other fleet repos' tests start hosts bare (mirror the
+~~6. ANNOTATE + archive the two 2026-10-12 status reports (§f.38).~~ done — this 2026-10-17 sweep
+~~7. Re-annotate the SUPERB plan post-release (§f.25).~~ done — plans annotated (12-47/13-32/17-31 EXECUTED)
+~~8. gochecknoglobals rationale docs (§f.15).~~ NOT-DO — rationales live at the nolint sites (visible in lint context)
+~~9. Keyset-stall UX in the export UI (§f.16).~~ done — export honesty note (ba6ec8f)
+~~10. Range-picker presets + digits-only search hint chip (§f.17/19).~~ done — presets shipped; the chip superseded by the R6 hint copy
+~~11. Staleness fragment filter carry (§f.21).~~ NOT-DO — banner unfiltered-only by design
+~~12. Export memory-budget test for `exportBatchSize` (§f.22).~~ done — TestExportMemoryBudgetStreamsPastOldCap
+~~13. `/api/ops` lastPass age warning (§f.35).~~ done — last_pass_age_seconds (v0.2.0)
+~~14. `docs/drafts/` README table (§f.28).~~ done — docs/drafts/README.md live
+~~15. Injected-deadline refactor, recording timeout tests (pre-existing row).~~ → routed: recording timeout-test row
+~~16. `cmd/pbx-lens/ingest.go` extraction (pre-existing row).~~ done — 83fe566
+~~17. Split `telnyx_test.go` (836 lines; grew this session).~~ NOT-DO — accept-and-document (835 lines, table-driven; R27.x triage)
+~~18. Prod re-ingest ContentHash v2 (Blocked, owner).~~ → routed: prod re-ingest row
+~~19. Watch dependabot-core#16538; answer maintainer (Blocked).~~ → routed: dependabot-core#16538 watch row
+~~20. R27.x advisory residue pass (Blocked).~~ → routed: R27.x advisory row
+~~21. Telnyx live DTO re-verify (window opens 2027-01).~~ → routed: Telnyx quarterly row
+~~22. SegmentBar swap when templ-components publishes it.~~ → routed: ROADMAP SegmentBar re-eval
+~~23. ContentHash length-prefix encoding at schema v2.~~ → routed: schema-v2 ContentHash row
+~~24. Owner: tick or drop the go-atomic-write draft review.~~ → routed: go-atomic-write draft (docs/drafts/README.md)
+~~25. Check whether other fleet repos' tests start hosts bare (mirror the~~ → routed: crush-config (stopAndWait pattern documented in buildflow-dev-gate)
     stopAndWait pattern fix).
-26. Ratify/adjust the recorded gate load policy (docs/buildflow-dev-gate.md).
-27. Consider a Nix-side checksum pin for vendored static assets (stronger
+~~26. Ratify/adjust the recorded gate load policy (docs/buildflow-dev-gate.md).~~ done — load policy is the standing norm
+~~27. Consider a Nix-side checksum pin for vendored static assets (stronger~~ NOT-DO — global exclude proven across green gates; no recurrence
     than the global exclude — integrity, not just skip).
-28. Update docs/buildflow-dev-gate.md run-ledger when run #6's numbers are
+~~28. Update docs/buildflow-dev-gate.md run-ledger when run #6's numbers are~~ done — run #5 cited in the ledger
     next quoted (both #5 and #6 are green; cite either, not "pending").
-29. Audit remaining `time.Sleep` in tests for the cancellation pattern
+~~29. Audit remaining `time.Sleep` in tests for the cancellation pattern~~ → routed: recording timeout-test row
     (§f.14 residue; WAV test is the template).
-30. Close the session loop: verify the daemon swept every doc edit from
+~~30. Close the session loop: verify the daemon swept every doc edit from~~ done — tree clean; daemon swept
     this session (currently clean at write time).
 
 ## g. Questions I cannot answer myself
 
-1. **Host deploy:** which AI DID numbers should `services.telephony.pbx-lens.aiDids`
+~~1. **Host deploy:** which AI DID numbers should `services.telephony.pbx-lens.aiDids`~~ → routed: host deploy row
    carry on the live host(s), and do you want to drive the deploy now, or
    should the next deploy window pick it up? (The option is landed and
    flake-check green; I have no prod values or deploy path.)
-2. **Release presentation:** v0.1.0 is marked Pre-release on GitHub per
+~~2. **Release presentation:** v0.1.0 is marked Pre-release on GitHub per~~ resolved — superseded by v0.2.0 (a full, latest release)
    the go-release v0.x doctrine — flip it to a full Latest release, or
    keep the pre-release label until v0.2?
-3. **Upstream filing order:** file the two BuildFlow issues (oxfmt/oxlint
+~~3. **Upstream filing order:** file the two BuildFlow issues (oxfmt/oxlint~~ done — BuildFlow#50/#55/#56 filed over the following days
    min.js provider gap + spawn-starvation) now via the usual
    verify-before-filing flow, or batch them into your next BuildFlow
    session where you can review in context?

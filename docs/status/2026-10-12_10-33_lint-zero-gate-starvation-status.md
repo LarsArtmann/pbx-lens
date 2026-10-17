@@ -60,7 +60,7 @@ covers 07:56–10:33 only.
 
 ## b. Partially done
 
-1. **R1 gate — TWO manual runs FAILED on spawn starvation, run #3 in
+~~1. **R1 gate — TWO manual runs FAILED on spawn starvation, run #3 in~~ done — run #5 green 75/75 at 11:36
    flight.** Run #1 (15-min load ~54): `go-mod-update` killed after 13.3 s
    and `lychee` after 2.4 s — `[transient:tool.timeout] … no output at all
    (hung at or right after spawn)`, i.e. load starvation, zero code signal.
@@ -68,7 +68,7 @@ covers 07:56–10:33 only.
    one more step. **Run #3 started 10:32 at load 4–9** — the first genuinely
    quiet window of the day; result pending. The old watcher (12E) was killed
    in favor of manual runs.
-2. **The htmx vendored-asset mystery — damage controlled, culprit NOT
+~~2. **The htmx vendored-asset mystery — damage controlled, culprit NOT~~ done — culprit = oxfmt/oxlint provider gap; bytes restored + global exclude (12-23 a2)
    found.** A gate run's step un-minified the vendored `htmx.min.js`
    (1 line → 3,416). I restored the pinned bytes once, but run #2 reformatted
    it AGAIN and a daemon sweep has now COMMITTED the reformatted version
@@ -76,7 +76,7 @@ covers 07:56–10:33 only.
    `*.min.js`, so the culprit is some other step — identified but not named
    yet. The server serves the file byte-for-byte, so the 3,416-line version
    works functionally, but vendored assets must stay byte-pinned.
-3. **R4 release — fully staged, not executed:** release flow designed
+~~3. **R4 release — fully staged, not executed:** release flow designed~~ done — v0.1.0 released 12:23
    (rename `[Unreleased]` → `[v0.1.0] — 2026-10-12` in CHANGELOG, push main,
    annotated tag, `gh release create` from the changelog, `nix run . --
    version` — the binary's hardcoded `version = "0.1.0"` will match the
@@ -84,12 +84,12 @@ covers 07:56–10:33 only.
 
 ## c. Not started
 
-- **R4 execution** (gate-gated; staging done).
-- **§f#10 DID-direction implementation** — deliberately NOT started: doing a
+~~- **R4 execution** (gate-gated; staging done).~~ done — v0.1.0 released 12:23
+~~- **§f#10 DID-direction implementation** — deliberately NOT started: doing a~~ done — shipped 2026-10-12 (-ai-did; CHANGELOG)
   feature between gate-green and tag would invalidate the gate.
-- **Sibling repo** (flake check rerun, fmt strategy, pushes) — owner §g
+~~- **Sibling repo** (flake check rerun, fmt strategy, pushes) — owner §g~~ done — sibling green, pushed e7c0f8b
   answers still pending.
-- **CI verification post-push**, m1.2 gate-sample recording, gochecknoglobals
+~~- **CI verification post-push**, m1.2 gate-sample recording, gochecknoglobals~~ done — CI green; m1.2 recorded; nolint rationales live in code
   audit notes into docs (the nolint rationales live in code now).
 
 ## d. Totally fucked up (honest)
@@ -139,79 +139,79 @@ covers 07:56–10:33 only.
 
 ## f. Next tasks (ranked)
 
-1. Read gate run #3's result (job 19C, started 10:32 at load 4–9).
-2. If green → R4: CHANGELOG `[Unreleased]` → `[v0.1.0] — 2026-10-12`, dprint,
+~~1. Read gate run #3's result (job 19C, started 10:32 at load 4–9).~~ done-superseded — run #5 green (11:36)
+~~2. If green → R4: CHANGELOG `[Unreleased]` → `[v0.1.0] — 2026-10-12`, dprint,~~ done — v0.1.0 released 12:23
    commit, push main, annotated tag, `gh release create` from changelog,
    `nix run . -- version`, confirm the tag matches the binary, watch CI.
-3. If run #3 starved again → rerun at load ≤ ~10 (it is 4–9 now; this IS the
+~~3. If run #3 starved again → rerun at load ≤ ~10 (it is 4–9 now; this IS the~~ moot — run #3 superseded by run #5
    window) and re-verify `htmx.min.js` byte-integrity after.
-4. Restore vendored `htmx.min.js` (3,415-line reformatted version is
+~~4. Restore vendored `htmx.min.js` (3,415-line reformatted version is~~ done — bytes restored + `.buildflow.yml` global exclude (12-23 a2)
    committed at `939f194`) and prevent recurrence: identify the culprit step
    (`buildflow -s <fmt> --verbose` bisection), extend its excludes, add a
    checksum pin for `internal/web/static/`.
-5. Record the m1.2 gate sample in `docs/buildflow-dev-gate.md` with the
+~~5. Record the m1.2 gate sample in `docs/buildflow-dev-gate.md` with the~~ done — run #5 entry in buildflow-dev-gate.md
    honest load context of whichever run goes green; retire "pending" wording.
-6. File the spawn-starvation failure mode upstream (BuildFlow issue: tools
+~~6. File the spawn-starvation failure mode upstream (BuildFlow issue: tools~~ done — BuildFlow#50 filed; #45 fixed v0.8.0
    killed at spawn under load; propose pre-flight load check / spawn retry).
-7. Coordinate the tag with the concurrent session before pushing (§g#2).
-8. §f#10 DID-direction implementation (post-release):
+~~7. Coordinate the tag with the concurrent session before pushing (§g#2).~~ done — released clean
+~~8. §f#10 DID-direction implementation (post-release):~~ done — DID-direction shipped
    `DirectionResolver` mapper + `-ai-did` flag + fixtures, then the sibling
    `-ai-did` module option.
-9. Sibling: repo-wide `nix fmt` vs per-file (§g#3), `nix flake check` green
+~~9. Sibling: repo-wide `nix fmt` vs per-file (§g#3), `nix flake check` green~~ done — sibling green/pushed (deploy row remains)
    (PIPESTATUS trap), host re-deploys with the new module options, push.
-10. Watch CI on push: templ regen, golangci v2.14, tidy-diff with the htmx
+~~10. Watch CI on push: templ regen, golangci v2.14, tidy-diff with the htmx~~ done — CI green
     require, e2e probe step, backup-drill-as-step (§f#48).
-11. Annotate §g answers into TODO_LIST/ROADMAP once decided.
-12. TODO_LIST: flip release + sibling rows DONE after they land; harvest
+~~11. Annotate §g answers into TODO_LIST/ROADMAP once decided.~~ done — resolved by events (R4)
+~~12. TODO_LIST: flip release + sibling rows DONE after they land; harvest~~ done — sixth-pass harvest
     this report's §f (docs-health HARVEST).
-13. `nix build` re-verify after the CHANGELOG/README edits (doc-only, but
+~~13. `nix build` re-verify after the CHANGELOG/README edits (doc-only, but~~ done — nix build green on the doc-only tree
     the gate hash changes).
-14. §f#12 residue: audit remaining `time.Sleep` in tests for the
+~~14. §f#12 residue: audit remaining `time.Sleep` in tests for the~~ → routed: recording timeout-test row
     cancellation-driven pattern (WAV test is the template).
-15. gochecknoglobals audit note: move the three nolint rationales into
+~~15. gochecknoglobals audit note: move the three nolint rationales into~~ NOT-DO — rationales live as code comments at the nolint sites
     `docs/` (cqrs-lint-policy-adjacent) so they survive refactors.
-16. Keyset stall UX: surface `export_cursor_stalled` in the export UI.
-17. Range-picker presets (7/30-day buttons).
-18. Dashboard cost panel (theme-1 leftover).
-19. Search hint chip for digits-only search in the UI.
-20. SSE upgrade path if poll volume ever matters.
-21. Staleness fragment filter carry.
-22. Export memory budget test for `exportBatchSize`.
-23. FEATURES evidence refs: keep rows file-level.
-24. CHANGELOG: fold the release under the version heading (done inside R4).
-25. Plan file re-annotation post-gate/release (ANNOTATE, never rewrite).
-26. `nix run . -- version` re-verify after the tag (inside R4).
-27. Re-tag vendorHash if go.mod moves (go-mod-update failed twice today —
+~~16. Keyset stall UX: surface `export_cursor_stalled` in the export UI.~~ done — export honesty note (ba6ec8f)
+~~17. Range-picker presets (7/30-day buttons).~~ done — 7/30-day presets
+~~18. Dashboard cost panel (theme-1 leftover).~~ → routed: ROADMAP theme 1 cost panel
+~~19. Search hint chip for digits-only search in the UI.~~ done-superseded — R6 hint copy
+~~20. SSE upgrade path if poll volume ever matters.~~ → routed: ROADMAP (R9 SSE note)
+~~21. Staleness fragment filter carry.~~ NOT-DO — banner unfiltered-only by design
+~~22. Export memory budget test for `exportBatchSize`.~~ done — TestExportMemoryBudgetStreamsPastOldCap
+~~23. FEATURES evidence refs: keep rows file-level.~~ NOT-DO — line refs retained deliberately
+~~24. CHANGELOG: fold the release under the version heading (done inside R4).~~ done — v0.1.0 heading
+~~25. Plan file re-annotation post-gate/release (ANNOTATE, never rewrite).~~ done — plans annotated; this sweep finishes the set
+~~26. `nix run . -- version` re-verify after the tag (inside R4).~~ done — receipts verified
+~~27. Re-tag vendorHash if go.mod moves (go-mod-update failed twice today —~~ done — vendorHash repairs via the app (04-45)
     check `git status` for reverted go.mod state).
-28. Consider `docs/drafts/` README table.
-29. Dependabot gomod pinning decision (owner call, #16538 context).
-30. Watch dependabot-core#16538; answer maintainer questions.
-31. Watch BuildFlow#45; close referencing fix commits once CI confirms.
-32. Owner: tick or drop the go-atomic-write draft review box.
-33. Telnyx live DTO re-verify window opens 2027-01 (needs API key).
-34. BuildFlow: cherry-pick the gate fix into pinned release branches.
-35. `/api/ops`: lastPass age warning when stale.
-36. Backup drill as a named CI step.
-37. Verify the two status reports + README/CHANGELOG edits all landed in
+~~28. Consider `docs/drafts/` README table.~~ done — drafts README live
+~~29. Dependabot gomod pinning decision (owner call, #16538 context).~~ → routed: dependabot-core#16538 watch row
+~~30. Watch dependabot-core#16538; answer maintainer questions.~~ → routed: dependabot-core#16538 watch row
+~~31. Watch BuildFlow#45; close referencing fix commits once CI confirms.~~ done — v0.8.0 released with the fix
+~~32. Owner: tick or drop the go-atomic-write draft review box.~~ → routed: go-atomic-write draft (docs/drafts/README.md)
+~~33. Telnyx live DTO re-verify window opens 2027-01 (needs API key).~~ → routed: Telnyx quarterly row
+~~34. BuildFlow: cherry-pick the gate fix into pinned release branches.~~ done — v0.8.0
+~~35. `/api/ops`: lastPass age warning when stale.~~ done — last_pass_age_seconds (v0.2.0)
+~~36. Backup drill as a named CI step.~~ done — named CI step
+~~37. Verify the two status reports + README/CHANGELOG edits all landed in~~ done — files committed (0ae3b15/a47ba32 confirmed)
     daemon sweeps (`0ae3b15`/`a47ba32` look like them — confirm).
-38. Post-release: harvest §f into TODO_LIST, archive superseded reports.
-39. Retire the "concurrent session" unknowns: confirm its buildflow bursts
+~~38. Post-release: harvest §f into TODO_LIST, archive superseded reports.~~ done — harvest passes done; archived by this sweep
+~~39. Retire the "concurrent session" unknowns: confirm its buildflow bursts~~ done — concurrency norms recorded (ROADMAP)
     are done before tagging (load history says yes as of 10:33).
-40. R27.x residue: art-dupl pass, branching-flow pass, nix-checker cleanup,
+~~40. R27.x residue: art-dupl pass, branching-flow pass, nix-checker cleanup,~~ → routed: R27.x advisory row
     README screenshots, vulnix re-triage (unchanged priorities).
 
 ## g. Questions I cannot answer myself
 
-1. **Gate #3 is running right now (started 10:32, load 4–9).** If it comes
+~~1. **Gate #3 is running right now (started 10:32, load 4–9).** If it comes~~ resolved — v0.1.0 released on the standing approval
    back green, do I proceed straight into the full R4 sequence (CHANGELOG
    rename → push main → annotated tag → GitHub release), or do you want to
    eyeball the tree first? The concurrent session looks done (load 4–9), but
    only you know if more bursts are scheduled.
-2. **The reformatted `htmx.min.js` is now committed** (`939f194`, un-minified
+~~2. **The reformatted `htmx.min.js` is now committed** (`939f194`, un-minified~~ resolved — bytes restored pre-tag + the exclude rule held
    3,416 lines, functionally identical, served byte-for-byte). Restore the
    pinned upstream bytes before tagging v0.1.0, or ship v0.1.0 with the
    pretty-printed asset and fix the pin in a follow-up?
-3. **Gate policy going forward:** keep the "15-min load < 40" doctrine (it
+~~3. **Gate policy going forward:** keep the "15-min load < 40" doctrine (it~~ done — load policy recorded (1-min <15 AND 15-min <40; buildflow-dev-gate)
    never once fired today), switch to "1-min < 15" (would have passed 3 of 3
    attempts), or run unconditionally and retry starvation failures once?
    I can implement any of the three — the choice changes when v0.1.0 ships.
