@@ -14,12 +14,12 @@ executions (the 08:02→10:28 Pareto legs plus this pass) and archived; the
 live set is now empty, and the pass report of THIS sweep is the single
 harvest source going forward.
 
-| File                                                                           | Classification      | Deciding reason                                                                                                                        |
-| ------------------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-10-17_01-45_statix-silent-noop-repair-and-gate-revival.md                 | ANNOTATE → ARCHIVED | §b/§c/§f/§g fully dispositioned (postscript closures cited; CI-nix-lane/tripwire/config-verify routed to the new gate-hardening row)   |
-| 2026-10-17_05-01_docs-health-corpus-sweep-archive-and-living-doc-rebuild.md    | ANNOTATE → ARCHIVED | every §b/§c/§f/§g item done (P1 legs) or routed; §g2 answered BY THIS PASS (planning archive); §g3 → answer sheet §9                   |
-| 2026-10-17_08-02_pareto-plan-execution-p0p2-and-red-domain-test.md             | ANNOTATE → ARCHIVED | §b/§c/§f/§g closed by the 10:28 close-out receipts; the three §f specials (filings/csp-sweep/cut-release) routed to new TODO rows      |
-| 2026-10-17_10-28_pareto-closeout-red-test-fix-and-tail-tasks-status.md         | ANNOTATE → ARCHIVED | §f 1-18 ride TODO rows, 19-50 triaged by this pass into TODO rows + ROADMAP; the three §g questions staged on the answer sheet         |
+| File                                                                        | Classification      | Deciding reason                                                                                                                      |
+| --------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-10-17_01-45_statix-silent-noop-repair-and-gate-revival.md              | ANNOTATE → ARCHIVED | §b/§c/§f/§g fully dispositioned (postscript closures cited; CI-nix-lane/tripwire/config-verify routed to the new gate-hardening row) |
+| 2026-10-17_05-01_docs-health-corpus-sweep-archive-and-living-doc-rebuild.md | ANNOTATE → ARCHIVED | every §b/§c/§f/§g item done (P1 legs) or routed; §g2 answered BY THIS PASS (planning archive); §g3 → answer sheet §9                 |
+| 2026-10-17_08-02_pareto-plan-execution-p0p2-and-red-domain-test.md          | ANNOTATE → ARCHIVED | §b/§c/§f/§g closed by the 10:28 close-out receipts; the three §f specials (filings/csp-sweep/cut-release) routed to new TODO rows    |
+| 2026-10-17_10-28_pareto-closeout-red-test-fix-and-tail-tasks-status.md      | ANNOTATE → ARCHIVED | §f 1-18 ride TODO rows, 19-50 triaged by this pass into TODO rows + ROADMAP; the three §g questions staged on the answer sheet       |
 
 ## Archive manifest (bulk sweep 2026-10-17 — the corpus close-out)
 

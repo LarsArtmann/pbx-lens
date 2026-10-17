@@ -5,24 +5,24 @@
 
 # Filing drafts
 
-| Draft                                                            | Upstream issue          | State                                                               |
-| ---------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------- |
-| `2026-10-12_buildflow-gomod-update-tool-timeout.md`              | BuildFlow#45            | FILED — CLOSED upstream 2026-10-12 (fixed)                          |
-| `buildflow-spawn-starvation-gate.md`                             | BuildFlow#50            | FILED — CLOSED upstream 2026-10-12                                  |
-| `2026-10-15_buildflow_nix-hash-fix_wrong-attribute.md`           | BuildFlow#55            | FILED — CLOSED upstream 2026-10-16 (local binary may predate fix)   |
-| `2026-10-12_dependabot-gomod-unrelated-bump-deletes-requires.md` | dependabot-core#16538   | FILED — OPEN upstream (owner watches for maintainer questions)      |
-| `2026-10-12_v0.1.0-release-notes.md`                             | —                       | local artifact — consumed at the v0.1.0 tag (2026-10-12)            |
-| `2026-10-12_v0.2.0-release-notes.md`                             | —                       | local artifact — EXECUTED: v0.2.0 tagged 2026-10-15, gh release cut |
-| `go-appkit-testkit-drain-delay-cost.md`                          | go-appkit#26            | FILED — CLOSED upstream 2026-10-17 (fold-in ready, TODO_LIST row)   |
-| `go-atomic-write-commit-primitive.md`                            | —                       | LIVE — unfiled, owner review box unchecked by design                |
+| Draft                                                            | Upstream issue          | State                                                                            |
+| ---------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------- |
+| `2026-10-12_buildflow-gomod-update-tool-timeout.md`              | BuildFlow#45            | FILED — CLOSED upstream 2026-10-12 (fixed)                                       |
+| `buildflow-spawn-starvation-gate.md`                             | BuildFlow#50            | FILED — CLOSED upstream 2026-10-12                                               |
+| `2026-10-15_buildflow_nix-hash-fix_wrong-attribute.md`           | BuildFlow#55            | FILED — CLOSED upstream 2026-10-16 (local binary may predate fix)                |
+| `2026-10-12_dependabot-gomod-unrelated-bump-deletes-requires.md` | dependabot-core#16538   | FILED — OPEN upstream (owner watches for maintainer questions)                   |
+| `2026-10-12_v0.1.0-release-notes.md`                             | —                       | local artifact — consumed at the v0.1.0 tag (2026-10-12)                         |
+| `2026-10-12_v0.2.0-release-notes.md`                             | —                       | local artifact — EXECUTED: v0.2.0 tagged 2026-10-15, gh release cut              |
+| `go-appkit-testkit-drain-delay-cost.md`                          | go-appkit#26            | FILED — CLOSED upstream 2026-10-17 (fold-in ready, TODO_LIST row)                |
+| `go-atomic-write-commit-primitive.md`                            | —                       | LIVE — unfiled, owner review box unchecked by design                             |
 | `go-cqrs-lite-cqrs-lint-c009-e005.md`                            | go-cqrs-lite#64         | FILED — CLOSED upstream 2026-10-17 (C009 half; E005 superseded by ADR-0123 note) |
-| `go-cqrs-lite-memory-engine-column-resolution.md`                | go-cqrs-lite#63         | FILED — CLOSED upstream 2026-10-17                                  |
-| `go-cqrs-lite-sqlite-time-filter-bind.md`                        | go-cqrs-lite#62         | FILED — CLOSED upstream 2026-10-17 (in-repo fix stays)              |
-| `go-etag-server-flush-no-observability.md`                       | go-etag#2               | FILED — OPEN upstream                                               |
-| `go-nix-helpers-templ-formatter-gopkg.md`                        | go-nix-helpers#7        | FILED — OPEN upstream                                               |
-| `templ-components-barchart-vertical-zero-height.md`              | templ-components#48     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)            |
-| `templ-components-scrollback-line-hook.md`                       | templ-components#51     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)            |
-| `templ-components-skill-docs-drift-v1.21.0.md`                   | templ-components#50     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)            |
-| `templ-components-tablerow-focus-indicator.md`                   | templ-components#49     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)            |
-| `2026-10-15_templ-components_nav-id-etag-volatility.md`          | templ-components#55     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)            |
-| `treefmt-nix-545-comment.md`                                     | numtide/treefmt-nix#545 | FILED — filed upstream 2026-10-02; OPEN (re-verified 2026-10-17)    |
+| `go-cqrs-lite-memory-engine-column-resolution.md`                | go-cqrs-lite#63         | FILED — CLOSED upstream 2026-10-17                                               |
+| `go-cqrs-lite-sqlite-time-filter-bind.md`                        | go-cqrs-lite#62         | FILED — CLOSED upstream 2026-10-17 (in-repo fix stays)                           |
+| `go-etag-server-flush-no-observability.md`                       | go-etag#2               | FILED — OPEN upstream                                                            |
+| `go-nix-helpers-templ-formatter-gopkg.md`                        | go-nix-helpers#7        | FILED — OPEN upstream                                                            |
+| `templ-components-barchart-vertical-zero-height.md`              | templ-components#48     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)                         |
+| `templ-components-scrollback-line-hook.md`                       | templ-components#51     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)                         |
+| `templ-components-skill-docs-drift-v1.21.0.md`                   | templ-components#50     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)                         |
+| `templ-components-tablerow-focus-indicator.md`                   | templ-components#49     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)                         |
+| `2026-10-15_templ-components_nav-id-etag-volatility.md`          | templ-components#55     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)                         |
+| `treefmt-nix-545-comment.md`                                     | numtide/treefmt-nix#545 | FILED — filed upstream 2026-10-02; OPEN (re-verified 2026-10-17)                 |

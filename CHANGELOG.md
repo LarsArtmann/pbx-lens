@@ -32,6 +32,15 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   ideas, and the README ingest section now mirrors `ingest-cdr -dry-run`;
   AGENTS.md holds the 219-line budget.
 
+### Fixed — 2026-10-17 (styles.css foreign rebuild)
+
+- The committed `styles.css` had been replaced by a foreign UNMINIFIED
+  Tailwind build (daemon commit f91f3f4, after the morning's green
+  verification), re-breaking `TestCSSGateBridgesHeatmapBrandToTeal` —
+  the same class as the 2026-10-15 incident. Repaired via the sanctioned
+  `nix run .#update-styles` (pinned, minified, bridge-verified); the
+  styles-freshness CI job would have red-flagged it on push.
+
 ### Added — 2026-10-17 (Pareto-plan quality tail)
 
 - Security-headers middleware in the serve chain (`X-Content-Type-Options:

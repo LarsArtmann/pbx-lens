@@ -55,40 +55,40 @@
 ## b) PARTIALLY DONE
 
 ~~1. **The four executed-but-unannotated planning docs** (`2026-10-11_00-09`, `01-32`, `19-05`,~~ done — P0-T4 landed the EXECUTED headers (08:02 §a); the archive decision itself closed this pass (docs/planning/archived/ + manifest)
-   `2026-10-12_03-43`) did NOT get the inline EXECUTED annotations I planned for them. I decided
-   against moving them (AGENTS/TODO/CHANGELOG cite their paths; 02-24/05-40/mos-poller stay live
-   anyway) but the header annotations were silently dropped — see §d.
+`2026-10-12_03-43`) did NOT get the inline EXECUTED annotations I planned for them. I decided
+against moving them (AGENTS/TODO/CHANGELOG cite their paths; 02-24/05-40/mos-poller stay live
+anyway) but the header annotations were silently dropped — see §d.
 ~~2. **Verdict depth in the big §f tables.** 16-32 MS/SR and 19-20-cache tail rows cite the 17-40~~ done — accepted as documented: the pairing notes say approximate; re-forensics adds nothing
-   ledger or carry terse verdicts; each is a real disposition, but a handful of 19-20-cache tail
-   rows (f38-f42) sit on adjacent-item boundaries where the pairing is approximate rather than
-   forensically exact.
+ledger or carry terse verdicts; each is a real disposition, but a handful of 19-20-cache tail
+rows (f38-f42) sit on adjacent-item boundaries where the pairing is approximate rather than
+forensically exact.
 ~~3. **Gate coverage:** build + focused tests + dprint + check-rows ran; the full dev gate did not~~ done — the same-day 58/0 gate (01-45 §a8) plus the close-out leg (lint 0, tests 14/14) covered it
-   (docs-only tree; the day's earlier 58/0 gate predates this pass's markdown edits).
+(docs-only tree; the day's earlier 58/0 gate predates this pass's markdown edits).
 ~~4. **Marker-canonical form:** the 16-32 SR python-repair pass rebuilt 61 struck lines; all carry~~ done — shape-verified, and the repair-mangle self-test validated the corpus clean (skill canon 2026-10-15)
-   `~~…~~ verdict` now, but they were rewritten outside the tool (see §d.4) — shape-verified by
-   grep and spot-checks, not by annotate.go.
+`~~…~~ verdict` now, but they were rewritten outside the tool (see §d.4) — shape-verified by
+grep and spot-checks, not by annotate.go.
 ~~5. **The "9 tools" and lychee fleet policy** are ROUTED (new TODO row), not resolved — the recurring~~ done — P1-T8 executed the triage (08:02 §a); the remainder is the tooling-triage TODO row
-   warning will appear in every gate run until that row executes.
+warning will appear in every gate run until that row executes.
 
 ## c) NOT STARTED (all routed, each with a landing place)
 
 ~~1. **Push the local main tail** — remote main was red on 6 consecutive runs (2026-10-15 18:11 →~~ done — pushed at d78291a, remote CI success (close-out §a16)
-   Oct 16) per the 01-45 postscript; the statix fix, phantom-linter fix, and this pass are unpushed.
-   Owner push call (TODO_LIST Blocked row).
+Oct 16) per the 01-45 postscript; the statix fix, phantom-linter fix, and this pass are unpushed.
+Owner push call (TODO_LIST Blocked row).
 ~~2. **Buildflow tooling triage bundle** (new TODO row): enumerate the 9 unavailable tools via~~ done — P1-T8 dispositioned the doctor marks (08:02 §a)
-   `buildflow doctor --verbose`, disposition each; triage nix-build-verify 100% / nix-hash-fix 84%
-   failure records; decide the devShell gap (prettier/lychee/shellcheck/vulnix) + lychee fleet
-   policy.
+`buildflow doctor --verbose`, disposition each; triage nix-build-verify 100% / nix-hash-fix 84%
+failure records; decide the devShell gap (prettier/lychee/shellcheck/vulnix) + lychee fleet
+policy.
 ~~3. **Recordings lookback audit** (new TODO row): `DefaultRecordingsLookback` (300) — page deeper or~~ done — P1-T9: the 300-recording window is a documented contract
-   document the bound as a contract.
+document the bound as a contract.
 ~~4. **The standing TODO_LIST rows** — unchanged by this pass: D1-D5 answers, PII boundary, MOS~~ routed → the TODO_LIST rows (still standing; re-verified 2026-10-17)
-   poller (2027-01), host deploys, prod re-ingest, browser-level 304 check, fold-ins
-   (go-etag#2/go-appkit#26, templ-components#48/#49/#50/#51/#55), >1MiB policy, dependabot confirm,
-   BuildFlow#56 clean-checkout gate, sibling backup-rotation fold, schema-v2 encoding, timeout-test
-   injected deadlines, mobile cards, and the ~20 Low rows.
+poller (2027-01), host deploys, prod re-ingest, browser-level 304 check, fold-ins
+(go-etag#2/go-appkit#26, templ-components#48/#49/#50/#51/#55), >1MiB policy, dependabot confirm,
+BuildFlow#56 clean-checkout gate, sibling backup-rotation fold, schema-v2 encoding, timeout-test
+injected deadlines, mobile cards, and the ~20 Low rows.
 ~~5. **Planning-doc annotations** (see b1) — deliberately deferred, not forgotten twice.~~ done — P0-T4 headers plus this pass's planning archive
 ~~6. **Pre-canon archive partials** — two 2026-10-11 archived files carry PARTIAL tables; closed~~ Won't implement — closed history under the never-re-run-the-whole-archive rule
-   history under the old manifest, left per the never-re-run-the-whole-archive rule.
+history under the old manifest, left per the never-re-run-the-whole-archive rule.
 
 ## d) TOTALLY FUCKED UP (all caught; two cost real rework)
 
@@ -149,84 +149,85 @@
 ## f) Up to 50 things we should get done next (ordered; first ~10 are the real queue)
 
 ~~1. **Push the local main tail** (statix fix + phantom linter + this pass; remote red since~~ done — d78291a pushed, remote CI success
-   2026-10-15) — owner go-ahead.
+2026-10-15) — owner go-ahead.
 ~~2. **Buildflow tooling triage bundle** (new Low row): doctor --verbose the 9 tools; nix-build-verify~~ done — P1-T8; remainder = the tooling-triage row
-   - nix-hash-fix failure records; devShell gap + lychee fleet policy.
-~~3. **Recordings lookback audit** (new Low row): page deeper or document the 300 cap as a contract.~~ done — P1-T9 contract decision
-~~4. **Rebuild the BuildFlow binary from its repo** (BuildFlow#56) → then the literal 70/70 gate row~~ routed → answer-sheet §9 (owner bookkeeping; BuildFlow#56 CLOSED upstream)
-   closes and #55's fix lands with it.
-~~5. **Annotate-or-archive the four executed planning docs** (b1) — close the question either way.~~ done — this pass: docs/planning/archived/ created, 8 executed plans moved with manifest
-~~6. **Answer D1-D5** (decision pack) — unblocks the date-format change, control rows, export-note~~ routed → owner decision pack + answer sheet (open by design)
-   collapse, and the volume-chart filing.
-~~7. **PII boundary answer** (one-pager recommends read) → then M4 implementation.~~ routed → owner (answer sheet §6; read-boundary recommendation stands)
-~~8. **Mobile card-vs-scroll taste call** → M8 implementation (375px is the last real gap).~~ routed → owner (answer sheet §7)
-~~9. **Host deploys + production re-ingest** (runbooks ready in process-prep).~~ routed → TODO blocked rows (owner paths; runbooks in process-prep)
-~~10. **Telnyx 2027-01 window prep:** the quarterly checklist file + calendar confirm (MOS design is~~ done — checklist file written (T22); execution rides the 2027-01 window row
-    pre-staged; execution-only in the window).
-~~11. Statix no-op tripwire (fail on "config error" + exit 0) in scripts/verify-all.sh (01-45 f3).~~ routed → TODO gate-hardening bundle (this pass)
-~~12. CI nix lane (statix + deadnix + `nix fmt --ci`) so nix linting isn't local-only (01-45 f4).~~ routed → TODO gate-hardening bundle (this pass)
-~~13. Wire `golangci-lint config verify` into pre-commit or CI (phantom-linter class; 01-45 f8).~~ routed → TODO gate-hardening bundle (this pass)
-~~14. styles.css freshness guard: CI regen + `git diff --exit-code` after proving pin determinism.~~ done — P1-T10: the styles-freshness CI job (byte-diff vs pinned Tailwind)
-~~15. `scripts/cut-release.sh` runbook (quiesce check → probes → tag → proxy check).~~ done — P1-T11 script landed; the full-body dry-run is the rehearsal TODO row
-~~16. verify-all `--fast` mode + screenshot-probe polish (drift guard, skip detail discovery).~~ done — T17
-~~17. Pixel-diff practice: save the first baseline, mask the footer stamp, wire `--diff` into~~ done — T18 + baseline v2 diff-proven (close-out §a4)
-    verify-all as alert-only (baseline strategy = the ROADMAP owner question).
-~~18. Security headers middleware (`Referrer-Policy` + `X-Content-Type-Options`).~~ done — P1-T5 (contract-tested chain)
-~~19. CSP report-only browser sweep → enforce/adjust call.~~ done — P1-T7 swept (2 real holes fixed); the enforce call is answer-sheet §11 (this pass)
-~~20. `/ops` hardening leftovers (auth-gated lane membership, stale-verdict probe, a11y sweep).~~ done — lane membership + a11y landed (T19); the stale-verdict probe keeps its TODO row
-~~21. Recording-proxy negative paths (upstream 403 → honest error) + optional throttle flags.~~ done — T16 (honest 502s, no URL leak)
-~~22. Export lane tests (consumer-side EXPORT_INCOMPLETE contract + 10k memory benchmark).~~ done — T15 (consumer parse + 10k benchmark)
-~~23. Recording timing-hop budget asserts (the cache-hardening remainder).~~ routed → the TODO Low row (standing)
-~~24. Ops/retention visibility (README alert recipe; `-max-age`/purge state on the /ops card).~~ done — P1-T13 README recipe; purge-state stays a ROADMAP revisit
-~~25. Ops-page print page-breaks.~~ done — T23 (break-inside rule + print probe capture)
-~~26. FTS quality pass (multi-word + ranking spot checks).~~ done — semantics pinned (T14); ranking spot checks keep the TODO row
-~~27. Search hint example query (2 min).~~ done — T23 (worked example matches the pinned semantics)
-~~28. `X-Robots-Tag: noindex` header.~~ done — P1-T6 (rode the security-headers middleware)
-~~29. RelativeTime day-precision tooltip fallback.~~ done — T23 (contract-pinned by TestRelativeTimeDayPrecisionContract)
-~~30. Coverage floor 80% in CI + cmd/pbx-lens httptest wiring test.~~ done — wiring tests landed and the floor went to 70 (close-out §a5); the chase to 80 is the owner row
-~~31. Pre-commit hook: AGENTS.md 220-line budget check at commit time.~~ done — T24 (script + .githooks/pre-commit, activation documented)
-~~32. `ingest-cdr -dry-run` for the re-ingest rehearsal (F63).~~ done — T24 (parse + age-gate report, no index created)
-~~33. DOMAIN_LANGUAGE MOS/cost vocabulary rows (feeds the 2027-01 window).~~ done — T22 (both rows written)
-~~34. Telnyx DTO negative fixtures for the DetailRecord union (feeds MOS window).~~ routed → the 2027-01 window row (tolerant decode + checklist shapes cover the prep)
-~~35. True clean-clone ensureCodegen rehearsal in a scratch worktree.~~ done — close-out §a11 (scratch worktree, self-healed)
-~~36. Dark-theme eyeball pass over the 41-PNG corpus.~~ done — close-out §a11 (no defects)
-~~37. 1MiB transcript policy decision (default documented; owner gate).~~ routed → owner row (option-1 default stands)
-~~38. Dependabot: confirm the weekly run proposes the newly-direct trio; watch dependabot-core#16538.~~ routed → the TODO dependabot row (weekly cycle)
-~~39. Fold-in watch execution when upstream lands (#48/#49/#50/#51/#55, go-etag#2, go-appkit#26) —~~ routed → the TODO fold-in rows (next check 2027-01)
-    next scheduled check 2027-01.
-~~40. Fold the backup-rotation opinion into the sibling `lens.nix` timer descriptions.~~ routed → the TODO sibling row
-~~41. ContentHash v2 length-prefixed encoding at the schema-v2 gate.~~ routed → the TODO schema-v2 row (frozen at v1)
-~~42. R27.x advisory residue pass (art-dupl, branching-flow, file-size triage, vulnix re-triage).~~ done — T26 triage (verdicts recorded, accept-with-rationale)
-~~43. `nix flake check` + full dev gate on this post-sweep tree (the 58/0 run predates the markdown~~ done — the 58/0 gate ran same-day (01-45 §a8); the literal-70/70 receipt keeps the gate row
-    edits; a fresh clean gate re-baselines).
-~~44. Consider a `docs/status/README.md` index (live-vs-archived at a glance) — the archive README~~ done — this pass created docs/status/README.md
-    carries the manifest; a one-line live-set pointer would prevent the next count drift.
-~~45. Sweep the live docs for remaining `docs/status/2026-…` citations that should say `archived/`~~ done — this pass updated living-doc citations to the archived paths
-    (the 01-45 report's own body cites pre-move paths; historical-report convention to settle once).
-~~46. AGENTS.md line-width spot check (two lines added this pass run long; the linter counts lines,~~ Won't implement — cosmetic; the budget gate counts lines, width accepted
-    not width — cosmetic).
-~~47. Retire-or-keep decision for the `any:`-marked 17-40 follow-ups once their owners (push, release~~ done — both owners acted: the tail pushed (d78291a) and the v0.2.0 release page was cut
-    page) act.
-~~48. Verify the auto-daemon's "RM" commits (rename+modify) keep rename fidelity in history — one~~ Won't implement — fleet curiosity, no repo action
-    `git log --follow` spot check.
-~~49. Schedule the annotate-driver `self-test` + fixture run after any skill-side tooling change~~ Won't implement — skill hygiene; no skill tooling changed this pass
-    (skill hygiene; none changed this pass).
-~~50. Then WAIT: the corpus is closed — the next docs-health pass starts from one live report, not~~ done — this pass IS the next sweep; it started from the live set
-    twenty-eight.
+
+- nix-hash-fix failure records; devShell gap + lychee fleet policy.
+  ~~3. **Recordings lookback audit** (new Low row): page deeper or document the 300 cap as a contract.~~ done — P1-T9 contract decision
+  ~~4. **Rebuild the BuildFlow binary from its repo** (BuildFlow#56) → then the literal 70/70 gate row~~ routed → answer-sheet §9 (owner bookkeeping; BuildFlow#56 CLOSED upstream)
+  closes and #55's fix lands with it.
+  ~~5. **Annotate-or-archive the four executed planning docs** (b1) — close the question either way.~~ done — this pass: docs/planning/archived/ created, 8 executed plans moved with manifest
+  ~~6. **Answer D1-D5** (decision pack) — unblocks the date-format change, control rows, export-note~~ routed → owner decision pack + answer sheet (open by design)
+  collapse, and the volume-chart filing.
+  ~~7. **PII boundary answer** (one-pager recommends read) → then M4 implementation.~~ routed → owner (answer sheet §6; read-boundary recommendation stands)
+  ~~8. **Mobile card-vs-scroll taste call** → M8 implementation (375px is the last real gap).~~ routed → owner (answer sheet §7)
+  ~~9. **Host deploys + production re-ingest** (runbooks ready in process-prep).~~ routed → TODO blocked rows (owner paths; runbooks in process-prep)
+  ~~10. **Telnyx 2027-01 window prep:** the quarterly checklist file + calendar confirm (MOS design is~~ done — checklist file written (T22); execution rides the 2027-01 window row
+  pre-staged; execution-only in the window).
+  ~~11. Statix no-op tripwire (fail on "config error" + exit 0) in scripts/verify-all.sh (01-45 f3).~~ routed → TODO gate-hardening bundle (this pass)
+  ~~12. CI nix lane (statix + deadnix + `nix fmt --ci`) so nix linting isn't local-only (01-45 f4).~~ routed → TODO gate-hardening bundle (this pass)
+  ~~13. Wire `golangci-lint config verify` into pre-commit or CI (phantom-linter class; 01-45 f8).~~ routed → TODO gate-hardening bundle (this pass)
+  ~~14. styles.css freshness guard: CI regen + `git diff --exit-code` after proving pin determinism.~~ done — P1-T10: the styles-freshness CI job (byte-diff vs pinned Tailwind)
+  ~~15. `scripts/cut-release.sh` runbook (quiesce check → probes → tag → proxy check).~~ done — P1-T11 script landed; the full-body dry-run is the rehearsal TODO row
+  ~~16. verify-all `--fast` mode + screenshot-probe polish (drift guard, skip detail discovery).~~ done — T17
+  ~~17. Pixel-diff practice: save the first baseline, mask the footer stamp, wire `--diff` into~~ done — T18 + baseline v2 diff-proven (close-out §a4)
+  verify-all as alert-only (baseline strategy = the ROADMAP owner question).
+  ~~18. Security headers middleware (`Referrer-Policy` + `X-Content-Type-Options`).~~ done — P1-T5 (contract-tested chain)
+  ~~19. CSP report-only browser sweep → enforce/adjust call.~~ done — P1-T7 swept (2 real holes fixed); the enforce call is answer-sheet §11 (this pass)
+  ~~20. `/ops` hardening leftovers (auth-gated lane membership, stale-verdict probe, a11y sweep).~~ done — lane membership + a11y landed (T19); the stale-verdict probe keeps its TODO row
+  ~~21. Recording-proxy negative paths (upstream 403 → honest error) + optional throttle flags.~~ done — T16 (honest 502s, no URL leak)
+  ~~22. Export lane tests (consumer-side EXPORT_INCOMPLETE contract + 10k memory benchmark).~~ done — T15 (consumer parse + 10k benchmark)
+  ~~23. Recording timing-hop budget asserts (the cache-hardening remainder).~~ routed → the TODO Low row (standing)
+  ~~24. Ops/retention visibility (README alert recipe; `-max-age`/purge state on the /ops card).~~ done — P1-T13 README recipe; purge-state stays a ROADMAP revisit
+  ~~25. Ops-page print page-breaks.~~ done — T23 (break-inside rule + print probe capture)
+  ~~26. FTS quality pass (multi-word + ranking spot checks).~~ done — semantics pinned (T14); ranking spot checks keep the TODO row
+  ~~27. Search hint example query (2 min).~~ done — T23 (worked example matches the pinned semantics)
+  ~~28. `X-Robots-Tag: noindex` header.~~ done — P1-T6 (rode the security-headers middleware)
+  ~~29. RelativeTime day-precision tooltip fallback.~~ done — T23 (contract-pinned by TestRelativeTimeDayPrecisionContract)
+  ~~30. Coverage floor 80% in CI + cmd/pbx-lens httptest wiring test.~~ done — wiring tests landed and the floor went to 70 (close-out §a5); the chase to 80 is the owner row
+  ~~31. Pre-commit hook: AGENTS.md 220-line budget check at commit time.~~ done — T24 (script + .githooks/pre-commit, activation documented)
+  ~~32. `ingest-cdr -dry-run` for the re-ingest rehearsal (F63).~~ done — T24 (parse + age-gate report, no index created)
+  ~~33. DOMAIN_LANGUAGE MOS/cost vocabulary rows (feeds the 2027-01 window).~~ done — T22 (both rows written)
+  ~~34. Telnyx DTO negative fixtures for the DetailRecord union (feeds MOS window).~~ routed → the 2027-01 window row (tolerant decode + checklist shapes cover the prep)
+  ~~35. True clean-clone ensureCodegen rehearsal in a scratch worktree.~~ done — close-out §a11 (scratch worktree, self-healed)
+  ~~36. Dark-theme eyeball pass over the 41-PNG corpus.~~ done — close-out §a11 (no defects)
+  ~~37. 1MiB transcript policy decision (default documented; owner gate).~~ routed → owner row (option-1 default stands)
+  ~~38. Dependabot: confirm the weekly run proposes the newly-direct trio; watch dependabot-core#16538.~~ routed → the TODO dependabot row (weekly cycle)
+  ~~39. Fold-in watch execution when upstream lands (#48/#49/#50/#51/#55, go-etag#2, go-appkit#26) —~~ routed → the TODO fold-in rows (next check 2027-01)
+  next scheduled check 2027-01.
+  ~~40. Fold the backup-rotation opinion into the sibling `lens.nix` timer descriptions.~~ routed → the TODO sibling row
+  ~~41. ContentHash v2 length-prefixed encoding at the schema-v2 gate.~~ routed → the TODO schema-v2 row (frozen at v1)
+  ~~42. R27.x advisory residue pass (art-dupl, branching-flow, file-size triage, vulnix re-triage).~~ done — T26 triage (verdicts recorded, accept-with-rationale)
+  ~~43. `nix flake check` + full dev gate on this post-sweep tree (the 58/0 run predates the markdown~~ done — the 58/0 gate ran same-day (01-45 §a8); the literal-70/70 receipt keeps the gate row
+  edits; a fresh clean gate re-baselines).
+  ~~44. Consider a `docs/status/README.md` index (live-vs-archived at a glance) — the archive README~~ done — this pass created docs/status/README.md
+  carries the manifest; a one-line live-set pointer would prevent the next count drift.
+  ~~45. Sweep the live docs for remaining `docs/status/2026-…` citations that should say `archived/`~~ done — this pass updated living-doc citations to the archived paths
+  (the 01-45 report's own body cites pre-move paths; historical-report convention to settle once).
+  ~~46. AGENTS.md line-width spot check (two lines added this pass run long; the linter counts lines,~~ Won't implement — cosmetic; the budget gate counts lines, width accepted
+  not width — cosmetic).
+  ~~47. Retire-or-keep decision for the `any:`-marked 17-40 follow-ups once their owners (push, release~~ done — both owners acted: the tail pushed (d78291a) and the v0.2.0 release page was cut
+  page) act.
+  ~~48. Verify the auto-daemon's "RM" commits (rename+modify) keep rename fidelity in history — one~~ Won't implement — fleet curiosity, no repo action
+  `git log --follow` spot check.
+  ~~49. Schedule the annotate-driver `self-test` + fixture run after any skill-side tooling change~~ Won't implement — skill hygiene; no skill tooling changed this pass
+  (skill hygiene; none changed this pass).
+  ~~50. Then WAIT: the corpus is closed — the next docs-health pass starts from one live report, not~~ done — this pass IS the next sweep; it started from the live set
+  twenty-eight.
 
 ## g) THREE QUESTIONS ONLY YOU CAN ANSWER
 
 ~~1. **Push the tail?** Remote main is red on 6 consecutive CI runs since 2026-10-15 18:11 (CSS~~ done — pushed at d78291a, remote CI success
-   flip-flop era + gohumanize), and everything that fixes it — statix repair, phantom-linter
-   removal, this docs pass — sits unpushed on local main. Push now, or do you want the full dev
-   gate re-run on the settled tree first?
+flip-flop era + gohumanize), and everything that fixes it — statix repair, phantom-linter
+removal, this docs pass — sits unpushed on local main. Push now, or do you want the full dev
+gate re-run on the settled tree first?
 ~~2. **The four executed planning docs** (`2026-10-11_00-09`, `01-32`, `19-05`, `2026-10-12_03-43`):~~ done — this pass: moved to docs/planning/archived/ per the archive-fully-done directive, with manifest + reference updates
-   annotate in place with EXECUTED headers, or create `docs/planning/archived/` and move them
-   (requires updating the live references to their paths)? Or leave them as-is — plans as design
-   records that stay put?
+annotate in place with EXECUTED headers, or create `docs/planning/archived/` and move them
+(requires updating the live references to their paths)? Or leave them as-is — plans as design
+records that stay put?
 ~~3. **BuildFlow#56 remediation:** may I rebuild + reinstall the BuildFlow binary from its repo in a~~ routed → answer-sheet §9 (owner; the upstream fix landed)
-   pbx-lens session (it would green the literal full gate and land the #55 fix), or does that stay
-   a BuildFlow-session task on your side?
+pbx-lens session (it would green the literal full gate and land the #55 fix), or does that stay
+a BuildFlow-session task on your side?
 
 ---
 

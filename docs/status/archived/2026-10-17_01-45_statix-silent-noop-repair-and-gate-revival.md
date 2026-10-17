@@ -64,45 +64,45 @@ auto-commit daemon (db18c22, f48b722, d403cd2, 0f99144).
 ## b) PARTIALLY DONE
 
 ~~1. **Remote CI state unverified.** All fixes are local-only (nothing pushed~~ done — the postscript mapped all 6 red runs; pushed at d78291a with remote CI success (close-out report §a16)
-   — harness rule). The last pushed commits (Oct 16) carry `gohumanize`, so
-   GitHub CI's lint job is almost certainly red on remote main right now;
-   I never ran `gh run list` to confirm, and pushing is the user's call.
-   Remaining: check CI, then push. S.
+— harness rule). The last pushed commits (Oct 16) carry `gohumanize`, so
+GitHub CI's lint job is almost certainly red on remote main right now;
+I never ran `gh run list` to confirm, and pushing is the user's call.
+Remaining: check CI, then push. S.
 ~~2. **The 3d93fdf sibling edits in `.golangci.yml` left standing,~~ routed → TODO_LIST Low row (confirm-or-formalize the lint-policy edits; this pass)
-   intent unknown.** In the same commit that added gohumanize, a session
-   also removed `lll` (line-length policy now unenforced repo-wide),
-   relaxed `run.go: 1.27.1` → `"1.27"` (vs the go.mod 1.27.1 floor), and
-   changed tagliatelle case rules. v2.14 accepts all of them (lint passes),
-   but I only reverted the provably-broken entry. Needs an intent
-   confirmation (question g1). S.
+intent unknown.** In the same commit that added gohumanize, a session
+also removed `lll` (line-length policy now unenforced repo-wide),
+relaxed `run.go: 1.27.1` → `"1.27"` (vs the go.mod 1.27.1 floor), and
+changed tagliatelle case rules. v2.14 accepts all of them (lint passes),
+but I only reverted the provably-broken entry. Needs an intent
+confirmation (question g1). S.
 ~~3. **LSP still shows stale `gohumanize` diagnostics** in tool output at~~ done — postscript §3: cleared after a full LSP restart
-   report time — the golangci-lint language server hasn't re-read the fixed
-   config; the real binary reports 0 issues. Needs an LSP restart to
-   confirm cleared. S.
+report time — the golangci-lint language server hasn't re-read the fixed
+config; the real binary reports 0 issues. Needs an LSP restart to
+confirm cleared. S.
 ~~4. **HARVEST of section (f) into TODO_LIST.md NOT run** — report-first per~~ done — harvested by the 05-01 sweep (§a8) and re-routed by this pass
-   the user's "wait for instructions". The 2026-10-12 regret that caused
-   this whole outage (c25) was NEVER harvested into TODO_LIST either — that
-   process gap is why it survived 5 days. Awaiting go (question g3). S.
+the user's "wait for instructions". The 2026-10-12 regret that caused
+this whole outage (c25) was NEVER harvested into TODO_LIST either — that
+process gap is why it survived 5 days. Awaiting go (question g3). S.
 ~~5. **No clean-tree confirmation gate run.** The final green gate ran while~~ done — postscript §6: gate re-ran clean on the settled tree (58/0)
-   the daemon committed mid-run (same class the 2026-10-12 report flagged as
-   its b6). A post-commit re-run on the settled tree was not done. S.
+the daemon committed mid-run (same class the 2026-10-12 report flagged as
+its b6). A post-commit re-run on the settled tree was not done. S.
 
 ## c) NOT STARTED
 
 ~~1. **CI has no statix/nix lane at all** — CI runs golangci-lint, govulncheck,~~ routed → TODO gate-hardening bundle (CI nix lane; this pass)
-   art-dupl; statix and deadnix exist only in local BuildFlow. The
-   silent-no-op class would be invisible on CI by construction.
+art-dupl; statix and deadnix exist only in local BuildFlow. The
+silent-no-op class would be invisible on CI by construction.
 ~~2. **No tripwire for the statix no-op class** (stderr says "config error",~~ routed → TODO gate-hardening bundle (statix no-op tripwire; this pass)
-   exit code 0 = red). Documentation only; nothing automated prevents a
-   recurrence.
+exit code 0 = red). Documentation only; nothing automated prevents a
+recurrence.
 ~~3. **Repo `statix.toml` vs treefmt's frozen store config split brain** —~~ routed → ROADMAP raw idea (revisit if treefmt-nix grows a statix config option)
-   documented, not unified (investigate a treefmt-nix statix config option).
+documented, not unified (investigate a treefmt-nix statix config option).
 ~~4. **Upstream statix filing** (exit 0 on config parse error is a footgun) —~~ routed → TODO upstream-filings row (verify-before-filing first; this pass)
-   D6-pattern candidate; existing-issue search not done (verify-before-filing).
+D6-pattern candidate; existing-issue search not done (verify-before-filing).
 ~~5. **`nix flake check`** full lane — the dev gate covered the module lanes;~~ done — postscript §5: all checks passed on the settled tree
-   the flake-check lane was not run this session.
+the flake-check lane was not run this session.
 ~~6. **docs-health VERIFY sweep** over other "empirically tested" claims in~~ done — the statix claim was the only falsified one (corrected in this file; doctrine §e1)
-   status docs — the class that produced the false schema claim.
+status docs — the class that produced the false schema claim.
 
 ## d) TOTALLY FUCKED UP
 
@@ -170,48 +170,48 @@ auto-commit daemon (db18c22, f48b722, d403cd2, 0f99144).
 
 ## f) Top 25 things to get done next
 
-| #  | Task                                                                                     | Impact                                                                   | Effort | Category      |
-| -- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ | ------------- |
-| ~~1~~  | ~~Check `gh run list`; confirm remote CI red; push when the user says go~~ done at `d78291a — pushed with remote CI success (close-out report §a16)` | ~~High~~ | ~~S~~ | ~~Bug~~ |
-| ~~2~~  | ~~Confirm or revert the 3d93fdf sibling edits (`lll` removal, `run.go` relax, tagliatelle)~~ done — → routed TODO_LIST Low row (lint-policy intent confirm; this pass) | ~~High~~ | ~~S~~ | ~~Quality~~ |
-| ~~3~~  | ~~Add a statix no-op tripwire (fail on "config error" in stderr) to scripts/verify-all.sh~~ done — → routed TODO gate-hardening bundle (this pass) | ~~High~~ | ~~S~~ | ~~Quality~~ |
-| ~~4~~  | ~~Add a CI nix lane (statix + deadnix + `nix fmt --ci`) so nix lint isn't local-only~~ done — → routed TODO gate-hardening bundle (this pass) | ~~High~~ | ~~M~~ | ~~Quality~~ |
-| ~~5~~ done — the 05-01 corpus sweep (its §a8): HARVEST executed | ~~HARVEST this report's (f) into TODO_LIST.md (docs-health)~~ | ~~High~~ | ~~S~~ |
-| ~~6~~ done — the 05-01 corpus sweep (its §a8): un-harvested regrets swept; c25 closed by the statix repair | ~~Sweep other un-harvested report regrets into TODO_LIST (c25 cost 5 days)~~ | ~~High~~ | ~~M~~ |
-| ~~7~~  | ~~Clean-tree confirmation gate run on the settled tree~~ done — → routed the gate-receipt TODO row (BuildFlow#56 CLOSED; load policy) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
-| ~~8~~  | ~~Wire `golangci-lint config verify` into CI or pre-commit~~ done — → routed TODO gate-hardening bundle (golangci config verify) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
-| ~~9~~  | ~~CSS gate test: also assert minified output (foreign-build tripwire)~~ done — superseded by the styles-freshness CI byte-diff (stronger) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
-| ~~10~~ | ~~Unify repo statix.toml with treefmt's store statix config (kill the split)~~ done — → routed ROADMAP raw idea | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
-| ~~11~~ | ~~Triage buildflow "9 tools unavailable (health check failed)" with -v~~ done — P1-T8 dispositioned (08:02 §a); remainder = the tooling-triage TODO row | ~~Medium~~ | ~~M~~ | ~~Cleanup~~ |
-| ~~12~~ | ~~Triage nix-hash-fix 82% / nix-build-verify 100% historical failure rates~~ done — P1-T8 (nix-build-verify skip rationalized; hash-fix failures environmental) | ~~Medium~~ | ~~M~~ | ~~Quality~~ |
-| ~~13~~ | ~~Triage or accept the 24 vulnix advisories (bash 2.05b, binutils CVEs)~~ done — → routed ROADMAP (rides the next flake bump) | ~~Medium~~ | ~~M~~ | ~~Security~~ |
-| ~~14~~ | ~~docs-health VERIFY sweep over "empirically tested" claims in status docs~~ done — the statix claim was the only falsified one; corrected in this file | ~~Medium~~ | ~~M~~ | ~~Documentation~~ |
-| ~~15~~ | ~~Run `nix flake check` on the settled tree~~ done — postscript §5 (all checks passed) | ~~Medium~~ | ~~S~~ | ~~Quality~~ |
-| ~~16~~ | ~~Restart LSP; confirm gohumanize diagnostics cleared~~ **Won't implement — obsolete — machine-local state; cleared per postscript §3.** | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
-| ~~17~~ | ~~File upstream statix issue re: exit 0 on config parse error (search dupes first)~~ done — → routed TODO upstream-filings row (verify-before-filing first) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
-| ~~18~~ | ~~Record the statix exit-0 contract in crush-config references/lessons.md (fleet)~~ done — → routed fleet (crush-config lessons.md by commit; out of this repo) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
-| ~~19~~ | ~~Propose a BuildFlow "lint-config validity" step (fleet value)~~ done — → routed ROADMAP fleet proposal | ~~Low~~ | ~~M~~ | ~~Process~~ |
-| ~~20~~ | ~~Pin the statix invocation contract (comment in .buildflow.yml or scripts/README)~~ done — → routed TODO rehearsal/tooling row (.buildflow.yml contract comment) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
-| ~~21~~ | ~~Daemon-commits-breakage: propose a fleet-level guard (BuildFlow repo)~~ done — → routed ROADMAP fleet proposal | ~~Medium~~ | ~~L~~ | ~~Process~~ |
-| ~~22~~ | ~~AGENTS.md headroom is 219/220 — plan a trim before the next addition~~ done — budget enforced (check-agents-budget.sh + pre-commit; 219/219) | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
-| ~~23~~ | ~~Re-test the statix ignore invocation matrix whenever nixpkgs bumps statix~~ done — → routed ROADMAP (statix bump watch) | ~~Low~~ | ~~S~~ | ~~Quality~~ |
-| ~~24~~ | ~~Note the rejected c25 alternative (restyle module-draft.nix) in the gate doc~~ done — rejected-alternative note added to docs/buildflow-dev-gate.md this pass | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
-| ~~25~~ | ~~Investigate why buildflow's statix step passes no target (cwd-fragile) upstream~~ done — → routed ROADMAP fleet (rides the BuildFlow filings) | ~~Low~~ | ~~S~~ | ~~Process~~ |
+| #                                                                                                          | Task                                                                                                                                                                   | Impact     | Effort | Category          |
+| ---------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | ------ | ----------------- |
+| ~~1~~                                                                                                      | ~~Check `gh run list`; confirm remote CI red; push when the user says go~~ done at `d78291a — pushed with remote CI success (close-out report §a16)`                   | ~~High~~   | ~~S~~  | ~~Bug~~           |
+| ~~2~~                                                                                                      | ~~Confirm or revert the 3d93fdf sibling edits (`lll` removal, `run.go` relax, tagliatelle)~~ done — → routed TODO_LIST Low row (lint-policy intent confirm; this pass) | ~~High~~   | ~~S~~  | ~~Quality~~       |
+| ~~3~~                                                                                                      | ~~Add a statix no-op tripwire (fail on "config error" in stderr) to scripts/verify-all.sh~~ done — → routed TODO gate-hardening bundle (this pass)                     | ~~High~~   | ~~S~~  | ~~Quality~~       |
+| ~~4~~                                                                                                      | ~~Add a CI nix lane (statix + deadnix + `nix fmt --ci`) so nix lint isn't local-only~~ done — → routed TODO gate-hardening bundle (this pass)                          | ~~High~~   | ~~M~~  | ~~Quality~~       |
+| ~~5~~ done — the 05-01 corpus sweep (its §a8): HARVEST executed                                            | ~~HARVEST this report's (f) into TODO_LIST.md (docs-health)~~                                                                                                          | ~~High~~   | ~~S~~  | ~~ ~~ |
+| ~~6~~ done — the 05-01 corpus sweep (its §a8): un-harvested regrets swept; c25 closed by the statix repair | ~~Sweep other un-harvested report regrets into TODO_LIST (c25 cost 5 days)~~                                                                                           | ~~High~~   | ~~M~~  | ~~ ~~ |
+| ~~7~~                                                                                                      | ~~Clean-tree confirmation gate run on the settled tree~~ done — → routed the gate-receipt TODO row (BuildFlow#56 CLOSED; load policy)                                  | ~~Medium~~ | ~~S~~  | ~~Quality~~       |
+| ~~8~~                                                                                                      | ~~Wire `golangci-lint config verify` into CI or pre-commit~~ done — → routed TODO gate-hardening bundle (golangci config verify)                                       | ~~Medium~~ | ~~S~~  | ~~Quality~~       |
+| ~~9~~                                                                                                      | ~~CSS gate test: also assert minified output (foreign-build tripwire)~~ done — superseded by the styles-freshness CI byte-diff (stronger)                              | ~~Medium~~ | ~~S~~  | ~~Quality~~       |
+| ~~10~~                                                                                                     | ~~Unify repo statix.toml with treefmt's store statix config (kill the split)~~ done — → routed ROADMAP raw idea                                                        | ~~Medium~~ | ~~M~~  | ~~Quality~~       |
+| ~~11~~                                                                                                     | ~~Triage buildflow "9 tools unavailable (health check failed)" with -v~~ done — P1-T8 dispositioned (08:02 §a); remainder = the tooling-triage TODO row                | ~~Medium~~ | ~~M~~  | ~~Cleanup~~       |
+| ~~12~~                                                                                                     | ~~Triage nix-hash-fix 82% / nix-build-verify 100% historical failure rates~~ done — P1-T8 (nix-build-verify skip rationalized; hash-fix failures environmental)        | ~~Medium~~ | ~~M~~  | ~~Quality~~       |
+| ~~13~~                                                                                                     | ~~Triage or accept the 24 vulnix advisories (bash 2.05b, binutils CVEs)~~ done — → routed ROADMAP (rides the next flake bump)                                          | ~~Medium~~ | ~~M~~  | ~~Security~~      |
+| ~~14~~                                                                                                     | ~~docs-health VERIFY sweep over "empirically tested" claims in status docs~~ done — the statix claim was the only falsified one; corrected in this file                | ~~Medium~~ | ~~M~~  | ~~Documentation~~ |
+| ~~15~~                                                                                                     | ~~Run `nix flake check` on the settled tree~~ done — postscript §5 (all checks passed)                                                                                 | ~~Medium~~ | ~~S~~  | ~~Quality~~       |
+| ~~16~~                                                                                                     | ~~Restart LSP; confirm gohumanize diagnostics cleared~~ **Won't implement — obsolete — machine-local state; cleared per postscript §3.**                               | ~~Low~~    | ~~S~~  | ~~Cleanup~~       |
+| ~~17~~                                                                                                     | ~~File upstream statix issue re: exit 0 on config parse error (search dupes first)~~ done — → routed TODO upstream-filings row (verify-before-filing first)            | ~~Low~~    | ~~S~~  | ~~Documentation~~ |
+| ~~18~~                                                                                                     | ~~Record the statix exit-0 contract in crush-config references/lessons.md (fleet)~~ done — → routed fleet (crush-config lessons.md by commit; out of this repo)        | ~~Low~~    | ~~S~~  | ~~Documentation~~ |
+| ~~19~~                                                                                                     | ~~Propose a BuildFlow "lint-config validity" step (fleet value)~~ done — → routed ROADMAP fleet proposal                                                               | ~~Low~~    | ~~M~~  | ~~Process~~       |
+| ~~20~~                                                                                                     | ~~Pin the statix invocation contract (comment in .buildflow.yml or scripts/README)~~ done — → routed TODO rehearsal/tooling row (.buildflow.yml contract comment)      | ~~Low~~    | ~~S~~  | ~~Documentation~~ |
+| ~~21~~                                                                                                     | ~~Daemon-commits-breakage: propose a fleet-level guard (BuildFlow repo)~~ done — → routed ROADMAP fleet proposal                                                       | ~~Medium~~ | ~~L~~  | ~~Process~~       |
+| ~~22~~                                                                                                     | ~~AGENTS.md headroom is 219/220 — plan a trim before the next addition~~ done — budget enforced (check-agents-budget.sh + pre-commit; 219/219)                         | ~~Low~~    | ~~S~~  | ~~Cleanup~~       |
+| ~~23~~                                                                                                     | ~~Re-test the statix ignore invocation matrix whenever nixpkgs bumps statix~~ done — → routed ROADMAP (statix bump watch)                                              | ~~Low~~    | ~~S~~  | ~~Quality~~       |
+| ~~24~~                                                                                                     | ~~Note the rejected c25 alternative (restyle module-draft.nix) in the gate doc~~ done — rejected-alternative note added to docs/buildflow-dev-gate.md this pass        | ~~Low~~    | ~~S~~  | ~~Documentation~~ |
+| ~~25~~                                                                                                     | ~~Investigate why buildflow's statix step passes no target (cwd-fragile) upstream~~ done — → routed ROADMAP fleet (rides the BuildFlow filings)                        | ~~Low~~    | ~~S~~  | ~~Process~~       |
 
 ## g) Questions I cannot answer myself
 
 ~~1. **The Oct 16 04:40 `.golangci.yml` edits — yours or another agent's?**~~ routed → TODO_LIST Low row (lint-policy intent confirm; this pass)
-   I removed only the provably-nonexistent `gohumanize` and left its
-   siblings standing: the `lll` removal (line-length checks now gone
-   repo-wide), `run.go` 1.27.1→"1.27", and tagliatelle case changes. If
-   those were deliberate curation, say so and they stay; if not, I should
-   review them properly.
+I removed only the provably-nonexistent `gohumanize` and left its
+siblings standing: the `lll` removal (line-length checks now gone
+repo-wide), `run.go` 1.27.1→"1.27", and tagliatelle case changes. If
+those were deliberate curation, say so and they stay; if not, I should
+review them properly.
 ~~2. **Should lint coverage be enforced in CI (statix/deadnix lane + config~~ routed → TODO gate-hardening bundle — answered: enforce in CI (this pass)
-   tripwires), or is local-BuildFlow-only a deliberate doctrine?** CI
-   already runs golangci-lint; nix linting has no remote lane at all, which
-   is exactly how a 5-day local-only outage stayed invisible.
+tripwires), or is local-BuildFlow-only a deliberate doctrine?** CI
+already runs golangci-lint; nix linting has no remote lane at all, which
+is exactly how a 5-day local-only outage stayed invisible.
 ~~3. **Run docs-health HARVEST now** to pull this report's (f) into~~ done — harvested by the 05-01 sweep and re-routed by this pass; the report can archive
-   TODO_LIST.md, or do you want to triage the list yourself first?
+TODO_LIST.md, or do you want to triage the list yourself first?
 
 ---
 
@@ -243,11 +243,11 @@ which was UNDERSTATED:
    - Oct 16 04:44 CEST — Build & Test (CSS) + **Lint (gohumanize)**.
 3. **b3 closed:** the stale `gohumanize` LSP diagnostics cleared after a
    full LSP restart (single-server restart did NOT suffice).
-~~4. Task 26 added to (f): triage `TestCacheSemanticsHardening` flakiness~~ claim was FALSE — the table still holds 25 rows (the edit never landed); flake triage routed to the TODO gate-hardening bundle; test green in every CI run since 2026-10-16
+   ~~4. Task 26 added to (f): triage `TestCacheSemanticsHardening` flakiness~~ claim was FALSE — the table still holds 25 rows (the edit never landed); flake triage routed to the TODO gate-hardening bundle; test green in every CI run since 2026-10-16
    (CI-only reproduction so far).
-5. **c5 closed:** `nix flake check` → all checks passed (treefmt, pre-commit,
+4. **c5 closed:** `nix flake check` → all checks passed (treefmt, pre-commit,
    build, vendor-hash) on the settled tree.
-6. **b5 closed, with one honest casualty:** the first clean-tree gate run hit
+5. **b5 closed, with one honest casualty:** the first clean-tree gate run hit
    the `nix-build` step's 47 s execution deadline — the daemon had committed
    this report's postscript mid-pass (new source hash → cold nix rebuilds),
    the documented daemon-race class, not a build failure. After warming the

@@ -44,51 +44,52 @@ that test is fixed.
 ## b) PARTIALLY DONE
 
 ~~1. **P2-T19 /ops hardening** — done: /ops joined the e2e lane (fifth~~ done — the close-out leg: full browser lane green twice post-h2 + baseline v2 diff-proven (§a3/§a4); the stale-verdict probe keeps its TODO row
-   surface), a11y contract leg added to verify-ui-contract.js, which caught
-   a REAL h1→h3 skip; fixed by `TitleTag: display.HeadingTagH2` on all 12
-   page-level Cards; goldens regenerated (-update, 4 files); browser probe
-   ALL PASS (headings 1,2,2,2). NOT done: the stale-verdict _browser_
-   probe — the probe stack has no poller-wired serve composition (serve
-   without ingest sources 503s /api/ops), and the stale markup is already
-   pinned server-side (`TestOpsPageStaleVerdictAlerts`); documented, not
-   built.
+surface), a11y contract leg added to verify-ui-contract.js, which caught
+a REAL h1→h3 skip; fixed by `TitleTag: display.HeadingTagH2` on all 12
+page-level Cards; goldens regenerated (-update, 4 files); browser probe
+ALL PASS (headings 1,2,2,2). NOT done: the stale-verdict _browser_
+probe — the probe stack has no poller-wired serve composition (serve
+without ingest sources 503s /api/ops), and the stale markup is already
+pinned server-side (`TestOpsPageStaleVerdictAlerts`); documented, not
+built.
 ~~2. **P2-T20 coverage floor** — cmd wiring tests landed~~ done — floor 70 landed (§a5), measured 73.0; the red domain test fixed (§a1)
-   (`indexsession_test.go`: openIndexSession/finalizeIngest/gateAndFinalize
-   - age gate, printRejected, requireDB/requireOneArg happy paths, smoke +
-     backupCmd flows): cmd 9.2% → **27.6%**, total 70.4% → **71.9%**. The
-     follow-up domain test (`internal/calls/commands_test.go`:
-     constructors + Excerpt + Retire decider) is **RED** — see (d). The CI
-     floor is still 50 (raising it is the unfinished half of the task).
-~~3. **Full browser lane after the h2 change** — verify-ui-contract +~~ done — close-out §a3 (all four suites green twice) and §a4 (baseline v2 saved)
-   internal/web tests ran green after the TitleTag fix, but the FULL
-   verify-all (style contract, staleness-live, 41-PNG sweep) has not been
-   re-run since; also the pixel baseline v1 now predates the h2 markup
-   change and needs a re-save.
+(`indexsession_test.go`: openIndexSession/finalizeIngest/gateAndFinalize
+
+- age gate, printRejected, requireDB/requireOneArg happy paths, smoke +
+  backupCmd flows): cmd 9.2% → **27.6%**, total 70.4% → **71.9%**. The
+  follow-up domain test (`internal/calls/commands_test.go`:
+  constructors + Excerpt + Retire decider) is **RED** — see (d). The CI
+  floor is still 50 (raising it is the unfinished half of the task).
+  ~~3. **Full browser lane after the h2 change** — verify-ui-contract +~~ done — close-out §a3 (all four suites green twice) and §a4 (baseline v2 saved)
+  internal/web tests ran green after the TitleTag fix, but the FULL
+  verify-all (style contract, staleness-live, 41-PNG sweep) has not been
+  re-run since; also the pixel baseline v1 now predates the h2 markup
+  change and needs a re-save.
 
 ## c) NOT STARTED
 
 ~~- P0-T2 full buildflow gate receipt — load policy blocked it all session~~ routed → the gate-receipt TODO row (load policy)
-  (1-min never under 15); `cut-release.sh` and the receipt procedure wait
-  on a quiet machine.
+(1-min never under 15); `cut-release.sh` and the receipt procedure wait
+on a quiet machine.
 ~~- P1-T12 BuildFlow#56 binary rebuild — owner-gated (cross-repo build +~~ routed → answer-sheet §9 (owner)
-  install from ~/projects/BuildFlow; doctor currently warns the binary
-  trails that checkout by some commits).
+install from ~/projects/BuildFlow; doctor currently warns the binary
+trails that checkout by some commits).
 ~~- P2-T21 timeout-test hardening (audit remaining `time.Sleep`, cancellation~~ done — T21 audit closed (close-out §a7)
-  pattern).
+pattern).
 ~~- P2-T22 docs bundle (DOMAIN_LANGUAGE MOS/cost rows, Telnyx 2027-01~~ done — T22 (close-out §a8)
-  quarterly checklist file).
+quarterly checklist file).
 ~~- P2-T23 UX bundle (search hint example query, RelativeTime day-precision~~ done — T23 (close-out §a9)
-  tooltip, ops print page-breaks).
+tooltip, ops print page-breaks).
 ~~- P2-T24 hygiene bundle (pre-commit AGENTS.md ≤219 check, `ingest-cdr~~ done — T24 (close-out §a10)
   -dry-run`).
 ~~- P2-T25 verification hygiene (dark-theme eyeball over the 41-PNG corpus,~~ done — T25 (close-out §a11)
-  true clean-clone ensureCodegen rehearsal).
+true clean-clone ensureCodegen rehearsal).
 ~~- P2-T26 R27.x advisory triage (art-dupl/branching/file-size verdicts).~~ done — T26 (close-out §a12)
 ~~- P3-T27 watch register pass (external gate states, re-rank).~~ done — T27 (close-out §a13)
 ~~- Close-out ledger: TODO_LIST rows not yet closed (T5-T19 work is done but~~ done — close-out §a14 (rows closed, CHANGELOG written, adoption map, lint re-run)
-  the rows still say open), CHANGELOG Unreleased entry not written,
-  docs/templ-components-adoption.md does not yet record the TitleTag
-  adoption, dprint/cqrs-lint/golangci-lint not re-run over the late edits.
+the rows still say open), CHANGELOG Unreleased entry not written,
+docs/templ-components-adoption.md does not yet record the TitleTag
+adoption, dprint/cqrs-lint/golangci-lint not re-run over the late edits.
 
 ## d) TOTALLY FUCKED UP (own failures, no gloss)
 
@@ -151,27 +152,27 @@ that test is fixed.
 **P0 — unblock the tree (do first, in order)**
 
 ~~1. Fix `TestRetireDeciderPaths` (mirror domain_test's working stream-id/~~ done — close-out §a1 (folded the full history; domain semantics correct)
-   record-fold pattern; or split the Retire leg out until diagnosed).
+record-fold pattern; or split the Retire leg out until diagnosed).
 ~~2. `GOEXPERIMENT=jsonv2 go test ./...` full-suite green.~~ done — close-out §a2 (14/14 packages)
 ~~3. Re-run the full browser lane post-h2 (`bash scripts/verify-all.sh`).~~ done — close-out §a3
 ~~4. Re-save the pixel baseline (`--save-baseline ~/lens-baselines/v2`) —~~ done — close-out §a4 (v2, 0 alerts)
-   v1 predates the h2 markup change.
+v1 predates the h2 markup change.
 ~~5. dprint the session's late edits (templ files, scripts, md).~~ done — close-out §a6 (formatted; scoped lesson recorded in §d5)
 ~~6. `nix develop -c golangci-lint run ./...` (clear the stale-LSP warnings~~ done — close-out §a6 (0 issues repo-wide)
-   for real: css_gate golines, export_consumer gocognit).
+for real: css_gate golines, export_consumer gocognit).
 ~~7. `nix develop -c cqrs-lint .` per the findings policy.~~ done — close-out §a6 (F009 reconfirmed as the documented policy)
 ~~8. Push the 17-commit tail once green; watch remote CI to green.~~ done — close-out §a16 (pushed, remote CI success)
 ~~9. Update TODO_LIST: close T4/T5/T6/T7/T8/T9/T10/T11/T13/T14/T15/T16/T17/~~ done — close-out §a14 (18 rows closed with receipts)
-   T18 rows (move to CHANGELOG), annotate the T19 partial, keep T20 open.
+T18 rows (move to CHANGELOG), annotate the T19 partial, keep T20 open.
 ~~10. CHANGELOG Unreleased entry for the whole session (headers, CSP fixes,~~ done — close-out §a14
-    a11y h2, nonce threading, instruments, guard, triage).
+a11y h2, nonce threading, instruments, guard, triage).
 ~~11. Record TitleTag + nonce-threading in docs/templ-components-adoption.md~~ done — close-out §a14
-    (and note Card's h3 default in the version-bump watchlist context).
+(and note Card's h3 default in the version-bump watchlist context).
 ~~12. Finish P2-T20: decide the CI floor (see question 1), edit ci.yml~~ done — close-out §a5 (floor 70 as default; answer sheet §8)
-    MIN_COVERAGE, watch the run.
+MIN_COVERAGE, watch the run.
 ~~13. P0-T2: full buildflow dev gate on the settled tree when load < 15/40;~~ routed → the gate-receipt TODO row (BuildFlow#56 CLOSED upstream; still load-gated — 1-min 92 at this pass)
-    bank the receipt in docs/buildflow-dev-gate.md; close/keep the
-    BuildFlow#56 workaround sentence accordingly.
+bank the receipt in docs/buildflow-dev-gate.md; close/keep the
+BuildFlow#56 workaround sentence accordingly.
 
 **P1 — remaining trust/quality work**
 ~~14. P2-T21: audit remaining `time.Sleep` in tests; convert one candidate to~~ done — close-out §a7 (exactly two await-pattern sites; row closed)
@@ -185,22 +186,22 @@ ops print page-breaks (with probe capture).
 - test.
 
 ~~18. P2-T25: dark-theme eyeball over the fresh corpus; true clean-clone~~ done — close-out §a11
-    ensureCodegen rehearsal in a scratch worktree.
+ensureCodegen rehearsal in a scratch worktree.
 ~~19. P2-T26: R27.x triage (art-dupl + branching-flow verdicts, file-size~~ done — close-out §a12
-    accept-or-split for server.go/search.go/telnyx_test.go, vulnix note).
+accept-or-split for server.go/search.go/telnyx_test.go, vulnix note).
 ~~20. P3-T27: watch-register pass (verify each Blocked row's external gate;~~ done — close-out §a13
-    re-rank TODO_LIST after P0/P1 land).
+re-rank TODO_LIST after P0/P1 land).
 ~~21. Consider an upstream filing candidate: Card's h3 default makes~~ routed → the TODO upstream-filings row (verify-before-filing first; this pass)
-    heading-order violations the natural outcome (we now pass TitleTag in
-    12 call sites) — verify-before-filing first; the library documents
-    TitleTag, so this is a DX suggestion, not a bug.
+heading-order violations the natural outcome (we now pass TitleTag in
+12 call sites) — verify-before-filing first; the library documents
+TitleTag, so this is a DX suggestion, not a bug.
 ~~22. Improve csp-sweep: attribute console violations to the current surface~~ routed → the TODO probe-polish row (this pass)
-    (reset the console buffer per navigation like the DOM events).
+(reset the console buffer per navigation like the DOM events).
 ~~23. cut-release.sh: dry-run the full body on a quiet machine (it has only~~ routed → the TODO release-rehearsals row (this pass)
-    had its guard rails exercised, not the gate+probe sequence).
+had its guard rails exercised, not the gate+probe sequence).
 ~~24. README: the new `--fast`/LENS_DIFF_BASELINE/csp-sweep entries exist in~~ Won't implement — audience split is deliberate: scripts/README is the dev surface, README stays user-facing
-    scripts/README — mirror the one-liner usage into README.md's dev
-    section if the owner wants them surfaced.
+scripts/README — mirror the one-liner usage into README.md's dev
+section if the owner wants them surfaced.
 
 **Watch / owner-gated (scheduled, not fake-scheduled)**
 ~~25. P1-T12 BuildFlow#56 rebuild on approval → then re-run the full gate for~~ routed → answer-sheet §9 + the gate-receipt row
@@ -254,17 +255,17 @@ csp-sweep-run*, tw-*, shots-fast) once the receipts above are banked.
 ## g) Questions for the owner (cannot self-answer)
 
 ~~1. **CI coverage floor**: total is 71.9% after the cmd wiring tests. Do I~~ done — floor 70 implemented as default (answer sheet §8; close-out §a15)
-   pin MIN_COVERAGE=70 now (truthful, 1.9pt headroom), hold at 50 until the
-   80 push is real, or invest the dedicated pass (projection-fold +
-   exec-level cmd tests) to legitimately reach the fleet's 80 gate?
+pin MIN_COVERAGE=70 now (truthful, 1.9pt headroom), hold at 50 until the
+80 push is real, or invest the dedicated pass (projection-fold +
+exec-level cmd tests) to legitimately reach the fleet's 80 gate?
 ~~2. **BuildFlow#56**: may I build + reinstall the buildflow binary from~~ routed → answer-sheet §9 (owner bookkeeping; the upstream fix landed)
-   ~/projects/BuildFlow on this machine (clean checkout, `nix build . &&
+~~/projects/BuildFlow on this machine (clean checkout, `nix build . &&
    nix run .#reinstall`)? It gates the literal full-gate receipt and the
-   stale-binary advisory.
+stale-binary advisory.
 ~~3. **Pixel-baseline strategy**: keep baselines machine-local~~ routed → answer-sheet §10 (owner; v2 saved machine-local per the recommendation)
-   (~/lens-baselines/<gen>, re-save after any markup change — my
-   recommendation, zero repo weight) or commit a baseline generation into
-   the repo (reviewable drift, ~41 PNGs per generation)?
+(~~/lens-baselines/<gen>, re-save after any markup change — my
+recommendation, zero repo weight) or commit a baseline generation into
+the repo (reviewable drift, ~41 PNGs per generation)?
 
 ---
 
