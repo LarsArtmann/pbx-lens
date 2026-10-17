@@ -109,7 +109,9 @@ const DB = path.join(OUT, "lens.db");
     await page.goto(BASE + "/", { waitUntil: "networkidle2" });
     const detailHref = await page.evaluate(() => {
       const a = document.querySelector('a[href^="/calls/"]');
-      return a ? a.getAttribute("href") : null;
+      if (a) return a.getAttribute("href");
+      const row = document.querySelector("tr[data-tc-row-href]");
+      return row ? row.dataset.tcRowHref : null;
     });
     if (detailHref) {
       await sweep(detailHref, { clickToggle: true });
