@@ -7,6 +7,41 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-17 (Pareto-plan quality tail)
+
+- Security-headers middleware in the serve chain (`X-Content-Type-Options:
+  nosniff`, `Referrer-Policy: no-referrer`, `X-Robots-Tag: noindex`), wired
+  second (after auth) per the docs/http-stack.md ordering doctrine and
+  contract-tested across page, 304, static, and export surfaces; the CSP
+  branch ships with a report-only sweep instrument
+  (`scripts/csp-sweep.js`, six surfaces, nonce + violation events) whose
+  run found and fixed the real nonce gaps (table row-hrefs, CopyButton
+  scripts).
+- Export-lane consumer tests: a real `csv.Reader`/JSON decoder must parse
+  the stalled-stream artifacts end to end (EXPORT_INCOMPLETE marker
+  contract from the consumer side) plus a 10k-row streaming benchmark
+  (~268ms/op, memory-bounded — the R7 stream-don't-materialize evidence).
+- Recording-proxy negative paths answer honestly: upstream 500, signed-URL
+  expiry (403 between metadata and audio), and empty-URL recordings are
+  fixture-covered (`TestRecordingNegativePathsAnswerHonestly`).
+- Browser-lane scale and polish: `verify-all --fast` (contracts without
+  the 41-PNG sweep), KNOWN_SURFACES drift guard, volatile-pixel budget in
+  the screenshot probe, pixel baseline v2 saved post-h2-change (0 alerts),
+  and `/ops` joined the authed e2e lane as the fifth surface.
+- CI: `styles-freshness` job (pinned Tailwind regenerates and byte-diffs
+  the committed styles.css), coverage floor raised 50→70 (measured 73.0%
+  after the new cmd wiring tests took cmd/pbx-lens 9.2%→27.6%).
+- `ingest-cdr -dry-run`: parse-and-age-gate rehearsal that reports
+  would-record counts without touching any index (no -db required) — the
+  F63 production re-ingest can rehearse first.
+- `scripts/cut-release.sh` (the release runbook: quiesce → CHANGELOG
+  sweep → build → gate → probes → CI-green → tag → proxy check) and
+  `scripts/check-agents-budget.sh` (+ `.githooks/pre-commit`) for the
+  AGENTS.md 220-line budget at commit time.
+- `docs/telnyx-quarterly-checklist.md`: the 2027-01 re-verify bundle
+  (commands, expected shapes, the calendar-confirm bullet) so the next
+  live window runs from a file, not from memory.
+
 ### Changed — 2026-10-17 (status-corpus archive)
 
 - The whole 2026-10-11→15 status-report corpus (27 reports) was annotated
@@ -19,6 +54,22 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   version truths were refreshed (v0.2.0 in README/FEATURES, the archived
   count in AGENTS.md, and the hash-repair line now warns off the
   BuildFlow#55-corrupting `nix-hash-fix` step).
+
+### Changed — 2026-10-17 (Pareto-plan UX and docs)
+
+- All twelve page-level Cards now render `h2` titles (library default was
+  `h3`, skipping a level under the page `h1` — the a11y sweep catch);
+  goldens regenerated, heading order asserted in the UI contract probe,
+  and the ops cards gained `break-inside: avoid` print protection with a
+  print-ops probe capture.
+- The search hint teaches the multi-word AND semantics with a worked
+  example (`thermostat broken`), matching the newly pinned
+  `TestMultiWordQuerySemantics`; RelativeTime's exact-timestamp tooltip
+  and day-precision old-age fallback are pinned by contract test.
+- docs/DOMAIN_LANGUAGE.md gained the MOS and CostMicros/CostCurrency
+  vocabulary rows (zero-means-unreported is now written law); the search
+  hint, README alerting recipe, and the Telnyx lookback-bound contract
+  paragraph landed with them.
 
 ### Added — 2026-10-15 (test hardening)
 
