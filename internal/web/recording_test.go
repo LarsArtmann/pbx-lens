@@ -51,6 +51,20 @@ func fakeTelnyx(t *testing.T, state *fakeTelnyxState) *httptest.Server {
 
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprintf(w, `{"data":{"id":"rec-mp3","download_urls":{"wav":"","mp3":%q}}}`, mp3URL)
+		case "/v2/recordings/rec-500":
+			state.authOnMetadata = r.Header.Get("Authorization")
+			w.WriteHeader(http.StatusInternalServerError)
+		case "/v2/recordings/rec-expired":
+			state.authOnMetadata = r.Header.Get("Authorization")
+			expiredURL := "http://" + r.Host + "/v2/audio-expired.wav"
+
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Fprintf(w, `{"data":{"id":"rec-expired","download_urls":{"wav":%q}}}`, expiredURL)
+		case "/v2/audio-expired.wav":
+			// The signed URL expired between metadata fetch and audio GET —
+			// the live-API failure class the negative path must answer
+			// honestly instead of hanging.
+			w.WriteHeader(http.StatusForbidden)
 		case "/v2/recordings/rec-none":
 			state.authOnMetadata = r.Header.Get("Authorization")
 
@@ -256,6 +270,48 @@ func TestRecordingUnknownCallAndNoRef(t *testing.T) {
 		status, _, _ := getWithHeaders(t, mux, test.path)
 		if status != http.StatusNotFound {
 			t.Errorf("GET %s status = %d, want 404", test.path, status)
+		}
+	}
+}
+
+// TestRecordingNegativePathsAnswerHonestly pins the failure classes of
+// the proxy (2026-10-17 quality pass): an upstream metadata 500 and a
+// signed-URL-expired audio 403 must both surface as an honest 502 with a
+// descriptive body — never a hang, never a leaked upstream URL.
+func TestRecordingNegativePathsAnswerHonestly(t *testing.T) {
+	state := &fakeTelnyxState{}
+	api := fakeTelnyx(t, state)
+
+	cases := []struct {
+		name     string
+		ref      string
+		wantCode int
+		wantBody string
+	}{
+		{"metadata 500", "rec-500", http.StatusBadGateway, "fetching the recording metadata failed"},
+		{"audio 403 (signed-URL expiry)", "rec-expired", http.StatusBadGateway, "recording source answered 403"},
+	}
+
+	for _, tc := range cases {
+		mux := newTestServerWith(t, Options{
+			Recordings: RecordingOptions{Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2")},
+		}, telnyxRecordingObservationWithRef(tc.ref))
+
+		status, body, header := getWithHeaders(t, mux, "/calls/telnyx-conversation/conv-rec/recording")
+		if status != tc.wantCode {
+			t.Errorf("%s: status = %d, want %d (body: %s)", tc.name, status, tc.wantCode, body)
+		}
+
+		if !strings.Contains(body, tc.wantBody) {
+			t.Errorf("%s: body %q does not name the failure (%q)", tc.name, body, tc.wantBody)
+		}
+
+		if strings.Contains(body, api.URL) {
+			t.Errorf("%s: body leaks the upstream URL: %q", tc.name, body)
+		}
+
+		if ct := header.Get("Content-Type"); strings.HasPrefix(ct, "audio/") {
+			t.Errorf("%s: error answered as %q, want a text error", tc.name, ct)
 		}
 	}
 }
