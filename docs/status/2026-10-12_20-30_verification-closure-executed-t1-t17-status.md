@@ -28,17 +28,17 @@
 
 ## b) PARTIALLY DONE
 
-1. **T16 scope was a Pareto cut** — 2 of 16 candidate reports fully annotated, 2 archived; 13 remain live with a written triage (archive README §T16.3). The plan's done-when said "triaged", which is met — but the annotate debt is real and itemized.
-2. **T7/T8 were verifications, not implementations** — the concurrent session built both while this session ran; my contribution is the done-when verification + the T7 deviation note (un-rate-limited overflow warn). If the owner wants the rate limit, it's still open.
-3. **The cqrs-lint flake-pin repair** — the WORKING-TREE fix (source hash + vendorHash) landed authored by the concurrent session/daemon while I diagnosed; I committed nothing of it and never determined WHY the pinned rev's content changed upstream (force-push on go-cqrs-lite? GitHub archive renormalization?). The gate was blocked ~20 min on this.
-4. **The verify script lost its capture half** — the /tmp original took evidence screenshots; the promoted `verify-ui-contract.js` asserts contracts only. T6's evidence regeneration used a one-off ad-hoc script, so the repo now has two browser tools where one with a `--shots` flag would do.
-5. **Push state** — the concurrent session pushed mid-session (branch was up-to-date with origin around 19:40); my last ~6 commits (T16/T17/EXECUTED annotation + this wrap) are LOCAL ONLY (ahead 6 at report time). Not pushed: nobody asked.
+~~1. **T16 scope was a Pareto cut** — 2 of 16 candidate reports fully annotated, 2 archived; 13 remain live with a written triage (archive README §T16.3). The plan's done-when said "triaged", which is met — but the annotate debt is real and itemized.~~ done — this 2026-10-17 sweep annotates + archives the whole corpus
+~~2. **T7/T8 were verifications, not implementations** — the concurrent session built both while this session ran; my contribution is the done-when verification + the T7 deviation note (un-rate-limited overflow warn). If the owner wants the rate limit, it's still open.~~ done — both verifications held (R26 cache section; named drill step)
+~~3. **The cqrs-lint flake-pin repair** — the WORKING-TREE fix (source hash + vendorHash) landed authored by the concurrent session/daemon while I diagnosed; I committed nothing of it and never determined WHY the pinned rev's content changed upstream (force-push on go-cqrs-lite? GitHub archive renormalization?). The gate was blocked ~20 min on this.~~ done-in-part — the drift class root-caused via BuildFlow#55 (value-only matching); the tarball-rename cause never isolated
+~~4. **The verify script lost its capture half** — the /tmp original took evidence screenshots; the promoted `verify-ui-contract.js` asserts contracts only. T6's evidence regeneration used a one-off ad-hoc script, so the repo now has two browser tools where one with a `--shots` flag would do.~~ NOT-DO — deliberate: two probes with distinct failure domains (scripts/README decision)
+~~5. **Push state** — the concurrent session pushed mid-session (branch was up-to-date with origin around 19:40); my last ~6 commits (T16/T17/EXECUTED annotation + this wrap) are LOCAL ONLY (ahead 6 at report time). Not pushed: nobody asked.~~ done — pushed (v0.1.0/v0.2.0 tags on origin)
 
 ## c) NOT STARTED
 
-1. **T18 owner-gated roster** (by design): host deploy, prod re-ingest (ContentHash v2), the v0.2.0 TAG (prepared only — checklist waits), fold-ins (#2/#26/#48/#49/#50/#51 — retire `!items-stretch`, focus-ring CSS, and the hand-rolled match log on fold), dependabot watches (#16538 + newly-direct deps), Telnyx DTO live-verify (2027-01 window), >1MiB transcript policy, browser-level 304 check, ContentHash v2 encoding.
-2. **The 13 remaining live status reports' annotate passes** — triaged, not executed (§b1).
-3. **Session residue not claimed by any task**: stale-poller warn in /api/ops (17-17 f17), e2e cache-semantics hardening — HEAD/Vary/Content-Length variants (f19), scratch-dir convention for one-off repro scaffolds (f41).
+~~1. **T18 owner-gated roster** (by design): host deploy, prod re-ingest (ContentHash v2), the v0.2.0 TAG (prepared only — checklist waits), fold-ins (#2/#26/#48/#49/#50/#51 — retire `!items-stretch`, focus-ring CSS, and the hand-rolled match log on fold), dependabot watches (#16538 + newly-direct deps), Telnyx DTO live-verify (2027-01 window), >1MiB transcript policy, browser-level 304 check, ContentHash v2 encoding.~~ → routed: the owner-gated roster IS the TODO_LIST blocked section (v0.2.0 shipped; the rest remain rows)
+~~2. **The 13 remaining live status reports' annotate passes** — triaged, not executed (§b1).~~ done — this 2026-10-17 sweep
+~~3. **Session residue not claimed by any task**: stale-poller warn in /api/ops (17-17 f17), e2e cache-semantics hardening — HEAD/Vary/Content-Length variants (f19), scratch-dir convention for one-off repro scaffolds (f41).~~ done — stale-poller warn landed (v0.2.0); cache hardening landed (13th pass); scratch-dir NOT-DO
 
 ## d) TOTALLY FUCKED UP (all caught; two cost real time)
 
@@ -65,62 +65,62 @@
 
 Owner-gated (the T18 roster, unchanged):
 
-1. Cut v0.2.0 by the T3 checklist (release commit: version const + CHANGELOG cut; annotated tag; proxy check; gh release).
-2. Deploy both hosts with the current lens module.
-3. Production re-ingest after that deploy (ContentHash v2 gate).
-4. Fold in go-etag#2 + go-appkit#26 when they land.
-5. Fold in templ-components#48/#49/#50/#51 — retire `!items-stretch`, the focus-ring CSS, and the hand-rolled match log (watchlist step 4).
-6. Watch dependabot-core#16538; answer maintainer questions.
-7. Browser-level 304 revalidation spot-check on a real host.
-8. Telnyx Detail-Records/insights DTO live-verify (window opens 2027-01).
-9. 1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).
-10. ContentHash v2 length-prefixed encoding at the schema-v2 gate.
-11. Confirm the next dependabot run proposes the newly-direct deps.
-12. Ratify (or override) the three defaulted §g answers below.
+~~1. Cut v0.2.0 by the T3 checklist (release commit: version const + CHANGELOG cut; annotated tag; proxy check; gh release).~~ done — v0.2.0 cut by the checklist (7d15c6f)
+~~2. Deploy both hosts with the current lens module.~~ → routed: host deploy row
+~~3. Production re-ingest after that deploy (ContentHash v2 gate).~~ → routed: prod re-ingest row
+~~4. Fold in go-etag#2 + go-appkit#26 when they land.~~ → routed: fold-in watch row (go-etag#2/go-appkit#26)
+~~5. Fold in templ-components#48/#49/#50/#51 — retire `!items-stretch`, the focus-ring CSS, and the hand-rolled match log (watchlist step 4).~~ → routed: fold-in watch row (templ-components#48/#49/#50/#51/#55)
+~~6. Watch dependabot-core#16538; answer maintainer questions.~~ → routed: dependabot-core#16538 watch row
+~~7. Browser-level 304 revalidation spot-check on a real host.~~ → routed: browser-level 304 row
+~~8. Telnyx Detail-Records/insights DTO live-verify (window opens 2027-01).~~ → routed: Telnyx live-verify row
+~~9. 1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).~~ → routed: >1MiB transcript policy row
+~~10. ContentHash v2 length-prefixed encoding at the schema-v2 gate.~~ → routed: schema-v2 ContentHash row
+~~11. Confirm the next dependabot run proposes the newly-direct deps.~~ → routed: dependabot confirm row
+~~12. Ratify (or override) the three defaulted §g answers below.~~ resolved — the three defaults held (release protocol → runbook row; pin drift → #55; overflow warn blessed by policy)
 
 Bounded engineering (fresh from this session):
 
-13. **Root-cause the cqrs-lint pin drift** — WHY did rev 5a08b0ea's tarball hash change upstream (force-push on go-cqrs-lite? archive renormalization)? The repair landed without the cause; the class can recur on any rev-pinned input.
-14. **Protect rev-pinned flake inputs** — a CI check that re-fetches pinned revs and diffs hashes (or pin by tag + narHash alerting), so the next silent upstream rewrite fails loudly at eval, not mid-gate.
-15. **Rate-limit (or explicitly bless) the etag overflow warn** — the T7 deviation; either a token bucket or a line in docs/buildflow-dev-gate.md stating skip-policy coverage makes it rare by construction.
-16. **Stale-poller warning in /api/ops** (17-17 f17) — age the lastPass timestamp.
-17. **E2E cache-semantics hardening** (f19) — Vary on 304s, Content-Length on buffered renders, HEAD/query-string/trailing-slash skip variants.
-18. **Coverage pass on caching_test.go + serve_test.go** — assert the fragment conditional-GET hot path.
-19. **Concurrent-poll hash-cost probe** — overlapping 30s/60s polls under one ETag middleware (CPU ceiling).
-20. **verify-ui-contract `--shots` mode** — fold the T6 evidence-capture into the promoted tool (kill the ad-hoc pattern).
-21. **Vendored htmx.min.js mystery** (10-33 §b2, still open) — a step un-minified the pinned bytes and the daemon committed the result; identify the culprit step, restore the pinned bytes, add a checksum test.
-22. **Scratch-dir convention** (f41) — a `.gitignore`'d path for one-off repro scaffolds so the daemon can't commit them.
-23. **vtsls fixed properly** — a minimal `jsconfig.json` for scripts/ (CommonJS) so the LSP stops false-positive-ing; replace the documentation workaround.
-24. **CI step: `node --check scripts/*.js`** — a one-line parse guard so script breakage fails before a human runs it.
-25. **nolint-ledger checker v2** — match file+LINTER (today basename-only: two nolints in one file with different lintners both "match"); also decide + document the test-file exclusion boundary.
-26. **Reachability test for the tc-classes corpus** — the T17 revisit precondition: fail the build when a rendered class is missing from the corpus (makes a future trim safe).
-27. **Annotate+archive the 13 remaining live status reports** — in priority order: 13-27/13-28/13-49 (bulk-archive candidates), 12-23, then the rest per the archive README triage.
-28. **Close the two 19-20 reports** — the concurrent session's; theirs to annotate once their session ends.
-29. **Multi-match prev/next UX** — ROADMAP row; needs #51's fold or hand-rolled nav affordances.
-30. **scroll-margin-top on `#turn-N`** — ROADMAP row; one CSS line + probe eyeball.
-31. **Filtered-for chip on the list page** — ROADMAP row; pairs with the EmptyState clear-CTA.
-32. **MOS data still placeholder** — the CDR Detail-Records poller (T15 of older plans) remains the blocker for the dashboard MOS card; same 2027-01 live-verify cluster.
-33. **SECURITY.md /metrics posture re-check after the next appkit bump** — the unauth opt-in is documented; confirm the endpoint stays outside the htpasswd chain.
-34. **docs/assets pruning rule enforcement** — the convention says delete assets whose owning filing closes; #48/#49/#51 will close eventually.
-35. **README dark-mode screenshot pair** — the two committed shots are light; dark needs one probe selection each.
-36. **AGENTS.md line-budget pre-check habit** — add `wc -l AGENTS.md` to the pre-commit reflex; the checker counts the trailing newline (221 = over).
-37. **git goto-fail decorum** — when `git commit` says "nothing to commit", run `git log -1 --stat` to find the daemon's commit and amend-or-accept consciously instead of retrying.
-38. **Consider `git push`** — the last ~7 commits (T16/T17/EXECUTED annotation/wrap fixes) are local-only at report time; the concurrent session pushed earlier, so main is NOT fully published until someone pushes.
-39. **art-dupl ignore/baseline** — when BuildFlow#28 lands, baseline the two intentional idioms (export call+guard pair) instead of carrying the warning.
-40. **error_registry fix-text for tool.timeout** — a BuildFlow#50 follow-up: the registry's "increase the timeout" advice should branch on the spawn-hang phase.
-41. **Load average in BuildFlow failure summaries** — part of #50's ask; worth a separate small PR if #50 stalls.
-42. **Retry-once for transient spawn kills** — the core #50 ask; prototype in BuildFlow-pr44's neighborhood.
-43. **`/metrics` scrape lane in the sibling hosts** — the option exists; a host actually consuming scrapeJobs (Gatus or Prometheus) is the missing half.
-44. **CHANGELOG for dev tooling** — decide whether scripts/ instruments (verify-ui-contract, ui-probe lib) get Unreleased entries or stay out by convention (currently out).
-45. **gen-tc-classes upstreaming** (13-32 §g.3) — still unanswered; #50's version-stamping ask is related.
-46. **Daemons and `-update`** — a pre-commit hook that refuses staged `.golden` changes without a matching `REVIEWED:` line in the message (mechanizes guardrail 2 after my §d1).
-47. **Status-report template for concurrent sessions** — the two 19-20 reports and my three collided in formatting only; a shared header convention would make cross-session triage cheaper.
-48. **Teach the probe about the fixture** — screenshot-probe assumes the "thermostat" fixture term; assert fixture presence before scraping the detail-q URL.
-49. **`scripts/README.md` arbiter note in CI** — reference `node --check` in the lint job description so the vtsls adjudication survives personnel changes.
-50. **Retire `beginExport`'s survivors** — after a few more export formats (if any ever land), revisit whether gate+PII-header+stream should be ONE helper taking a writer strategy.
+~~13. **Root-cause the cqrs-lint pin drift** — WHY did rev 5a08b0ea's tarball hash change upstream (force-push on go-cqrs-lite? archive renormalization)? The repair landed without the cause; the class can recur on any rev-pinned input.~~ done-in-part — BuildFlow#55 root-caused the matcher; the tarball-churn cause stayed unisolated (documented in #55)
+~~14. **Protect rev-pinned flake inputs** — a CI check that re-fetches pinned revs and diffs hashes (or pin by tag + narHash alerting), so the next silent upstream rewrite fails loudly at eval, not mid-gate.~~ done-in-part — #55/#56 filed; the rev-immutability check rides the BuildFlow fixes
+~~15. **Rate-limit (or explicitly bless) the etag overflow warn** — the T7 deviation; either a token bucket or a line in docs/buildflow-dev-gate.md stating skip-policy coverage makes it rare by construction.~~ done-as-policy — the overflow warn is blessed: skip-policy coverage makes it rare by construction (http-stack doctrine)
+~~16. **Stale-poller warning in /api/ops** (17-17 f17) — age the lastPass timestamp.~~ done — last_pass_age_seconds + stale verdict (v0.2.0)
+~~17. **E2E cache-semantics hardening** (f19) — Vary on 304s, Content-Length on buffered renders, HEAD/query-string/trailing-slash skip variants.~~ done — Vary/Content-Length/HEAD/query landed (thirteenth pass)
+~~18. **Coverage pass on caching_test.go + serve_test.go** — assert the fragment conditional-GET hot path.~~ done — caching.go 100% (M11/F32)
+~~19. **Concurrent-poll hash-cost probe** — overlapping 30s/60s polls under one ETag middleware (CPU ceiling).~~ done — BenchmarkConcurrentPoll (≈82/101 µs)
+~~20. **verify-ui-contract `--shots` mode** — fold the T6 evidence-capture into the promoted tool (kill the ad-hoc pattern).~~ NOT-DO — deliberate: two probes with distinct failure domains (scripts/README)
+~~21. **Vendored htmx.min.js mystery** (10-33 §b2, still open) — a step un-minified the pinned bytes and the daemon committed the result; identify the culprit step, restore the pinned bytes, add a checksum test.~~ done — oxfmt/oxlint root-caused; global exclude + bytes restored (12-23 a2)
+~~22. **Scratch-dir convention** (f41) — a `.gitignore`'d path for one-off repro scaffolds so the daemon can't commit them.~~ NOT-DO — one-off; no scratch-dir convention added
+~~23. **vtsls fixed properly** — a minimal `jsconfig.json` for scripts/ (CommonJS) so the LSP stops false-positive-ing; replace the documentation workaround.~~ NOT-DO — the node --check adjudication documented in scripts/README suffices
+~~24. **CI step: `node --check scripts/*.js`** — a one-line parse guard so script breakage fails before a human runs it.~~ NOT-DO — no CI script-parse step added
+~~25. **nolint-ledger checker v2** — match file+LINTER (today basename-only: two nolints in one file with different lintners both "match"); also decide + document the test-file exclusion boundary.~~ NOT-DO — v1 (basename matching) held; docs/nolint-ledger.md is the ledger
+~~26. **Reachability test for the tc-classes corpus** — the T17 revisit precondition: fail the build when a rendered class is missing from the corpus (makes a future trim safe).~~ done-as-decision — T17 decided KEEP with the revisit trigger recorded (b26a630)
+~~27. **Annotate+archive the 13 remaining live status reports** — in priority order: 13-27/13-28/13-49 (bulk-archive candidates), 12-23, then the rest per the archive README triage.~~ done — this 2026-10-17 sweep
+~~28. **Close the two 19-20 reports** — the concurrent session's; theirs to annotate once their session ends.~~ done — this 2026-10-17 sweep
+~~29. **Multi-match prev/next UX** — ROADMAP row; needs #51's fold or hand-rolled nav affordances.~~ → routed: ROADMAP multi-match open item
+~~30. **scroll-margin-top on `#turn-N`** — ROADMAP row; one CSS line + probe eyeball.~~ → routed: ROADMAP scroll-margin item
+~~31. **Filtered-for chip on the list page** — ROADMAP row; pairs with the EmptyState clear-CTA.~~ → routed: ROADMAP filtered-for chip item
+~~32. **MOS data still placeholder** — the CDR Detail-Records poller (T15 of older plans) remains the blocker for the dashboard MOS card; same 2027-01 live-verify cluster.~~ → routed: T15 MOS poller row
+~~33. **SECURITY.md /metrics posture re-check after the next appkit bump** — the unauth opt-in is documented; confirm the endpoint stays outside the htpasswd chain.~~ done — the appkit v0.9.0 bump ran the watchlist; SECURITY posture unchanged
+~~34. **docs/assets pruning rule enforcement** — the convention says delete assets whose owning filing closes; #48/#49/#51 will close eventually.~~ → routed: fold-in watch (assets retire when filings close)
+~~35. **README dark-mode screenshot pair** — the two committed shots are light; dark needs one probe selection each.~~ NOT-DO — no dark-mode asset pair committed
+~~36. **AGENTS.md line-budget pre-check habit** — add `wc -l AGENTS.md` to the pre-commit reflex; the checker counts the trailing newline (221 = over).~~ → routed: pre-commit 220-line check row
+~~37. **git goto-fail decorum** — when `git commit` says "nothing to commit", run `git log -1 --stat` to find the daemon's commit and amend-or-accept consciously instead of retrying.~~ NOT-DO — process note; no rule added
+~~38. **Consider `git push`** — the last ~7 commits (T16/T17/EXECUTED annotation/wrap fixes) are local-only at report time; the concurrent session pushed earlier, so main is NOT fully published until someone pushes.~~ done — pushed (tags on origin)
+~~39. **art-dupl ignore/baseline** — when BuildFlow#28 lands, baseline the two intentional idioms (export call+guard pair) instead of carrying the warning.~~ → routed: R27.x advisory row
+~~40. **error_registry fix-text for tool.timeout** — a BuildFlow#50 follow-up: the registry's "increase the timeout" advice should branch on the spawn-hang phase.~~ done — BuildFlow v0.8.0 shipped the fix (exit-75 + retry + load average)
+~~41. **Load average in BuildFlow failure summaries** — part of #50's ask; worth a separate small PR if #50 stalls.~~ done — v0.8.0 ships the load average in the starvation summary
+~~42. **Retry-once for transient spawn kills** — the core #50 ask; prototype in BuildFlow-pr44's neighborhood.~~ done — v0.8.0 ships the transient retry
+~~43. **`/metrics` scrape lane in the sibling hosts** — the option exists; a host actually consuming scrapeJobs (Gatus or Prometheus) is the missing half.~~ → routed: host deploy row (a host consuming scrapeJobs)
+~~44. **CHANGELOG for dev tooling** — decide whether scripts/ instruments (verify-ui-contract, ui-probe lib) get Unreleased entries or stay out by convention (currently out).~~ NOT-DO — convention: scripts stay out of CHANGELOG
+~~45. **gen-tc-classes upstreaming** (13-32 §g.3) — still unanswered; #50's version-stamping ask is related.~~ → routed: gen-tc-classes upstreaming rides the fold-in watch (#50 related)
+~~46. **Daemons and `-update`** — a pre-commit hook that refuses staged `.golden` changes without a matching `REVIEWED:` line in the message (mechanizes guardrail 2 after my §d1).~~ NOT-DO — no golden pre-commit hook added; review discipline held
+~~47. **Status-report template for concurrent sessions** — the two 19-20 reports and my three collided in formatting only; a shared header convention would make cross-session triage cheaper.~~ NOT-DO — no shared template adopted
+~~48. **Teach the probe about the fixture** — screenshot-probe assumes the "thermostat" fixture term; assert fixture presence before scraping the detail-q URL.~~ NOT-DO — probe stable; no fixture assert added
+~~49. **`scripts/README.md` arbiter note in CI** — reference `node --check` in the lint job description so the vtsls adjudication survives personnel changes.~~ NOT-DO — scripts/README carries the adjudication
+~~50. **Retire `beginExport`'s survivors** — after a few more export formats (if any ever land), revisit whether gate+PII-header+stream should be ONE helper taking a writer strategy.~~ NOT-DO — YAGNI; no further export formats landed
 
 ## g) THREE QUESTIONS ONLY YOU CAN ANSWER
 
-1. **Push the local tail?** The last ~7 commits (T16 annotations, T17 decision, EXECUTED annotation, the TODO_LIST/CHANGELOG wrap fixes, this report) are local-only (ahead 6+ at report time). The concurrent session pushed earlier today; do you want me to push this tail, or does your publish flow own it?
-2. **The cqrs-lint pin: force-push or renormalization?** rev 5a08b0ea's tarball content changed under a frozen hash, and I never determined why. Do you know of a history rewrite on go-cqrs-lite today (a daemon/amend flow that force-pushed?), or should I treat GitHub archive instability as the suspect and add rev-immutability checking for ALL rev-pinned flake inputs (task 14 above)?
-3. **Rate-limit the etag overflow warn or bless it?** The concurrent session's implementation warns on EVERY overflow; the skip policy makes overflows rare (exports/recording stream unbuffered), so I verified it as acceptable. Do you want a token bucket anyway, or is "rare by policy, loud when it happens" the doctrine you want documented?
+~~1. **Push the local tail?** The last ~7 commits (T16 annotations, T17 decision, EXECUTED annotation, the TODO_LIST/CHANGELOG wrap fixes, this report) are local-only (ahead 6+ at report time). The concurrent session pushed earlier today; do you want me to push this tail, or does your publish flow own it?~~ done — pushed (tags on origin)
+~~2. **The cqrs-lint pin: force-push or renormalization?** rev 5a08b0ea's tarball content changed under a frozen hash, and I never determined why. Do you know of a history rewrite on go-cqrs-lite today (a daemon/amend flow that force-pushed?), or should I treat GitHub archive instability as the suspect and add rev-immutability checking for ALL rev-pinned flake inputs (task 14 above)?~~ done-in-part — BuildFlow#55 filed (attribute-aware matching ask); tarball churn left to the fold-in watch
+~~3. **Rate-limit the etag overflow warn or bless it?** The concurrent session's implementation warns on EVERY overflow; the skip policy makes overflows rare (exports/recording stream unbuffered), so I verified it as acceptable. Do you want a token bucket anyway, or is "rare by policy, loud when it happens" the doctrine you want documented?~~ done-as-policy — "rare by policy, loud when it happens" is the recorded doctrine
