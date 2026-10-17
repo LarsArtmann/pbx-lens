@@ -68,7 +68,8 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
 // loads are skipped entirely (the --only dashboard eyeball pass no longer
 // pays for two scrapes it never uses).
 const NEEDS_DISCOVERY =
-  !ONLY || ONLY.some((n) => n === "detail-a" || n === "detail-b" || n === "detail-q" || n === "print");
+  !ONLY ||
+  ONLY.some((n) => n === "detail-a" || n === "detail-b" || n === "detail-q" || n === "print");
 
 (async () => {
   // --port is optional (M4/F13): omit it and the OS hands over a free port.

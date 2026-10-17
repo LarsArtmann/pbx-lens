@@ -168,7 +168,7 @@ never under 15).
 9. PII enforcement at the read boundary (owner decision, recommendation
    B on the table).
 10. Browser-level htmx 304 revalidation check (owner manual check).
-11. >1MiB marathon-transcript buffer policy (owner).
+11. 1MiB marathon-transcript buffer policy (owner).
 12. Dependabot confirmation for newly-direct deps (weekly cycle).
 13. dependabot-core#16538 maintainer answers + gomod pinning decision.
 14. Sibling backup-rotation fold into `modules/telephony/lens.nix`.
@@ -253,6 +253,7 @@ never under 15).
    while fresh.
 
 ## f) Top 50 things to get done next (brainstorm, impact-ordered; 1–18 are
+
 already-routed TODO_LIST rows, 19+ are proposal-grade ROADMAP fuel)
 
 1. Run the full buildflow gate at low load → bank the 70/70
@@ -281,7 +282,7 @@ already-routed TODO_LIST rows, 19+ are proposal-grade ROADMAP fuel)
 14. 2027-01 Telnyx window: run `docs/telnyx-quarterly-checklist.md` top
     to bottom; confirm the calendar entry NOW.
 15. T15 MOS poller execution in the same window.
-16. >1MiB transcript buffer policy decision + implementation.
+16. 1MiB transcript buffer policy decision + implementation.
 17. Confirm dependabot bumps for newly-direct deps; answer
     dependabot-core#16538.
 18. Sibling fold: backup-rotation opinion into lens.nix comments; schema

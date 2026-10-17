@@ -139,6 +139,10 @@ const DB = path.join(OUT, "lens.db");
     return;
   }
 
-  console.log(`\nPASS: zero CSP violations across ${surfaces} surfaces (nonce policy is enforce-clean).`);
-  console.log("Enforce/adjust call: flip CSP_REPORT_ONLY to enforcing (CSP_NONCE=1 stays opt-in) per docs/http-stack.md.");
+  console.log(
+    `\nPASS: zero CSP violations across ${surfaces} surfaces (nonce policy is enforce-clean).`,
+  );
+  console.log(
+    "Enforce/adjust call: flip CSP_REPORT_ONLY to enforcing (CSP_NONCE=1 stays opt-in) per docs/http-stack.md.",
+  );
 })();
