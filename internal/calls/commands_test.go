@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
-	"github.com/larsartmann/go-cqrs-lite/id/v4"
 )
 
 func TestCommandConstructorsValidateAndAddress(t *testing.T) {
@@ -100,15 +99,10 @@ func TestExcerptSelectsAndTruncates(t *testing.T) {
 
 func TestRetireDeciderPaths(t *testing.T) {
 	obs := validObservation()
-	sid, err := obs.StreamID()
-	if err != nil {
-		t.Fatalf("StreamID: %v", err)
-	}
+	streamID := mustSID(t, obs)
 
-	streamID, err := id.ParseStreamID(sid.String())
-	if err != nil {
-		t.Fatalf("ParseStreamID: %v", err)
-	}
+	history := decide(t, Record(obs, streamID), CallState{}, 0)
+	recorded := foldAll(t, history)
 
 	retire := Retire("retention:age", streamID)
 
@@ -116,14 +110,14 @@ func TestRetireDeciderPaths(t *testing.T) {
 		t.Error("retiring an unobserved stream must be rejected")
 	}
 
-	events := decide(t, retire, foldAll(t, decide(t, Record(obs, streamID), CallState{}, 0)), event.Version(1))
+	events := decide(t, retire, recorded, event.Version(1))
 	if len(events) != 1 || events[0].Type() != EventRetired {
 		t.Fatalf("retire events = %+v, want one call.retired", events)
 	}
 
-	retired := foldAll(t, events)
-	if !retired.Retired {
-		t.Error("folded state must carry the retirement")
+	retired := foldAll(t, append(history, events...))
+	if !retired.Observed || !retired.Retired {
+		t.Errorf("folded state must keep the observation and carry the retirement: %+v", retired)
 	}
 
 	if again := decide(t, retire, retired, event.Version(2)); len(again) != 0 {
