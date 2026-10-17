@@ -197,3 +197,51 @@ jobs:
             echo "::error::styles.css drifted from the pinned-builder output. Rebuild ONLY via 'nix run .#update-styles' and commit the result — never a foreign/unminified build (go:embed is compile-time)."
             exit 1
           }
+
+  nix-lint:
+    name: Nix Lint (statix + deadnix + treefmt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@e50d5f73bfe71c2dd0aa4218de8f4afa59f8f81d # v16
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve the flake's locked nixpkgs
+        # Every nix run below goes through the SAME nixpkgs rev the flake
+        # locks, so a tool release can never change a verdict mid-green
+        # (fleet hermeticity doctrine).
+        run: echo "NIXPKGS_REF=$(nix flake metadata --json . | jq -r '.locks.nodes.nixpkgs.locked | "\(.type):\(.owner)/\(.repo)/\(.rev)"')" >> "$GITHUB_ENV"
+
+      - name: statix check (with the no-op tripwire)
+        # statix exits 0 on a config parse error and lints NOTHING — the
+        # five-day silent outage of 2026-10-12..17 (docs/gotchas.md). The
+        # tripwire greps stderr for the signature; the exit code then
+        # carries the real findings verdict, matching BuildFlow's local
+        # invocation (bare `statix check`, repo statix.toml applies).
+        run: |
+          set +e
+          ERR="$(nix run "$NIXPKGS_REF"#statix -- check 2>&1 1>/dev/null)"
+          RC=$?
+          set -e
+          case "$ERR" in
+            *"config error"*)
+              echo "::error::statix no-op: a config parse error exits 0 and lints nothing — fix statix.toml"
+              echo "$ERR"
+              exit 1
+              ;;
+          esac
+          exit "$RC"
+
+      - name: deadnix
+        # --fail turns "unused declaration found" into a red lane (the
+        # default exit code is 0 even with findings).
+        run: nix run "$NIXPKGS_REF"#deadnix -- --fail .
+
+      - name: treefmt CI check (nixfmt + deadnix + statix via the flake)
+        # The flake's treefmt (nixfmt + deadnix + statix, frozen store
+        # configs, templ fmt over the module's own go) must report zero
+        # changes; also catches unparseable .nix that deadnix exits 0 on.
+        run: nix fmt -- --ci
