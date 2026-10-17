@@ -3,7 +3,46 @@
 Closed history: every open item in these reports is resolved INLINE (each file
 carries `done` / `Won't implement` / `→ routed` strikethrough markers; the
 living backlog is [TODO_LIST.md](../../../TODO_LIST.md)). Do not harvest from
-here — terminal state. Archived 2026-10-12 by the docs-health AUDIT pass.
+here — terminal state. Archived 2026-10-12 by the docs-health AUDIT pass and
+2026-10-17 by the corpus-closing sweep (manifest below).
+
+## Archive manifest (bulk sweep 2026-10-17 — the corpus close-out)
+
+The whole 2026-10-11→15 live set annotated inline (verified against CHANGELOG,
+code, and the fold-in ledgers) and archived. Two files stay live on purpose:
+`2026-10-12_17-17` was folded into this sweep (its five bare residuals
+dispositioned), and `2026-10-17_01-45_statix-silent-noop-repair-and-gate-revival.md`
+remains the newest harvest source (its §f items ride TODO_LIST).
+
+| File                                                                           | Classification      | Deciding reason                                                                                                               |
+| ------------------------------------------------------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-12_01-16_full-mode-gate-green-and-lint-debt-surfaced.md                | ANNOTATE → ARCHIVED | §b/§c/§f/§g fully dispositioned (gate tools triage routed to the new TODO row; statix/DID/FTS done; jsonv2 = documented hold) |
+| 2026-10-12_02-34_third-pass-todo-closure-upstream-filings-and-file-splits.md   | ANNOTATE → ARCHIVED | BuildFlow#45 fixed upstream; sibling flags verified exposed; residue routed (timeout row, fold-ins, schema-v2)                |
+| 2026-10-12_03-39_docs-health-audit-annotate-archive-and-living-doc-rebuild.md  | ANNOTATE → ARCHIVED | every §f item done/routed (R2-R24 shipped or rowed); the §g questions resolved (R2, daemon norm, releases tagged)             |
+| 2026-10-12_07-13_SUPERB-plan-execution-status.md                               | ANNOTATE → ARCHIVED | R1-R27 all done/routed (v0.1.0 tagged, DID shipped, sibling green); R27.x residue = the advisory row                          |
+| 2026-10-12_07-56_gate-watch-lint-audit-status.md                               | ANNOTATE → ARCHIVED | continuation of 07-13; lint zero, gate green, release shipped; the mirror list resolved identically                           |
+| 2026-10-12_10-33_lint-zero-gate-starvation-status.md                           | ANNOTATE → ARCHIVED | lint zero held; htmx culprit solved (oxfmt provider + exclude); gate policy recorded; §f fully dispositioned                  |
+| 2026-10-12_12-23_release-did-sibling-gate-green-status.md                      | ANNOTATE → ARCHIVED | v0.1.0 released; oxfmt filing NOT-DO'd (repo-side exclude); host deploys = the deploy row                                     |
+| 2026-10-12_13-27_templ-components-max-adoption-ui-pass-status.md               | ANNOTATE → ARCHIVED | the UI follow-ups shipped (heatmap, presets, print, a11y, goldens, probes); library leverage items routed to the bump watch   |
+| 2026-10-12_13-28_superb-http-stack-adoption-status.md                          | ANNOTATE → ARCHIVED | appendix closures verified; §f 50 rows all done/routed (R26, research report, no-cache, Vary, Content-Length)                 |
+| 2026-10-12_13-49_superb-adoption-final-wrap.md                                 | ANNOTATE → ARCHIVED | the 13-28 supersede completed: every ⬜ item resolved (v0.2.0 shipped the release-bound ones)                                 |
+| 2026-10-12_14-16_css-mime-favicon-fix-session-status.md                        | ANNOTATE → ARCHIVED | styles.css committed policy closed the CI blind spot; T16 remainder landed; templ skew resolved by doctrine                   |
+| 2026-10-12_15-07_followups-closure-and-self-review.md                          | ANNOTATE → ARCHIVED | 13-49 closure verified complete; gate green; every §f row landed/routed/declined                                              |
+| 2026-10-12_15-10_telnyx-mp3-recording-fix-session-status.md                    | ANNOTATE → ARCHIVED | MP3 fallback shipped + documented; open tails routed to the 2027-01 window; lookback audit = the new TODO row                 |
+| 2026-10-12_17-17_templ-ui-pareto-closeout-t20-t27-status.md                    | ANNOTATE → ARCHIVED | the five bare residuals dispositioned (stale-pass/cache-hardening/styles-trim/scratch-dir/quarterly); owner rows routed       |
+| 2026-10-12_19-20_buildflow-gate-green-templ-fmt-and-hash-collision-recovery.md | ANNOTATE → ARCHIVED | statix narrowed (2026-10-17); hash collision = BuildFlow#55; every §f item done/routed/NOT-DO'd                               |
+| 2026-10-12_19-20_cache-observability-drill-lane-gate-triage-status.md          | ANNOTATE → ARCHIVED | drill lane + cache section shipped; v0.2.0 cut; every §f row dispositioned                                                    |
+| 2026-10-12_20-30_verification-closure-executed-t1-t17-status.md                | ANNOTATE → ARCHIVED | T1-T17 verified done; T18 roster = the TODO rows; §f 13-50 executed, routed, or declined with reasons                         |
+| 2026-10-15_02-00_ui-design-audit-polish.md                                     | ANNOTATE → ARCHIVED | every actionable fix landed; taste calls = the decision pack (D1-D5); /ops + probe corpus closed the surfaced gaps            |
+| 2026-10-15_04-45_vendorhash-and-flake-hash-repair-status.md                    | ANNOTATE → ARCHIVED | hashes repaired + verified; the guard class = BuildFlow#55 + the clean-tree rule; nine-tools = the triage row                 |
+| 2026-10-15_05-18_superb-ui-contract-execution.md                               | ANNOTATE → ARCHIVED | M1-M11 executed; the queue landed (pixel-diff, /ops, retention, probes) or routed (owner pack, MOS, PII, mobile)              |
+| 2026-10-15_06-19_superb-0540-execution-ops-retention-cache-armor.md            | ANNOTATE → ARCHIVED | M9/M10 landed, M11 completed by the thirteenth pass; purge telemetry declined-by-default (read-only doctrine)                 |
+| 2026-10-15_16-30_superb-owner-unlock-execution.md                              | ANNOTATE → ARCHIVED | v0.2.0 receipt; BuildFlow#55/#56 filed; the owner-gated §g = the TODO rows                                                    |
+| 2026-10-15_16-32_superb-0540-m11-m19-execution-multi-session.md                | ANNOTATE → ARCHIVED | every §f row carries its 17-40-ledger disposition inline; trailing-slash + baseline strategy = ROADMAP questions              |
+| 2026-10-15_16-32_superb-execution-self-review.md                               | ANNOTATE → ARCHIVED | §b/§c/§f/§g fully dispositioned (f34's owner-read gate superseded by the 2026-10-17 sweep directive)                          |
+| 2026-10-15_17-40_harvest-pass.md                                               | ANNOTATE → ARCHIVED | the pass artifact is complete; its three deliberate follow-ups closed by this sweep                                           |
+| 2026-10-15_18-06_buildflow-full-gate-triage.md                                 | ANNOTATE → ARCHIVED | triage superseded by the 2026-10-17 green dev gate (58/0); §f done/routed (BuildFlow#56, tooling triage row)                  |
+| 2026-10-15_18-45_css-gate-recurrence-fix-and-buildflow55-restore.md            | ANNOTATE → ARCHIVED | update-styles guard landed; the AGENTS ~192 fix DONE (2026-10-17); §f done/routed                                             |
 
 ## Archive manifest (bulk sweep 2026-10-12)
 

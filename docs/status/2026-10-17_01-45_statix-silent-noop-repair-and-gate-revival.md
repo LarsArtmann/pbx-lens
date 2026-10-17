@@ -170,33 +170,33 @@ auto-commit daemon (db18c22, f48b722, d403cd2, 0f99144).
 
 ## f) Top 25 things to get done next
 
-| #  | Task                                                                                     | Impact | Effort | Category      |
-| -- | ---------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 1  | Check `gh run list`; confirm remote CI red; push when the user says go                   | High   | S      | Bug           |
-| 2  | Confirm or revert the 3d93fdf sibling edits (`lll` removal, `run.go` relax, tagliatelle) | High   | S      | Quality       |
-| 3  | Add a statix no-op tripwire (fail on "config error" in stderr) to scripts/verify-all.sh  | High   | S      | Quality       |
-| 4  | Add a CI nix lane (statix + deadnix + `nix fmt --ci`) so nix lint isn't local-only       | High   | M      | Quality       |
-| 5  | HARVEST this report's (f) into TODO_LIST.md (docs-health)                                | High   | S      | Documentation |
-| 6  | Sweep other un-harvested report regrets into TODO_LIST (c25 cost 5 days)                 | High   | M      | Documentation |
-| 7  | Clean-tree confirmation gate run on the settled tree                                     | Medium | S      | Quality       |
-| 8  | Wire `golangci-lint config verify` into CI or pre-commit                                 | Medium | S      | Quality       |
-| 9  | CSS gate test: also assert minified output (foreign-build tripwire)                      | Medium | S      | Quality       |
-| 10 | Unify repo statix.toml with treefmt's store statix config (kill the split)               | Medium | M      | Quality       |
-| 11 | Triage buildflow "9 tools unavailable (health check failed)" with -v                     | Medium | M      | Cleanup       |
-| 12 | Triage nix-hash-fix 82% / nix-build-verify 100% historical failure rates                 | Medium | M      | Quality       |
-| 13 | Triage or accept the 24 vulnix advisories (bash 2.05b, binutils CVEs)                    | Medium | M      | Security      |
-| 14 | docs-health VERIFY sweep over "empirically tested" claims in status docs                 | Medium | M      | Documentation |
-| 15 | Run `nix flake check` on the settled tree                                                | Medium | S      | Quality       |
-| 16 | Restart LSP; confirm gohumanize diagnostics cleared                                      | Low    | S      | Cleanup       |
-| 17 | File upstream statix issue re: exit 0 on config parse error (search dupes first)         | Low    | S      | Documentation |
-| 18 | Record the statix exit-0 contract in crush-config references/lessons.md (fleet)          | Low    | S      | Documentation |
-| 19 | Propose a BuildFlow "lint-config validity" step (fleet value)                            | Low    | M      | Process       |
-| 20 | Pin the statix invocation contract (comment in .buildflow.yml or scripts/README)         | Low    | S      | Documentation |
-| 21 | Daemon-commits-breakage: propose a fleet-level guard (BuildFlow repo)                    | Medium | L      | Process       |
-| 22 | AGENTS.md headroom is 219/220 — plan a trim before the next addition                     | Low    | S      | Cleanup       |
-| 23 | Re-test the statix ignore invocation matrix whenever nixpkgs bumps statix                | Low    | S      | Quality       |
-| 24 | Note the rejected c25 alternative (restyle module-draft.nix) in the gate doc             | Low    | S      | Documentation |
-| 25 | Investigate why buildflow's statix step passes no target (cwd-fragile) upstream          | Low    | S      | Process       |
+| #  | Task                                                                                     | Impact                                                                   | Effort | Category      |
+| -- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ | ------ | ------------- |
+| 1  | Check `gh run list`; confirm remote CI red; push when the user says go                   | High                                                                     | S      | Bug           |
+| 2  | Confirm or revert the 3d93fdf sibling edits (`lll` removal, `run.go` relax, tagliatelle) | High                                                                     | S      | Quality       |
+| 3  | Add a statix no-op tripwire (fail on "config error" in stderr) to scripts/verify-all.sh  | High                                                                     | S      | Quality       |
+| 4  | Add a CI nix lane (statix + deadnix + `nix fmt --ci`) so nix lint isn't local-only       | High                                                                     | M      | Quality       |
+| ~~ | 5                                                                                        | HARVEST this report's (f) into TODO_LIST.md (docs-health)                | High   | S             |
+| ~~ | 6                                                                                        | Sweep other un-harvested report regrets into TODO_LIST (c25 cost 5 days) | High   | M             |
+| 7  | Clean-tree confirmation gate run on the settled tree                                     | Medium                                                                   | S      | Quality       |
+| 8  | Wire `golangci-lint config verify` into CI or pre-commit                                 | Medium                                                                   | S      | Quality       |
+| 9  | CSS gate test: also assert minified output (foreign-build tripwire)                      | Medium                                                                   | S      | Quality       |
+| 10 | Unify repo statix.toml with treefmt's store statix config (kill the split)               | Medium                                                                   | M      | Quality       |
+| 11 | Triage buildflow "9 tools unavailable (health check failed)" with -v                     | Medium                                                                   | M      | Cleanup       |
+| 12 | Triage nix-hash-fix 82% / nix-build-verify 100% historical failure rates                 | Medium                                                                   | M      | Quality       |
+| 13 | Triage or accept the 24 vulnix advisories (bash 2.05b, binutils CVEs)                    | Medium                                                                   | M      | Security      |
+| 14 | docs-health VERIFY sweep over "empirically tested" claims in status docs                 | Medium                                                                   | M      | Documentation |
+| 15 | Run `nix flake check` on the settled tree                                                | Medium                                                                   | S      | Quality       |
+| 16 | Restart LSP; confirm gohumanize diagnostics cleared                                      | Low                                                                      | S      | Cleanup       |
+| 17 | File upstream statix issue re: exit 0 on config parse error (search dupes first)         | Low                                                                      | S      | Documentation |
+| 18 | Record the statix exit-0 contract in crush-config references/lessons.md (fleet)          | Low                                                                      | S      | Documentation |
+| 19 | Propose a BuildFlow "lint-config validity" step (fleet value)                            | Low                                                                      | M      | Process       |
+| 20 | Pin the statix invocation contract (comment in .buildflow.yml or scripts/README)         | Low                                                                      | S      | Documentation |
+| 21 | Daemon-commits-breakage: propose a fleet-level guard (BuildFlow repo)                    | Medium                                                                   | L      | Process       |
+| 22 | AGENTS.md headroom is 219/220 — plan a trim before the next addition                     | Low                                                                      | S      | Cleanup       |
+| 23 | Re-test the statix ignore invocation matrix whenever nixpkgs bumps statix                | Low                                                                      | S      | Quality       |
+| 24 | Note the rejected c25 alternative (restyle module-draft.nix) in the gate doc             | Low                                                                      | S      | Documentation |
+| 25 | Investigate why buildflow's statix step passes no target (cwd-fragile) upstream          | Low                                                                      | S      | Process       |
 
 ## g) Questions I cannot answer myself
 

@@ -158,7 +158,7 @@ versions):
   standing norm is concurrency pre-flight (check `git status` for foreign
   entries + fresh mtimes before any gate/commit) and ship-state verification
   (test what HEAD contains, e.g. `git stash -u` the foreign delta or probe a
-  clean worktree of the commit). (docs/status/2026-10-12_13-49 §e/§g.3)
+  clean worktree of the commit). (docs/status/archived/2026-10-12_13-49 §e/§g.3)
 - **Multi-match transcript navigation** (2026-10-12, from the ?q= jump
   follow-ups): the deep link lands on the FIRST matching turn; when several
   turns match, prev/next match buttons (or a match counter) inside the
@@ -182,7 +182,7 @@ versions):
   route table, honest "path does not exist"). Two sessions fought the test
   assertion to a draw; it is deliberately UNPINNED until one owner taste
   call, then the test gets re-pinned (or the redirect deleted) to match.
-  (docs/status/2026-10-15_16-32_superb-0540-m11-m19-execution-multi-session.md §g.1)
+  (docs/status/archived/2026-10-15_16-32_superb-0540-m11-m19-execution-multi-session.md §g.1)
 - **Pixel-diff baseline strategy** (2026-10-15): commit a light-theme
   baseline corpus (~1-2 MB PNGs — cross-session/cross-machine alerts at
   repo-weight cost) or keep baselines machine-local in /tmp (repo lean;
