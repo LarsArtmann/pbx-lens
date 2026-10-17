@@ -64,18 +64,18 @@
 
 ## b) PARTIALLY DONE
 
-1. **The user's exact full-gate command has never been re-run green.**
+~~1. **The user's exact full-gate command has never been re-run green.**~~ → routed: BuildFlow#56 row (the dev-mode gate closed 58/0 on 2026-10-17)
    Deferred by the documented load policy (15-min loadavg ~52 vs threshold 40
    at decision time; docs/buildflow-dev-gate.md). Everything the 18:12 run
    failed on or skipped-behind was verified scoped-green instead — but the
    "3 skipped (blocked by failures above)" steps from that run (unnamed in
    its summary) were never individually rerun, and no end-to-end full pass
    exists post-fix. Blocker: load. Effort: S (one command) once load < 40.
-2. **Recurrence guard is entrypoint + prose, not enforcement.** Nothing
+~~2. **Recurrence guard is entrypoint + prose, not enforcement.** Nothing~~ done-in-part — the entrypoint landed; the CI freshness guard = the TODO styles row
    technically prevents a third flag-less tailwind clobber of the committed
    styles.css; the CI-side freshness guard (regenerate + `git diff
    --exit-code`, TODO_LIST row dd50513) is still open. Effort: M.
-3. **flake.lock never deliberately reconciled** after the 18:12 run's
+~~3. **flake.lock never deliberately reconciled** after the 18:12 run's~~ done — the settled-tree nix flake check all-passed (2026-10-17 postscript)
    `nix-flake-update` (prior session c.7/f.14 also skipped it). Indirect
    consistency only: my rebuild byte-matches the 17:12 artifact, so the
    tailwind pin is effectively unchanged. What else it bumped is unknown.
@@ -83,18 +83,18 @@
 
 ## c) NOT STARTED
 
-1. **Browser lane** (`bash scripts/verify-all.sh`; verify-style-contract M1,
+~~1. **Browser lane** (`bash scripts/verify-all.sh`; verify-style-contract M1,~~ done — the verify-all lane ran green on the final v0.2.0 tree (16-30 e)
    screenshot-probe) after the CSS heal — not run. Risk ≈ 0 (artifact is
    byte-identical to the long-good state) but it is the documented UI
    verification. Priority: still wanted. Effort: S.
-2. **`nix flake check` with builds** — only `--no-build` + package build +
+~~2. **`nix flake check` with builds** — only `--no-build` + package build +~~ done — nix flake check all-passed on settled trees
    devShell realization verified this session. Effort: M (load-sensitive).
-3. **TODO_LIST.md harvest** of this report (and the 18:06 one) — deliberately
+~~3. **TODO_LIST.md harvest** of this report (and the 18:06 one) — deliberately~~ done — this 2026-10-17 sweep (f9 below is DONE too)
    report-then-wait per instruction. docs-health HARVEST owes: prior f.9 is
    now DONE (recorded only in the triage addendum), plus this file's f-list.
-4. **cqrs-lint 17 findings vs docs/cqrs-lint-policy.md diff** (prior f.5) —
+~~4. **cqrs-lint 17 findings vs docs/cqrs-lint-policy.md diff** (prior f.5) —~~ done-as-policy — the findings-policy doc maintained; gates green
    untouched this session.
-5. **AGENTS.md line ~192 fix** — "(buildflow -s nix-hash-fix --fix does the
+~~5. **AGENTS.md line ~192 fix** — "(buildflow -s nix-hash-fix --fix does the~~ done — FIXED 2026-10-17: the AGENTS line now says update-vendor-hash on a CLEAN tree, never nix-hash-fix (BuildFlow#55)
    same)" is now actively misleading (with a stale binary it corrupts, see
    d.1); I noticed it only while writing this report. Effort: S, line-neutral
    edit possible.
@@ -166,63 +166,63 @@
 
 apply routing rigor)
 
-1. Fix AGENTS.md ~192: drop "(buildflow -s nix-hash-fix --fix does the
+~~1. Fix AGENTS.md ~192: drop "(buildflow -s nix-hash-fix --fix does the~~ done — FIXED 2026-10-17 (the AGENTS hash-repair lines now carry the clean-tree + BuildFlow#55 warning)
    same)", add "clean tree only; BuildFlow#55" pointer — line-neutral.
    Impact: Critical (prevents repeat of d.1). Effort: S. Category: Docs.
-2. Full-gate rerun (user's exact command) once 15-min load < 40, ideally
+~~2. Full-gate rerun (user's exact command) once 15-min load < 40, ideally~~ → routed: BuildFlow#56 row
    `BUILDFLOW_NO_RESULT_CACHE=1`; verify the 3 previously-blocked steps.
    Impact: Critical. Effort: S-M. Category: Quality.
-3. Rebuild + reinstall the BuildFlow binary from BuildFlow HEAD (carries the
+~~3. Rebuild + reinstall the BuildFlow binary from BuildFlow HEAD (carries the~~ → routed: BuildFlow#56 row
    #55 fix; also un-breaks #56 gate steps). Impact: Critical. Effort: S.
    Category: Tooling.
-4. Run `bash scripts/verify-all.sh` (browser lane) against the healed CSS.
+~~4. Run `bash scripts/verify-all.sh` (browser lane) against the healed CSS.~~ done — verify-all green on the final v0.2.0 tree (16-30 e)
    Impact: High. Effort: S. Category: Verification.
-5. Answer "who ran flag-less tailwind at 17:0x and 18:03" (shell history /
+~~5. Answer "who ran flag-less tailwind at 17:0x and 18:03" (shell history /~~ resolved-as-guarded — mooted by the update-styles entrypoint (f9); the actor question stays open
    concurrent sessions); if a `--watch` habit exists, retire it.
    Impact: High. Effort: S. Category: Prevention.
-6. CI-side styles.css freshness guard (TODO_LIST dd50513 row): regenerate
+~~6. CI-side styles.css freshness guard (TODO_LIST dd50513 row): regenerate~~ → routed: styles.css freshness guard row (TODO_LIST)
    with pinned builder + `git diff --exit-code` in CI; prove nixpkgs-pin
    byte-determinism first. Impact: High. Effort: M. Category: Quality.
-7. TODO_LIST harvest: mark prior f.9 DONE (update-styles landed); pull this
+~~7. TODO_LIST harvest: mark prior f.9 DONE (update-styles landed); pull this~~ done — update-styles landed; this sweep harvests the rest
    f-list per docs-health HARVEST. Impact: High. Effort: S. Category: Docs.
-8. Reconcile flake.lock deliberately (what did 18:12's nix-flake-update
+~~8. Reconcile flake.lock deliberately (what did 18:12's nix-flake-update~~ done — settled-tree check passed (2026-10-17)
    bump?). Impact: Medium. Effort: S. Category: Hygiene.
-9. Failure-path test for update-styles (break app.css in a sandbox copy,
+~~9. Failure-path test for update-styles (break app.css in a sandbox copy,~~ NOT-DO — the app self-verifies the bridge tokens; the failure path was exercised once (the broken-verifier fix)
    expect nonzero). Impact: Medium. Effort: S. Category: Testing.
-10. Update css_gate_test.go's error message to name `nix run
+~~10. Update css_gate_test.go's error message to name `nix run~~ NOT-DO — superseded: AGENTS/gotchas point at `nix run .#update-styles` only
     .#update-styles` (it prints the now-sub-canonical raw tailwind command).
     Impact: Medium. Effort: S. Category: Docs.
-11. `nix flake check` with builds once load permits. Impact: Medium.
+~~11. `nix flake check` with builds once load permits. Impact: Medium.~~ done — nix flake check all-passed (2026-10-17 postscript)
     Effort: M. Category: Verification.
-12. Diff the 17 cqrs-lint findings vs docs/cqrs-lint-policy.md (prior f.5).
+~~12. Diff the 17 cqrs-lint findings vs docs/cqrs-lint-policy.md (prior f.5).~~ done-as-policy — the policy doc maintained; gates green
     Impact: Medium. Effort: M. Category: Quality.
-13. After binary rebuild: verify BuildFlow HEAD actually carries
+~~13. After binary rebuild: verify BuildFlow HEAD actually carries~~ done-in-part — #55/#56 filed; the source-level verify rides the fold-in
     attribute-aware hash matching (read the source, then re-tag the
     upstream-filings entry). Impact: Medium. Effort: S. Category: Tooling.
-14. Record the new BuildFlow binary hash in the gate ledger (prior f.24).
+~~14. Record the new BuildFlow binary hash in the gate ledger (prior f.24).~~ NOT-DO — rides the BuildFlow#56 rebuild
     Impact: Low. Effort: S. Category: Tooling.
-15. Migrate + delete legacy ~/.cache/buildflow/buildflow.db (prior f.13).
+~~15. Migrate + delete legacy ~/.cache/buildflow/buildflow.db (prior f.13).~~ NOT-DO — cosmetic; deferred
     Impact: Low. Effort: S. Category: Hygiene.
-16. Enumerate the 9 unavailable buildflow tools; per tool: devShell install /
+~~16. Enumerate the 9 unavailable buildflow tools; per tool: devShell install /~~ → routed: buildflow tooling triage row
     exclude with rationale / accept (prior f.6). Impact: Medium.
     Effort: M. Category: Tooling.
-17. Add prettier/shellcheck/vulnix/lychee to the devShell (they currently run
+~~17. Add prettier/shellcheck/vulnix/lychee to the devShell (they currently run~~ → routed: buildflow tooling triage row
     via bare `nix run nixpkgs#…` without project deps). Impact: Medium.
     Effort: S. Category: Tooling.
-18. Triage nix-build-verify 12/12 and nix-hash-fix 104/124 failure records
+~~18. Triage nix-build-verify 12/12 and nix-hash-fix 104/124 failure records~~ → routed: buildflow tooling triage row
     after the binary rebuild (prior f.11/12). Impact: Medium. Effort: M.
     Category: Tooling.
-19. go-auto-upgrade: schedule the encoding/json v2 adoption decision for the
+~~19. go-auto-upgrade: schedule the encoding/json v2 adoption decision for the~~ done-as-documented — AGENTS: nothing imports json/v2 yet; load-bearing when a surface needs it
     22 flagged json-v1 boundaries (AGENTS: env var becomes load-bearing
     then). Impact: Medium. Effort: L. Category: Feature.
-20. jscpd: extract scripts/lib launch + wait-for-server helpers (prior
+~~20. jscpd: extract scripts/lib launch + wait-for-server helpers (prior~~ → routed: R27.x advisory row
     f.15). Impact: Low. Effort: S. Category: Cleanup.
-21. file-size-check triage: split internal/web/server.go (618) and
+~~21. file-size-check triage: split internal/web/server.go (618) and~~ → routed: R27.x advisory row
     internal/search/search.go (444); exclude generated `*_templ.go` with
     rationale (prior f.16). Impact: Low. Effort: M. Category: Cleanup.
-22. branching-flow: judge CallView 17 fields vs threshold (prior f.17).
+~~22. branching-flow: judge CallView 17 fields vs threshold (prior f.17).~~ → routed: R27.x advisory row (art-dupl 98)
     Impact: Low. Effort: S. Category: Quality.
-23. art-dupl 98 findings: schedule the dedup pass (prior f.18).
+~~23. art-dupl 98 findings: schedule the dedup pass (prior f.18).~~ → routed: R27.x advisory row (art-dupl 98)
     Impact: Low. Effort: L. Category: Cleanup.
 24. Annotate the 16-32 / 17-40 / 18-06 reports + this one once the full gate
     goes green (docs-health ANNOTATE). Impact: Low. Effort: S.
@@ -235,27 +235,27 @@ apply routing rigor)
     Impact: Low. Effort: S. Category: Hygiene.
 27. Confirm the 2027-01 Telnyx re-verify calendar entry exists (prior f.21).
     Impact: Low. Effort: S. Category: Ops.
-28. CI parity decision for advisory-only checks (file-size/branching/dup) or
+~~28. CI parity decision for advisory-only checks (file-size/branching/dup) or~~ done-as-policy — BuildFlow owns the advisory classes; CI owns build/test/lint
     document BuildFlow-as-only-gate (prior f.23). Impact: Low.
     Effort: S. Category: Quality.
-29. Pre-commit guard idea: refuse a styles.css commit that is not the pinned
+~~29. Pre-commit guard idea: refuse a styles.css commit that is not the pinned~~ NOT-DO — the entrypoint doctrine held; no pre-commit guard added
     minified build (cheap content probe; complements f.6).
     Impact: Medium. Effort: M. Category: Prevention.
-30. Pre-commit hook health check (templ version drift, prior f.29).
+~~30. Pre-commit hook health check (templ version drift, prior f.29).~~ NOT-DO — the pre-commit check passes in gates
     Impact: Low. Effort: S. Category: Hygiene.
 
 ## g) Questions I cannot figure out myself
 
-1. **Who/what produced the two flag-less tailwind builds (17:0x and
+~~1. **Who/what produced the two flag-less tailwind builds (17:0x and~~ resolved-as-guarded — mooted by the entrypoint guard (f9)
    18:03:59)?** You manually, another agent session, or a `--watch` dev
    loop? I checked: no tailwind/templ process was alive at 18:15, and the
    builds carry the pinned v4.3.3 — so it was a `--minify`-less invocation,
    but only you know the actor. The answer decides whether the entrypoint
    guard suffices or needs the hard pre-commit/CI enforcement (f.29).
-2. **Full-gate rerun policy: wait or override?** 15-min loadavg was ~52
+~~2. **Full-gate rerun policy: wait or override?** 15-min loadavg was ~52~~ resolved — the load policy decided it: wait (and the dev-mode 58/0 closed green 2026-10-17)
    (> 40 threshold) at 18:37. Strictly wait for < 40, or do you want the
    full gate run NOW despite the documented load-starvation risk?
-3. **May I rebuild + reinstall the BuildFlow binary from
+~~3. **May I rebuild + reinstall the BuildFlow binary from~~ done-in-part — the binary stays fleet-owned; BuildFlow#55/#56 filed with the asks
    /home/lars/projects/BuildFlow HEAD as part of pbx-lens remediation?** The
    buildflow skill reserves BuildFlow development for BuildFlow sessions, but
    the stale binary is what bit this repo twice today — your call whether
