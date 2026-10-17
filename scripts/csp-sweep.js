@@ -67,15 +67,18 @@ const DB = path.join(OUT, "lens.db");
       });
     });
 
+    let consoleSurface = "(before first navigation)";
+
     page.on("console", (msg) => {
       const text = msg.text();
       if (/\[Report Only\]|Refused to |Content Security Policy/i.test(text)) {
-        violations.push({ surface: "(console)", text: text.slice(0, 300) });
+        violations.push({ surface: `${consoleSurface} (console)`, text: text.slice(0, 300) });
       }
     });
 
     async function sweep(surface, { clickToggle = false } = {}) {
       surfaces++;
+      consoleSurface = surface;
       const resp = await page.goto(BASE + surface, { waitUntil: "networkidle2" });
       const reportOnly = resp.headers()["content-security-policy-report-only"];
       console.log(
@@ -115,6 +118,7 @@ const DB = path.join(OUT, "lens.db");
     });
     if (detailHref) {
       await sweep(detailHref, { clickToggle: true });
+      consoleSurface = `${detailHref} (copy click)`;
       const copy = await page.$("[data-tc-copy]");
       if (copy) await copy.click();
       const found = await page.evaluate(() => window.__cspViolations || []);
