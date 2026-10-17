@@ -369,6 +369,10 @@ func TestLiveServerEndToEnd(t *testing.T) {
 		{"/dashboard", []string{"Call quality (MOS)"}},
 		{"/search?q=17287289311", []string{"conv-e2e"}},
 		{"/api/freshness", []string{`"calls_indexed":2`}},
+		// The fifth surface (2026-10-17 hardening): ops joins the named
+		// lane. Unwired here, so the honest empty state is the expected
+		// render (the retention card rides the wired branch).
+		{"/ops", []string{"Ops", "No counters are wired"}},
 	}
 
 	for _, c := range checks {

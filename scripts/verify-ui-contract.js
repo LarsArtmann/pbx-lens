@@ -168,6 +168,42 @@ function fail(msg) {
     console.log("turn in viewport:", visible);
     if (!visible) fail("fragment did not scroll to the match");
 
+    // --- Contract E: a11y basics on /ops (2026-10-17 hardening) --------
+    // Heading order starts at exactly one h1 and never skips a level, and
+    // keyboard focus carries a visible indicator on the first nav stop.
+    // The verdict-chip contrast rides the library tc-* tokens (the style
+    // contract pins the token chain); the probe stack serves /ops unwired,
+    // so the chip itself is covered by the ops goldens + page tests.
+    await page.goto(`${BASE}/ops`, { waitUntil: "networkidle0" });
+    const a11y = await page.evaluate(() => {
+      const levels = [...document.querySelectorAll("h1, h2, h3, h4, h5, h6")].map((h) =>
+        Number(h.tagName[1]),
+      );
+      let skipped = null;
+      let prev = 0;
+      for (const level of levels) {
+        if (prev > 0 && level > prev + 1) {
+          skipped = `h${prev}->h${level}`;
+          break;
+        }
+        prev = level;
+      }
+      return { h1Count: levels.filter((l) => l === 1).length, skipped, levels: levels.join(",") };
+    });
+    console.log("ops headings:", a11y.levels);
+    if (a11y.h1Count !== 1) fail(`/ops must have exactly one h1, got ${a11y.h1Count}`);
+    if (a11y.skipped) fail(`/ops heading order skips a level (${a11y.skipped})`);
+
+    await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
+    await page.keyboard.press("Tab");
+    const focusVisible = await page.evaluate(() => {
+      const el = document.activeElement;
+      if (!el) return false;
+      const cs = getComputedStyle(el);
+      return cs.outlineStyle !== "none" || cs.boxShadow !== "none";
+    });
+    if (!focusVisible) fail("first Tab stop has no visible focus indicator");
+
     console.log(process.exitCode ? "RESULT: FAILED" : "RESULT: ALL PASS");
   } finally {
     await browser.close();
