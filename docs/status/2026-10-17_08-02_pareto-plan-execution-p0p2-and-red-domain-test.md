@@ -271,3 +271,19 @@ csp-sweep-run*, tw-*, shots-fast) once the receipts above are banked.
 _Verified state at writing: local main 02ee134, 17 ahead of origin/main
 (UNPUSHED, remote green), working tree clean, internal/calls RED
 (TestRetireDeciderPaths), everything else green as itemized above._
+
+---
+
+## Resolution addendum (same day, ~10:30)
+
+The red `TestRetireDeciderPaths` is FIXED: the test folded only the retire
+event into an empty state, so the idempotent-re-retire leg saw
+`Observed=false`; the domain semantics were correct. Fixed by folding the
+full history (commands_test.go). Close-out landed the same morning:
+TODO_LIST swept (18 rows closed with receipts, watch table re-verified —
+go-appkit#26 and BuildFlow#55/#56 CLOSED upstream), CHANGELOG Unreleased
+written, the adoption map gained the TitleTag + nonce rows, the three §g
+questions got answer-sheet slots (§8-10; floor 70 implemented as default),
+the gate receipt stayed load-blocked (1-min load never dropped under 15;
+peak 112), and the tail pushed with remote CI watched to green. Pixel
+baseline v2 saved and diff-proven (0 alerts / 41 PNGs).
