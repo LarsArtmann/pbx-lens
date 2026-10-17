@@ -95,9 +95,13 @@ func ingestTelnyx(args []string) {
 		"comma-separated AI-facing DIDs: conversations touching one are inbound (empty = keep declared direction)",
 	)
 	telnyxMaxAge := fs.Duration("max-age", 0, "refuse conversations older than this (0 = keep everything)")
+	dryRun := fs.Bool("dry-run", false, "fetch and report without touching the index (no -db needed)")
+	apiBase := fs.String("api-base", "", "override the Telnyx API base URL (stub-server rehearsals; empty = production)")
 	_ = fs.Parse(args)
 
-	requireDB(fs, *db)
+	if !*dryRun {
+		requireDB(fs, *db)
+	}
 
 	key, err := cli.ResolveKey(*keyFile)
 	if err != nil {
@@ -114,6 +118,39 @@ func ingestTelnyx(args []string) {
 		fatal(err)
 	}
 
+	opts := cli.TelnyxOptions{
+		Since:     sinceAt,
+		Direction: dir,
+		AIDIDs:    telnyx.ParseAIDIDs(*aiDID),
+		Limit:     *limit,
+	}
+
+	if *dryRun {
+		// Report-only fetch (T14 parity with ingest-cdr): the counts ARE
+		// the deliverable — conversations would fetch, which would record,
+		// which the age gate would refuse — but no index opens, so neither
+		// ingest nor enrichment runs (enrichment reads the read model).
+		ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
+		defer cancel()
+
+		observations, _, fetchRejects, err := cli.FetchTelnyxObservations(ctx, telnyx.NewClient(key, *apiBase), opts)
+		if err != nil {
+			fatal(err)
+		}
+
+		admitted, refusals := (cli.AgeGate{MaxAge: *telnyxMaxAge}).Apply(observations, time.Now().UTC())
+
+		fmt.Printf(
+			"ingest-telnyx (dry-run): %d conversations fetched, %d would-record, %d age-refused, %d fetch-rejected — nothing written\n",
+			len(observations), len(admitted), len(refusals), len(fetchRejects),
+		)
+
+		printRejected(fetchRejects)
+		printRejected(refusals)
+
+		return
+	}
+
 	ctx, sys, cleanup, err := openIndexSession(*db)
 	if err != nil {
 		fatal(err)
@@ -121,14 +158,9 @@ func ingestTelnyx(args []string) {
 
 	defer cleanup()
 
-	client := telnyx.NewClient(key, "")
+	client := telnyx.NewClient(key, *apiBase)
 
-	observations, seeds, fetchRejects, err := cli.FetchTelnyxObservations(ctx, client, cli.TelnyxOptions{
-		Since:     sinceAt,
-		Direction: dir,
-		AIDIDs:    telnyx.ParseAIDIDs(*aiDID),
-		Limit:     *limit,
-	})
+	observations, seeds, fetchRejects, err := cli.FetchTelnyxObservations(ctx, client, opts)
 	if err != nil {
 		fatal(err)
 	}

@@ -3,7 +3,10 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -242,6 +245,93 @@ func TestIngestCDRDryRunReportsWithoutWrites(t *testing.T) {
 		if !strings.Contains(captured.String(), want) {
 			t.Errorf("dry-run stdout missing %q (got %q)", want, captured.String())
 		}
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(entries) != 1 {
+		t.Errorf("dry-run must leave no index behind, dir now holds %d entries", len(entries))
+	}
+}
+
+// TestIngestTelnyxDryRunReportsWithoutWrites pins the T14 rehearsal flag:
+// a dry-run against a stub API fetches (the counts ARE the deliverable),
+// walks every conversation's messages, and prints the would-fetch report —
+// with NO -db, no index created, and no ingest/enrichment side effects.
+func TestIngestTelnyxDryRunReportsWithoutWrites(t *testing.T) {
+	dir := t.TempDir()
+
+	keyFile := filepath.Join(dir, "key")
+	if err := os.WriteFile(keyFile, []byte("test-key\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	var messagesWalked []string
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeStubJSON := func(v any) {
+			w.Header().Set("Content-Type", "application/json")
+
+			if err := json.NewEncoder(w).Encode(v); err != nil {
+				t.Errorf("encode stub response: %v", err)
+			}
+		}
+
+		switch {
+		case r.URL.Path == "/ai/conversations":
+			writeStubJSON(map[string]any{"data": []map[string]any{
+				{"id": "conv-1", "created_at": "2026-10-17T10:00:00Z"},
+				{"id": "conv-2", "created_at": "2026-10-17T11:00:00Z"},
+			}})
+		case strings.HasPrefix(r.URL.Path, "/ai/conversations/") && strings.HasSuffix(r.URL.Path, "/messages"):
+			messagesWalked = append(messagesWalked, r.URL.Path)
+			writeStubJSON(map[string]any{"data": []map[string]any{}})
+		case r.URL.Path == "/recordings":
+			writeStubJSON(map[string]any{"data": []map[string]any{}})
+		default:
+			t.Errorf("unexpected stub hit: %s", r.URL.Path)
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+
+	original := os.Stdout
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+
+	os.Stdout = w
+
+	ingestTelnyx([]string{"-dry-run", "-key-file", keyFile, "-api-base", srv.URL, "-since", "48h"})
+
+	if err := w.Close(); err != nil {
+		t.Fatalf("close writer: %v", err)
+	}
+
+	os.Stdout = original
+
+	var captured bytes.Buffer
+
+	if _, err := captured.ReadFrom(r); err != nil {
+		t.Fatalf("read captured stdout: %v", err)
+	}
+
+	for _, want := range []string{
+		"2 conversations fetched, 2 would-record, 0 age-refused, 0 fetch-rejected",
+		"nothing written",
+	} {
+		if !strings.Contains(captured.String(), want) {
+			t.Errorf("dry-run stdout missing %q (got %q)", want, captured.String())
+		}
+	}
+
+	if len(messagesWalked) != 2 {
+		t.Errorf("dry-run walked %d conversation message lists, want 2 (the fetch is real)", len(messagesWalked))
 	}
 
 	entries, err := os.ReadDir(dir)
