@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Pre-commit hook: refuses commits that push AGENTS.md over its 220-line
+# render budget (219 by wc -l; the lint tool counts a phantom +1).
+# Activate once per clone:  git config core.hooksPath .githooks
+exec "$(dirname "$0")/../scripts/check-agents-budget.sh" AGENTS.md

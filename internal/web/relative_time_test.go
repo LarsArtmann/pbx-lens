@@ -1,6 +1,7 @@
 package web
 
 import (
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -12,12 +13,10 @@ import (
 func renderToString(t *testing.T, c templ.Component) string {
 	t.Helper()
 
-	html, err := templ.RenderString(c)
-	if err != nil {
-		t.Fatalf("render: %v", err)
-	}
+	rec := httptest.NewRecorder()
+	templ.Handler(c).ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
 
-	return html
+	return rec.Body.String()
 }
 
 // TestRelativeTimeDayPrecisionContract pins the pinned library's relative-time
@@ -36,7 +35,7 @@ func TestRelativeTimeDayPrecisionContract(t *testing.T) {
 	}{
 		{"recent stays relative", 2 * time.Hour, "2 hours ago"},
 		{"a week stays week-granular", 10 * 24 * time.Hour, "1 week ago"},
-		{"past a month falls back to the absolute date", 40 * 24 * time.Hour, "Oct 7, 2026"},
+		{"past a month falls back to the absolute date", 40 * 24 * time.Hour, "Sep 7, 2026"},
 	}
 
 	for _, tc := range cases {

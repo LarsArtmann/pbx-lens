@@ -202,6 +202,11 @@ const NEEDS_DISCOVERY =
       );
       console.log("print chrome hidden (nav/footer/button):", JSON.stringify(hidden));
       if (hidden.some((h) => !h)) fail("print media did not drop all chrome");
+      // The ops cards carry break-inside:avoid under print (2026-10-17
+      // print-breaks nit); capture the page's print posture as evidence.
+      await page.goto(`${BASE}/ops`, { waitUntil: "networkidle0" });
+      await page.screenshot({ path: path.join(OUT, "print-ops.png"), fullPage: true });
+      n++;
       await ctx.close();
     }
 
