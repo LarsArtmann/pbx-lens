@@ -127,9 +127,8 @@ webphone later gets a read-only deep link, never a data dependency.
   former 30 s deadline truncated both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`;
   READY/STOPPING/WATCHDOG under the manager) + htpasswd auth. The
   ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
-  Compression → ETag; the
-  ordering doctrine, the ETag skip policy, the render-buffering trap, and
-  the `Cache-Control: no-cache` revalidation contract) lives in
+  Compression → ETag; the ordering doctrine, the ETag skip policy, the
+  render-buffering trap, and the `Cache-Control: no-cache` revalidation contract) lives in
   docs/http-stack.md — read it before touching caching or timing. Every UI
   route is a query or a proxy, never a write. The recording proxy's two
   upstream hops are bounded by `web.DefaultUpstreamTimeout` (30 s; `serve
