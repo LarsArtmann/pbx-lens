@@ -67,13 +67,13 @@ hash incident triaged to root cause.
 
 ## b) PARTIALLY DONE
 
-1. **F65 (Telnyx 2027-01 calendar confirm):** no calendar tooling/ics in
+~~1. **F65 (Telnyx 2027-01 calendar confirm):** no calendar tooling/ics in~~ → routed: Telnyx quarterly checklist row (calendar confirm bullet)
    this environment — the entry lives in the owner's external calendar;
    repo-side truth (quarterly note in docs/telnyx-live-api.md) stands.
-2. **M6 buildflow dev gate:** everything green EXCEPT the in-gate nix-build
+~~2. **M6 buildflow dev gate:** everything green EXCEPT the in-gate nix-build~~ → routed: BuildFlow#56 + the clean-checkout gate row
    step (OOM under load 24–45); individually verified green per doctrine —
    a quiet-machine full-gate rerun is still owed for a 70/70 stamp.
-3. **Plan §Step-1 P2 outcomes:** memo done, answers not (F7) — D1 alone
+~~3. **Plan §Step-1 P2 outcomes:** memo done, answers not (F7) — D1 alone~~ → routed: owner decision pack D1-D5 row
    gates an all-surfaces date-format change.
 
 ## c) NOT STARTED (deliberately — harvested, not dropped)
@@ -127,80 +127,80 @@ TODO_LIST rows with evidence pointers.
 
 ## f) NEXT 50 (ordered by impact; the first ~10 are the real queue)
 
-1. Answer D1–D5 (owner) → date-format change lands everywhere.
-2. Quiet-machine full-gate rerun for the 70/70 stamp.
-3. File the hash-fixer dirty-tree corruption upstream (BuildFlow).
-4. M12 F39–F45: MOS poller when the 2027-01 window opens (design now,
+~~1. Answer D1–D5 (owner) → date-format change lands everywhere.~~ → routed: owner decision pack D1-D5 row
+~~2. Quiet-machine full-gate rerun for the 70/70 stamp.~~ → routed: BuildFlow#56 + the clean-checkout gate row
+~~3. File the hash-fixer dirty-tree corruption upstream (BuildFlow).~~ done — BuildFlow#55 filed
+~~4. M12 F39–F45: MOS poller when the 2027-01 window opens (design now,~~ → routed: T15 MOS poller row (design done; 2027-01 execution)
    execute then).
-5. M13 F46–F49: PII enforcement point decision + E164/ParticipantHash.
-6. M17 mobile card-list: decide card vs scroll, implement.
-7. M14 alert-only pixel-diff over the 39-PNG corpus.
-8. M15 /api/ops human surface (card vs page).
-9. M16 retention surfacing (last purge, retired counts).
-10. Watch templ-components#48/#49/#51/#55; fold in on landing (retire
+~~5. M13 F46–F49: PII enforcement point decision + E164/ParticipantHash.~~ → routed: PII enforcement row (one-pager ready)
+~~6. M17 mobile card-list: decide card vs scroll, implement.~~ → routed: mobile card-list row (owner taste)
+~~7. M14 alert-only pixel-diff over the 39-PNG corpus.~~ done — --diff/--save-baseline alert-only pixel diff
+~~8. M15 /api/ops human surface (card vs page).~~ done — the /ops page (v0.2.0)
+~~9. M16 retention surfacing (last purge, retired counts).~~ done — the /ops retention card (v0.2.0)
+~~10. Watch templ-components#48/#49/#51/#55; fold in on landing (retire~~ → routed: fold-in watch row
     workarounds + goldens).
-11. v0.2.0 cut (CHANGELOG Unreleased is full).
-12. Production re-ingest ContentHash v2 (deploy-path blocked).
-13. Host deploys with current module options (deploy-path blocked).
-14. Dependabot confirmation for newly-direct deps.
-15. 1MiB transcript policy decision.
-16. E2E cache-semantics hardening (Vary/HEAD/query variants).
-17. Coverage pass on caching/serve hot paths.
-18. Concurrent-poll hash-cost probe.
-19. `/api/ops` stale-pass warning.
-20. Cost panel on the dashboard (CostMicros data exists).
-21. Backup rotation/shipping opinion.
-22. Direction auto-detection design follow-through (did-direction doc).
-23. SegmentBar/FilterBar re-eval on next templ-components bump.
-24. Search hit-card keyboard focus parity with table rows (focus ring on
+~~11. v0.2.0 cut (CHANGELOG Unreleased is full).~~ done — v0.2.0 cut AND pushed (7d15c6f)
+~~12. Production re-ingest ContentHash v2 (deploy-path blocked).~~ → routed: prod re-ingest row
+~~13. Host deploys with current module options (deploy-path blocked).~~ → routed: host deploy row
+~~14. Dependabot confirmation for newly-direct deps.~~ → routed: dependabot confirm row
+~~15. 1MiB transcript policy decision.~~ → routed: >1MiB transcript policy row
+~~16. E2E cache-semantics hardening (Vary/HEAD/query variants).~~ done — Vary/Content-Length/HEAD/query landed
+~~17. Coverage pass on caching/serve hot paths.~~ done — caching.go 100% coverage pass
+~~18. Concurrent-poll hash-cost probe.~~ done — BenchmarkConcurrentPoll
+~~19. `/api/ops` stale-pass warning.~~ done — last_pass_age_seconds (v0.2.0)
+~~20. Cost panel on the dashboard (CostMicros data exists).~~ → routed: ROADMAP theme 1 cost panel
+~~21. Backup rotation/shipping opinion.~~ → routed: sibling backup-rotation opinion row
+~~22. Direction auto-detection design follow-through (did-direction doc).~~ done — DID-direction shipped 2026-10-12
+~~23. SegmentBar/FilterBar re-eval on next templ-components bump.~~ → routed: ROADMAP SegmentBar/FilterBar bump watch
+~~24. Search hit-card keyboard focus parity with table rows (focus ring on~~ done — hover/focus aligned (M11)
     the `<a>` hit card — verify once).
-25. `--only <surface>` filter for screenshot-probe (e5.4).
-26. Content-hash `ensureCodegen` (e5.3).
-27. Shared snapshot hashing for gate-vs-standalone nix (e5.5).
-28. Long-transcript `?q=` performance sanity (amber marks over 500 turns).
-29. Export CSV header i18n check once D1 answers.
-30. Golden normalization audit: is `tc-mobile-menu-NORMALIZED` still needed
+~~25. `--only <surface>` filter for screenshot-probe (e5.4).~~ done — --only filter shipped
+~~26. Content-hash `ensureCodegen` (e5.3).~~ done-in-part — content-hash ledger landed (M12/F36); the clean-clone rehearsal row remains
+~~27. Shared snapshot hashing for gate-vs-standalone nix (e5.5).~~ NOT-DO — superseded by BuildFlow#55/#56 + the sanctioned update-vendor-hash path
+~~28. Long-transcript `?q=` performance sanity (amber marks over 500 turns).~~ done — TestDetail500TurnTranscriptRenders (M16)
+~~29. Export CSV header i18n check once D1 answers.~~ → routed: owner decision pack D1 row
+~~30. Golden normalization audit: is `tc-mobile-menu-NORMALIZED` still needed~~ done — zero NORMALIZED references (M12/F37)
     anywhere after the pinned nav id? (probably dead — remove).
-31. `verify-ui-contract` + `verify-staleness-live` merge? Two serves of the
+~~31. `verify-ui-contract` + `verify-staleness-live` merge? Two serves of the~~ NOT-DO — deliberate: separate probes, one lane (scripts/README)
     same shape; one runner with subcommands could cut probe time.
-32. Add the four probes to a local `just`-free runner script (single
+~~32. Add the four probes to a local `just`-free runner script (single~~ done — scripts/verify-all.sh
     `scripts/verify-all.sh`) — convenience only.
-33. Phone-number formatting pass (E.164 display grouping) behind D1.
-34. Table column width audit on 200-rune excerpts at 768px (tablet gap in
+~~33. Phone-number formatting pass (E.164 display grouping) behind D1.~~ → routed: owner decision pack D1 row
+~~34. Table column width audit on 200-rune excerpts at 768px (tablet gap in~~ NOT-DO — 768px audit clean; no tablet issue found
     the eyeball matrix).
-35. Print stylesheet: add transcript page-break rules (long logs split
+~~35. Print stylesheet: add transcript page-break rules (long logs split~~ done — transcript print page-breaks (v0.2.0)
     mid-turn today).
-36. `favicon.svg` dark-variant via `prefers-color-scheme` media attr.
-37. robots.txt + noindex meta (public LAN tool hygiene).
-38. Security headers pass (CSP report-only dry run on / and detail).
-39. Rate-limit the recording proxy explicitly (auth exists; throttle
+~~36. `favicon.svg` dark-variant via `prefers-color-scheme` media attr.~~ done — in-SVG prefers-color-scheme (v0.2.0)
+~~37. robots.txt + noindex meta (public LAN tool hygiene).~~ done — robots.txt + noindex (M15)
+~~38. Security headers pass (CSP report-only dry run on / and detail).~~ done — CSP_REPORT_ONLY branch (M15); the browser sweep = its own TODO row
+~~39. Rate-limit the recording proxy explicitly (auth exists; throttle~~ done — recording rate limit (M15, 429 + Retry-After)
     documented as not honored via XFF).
-40. CHANGELOG entry for the nav-id fix + empty-index ladder (Unreleased).
-41. AGENTS.md: retire the "38-PNG" count drift risk (say "the probe set").
-42. docs/README screenshots refresh after the theme-color/hover fixes.
-43. Spotlight the heat-map ring in the README quality section (new teal
+~~40. CHANGELOG entry for the nav-id fix + empty-index ladder (Unreleased).~~ done — v0.2.0 CHANGELOG entries
+~~41. AGENTS.md: retire the "38-PNG" count drift risk (say "the probe set").~~ done — AGENTS wording rot-proofed (M13)
+~~42. docs/README screenshots refresh after the theme-color/hover fixes.~~ done — README screenshots verified current (disposition, not skip)
+~~43. Spotlight the heat-map ring in the README quality section (new teal~~ NOT-DO — the teal evidence lives in README prose; no ring spotlight added
     evidence PNG exists).
-44. Benchmark: `ListCalls` page latency at 10k seeded rows (index sanity).
-45. Fuzz-ish ingest pass: malformed JSONL lines never panic (probably
+~~44. Benchmark: `ListCalls` page latency at 10k seeded rows (index sanity).~~ done — BenchmarkListCalls10k (36.3 ms/op)
+~~45. Fuzz-ish ingest pass: malformed JSONL lines never panic (probably~~ done — TestParseMalformedJSONLNeverPanics (M16)
     covered; one property test would pin it).
-46. `smoke -age`/`-with-recording` go doc comment + `--help` wording pass.
-47. Move `/tmp/long-excerpt-capture.js` logic into screenshot-probe as a
+~~46. `smoke -age`/`-with-recording` go doc comment + `--help` wording pass.~~ NOT-DO — help verified adequate (M13)
+~~47. Move `/tmp/long-excerpt-capture.js` logic into screenshot-probe as a~~ done — superseded: the long-excerpt fixture folded into the probe (M13)
     fixture option or delete the file.
-48. Retire `TestSearchHintProse`'s chip-absence assertion if the chip never
+~~48. Retire `TestSearchHintProse`'s chip-absence assertion if the chip never~~ done-as-tripwire — kept as the chip-absence assertion (M13 decision)
     comes back (or keep as a tripwire — decide once).
-49. Add `vendorHash.nix` provenance comment (which commit set it, which
+~~49. Add `vendorHash.nix` provenance comment (which commit set it, which~~ done — vendorHash.nix provenance comment (M5/F12)
     command refreshes it) — the placeholder incident showed the gap.
-50. Quarterly Telnyx re-verify (2027-01, owner calendar F65).
+~~50. Quarterly Telnyx re-verify (2027-01, owner calendar F65).~~ → routed: Telnyx quarterly row
 
 ## g) Questions only the owner can answer
 
-1. **D1 date/number vocabulary:** EU (09.10.2025), US (current), or hybrid?
+~~1. **D1 date/number vocabulary:** EU (09.10.2025), US (current), or hybrid?~~ → routed: owner decision pack D1
    Recommendation stands: EU. This gates the single largest cross-surface
    change.
-2. **D3 quiet-week volume chart:** do you actually look at the 30-day chart
+~~2. **D3 quiet-week volume chart:** do you actually look at the 30-day chart~~ → routed: owner decision pack D3
    during quiet stretches — is an upstream axis/baseline ask (#48 follow-up
    or a local baseline rule) worth it, or is spike-reading fine?
-3. **M13 PII boundary:** enforce E164/ParticipantHash at INGEST (storage is
+~~3. **M13 PII boundary:** enforce E164/ParticipantHash at INGEST (storage is~~ → routed: PII enforcement row (one-pager recommends read)
    normalized; raw-at-rest doctrine bends) or at READ (raw stays, every
    surface gates)? The export gate already chose READ; should storage match
    eventually, or is export-time-only the permanent answer?

@@ -81,7 +81,7 @@ map, which still claimed v1.21.0 / go-appkit v0.8.0.
 
 ## b) PARTIALLY DONE
 
-1. **M11/F29–F30 cache-semantics hardening: WRITTEN, NOT RUN.**
+~~1. **M11/F29–F30 cache-semantics hardening: WRITTEN, NOT RUN.**~~ done — the test ran green; Vary/Content-Length/HEAD/query landed (thirteenth pass)
    `TestCacheSemanticsHardening` (cmd/pbx-lens/serve_test.go, uncommitted)
    pins: `Vary: Accept-Encoding` on 200 AND 304, identity conditional
    replay → 304 (proving tags hash identity bodies per the ordering
@@ -89,8 +89,8 @@ map, which still claimed v1.21.0 / go-appkit v0.8.0.
    HEAD → 304 with no body, exact `Content-Length` on buffered renders, and
    the mux's 301 for the trailing-slash form. **First action for the next
    session: run it and fix what it finds.**
-2. **M11/F31–F32 not started** (hash-cost probe, coverage pass).
-3. **TODO_LIST/CHANGELOG/plan annotation** not yet updated with M9/M10
+~~2. **M11/F31–F32 not started** (hash-cost probe, coverage pass).~~ done — BenchmarkConcurrentPoll + the coverage pass (M11/F31-F32)
+~~3. **TODO_LIST/CHANGELOG/plan annotation** not yet updated with M9/M10~~ done — rows closed (thirteenth pass); v0.2.0 CHANGELOG carries /ops; the plan header annotated
    closures — rows still say TODO.
 
 ## c) NOT STARTED (deliberately — unclaimed 05-40 items)
@@ -153,40 +153,40 @@ full-gate stamp (needs load < 40; box sat at 39–58 all session).
 
 ## f) NEXT 50 (ordered; first ~10 are the real queue)
 
-1. Run `TestCacheSemanticsHardening`; fix what it finds; commit with the
+~~1. Run `TestCacheSemanticsHardening`; fix what it finds; commit with the~~ done — the hardening test ran and landed (thirteenth pass)
    F29/F30 note.
-2. M11/F31 concurrent-poll hash-cost probe (CPU ceiling numbers).
-3. M11/F32 coverage pass on caching_test/serve_test hot paths.
-4. Close M9/M10/M11 rows in TODO_LIST + CHANGELOG entries (ops page,
+~~2. M11/F31 concurrent-poll hash-cost probe (CPU ceiling numbers).~~ done — BenchmarkConcurrentPoll (≈82/101 µs)
+~~3. M11/F32 coverage pass on caching_test/serve_test hot paths.~~ done — caching.go 100%
+~~4. Close M9/M10/M11 rows in TODO_LIST + CHANGELOG entries (ops page,~~ done — rows closed; v0.2.0 carries the surfaces
    retention card, stale warning) + annotate the 05-40 plan.
-5. M12/F33–F37 probe consolidation (`--only` filter, verify-all.sh,
+~~5. M12/F33–F37 probe consolidation (`--only` filter, verify-all.sh,~~ done — verify-all.sh + --only + the codegen ledger (M12)
    probe-merge decision, content-hash ensureCodegen, golden
    NORMALIZED-dead audit).
-6. M13/F38–43 doc hygiene (AGENTS "38-PNG" wording, README screenshots
+~~6. M13/F38–43 doc hygiene (AGENTS "38-PNG" wording, README screenshots~~ done — AGENTS rot-proofed; README current; fixtures folded (M13)
    refresh, heatmap-ring mention, smoke help wording, /tmp fixture
    disposition, hint-tripwire decision).
-7. M14/F44 quarterly fold-in checklist into upstream-filings.md.
-8. M15/F45–48 security bundle (favicon dark media variant, robots/noindex,
+~~7. M14/F44 quarterly fold-in checklist into upstream-filings.md.~~ done — the fold-in watch table (upstream-filings.md)
+~~8. M15/F45–48 security bundle (favicon dark media variant, robots/noindex,~~ done — M15 shipped (robots/noindex/CSP/rate-limit)
    CSP report-only dry run, explicit recording-proxy rate-limit).
-9. M16/F49–51 perf sanity (10k-row ListCalls benchmark, 500-turn `?q=`
+~~9. M16/F49–51 perf sanity (10k-row ListCalls benchmark, 500-turn `?q=`~~ done — M16 shipped (10k bench, 500-turn, JSONL property test)
    check, malformed-JSONL property test).
-10. M5/F12 vendorHash.nix provenance comment (commit, command, date).
-11. M6 full-gate 70/70 stamp when load < 40 (side effect of a quiet box).
-12. M7/F18–20 MOS poller design doc (no live calls; stages the 2027-01
+~~10. M5/F12 vendorHash.nix provenance comment (commit, command, date).~~ done — vendorHash.nix provenance comment (M5/F12)
+~~11. M6 full-gate 70/70 stamp when load < 40 (side effect of a quiet box).~~ → routed: BuildFlow#56 + the clean-checkout gate row
+~~12. M7/F18–20 MOS poller design doc (no live calls; stages the 2027-01~~ done — docs/planning/2026-10-15_mos-poller-design.md
     window).
-13. M17/F54–55: 768px excerpt/tablet audit, transcript print page-breaks.
-14. M18/F56–58: dashboard cost panel (CostMicros data exists), backup
+~~13. M17/F54–55: 768px excerpt/tablet audit, transcript print page-breaks.~~ done — 768px clean (F54); transcript print-breaks landed (F55)
+~~14. M18/F56–58: dashboard cost panel (CostMicros data exists), backup~~ cost panel → routed: ROADMAP theme 1; the direction note closed as landed (followons)
     rotation opinion, direction auto-detection follow-through.
-15. M19/F59–60: alert-only pixel-diff over the 39-PNG corpus.
-16. M20/F62–64: >1MiB transcript policy one-pager, production re-ingest
+~~15. M19/F59–60: alert-only pixel-diff over the 39-PNG corpus.~~ done — --diff/--save-baseline alert-only pixel diff
+~~16. M20/F62–64: >1MiB transcript policy one-pager, production re-ingest~~ done — process-prep + followons + the PII one-pager landed (M20/M18/M4 docs)
     runbook, host-deploy prep checklist.
-17. Decide where a purge-execution record would live (see g-2) and file it
+~~17. Decide where a purge-execution record would live (see g-2) and file it~~ NOT-DO — the would-retire card + -json cover the need; a write path into the index DB contradicts read-only doctrine (g2 unanswered = declined-by-default)
     as a bounded TODO row if the answer is "worth it".
-18. SegmentBar adoption evaluation now that v1.23.0 ships it (the
+~~18. SegmentBar adoption evaluation now that v1.23.0 ships it (the~~ → routed: ROADMAP SegmentBar re-eval on bump
     hand-rolled AI/human stand-in and the Donut mix may simplify).
-19. FilterBar/SegmentedControl evaluation when the filter form outgrows the
+~~19. FilterBar/SegmentedControl evaluation when the filter form outgrows the~~ → routed: ROADMAP FilterBar re-eval on bump
     hand-rolled row (map rows now say EXIST).
-20. utils/format sweep: CompactCount/ClockDuration anywhere counts or
+~~20. utils/format sweep: CompactCount/ClockDuration anywhere counts or~~ done-in-part — format.Percent adopted on /ops; the wider sweep never needed
     durations render raw (search hit cards, detail durations).
     21–50. The plan's remaining tail verbatim: fold-in watch on
     templ-components#48/#49/#51/#55 + BuildFlow#45/#50 + go-etag#2 +
@@ -204,17 +204,17 @@ full-gate stamp (needs load < 40; box sat at 39–58 all session).
 
 ## g) Questions only the owner can answer
 
-1. **D1–D5 (unchanged, still the 1%):** date/number vocabulary EU vs US
+~~1. **D1–D5 (unchanged, still the 1%):** date/number vocabulary EU vs US~~ → routed: owner decision pack D1-D5 row
    gates the largest cross-surface change plus phone grouping and export
    headers; the other four answers unblock ~8 tasks. The pack is at
    `docs/decisions/2026-10-15_ui-owner-decision-pack.md`.
-2. **Purge-execution telemetry:** `/ops` today shows the live would-retire
+~~2. **Purge-execution telemetry:** `/ops` today shows the live would-retire~~ NOT-DO — declined-by-default (see f17): read-only doctrine + disposable DB; -dry-run -json covers automation
    count and points at the `call.retired` audit trail, but "last purge ran
    at T, N retired" needs a persisted execution record (meta collection vs
    dedicated table vs event — schema surgery on the library-owned DB either
    way). Is that record worth the write path from `purge` into the index
    DB, or is the current posture + `-dry-run -json` enough?
-3. **Concurrent-session commit policy:** a second session committed this
+~~3. **Concurrent-session commit policy:** a second session committed this~~ → routed: ROADMAP multi-agent open question
    session's uncommitted TODO_LIST edit (accurately). Should sessions on
    shared checkouts restrict commits to files they authored, even when the
    foreign edit is obviously complete and correct?
