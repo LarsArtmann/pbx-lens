@@ -51,6 +51,9 @@ pbx-lens ingest-cdr -db /var/lib/pbx-lens/calls.db /path/to/Master.csv
 Re-running the same file is safe: identical rows replay to zero events
 (content-hash idempotency), and a changed snapshot of an existing stream is
 superseded by a `call.corrected` event — the log keeps the full audit trail.
+`-dry-run` parses and age-gates the file and prints the would-record report
+without touching any index (no `-db` required) — the zero-risk rehearsal
+step before any production re-ingest.
 
 ### Index Telnyx AI calls
 

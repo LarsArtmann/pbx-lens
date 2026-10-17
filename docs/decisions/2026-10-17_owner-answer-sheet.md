@@ -83,3 +83,16 @@ repo weight ~10-20MB) ·
 C artifact-store per CI run.
 **Recommendation: A** for a single-host internal tool; revisit if a
 second operator machine starts touching the UI.
+
+## 11. CSP enforce-mode flip → ANSWER:
+
+The report-only sweep is enforce-clean in the probe browser (zero
+violations across 6 surfaces after the nonce fixes). Enforce-mode breaks
+pages silently for real users if any surface was missed — only you know
+the operator risk tolerance for that. Options:
+A stay report-only until real-browser usage exists on the deployed hosts ·
+B flip to enforce in v0.3.0 after one more clean sweep (the flip bundles
+with the next host deploy either way).
+**Recommendation: A** for a private internal tool; the ROADMAP
+collector-endpoint idea would surface any real violations first.
+(Staged from the 10-28 close-out report's §g Q3, 2026-10-17.)

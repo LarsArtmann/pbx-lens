@@ -51,7 +51,7 @@ revisit trigger — not commitments):
 - data-fingerprint fast-304 (mtime+count keyed) if the index grows ~100x
 - static assets with hashed filenames + long max-age (measure the actual
   cache-miss rate first; YAGNI-lean while htmx.min.js is the only asset)
-- `go-etag/entitytag` as a direct dep only if handler-set tags ever land
+- `go-etag/entitytag` as a direct dep only if handler-set tags land
 - consolidate `timing.go`/`caching.go` when a fourth middleware arrives
 - etag/gzip ratios surfaced as `appkit_*` metrics (needs appkit metric
   plumbing; `/api/ops` hook wiring is the TODO_LIST near-term)
@@ -60,6 +60,26 @@ revisit trigger — not commitments):
   would aggregate browser reports during the enforcement evaluation
 - Screenshot corpus compression (2026-10-15): 41 PNGs per sweep → webp or
   on-demand capture, for eyeball-pass ergonomics
+
+Process/ops raw ideas (2026-10-17 second docs-health pass harvest; each
+rides its own trigger — the actionable bounded versions live in TODO_LIST):
+
+- Off-hours full-gate catch-up (systemd timer / cron, or a
+  first-session-runs-the-gate rule) so load-gated receipts stop aging
+- vulnix scan of the full nix closure (govulncheck covers only Go) — pair
+  with the next flake lock bump; nix-checker cleanup rides the same pass
+- Branch protection requiring HEAD-green only (cosmetic mitigation for
+  mid-flight red SHAs)
+- dprint policy for `docs/status/archived/` (exclude from formatting vs
+  accept future reflows) — owner call, one line in dprint.json either way
+- Session-start drift guard: `gh run list` + one package test as a
+  two-second "is HEAD actually green" check before continuing work
+- Long-excerpt PNG eyeball as a quarterly truncation-regression cadence
+- Purge-timer state surfaced on `/ops` — revisit only if ops asks (the
+  in-process card deliberately cannot see host-side timer facts)
+- Split the CHANGELOG Unreleased pile at v0.3.0 (three sections deep)
+- Cadence: schedule the next Pareto pass BEFORE new work accretes (the
+  plan-after-plan pattern that closed both prior queues)
 
 ### 3. Ecosystem integration (plan phase 4)
 

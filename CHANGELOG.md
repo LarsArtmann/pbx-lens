@@ -7,6 +7,31 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-10-17 (docs-health pass: live-set close-out + planning archive)
+
+- The four 2026-10-17 status reports were annotated inline (247 verdicts:
+  every §b/§c/§f/§g item carries a done / routed / Won't verdict verified
+  against code, CHANGELOG, and the upstream ledgers) and archived — the
+  `docs/status/` live set is empty, and a `docs/status/README.md` now
+  indexes live-vs-archived at a glance.
+- The eight fully-executed planning docs (00-09, 01-32, 19-05, 03-43,
+  12-47, 13-32, 17-31, 05-07) moved to `docs/planning/archived/` with a
+  per-file manifest, resolving the question the corpus sweep staged
+  (annotate-in-place vs archive). The three plans with owner-gated or
+  2027-01 residue stay live. Living-doc citations updated; CHANGELOG
+  historical entries keep their original paths (append-only).
+- The upstream filings ledger and the drafts README were re-synced with
+  the 2026-10-17 gh-verified states (BuildFlow#45/#50/#55/#56,
+  go-cqrs-lite#62-64, and go-appkit#26 CLOSED; go-etag#2, go-nix-helpers#7,
+  treefmt-nix#545, templ-components#48/#49/#50/#51/#55 open), and the two
+  2026-10-15 drafts gained their ledger rows and FILED banners.
+- Harvest: the close-out report's §f 19+ queue triaged into six new
+  bounded TODO rows (gate hardening, upstream filings, probe polish,
+  release rehearsals, lint-policy intent, hooks wiring), the CSP
+  enforce-mode decision staged as answer-sheet §11, ten ROADMAP raw
+  ideas, and the README ingest section now mirrors `ingest-cdr -dry-run`;
+  AGENTS.md holds the 219-line budget.
+
 ### Added — 2026-10-17 (Pareto-plan quality tail)
 
 - Security-headers middleware in the serve chain (`X-Content-Type-Options:
