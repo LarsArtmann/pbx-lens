@@ -363,6 +363,15 @@ func TestSecurityHeadersContract(t *testing.T) {
 // 2026-10-15 hardening pass owed the HTTP-stack doctrine (05-40 M11):
 // content negotiation must Vary, query strings must never cross-revalidate,
 // HEAD rides the same tags, and buffered renders carry exact lengths.
+//
+// Flake triage (2026-10-18, pareto T6): the one CI failure on record
+// (2026-10-16 era, 5.06s duration) is the upstream testkit.Serve start
+// deadline — go-appkit's startTimeout = 5s with a 1ms poll Fatals when
+// saturation delays the listener start; nothing in this test depends on
+// wall-clock time. Same saturation class go-appkit already outgrew on
+// leakSettleTimeout (5s→10s, proven twice). Disposition: green in every
+// run since, 50x -race local loop under load 140-200 green, upstream
+// filing drafted (docs/drafts/go-appkit-testkit-start-timeout-saturation.md).
 func TestCacheSemanticsHardening(t *testing.T) {
 	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
 	if err != nil {
