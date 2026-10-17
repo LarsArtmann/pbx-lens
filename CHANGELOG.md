@@ -44,6 +44,11 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   in any golangci-lint release (added 2026-10-16; both the devShell and
   CI pin v2.14, which rejects it as unknown), so every lint run aborted
   with "unknown linters". Removed the phantom entry; lint runs again.
+- Repo sync closed: remote main is green again (the 01:53 daemon push
+  carried the statix + phantom-linter fixes; CI run 38992729791 success),
+  and the docs-corpus tail (27-report archive, living-doc rebuild, the
+  Pareto plan) is pushed on top of it — the "local ahead of a red remote"
+  state is gone, so the push-tail TODO row is resolved by events.
 
 Nothing else yet.
 
