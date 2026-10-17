@@ -54,11 +54,11 @@ jobs:
 
       - name: Check coverage threshold
         run: |
-          MIN_COVERAGE=50
-          # 50 is the measured floor (2026-10-11): packages sit at 76-94%, but
-          # cmd/pbx-lens and internal/wire carry untested wiring (TODO_LIST:
-          # httptest loop test, resolveKey/parseSince extraction). Raise this
-          # to the fleet 80% gate when those land.
+          MIN_COVERAGE=70
+          # 70 pins the 2026-10-17 reality (total 71.9% after the cmd wiring
+          # tests landed, cmd 9.2% -> 27.6%): 2pts of headroom, not a chase
+          # target. Fleet 80 stays the aspiration; raising further is an
+          # owner call (answer sheet D-question, coverage floor).
           COV=$(go tool cover -func=cover.out | grep total | awk '{print $3}' | sed 's/%//')
           echo "total coverage: ${COV}%"
           rm -f cover.out
