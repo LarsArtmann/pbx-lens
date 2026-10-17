@@ -283,8 +283,20 @@ func TestIngestTelnyxDryRunReportsWithoutWrites(t *testing.T) {
 		switch {
 		case r.URL.Path == "/ai/conversations":
 			writeStubJSON(map[string]any{"data": []map[string]any{
-				{"id": "conv-1", "created_at": "2026-10-17T10:00:00Z"},
-				{"id": "conv-2", "created_at": "2026-10-17T11:00:00Z"},
+				{
+					"id":         "conv-1",
+					"created_at": "2026-10-17T10:00:00Z",
+					"metadata": map[string]any{
+						"telnyx_agent_target":    "+15551230001",
+						"telnyx_end_user_target": "+15551230002",
+					},
+				},
+				{
+					"id":         "conv-2",
+					"created_at": "2026-10-17T11:00:00Z",
+
+					"metadata": map[string]any{"telnyx_agent_target": "+15551230001"},
+				},
 			}})
 		case strings.HasPrefix(r.URL.Path, "/ai/conversations/") && strings.HasSuffix(r.URL.Path, "/messages"):
 			messagesWalked = append(messagesWalked, r.URL.Path)
