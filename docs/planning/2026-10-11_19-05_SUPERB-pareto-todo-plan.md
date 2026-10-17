@@ -7,6 +7,12 @@
 
 # SUPERB Plan — pbx-lens Open Work (Pareto)
 
+> **EXECUTED (annotated 2026-10-17, planning-doc closure):** this plan's
+> tiers were executed on 2026-10-11→12; the execution record is
+> `docs/status/archived/2026-10-11_19-37_tier1-2-pareto-execution-status.md`
+> (followed by the 20-26 and 23-35/23-41 gate-closure reports). This file is
+> a historical snapshot — never rewritten; open work lives in `TODO_LIST.md`.
+
 Date: 2026-10-11 19:05 CEST · Baseline: build green, 117 test functions green,
 golangci-lint 0 issues, buildflow dev gate "passed with warnings" with exactly
 ONE error-severity finding (AGENTS.md size).

@@ -1,5 +1,13 @@
 # SUPERB Plan: pbx-lens remaining work — Pareto re-cut after T1-T4 + docs
 
+> **EXECUTED (annotated 2026-10-17, planning-doc closure):** every task in
+> this plan was executed and verified during the 2026-10-11→12 era; the
+> execution record is `docs/status/archived/2026-10-11_19-37_tier1-2-pareto-execution-status.md`
+> (with the earlier same-day reports 03-55 through 18-21 alongside it) and the
+> shipped outcomes are in `CHANGELOG.md` (R-series entries, v0.1.0/v0.2.0
+> receipts). This file is a historical snapshot — never rewritten; open work
+> lives in `TODO_LIST.md`.
+
 Date: 2026-10-11 00:09 CEST. Input state: the ingest core is DONE and
 live-proven (T1-T4: scaffold, domain, CDR ingest, Telnyx ingest; 24 tests;
 idempotency proven against production data), the doc set exists

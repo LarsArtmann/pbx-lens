@@ -20,6 +20,12 @@
 >   filing, owner yes).
 > - RELEASED: R4 v0.1.0 after the clean gate (owner yes).
 > - STILL BLOCKED: R20 (API key), R25 (upstream release), R26 (v2 gate).
+>
+> **EXECUTED (annotated 2026-10-17, planning-doc closure):** the full
+> execution record is
+> `docs/status/archived/2026-10-12_07-13_SUPERB-plan-execution-status.md`
+> (with 07-56 → 13-49 continuing it) and the shipped R-series outcomes are in
+> `CHANGELOG.md`. Nothing left open here that is not already a TODO_LIST row.
 
 Date: 2026-10-12 03:43 CEST · Baseline: working tree clean at `48a350e`
 (the 03:39 status-report commit), 13/13 test packages green, race green,

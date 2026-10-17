@@ -1,5 +1,13 @@
 # SUPERB Plan: pbx-lens Frontend — templ-components UI on a go-appkit host
 
+> **EXECUTED (annotated 2026-10-17, planning-doc closure):** the frontend era
+> this plan scoped (serve on go-appkit + templ-components UI) shipped on
+> 2026-10-11→12; the execution record is
+> `docs/status/archived/2026-10-11_09-35_session-frontend-completion-dashboard-systemd-docs.md`
+> and the UI-trio entries in `CHANGELOG.md` (go-appkit + templ-components +
+> templ adoption, later bumped 2026-10-15). This file is a historical
+> snapshot — never rewritten; open work lives in `TODO_LIST.md`.
+
 Date: 2026-10-11 01:32 CEST. Scope: the "lens" half of pbx-lens — the `serve`
 command and every page that renders the call index (list, detail, search,
 freshness, dashboards), plus the build pipeline they need. Ingest-side work
