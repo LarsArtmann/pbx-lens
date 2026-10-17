@@ -62,8 +62,9 @@ Either (either is fine; both is better):
 ## Local reproduction note
 
 `go test -race -count=50 -run TestCacheSemanticsHardening` on a saturated
-machine (load 140-200) at the pin: [loop result pending — fill before filing;
-green-under-saturation does not refute the CI one-off, it bounds the frequency].
+machine (load 140-200) at the pin: **green 50/50 in 254 s** (2026-10-18).
+Green-under-saturation does not refute the CI one-off — it bounds the
+frequency; the CI failure predates every run since 2026-10-16.
 
 ## Consumer context
 
