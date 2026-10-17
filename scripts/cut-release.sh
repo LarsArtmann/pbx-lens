@@ -36,7 +36,7 @@ step "quiesce: clean tree, no concurrent gate, load policy"
 git fetch origin main --quiet
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] ||
 	fail "HEAD != origin/main — push/rebase the branch first; releases cut from unpushed work tag red"
-read -r L1 L5 L15 _ < /proc/loadavg
+read -r L1 _ L15 _ < /proc/loadavg
 awk -v a="$L1" -v b="$L15" 'BEGIN { exit !(a < 15 && b < 40) }' ||
 	fail "load ${L1}/${L15} is over the gate policy (1-min < 15 AND 15-min < 40) — wait for a quieter machine"
 
