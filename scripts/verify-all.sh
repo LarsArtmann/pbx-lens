@@ -10,7 +10,10 @@
 # for a fast UI sanity check after logic changes; run the full lane before
 # tagging or after any visual change.
 #
-# Usage: bash scripts/verify-all.sh [--fast | screenshot-probe args...]
+# --baseline <dir> (2026-10-18): alert-only pixel diff against that baseline
+# directory (same hook as LENS_DIFF_BASELINE, as a lane flag).
+#
+# Usage: bash scripts/verify-all.sh [--fast | [--baseline <dir>] screenshot-probe args...]
 #   e.g. bash scripts/verify-all.sh --only dashboard --themes light
 set -euo pipefail
 
@@ -66,7 +69,23 @@ echo "=== screenshot-probe ==="
 # Alert-only pixel diff hook: LENS_DIFF_BASELINE=<dir> compares the fresh
 # captures against that baseline (never fails the lane). Practiced corpus:
 # ~/lens-baselines/<gen>/ (save one with screenshot-probe --save-baseline).
-if [ -n "${LENS_DIFF_BASELINE:-}" ]; then
+# --baseline <dir> is the same hook as a lane flag (T16): it wins over the
+# env var when both are set, and everything after it still passes through
+# to screenshot-probe.
+BASELINE_FLAG=""
+if [ "${1:-}" = "--baseline" ]; then
+	if [ -z "${2:-}" ]; then
+		echo "verify-all: --baseline needs a directory argument" >&2
+		exit 2
+	fi
+
+	BASELINE_FLAG="$2"
+	shift 2
+fi
+
+if [ -n "$BASELINE_FLAG" ]; then
+	set -- "$@" --diff "$BASELINE_FLAG"
+elif [ -n "${LENS_DIFF_BASELINE:-}" ]; then
 	set -- "$@" --diff "$LENS_DIFF_BASELINE"
 fi
 node scripts/screenshot-probe.js "$@"

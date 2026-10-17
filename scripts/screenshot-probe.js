@@ -204,8 +204,22 @@ const NEEDS_DISCOVERY =
       console.log("print chrome hidden (nav/footer/button):", JSON.stringify(hidden));
       if (hidden.some((h) => !h)) fail("print media did not drop all chrome");
       // The ops cards carry break-inside:avoid under print (2026-10-17
-      // print-breaks nit); capture the page's print posture as evidence.
+      // print-breaks nit); assert the computed result on every card, not
+      // just the CSS text, and capture the page's print posture as evidence.
       await page.goto(`${BASE}/ops`, { waitUntil: "networkidle0" });
+      const breakInside = await page.evaluate(() => {
+        const cards = document.querySelectorAll(".lens-ops-card");
+        const values = [...cards].map((el) => getComputedStyle(el).breakInside);
+        return { count: cards.length, values };
+      });
+      console.log(
+        `print break-inside on .lens-ops-card (${breakInside.count} cards):`,
+        JSON.stringify(breakInside.values),
+      );
+      if (breakInside.count === 0) fail("print ops posture: no .lens-ops-card found on /ops");
+      if (breakInside.values.some((v) => v !== "avoid")) {
+        fail("print media did not keep break-inside:avoid on every .lens-ops-card");
+      }
       await page.screenshot({ path: path.join(OUT, "print-ops.png"), fullPage: true });
       n++;
       await ctx.close();
