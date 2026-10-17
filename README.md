@@ -156,6 +156,30 @@ the view stays purged. Full erasure remains the disposable-DB move: drop
 the file and re-ingest. `-json` turns both the dry run and the applied
 purge into machine-readable reports for automation.
 
+**Alerting recipe (ops/retention visibility):** two health facts live in
+different places, and both belong in your alerter.
+
+- *Is the poller alive?* `GET /api/ops` (same auth as the UI) answers
+  `last_pass_age_seconds`; alert when it exceeds a few poll intervals:
+
+  ```console
+  curl -fsS -u ops:… https://lens.internal/api/ops \
+    | jq -e '.last_pass_age_seconds >= 0 and .last_pass_age_seconds < 600'
+  ```
+
+  (The age is `-1` when no pass ever ran — the `>= 0` guard makes "never
+  ran" alert instead of silently passing.)
+
+  `/ops` renders the same verdict chips for a human glance. What the card
+  deliberately does NOT show: the purge timer's state and the last purge's
+  age. Those are host-side facts (the timer runs out-of-band), so the
+  process honestly cannot see them — alert on them at the host instead:
+
+  ```console
+  systemctl list-timers --no-pager | grep pbx-lens-purge   # timer armed + next run
+  journalctl -u pbx-lens-purge.service --since -7d         # last pass + its report
+  ```
+
 ### Back up the index
 
 ```console

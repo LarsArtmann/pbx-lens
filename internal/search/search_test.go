@@ -272,6 +272,49 @@ func TestAbsentDigitsMatchNothing(t *testing.T) {
 	}
 }
 
+func TestMultiWordQuerySemantics(t *testing.T) {
+	// The multi-word quality pass (2026-10-17, untouched since the
+	// digits-shadow work): terms AND together regardless of order, an
+	// absent second term empties the result, case folds, and a words +
+	// number mix hits exactly once through the FTS leg + the digit shadow
+	// (merge dedupes).
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	ctx := context.Background()
+
+	cases := []struct {
+		name  string
+		query string
+		want  []string
+	}{
+		{"both terms AND", "woolly invoice", []string{"conv-a"}},
+		{"order is free", "invoice woolly", []string{"conv-a"}},
+		{"absent term empties", "woolly zanzibar", nil},
+		{"case folds", "WOOLLY INVOICE", []string{"conv-a"}},
+		{"words + number mix", "woolly +15555550123", []string{"conv-a"}},
+	}
+
+	for _, tc := range cases {
+		hits, err := index.Query(ctx, tc.query, 0)
+		if err != nil {
+			t.Fatalf("%s: Query(%q): %v", tc.name, tc.query, err)
+		}
+
+		got := make([]string, 0, len(hits))
+		for _, hit := range hits {
+			got = append(got, string(hit.NativeID))
+		}
+
+		if strings.Join(got, ",") != strings.Join(tc.want, ",") {
+			t.Errorf("%s: Query(%q) = %v, want %v", tc.name, tc.query, got, tc.want)
+		}
+	}
+}
+
 func TestRebuildRefreshesDigitTable(t *testing.T) {
 	// The digits shadow table rides the wholesale rebuild: after reindexing
 	// without a view, its numbers must stop matching (no drift).
