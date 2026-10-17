@@ -63,6 +63,12 @@ if (ONLY) {
   }
 }
 const wanted = (name) => !ONLY || ONLY.includes(name);
+// Surfaces that consume the DISCOVERED detail hrefs (detail-a/b/q and the
+// print check ride detail1). When none are selected, the discovery page
+// loads are skipped entirely (the --only dashboard eyeball pass no longer
+// pays for two scrapes it never uses).
+const NEEDS_DISCOVERY =
+  !ONLY || ONLY.some((n) => n === "detail-a" || n === "detail-b" || n === "detail-q" || n === "print");
 
 (async () => {
   // --port is optional (M4/F13): omit it and the OS hands over a free port.
@@ -85,29 +91,36 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
 
     // Discover two detail URLs (telnyx + freeswitch shape) from the list
     // page. Rows are library clickable rows: <tr data-tc-row-href=…>, not
-    // anchors — scrape the attribute (a[href] kept as fallback).
-    const seedPage = await browser.newPage();
-    await seedPage.goto(`${BASE}/`, { waitUntil: "networkidle0" });
-    const hrefs = await seedPage.$$eval('[data-tc-row-href], a[href^="/calls/"]', (els) => [
-      ...new Set(els.map((el) => el.getAttribute("data-tc-row-href") || el.getAttribute("href"))),
-    ]);
-    await seedPage.close();
-    const detail1 = hrefs[0] || "/calls/telnyx-conversation/none";
-    const detail2 = hrefs[1] || detail1;
+    // anchors — scrape the attribute (a[href] kept as fallback). Skipped
+    // when no discovered-detail surface is selected (see NEEDS_DISCOVERY).
+    let detail1 = "/calls/telnyx-conversation/none";
+    let detail2 = detail1;
+    let detailQ = detail1;
 
-    // Discover the ?q= match-log URL (plan T1.3): scrape the first search
-    // hit for the fixture term; that href + ?q= is the detail page whose
-    // turns carry the amber mark (the server 302s once to at=0#turn-0 and
-    // puppeteer follows it, so the capture shows the post-jump state).
-    const hitPage = await browser.newPage();
-    await hitPage.goto(`${BASE}/search?q=thermostat`, { waitUntil: "networkidle0" });
-    const hitHrefs = await hitPage.$$eval('[data-tc-row-href], a[href^="/calls/"]', (els) => [
-      ...new Set(els.map((el) => el.getAttribute("data-tc-row-href") || el.getAttribute("href"))),
-    ]);
-    await hitPage.close();
-    const detailQ = hitHrefs[0]
-      ? `${hitHrefs[0]}${hitHrefs[0].includes("?") ? "&" : "?"}q=thermostat`
-      : detail1;
+    if (NEEDS_DISCOVERY) {
+      const seedPage = await browser.newPage();
+      await seedPage.goto(`${BASE}/`, { waitUntil: "networkidle0" });
+      const hrefs = await seedPage.$$eval('[data-tc-row-href], a[href^="/calls/"]', (els) => [
+        ...new Set(els.map((el) => el.getAttribute("data-tc-row-href") || el.getAttribute("href"))),
+      ]);
+      await seedPage.close();
+      detail1 = hrefs[0] || detail1;
+      detail2 = hrefs[1] || detail1;
+
+      // Discover the ?q= match-log URL (plan T1.3): scrape the first search
+      // hit for the fixture term; that href + ?q= is the detail page whose
+      // turns carry the amber mark (the server 302s once to at=0#turn-0 and
+      // puppeteer follows it, so the capture shows the post-jump state).
+      const hitPage = await browser.newPage();
+      await hitPage.goto(`${BASE}/search?q=thermostat`, { waitUntil: "networkidle0" });
+      const hitHrefs = await hitPage.$$eval('[data-tc-row-href], a[href^="/calls/"]', (els) => [
+        ...new Set(els.map((el) => el.getAttribute("data-tc-row-href") || el.getAttribute("href"))),
+      ]);
+      await hitPage.close();
+      detailQ = hitHrefs[0]
+        ? `${hitHrefs[0]}${hitHrefs[0].includes("?") ? "&" : "?"}q=thermostat`
+        : detail1;
+    }
 
     const pages = [
       ["calls", "/"],
@@ -123,6 +136,14 @@ const wanted = (name) => !ONLY || ONLY.includes(name);
       ["notfound", "/calls/no-such-stream/none"],
       ["detail-rec", "/calls/telnyx-conversation/smoke-0001"],
     ];
+    // Drift guard (2026-10-17): a page added to the capture loop without a
+    // KNOWN_SURFACES label (or vice versa) is a silent --only hole — fail
+    // loudly instead.
+    const drift = pages.map(([name]) => name).filter((n) => !KNOWN_SURFACES.includes(n));
+    if (drift.length > 0) {
+      console.error(`surface drift: ${drift.join(", ")} missing from KNOWN_SURFACES`);
+      process.exit(1);
+    }
     // --themes dark|light|light,dark (plan M21/F64): the exhaustive dark
     // sweep after a color change is one command without re-capturing light.
     const themes = (arg("--themes", "light,dark") || "light,dark")
