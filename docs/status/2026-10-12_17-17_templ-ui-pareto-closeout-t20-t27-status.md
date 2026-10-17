@@ -119,18 +119,18 @@ three §g questions) — unchanged, correctly untouched.
 
 Owner-blocked (from TODO_LIST, unchanged):
 
-1. Deploy both hosts with the current lens module (deploy path = owner).
-2. Production re-ingest for ContentHash v2 after that deploy.
-3. Cut v0.2.0 (Unreleased carries the HTTP stack + this UI pass).
-4. Fold in go-etag#2 + go-appkit#26 when upstream lands them.
-5. Fold in templ-components#48/#49/#50; retire the `!items-stretch` arg and
+~~1. Deploy both hosts with the current lens module (deploy path = owner).~~ → routed: host deploy row (TODO_LIST)
+~~2. Production re-ingest for ContentHash v2 after that deploy.~~ → routed: prod re-ingest row (TODO_LIST)
+~~3. Cut v0.2.0 (Unreleased carries the HTTP stack + this UI pass).~~ done — v0.2.0 cut AND pushed (7d15c6f, tag on origin)
+~~4. Fold in go-etag#2 + go-appkit#26 when upstream lands them.~~ → routed: fold-in watch row (go-etag#2/go-appkit#26)
+~~5. Fold in templ-components#48/#49/#50; retire the `!items-stretch` arg and~~ → routed: fold-in watch row (templ-components#48/#49/#50/#51/#55)
    the focus-visible CSS on fold-in (bump watchlist step 4).
-6. Answer/watch dependabot-core#16538.
-7. Browser-level 304 revalidation spot-check on a real host.
-8. Live-verify Telnyx Detail Records/insights DTOs (needs API key).
-9. ContentHash v2 length-prefixed encoding (scheduled at schema v2).
-10. 1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).
-11. Confirm next dependabot run proposes the newly-direct deps.
+~~6. Answer/watch dependabot-core#16538.~~ → routed: dependabot-core#16538 watch row
+~~7. Browser-level 304 revalidation spot-check on a real host.~~ → routed: browser-level 304 row (TODO_LIST)
+~~8. Live-verify Telnyx Detail Records/insights DTOs (needs API key).~~ → routed: Telnyx live-verify row
+~~9. ContentHash v2 length-prefixed encoding (scheduled at schema v2).~~ → routed: schema-v2 ContentHash row
+~~10. 1MiB transcript policy decision (OnBufferOverflow vs MaxBufferSize).~~ → routed: >1MiB transcript policy row
+~~11. Confirm next dependabot run proposes the newly-direct deps.~~ → routed: dependabot confirm row
 
 Bounded TODO rows still open:
 ~~12. Backup drill as a named CI step.~~ done — named ci.yml step live (concurrent session); drill test green locally
@@ -138,9 +138,9 @@ Bounded TODO rows still open:
 ~~14. `cmd/pbx-lens/ingest.go`: extract the shared open→gate→drain→rebuild seq.~~ done at `83fe566` (gateAndFinalize + indexsession.go)
 ~~15. Surface `export_cursor_stalled` in the export UI.~~ done at `ba6ec8f` (visible honesty note on the list page)
 ~~16. Export memory-budget test (bounded allocation under `exportBatchSize`).~~ done at `ba6ec8f` (TestExportMemoryBudgetStreamsPastOldCap)
-17. `/api/ops`: warn when the reported poller pass is stale.
+~~17. `/api/ops`: warn when the reported poller pass is stale.~~ done — last_pass_age_seconds + the stale verdict (v0.2.0)
 ~~18. go-etag cache hooks into `/api/ops` (hit-ratio + overflow warn).~~ done — CacheCounters + ETagMiddleware wired and tested (concurrent session; verified green)
-19. E2E cache-semantics hardening (Vary/Content-Length/HEAD variants).
+~~19. E2E cache-semantics hardening (Vary/Content-Length/HEAD variants).~~ done — Vary/Content-Length/HEAD/query-string landed (thirteenth pass)
 ~~20. Render the HTTP-stack audit as the HTML research report.~~ done at `399fd50` (docs/research/)
 ~~21. `/metrics` scrape + smoke from the sibling NixOS module.~~ done — sibling scrapeJobs option + lens scrape.enable (hosts eval green); text-format smoke green in serve_test.go
 ~~22. File BuildFlow spawn-starvation upstream.~~ done at `a061fbb` — filed as BuildFlow#50
@@ -174,16 +174,16 @@ test seed (7+ test files) into one helper.
 ~~38. Deduplicate the chromium auto-locate + puppeteer bootstrap between~~ done at `f306cfa` (scripts/lib/ui-probe.js)
 `screenshot-probe.js` and any hardened verify script.
 ~~39. Decide a `docs/assets/` (or similar) convention for durable UI evidence.~~ done at `09eb780`
-40. gen-tc-classes.js over-captures (6405 classes) — trim to reachable
+~~40. gen-tc-classes.js over-captures (6405 classes) — trim to reachable~~ done — T17 measured and decided KEEP (b26a630; revisit trigger + reachability test in the adoption map)
 classes for a smaller styles.css (measure first).
-41. The auto-daemon committed the throwaway `tmprepro/main.go` mid-session
+~~41. The auto-daemon committed the throwaway `tmprepro/main.go` mid-session~~ NOT-DO — one-off; the daemon swept the deletion; no scratch-dir convention added
 (deletion landed later) — a scratch-dir convention (.gitignore'd) would
 keep one-off repro scaffolds out of history.
 ~~42. FEATURES.md UI rows may lag the T13–T21 features (T26 scope didn't~~ done at `8438eca`
 include FEATURES) — one pass to confirm.
 ~~43. Update the 13-32 plan's mermaid graph nodes with completion ticks~~ done at `8438eca`
 (cosmetic; the EXECUTED table already carries the state).
-44. When #48 folds upstream, drop `!items-stretch` from BOTH BarChart call
+~~44. When #48 folds upstream, drop `!items-stretch` from BOTH BarChart call~~ → routed: fold-in watch row (the watchlist step covers both retirements)
 sites and re-eyeball; when #49 folds, delete the app.css focus ring.
 ~~45. Consider scroll-margin-top on `#turn-N` targets if a page header ever~~ routed at `8438eca` — ROADMAP row
 becomes sticky.
@@ -193,7 +193,7 @@ nolint lacks a ledger row) — mirrors the palette-gate pattern.
 detail page's q is invisible in the UI — consider a small "filtered for
 '…'" chip with a clear link.
 ~~48. README sales page could use two of the verify captures once durable (#33).~~ done at `09eb780`
-49. Quarterly re-verify cluster for templ-components filings — add #48/#49/
+~~49. Quarterly re-verify cluster for templ-components filings — add #48/#49/~~ done — the fold-in watch table covers #48/#49/#50/#51/#55 (upstream-filings, next check 2027-01)
 #50 to the calendar entry next to the Telnyx one.
 ~~50. Harvest the T21 redirect-loop design (at-param pattern) into~~ done at `8438eca` (gotchas.md)
 docs/gotchas.md — it's a paid-for war story (fragment-invisible-to-
@@ -201,17 +201,17 @@ server) worth a paragraph.
 
 ## g) THREE QUESTIONS ONLY YOU CAN ANSWER
 
-1. **Same-file concurrency norm (carried §g.1, now with two more races):**
+~~1. **Same-file concurrency norm (carried §g.1, now with two more races):**~~ → routed: ROADMAP multi-agent open question
    this session raced a concurrent session on `detail.templ` and
    `search_jump_test.go` (lost edits, edit-tracker retries). Is retry-with-
    fresh-read the standing answer, or do you want task-level file claims
    (e.g. a CLAIMS.md both sessions honor)?
-2. **Pager ratification (carried §g.2):** the numberless two-button pager is
+~~2. **Pager ratification (carried §g.2):** the numberless two-button pager is~~ resolved-by-ship — the pager is load-bearing (tests, goldens, rationale) with no owner objection since v0.1.0
    now load-bearing (tests, goldens, doc-comment rationale — a TotalPages
    pager would fabricate counts over keyset cursors). Ratify as final, or do
    you ever want numbered pages (requires a count query over the read model
    — real cost)?
-3. **Fourth filing (new):** shall I file the ScrollbackLine id/class-hook gap
+~~3. **Fourth filing (new):** shall I file the ScrollbackLine id/class-hook gap~~ done — filed as templ-components#51 (ac027a4)
    (the thing that forced the hand-rolled match log) as templ-components now
    — or batch it with the SegmentBar/extension roadmap work you may already
    be planning in that repo?
