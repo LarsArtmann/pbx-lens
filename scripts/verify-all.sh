@@ -16,6 +16,31 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
+# statix no-op tripwire (gate-hardening, 2026-10-18): statix exits 0 on a
+# config parse error and lints NOTHING — the repo's statix lane once read
+# green for five days that way (docs/gotchas.md, CHANGELOG 2026-10-17).
+# This lane therefore greps stderr for the no-op signature instead of
+# trusting the exit code. Lint VERDICTS stay BuildFlow's job; this only
+# asserts the check is not silently dead. Skips when statix is off PATH.
+statix_tripwire() {
+	if ! command -v statix >/dev/null 2>&1; then
+		echo "statix-tripwire: statix not on PATH — skipped (nix develop provides it)"
+		return 0
+	fi
+	local stderr_text
+	stderr_text="$(statix check 2>&1 >/dev/null || true)"
+	case "$stderr_text" in
+	*"config error"*)
+		echo "statix-tripwire: FAIL — statix printed 'config error' and exited 0:" >&2
+		echo "$stderr_text" >&2
+		echo "statix-tripwire: the statix lane is a silent no-op; fix statix.toml (docs/gotchas.md)" >&2
+		return 1
+		;;
+	esac
+	echo "statix-tripwire: config parses (no-op tripwire green)"
+}
+statix_tripwire
+
 if [ "${1:-}" = "--fast" ]; then
 	shift
 	FAST=1
