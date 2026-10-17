@@ -300,6 +300,7 @@ func TestIngestTelnyxDryRunReportsWithoutWrites(t *testing.T) {
 			}})
 		case strings.HasPrefix(r.URL.Path, "/ai/conversations/") && strings.HasSuffix(r.URL.Path, "/messages"):
 			messagesWalked = append(messagesWalked, r.URL.Path)
+
 			writeStubJSON(map[string]any{"data": []map[string]any{}})
 		case r.URL.Path == "/recordings":
 			writeStubJSON(map[string]any{"data": []map[string]any{}})

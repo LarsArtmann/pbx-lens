@@ -96,7 +96,7 @@ func ingestTelnyx(args []string) {
 	)
 	telnyxMaxAge := fs.Duration("max-age", 0, "refuse conversations older than this (0 = keep everything)")
 	dryRun := fs.Bool("dry-run", false, "fetch and report without touching the index (no -db needed)")
-	apiBase := fs.String("api-base", "", "override the Telnyx API base URL (stub-server rehearsals; empty = production)")
+	apiBase := fs.String("api-base", "", "override the Telnyx API base URL (stub rehearsals; empty = production)")
 	_ = fs.Parse(args)
 
 	if !*dryRun {
@@ -142,7 +142,10 @@ func ingestTelnyx(args []string) {
 
 		fmt.Printf(
 			"ingest-telnyx (dry-run): %d conversations fetched, %d would-record, %d age-refused, %d fetch-rejected — nothing written\n",
-			len(observations), len(admitted), len(refusals), len(fetchRejects),
+			len(observations),
+			len(admitted),
+			len(refusals),
+			len(fetchRejects),
 		)
 
 		printRejected(fetchRejects)

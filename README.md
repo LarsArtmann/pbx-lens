@@ -67,7 +67,10 @@ or RFC3339 timestamp, default `48h`), `-direction` (`outbound` default —
 Telnyx conversation metadata exposes no direction field), `-limit N`
 (max conversations, 0 = all). Conversations are correlated with their
 recordings via `call_control_id`; each call's Observation carries a transcript
-excerpt and the recording reference.
+excerpt and the recording reference. Like `ingest-cdr`, `-dry-run` fetches
+the window and prints the would-record report without touching any index
+(no `-db` required); `-api-base` points the fetch at a stub server for
+rehearsals.
 
 ### Serve the call-history UI
 
