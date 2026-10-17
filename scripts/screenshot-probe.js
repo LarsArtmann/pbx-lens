@@ -309,11 +309,18 @@ const NEEDS_DISCOVERY =
 
     // --- Alert-only pixel diff (plan 05-40 M19/F59-F60): compare the
     // fresh captures against a baseline directory. The report NEVER fails
-    // the run — it is an alert for eyeballs, not a gate. The dashboard
-    // footer carries a live "Updated <time>" stamp, so a few hundred
-    // volatile pixels are expected there every run; the default tolerance
-    // (0.5% of pixels) absorbs them. Deps install into the scratch prefix
-    // (same as puppeteer-core) — nothing enters the repo or flake.
+    // the run — it is an alert for eyeballs, not a gate.
+    //
+    // Volatile-pixel budget (practiced 2026-10-17 against a 41-PNG
+    // baseline, zero-tolerance measured): the only run-to-run churn is
+    // time text — the footer "Updated <time>" stamp (dashboard, 36-63 px)
+    // and a RelativeTime chip on detail pages (80-81 px) — ≤81 px in every
+    // measured pair, at content-dependent positions, so a geometric mask
+    // would be brittle. Instead any capture at or under --volatile-px
+    // (default 128) is reported as absorbed; the % tolerance for what
+    // remains tightens to 0.05%. The baseline STRATEGY itself (in-repo vs
+    // machine-local) stays the ROADMAP owner question; the practiced
+    // corpus lives at ~/lens-baselines/<gen>/ outside the repo.
     if (args.includes("--diff") || args.includes("--save-baseline")) {
       const captured = fs
         .readdirSync(OUT)
@@ -336,7 +343,8 @@ const NEEDS_DISCOVERY =
           process.exit(1);
         }
 
-        const tolerancePct = parseFloat(arg("--tolerance", "0.5"));
+        const tolerancePct = parseFloat(arg("--tolerance", "0.05"));
+        const volatilePx = parseInt(arg("--volatile-px", "128"), 10);
         const mods = probe.ensureScratchDeps(["pixelmatch@5", "pngjs@7"]);
         const pixelmatch = mods.pixelmatch;
         const { PNG } = mods.pngjs;
@@ -362,7 +370,11 @@ const NEEDS_DISCOVERY =
             threshold: 0.1,
           });
           const pct = (100 * changed) / (a.width * a.height);
-          if (pct > tolerancePct) {
+          if (changed <= volatilePx) {
+            console.log(
+              `PIXELDIFF VOLATILE ${f}: ${changed} px (≤ ${volatilePx} time-text budget) absorbed`,
+            );
+          } else if (pct > tolerancePct) {
             console.log(
               `PIXELDIFF ALERT ${f}: ${changed} px (${pct.toFixed(3)}% > ${tolerancePct}%)`,
             );

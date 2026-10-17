@@ -38,6 +38,12 @@ if [ "$FAST" -eq 1 ]; then
 fi
 
 echo "=== screenshot-probe ==="
+# Alert-only pixel diff hook: LENS_DIFF_BASELINE=<dir> compares the fresh
+# captures against that baseline (never fails the lane). Practiced corpus:
+# ~/lens-baselines/<gen>/ (save one with screenshot-probe --save-baseline).
+if [ -n "${LENS_DIFF_BASELINE:-}" ]; then
+	set -- "$@" --diff "$LENS_DIFF_BASELINE"
+fi
 node scripts/screenshot-probe.js "$@"
 
 echo "verify-all: all probes passed"
