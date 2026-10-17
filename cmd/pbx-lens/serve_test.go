@@ -235,8 +235,8 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		t.Error("Metrics must be enabled with the explicit unauthenticated opt-in")
 	}
 
-	if got := len(plain.ExtraMiddlewares); got != 3 {
-		t.Fatalf("plain ExtraMiddlewares = %d, want 3 (timing, compression, etag)", got)
+	if got := len(plain.ExtraMiddlewares); got != 4 {
+		t.Fatalf("plain ExtraMiddlewares = %d, want 4 (security headers, timing, compression, etag)", got)
 	}
 
 	authed, err := buildServiceConfig("127.0.0.1:0", writeTempHtpasswd(t), nil, nil)
@@ -244,8 +244,8 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		t.Fatalf("build authed config: %v", err)
 	}
 
-	if got := len(authed.ExtraMiddlewares); got != 4 {
-		t.Errorf("authed ExtraMiddlewares = %d, want 4 (auth first, then timing, compression, etag)", got)
+	if got := len(authed.ExtraMiddlewares); got != 5 {
+		t.Errorf("authed ExtraMiddlewares = %d, want 5 (auth first, then security headers, timing, compression, etag)", got)
 	}
 }
 
@@ -261,8 +261,8 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 		t.Fatalf("build nonced config: %v", err)
 	}
 
-	if got := len(nonced.ExtraMiddlewares); got != 4 {
-		t.Errorf("CSP_NONCE=1 ExtraMiddlewares = %d, want 4 (nonce first, then timing, compression, etag)", got)
+	if got := len(nonced.ExtraMiddlewares); got != 5 {
+		t.Errorf("CSP_NONCE=1 ExtraMiddlewares = %d, want 5 (nonce first, then security headers, timing, compression, etag)", got)
 	}
 
 	csp := nonceCSP("abc123")
@@ -275,6 +275,81 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 
 	if _, err := buildServiceConfig("127.0.0.1:0", t.TempDir()+"/absent-htpasswd", nil, nil); err == nil {
 		t.Error("buildServiceConfig with a missing htpasswd file must fail, want load error")
+	}
+}
+
+// TestSecurityHeadersContract pins the P1-T5/T6 hardening: every response
+// carries Referrer-Policy: no-referrer, X-Content-Type-Options: nosniff, and
+// X-Robots-Tag: noindex — the HTML page, the 304 replay, a static asset, and
+// a streaming export alike (the meta robots tag only ever covered HTML).
+// The appkit default's X-Frame-Options: DENY must survive the inner
+// overwrite, so the composition keeps its framing lockout.
+func TestSecurityHeadersContract(t *testing.T) {
+	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
+	if err != nil {
+		t.Fatalf("open memory index: %v", err)
+	}
+
+	defer cleanup()
+
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	if err != nil {
+		t.Fatalf("build service config: %v", err)
+	}
+
+	svc, err := appkit.NewService(serviceConfig)
+	if err != nil {
+		t.Fatalf("new service: %v", err)
+	}
+
+	web.Register(svc.Mux, sys, web.Options{})
+
+	ts := testkit.Serve(t, svc)
+	client := noAutoGzip()
+
+	wantHeaders := map[string]string{
+		"Referrer-Policy":        securityReferrerPolicy,
+		"X-Content-Type-Options": securityHeaderNosniff,
+		"X-Robots-Tag":           securityRobotsTagNoindex,
+		"X-Frame-Options":        "DENY",
+	}
+
+	assertSecurityHeaders := func(when string, headers http.Header) {
+		t.Helper()
+
+		for header, want := range wantHeaders {
+			if got := headers.Get(header); got != want {
+				t.Errorf("%s %s = %q, want %q", when, header, got, want)
+			}
+		}
+	}
+
+	status, page, _ := get(t, client, ts.FullChainURL, "/", nil)
+	if status != http.StatusOK {
+		t.Fatalf("GET / status = %d, want 200", status)
+	}
+
+	assertSecurityHeaders("GET /", page)
+
+	etag := page.Get("ETag")
+	if etag == "" {
+		t.Fatal("/ served without an ETag; the 304 leg cannot run")
+	}
+
+	status, replay, _ := get(t, client, ts.FullChainURL, "/", map[string]string{"If-None-Match": etag})
+	if status != http.StatusNotModified {
+		t.Fatalf("conditional replay status = %d, want 304", status)
+	}
+
+	assertSecurityHeaders("304 replay", replay)
+
+	for _, path := range []string{"/app.css", "/api/export.csv", "/api/export.jsonl"} {
+		status, headers, _ := get(t, client, ts.FullChainURL, path, nil)
+		if status != http.StatusOK {
+			t.Fatalf("GET %s status = %d, want 200", path, status)
+		}
+
+		assertSecurityHeaders(path, headers)
 	}
 }
 

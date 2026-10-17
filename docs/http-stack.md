@@ -18,7 +18,18 @@ ExtraMiddlewares, in strict order:
 
 1. **auth** (htpasswd middleware when `-htpasswd` is set) — innermost of the
    three additions but outer of everything web-local.
-2. **`web.ServerTimingMiddleware`** — W3C Server-Timing via
+2. **`httputil.SecurityHeaders`** (Pareto P1-T5/T6, 2026-10-17) — tightens the
+   appkit default for an internal single-operator tool: `Referrer-Policy:
+   no-referrer` (the internal host + query strings must not leak to the
+   recording/audio origin), `X-Content-Type-Options: nosniff`, and
+   `X-Robots-Tag: noindex` via the config's `Custom` map (the HTML pages
+   carry the meta robots tag already; the header covers exports and
+   `/api/*` uniformly). The appkit default SecurityHeaders still runs OUTER
+   in the default stack; the inner `Set` calls win, so the effective values
+   are ours while the default's `X-Frame-Options: DENY` survives untouched.
+   Header-only and set before the first write, so every value rides into
+   304 revalidations. Pinned by `TestSecurityHeadersContract`.
+3. **`web.ServerTimingMiddleware`** — W3C Server-Timing via
    `servertiming.WrapServerTiming(w, r)`. NO middleware constructor exists in
    any released `httputil/server_timing` version — always wrap manually.
    Handlers add named metrics with `MeasureServerTiming(r.Context(), name)`
@@ -26,11 +37,11 @@ ExtraMiddlewares, in strict order:
    body write: the header flushes at the first write, and metrics recorded
    after it are silently dropped. Streaming routes therefore time only their
    pre-first-write hops (metadata fetch, response headers).
-3. **`httputil.Compression`** (`DefaultCompressionConfig`) — q-value
+4. **`httputil.Compression`** (`DefaultCompressionConfig`) — q-value
    negotiation. MUST sit OUTER of ETag so tags hash identity bodies
    (go-etag's ordering doctrine: compress-inner would hash the compressed
    bytes per encoding).
-4. **`web.ETagMiddleware`** (go-etag/server, `DefaultETagConfig` +
+5. **`web.ETagMiddleware`** (go-etag/server, `DefaultETagConfig` +
    `SkipIfPresent: true`).
 
 ## ETag skip policy

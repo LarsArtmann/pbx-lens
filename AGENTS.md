@@ -126,7 +126,8 @@ webphone later gets a read-only deep link, never a data dependency.
   the recording audio stream (WAV, else MP3 fallback) are unbounded and the
   former 30 s deadline truncated both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`;
   READY/STOPPING/WATCHDOG under the manager) + htpasswd auth. The
-  ExtraMiddlewares chain (auth → Server-Timing → Compression → ETag; the
+  ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
+  Compression → ETag; the
   ordering doctrine, the ETag skip policy, the render-buffering trap, and
   the `Cache-Control: no-cache` revalidation contract) lives in
   docs/http-stack.md — read it before touching caching or timing. Every UI

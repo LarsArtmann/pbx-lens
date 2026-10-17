@@ -22,6 +22,16 @@ const (
 	serveTimeout = 5 * time.Minute
 )
 
+// Security header values (Pareto plan P1-T5/T6): no-referrer keeps the
+// internal host and query strings from leaking to the recording origin;
+// nosniff and noindex harden every non-HTML endpoint uniformly.
+const (
+	securityHeaderNosniff    = "nosniff"
+	securityReferrerPolicy   = "no-referrer"
+	securityRobotsTagHeader  = "X-Robots-Tag"
+	securityRobotsTagNoindex = "noindex"
+)
+
 // slogLog adapts slog's record shape to the injected log func (R14): the
 // structured key-value calls in the poller and web layers come out as
 // greppable text records instead of printf lines.
@@ -220,6 +230,20 @@ func buildServiceConfig(
 
 		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares, auth)
 	}
+
+	// Security headers: the appkit default SecurityHeaders still runs outer
+	// (Recovery → … → SecurityHeaders); the inner Set calls below win, so
+	// the effective policy is ours while the default's X-Frame-Options: DENY
+	// survives untouched. Header-only and set before the first write, so
+	// every value rides into 304 revalidations too.
+	serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
+		httputil.SecurityHeaders(httputil.SecurityHeadersConfig{
+			ContentTypeOptions: securityHeaderNosniff,
+			ReferrerPolicy:     securityReferrerPolicy,
+			Custom: map[string]string{
+				securityRobotsTagHeader: securityRobotsTagNoindex,
+			},
+		}))
 
 	// CSP nonce mode (opt-in): a per-request nonce replaces 'unsafe-inline'
 	// in script-src. Every inline script (theme, htmx self-host marker,
