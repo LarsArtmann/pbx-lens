@@ -1,13 +1,14 @@
 # BuildFlow filing — nix-hash-fix wrong-attribute write
 
 - **FILED: [BuildFlow#55](https://github.com/LarsArtmann/BuildFlow/issues/55)**
-  (2026-10-15, verified OPEN; checker 0 FAIL/0 WARN before posting)
+  (2026-10-15, checker 0 FAIL/0 WARN before posting; **CLOSED upstream
+  2026-10-16** — the local binary may still predate the fix, answer-sheet §9)
 
 - **Repo:** LarsArtmann/BuildFlow (own repo, plan-solicited: 05-40 M5/F11)
 - **Kind:** bug report body, AI-drafted (Crush footer)
 - **Cite-at commit:** BuildFlow `d114f28ce`; go-checker-helpers `helpers.go:208`
   (module `../go-checker-helpers` replace in BuildFlow go.mod)
-- **Status:** DRAFT — run checker, then `gh issue create --body-file` (never stdin)
+- **Status:** FILED (historical write-up; the 2026-10-15 recurrence + the clean-tree rule live in docs/upstream-filings.md)
 
 ---
 

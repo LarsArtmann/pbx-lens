@@ -200,7 +200,9 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   no-op since the day the config landed (the only clue: the "config error"
   line on `statix check .`'s stderr). Full statix contract: the statix
   entry in gotchas.md. If a real repeated-keys smell shows up elsewhere,
-  statix now actually says so.
+  statix now actually says so. The rejected alternative (restyle
+  `deploy/nixos/module-draft.nix` to avoid W20 entirely) stays rejected —
+  the sealed design record is not restyled for a linter (01-45 §f24).
 - **The auto-commit daemon races the gate's repair steps (paid for,
   2026-10-12)**: go-mod-normalize rewrote go.mod mid-run, the daemon
   committed the rewrite seconds later, and go-generate then failed with

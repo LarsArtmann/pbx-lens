@@ -1,3 +1,5 @@
+> **FILED as [templ-components#55](https://github.com/LarsArtmann/templ-components/issues/55) (2026-10-15, plan M8/F28 + M10). Kept as the historical write-up; upstream state lives in `docs/upstream-filings.md` (re-verified OPEN 2026-10-17).**
+
 > [!NOTE]
 > This filing was drafted by GLM via Crush from an AI-run investigation, not at my request. When the failure traces to an external report, that source is linked in the body.
 >
