@@ -20,7 +20,7 @@ import (
 templ listRoute(nonce string, page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
 	@shell(nonce, "Calls — pbx-lens", "/") {
 		@staleLive(filters, staleFor, stale)
-		@listPage(page, filters)
+		@listPage(nonce, page, filters)
 	}
 }
 

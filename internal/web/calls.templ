@@ -65,7 +65,7 @@ func navLinks() []navigation.NavLinkProps {
 
 // listPage renders the calls table with its filter form. Data honesty: the
 // empty state explains HOW to fill the index, not just that it is empty.
-templ listPage(page CallListPage, filters ListCallsQuery) {
+templ listPage(nonce string, page CallListPage, filters ListCallsQuery) {
 	@display.PageHeader(display.PageHeaderProps{
 		Title:    "Calls",
 		Subtitle: "Every call the PBX ever saw",
@@ -82,7 +82,7 @@ templ listPage(page CallListPage, filters ListCallsQuery) {
 		})
 	} else {
 		@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(page.Rows)})
-		@display.Table(tableProps(page.Rows))
+		@display.Table(tableProps(nonce, page.Rows))
 		if page.NextOlder != "" || page.NextNewer != "" {
 			@pagerRow(filters, page)
 		}
@@ -235,14 +235,18 @@ func dateValue(t time.Time) string {
 }
 
 // tableProps builds the typed rows: display components in cells, the whole
-// row clickable through Table's Href support (keyboard-navigable).
-func tableProps(rows []CallRow) display.TableProps {
+// row clickable through Table's Href support (keyboard-navigable). The nonce
+// rides along so the row-href singleton script carries the CSP nonce —
+// without it the script violates script-src under the nonce policy (found
+// live by scripts/csp-sweep.js, 2026-10-17).
+func tableProps(nonce string, rows []CallRow) display.TableProps {
 	out := display.TableProps{
 		Headers:     []string{"When", "From", "To", "Direction", "Who", "Duration", "Opening line"},
 		Striped:     true,
 		Hover:       true,
 		CellPadding: display.TableCellPaddingCompact,
 		LazyRows:    true,
+		Nonce:       nonce,
 		Rows:        make([]display.TableRow, 0, len(rows)),
 	}
 
