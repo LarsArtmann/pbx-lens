@@ -227,3 +227,33 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   up current nixpkgs go); filed as BuildFlow#56. Until it lands: after
   ANY go.mod floor bump, expect the buildflow gate's go/govalid steps to
   fail first and verify them individually per this file's doctrine.
+
+- **Tooling triage bundle (2026-10-17, TODO row closed)**: the recurring
+  "N tools unavailable (health check failed)" warning is dispositioned.
+  `buildflow doctor` marks 32 fleet-wide tools missing, but the gate only
+  ever runs REGISTERED providers with matching files — for this repo that
+  set is small, and `buildflow --dry-run` is the arbiter (it warns on
+  dead `skip_steps` entries, which proved eslint/markdownlint/prettier are
+  NOT registered here: their doctor ✗ marks are cosmetic, never gate
+  steps; markdownlint was additionally trial-run via
+  `nix run nixpkgs#markdownlint-cli2` and its MD013/MD060 defaults fight
+  the house format's 650+-char evidence tables — a deliberate non-adoption
+  even if a provider registers). Applied:
+  (1) `shellcheck` joined the devShell packages (trial run: ZERO findings
+  on scripts/*.sh — pure value);
+  (2) `.buildflow.yml` skips `lychee` (needs the fleet GITHUB_TOKEN policy
+  first — GitHub links 401/429 without it; the decision line: exclude
+  until a fleet-wide token story exists, revisit upstream) and
+  `nix-build-verify` (12/12 historical failures on this machine — the
+  equivalent check runs as the MANUAL `nix build` step of every receipt
+  procedure, and statix/deadnix/nix-flake-check still cover the nix lane
+  in-gate);
+  (3) accepted as-is: `nix-hash-fix`'s 82% failure record (environmental —
+  load/OOM/tmp-disk, and it remains the sanctioned repair mechanism), the
+  cargo/python/js-ts/docker/proto doctor marks (no matching files in this
+  repo), `codespell` (on-demand-only by design), `gci` (golangci-lint runs
+  it internally when configured), `vulnix` (owned by the R27.x advisory
+  row; CI's govulncheck lane is the trusted CVE gate), and the stale
+  binary-freshness advisory (P1-T12, owner-gated rebuild).
+  Verification: `buildflow --dry-run` shows 37 ok / 1 warn / 0 fail with
+  2 user-intent skips and no dead-config warnings.

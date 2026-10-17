@@ -12,6 +12,16 @@ import (
 // correlate against conversations (correlation is client-side by
 // call_control_id; the recordings list filter's supported keys are
 // undocumented, so no server-side filter is trusted).
+//
+// CONTRACT (audit 2026-10-17, TODO row "Recordings lookback audit"): this
+// is a BOUND, not a guarantee. A conversation ingested after its recording
+// fell out of the most-recent-300 window silently maps with no
+// RecordingRef — the detail page then 404s on "no recording reference
+// indexed" forever (re-ingest replays the same ContentHash, so the miss
+// never self-heals). Deliberate: paging deeper costs unbounded API budget
+// per pass against a rare miss (300 recordings ≈ weeks of this PBX's
+// volume), and the recording proxy 404s honestly. Remedy if it ever bites:
+// a one-off pass with a raised lookback, not a new surface.
 const DefaultRecordingsLookback = 300
 
 // TelnyxOptions shapes one Telnyx fetch pass.

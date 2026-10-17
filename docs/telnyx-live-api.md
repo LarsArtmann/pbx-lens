@@ -50,6 +50,15 @@ supported keys are undocumented, so no server-side filter is trusted.
 Detail Records correlation works the same way
 (`DetailRecordByCallControl`).
 
+The correlation window is a BOUND, not a guarantee (audit 2026-10-17):
+one pass pulls the `DefaultRecordingsLookback` (300) most recent
+recordings; a conversation ingested after its recording fell out of that
+window maps with no `RecordingRef` and the detail page 404s "no recording
+reference indexed" permanently (re-ingest replays the same ContentHash, so
+the miss never self-heals). Deliberate trade: paging deeper costs
+unbounded API budget per pass against a rare miss. Remedy if it bites: a
+one-off pass with a raised lookback constant.
+
 ## Recordings are MP3-only on the AI assistant connection (live 2026-10-12)
 
 Verified against the live API with the real key: EVERY recording on the

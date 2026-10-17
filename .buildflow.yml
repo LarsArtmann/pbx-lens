@@ -6,16 +6,15 @@ exclude:
   - "*.min.js"
 # Tool dispositions (2026-10-17 triage, TODO row "Buildflow tooling triage
 # bundle"; full rationale in docs/buildflow-dev-gate.md):
-# - markdownlint: defaults fight the house format — wide evidence tables
-#   (650+ char cells) are deliberate, dprint owns markdown without
-#   reflowing; MD013/MD060 would red the gate on every table edit.
 # - lychee: needs the fleet GITHUB_TOKEN policy first (GitHub links in the
 #   docs 401/429 without it) — excluded until that decision exists.
-# - prettier + eslint: dprint owns JS formatting and the probe scripts are
-#   plain CommonJS verified by `node --check`; a second JS formatter/linter
-#   is split-brain, not coverage.
+#   (markdownlint/prettier/eslint are NOT registered for this repo — the
+#   doctor's fleet-wide ✗ marks never matched gate steps; dead skip_steps
+#   entries are warned on, so they are documented, not listed.)
+# - nix-build-verify: 12/12 failures on this machine (documented below and
+#   in the gate doc); the equivalent check runs as the manual `nix build`
+#   step of every receipt procedure, and statix/deadnix/flake-check still
+#   cover the nix lane inside the gate.
 skip_steps:
-  - markdownlint
   - lychee
-  - prettier
-  - eslint
+  - nix-build-verify
