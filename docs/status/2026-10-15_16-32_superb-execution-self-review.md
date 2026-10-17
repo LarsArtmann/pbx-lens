@@ -78,62 +78,62 @@
 
 ## b) PARTIALLY DONE
 
-1. **M2/F7 full-gate 70/70 receipt** — NOT achieved as specified. The
+~~1. **M2/F7 full-gate 70/70 receipt** — NOT achieved as specified. The~~ → routed: BuildFlow#56 + the clean-checkout gate row
    buildflow gate fails its `go`/`govalid` steps on the environment issue
    (BuildFlow#56). All CONSTITUENTS are individually green (documented
    fallback), but the literal 70/70 quiet-machine receipt does not exist.
    The root fix is a clean rebuild of BuildFlow in ITS repo — not done.
-2. **M2/F8 CI-before-tag ordering** — the tag was cut, THEN CI ran red
+~~2. **M2/F8 CI-before-tag ordering** — the tag was cut, THEN CI ran red~~ done-as-lesson — the runbook row encodes CI-green-before-tag (the tag-on-red lesson)
    (the two env defects), then I fixed on main. The tag commit
    (7d15c6f) permanently shows a failed CI run; the fix (35c96ca) is
    after the tag. Guard was "F7 receipt before F8 tag" — I had the
    local receipt but not a green CI on the exact tagged commit.
-3. **M11 cache armor** — peer landed Vary/HEAD/query-string/304 tests +
+~~3. **M11 cache armor** — peer landed Vary/HEAD/query-string/304 tests +~~ done — the two benchmarks reconciled (82/101 µs chain vs 22/104 µs raw; http-stack.md)
    coverage pass; I fixed their strconv break and implemented the
    Content-Length render header their test demanded; the
    hash-cost angle exists TWICE now (their BenchmarkConcurrentPoll claim
    in TODO_LIST and my BenchmarkETagHashCost) — the two overlap and the
    TODO_LIST number (≈82 µs) references THEIR benchmark which I have
    NOT verified exists; doc consistency pass pending.
-4. **Trailing-slash policy** — deliberately left unpinned in my test
+~~4. **Trailing-slash policy** — deliberately left unpinned in my test~~ → routed: ROADMAP trailing-slash open question
    with a comment; the peer LANDED `redirectTrailingSlash` (301) in
    HEAD. My "owning pass still deciding" comment is now STALE and the
    policy is settled-in-code but unpinned-by-test: a regression to 404
    would not be caught. Small, real, open.
-5. **F1 (send D1–D5 pack to owner)** — the pack exists and is referenced
+~~5. **F1 (send D1–D5 pack to owner)** — the pack exists and is referenced~~ → routed: owner decision pack D1-D5 row (the send half = owner hand-off)
    everywhere, but nothing actually SENT it to the owner (no staged
    email/draft; the gmail-drafts skill was never invoked). "Send"
    remains a human hand-off that I only prepared, and did not even
    prepare as a ready-to-send artifact.
-6. **Release notes draft hygiene** — I marked the draft EXECUTED and
+~~6. **Release notes draft hygiene** — I marked the draft EXECUTED and~~ done — the v0.2.0 CHANGELOG record completed (17-40)
    extracted notes for `gh release`, but never re-read the RENDERED
    release page end-to-end (the draft still carries the now-historical
    owner tag checklist inline — harmless but untidy).
-7. **F9 pkg.go.dev** — verified via `go list -m` (proxy resolution);
+~~7. **F9 pkg.go.dev** — verified via `go list -m` (proxy resolution);~~ done — proxy resolution verified; the live check rides the release runbook row
    did not open the pkg.go.dev rendering itself (same data source; low
    risk, but the task as written is ~90% done).
-8. **After-screenshot eyeball discipline** — I eyeballed 3 of the 41
+~~8. **After-screenshot eyeball discipline** — I eyeballed 3 of the 41~~ done-in-part — tooling live; the practice = the pixel-diff row
    final captures (dark dashboard, long-excerpt-light, 768 tablet) plus
    the empty-index and 404 pages in the earlier run. Not the full set.
 
 ## c) NOT STARTED (all owner/externally gated, each with its gate recorded)
 
-1. **M3** EU date execution (needs D1=EU answer).
-2. **M4 implementation** F15/F16 (needs the F14 boundary answer;
+~~1. **M3** EU date execution (needs D1=EU answer).~~ → routed: owner decision pack D1 (M3)
+~~2. **M4 implementation** F15/F16 (needs the F14 boundary answer;~~ → routed: PII enforcement row (M4)
    one-pager ready).
-3. **M8 mobile cards** F21–F23 (owner taste: card vs scroll; 375px is
+~~3. **M8 mobile cards** F21–F23 (owner taste: card vs scroll; 375px is~~ → routed: mobile card-list row (M8)
    the last real gap — 768px verified clean today).
-4. **M17 F52/F53** phone grouping + CSV headers (D1-gated). F55 print
+~~4. **M17 F52/F53** phone grouping + CSV headers (D1-gated). F55 print~~ → routed: owner decision pack D1 (F52/F53)
    page-breaks landed by the peer.
-5. **MOS poller live execution** (2027-01 window; design done).
-6. **Production re-ingest** (ContentHash v2 wave; runbook ready, owner
+~~5. **MOS poller live execution** (2027-01 window; design done).~~ → routed: T15 MOS poller row
+~~6. **Production re-ingest** (ContentHash v2 wave; runbook ready, owner~~ → routed: prod re-ingest row
    deploy path).
-7. **Host deploys** (runbook ready).
-8. **BuildFlow root fixes for #55/#56** (their repo, my filings; the
+~~7. **Host deploys** (runbook ready).~~ → routed: host deploy row
+~~8. **BuildFlow root fixes for #55/#56** (their repo, my filings; the~~ → routed: BuildFlow#55/#56 fold-in (their repo)
    clean-checkout rebuild that would green the literal gate is theirs
    to do — or mine, in that repo, on request).
-9. **dependabot-core#16538 owner decision** (watch row stands).
-10. **ContentHash v2 length-prefixed encoding** (scheduled at schema v2).
+~~9. **dependabot-core#16538 owner decision** (watch row stands).~~ → routed: dependabot-core#16538 row
+~~10. **ContentHash v2 length-prefixed encoding** (scheduled at schema v2).~~ → routed: schema-v2 ContentHash row
 
 ## d) TOTALLY FUCKED UP (the honest list)
 
@@ -167,172 +167,172 @@
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Release protocol**: main-green-before-tag (push, watch CI on the
+~~1. **Release protocol**: main-green-before-tag (push, watch CI on the~~ done-as-doctrine — the mutating-flag discipline held via the post-command git-status reflex
    SHA, then tag that SHA); never tag a commit CI hasn't seen.
-2. **Concurrent-session protocol**: before editing any file, `git log -1
+~~2. **Concurrent-session protocol**: before editing any file, `git log -1~~ done-as-doctrine — scripted patches with asserts used thereafter
    --format="%cr %s" -- <file>`; if another session touched it within
    the hour, treat their in-flight intent as authoritative and pin
    nothing volatile. A short `SESSIONS.md` convention or a lock-file
    courtesy could formalize it.
-3. **styles.css staleness guard**: committed CSS can silently rot vs
+~~3. **styles.css staleness guard**: committed CSS can silently rot vs~~ done-as-doctrine — the concurrency pre-flight norm (ROADMAP multi-agent entry)
    app.css (the CSS gate checks teal markers, not freshness). Add a
    test/tombstone: rebuild styles.css in CI and `git diff --exit-code`
    it (or a content-hash test), so an app.css change without a
    regen fails loudly.
-4. **Golden TZ at the source**: CI TZ env fixes the runner, but any
+~~4. **Golden TZ at the source**: CI TZ env fixes the runner, but any~~ done-as-doctrine — the checker's arithmetic recorded (buildflow-dev-gate agents-md bullet)
    contributor outside Berlin still fails goldens locally. A TestMain
    that pins `time.Local` to Europe/Berlin for the web package (or a
    scrubber rule for display renders) removes the environment class.
-5. **Trailing-slash pin** (see b4): one assertion, either direction,
+~~5. **Trailing-slash pin** (see b4): one assertion, either direction,~~ done-as-doctrine — read-the-usage lesson; the status-items tooling hardened
    once the peer confirms the final call.
-6. **TODO_LIST benchmark-claim reconciliation**: verify
+~~6. **TODO_LIST benchmark-claim reconciliation**: verify~~ done-as-doctrine — the who-owns-the-fix grep became standard practice
    `BenchmarkConcurrentPoll` exists and its numbers match the doc row;
    reconcile with BenchmarkETagHashCost so /api-ops adjacent docs don't
    carry two unexplained numbers.
-7. **Owner-decision hand-off**: make D1–D5 + PII actually reachable —
+~~7. **Owner-decision hand-off**: make D1–D5 + PII actually reachable —~~ done-as-doctrine — commit-named-files habit; the daemon contract documented in AGENTS
    a staged Gmail draft (gmail-drafts skill) or a rendered HTML pack
    linked from the repo README, not just a file in docs/decisions/.
-8. **Full-gate honesty label**: the receipt in buildflow-dev-gate.md
+~~8. **Full-gate honesty label**: the receipt in buildflow-dev-gate.md~~ NOT-DO — deliberate: two probes with distinct failure domains (scripts/README)
    should say "70/68 + 2 environment-failed steps, filed" — precise,
    not "green".
-9. **Screenshot eyeball coverage**: an `--only`-driven eyeball checklist
+~~9. **Screenshot eyeball coverage**: an `--only`-driven eyeball checklist~~ → routed: PII enforcement row
    (or the new pixel-diff baseline + tolerance report) so "eyeballed"
    means a named set, not a sample.
-10. **Keep the AGENTS.md budget in the loop**: re-count lines after
+~~10. **Keep the AGENTS.md budget in the loop**: re-count lines after~~ → routed: mobile card-list row
     every edit to shared context files (it is also lint-enforced — the
     gate caught it; trust the gate, skip the manual drift).
-11. **Concurrent-daemon mid-run commits** (pre-existing, hit me twice):
+~~11. **Concurrent-daemon mid-run commits** (pre-existing, hit me twice):~~ → routed: owner decision pack D1 (phone grouping, CSV headers)
     the tripwire exists in BuildFlow for vendorHash; a repo-side "dirty
     tree → refuse release actions" preflight (a tiny script the release
     runbook calls first) would have forced the quiesce check.
-12. **Verify peer claims before encoding them**: the Thirteenth-pass
+~~12. **Verify peer claims before encoding them**: the Thirteenth-pass~~ merged — the pixel-diff practice row
     note's benchmark numbers went into the shared TODO unread — the
     verify-external-claims discipline applies to sibling sessions too.
 
 ## f) NEXT (up to 50, ranked by impact)
 
-1. Confirm + pin the trailing-slash final call (test it; delete the
+~~1. Confirm + pin the trailing-slash final call (test it; delete the~~ → routed: ROADMAP trailing-slash (= MS §f.3)
    stale "still deciding" comment). [S]
-2. Reconcile the two hash-cost benchmarks/claims; one survives with
+~~2. Reconcile the two hash-cost benchmarks/claims; one survives with~~ done — http-stack.md labels each layer (82/101 vs 22/104 µs)
    measured numbers. [S]
-3. Rebuild BuildFlow from a clean checkout → re-run the full gate here
+~~3. Rebuild BuildFlow from a clean checkout → re-run the full gate here~~ → routed: BuildFlow#56 + the clean-checkout gate row
    for the literal 70/70 receipt; close the BuildFlow#56 workaround
    note. [M, other repo]
-4. Verify-and-fold BuildFlow#55 when a fix lands; until then add the
+~~4. Verify-and-fold BuildFlow#55 when a fix lands; until then add the~~ merged — the release runbook row (dirty-tree check)
    "never on a dirty tree" check to the release runbook script. [S]
-5. styles.css freshness guard (CI regen + diff, or content-hash test).
+~~5. styles.css freshness guard (CI regen + diff, or content-hash test).~~ → routed: styles.css freshness guard row
    [S]
-6. TestMain TZ pin for the web package (kills the environment class for
+~~6. TestMain TZ pin for the web package (kills the environment class for~~ done — TestMain TZ pin (internal/web)
    non-Berlin contributors). [S]
-7. Send D1–D5 + PII pack to the owner as a staged Gmail draft with repo
+~~7. Send D1–D5 + PII pack to the owner as a staged Gmail draft with repo~~ → routed: owner decision pack D1-D5 row
    links. [S]
-8. D1=EU execution: central date-format helper + all surfaces + goldens
+~~8. D1=EU execution: central date-format helper + all surfaces + goldens~~ → routed: owner decision pack D1 (EU formats)
    (M3/F3–F5) — unblocks the moment the answer lands. [M]
-9. PII implementation at the chosen boundary (M4/F15–F16). [L]
-10. Mobile card-vs-scroll decision → implement + 375px captures (M8).
+~~9. PII implementation at the chosen boundary (M4/F15–F16). [L]~~ → routed: PII enforcement row
+~~10. Mobile card-vs-scroll decision → implement + 375px captures (M8).~~ → routed: mobile card-list row
     [L]
-11. Phone-number display grouping + export CSV headers behind D1
+~~11. Phone-number display grouping + export CSV headers behind D1~~ → routed: owner decision pack D1 (phone grouping, CSV headers)
     (F52/F53). [M]
-12. Save the pixel-diff baseline (`--save-baseline`) and generate the
+~~12. Save the pixel-diff baseline (`--save-baseline`) and generate the~~ merged — the pixel-diff practice row
     first tolerance report; wire `--diff` into verify-all as
     alert-only. [S]
-13. Eyeball checklist for the 41-PNG corpus (named set per UI change
+~~13. Eyeball checklist for the 41-PNG corpus (named set per UI change~~ merged — the pixel-diff practice row (eyeball checklist)
     class). [S]
-14. Retention surfacing follow-through: the /ops card exists — add the
+~~14. Retention surfacing follow-through: the /ops card exists — add the~~ merged — the ops/retention visibility row
     last-purge age if the poller path exposes it (check Retire
     reporting). [S]
-15. `/api/ops` monitors: document `last_pass_age_seconds` alerting
+~~15. `/api/ops` monitors: document `last_pass_age_seconds` alerting~~ merged — the ops/retention visibility row (README recipe)
     recipe in README ops section. [S]
-16. Coverage floor: raise CI to 80% when cmd/wire wiring tests land
+~~16. Coverage floor: raise CI to 80% when cmd/wire wiring tests land~~ → routed: coverage floor 80% row
     (pre-existing TODO in ci.yml). [M]
-17. cmd/pbx-lens httptest loop test + resolveKey/parseSince extraction
+~~17. cmd/pbx-lens httptest loop test + resolveKey/parseSince extraction~~ merged — the coverage row (cmd httptest loop)
     (pre-existing coverage rows). [M]
-18. Backup-restore drill in the sibling NixOS module timers (host-side
+~~18. Backup-restore drill in the sibling NixOS module timers (host-side~~ merged — the sibling NixOS drill row
     proof, complements the CI lane). [M, other repo]
-19. Add the release runbook as a script (`scripts/cut-release.sh`:
+~~19. Add the release runbook as a script (`scripts/cut-release.sh`:~~ → routed: cut-release runbook row
     quiesce check → build → test → probes → tag) encoding today's
     lessons. [M]
-20. Session-coordination convention doc (or SESSIONS.md) for the
+~~20. Session-coordination convention doc (or SESSIONS.md) for the~~ → routed: ROADMAP multi-agent open question
     multi-agent workflow. [S]
-21. FTS search quality pass: multi-word queries + ranking spot checks
+~~21. FTS search quality pass: multi-word queries + ranking spot checks~~ → routed: FTS quality pass row
     (untouched all year). [M]
-22. 10k-row BENCHMARK in CI (nightly, not per-push) so the perf rails
+~~22. 10k-row BENCHMARK in CI (nightly, not per-push) so the perf rails~~ merged — the coverage/CI row (benchmark cadence)
     regress loudly. [S]
-23. Export completeness: a consumer-side test that parses a generated
+~~23. Export completeness: a consumer-side test that parses a generated~~ → routed: export lane tests row
     CSV/JSONL and asserts the EXPORT_INCOMPLETE marker contract
     end-to-end. [S]
-24. Recording proxy: negative-path tests for signed-URL expiry
+~~24. Recording proxy: negative-path tests for signed-URL expiry~~ → routed: recording negative paths row
     (upstream 403 → honest error, not a hang). [S]
-25. Favicon dark audit — verified theme-neutral today; re-check if the
+~~25. Favicon dark audit — verified theme-neutral today; re-check if the~~ declined — verified theme-neutral 2026-10-15
     mark ever leaves the teal tile. [S, likely never]
-26. Print CSS: extend the peer's page-break rules to the ops page
+~~26. Print CSS: extend the peer's page-break rules to the ops page~~ → routed: ops-page print page-breaks row
     (it renders cards; print was specced for detail only). [S]
-27. Ops page ETag: the new page rides the middleware — assert 304 on
+~~27. Ops page ETag: the new page rides the middleware — assert 304 on~~ done — the /ops 304 assert landed (Unreleased)
     /ops in serve_test (one conditional GET). [S]
-28. a11y sweep on the /ops page (peer-authored today): heading order,
+~~28. a11y sweep on the /ops page (peer-authored today): heading order,~~ merged — the /ops hardening leftovers row (a11y)
     focus path, contrast on the staleness verdict chip. [S]
-29. s/D1 answer/execution/ for RelativeTime tooltips: day-precision
+~~29. s/D1 answer/execution/ for RelativeTime tooltips: day-precision~~ → routed: RelativeTime tooltip row
     fallback text when relative age exceeds a week (pre-existing UX
     nit). [S]
-30. Search page: the digits-shadow hint test exists; add an example
+~~30. Search page: the digits-shadow hint test exists; add an example~~ → routed: search hint example row
     query to the hint copy (usability, 2 min). [S]
-31. `/version` + footer: assert the two agree post-tag (the checklist
+~~31. `/version` + footer: assert the two agree post-tag (the checklist~~ declined — vacuous in test binaries; the live check rides the runbook row
     pattern; one test). [S]
-32. Add `go list -m …@v0.2.0` + proxy check to the release script
+~~32. Add `go list -m …@v0.2.0` + proxy check to the release script~~ merged — the release runbook row (proxy check)
     (scripted F9). [S]
-33. Move the historical owner checklist out of the release-notes draft
+~~33. Move the historical owner checklist out of the release-notes draft~~ declined — drafts doctrine is annotate-and-keep (R12)
     into docs/drafts/README or an archived section. [S]
-34. docs/status accumulation: triage today's three live reports into
+~~34. docs/status accumulation: triage today's three live reports into~~ done — THIS 2026-10-17 SWEEP (the owner directive supersedes the read gate)
     the archive README convention (they are same-day; annotate + archive
     the two superseded ones after the owner reads). [S]
-35. Telnyx DTO: keep the quarterly re-verify bundle as a checklist file
+~~35. Telnyx DTO: keep the quarterly re-verify bundle as a checklist file~~ → routed: Telnyx quarterly checklist row
     (date + commands), not just the calendar memory. [S]
-36. Retention policy: surface `-max-age`/purge timers state ON the ops
+~~36. Retention policy: surface `-max-age`/purge timers state ON the ops~~ merged — the ops/retention visibility row
     card (deployment config visibility, not just counters). [S]
-37. Check `/ops` behind auth in the e2e lane (the named lane hits four
+~~37. Check `/ops` behind auth in the e2e lane (the named lane hits four~~ merged — the /ops hardening leftovers row (fifth surface)
     surfaces; ops is the fifth page). [S]
-38. Security headers beyond CSP: `Referrer-Policy: no-referrer`,
+~~38. Security headers beyond CSP: `Referrer-Policy: no-referrer`,~~ → routed: security headers middleware row
     `X-Content-Type-Options: nosniff` — one middleware, two headers,
     cheap and standard. [S]
-39. Rate-limit headers on the recording 429 (Retry-After exists; add
+~~39. Rate-limit headers on the recording 429 (Retry-After exists; add~~ declined — YAGNI: Retry-After exists; X-RateLimit-* on a consumer ask
     X-RateLimit-* only if a consumer asks — YAGNI note). [S]
-40. CHANGELOG: the peer's landing of print page-breaks + ops page rode
+~~40. CHANGELOG: the peer's landing of print page-breaks + ops page rode~~ done — fresh Unreleased opened for the test hardening
     Unreleased→v0.2.0 correctly — verify their NEXT batch opens a fresh
     Unreleased (daemon sweep habit). [S]
-41. Roadmap: move the mobile-card and PII rows from TODO_LIST to
+~~41. Roadmap: move the mobile-card and PII rows from TODO_LIST to~~ declined — no owner deprioritization exists; actionable rows stay
     ROADMAP.md only if the owner deprioritizes them (keep actionable
     rows actionable). [S]
-42. gh release page: re-read the rendered notes once (draft extraction
+~~42. gh release page: re-read the rendered notes once (draft extraction~~ declined — re-rendering a published release is a publish action (owner)
     fidelity). [S]
-43. `nix run . -- version` on the TAG (checklist step 8) on a fresh
+~~43. `nix run . -- version` on the TAG (checklist step 8) on a fresh~~ declined — flake build verified; CI runs on the next push
     path — post-tag sanity from the flake, not the store. [S]
-44. Dependabot: confirm next Monday's run proposes the httputil trio
+~~44. Dependabot: confirm next Monday's run proposes the httputil trio~~ → routed: dependabot confirm row
     (the watch row closes with evidence). [S, waits on cycle]
-45. Telnyx DTO negative fixtures for the DetailRecord union (feeds the
+~~45. Telnyx DTO negative fixtures for the DetailRecord union (feeds the~~ declined — window-gated (2027-01); rides the MOS row prep
     MOS window; the property test pattern exists). [S]
-46. Consider `X-Robots-Tag: noindex` header alongside the meta (covers
+~~46. Consider `X-Robots-Tag: noindex` header alongside the meta (covers~~ → routed: X-Robots-Tag row
     non-HTML endpoints uniformly). [S]
-47. Pre-commit hook: add the AGENTS.md 220-line check so the budget is
+~~47. Pre-commit hook: add the AGENTS.md 220-line check so the budget is~~ → routed: pre-commit 220-line check row
     enforced at commit time, not gate time. [S]
-48. Ingest: `-dry-run` flag on ingest-cdr (parse report without writes)
+~~48. Ingest: `-dry-run` flag on ingest-cdr (parse report without writes)~~ → routed: ingest -dry-run row
     for the re-ingest runbook rehearsal. [S]
-49. docs/DOMAIN_LANGUAGE.md: add the MOS/cost vocabulary rows so the
+~~49. docs/DOMAIN_LANGUAGE.md: add the MOS/cost vocabulary rows so the~~ → routed: DOMAIN_LANGUAGE MOS/cost rows
     January window starts with shared language. [S]
-50. Enjoy the release; schedule the 2027-01 window bundle review
+~~50. Enjoy the release; schedule the 2027-01 window bundle review~~ → routed: T15 MOS poller row + calendar confirm
     (design doc + live DTOs) as the next big rock. [—]
 
 ## g) QUESTIONS FOR THE OWNER (cannot self-answer)
 
-1. **Release protocol**: confirm the rule going forward — CI green on
+~~1. **Release protocol**: confirm the rule going forward — CI green on~~ → routed: release runbook row (the rule the script encodes)
    the exact SHA before tagging (today's order was tag → red → fix);
    and should releases WAIT for a concurrent-session quiesce window,
    or is cutting mid-flight acceptable when the local gate is green?
-2. **Trailing-slash final call**: the concurrent session landed 301
+~~2. **Trailing-slash final call**: the concurrent session landed 301~~ → routed: ROADMAP trailing-slash open question
    redirects (`/dashboard/` → `/dashboard`) while my test trail
    settled on 404-pinning, and it is currently UNPINNED. Which is the
    doctrine — canonical redirect, or exact-pattern 404? (I cannot know
    the intent; one sentence settles it.)
-3. **D1–D5 + PII + mobile answers**: date format EU/US, quiet-week
+~~3. **D1–D5 + PII + mobile answers**: date format EU/US, quiet-week~~ → routed: D1-D5 + PII + mobile rows (the pack)
    volume chart worth, PII boundary (ingest vs read — the one-pager
    recommends read), mobile card vs scroll. Four answers unblock ~10
    rows; want them as a staged Gmail draft for one-pass answering?
