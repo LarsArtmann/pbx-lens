@@ -43,7 +43,7 @@ that test is fixed.
 
 ## b) PARTIALLY DONE
 
-1. **P2-T19 /ops hardening** — done: /ops joined the e2e lane (fifth
+~~1. **P2-T19 /ops hardening** — done: /ops joined the e2e lane (fifth~~ done — the close-out leg: full browser lane green twice post-h2 + baseline v2 diff-proven (§a3/§a4); the stale-verdict probe keeps its TODO row
    surface), a11y contract leg added to verify-ui-contract.js, which caught
    a REAL h1→h3 skip; fixed by `TitleTag: display.HeadingTagH2` on all 12
    page-level Cards; goldens regenerated (-update, 4 files); browser probe
@@ -52,14 +52,14 @@ that test is fixed.
    without ingest sources 503s /api/ops), and the stale markup is already
    pinned server-side (`TestOpsPageStaleVerdictAlerts`); documented, not
    built.
-2. **P2-T20 coverage floor** — cmd wiring tests landed
+~~2. **P2-T20 coverage floor** — cmd wiring tests landed~~ done — floor 70 landed (§a5), measured 73.0; the red domain test fixed (§a1)
    (`indexsession_test.go`: openIndexSession/finalizeIngest/gateAndFinalize
    - age gate, printRejected, requireDB/requireOneArg happy paths, smoke +
      backupCmd flows): cmd 9.2% → **27.6%**, total 70.4% → **71.9%**. The
      follow-up domain test (`internal/calls/commands_test.go`:
      constructors + Excerpt + Retire decider) is **RED** — see (d). The CI
      floor is still 50 (raising it is the unfinished half of the task).
-3. **Full browser lane after the h2 change** — verify-ui-contract +
+~~3. **Full browser lane after the h2 change** — verify-ui-contract +~~ done — close-out §a3 (all four suites green twice) and §a4 (baseline v2 saved)
    internal/web tests ran green after the TitleTag fix, but the FULL
    verify-all (style contract, staleness-live, 41-PNG sweep) has not been
    re-run since; also the pixel baseline v1 now predates the h2 markup
@@ -67,25 +67,25 @@ that test is fixed.
 
 ## c) NOT STARTED
 
-- P0-T2 full buildflow gate receipt — load policy blocked it all session
+~~- P0-T2 full buildflow gate receipt — load policy blocked it all session~~ routed → the gate-receipt TODO row (load policy)
   (1-min never under 15); `cut-release.sh` and the receipt procedure wait
   on a quiet machine.
-- P1-T12 BuildFlow#56 binary rebuild — owner-gated (cross-repo build +
+~~- P1-T12 BuildFlow#56 binary rebuild — owner-gated (cross-repo build +~~ routed → answer-sheet §9 (owner)
   install from ~/projects/BuildFlow; doctor currently warns the binary
   trails that checkout by some commits).
-- P2-T21 timeout-test hardening (audit remaining `time.Sleep`, cancellation
+~~- P2-T21 timeout-test hardening (audit remaining `time.Sleep`, cancellation~~ done — T21 audit closed (close-out §a7)
   pattern).
-- P2-T22 docs bundle (DOMAIN_LANGUAGE MOS/cost rows, Telnyx 2027-01
+~~- P2-T22 docs bundle (DOMAIN_LANGUAGE MOS/cost rows, Telnyx 2027-01~~ done — T22 (close-out §a8)
   quarterly checklist file).
-- P2-T23 UX bundle (search hint example query, RelativeTime day-precision
+~~- P2-T23 UX bundle (search hint example query, RelativeTime day-precision~~ done — T23 (close-out §a9)
   tooltip, ops print page-breaks).
-- P2-T24 hygiene bundle (pre-commit AGENTS.md ≤219 check, `ingest-cdr
+~~- P2-T24 hygiene bundle (pre-commit AGENTS.md ≤219 check, `ingest-cdr~~ done — T24 (close-out §a10)
   -dry-run`).
-- P2-T25 verification hygiene (dark-theme eyeball over the 41-PNG corpus,
+~~- P2-T25 verification hygiene (dark-theme eyeball over the 41-PNG corpus,~~ done — T25 (close-out §a11)
   true clean-clone ensureCodegen rehearsal).
-- P2-T26 R27.x advisory triage (art-dupl/branching/file-size verdicts).
-- P3-T27 watch register pass (external gate states, re-rank).
-- Close-out ledger: TODO_LIST rows not yet closed (T5-T19 work is done but
+~~- P2-T26 R27.x advisory triage (art-dupl/branching/file-size verdicts).~~ done — T26 (close-out §a12)
+~~- P3-T27 watch register pass (external gate states, re-rank).~~ done — T27 (close-out §a13)
+~~- Close-out ledger: TODO_LIST rows not yet closed (T5-T19 work is done but~~ done — close-out §a14 (rows closed, CHANGELOG written, adoption map, lint re-run)
   the rows still say open), CHANGELOG Unreleased entry not written,
   docs/templ-components-adoption.md does not yet record the TitleTag
   adoption, dprint/cqrs-lint/golangci-lint not re-run over the late edits.
@@ -150,118 +150,118 @@ that test is fixed.
 
 **P0 — unblock the tree (do first, in order)**
 
-1. Fix `TestRetireDeciderPaths` (mirror domain_test's working stream-id/
+~~1. Fix `TestRetireDeciderPaths` (mirror domain_test's working stream-id/~~ done — close-out §a1 (folded the full history; domain semantics correct)
    record-fold pattern; or split the Retire leg out until diagnosed).
-2. `GOEXPERIMENT=jsonv2 go test ./...` full-suite green.
-3. Re-run the full browser lane post-h2 (`bash scripts/verify-all.sh`).
-4. Re-save the pixel baseline (`--save-baseline ~/lens-baselines/v2`) —
+~~2. `GOEXPERIMENT=jsonv2 go test ./...` full-suite green.~~ done — close-out §a2 (14/14 packages)
+~~3. Re-run the full browser lane post-h2 (`bash scripts/verify-all.sh`).~~ done — close-out §a3
+~~4. Re-save the pixel baseline (`--save-baseline ~/lens-baselines/v2`) —~~ done — close-out §a4 (v2, 0 alerts)
    v1 predates the h2 markup change.
-5. dprint the session's late edits (templ files, scripts, md).
-6. `nix develop -c golangci-lint run ./...` (clear the stale-LSP warnings
+~~5. dprint the session's late edits (templ files, scripts, md).~~ done — close-out §a6 (formatted; scoped lesson recorded in §d5)
+~~6. `nix develop -c golangci-lint run ./...` (clear the stale-LSP warnings~~ done — close-out §a6 (0 issues repo-wide)
    for real: css_gate golines, export_consumer gocognit).
-7. `nix develop -c cqrs-lint .` per the findings policy.
-8. Push the 17-commit tail once green; watch remote CI to green.
-9. Update TODO_LIST: close T4/T5/T6/T7/T8/T9/T10/T11/T13/T14/T15/T16/T17/
+~~7. `nix develop -c cqrs-lint .` per the findings policy.~~ done — close-out §a6 (F009 reconfirmed as the documented policy)
+~~8. Push the 17-commit tail once green; watch remote CI to green.~~ done — close-out §a16 (pushed, remote CI success)
+~~9. Update TODO_LIST: close T4/T5/T6/T7/T8/T9/T10/T11/T13/T14/T15/T16/T17/~~ done — close-out §a14 (18 rows closed with receipts)
    T18 rows (move to CHANGELOG), annotate the T19 partial, keep T20 open.
-10. CHANGELOG Unreleased entry for the whole session (headers, CSP fixes,
+~~10. CHANGELOG Unreleased entry for the whole session (headers, CSP fixes,~~ done — close-out §a14
     a11y h2, nonce threading, instruments, guard, triage).
-11. Record TitleTag + nonce-threading in docs/templ-components-adoption.md
+~~11. Record TitleTag + nonce-threading in docs/templ-components-adoption.md~~ done — close-out §a14
     (and note Card's h3 default in the version-bump watchlist context).
-12. Finish P2-T20: decide the CI floor (see question 1), edit ci.yml
+~~12. Finish P2-T20: decide the CI floor (see question 1), edit ci.yml~~ done — close-out §a5 (floor 70 as default; answer sheet §8)
     MIN_COVERAGE, watch the run.
-13. P0-T2: full buildflow dev gate on the settled tree when load < 15/40;
+~~13. P0-T2: full buildflow dev gate on the settled tree when load < 15/40;~~ routed → the gate-receipt TODO row (BuildFlow#56 CLOSED upstream; still load-gated — 1-min 92 at this pass)
     bank the receipt in docs/buildflow-dev-gate.md; close/keep the
     BuildFlow#56 workaround sentence accordingly.
 
 **P1 — remaining trust/quality work**
-14. P2-T21: audit remaining `time.Sleep` in tests; convert one candidate to
+~~14. P2-T21: audit remaining `time.Sleep` in tests; convert one candidate to~~ done — close-out §a7 (exactly two await-pattern sites; row closed)
 the cancellation-driven pattern; generalize the helper.
-15. P2-T22: DOMAIN_LANGUAGE MOS/cost rows; Telnyx quarterly checklist file
+~~15. P2-T22: DOMAIN_LANGUAGE MOS/cost rows; Telnyx quarterly checklist file~~ done — close-out §a8
 (date + commands, 2027-01 window).
-16. P2-T23: search hint example query; RelativeTime day-precision tooltip;
+~~16. P2-T23: search hint example query; RelativeTime day-precision tooltip;~~ done — close-out §a9
 ops print page-breaks (with probe capture).
-17. P2-T24: pre-commit AGENTS.md ≤219 wc check; `ingest-cdr -dry-run` flag
+~~17. P2-T24: pre-commit AGENTS.md ≤219 wc check; `ingest-cdr -dry-run` flag~~ done — close-out §a10
 
 - test.
 
-18. P2-T25: dark-theme eyeball over the fresh corpus; true clean-clone
+~~18. P2-T25: dark-theme eyeball over the fresh corpus; true clean-clone~~ done — close-out §a11
     ensureCodegen rehearsal in a scratch worktree.
-19. P2-T26: R27.x triage (art-dupl + branching-flow verdicts, file-size
+~~19. P2-T26: R27.x triage (art-dupl + branching-flow verdicts, file-size~~ done — close-out §a12
     accept-or-split for server.go/search.go/telnyx_test.go, vulnix note).
-20. P3-T27: watch-register pass (verify each Blocked row's external gate;
+~~20. P3-T27: watch-register pass (verify each Blocked row's external gate;~~ done — close-out §a13
     re-rank TODO_LIST after P0/P1 land).
-21. Consider an upstream filing candidate: Card's h3 default makes
+~~21. Consider an upstream filing candidate: Card's h3 default makes~~ routed → the TODO upstream-filings row (verify-before-filing first; this pass)
     heading-order violations the natural outcome (we now pass TitleTag in
     12 call sites) — verify-before-filing first; the library documents
     TitleTag, so this is a DX suggestion, not a bug.
-22. Improve csp-sweep: attribute console violations to the current surface
+~~22. Improve csp-sweep: attribute console violations to the current surface~~ routed → the TODO probe-polish row (this pass)
     (reset the console buffer per navigation like the DOM events).
-23. cut-release.sh: dry-run the full body on a quiet machine (it has only
+~~23. cut-release.sh: dry-run the full body on a quiet machine (it has only~~ routed → the TODO release-rehearsals row (this pass)
     had its guard rails exercised, not the gate+probe sequence).
-24. README: the new `--fast`/LENS_DIFF_BASELINE/csp-sweep entries exist in
+~~24. README: the new `--fast`/LENS_DIFF_BASELINE/csp-sweep entries exist in~~ Won't implement — audience split is deliberate: scripts/README is the dev surface, README stays user-facing
     scripts/README — mirror the one-liner usage into README.md's dev
     section if the owner wants them surfaced.
 
 **Watch / owner-gated (scheduled, not fake-scheduled)**
-25. P1-T12 BuildFlow#56 rebuild on approval → then re-run the full gate for
+~~25. P1-T12 BuildFlow#56 rebuild on approval → then re-run the full gate for~~ routed → answer-sheet §9 + the gate-receipt row
 the literal full receipt; close the ledger note.
-26. Owner answer sheet (D1-D5, PII, mobile) → record outcomes in
+~~26. Owner answer sheet (D1-D5, PII, mobile) → record outcomes in~~ routed → the owner rows (outcomes recorded on arrival per the F7 contract)
 TODO_LIST + AGENTS.md per the F7 contract.
-27. Fold-ins when upstream lands: templ-components #48/#49/#50/#51/#55,
+~~27. Fold-ins when upstream lands: templ-components #48/#49/#50/#51/#55,~~ routed → the TODO fold-in rows (next check 2027-01)
 go-etag#2, go-appkit#26, BuildFlow#55.
-28. 2027-01 Telnyx live-verify window + MOS poller execution (design done).
-29. Host deploys (`aiDids` options; the NixOS module is ready).
-30. Production re-ingest for ContentHash v2 (owner path).
-31. Schema-v2 length-prefixed ContentHash encoding (frozen at v1 until the
+~~28. 2027-01 Telnyx live-verify window + MOS poller execution (design done).~~ routed → the 2027-01 window row (checklist file ready)
+~~29. Host deploys (`aiDids` options; the NixOS module is ready).~~ routed → the TODO deploy row (owner)
+~~30. Production re-ingest for ContentHash v2 (owner path).~~ routed → the TODO re-ingest row (-dry-run rehearsal enabled)
+~~31. Schema-v2 length-prefixed ContentHash encoding (frozen at v1 until the~~ routed → the TODO schema-v2 row
 gate).
-32. Dependabot weekly run: confirm bumps for the newly-direct deps.
-33. dependabot-core#16538 maintainer answers (owner).
-34. Browser-level 304 check (owner manual; server side pinned).
-35. >1MiB transcript policy (owner decision, default documented).
-36. Sibling repo backup-rotation fold into lens.nix comments.
-37. /tmp cleanup decision (48G tmpfs was 100% at session start, recovered
+~~32. Dependabot weekly run: confirm bumps for the newly-direct deps.~~ routed → the TODO dependabot row
+~~33. dependabot-core#16538 maintainer answers (owner).~~ routed → the TODO watch row (owner)
+~~34. Browser-level 304 check (owner manual; server side pinned).~~ routed → the TODO browser-304 row (owner manual check)
+~~35. >1MiB transcript policy (owner decision, default documented).~~ routed → the TODO owner row (option-1 default stands)
+~~36. Sibling repo backup-rotation fold into lens.nix comments.~~ routed → the TODO sibling row
+~~37. /tmp cleanup decision (48G tmpfs was 100% at session start, recovered~~ Won't implement — machine-local scratch, not repo work
 to 54% by external cleanup — the cross-session logs are not ours to
 trash unilaterally).
-38. lychee fleet GITHUB_TOKEN policy (BuildFlow fleet question) — revisit
+~~38. lychee fleet GITHUB_TOKEN policy (BuildFlow fleet question) — revisit~~ routed → the tooling-triage row (fleet policy)
 the skip_steps entry when it exists.
-39. vulnix re-triage (rides R27.x / next bump cycle; govulncheck is the
+~~39. vulnix re-triage (rides R27.x / next bump cycle; govulncheck is the~~ routed → ROADMAP (rides the next flake bump)
 trusted CVE gate).
-40. markdownlint: revisit only if the fleet adopts a curated config that
+~~40. markdownlint: revisit only if the fleet adopts a curated config that~~ Won't implement — deliberate non-adoption recorded by P1-T8
 tolerates wide tables.
-41. Coverage: the calls-projection fold + cmd exec-level flag tests are the
+~~41. Coverage: the calls-projection fold + cmd exec-level flag tests are the~~ routed → the coverage owner row (answer sheet §8)
 path from 71.9% toward 80 — decide whether that is worth a dedicated
 pass (see question 1).
-42. serve.go: the CSP flip (enforcing nonce mode) waits on the next host
+~~42. serve.go: the CSP flip (enforcing nonce mode) waits on the next host~~ routed → answer-sheet §11 (CSP enforce-mode; staged this pass)
 deploy — bundle it with the `aiDids` deploy.
-43. Stale-verdict browser probe: revisit ONLY if a poller-wired serve
+~~43. Stale-verdict browser probe: revisit ONLY if a poller-wired serve~~ routed → the TODO stale-verdict probe row
 composition ever exists in the probe stack (otherwise it tests nothing
 a golden doesn't).
-44. golden-volatile scrubber: `Updated HH:MM:SS` replacement hardcodes the
+~~44. golden-volatile scrubber: `Updated HH:MM:SS` replacement hardcodes the~~ routed → the TODO probe-polish row
 stamp format — verify it still catches after any footer copy change.
-45. cut-release.sh `go list -m` sleep-10 proxy lag: make it a retry loop if
+~~45. cut-release.sh `go list -m` sleep-10 proxy lag: make it a retry loop if~~ routed → the TODO release-rehearsals row
 the first check ever flakes.
-46. .buildflow.yml skip_steps: re-audit if BuildFlow registers
+~~46. .buildflow.yml skip_steps: re-audit if BuildFlow registers~~ routed → the tooling-triage row (re-audit trigger)
 markdownlint/prettier/eslint providers for this repo shape (the
 disposition rationale says why they're excluded today).
-47. scripts/README: two "Codegen bootstrap" paragraphs tell the same story
+~~47. scripts/README: two "Codegen bootstrap" paragraphs tell the same story~~ routed → the TODO probe-polish row (docs merge)
 twice (M4/F14 + hash-primary) — merge them next docs touch.
-48. AGENTS.md 219-line budget: held this session; the next addition needs
+~~48. AGENTS.md 219-line budget: held this session; the next addition needs~~ done — budget enforced (check-agents-budget.sh + .githooks/pre-commit); the extraction pre-plan is a TODO row
 a compensating trim (the pre-commit check in P2-T24 would automate
 this).
-49. Clean up scratch dirs from this session (/home/lars/tmp/pd-run*,
+~~49. Clean up scratch dirs from this session (/home/lars/tmp/pd-run*,~~ Won't implement — machine-local scratch, not repo work
 csp-sweep-run*, tw-*, shots-fast) once the receipts above are banked.
 
 ## g) Questions for the owner (cannot self-answer)
 
-1. **CI coverage floor**: total is 71.9% after the cmd wiring tests. Do I
+~~1. **CI coverage floor**: total is 71.9% after the cmd wiring tests. Do I~~ done — floor 70 implemented as default (answer sheet §8; close-out §a15)
    pin MIN_COVERAGE=70 now (truthful, 1.9pt headroom), hold at 50 until the
    80 push is real, or invest the dedicated pass (projection-fold +
    exec-level cmd tests) to legitimately reach the fleet's 80 gate?
-2. **BuildFlow#56**: may I build + reinstall the buildflow binary from
+~~2. **BuildFlow#56**: may I build + reinstall the buildflow binary from~~ routed → answer-sheet §9 (owner bookkeeping; the upstream fix landed)
    ~/projects/BuildFlow on this machine (clean checkout, `nix build . &&
    nix run .#reinstall`)? It gates the literal full-gate receipt and the
    stale-binary advisory.
-3. **Pixel-baseline strategy**: keep baselines machine-local
+~~3. **Pixel-baseline strategy**: keep baselines machine-local~~ routed → answer-sheet §10 (owner; v2 saved machine-local per the recommendation)
    (~/lens-baselines/<gen>, re-save after any markup change — my
    recommendation, zero repo weight) or commit a baseline generation into
    the repo (reviewable drift, ~41 PNGs per generation)?

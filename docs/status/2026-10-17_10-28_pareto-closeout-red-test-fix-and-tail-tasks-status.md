@@ -123,59 +123,59 @@ never under 15).
 
 ## b) PARTIALLY DONE
 
-1. **P0-T2 / clean-checkout 70/70 gate receipt.** Upstream is unblocked
+~~1. **P0-T2 / clean-checkout 70/70 gate receipt.** Upstream is unblocked~~ routed → the gate-receipt TODO row (BuildFlow#56 CLOSED; still load-gated — 1-min 92 at this pass)
    (BuildFlow#56 CLOSED today — the fix landed), but the load policy
    (1-min < 15 AND 15-min < 40) never permitted a run all day (1-min
    ranged 25→112). The row now sits FIRST in TODO_LIST Unblocked, ready
    for a low-load window. Nothing about the tree blocks it.
-2. **/ops hardening (T19 leftover).** Authed lane membership + a11y
+~~2. **/ops hardening (T19 leftover).** Authed lane membership + a11y~~ routed → the stale-verdict-probe TODO row
    (headings, focus) landed; the stale-verdict browser probe was
    deliberately not built — the e2e serve boots without ingest sources,
    so /ops renders the unwired EmptyState. The blocker is buildable-away
    (a poller-wired serve composition or a `serve -wired-ops` dev flag);
    markup is pinned by `TestOpsPageStaleVerdictAlerts` meanwhile.
-3. **FTS quality pass.** Multi-word AND semantics pinned
+~~3. **FTS quality pass.** Multi-word AND semantics pinned~~ routed → the FTS-ranking TODO row
    (`TestMultiWordQuerySemantics`, prior leg); ranking spot checks on a
    larger corpus remain (row rewritten in TODO_LIST).
-4. **Buildflow tooling triage.** lychee + nix-build-verify skips
+~~4. **Buildflow tooling triage.** lychee + nix-build-verify skips~~ routed → the tooling-triage remainder row
    rationalized in `.buildflow.yml`, shellcheck joined the devShell;
    the doctor-entry disposition (markdown-lint/gitleaks/codespell
    on-demand vs install) still wants a pass after the BuildFlow#56
    rebuild.
-5. **Coverage story.** Floor 70 landed; the chase to the fleet-80 target
+~~5. **Coverage story.** Floor 70 landed; the chase to the fleet-80 target~~ routed → the coverage owner row (answer sheet §8)
    is owner-gated (answer sheet §8; measured 73.0%).
-6. **Pixel-diff practice.** Baseline v2 + alert-only `--diff` + volatile
+~~6. **Pixel-diff practice.** Baseline v2 + alert-only `--diff` + volatile~~ routed → the baseline-home owner row (answer sheet §10)
    budget all landed; the durable HOME of baselines is owner-gated
    (answer sheet §10).
-7. **CSP posture.** Report-only sweep is enforce-clean (prior leg);
+~~7. **CSP posture.** Report-only sweep is enforce-clean (prior leg);~~ routed → answer-sheet §11 (staged this pass; decision pending owner)
    enforce-mode flip is a decision not yet made (see §g, question 3).
 
 ## c) NOT STARTED (verified — all live in TODO_LIST with evidence)
 
-1. Recording-proxy timing-hop budget asserts (Server-Timing must not
+~~1. Recording-proxy timing-hop budget asserts (Server-Timing must not~~ routed → the TODO row (standing)
    perturb upstream timeout budgets).
-2. Stale-verdict browser probe (blocked on the wired-ops composition —
+~~2. Stale-verdict browser probe (blocked on the wired-ops composition —~~ routed → the TODO row
    see b.2).
-3. FTS ranking spot checks.
-4. Buildflow tooling triage remainder.
-5. Production re-ingest for ContentHash v2 (owner path; the `-dry-run`
+~~3. FTS ranking spot checks.~~ routed → the TODO row
+~~4. Buildflow tooling triage remainder.~~ routed → the TODO row
+~~5. Production re-ingest for ContentHash v2 (owner path; the `-dry-run`~~ routed → the TODO row (-dry-run rehearsal ready)
    flag now enables the rehearsal step).
-6. Host deploys via the nix-international-telephony module (`aiDids`
+~~6. Host deploys via the nix-international-telephony module (`aiDids`~~ routed → the TODO deploy row (owner)
    newly available) — owner.
-7. Owner decision pack D1–D5 execution (answers → one-decision
+~~7. Owner decision pack D1–D5 execution (answers → one-decision~~ routed → the owner rows (answer sheet)
    all-surfaces date change etc.).
-8. T15 MOS poller execution (2027-01 Telnyx window).
-9. PII enforcement at the read boundary (owner decision, recommendation
+~~8. T15 MOS poller execution (2027-01 Telnyx window).~~ routed → the 2027-01 window row
+~~9. PII enforcement at the read boundary (owner decision, recommendation~~ routed → the owner row (answer sheet §6; recommendation B)
    B on the table).
-10. Browser-level htmx 304 revalidation check (owner manual check).
-11. 1MiB marathon-transcript buffer policy (owner).
-12. Dependabot confirmation for newly-direct deps (weekly cycle).
-13. dependabot-core#16538 maintainer answers + gomod pinning decision.
-14. Sibling backup-rotation fold into `modules/telephony/lens.nix`.
-15. Mobile card-list (375px) — after owner taste call.
-16. Telnyx live-verify cluster (2027-01; checklist file ready).
-17. Schema v2 length-prefixed ContentHash encoding (at the v2 gate).
-18. README screenshots (R27.x remnant), nix-checker cleanup, vulnix
+~~10. Browser-level htmx 304 revalidation check (owner manual check).~~ routed → the owner row (manual check)
+~~11. 1MiB marathon-transcript buffer policy (owner).~~ routed → the owner row (option-1 default stands)
+~~12. Dependabot confirmation for newly-direct deps (weekly cycle).~~ routed → the TODO row (weekly cycle)
+~~13. dependabot-core#16538 maintainer answers + gomod pinning decision.~~ routed → the TODO watch row
+~~14. Sibling backup-rotation fold into `modules/telephony/lens.nix`.~~ routed → the TODO sibling row
+~~15. Mobile card-list (375px) — after owner taste call.~~ routed → the owner row (answer sheet §7)
+~~16. Telnyx live-verify cluster (2027-01; checklist file ready).~~ routed → the 2027-01 window row
+~~17. Schema v2 length-prefixed ContentHash encoding (at the v2 gate).~~ routed → the TODO schema-v2 row
+~~18. README screenshots (R27.x remnant), nix-checker cleanup, vulnix~~ split verdict — README screenshots: done (README embeds the dashboard + mobile shots; docs/assets indexed); nix-checker + vulnix: routed → ROADMAP
     closure scan (govulncheck covers Go; the nix closure is unaudited
     this cycle).
 
@@ -256,105 +256,105 @@ never under 15).
 
 already-routed TODO_LIST rows, 19+ are proposal-grade ROADMAP fuel)
 
-1. Run the full buildflow gate at low load → bank the 70/70
+~~1. Run the full buildflow gate at low load → bank the 70/70~~ routed → the gate-receipt TODO row
    clean-checkout receipt (BuildFlow#56 landed); retire the v0.2.0
    workaround note.
-2. Owner: answer the three §g questions below + the standing answer
+~~2. Owner: answer the three §g questions below + the standing answer~~ routed → the owner rows (answer sheet)
    sheet (D1–D5, PII, mobile) — most blocked High rows gate on this.
-3. Prod re-ingest REHEARSAL with the new flag: `ingest-cdr -dry-run`
+~~3. Prod re-ingest REHEARSAL with the new flag: `ingest-cdr -dry-run`~~ routed → the re-ingest row (rehearsal step)
    against the production Master.csv (F63 prep, zero risk).
-4. Host deploys (owner) via `modules/telephony/lens.nix`; verify
+~~4. Host deploys (owner) via `modules/telephony/lens.nix`; verify~~ routed → the deploy row
    `aiDids` + `-max-age`/`-recording-timeout` on real hosts.
-5. Production re-ingest for ContentHash v2 (the one-time wave, after 4).
-6. Build a poller-wired ops composition for the e2e serve (small
+~~5. Production re-ingest for ContentHash v2 (the one-time wave, after 4).~~ routed → the re-ingest row
+~~6. Build a poller-wired ops composition for the e2e serve (small~~ routed → the stale-verdict-probe row
    serveProbe option or `serve -wired-ops` dev flag) → unlock the
    stale-verdict browser probe.
-7. PII enforcement at the read boundary (if owner picks B): E164
+~~7. PII enforcement at the read boundary (if owner picks B): E164~~ routed → the owner row (answer sheet §6)
    rendering path + gate-style pinning test.
-8. FTS ranking spot checks on a larger corpus (digits-shadow corners).
-9. Recording-proxy timing-hop budget asserts.
-10. Buildflow tooling triage remainder (doctor entries disposition).
-11. Mobile card-list implementation (after the owner taste call).
-12. Fold the go-appkit#26 drain-cost insight into our testkit usage +
+~~8. FTS ranking spot checks on a larger corpus (digits-shadow corners).~~ routed → the FTS row
+~~9. Recording-proxy timing-hop budget asserts.~~ routed → the TODO row
+~~10. Buildflow tooling triage remainder (doctor entries disposition).~~ routed → the tooling-triage row
+~~11. Mobile card-list implementation (after the owner taste call).~~ routed → the owner row
+~~12. Fold the go-appkit#26 drain-cost insight into our testkit usage +~~ routed → the fold-in row
     the upstream ledger.
-13. Watch ledger: go-etag#2, go-nix-helpers#7, treefmt-nix#545,
+~~13. Watch ledger: go-etag#2, go-nix-helpers#7, treefmt-nix#545,~~ routed → the fold-in rows (next check 2027-01)
     templ-components #48/49/50/51/55 (quarterly re-verify).
-14. 2027-01 Telnyx window: run `docs/telnyx-quarterly-checklist.md` top
+~~14. 2027-01 Telnyx window: run `docs/telnyx-quarterly-checklist.md` top~~ routed → the 2027-01 window row
     to bottom; confirm the calendar entry NOW.
-15. T15 MOS poller execution in the same window.
-16. 1MiB transcript buffer policy decision + implementation.
-17. Confirm dependabot bumps for newly-direct deps; answer
+~~15. T15 MOS poller execution in the same window.~~ routed → the window row
+~~16. 1MiB transcript buffer policy decision + implementation.~~ routed → the owner row
+~~17. Confirm dependabot bumps for newly-direct deps; answer~~ routed → the dependabot row
     dependabot-core#16538.
-18. Sibling fold: backup-rotation opinion into lens.nix comments; schema
+~~18. Sibling fold: backup-rotation opinion into lens.nix comments; schema~~ routed → the sibling + schema-v2 rows
     v2 ContentHash encoding at the v2 gate.
-19. CSP enforce-mode decision (needs §g Q3) + flip mechanics if go.
-20. csp-sweep improvement: per-surface console attribution (§d5 of the
+~~19. CSP enforce-mode decision (needs §g Q3) + flip mechanics if go.~~ routed → answer-sheet §11 (staged this pass)
+~~20. csp-sweep improvement: per-surface console attribution (§d5 of the~~ routed → the probe-polish row (this pass)
     08:02 report).
-21. Activate `.githooks` (owner one-liner) AND wire the budget check into
+~~21. Activate `.githooks` (owner one-liner) AND wire the budget check into~~ routed → the hooks-wiring row (this pass)
     the daemon path (the daemon bypasses local hooks unless hooksPath is
     set) — otherwise the pre-commit check only guards human commits.
-22. Add the AGENTS.md budget check as a lightweight CI job (guards all
+~~22. Add the AGENTS.md budget check as a lightweight CI job (guards all~~ routed → the hooks-wiring row (this pass)
     committers without local config).
-23. cqrs-lint inline suppression for F009 (if supported upstream —
+~~23. cqrs-lint inline suppression for F009 (if supported upstream —~~ routed → the upstream-filings row (possible filing)
     possible filing).
-24. Off-hours gate catch-up timer (see e.4).
-25. art-dupl verdict baseline file (see e.8).
-26. cut-release.sh has never been exercised end-to-end — dry-run it once
+~~24. Off-hours gate catch-up timer (see e.4).~~ routed → ROADMAP raw idea (this pass)
+~~25. art-dupl verdict baseline file (see e.8).~~ routed → the probe-polish row (this pass)
+~~26. cut-release.sh has never been exercised end-to-end — dry-run it once~~ routed → the release-rehearsals row (this pass)
     against a non-release commit.
-27. Baseline-freshness warning in cut-release.sh / verify-all (e.7).
-28. File the CopyButton nonce gap upstream (templ-components).
-29. File the Card TitleTag default (h3 level-skip) upstream.
-30. Decide the archived-docs dprint policy: exclude
+~~27. Baseline-freshness warning in cut-release.sh / verify-all (e.7).~~ routed → the probe-polish row (this pass)
+~~28. File the CopyButton nonce gap upstream (templ-components).~~ routed → the upstream-filings row (this pass)
+~~29. File the Card TitleTag default (h3 level-skip) upstream.~~ routed → the upstream-filings row (this pass)
+~~30. Decide the archived-docs dprint policy: exclude~~ routed → ROADMAP open question (this pass)
     `docs/status/archived/` or accept future reflows.
-31. Check whether branch protection can require HEAD-green only (cosmetic
+~~31. Check whether branch protection can require HEAD-green only (cosmetic~~ routed → ROADMAP raw idea (this pass)
     mitigation for mid-flight red SHAs like `bafd463`).
-32. README screenshots (the R27.x remnant — README is still text-only).
-33. nix-checker cleanup (R27.x remnant).
-34. vulnix scan of the full nix closure (govulncheck covers only Go) —
+~~32. README screenshots (the R27.x remnant — README is still text-only).~~ done — verified this pass: README embeds the dashboard + mobile screenshots; docs/assets/ carries and indexes the set
+~~33. nix-checker cleanup (R27.x remnant).~~ routed → ROADMAP raw idea (this pass)
+~~34. vulnix scan of the full nix closure (govulncheck covers only Go) —~~ routed → ROADMAP raw idea (this pass)
     pair with the next flake lock bump.
-35. D3 follow-through: quiet-week volume-chart filing if owner picks B.
-36. D4 follow-through: export-note collapse if chosen.
-37. D5 follow-through: AI-share tone change if chosen.
-38. Extend the print probe to assert `break-inside` computed style on
+~~35. D3 follow-through: quiet-week volume-chart filing if owner picks B.~~ routed → the D1-D5 owner rows
+~~36. D4 follow-through: export-note collapse if chosen.~~ routed → the D1-D5 owner rows
+~~37. D5 follow-through: AI-share tone change if chosen.~~ routed → the D1-D5 owner rows
+~~38. Extend the print probe to assert `break-inside` computed style on~~ routed → the probe-polish row (this pass)
     `.lens-ops-card` (today the rule's presence is only in the CSS).
-39. Long-excerpt PNGs: quarterly truncation-regression eyeball.
-40. `verify-all --baseline <dir>` convenience wrapper over
+~~39. Long-excerpt PNGs: quarterly truncation-regression eyeball.~~ routed → ROADMAP (quarterly cadence; this pass)
+~~40. `verify-all --baseline <dir>` convenience wrapper over~~ routed → the probe-polish row (this pass)
     LENS_DIFF_BASELINE.
-41. AGENTS.md 219/219: pre-plan the next extraction (the serve/UI
+~~41. AGENTS.md 219/219: pre-plan the next extraction (the serve/UI~~ routed → the TODO extraction-pre-plan row (this pass)
     paragraph's recording-proxy details could move to docs/http-stack.md)
     so the next addition doesn't stall.
-42. Session-start drift guard: `gh run list` + one package test as a
+~~42. Session-start drift guard: `gh run list` + one package test as a~~ routed → ROADMAP raw idea (this pass)
     two-second "is HEAD actually green" check before continuing work.
-43. ROADMAP sweep: fold f-items 19+ that survive triage into ROADMAP
+~~43. ROADMAP sweep: fold f-items 19+ that survive triage into ROADMAP~~ done — this pass: the f19+ queue was triaged into TODO rows and ROADMAP raw ideas
     raw-ideas (docs-health HARVEST rigor: don't entomb them here).
-44. CHANGELOG: consider splitting the Unreleased pile at v0.3.0 once the
+~~44. CHANGELOG: consider splitting the Unreleased pile at v0.3.0 once the~~ routed → ROADMAP (at the v0.3.0 release; this pass)
     gate receipt lands (the pile is 3 sections deep already).
-45. Pixel baseline: re-save to v3 automatically as part of the next
+~~45. Pixel baseline: re-save to v3 automatically as part of the next~~ routed → the probe-polish row (DoD note; this pass)
     markup-touching change's definition-of-done.
-46. Coverage: if owner chases 80, the biggest gaps are serve/UI handler
+~~46. Coverage: if owner chases 80, the biggest gaps are serve/UI handler~~ routed → the coverage owner row
     branches (web 73.9%) — plan extraction of pure helpers first.
-47. `ingest-telnyx -dry-run` parity with ingest-cdr (fetch is network-
+~~47. `ingest-telnyx -dry-run` parity with ingest-cdr (fetch is network-~~ routed → the release-rehearsals row (this pass)
     bound; a report-only mode still helps window rehearsals).
-48. Ops page: surface purge-timer state (deployment config visibility
+~~48. Ops page: surface purge-timer state (deployment config visibility~~ routed → ROADMAP (revisit if ops asks; this pass)
     row partially done; last-purge age still absent by design decision —
     revisit if ops asks).
-49. Docs: mirror the `-dry-run` flag into README's ingest examples.
-50. Celebrate v0.2.x hygiene: the repo is at lint-0 / test-14-14 /
+~~49. Docs: mirror the `-dry-run` flag into README's ingest examples.~~ done — this pass (README ingest section now names the flag)
+~~50. Celebrate v0.2.x hygiene: the repo is at lint-0 / test-14-14 /~~ routed → ROADMAP cadence note (this pass IS the next docs-health sweep)
     CI-green / probes-green — schedule the next Pareto pass BEFORE new
     work accretes (the plan-after-plan pattern that worked twice now).
 
 ## g) Three questions I cannot answer myself
 
-1. **Coverage: keep the floor at 70 (landed, measured 73.0%) or chase
+~~1. **Coverage: keep the floor at 70 (landed, measured 73.0%) or chase~~ routed → answer sheet §8 (floor 70 default stands; chase = the owner row)
    the fleet-80 gate?** Chasing 80 means mostly serve/UI handler-branch
    tests — real work with diminishing returns for a single-host internal
    tool. Your risk appetite decides; I can't derive it.
-2. **Pixel-baseline home: stay machine-local (`~/lens-baselines/<gen>`,
+~~2. **Pixel-baseline home: stay machine-local (`~/lens-baselines/<gen>`,~~ routed → answer sheet §10 (owner)
    my recommendation, zero repo weight) or commit a baseline generation
    (~41 PNGs, reviewable drift, ~10–20 MB repo weight)?** This is a
    repo-weight-vs-reproducibility taste call, and it decides whether a
    second machine can ever meaningfully diff.
-3. **CSP: flip to enforce-mode in v0.3.0 after one more clean sweep, or
+~~3. **CSP: flip to enforce-mode in v0.3.0 after one more clean sweep, or~~ routed → answer sheet §11 (staged this pass; decision pending owner)
    stay report-only until real-browser usage exists on the deployed
    hosts?** The sweep is enforce-clean in the probe environment, but the
    probe browser is not your browser mix — enforce-mode breaks pages
