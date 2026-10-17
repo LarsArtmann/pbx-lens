@@ -199,3 +199,56 @@ func TestSmokeSeedsAndBackupVerifies(t *testing.T) {
 		t.Fatalf("backup left no snapshot at %s: %v", out, err)
 	}
 }
+
+// TestIngestCDRDryRunReportsWithoutWrites pins the F63 rehearsal flag: a
+// dry-run against a real fixture CSV parses, applies the age gate, and
+// prints the would-record report — with NO -db and no index created.
+func TestIngestCDRDryRunReportsWithoutWrites(t *testing.T) {
+	dir := t.TempDir()
+	csv := filepath.Join(dir, "Master.csv")
+	row := `"John Doe","17287289311","2000","public","2026-10-09 19:51:25","2026-10-09 19:51:26","2026-10-09 19:51:51","26","25","NORMAL_CLEARING","f0e1d2c3-1111-4aaa-9aaa-000000000001","b0a9-2222",""`
+	if err := os.WriteFile(csv, []byte(row+"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	original := os.Stdout
+
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+
+	os.Stdout = w
+
+	ingestCDR([]string{"-dry-run", csv})
+
+	if err := w.Close(); err != nil {
+		t.Fatalf("close writer: %v", err)
+	}
+
+	os.Stdout = original
+
+	var captured bytes.Buffer
+
+	if _, err := captured.ReadFrom(r); err != nil {
+		t.Fatalf("read captured stdout: %v", err)
+	}
+
+	for _, want := range []string{
+		"1 rows parsed, 0 parse-skipped, 1 would-record, 0 age-refused",
+		"nothing written",
+	} {
+		if !strings.Contains(captured.String(), want) {
+			t.Errorf("dry-run stdout missing %q (got %q)", want, captured.String())
+		}
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(entries) != 1 {
+		t.Errorf("dry-run must leave no index behind, dir now holds %d entries", len(entries))
+	}
+}

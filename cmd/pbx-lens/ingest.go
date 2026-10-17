@@ -21,9 +21,13 @@ func ingestCDR(args []string) {
 	aiDest := fs.String("ai-dest", cdr.DefaultAIDestination,
 		"comma-separated AI destinations (dialplan badge): destination_number matches badge IsAI")
 	maxAge := fs.Duration("max-age", 0, "refuse observations older than this (0 = keep everything)")
+	dryRun := fs.Bool("dry-run", false, "parse and report without touching the index (no -db needed)")
 	_ = fs.Parse(args)
 
-	requireDB(fs, *db)
+	if !*dryRun {
+		requireDB(fs, *db)
+	}
+
 	requireOneArg(fs, "Master.csv path")
 
 	file, err := os.Open(fs.Arg(0))
@@ -40,6 +44,19 @@ func ingestCDR(args []string) {
 
 	if closeErr != nil {
 		fatal(closeErr)
+	}
+
+	if *dryRun {
+		admitted, refusals := (cli.AgeGate{MaxAge: *maxAge}).Apply(parsed.Observations, time.Now().UTC())
+
+		fmt.Printf(
+			"ingest-cdr (dry-run): %d rows parsed, %d parse-skipped, %d would-record, %d age-refused — nothing written\n",
+			len(parsed.Observations), parsed.Skipped, len(admitted), len(refusals),
+		)
+
+		printRejected(refusals)
+
+		return
 	}
 
 	stats := gateAndFinalize(
