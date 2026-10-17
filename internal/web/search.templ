@@ -33,7 +33,8 @@ templ searchRoute(nonce string, query string, hits []search.Hit, errMessage stri
 			@display.Button(display.ButtonProps{Text: "Search", Type: display.ButtonHTMLSubmit})
 		}
 		<p class="mb-6 max-w-xl text-xs text-gray-500 dark:text-gray-400">
-			Matches transcript words and phone numbers. Partial numbers match
+			Matches transcript words and phone numbers. Multiple words must all
+			match the same call: try `thermostat broken`. Partial numbers match
 			too: any run of 4+ digits finds the call (+49…, 0728…, or a
 			mid-number snippet all work).
 		</p>
