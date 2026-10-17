@@ -11,9 +11,10 @@ archived/** — the living backlog is [TODO_LIST.md](../../TODO_LIST.md).
 
 ## Live reports
 
-| Report                                                                        | State                                                             |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `2026-10-18_00-18_docs-health-pass-live-set-closeout-and-planning-archive.md` | newest harvest source — its open items route to TODO_LIST/ROADMAP |
+| Report                                                                        | State                                                   |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `2026-10-18_00-55_docs-health-pass-self-review-and-remote-ci-verdict.md`      | newest harvest source — self-review + remote-CI verdict |
+| `2026-10-18_00-18_docs-health-pass-live-set-closeout-and-planning-archive.md` | same-pass companion — the close-out ledger itself       |
 
 (A single live report is the steady state after the 2026-10-17 second pass:
 the previous sweep emptied the queue, so each new pass starts from one
