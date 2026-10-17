@@ -100,51 +100,51 @@ other session (see d1).
 ## b) PARTIALLY DONE
 
 ~~1. **Visual verification is structural, not pixel-level.** Every new~~ done — screenshot probe + goldens + style contracts landed (M1/M3/M4)
-   component's markup was grepped in rendered HTML (donut center label,
-   gauge, scrollback tags, icons, container, footer, single `<main>`), but
-   no browser screenshot pass happened — the frontend-design skill explicitly
-   says "a picture is worth 1000 tokens" and asks for self-critique from
-   renders. Unknown: donut center-label overflow at "100.0%", teal contrast
-   in dark mode, 375px behavior.
+component's markup was grepped in rendered HTML (donut center label,
+gauge, scrollback tags, icons, container, footer, single `<main>`), but
+no browser screenshot pass happened — the frontend-design skill explicitly
+says "a picture is worth 1000 tokens" and asks for self-critique from
+renders. Unknown: donut center-label overflow at "100.0%", teal contrast
+in dark mode, 375px behavior.
 ~~2. **Mobile nav unverified.** `SimpleNav` + `CurrentPath` is wired, but I~~ done — the probe corpus covers 375px (mobile captures eyeballed)
-   never rendered/probed a narrow viewport; the library has MobileMenu
-   components we do not use — whether SimpleNav degrades acceptably on a
-   phone is unchecked.
+never rendered/probed a narrow viewport; the library has MobileMenu
+components we do not use — whether SimpleNav degrades acceptably on a
+phone is unchecked.
 ~~3. **htmx error handling claimed but never wired (pre-existing, preserved).**~~ done — htmx ErrorHandlingConfig shipped (dashboard density pass, CHANGELOG)
-   The old page.templ comment said "…htmx error handling" but
-   `GlobalErrorHandling` appears NOWHERE in our templates (verified by grep).
-   Polled regions have no client-side fetch-failure feedback. I neither
-   introduced nor fixed this — it is exactly the kind of gap this session
-   was hunting, found one step too late.
+The old page.templ comment said "…htmx error handling" but
+`GlobalErrorHandling` appears NOWHERE in our templates (verified by grep).
+Polled regions have no client-side fetch-failure feedback. I neither
+introduced nor fixed this — it is exactly the kind of gap this session
+was hunting, found one step too late.
 ~~4. **StatCard Change/Trend fields unused.** The week-over-week delta renders~~ done — week-over-week deltas shipped (R8)
-   as a plain `<p>` under the volume chart while `StatCardProps` ships
-   `Change`/`Trend`. Arguably the delta belongs to the chart card, but the
-   library affordance went unexamined.
+as a plain `<p>` under the volume chart while `StatCardProps` ships
+`Change`/`Trend`. Arguably the delta belongs to the chart card, but the
+library affordance went unexamined.
 ~~5. **Search hit cards remain hand-rolled** (intentional similarity — they are~~ done — hover aligned with the calls table (v0.2.0 dark-mode pass)
-   semantic link blocks, not cards) but got zero polish: no hover transition,
-   no chevron affordance, no focus-visible ring beyond browser default.
+semantic link blocks, not cards) but got zero polish: no hover transition,
+no chevron affordance, no focus-visible ring beyond browser default.
 ~~6. **Lint debt in the package is real but not mine:** wsl_v5/goimports/gci~~ done — lint driven to zero (10-33)
-   findings in freshness.go, recording.go, search.go, server.go, timing.go —
-   all touched by the concurrent session, all committed by the auto-daemon.
-   Not fixed (not my files); BuildFlow gate will own them.
+findings in freshness.go, recording.go, search.go, server.go, timing.go —
+all touched by the concurrent session, all committed by the auto-daemon.
+Not fixed (not my files); BuildFlow gate will own them.
 ~~7. **`TestBuildServiceConfigWiring` red** (concurrent session's in-flight~~ done — the peer's htpasswd work landed; suite green since
-   htpasswd lazy-read TDD work in cmd/pbx-lens). Flagged, not touched.
+htpasswd lazy-read TDD work in cmd/pbx-lens). Flagged, not touched.
 
 ## c) NOT STARTED
 
 ~~1. Browser screenshot/golden regression gate for the UI (nothing exists).~~ done — screenshot-probe + goldens + the verify-all lane
 ~~2. Dashboard range-picker presets (7/30-day) and digits-only search hint~~ done — presets shipped; the chip superseded by the R6 hint copy
-   chip — pre-existing TODO_LIST items, untouched.
+chip — pre-existing TODO_LIST items, untouched.
 ~~3. Staleness fragment carrying active filters (pre-existing TODO, untouched).~~ NOT-DO — the banner renders unfiltered-first-page only, by design
 ~~4. `export_cursor_stalled` surfaced in the export UI (pre-existing TODO).~~ done — export honesty note (ba6ec8f)
 ~~5. Recording-proxy timeout-test hardening (injected deadlines) — pre-existing.~~ → routed: recording timeout-test row (TODO_LIST)
 ~~6. `errorpage`/`NotFound404` adoption — package absent in v1.21.0; revisit on~~ → routed: ROADMAP errorpages/security revisit
-   next templ-components bump.
+next templ-components bump.
 ~~7. `SegmentBar` swap-in — moot for now (donut covers the need); revisit only~~ → routed: ROADMAP SegmentBar re-eval
-   if the donut reads wrong visually.
+if the donut reads wrong visually.
 ~~8. `utils/format` adoption — confirmed absent in v1.21.0; revisit on bump.~~ → routed: ROADMAP utils/format bump watch
 ~~9. library-deep-dive's canonical HTML research report — the session collapsed~~ done — the research report landed (399fd50, docs/research/)
-   the audit into fix-work + this status report instead.
+the audit into fix-work + this status report instead.
 ~~10. Favicon / theme-color meta on the Base shell.~~ done — favicon.svg shipped + ThemeColor/DarkThemeColor props (calls.templ)
 
 ## d) TOTALLY FUCKED UP
@@ -216,19 +216,19 @@ context); the tail is ROADMAP fuel. Not commitments._
 ~~1. Screenshot pass: 5 pages × light/dark × 375px/1280px; fix what looks wrong.~~ done — the probe corpus grew to 41 PNGs (light/dark × mobile/desktop)
 ~~2. Donut center-label overflow probe ("100.0%", 4+ char strings).~~ done — corpus eyeball + goldens
 ~~3. Teal-600/500 contrast audit (AA) in light and dark, buttons + badges +~~ done — T22 contrast-audited palette tokens
-   focus rings.
+focus rings.
 ~~4. Mobile nav behavior probe (SimpleNav at 375px; adopt MobileMenu if broken).~~ done — mobile captures in the corpus
 ~~5. Wire `htmx.GlobalErrorHandling` into the shell (polled regions fail~~ done — ErrorHandlingConfig shipped
-   silently today).
+silently today).
 ~~6. StatCard `Change`/`Trend` trial for the week-over-week delta.~~ done — StatCard deltas shipped (R8)
 ~~7. grep-gate CI check: no raw `bg-blue-*`/palette classes in pbx-lens~~ done — palette_gate_test.go
-   .templ files.
+.templ files.
 ~~8. Fix lint debt in internal/web (wsl_v5/goimports/gci — concurrent session's~~ done — lint zero (10-33)
-   files; coordinate).
+files; coordinate).
 ~~9. Fix/await `TestBuildServiceConfigWiring` (concurrent session's red).~~ done — the peer's work landed; suite green
 ~~10. Codegen-drift guard: CI runs `templ generate` and fails on diff.~~ done — templ_sync_test.go
 ~~11. Keyboard pass: tab through list rows, filter form, search; confirm~~ done — M5 a11y bundle + the #49 focus ring
-    Row.Href keyboard support and visible focus.
+Row.Href keyboard support and visible focus.
 ~~12. Table `CellPadding` compact trial for the dense call list.~~ NOT-DO — density fine at the current scale
 ~~13. `tc-content-auto` on the calls table (content-visibility for long lists).~~ NOT-DO — keyset paging keeps lists short
 
@@ -296,16 +296,16 @@ templ-components skill could cite pbx-lens as the worked example.
 ## g) Questions I cannot figure out myself
 
 ~~1. **Palette taste-call:** is the teal "signal" accent right for pbx-lens, or~~ resolved-by-ship — teal is the shipped theme (v0.1.0/v0.2.0; doctrine in AGENTS.md)
-   do you want a different accent family? It is now a three-line change in
-   `app.css` (`--color-tc-primary/-hover/-info`), so this is purely a taste
-   decision I cannot derive from the codebase.
+do you want a different accent family? It is now a three-line change in
+`app.css` (`--color-tc-primary/-hover/-info`), so this is purely a taste
+decision I cannot derive from the codebase.
 ~~2. **Verification bar:** for a LAN htpasswd'd operator tool, do you want a~~ resolved — goldens + screenshot corpus + browser contracts = the chosen bar (local, not CI)
-   screenshot/golden-UI regression gate (CI weight, catches "ugly" early), or
-   is HTML-assert + occasional eyeball the right level?
+screenshot/golden-UI regression gate (CI weight, catches "ugly" early), or
+is HTML-assert + occasional eyeball the right level?
 ~~3. **Concurrent session ownership:** the htpasswd/httputil session left~~ done — the peer's work landed; suite green since
-   `TestBuildServiceConfigWiring` red and lint debt in five web files — do I
-   wait for it to land, or take over and finish that work now (risk: clobbering
-   an active editor buffer)?
+`TestBuildServiceConfigWiring` red and lint debt in five web files — do I
+wait for it to land, or take over and finish that work now (risk: clobbering
+an active editor buffer)?
 
 ---
 

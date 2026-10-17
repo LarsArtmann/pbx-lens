@@ -159,7 +159,7 @@ purge into machine-readable reports for automation.
 **Alerting recipe (ops/retention visibility):** two health facts live in
 different places, and both belong in your alerter.
 
-- *Is the poller alive?* `GET /api/ops` (same auth as the UI) answers
+- _Is the poller alive?_ `GET /api/ops` (same auth as the UI) answers
   `last_pass_age_seconds`; alert when it exceeds a few poll intervals:
 
   ```console

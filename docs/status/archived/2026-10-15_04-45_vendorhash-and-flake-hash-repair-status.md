@@ -60,34 +60,34 @@ verified by a real build or an independent prefetch — none pasted on trust**.
 ## b) PARTIALLY DONE
 
 ~~1. **One all-green end-to-end dev gate run** — not achieved. Both full gate runs lost~~ done-in-part — the literal clean full run waits on BuildFlow#56 (the clean-checkout row)
-   the `nix-build` step to load starvation ("killed (OOM or timeout)"; machine showed
-   6,500+ processes, 15-min load 35–41). All casualties were verified green
-   individually per docs/buildflow-dev-gate.md's own protocol, but the "single clean
-   run" artifact doesn't exist yet.
+the `nix-build` step to load starvation ("killed (OOM or timeout)"; machine showed
+6,500+ processes, 15-min load 35–41). All casualties were verified green
+individually per docs/buildflow-dev-gate.md's own protocol, but the "single clean
+run" artifact doesn't exist yet.
 ~~2. **vulnix (24 findings) and jscpd (2 duplicates) triage** — classified advisory~~ done-as-policy — vulnix advisory-documented; jscpd = R27.x advisory row
-   (below the error gate; nixpkgs-closure CVEs and scripts/verify-ui-contract.js
-   boilerplate), but NOT deeply investigated: no policy-doc check, no upstream check,
-   and the "intentional boilerplate" judgment for the JS clones was assumed, not
-   verified by reading the code.
+(below the error gate; nixpkgs-closure CVEs and scripts/verify-ui-contract.js
+boilerplate), but NOT deeply investigated: no policy-doc check, no upstream check,
+and the "intentional boilerplate" judgment for the JS clones was assumed, not
+verified by reading the code.
 ~~3. **AGENTS.md knowledge capture** — the repair lesson lives in docs/gotchas.md, but~~ done-as-is — the gotchas pointer is the canonical home (AGENTS at budget)
-   the one-line rule ("never trust a `got:` without knowing which FOD printed it")
-   didn't make it into AGENTS.md itself (line budget 218/220). A future session must
-   find it via the gotchas pointer.
+the one-line rule ("never trust a `got:` without knowing which FOD printed it")
+didn't make it into AGENTS.md itself (line budget 218/220). A future session must
+find it via the gotchas pointer.
 ~~4. **The "9 tools unavailable (health check failed)" warning** — surfaced in every gate~~ → routed: buildflow tooling triage row (TODO_LIST 2026-10-17)
-   run; never drilled into which tools or why. Doctor itself reported 34 ok / 3 warn /
-   0 fail, so this is unresolved signal, not a diagnosis.
+run; never drilled into which tools or why. Doctor itself reported 34 ok / 3 warn /
+0 fail, so this is unresolved signal, not a diagnosis.
 
 ## c) NOT STARTED
 
 ~~1. **Daemon race guard for `update-vendor-hash`** — the app still writes the fake probe~~ done-in-part — the app gained trap-restore ERR handling; the clean-tree rule + provenance comment are the mitigation (the probe still writes live)
-   value into the live tracked file; the same race can corrupt the tree again on the
-   next overlap. No guard designed or implemented.
+value into the live tracked file; the same race can corrupt the tree again on the
+next overlap. No guard designed or implemented.
 ~~2. **CI coverage for the second hash site** — the CI lane builds the package; it does~~ NOT-DO — CI builds the package + codegen; the devShell site is covered by the local gate + nix flake check
-   not build the devShell/checks, so a corrupted cqrs-lint hash pair can still land
-   unnoticed.
+not build the devShell/checks, so a corrupted cqrs-lint hash pair can still land
+unnoticed.
 ~~3. **Leftover-artifact check** — `update-vendor-hash` creates `vendorHash.nix.bak` on~~ done — no .bak exists (checked 2026-10-17); the trap restores on error
-   failure paths; never checked whether one is lying around now (and it's not
-   gitignored).
+failure paths; never checked whether one is lying around now (and it's not
+gitignored).
 
 ## d) TOTALLY FUCKED UP
 
@@ -134,30 +134,30 @@ Pareto core; the rest is roadmap fuel (docs-health HARVEST should route accordin
 **Hash/flake integrity (root cause + tripwires):**
 
 ~~1. Make `apps.update-vendor-hash` daemon-immune (temp file + atomic move, or~~ done-in-part — trap-restore landed; full daemon-immunity (temp-file swap) never built; the clean-tree rule is the guard
-   in-memory probe via `nix build --expr`), so no future overlap can commit a fake hash.
+in-memory probe via `nix build --expr`), so no future overlap can commit a fake hash.
 ~~2. Teach `buildflow -s nix-hash-fix` the same lesson (or file it upstream — it probes~~ done — BuildFlow#55 filed with the dirty-tree-guard ask
-   the live `vendorHash.nix` the same way).
+the live `vendorHash.nix` the same way).
 ~~3. Add a flake check that fails if any hash string equals the `AAAA…` probe~~ NOT-DO — the provenance comment + the sentinel check-by-eye stand; no automated tripwire
-   placeholder (cheap tripwire, catches the exact corruption signature).
+placeholder (cheap tripwire, catches the exact corruption signature).
 ~~4. Add a flake check that fails when two different derivations' hash fields carry the~~ NOT-DO — never built; the paste bug never recurred
-   same digest (a source `hash` equal to a vendor FOD hash is always wrong here).
+same digest (a source `hash` equal to a vendor FOD hash is always wrong here).
 ~~5. Extend `update-vendor-hash` to verify BOTH derivations green (main + devShell)~~ NOT-DO — the devShell realization is covered by nix flake check locally
-   before declaring success — the inline cqrs-lint pair currently has no tool coverage.
+before declaring success — the inline cqrs-lint pair currently has no tool coverage.
 ~~6. Consider extracting the cqrs-lint `hash`/`vendorHash` pair into its own~~ NOT-DO — kept inline deliberately (a second hash file would conflate the repair app; 18-06 a6)
-   `vendorHash-cqrs-lint.nix` so file-based tooling can own it; or file the
-   "inline-FOD hash repair" gap to BuildFlow.
+`vendorHash-cqrs-lint.nix` so file-based tooling can own it; or file the
+"inline-FOD hash repair" gap to BuildFlow.
 ~~7. Add `nix build .#devShells.<system>.default` (or the two checks) to the CI lane so~~ NOT-DO — the CI lane stays codegen+test+lint; nix coverage is local
-   the second hash site is compiled evidence on every push.
+the second hash site is compiled evidence on every push.
 ~~8. Check for a leftover `vendorHash.nix.bak`; delete it; gitignore `*.nix.bak`.~~ done — no .bak exists; the trap restores on error
 ~~9. Verify the pinned raw rev `5a08b0e…` really is tag `cmd/cqrs-lint/v4.16.0` (the~~ NOT-DO — the pin is rev-pinned deliberately; the tag-vs-rev note stands in flake.nix
-   comment claims the tag; the flake pins a bare commit) — and add a quarterly
-   re-check note to docs/telnyx-live-api.md's re-verify calendar pattern.
+comment claims the tag; the flake pins a bare commit) — and add a quarterly
+re-check note to docs/telnyx-live-api.md's re-verify calendar pattern.
 ~~10. Evaluate `nix store prefetch-file --unpack` as a proof step inside the hash-repair~~ done-as-doc — the trick is documented in gotchas (used in the repair)
-    flow (independent verification before any write).
+flow (independent verification before any write).
 ~~11. Document in AGENTS.md (when line budget allows) or the gotchas pointer: "know~~ done-as-is — the gotchas pointer is canonical
-    which FOD a `got:` came from before pasting."
+which FOD a `got:` came from before pasting."
 ~~12. Re-run the FULL gate (`--build-mode full --max-time 15m`) on a quiet machine~~ → routed: BuildFlow#56 + the clean-checkout gate row
-    (15-min load < 40) to bank one all-green end-to-end run including `nix-build`.
+(15-min load < 40) to bank one all-green end-to-end run including `nix-build`.
 
 **Gate / environment hygiene:**
 ~~13. Identify the 9 "tools unavailable (health check failed)" gate tools; fix or~~ → routed: buildflow tooling triage row
@@ -256,16 +256,16 @@ TODO_LIST.md / ROADMAP.md.
 ## g) Questions I can NOT figure out myself
 
 ~~1. **Was the corrupted state the product of a hash-fix run that is STILL running (or~~ resolved — the daemon had swept; no concurrent repair was mid-flight
-   was abandoned) in another session?** I can see the corruption and repaired it, but
-   if another session believes it is mid-repair on these same files, we can undo each
-   other's work. Should I coordinate/announce before touching flake.nix again?
+was abandoned) in another session?** I can see the corruption and repaired it, but
+if another session believes it is mid-repair on these same files, we can undo each
+other's work. Should I coordinate/announce before touching flake.nix again?
 2. **Is there an accepted-risk policy for vulnix closure findings (nixpkgs-level
-   CVEs), or should this project start one?** This is a project-owner policy decision;
-   the 24 findings are real but live in the build closure, not project code.
+CVEs), or should this project start one?** This is a project-owner policy decision;
+the 24 findings are real but live in the build closure, not project code.
 3. **Should the cqrs-lint inline hash pair get first-class tooling (BuildFlow
-   provider / own vendorHash file), or is the manual probe acceptable as the
-   documented path?** Design tradeoff between upstream investment and a 4-line
-   convention I can't decide from the code alone.
+provider / own vendorHash file), or is the manual probe acceptable as the
+documented path?** Design tradeoff between upstream investment and a 4-line
+convention I can't decide from the code alone.
 
 ---
 

@@ -53,8 +53,8 @@ value for 10% of its cost. Details: the one-pager.
 A keep the table, allow horizontal scroll (zero new markup) ·
 B card-list below the breakpoint (the M17 sketch: who/when/first line stacked) ·
 C hybrid (cards < 640px, table above).
-*Taste call — no assistant recommendation; B/C follow the 02-24 plan sketch,
-A is the zero-risk default.*
+_Taste call — no assistant recommendation; B/C follow the 02-24 plan sketch,
+A is the zero-risk default._
 
 ---
 

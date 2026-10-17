@@ -74,29 +74,29 @@ module option, and harvested the 10:33 report into TODO_LIST (sixth pass).
 ## b. Partially done
 
 ~~1. **Sibling CI on `e7c0f8b`: in_progress** at write time (run~~ done — sibling CI green; e7c0f8b pushed
-   38233052109, ~27 min — longer than its usual lane; earlier sibling
-   pushes also still in flight). Local `nix flake check` is green; the CI
-   verdict is the open tail.
+38233052109, ~27 min — longer than its usual lane; earlier sibling
+pushes also still in flight). Local `nix flake check` is green; the CI
+verdict is the open tail.
 ~~2. **§g answers (10:33 report): effectively executed, not ratified.** All~~ done — ratified as the standing norm (buildflow-dev-gate load policy + ROADMAP machine-hygiene)
-   three questions resolved by action (R4 proceeded on the standing
-   approval; htmx restored pre-tag; load policy recorded from evidence) —
-   but you have not explicitly ratified the policy wording.
+three questions resolved by action (R4 proceeded on the standing
+approval; htmx restored pre-tag; load policy recorded from evidence) —
+but you have not explicitly ratified the policy wording.
 ~~3. **Harvest routing done, source reports untouched.** The 10:33/07:56~~ done — this 2026-10-17 sweep annotates + archives them
-   reports are not yet annotated/archived (rowed: §f.38) — HARVEST by
-   design never edits the source.
+reports are not yet annotated/archived (rowed: §f.38) — HARVEST by
+design never edits the source.
 ~~4. **Host deploys:** the `aiDids` option exists but no host consumes it —~~ → routed: host deploy row (TODO_LIST)
-   blocked on the deploy path (owner).
+blocked on the deploy path (owner).
 
 ## c. Not started
 
 ~~- The seven new Low rows (gochecknoglobals rationale docs, keyset-stall~~ done — all seven dispositioned in §f below (landed, superseded, or NOT-DO)
-  UX, range presets + digits hint chip, staleness filter carry, export
-  memory-budget test, `/api/ops` staleness warning, drafts README).
+UX, range presets + digits hint chip, staleness filter carry, export
+memory-budget test, `/api/ops` staleness warning, drafts README).
 ~~- Backup drill as a named CI step (the one Unblocked Medium).~~ done — named ci.yml step live
 ~~- Upstream filings: BuildFlow spawn-starvation failure mode; NEW from this~~ done — BuildFlow#50 filed; the oxfmt min.js gap NOT filed (repo-side exclude shipped; §f4)
-  session — the oxfmt/oxlint `*.min.js` provider gap.
+session — the oxfmt/oxlint `*.min.js` provider gap.
 ~~- Injected-deadline refactor of the recording timeout tests; ingest.go~~ → routed: timeout-test row; the ingest extraction landed (83fe566)
-  (269-line) extraction — both pre-existing rows, untouched today.
+(269-line) extraction — both pre-existing rows, untouched today.
 
 ## d. Totally fucked up (honest)
 
@@ -147,9 +147,9 @@ module option, and harvested the 10:33 report into TODO_LIST (sixth pass).
 ~~2. Backup drill as a named CI step (Unblocked Medium).~~ done — named ci.yml step live
 ~~3. Owner: deploy hosts with `aiDids` (needs DID values + deploy path).~~ → routed: host deploy row (TODO_LIST)
 ~~4. File BuildFlow upstream: oxfmt/oxlint `*.min.js` provider gap (with the~~ NOT-DO — never filed; the `.buildflow.yml` global exclude shipped instead (buildflow-dev-gate oxfmt bullet)
-   `.buildflow.yml` global-exclude workaround).
+`.buildflow.yml` global-exclude workaround).
 ~~5. File BuildFlow upstream: spawn-starvation failure mode (runs #1/#2~~ done — BuildFlow#50 filed (a061fbb)
-   evidence).
+evidence).
 ~~6. ANNOTATE + archive the two 2026-10-12 status reports (§f.38).~~ done — this 2026-10-17 sweep
 ~~7. Re-annotate the SUPERB plan post-release (§f.25).~~ done — plans annotated (12-47/13-32/17-31 EXECUTED)
 ~~8. gochecknoglobals rationale docs (§f.15).~~ NOT-DO — rationales live at the nolint sites (visible in lint context)
@@ -170,27 +170,27 @@ module option, and harvested the 10:33 report into TODO_LIST (sixth pass).
 ~~23. ContentHash length-prefix encoding at schema v2.~~ → routed: schema-v2 ContentHash row
 ~~24. Owner: tick or drop the go-atomic-write draft review.~~ → routed: go-atomic-write draft (docs/drafts/README.md)
 ~~25. Check whether other fleet repos' tests start hosts bare (mirror the~~ → routed: crush-config (stopAndWait pattern documented in buildflow-dev-gate)
-    stopAndWait pattern fix).
+stopAndWait pattern fix).
 ~~26. Ratify/adjust the recorded gate load policy (docs/buildflow-dev-gate.md).~~ done — load policy is the standing norm
 ~~27. Consider a Nix-side checksum pin for vendored static assets (stronger~~ NOT-DO — global exclude proven across green gates; no recurrence
-    than the global exclude — integrity, not just skip).
+than the global exclude — integrity, not just skip).
 ~~28. Update docs/buildflow-dev-gate.md run-ledger when run #6's numbers are~~ done — run #5 cited in the ledger
-    next quoted (both #5 and #6 are green; cite either, not "pending").
+next quoted (both #5 and #6 are green; cite either, not "pending").
 ~~29. Audit remaining `time.Sleep` in tests for the cancellation pattern~~ → routed: recording timeout-test row
-    (§f.14 residue; WAV test is the template).
+(§f.14 residue; WAV test is the template).
 ~~30. Close the session loop: verify the daemon swept every doc edit from~~ done — tree clean; daemon swept
-    this session (currently clean at write time).
+this session (currently clean at write time).
 
 ## g. Questions I cannot answer myself
 
 ~~1. **Host deploy:** which AI DID numbers should `services.telephony.pbx-lens.aiDids`~~ → routed: host deploy row
-   carry on the live host(s), and do you want to drive the deploy now, or
-   should the next deploy window pick it up? (The option is landed and
-   flake-check green; I have no prod values or deploy path.)
+carry on the live host(s), and do you want to drive the deploy now, or
+should the next deploy window pick it up? (The option is landed and
+flake-check green; I have no prod values or deploy path.)
 ~~2. **Release presentation:** v0.1.0 is marked Pre-release on GitHub per~~ resolved — superseded by v0.2.0 (a full, latest release)
-   the go-release v0.x doctrine — flip it to a full Latest release, or
-   keep the pre-release label until v0.2?
+the go-release v0.x doctrine — flip it to a full Latest release, or
+keep the pre-release label until v0.2?
 ~~3. **Upstream filing order:** file the two BuildFlow issues (oxfmt/oxlint~~ done — BuildFlow#50/#55/#56 filed over the following days
-   min.js provider gap + spawn-starvation) now via the usual
-   verify-before-filing flow, or batch them into your next BuildFlow
-   session where you can review in context?
+min.js provider gap + spawn-starvation) now via the usual
+verify-before-filing flow, or batch them into your next BuildFlow
+session where you can review in context?

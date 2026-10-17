@@ -66,45 +66,45 @@ user's gate run: `buildflow --fix --build-mode=full` exiting 69 with 3 failed st
 ## b) PARTIALLY DONE
 
 ~~1. **AGENTS.md headroom = zero.** 219 wc / 220 linter-count is _at_ the limit, not~~ done — the budget is gate-enforced; AGENTS.md held at 219 through later passes
-   under it. The file was over-limit twice today and a live concurrent session keeps
-   adding to it — the next addition re-trips an error-level finding. Needs a real trim
-   to ~215.
+under it. The file was over-limit twice today and a live concurrent session keeps
+adding to it — the next addition re-trips an error-level finding. Needs a real trim
+to ~215.
 ~~2. **Toolchain skew is avoided procedurally, not fixed.** The bare `buildflow …`~~ done-as-doctrine — the devShell rule is the standing command (AGENTS); enforcement = the documented trap
-   invocation still fails on a host go 1.27.0; nothing enforces the devShell wrapper.
+invocation still fails on a host go 1.27.0; nothing enforces the devShell wrapper.
 ~~3. **statix suppression is broader than the problem.** Rule 20 is disabled repo-wide;~~ done — file-level ignore landed 2026-10-17 (exactly this narrowing; CHANGELOG)
-   a genuine future repeated-keys smell anywhere would be silenced too.
+a genuine future repeated-keys smell anywhere would be silenced too.
 ~~4. **go.mod `go 1.27.1` finding stands.** Correctly identified as dependency-forced~~ done-as-policy — dep-forced floors are correct-by-design (buildflow-dev-gate go-version bullet)
-   (go-appkit v0.8.0's own directive; `go mod tidy` deterministically re-bumps), but
-   no upstream filing was drafted (the docs/upstream-filings.md D6 pattern).
+(go-appkit v0.8.0's own directive; `go mod tidy` deterministically re-bumps), but
+no upstream filing was drafted (the docs/upstream-filings.md D6 pattern).
 ~~5. **Concurrent-session awareness.** Noticed and worked around late (two~~ → routed: ROADMAP multi-agent open question
-   "file modified since read" races, one hash-slot collision); no protocol established.
+"file modified since read" races, one hash-slot collision); no protocol established.
 ~~6. **Final gate green but on a dirty tree** (daemon still committing during the run;~~ done — clean-tree green gates followed (11:36; 58/0 on 2026-10-17)
-   drv names carried `-dirty`). A clean-tree confirmation pass was not done.
+drv names carried `-dirty`). A clean-tree confirmation pass was not done.
 
 ## c) NOT STARTED (all observed during this session, none acted on)
 
 ~~1. **9 tools "unavailable (health check failed)"** — never triaged with `--verbose`.~~ → routed: buildflow tooling triage row (TODO_LIST 2026-10-17)
 ~~2. **prettier / vulnix / lychee not in the devShell** — each run emits 5 warnings and~~ → routed: buildflow tooling triage row
-   runs them via `nix run nixpkgs#…` without project deps; the fix hint
-   ("add to devShells.default") was never applied.
+runs them via `nix run nixpkgs#…` without project deps; the fix hint
+("add to devShells.default") was never applied.
 ~~3. **govulncheck GO-2026-6617** (net/http HPACK race, stdlib) — never checked whether~~ done-by-CI — govulncheck lane green on every push since
-   go 1.27.2 (already in the nixpkgs lock) contains the fix.
+go 1.27.2 (already in the nixpkgs lock) contains the fix.
 ~~4. **vulnix 22 findings** (binutils 2.46/2.47, bison, coreutils, gcc 10.4.0…) — no~~ done-as-policy — vulnix = documented advisory; CI govulncheck is the trusted lane
-   accept-and-document decision, no nixpkgs policy.
+accept-and-document decision, no nixpkgs policy.
 ~~5. **lychee private-repo links** — the fleet authenticate-vs-exclude decision~~ → routed: buildflow tooling triage row (lychee fleet policy)
-   (GITHUB_TOKEN vs `exclude` regex) remains open; 86 markdown files scanned each run.
+(GITHUB_TOKEN vs `exclude` regex) remains open; 86 markdown files scanned each run.
 ~~6. **detect-only finding piles unreviewed**: art-dupl 76, branching-flow 79,~~ → routed: R27.x advisory row (server.go 617 / search.go 443 / telnyx_test.go 835)
-   file-size 10 (e.g. `internal/web/calls_templ.go` 586/350, `telnyx_test.go` 836/350,
-   `web/server.go` 507/350, `search.go` 444/350), and the CallView 17-field
-   threshold breach + "Observation/CallView share 13 fields — consider mixin" hint.
+file-size 10 (e.g. `internal/web/calls_templ.go` 586/350, `telnyx_test.go` 836/350,
+`web/server.go` 507/350, `search.go` 444/350), and the CallView 17-field
+threshold breach + "Observation/CallView share 13 fields — consider mixin" hint.
 ~~7. **cqrs-lint 17 findings** — assumed to match docs/cqrs-lint-policy.md's documented~~ done-as-policy — docs/cqrs-lint-policy.md is the truth source; the 2026-10-17 gate runs green
-   set; the lists were never diffed.
+set; the lists were never diffed.
 ~~8. **BuildFlow binary freshness** — binary built at 893de6b vs HEAD 916fe0f~~ → routed: BuildFlow#56 + the clean-checkout gate row
-   (`nix build . && nix run .#reinstall` in the BuildFlow repo).
+(`nix build . && nix run .#reinstall` in the BuildFlow repo).
 ~~9. **TODO_LIST.md harvest** — section (f) below was not routed into TODO_LIST.md /~~ done — harvested by later passes; archived by this sweep
-   ROADMAP.md (docs-health HARVEST).
+ROADMAP.md (docs-health HARVEST).
 ~~10. **CI** — never checked whether the GitHub lane mirrors the flake checks~~ done — CI green repeatedly; lane documented in FEATURES
-    (pre-commit/treefmt) or ran green on today's daemon commit series.
+(pre-commit/treefmt) or ran green on today's daemon commit series.
 
 ## d) TOTALLY FUCKED UP (own failures this session)
 

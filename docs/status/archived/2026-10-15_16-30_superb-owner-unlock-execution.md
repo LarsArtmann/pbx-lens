@@ -101,10 +101,10 @@ wording.
 ## g. Open / owner-gated
 
 ~~1. **D1–D5 answers** (pack:~~ → routed: owner decision pack D1-D5 row
-   `docs/decisions/2026-10-15_ui-owner-decision-pack.md`) — gates M3
-   (EU date format), F52/F53 (phone grouping, CSV headers behind D1).
+`docs/decisions/2026-10-15_ui-owner-decision-pack.md`) — gates M3
+(EU date format), F52/F53 (phone grouping, CSV headers behind D1).
 ~~2. **PII boundary** (F14; one-pager ready) — gates M4 implementation.~~ → routed: PII enforcement row (one-pager ready)
 ~~3. **Mobile card-vs-scroll taste** (M8/F21) — 375px excerpt visibility~~ → routed: mobile card-list row (owner taste)
-   is the last real responsive gap; 768px is clean.
+is the last real responsive gap; 768px is clean.
 ~~4. Host deploys + production re-ingest (runbooks ready, owner paths).~~ → routed: host deploy + prod re-ingest rows
 ~~5. Telnyx 2027-01 window (calendar m27.9; MOS design pre-staged).~~ → routed: Telnyx quarterly row (MOS design pre-staged)

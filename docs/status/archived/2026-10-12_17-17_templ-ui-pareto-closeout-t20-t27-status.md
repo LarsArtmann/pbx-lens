@@ -124,7 +124,7 @@ Owner-blocked (from TODO_LIST, unchanged):
 ~~3. Cut v0.2.0 (Unreleased carries the HTTP stack + this UI pass).~~ done — v0.2.0 cut AND pushed (7d15c6f, tag on origin)
 ~~4. Fold in go-etag#2 + go-appkit#26 when upstream lands them.~~ → routed: fold-in watch row (go-etag#2/go-appkit#26)
 ~~5. Fold in templ-components#48/#49/#50; retire the `!items-stretch` arg and~~ → routed: fold-in watch row (templ-components#48/#49/#50/#51/#55)
-   the focus-visible CSS on fold-in (bump watchlist step 4).
+the focus-visible CSS on fold-in (bump watchlist step 4).
 ~~6. Answer/watch dependabot-core#16538.~~ → routed: dependabot-core#16538 watch row
 ~~7. Browser-level 304 revalidation spot-check on a real host.~~ → routed: browser-level 304 row (TODO_LIST)
 ~~8. Live-verify Telnyx Detail Records/insights DTOs (needs API key).~~ → routed: Telnyx live-verify row
@@ -202,16 +202,16 @@ server) worth a paragraph.
 ## g) THREE QUESTIONS ONLY YOU CAN ANSWER
 
 ~~1. **Same-file concurrency norm (carried §g.1, now with two more races):**~~ → routed: ROADMAP multi-agent open question
-   this session raced a concurrent session on `detail.templ` and
-   `search_jump_test.go` (lost edits, edit-tracker retries). Is retry-with-
-   fresh-read the standing answer, or do you want task-level file claims
-   (e.g. a CLAIMS.md both sessions honor)?
+this session raced a concurrent session on `detail.templ` and
+`search_jump_test.go` (lost edits, edit-tracker retries). Is retry-with-
+fresh-read the standing answer, or do you want task-level file claims
+(e.g. a CLAIMS.md both sessions honor)?
 ~~2. **Pager ratification (carried §g.2):** the numberless two-button pager is~~ resolved-by-ship — the pager is load-bearing (tests, goldens, rationale) with no owner objection since v0.1.0
-   now load-bearing (tests, goldens, doc-comment rationale — a TotalPages
-   pager would fabricate counts over keyset cursors). Ratify as final, or do
-   you ever want numbered pages (requires a count query over the read model
-   — real cost)?
+now load-bearing (tests, goldens, doc-comment rationale — a TotalPages
+pager would fabricate counts over keyset cursors). Ratify as final, or do
+you ever want numbered pages (requires a count query over the read model
+— real cost)?
 ~~3. **Fourth filing (new):** shall I file the ScrollbackLine id/class-hook gap~~ done — filed as templ-components#51 (ac027a4)
-   (the thing that forced the hand-rolled match log) as templ-components now
-   — or batch it with the SegmentBar/extension roadmap work you may already
-   be planning in that repo?
+(the thing that forced the hand-rolled match log) as templ-components now
+— or batch it with the SegmentBar/extension roadmap work you may already
+be planning in that repo?

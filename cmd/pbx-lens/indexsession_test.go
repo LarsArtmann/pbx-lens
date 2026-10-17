@@ -164,6 +164,7 @@ func TestPrintRejectedWritesEachReason(t *testing.T) {
 func TestRequireFlagHelpersHappyPaths(t *testing.T) {
 	fs := flag.NewFlagSet("test-verb", flag.ContinueOnError)
 	fs.String("db", "", "")
+
 	if err := fs.Parse([]string{"-db", "/tmp/x.db"}); err != nil {
 		t.Fatalf("parse: %v", err)
 	}

@@ -81,32 +81,32 @@
 ## b) PARTIALLY DONE
 
 ~~1. **Gate-green claim is scoped, not full.** Under load average 70-77~~ → routed: BuildFlow#56 + the clean-checkout gate row (green run since: 58/0 on 2026-10-17, dev mode)
-   (threshold: 15-min < 40 for full runs, paid-for doctrine), only the two
-   formerly-failing steps were rerun under the gate's own harness plus the
-   direct full test suite. A full `--build-mode full` rerun (with
-   `--max-time 15m`, NOT the 5m used at 17:08 — the doc says full needs ≥15m)
-   is still owed when the machine quiets down.
+(threshold: 15-min < 40 for full runs, paid-for doctrine), only the two
+formerly-failing steps were rerun under the gate's own harness plus the
+direct full test suite. A full `--build-mode full` rerun (with
+`--max-time 15m`, NOT the 5m used at 17:08 — the doc says full needs ≥15m)
+is still owed when the machine quiets down.
 ~~2. **BuildFlow binary rebuild (BuildFlow#56).** The preflight warns the~~ → routed: BuildFlow#56 row
-   binary (518739c) is 101 commits behind BuildFlow HEAD (d114f28);
-   `buildflow upgrade` refuses on a dirty checkout. Documented, not done.
-   Until rebuilt, the go/govalid gate steps stay broken against the 1.27.2
-   floor and advisory severities may mis-report.
+binary (518739c) is 101 commits behind BuildFlow HEAD (d114f28);
+`buildflow upgrade` refuses on a dirty checkout. Documented, not done.
+Until rebuilt, the go/govalid gate steps stay broken against the 1.27.2
+floor and advisory severities may mis-report.
 ~~3. **The go-version severity claim in the ledger is UNVERIFIED.** I wrote~~ done-as-caveated — the ledger sentence carries its own re-verify caveat; the adjacent statix claim was falsified+fixed 2026-10-17
-   that the 2026-10-15 warning flag is "from the stale fleet binary" — I
-   verified the binary's AGE but never verified that the dep-forced-floor
-   severity policy differs at HEAD. Honest flag: that sentence is a
-   hypothesis, not a fact; verify after rebuild.
+that the 2026-10-15 warning flag is "from the stale fleet binary" — I
+verified the binary's AGE but never verified that the dep-forced-floor
+severity policy differs at HEAD. Honest flag: that sentence is a
+hypothesis, not a fact; verify after rebuild.
 ~~4. **cqrs-lint 17 findings assumed documented.** I did NOT diff the actual 17~~ done-as-policy — the findings-policy doc is maintained; the 2026-10-17 gate runs green
-   against docs/cqrs-lint-policy.md this session (the first five shown match
-   the known classes). Scoped `nix develop -c cqrs-lint .` + policy diff
-   still owed.
+against docs/cqrs-lint-policy.md this session (the first five shown match
+the known classes). Scoped `nix develop -c cqrs-lint .` + policy diff
+still owed.
 ~~5. **9 unavailable gate tools only half-triaged.** The run warned~~ → routed: buildflow tooling triage row (TODO_LIST 2026-10-17)
-   ("use --verbose for details"); I saw interrogate missing + prettier/lychee
-   not in the devShell, but never ran `buildflow -s test-race --verbose` /
-   `buildflow doctor` to enumerate all 9 and decide install-vs-exclude each.
+("use --verbose for details"); I saw interrogate missing + prettier/lychee
+not in the devShell, but never ran `buildflow -s test-race --verbose` /
+`buildflow doctor` to enumerate all 9 and decide install-vs-exclude each.
 ~~6. **Upstream BuildFlow fixes.** The agents_md counter off-by-one is~~ done-in-part — the counter off-by-one is documented repo-side (≤219 convention); the upstream fix rides the BuildFlow fold-in
-   diagnosed but not fixed/filed in the BuildFlow repo (out of this repo's
-   scope per the buildflow skill).
+diagnosed but not fixed/filed in the BuildFlow repo (out of this repo's
+scope per the buildflow skill).
 
 ## c) NOT STARTED
 
@@ -114,15 +114,15 @@
 ~~2. BuildFlow binary rebuild + re-baseline of all advisory warnings.~~ → routed: BuildFlow#56 row
 ~~3. Upstream fix (or issue) for the agents_md.go:51 counter.~~ done-as-doctrine — the ≤219 convention + the buildflow-dev-gate bullet
 ~~4. jscpd's 2 duplications in scripts/ (screenshot-probe vs~~ → routed: R27.x advisory row (jscpd clones)
-   verify-staleness-live; verify-style-contract vs verify-ui-contract) —
-   extract a shared scripts/lib helper.
+verify-staleness-live; verify-style-contract vs verify-ui-contract) —
+extract a shared scripts/lib helper.
 ~~5. HARVEST of section (f) below into TODO_LIST.md (docs-health) — the user~~ done — this 2026-10-17 sweep
-   instructed report-then-wait, so it is deliberately deferred.
+instructed report-then-wait, so it is deliberately deferred.
 ~~6. Legacy buildflow.db cleanup at ~/.cache/buildflow/buildflow.db (preflight~~ NOT-DO — cosmetic; deferred to a new-binary run
-   storage-layout warn; migrate via a new-binary pipeline run first).
+storage-layout warn; migrate via a new-binary pipeline run first).
 ~~7. Explicit reconciliation of `nix-flake-update ran` — flake.lock state was~~ done — settled-tree nix flake check all-passed (2026-10-17 postscript)
-   never deliberately inspected this session (only indirectly: clean tree,
-   green build).
+never deliberately inspected this session (only indirectly: clean tree,
+green build).
 
 ## d) TOTALLY FUCKED UP
 
@@ -180,99 +180,99 @@
 should route these into TODO_LIST.md / ROADMAP.md)
 
 ~~1. Rebuild the BuildFlow binary from a clean checkout (BuildFlow#56), then~~ → routed: BuildFlow#56 row
-   `buildflow upgrade` — unbreaks go/govalid gate steps and re-baselines all
-   advisory severities.
+`buildflow upgrade` — unbreaks go/govalid gate steps and re-baselines all
+advisory severities.
 ~~2. After rebuild: re-run the full gate (`--build-mode full --max-time 15m`)~~ → routed: BuildFlow#56 row (green dev-mode run since: 58/0)
-   when 15-min load < 40, ideally with BUILDFLOW_NO_RESULT_CACHE=1.
+when 15-min load < 40, ideally with BUILDFLOW_NO_RESULT_CACHE=1.
 ~~3. Fix the agents_md.go:51 off-by-one upstream (drop the `+1` when data ends~~ done-as-doctrine — the ≤219 convention is recorded (buildflow-dev-gate)
-   with `\n`), then relax the repo convention back to ≤220 real lines.
+with `\n`), then relax the repo convention back to ≤220 real lines.
 ~~4. Re-verify the go-version-auto-configure severity behavior at HEAD~~ done-as-caveated — the ledger sentence carries its re-verify caveat
-   (b.3) and correct the ledger sentence if wrong.
+(b.3) and correct the ledger sentence if wrong.
 ~~5. Diff the 17 cqrs-lint findings against docs/cqrs-lint-policy.md; file or~~ done-as-policy — the policy doc is maintained; gates green
-   document any undocumented survivor.
+document any undocumented survivor.
 ~~6. Enumerate the 9 unavailable tools (`buildflow doctor` + verbose run) and~~ → routed: buildflow tooling triage row
-   decide per tool: install into devShell, exclude with rationale, or accept.
+decide per tool: install into devShell, exclude with rationale, or accept.
 ~~7. Add prettier + lychee to the devShell (buildflow runs them via bare~~ → routed: buildflow tooling triage row
-   `nix run nixpkgs#…` WITHOUT project deps today).
+`nix run nixpkgs#…` WITHOUT project deps today).
 ~~8. Decide interrogate's fate (missing from PATH; warning every run).~~ → routed: buildflow tooling triage row
 ~~9. Give styles.css a single pinned rebuild entrypoint (flake app~~ done — `nix run .#update-styles` (18-45 f9)
-   `update-styles` mirroring `update-vendor-hash`); make AGENTS.md point at
-   it only.
+`update-styles` mirroring `update-vendor-hash`); make AGENTS.md point at
+it only.
 ~~10. Consider making the CSS gate format-tolerant (normalize whitespace before~~ NOT-DO — the strict gate + the single entrypoint held; no recurrence since 2026-10-15
-    comparing tokens) IF unminified builds keep happening — tradeoff noted in
-    g.2; default remains strict.
+comparing tokens) IF unminified builds keep happening — tradeoff noted in
+g.2; default remains strict.
 ~~11. Investigate nix-build-verify's 12/12 (100%) failure record — OOM per the~~ → routed: buildflow tooling triage row
-    run's own triage hint; fix, budget, or exclude with rationale.
+run's own triage hint; fix, budget, or exclude with rationale.
 ~~12. Investigate nix-hash-fix's 104/124 (84%) failure record — likely the same~~ → routed: buildflow tooling triage row
-    OOM/budget class; the run's summary says "consider investigating or
-    excluding".
+OOM/budget class; the run's summary says "consider investigating or
+excluding".
 ~~13. Migrate the legacy buildflow state DB (run one pipeline with the rebuilt~~ NOT-DO — cosmetic; deferred
-    binary), then delete ~/.cache/buildflow/buildflow.db.
+binary), then delete ~/.cache/buildflow/buildflow.db.
 ~~14. Reconcile flake.lock deliberately after the next `--fix` that runs~~ done — the settled-tree check passed (2026-10-17 postscript)
-    nix-flake-update (what did it bump? was it wanted?).
+nix-flake-update (what did it bump? was it wanted?).
 ~~15. Extract the 2 jscpd duplications in scripts/ into scripts/lib (launch +~~ → routed: R27.x advisory row
-    wait-for-server helpers are the repeated blocks).
+wait-for-server helpers are the repeated blocks).
 ~~16. file-size-check: 13 files >350 lines — triage each: split~~ → routed: R27.x advisory row (server.go 617 / search.go 443 / telnyx_test.go 835)
-    internal/web/server.go (618) and internal/search/search.go (444) along
-    handler/query seams; EXCLUDE `*_templ.go` (generated) from the check via
-    config with rationale; tests (836/446 lines) — split or accept+document.
+internal/web/server.go (618) and internal/search/search.go (444) along
+handler/query seams; EXCLUDE `*_templ.go` (generated) from the check via
+config with rationale; tests (836/446 lines) — split or accept+document.
 ~~17. branching-flow: CallView at 17 fields (threshold 15) — judge whether the~~ → routed: R27.x advisory row
-    view genuinely decomposes or the threshold gets a documented bump.
+view genuinely decomposes or the threshold gets a documented bump.
 ~~18. art-dupl 98 findings — schedule the deferred dedup pass (the ledger says~~ → routed: R27.x advisory row
-    "revisit if a dedicated pass is scheduled"; this is the scheduling).
+"revisit if a dedicated pass is scheduled"; this is the scheduling).
 ~~19. HARVEST this report + the 17:40 harvest-pass report into TODO_LIST.md~~ done — this 2026-10-17 sweep
-    (docs-health HARVEST mode).
+(docs-health HARVEST mode).
 ~~20. Verify .github/dependabot.yml actually excludes templ (AGENTS.md says~~ NOT-DO — templ stays manual-bump (go.mod tool directive); dependabot watches gomod only
-    manual-only bumps because a dependabot templ PR mangles go.mod — the
-    exclusion was asserted, never checked this session).
+manual-only bumps because a dependabot templ PR mangles go.mod — the
+exclusion was asserted, never checked this session).
 ~~21. Confirm the 2027-01 Telnyx live re-verify window exists as a REAL~~ → routed: Telnyx quarterly row
-    calendar entry (AGENTS.md says "calendar entry, m27.9" — the repo cannot
-    prove a calendar; see g.3).
+calendar entry (AGENTS.md says "calendar entry, m27.9" — the repo cannot
+prove a calendar; see g.3).
 ~~22. Copy the .gitignore styles.css incident note's essence into~~ done — the gotchas entry carries the story (styles.css MIME + bridge)
-    docs/gotchas.md by cross-link (one line) so the war story is not entombed
-    in a dotfile.
+docs/gotchas.md by cross-link (one line) so the war story is not entombed
+in a dotfile.
 ~~23. CI parity check: file-size/branching/dup checks exist only as buildflow~~ done-as-policy — BuildFlow is the gate for advisory classes; CI owns build/test/lint (documented)
-    advisories — decide whether ci.yml should carry any of them (or document
-    BuildFlow-as-the-only-gate for those classes).
+advisories — decide whether ci.yml should carry any of them (or document
+BuildFlow-as-the-only-gate for those classes).
 ~~24. After the binary rebuild, record the new binary hash in the gate ledger~~ NOT-DO — rides the BuildFlow#56 rebuild
-    so "binary built at X" preflight warnings are instantly triageable.
+so "binary built at X" preflight warnings are instantly triageable.
 ~~25. Add a scoped make-target-style flake app for the documented scoped rerun~~ NOT-DO — never built; the scoped reruns stayed ad-hoc
-    pair (`-s test-race` + `-s go-structure-linter`) used by this triage —
-    it is now the de-facto post-incident verification ritual.
+pair (`-s test-race` + `-s go-structure-linter`) used by this triage —
+it is now the de-facto post-incident verification ritual.
 ~~26. Review whether `--budget 5m` class commands should warn loudly when~~ NOT-DO — never built; the ≥15m doctrine is documented
-    full mode is requested (the 17:08 run's 5m cap contradicts the ≥15m
-    doctrine; a preflight check would have caught it).
+full mode is requested (the 17:08 run's 5m cap contradicts the ≥15m
+doctrine; a preflight check would have caught it).
 ~~27. Annotate the 2026-10-15 status reports (16-32 self-review, 17-40~~ done — this 2026-10-17 sweep
-    harvest-pass) once today's gate work settles — they reference a red gate
-    that is now green.
+harvest-pass) once today's gate work settles — they reference a red gate
+that is now green.
 ~~28. Sweep for any OTHER committed artifact with dual-format risk like~~ NOT-DO — styles.css is the only committed codegen artifact; .codegen-inputs ledger + classes.txt are inputs, not outputs
-    styles.css (generated-but-committed files: check .codegen-inputs.sha256
-    consumers and templ-components-classes.txt staleness).
+styles.css (generated-but-committed files: check .codegen-inputs.sha256
+consumers and templ-components-classes.txt staleness).
 ~~29. Consider `buildflow precommit install` health check — the sandboxed~~ NOT-DO — the pre-commit check passes in gates
-    pre-commit check chain (treefmt → templ fmt) has bitten twice; verify the
-    hook still matches current templ versions.
+pre-commit check chain (treefmt → templ fmt) has bitten twice; verify the
+hook still matches current templ versions.
 ~~30. Keep AGENTS.md at ≤219 lines until item 3 lands; add a one-line reminder~~ done-as-doctrine — the convention lives in buildflow-dev-gate (checked each AGENTS edit)
-    comment is NOT possible (line budget) — instead the convention lives in
-    the gate ledger (done) and should be re-checked on every AGENTS.md edit.
+comment is NOT possible (line budget) — instead the convention lives in
+the gate ledger (done) and should be re-checked on every AGENTS.md edit.
 
 ## g) Questions I cannot figure out myself
 
 ~~1. **Who/what produced the unminified styles.css on disk before 17:08?** A~~ resolved-as-guarded — the `update-styles` entrypoint + the freshness-guard row close the class (g1's actor question stays open, mooted by the guard)
-   manual `tailwindcss` run without `--minify` by you, or another agent
-   session using a PATH tailwind? The .gitignore note says it was
-   "sharpened by" today's incident — so someone diagnosed it concurrently.
-   Knowing the source decides whether item 9 (single entrypoint) is a
-   convenience or a hard requirement.
+manual `tailwindcss` run without `--minify` by you, or another agent
+session using a PATH tailwind? The .gitignore note says it was
+"sharpened by" today's incident — so someone diagnosed it concurrently.
+Knowing the source decides whether item 9 (single entrypoint) is a
+convenience or a hard requirement.
 ~~2. **Should the CSS gate stay format-strict?** Strict caught today's~~ resolved-as-strict — the gate stayed strict; the entrypoint doctrine is the answer
-   non-canonical artifact but produced confusing "lost the ds-brand bridge"
-   messages for a semantically-correct file. Do you want it to stay a
-   canonical-artifact pin (my current read), or become format-tolerant and
-   move the canonical-pin elsewhere?
+non-canonical artifact but produced confusing "lost the ds-brand bridge"
+messages for a semantically-correct file. Do you want it to stay a
+canonical-artifact pin (my current read), or become format-tolerant and
+move the canonical-pin elsewhere?
 ~~3. **Fleet policy for the two BuildFlow bugs (counter off-by-one, and the~~ done — #55/#56/#counter-bullet filed or ledgered (BuildFlow sessions own the fixes)
-   go-version dep-forced-floor handling):** fix directly in the BuildFlow
-   repo as a dev task there, or file issues to your own repo first? I can
-   prepare either; BuildFlow development is out of scope for pbx-lens
-   sessions by the skill's own rule, so this is your call.
+go-version dep-forced-floor handling):** fix directly in the BuildFlow
+repo as a dev task there, or file issues to your own repo first? I can
+prepare either; BuildFlow development is out of scope for pbx-lens
+sessions by the skill's own rule, so this is your call.
 
 ---
 

@@ -23,23 +23,23 @@ that test is fixed.
 
 ## a) FULLY DONE (verified this session)
 
-| Task | What landed | Verification |
-| ---- | ----------- | ------------ |
-| P0-T4 planning-doc closure | EXECUTED headers on all four executed plans (00-09, 01-32, 19-05, 03-43) pointing at archived execution reports + CHANGELOG | dprint clean; headers render |
-| P0-T3 decision-pack staging | `docs/decisions/2026-10-17_owner-answer-sheet.md` (7 questions: D1-D5, PII boundary, mobile card-list — options + recommendations + ANSWER slots); linked from the 3 TODO_LIST rows | File live; owner answers pending by design |
-| P1-T5 security headers | `httputil.SecurityHeaders` in the extras chain (Referrer-Policy: no-referrer, nosniff, X-Robots-Tag: noindex); appkit default XFO:DENY survives; http-stack.md chain now 5 items; AGENTS.md chain line updated (219-line budget held) | `TestSecurityHeadersContract` (page, 304 replay, app.css, export.csv, export.jsonl) + wiring counts 4/5/5 |
-| P1-T6 X-Robots-Tag | Rode the same middleware via `Custom` — covers non-HTML endpoints uniformly (the row's whole point) | Same contract test asserts it on exports |
-| P1-T7 CSP report-only sweep | NEW instrument `scripts/csp-sweep.js` (nonce + report-only, 6 surfaces, securitypolicyviolation events); **found 2 real holes**: calls-Table row-href script and CopyButton scripts rendered un-nonced; fixed by threading the nonce (`tableProps`, `listPage`, `nativeIDCopy`, `copyableValue`, `copyDetail` chains); serve.go comment corrected (report-only alone is meaningless); verdict recorded in http-stack.md | Re-run: ZERO violations across 6 surfaces; full browser lane (`verify-all.sh`) green after the fix |
-| P1-T8 buildflow tooling triage | doctor's 32 fleet-wide ✗ marks dispositioned; KEY finding: eslint/markdownlint/prettier are NOT registered for this repo (dead skip config would warn); shellcheck → devShell (0 findings on scripts/); `.buildflow.yml` skips lychee (fleet GITHUB_TOKEN policy pending) + nix-build-verify (12/12 env failures; `nix build` stays the manual receipt step); nix-hash-fix 82% accepted as environmental; markdownlint trial-run → deliberate non-adoption (MD013/MD060 vs house tables) | `buildflow --dry-run`: 37 ok / 1 warn / 0 fail, no dead-config warnings; flake check green |
-| P1-T9 recordings lookback | Decision: the 300-recording window is a CONTRACT, not a guarantee (silent permanent RecordingRef miss documented); comment upgraded in `telnyx.go`; bound paragraph in docs/telnyx-live-api.md; remedy = one-off raised-constant pass if it ever bites | Comment/doc only — behavior unchanged by design |
-| P1-T10 styles freshness guard | Determinism PROVEN: nixpkgs tailwindcss 4.3.3 byte-identical (rerun + committed copy + npm `@tailwindcss/cli@4.3.3`); NEW CI job `styles-freshness` (scratch npm install → regen → diff, error names `nix run .#update-styles`); css-gate error messages repointed | 3-way cmp byte-identical; ci.yml job added |
-| P1-T11 cut-release.sh | `scripts/cut-release.sh`: clean-tree + load-policy + pushed-HEAD quiesce (BuildFlow#55 guard), CHANGELOG sweep, nix build, full gate, verify-all, remote-CI-green check (the tag-red lesson), annotated tag + push, `go list -m` proxy check | bash -n + shellcheck clean; guard rails proven (no-arg fail, dirty-tree fail) |
-| P1-T13 ops visibility | README alerting recipe: jq on `last_pass_age_seconds` (with the -1-never-ran guard) + host-side `systemctl list-timers`/`journalctl` for the purge timer; the /ops card's in-process facts (window, would-retire) verified already present; host-side boundary documented | README section; wire shape checked against `SnapshotAny` |
-| P2-T14 FTS quality pass | `TestMultiWordQuerySemantics`: AND semantics, order-free, case-folding, absent-term, words+number mix with digit-shadow dedupe — all clean, no ranking surprises (bm25 double-mention ranking was already pinned) | Test green in internal/search |
-| P2-T15 export lane tests | Consumer-side parsing (real `csv.Reader` + line-by-line JSON decode) of STALLED streams: header integrity + marker record well-formed; `BenchmarkExportStream10k` (real sqlite, 10k rows: ~268 ms/op, ~24.8 MB allocs — streaming evidence) | Both tests + 1x benchmark run green |
-| P2-T16 recording negative paths | fakeTelnyx gained metadata-500 + signed-URL-403; `TestRecordingNegativePathsAnswerHonestly`: honest 502 bodies, no upstream-URL leak, no audio content-type; throttle decision: defaults stay hardcoded (2/s, burst 60, loopback exempt — flags only if ops asks) | Test green |
-| P2-T17 verify-all --fast + probe polish | `verify-all.sh --fast` (contracts-only); screenshot-probe: discovery SKIPPED when no detail-*/print surface selected + KNOWN_SURFACES drift guard | `--only dashboard` run: 2 PNGs, no discovery scrapes |
-| P2-T18 pixel-diff practice | Baseline corpus saved (41 PNGs → ~/lens-baselines/v1); zero-tolerance self-diff measured the noise: ≤81 px time-text churn at content-dependent positions → implemented a **volatile-px budget (128)** instead of brittle geometric masks, tightened default tolerance 0.5% → 0.05%; aged-baseline alerts documented as the refresh signal; `LENS_DIFF_BASELINE` hook in verify-all | Same-session diff: 0 alerts, all absorbed; doctrine in scripts/README |
+| Task                                    | What landed                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | Verification                                                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| P0-T4 planning-doc closure              | EXECUTED headers on all four executed plans (00-09, 01-32, 19-05, 03-43) pointing at archived execution reports + CHANGELOG                                                                                                                                                                                                                                                                                                                                                              | dprint clean; headers render                                                                              |
+| P0-T3 decision-pack staging             | `docs/decisions/2026-10-17_owner-answer-sheet.md` (7 questions: D1-D5, PII boundary, mobile card-list — options + recommendations + ANSWER slots); linked from the 3 TODO_LIST rows                                                                                                                                                                                                                                                                                                      | File live; owner answers pending by design                                                                |
+| P1-T5 security headers                  | `httputil.SecurityHeaders` in the extras chain (Referrer-Policy: no-referrer, nosniff, X-Robots-Tag: noindex); appkit default XFO:DENY survives; http-stack.md chain now 5 items; AGENTS.md chain line updated (219-line budget held)                                                                                                                                                                                                                                                    | `TestSecurityHeadersContract` (page, 304 replay, app.css, export.csv, export.jsonl) + wiring counts 4/5/5 |
+| P1-T6 X-Robots-Tag                      | Rode the same middleware via `Custom` — covers non-HTML endpoints uniformly (the row's whole point)                                                                                                                                                                                                                                                                                                                                                                                      | Same contract test asserts it on exports                                                                  |
+| P1-T7 CSP report-only sweep             | NEW instrument `scripts/csp-sweep.js` (nonce + report-only, 6 surfaces, securitypolicyviolation events); **found 2 real holes**: calls-Table row-href script and CopyButton scripts rendered un-nonced; fixed by threading the nonce (`tableProps`, `listPage`, `nativeIDCopy`, `copyableValue`, `copyDetail` chains); serve.go comment corrected (report-only alone is meaningless); verdict recorded in http-stack.md                                                                  | Re-run: ZERO violations across 6 surfaces; full browser lane (`verify-all.sh`) green after the fix        |
+| P1-T8 buildflow tooling triage          | doctor's 32 fleet-wide ✗ marks dispositioned; KEY finding: eslint/markdownlint/prettier are NOT registered for this repo (dead skip config would warn); shellcheck → devShell (0 findings on scripts/); `.buildflow.yml` skips lychee (fleet GITHUB_TOKEN policy pending) + nix-build-verify (12/12 env failures; `nix build` stays the manual receipt step); nix-hash-fix 82% accepted as environmental; markdownlint trial-run → deliberate non-adoption (MD013/MD060 vs house tables) | `buildflow --dry-run`: 37 ok / 1 warn / 0 fail, no dead-config warnings; flake check green                |
+| P1-T9 recordings lookback               | Decision: the 300-recording window is a CONTRACT, not a guarantee (silent permanent RecordingRef miss documented); comment upgraded in `telnyx.go`; bound paragraph in docs/telnyx-live-api.md; remedy = one-off raised-constant pass if it ever bites                                                                                                                                                                                                                                   | Comment/doc only — behavior unchanged by design                                                           |
+| P1-T10 styles freshness guard           | Determinism PROVEN: nixpkgs tailwindcss 4.3.3 byte-identical (rerun + committed copy + npm `@tailwindcss/cli@4.3.3`); NEW CI job `styles-freshness` (scratch npm install → regen → diff, error names `nix run .#update-styles`); css-gate error messages repointed                                                                                                                                                                                                                       | 3-way cmp byte-identical; ci.yml job added                                                                |
+| P1-T11 cut-release.sh                   | `scripts/cut-release.sh`: clean-tree + load-policy + pushed-HEAD quiesce (BuildFlow#55 guard), CHANGELOG sweep, nix build, full gate, verify-all, remote-CI-green check (the tag-red lesson), annotated tag + push, `go list -m` proxy check                                                                                                                                                                                                                                             | bash -n + shellcheck clean; guard rails proven (no-arg fail, dirty-tree fail)                             |
+| P1-T13 ops visibility                   | README alerting recipe: jq on `last_pass_age_seconds` (with the -1-never-ran guard) + host-side `systemctl list-timers`/`journalctl` for the purge timer; the /ops card's in-process facts (window, would-retire) verified already present; host-side boundary documented                                                                                                                                                                                                                | README section; wire shape checked against `SnapshotAny`                                                  |
+| P2-T14 FTS quality pass                 | `TestMultiWordQuerySemantics`: AND semantics, order-free, case-folding, absent-term, words+number mix with digit-shadow dedupe — all clean, no ranking surprises (bm25 double-mention ranking was already pinned)                                                                                                                                                                                                                                                                        | Test green in internal/search                                                                             |
+| P2-T15 export lane tests                | Consumer-side parsing (real `csv.Reader` + line-by-line JSON decode) of STALLED streams: header integrity + marker record well-formed; `BenchmarkExportStream10k` (real sqlite, 10k rows: ~268 ms/op, ~24.8 MB allocs — streaming evidence)                                                                                                                                                                                                                                              | Both tests + 1x benchmark run green                                                                       |
+| P2-T16 recording negative paths         | fakeTelnyx gained metadata-500 + signed-URL-403; `TestRecordingNegativePathsAnswerHonestly`: honest 502 bodies, no upstream-URL leak, no audio content-type; throttle decision: defaults stay hardcoded (2/s, burst 60, loopback exempt — flags only if ops asks)                                                                                                                                                                                                                        | Test green                                                                                                |
+| P2-T17 verify-all --fast + probe polish | `verify-all.sh --fast` (contracts-only); screenshot-probe: discovery SKIPPED when no detail-*/print surface selected + KNOWN_SURFACES drift guard                                                                                                                                                                                                                                                                                                                                        | `--only dashboard` run: 2 PNGs, no discovery scrapes                                                      |
+| P2-T18 pixel-diff practice              | Baseline corpus saved (41 PNGs → ~/lens-baselines/v1); zero-tolerance self-diff measured the noise: ≤81 px time-text churn at content-dependent positions → implemented a **volatile-px budget (128)** instead of brittle geometric masks, tightened default tolerance 0.5% → 0.05%; aged-baseline alerts documented as the refresh signal; `LENS_DIFF_BASELINE` hook in verify-all                                                                                                      | Same-session diff: 0 alerts, all absorbed; doctrine in scripts/README                                     |
 
 ## b) PARTIALLY DONE
 
@@ -47,18 +47,18 @@ that test is fixed.
    surface), a11y contract leg added to verify-ui-contract.js, which caught
    a REAL h1→h3 skip; fixed by `TitleTag: display.HeadingTagH2` on all 12
    page-level Cards; goldens regenerated (-update, 4 files); browser probe
-   ALL PASS (headings 1,2,2,2). NOT done: the stale-verdict *browser*
+   ALL PASS (headings 1,2,2,2). NOT done: the stale-verdict _browser_
    probe — the probe stack has no poller-wired serve composition (serve
    without ingest sources 503s /api/ops), and the stale markup is already
    pinned server-side (`TestOpsPageStaleVerdictAlerts`); documented, not
    built.
 2. **P2-T20 coverage floor** — cmd wiring tests landed
    (`indexsession_test.go`: openIndexSession/finalizeIngest/gateAndFinalize
-   + age gate, printRejected, requireDB/requireOneArg happy paths, smoke +
-   backupCmd flows): cmd 9.2% → **27.6%**, total 70.4% → **71.9%**. The
-   follow-up domain test (`internal/calls/commands_test.go`:
-   constructors + Excerpt + Retire decider) is **RED** — see (d). The CI
-   floor is still 50 (raising it is the unfinished half of the task).
+   - age gate, printRejected, requireDB/requireOneArg happy paths, smoke +
+     backupCmd flows): cmd 9.2% → **27.6%**, total 70.4% → **71.9%**. The
+     follow-up domain test (`internal/calls/commands_test.go`:
+     constructors + Excerpt + Retire decider) is **RED** — see (d). The CI
+     floor is still 50 (raising it is the unfinished half of the task).
 3. **Full browser lane after the h2 change** — verify-ui-contract +
    internal/web tests ran green after the TitleTag fix, but the FULL
    verify-all (style contract, staleness-live, 41-PNG sweep) has not been
@@ -149,6 +149,7 @@ that test is fixed.
 ## f) NEXT — ranked (49 items)
 
 **P0 — unblock the tree (do first, in order)**
+
 1. Fix `TestRetireDeciderPaths` (mirror domain_test's working stream-id/
    record-fold pattern; or split the Retire leg out until diagnosed).
 2. `GOEXPERIMENT=jsonv2 go test ./...` full-suite green.
@@ -174,13 +175,15 @@ that test is fixed.
 
 **P1 — remaining trust/quality work**
 14. P2-T21: audit remaining `time.Sleep` in tests; convert one candidate to
-    the cancellation-driven pattern; generalize the helper.
+the cancellation-driven pattern; generalize the helper.
 15. P2-T22: DOMAIN_LANGUAGE MOS/cost rows; Telnyx quarterly checklist file
-    (date + commands, 2027-01 window).
+(date + commands, 2027-01 window).
 16. P2-T23: search hint example query; RelativeTime day-precision tooltip;
-    ops print page-breaks (with probe capture).
+ops print page-breaks (with probe capture).
 17. P2-T24: pre-commit AGENTS.md ≤219 wc check; `ingest-cdr -dry-run` flag
-    + test.
+
+- test.
+
 18. P2-T25: dark-theme eyeball over the fresh corpus; true clean-clone
     ensureCodegen rehearsal in a scratch worktree.
 19. P2-T26: R27.x triage (art-dupl + branching-flow verdicts, file-size
@@ -201,52 +204,52 @@ that test is fixed.
 
 **Watch / owner-gated (scheduled, not fake-scheduled)**
 25. P1-T12 BuildFlow#56 rebuild on approval → then re-run the full gate for
-    the literal full receipt; close the ledger note.
+the literal full receipt; close the ledger note.
 26. Owner answer sheet (D1-D5, PII, mobile) → record outcomes in
-    TODO_LIST + AGENTS.md per the F7 contract.
+TODO_LIST + AGENTS.md per the F7 contract.
 27. Fold-ins when upstream lands: templ-components #48/#49/#50/#51/#55,
-    go-etag#2, go-appkit#26, BuildFlow#55.
+go-etag#2, go-appkit#26, BuildFlow#55.
 28. 2027-01 Telnyx live-verify window + MOS poller execution (design done).
 29. Host deploys (`aiDids` options; the NixOS module is ready).
 30. Production re-ingest for ContentHash v2 (owner path).
 31. Schema-v2 length-prefixed ContentHash encoding (frozen at v1 until the
-    gate).
+gate).
 32. Dependabot weekly run: confirm bumps for the newly-direct deps.
 33. dependabot-core#16538 maintainer answers (owner).
 34. Browser-level 304 check (owner manual; server side pinned).
 35. >1MiB transcript policy (owner decision, default documented).
 36. Sibling repo backup-rotation fold into lens.nix comments.
 37. /tmp cleanup decision (48G tmpfs was 100% at session start, recovered
-    to 54% by external cleanup — the cross-session logs are not ours to
-    trash unilaterally).
+to 54% by external cleanup — the cross-session logs are not ours to
+trash unilaterally).
 38. lychee fleet GITHUB_TOKEN policy (BuildFlow fleet question) — revisit
-    the skip_steps entry when it exists.
+the skip_steps entry when it exists.
 39. vulnix re-triage (rides R27.x / next bump cycle; govulncheck is the
-    trusted CVE gate).
+trusted CVE gate).
 40. markdownlint: revisit only if the fleet adopts a curated config that
-    tolerates wide tables.
+tolerates wide tables.
 41. Coverage: the calls-projection fold + cmd exec-level flag tests are the
-    path from 71.9% toward 80 — decide whether that is worth a dedicated
-    pass (see question 1).
+path from 71.9% toward 80 — decide whether that is worth a dedicated
+pass (see question 1).
 42. serve.go: the CSP flip (enforcing nonce mode) waits on the next host
-    deploy — bundle it with the `aiDids` deploy.
+deploy — bundle it with the `aiDids` deploy.
 43. Stale-verdict browser probe: revisit ONLY if a poller-wired serve
-    composition ever exists in the probe stack (otherwise it tests nothing
-    a golden doesn't).
+composition ever exists in the probe stack (otherwise it tests nothing
+a golden doesn't).
 44. golden-volatile scrubber: `Updated HH:MM:SS` replacement hardcodes the
-    stamp format — verify it still catches after any footer copy change.
+stamp format — verify it still catches after any footer copy change.
 45. cut-release.sh `go list -m` sleep-10 proxy lag: make it a retry loop if
-    the first check ever flakes.
+the first check ever flakes.
 46. .buildflow.yml skip_steps: re-audit if BuildFlow registers
-    markdownlint/prettier/eslint providers for this repo shape (the
-    disposition rationale says why they're excluded today).
+markdownlint/prettier/eslint providers for this repo shape (the
+disposition rationale says why they're excluded today).
 47. scripts/README: two "Codegen bootstrap" paragraphs tell the same story
-    twice (M4/F14 + hash-primary) — merge them next docs touch.
+twice (M4/F14 + hash-primary) — merge them next docs touch.
 48. AGENTS.md 219-line budget: held this session; the next addition needs
-    a compensating trim (the pre-commit check in P2-T24 would automate
-    this).
+a compensating trim (the pre-commit check in P2-T24 would automate
+this).
 49. Clean up scratch dirs from this session (/home/lars/tmp/pd-run*,
-    csp-sweep-run*, tw-*, shots-fast) once the receipts above are banked.
+csp-sweep-run*, tw-*, shots-fast) once the receipts above are banked.
 
 ## g) Questions for the owner (cannot self-answer)
 

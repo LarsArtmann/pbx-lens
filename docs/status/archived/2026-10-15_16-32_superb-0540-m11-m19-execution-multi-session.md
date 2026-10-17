@@ -73,25 +73,25 @@ up.
 ## b) PARTIALLY DONE
 
 ~~1. **Trailing-slash policy — the session's open scar.** Three assertion flips~~ → routed: ROADMAP trailing-slash open question (deliberately unpinned)
-   (301 → 404 → 301 → 404) ended with the parallel session UNPINNING the
-   test ("intentionally unpinned… pin it once that settles"). Current state:
-   `server.go` still carries `redirectTrailingSlash` (so `/dashboard/` 301s),
-   but NO test pins the behavior. Implementation and test-coverage disagree in
-   spirit; the decision (301 canonical vs exact-pattern 404) is genuinely open
-   and needs ONE owner taste call.
+(301 → 404 → 301 → 404) ended with the parallel session UNPINNING the
+test ("intentionally unpinned… pin it once that settles"). Current state:
+`server.go` still carries `redirectTrailingSlash` (so `/dashboard/` 301s),
+but NO test pins the behavior. Implementation and test-coverage disagree in
+spirit; the decision (301 canonical vs exact-pattern 404) is genuinely open
+and needs ONE owner taste call.
 ~~2. **M17 display polish** — f-34 + f-35 done (this session); f-33~~ done-in-part — f33/f29 wait on D1; structurally complete
-   (phone-number grouping) and f-29 (export CSV header review) are blocked
-   behind owner decisions (D1 / M3) by the plan's own mapping. Structurally
-   complete; substantively waiting on the owner.
+(phone-number grouping) and f-29 (export CSV header review) are blocked
+behind owner decisions (D1 / M3) by the plan's own mapping. Structurally
+complete; substantively waiting on the owner.
 ~~3. **M18** — f-21 done (opinion doc); f-20 (dashboard cost panel) and f-22~~ done-in-part — cost panel → ROADMAP; the direction note closed as landed
-   (direction auto-detection follow-through) NOT started by either session.
+(direction auto-detection follow-through) NOT started by either session.
 ~~4. **The 05-40 plan execution overall** — M11-M19 done; M20 done by the~~ done — the owner-gated residue IS the TODO_LIST blocked section
-   parallel session; what remains is exactly the owner-gated set (M1-M4, M8)
-   plus the two M18 items. The plan's own completion % can't reach 100
-   without the owner.
+parallel session; what remains is exactly the owner-gated set (M1-M4, M8)
+plus the two M18 items. The plan's own completion % can't reach 100
+without the owner.
 ~~5. **pixel-diff as a practice** — tooling done and live-verified, but there is~~ done-in-part — tooling live; the practice = the pixel-diff row
-   no committed baseline corpus and no documented routine ("when do I run
-   --diff?"). Alert-only tooling without a habit is half a tool.
+no committed baseline corpus and no documented routine ("when do I run
+--diff?"). Alert-only tooling without a habit is half a tool.
 
 ## c) NOT STARTED (all owner-gated or explicitly unpicked)
 
@@ -186,73 +186,73 @@ up.
 
 ## f) TOP 50 THINGS TO GET DONE NEXT (brainstorm — sorted by impact, most are ROADMAP fuel; HARVEST with routing rigor)
 
-| #  | Thing                                                                                                                                                     | Why / source                                                       |
-| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-~~| 1  | **Cut v0.2.0** (CHANGELOG sweep → tag → push)                                                                                                             | The nav-id ETag fix is unreleased; all gates green (M2/P2)         |~~ done — v0.2.0 cut AND pushed (7d15c6f)
-~~| 2  | **Owner pack D1-D5 out the door**                                                                                                                         | Unblocks M3, M4, M8, f-33, f-29 (M1)                               |~~ → routed: owner decision pack D1-D5 row
-~~| 3  | **Pin the trailing-slash policy** (301 vs 404) and re-pin the test                                                                                        | The war's open scar; implementation currently untested             |~~ → routed: ROADMAP trailing-slash open question
-~~| 4  | PII enforcement implementation (post-M1 boundary)                                                                                                         | Trust core; primitives sit unenforced (M4)                         |~~ → routed: PII enforcement row
-~~| 5  | Dashboard cost panel                                                                                                                                      | f-20, the biggest unpicked M18 item                                |~~ → routed: ROADMAP theme 1 cost panel
-~~| 6  | Harvest this f-list into TODO_LIST/ROADMAP                                                                                                                | docs-health HARVEST; skill mandate after every report              |~~ done — the 17-40 harvest pass
-~~| 7  | Mobile card-vs-scroll decision + build (post-M1)                                                                                                          | M8; 375px UX                                                       |~~ → routed: mobile card-list row
-~~| 8  | EU formats (post-M1): dates, numbers, CSV headers f-29, phone grouping f-33                                                                               | M3 rides D-answer                                                  |~~ → routed: owner decision pack D1 row
-~~| 9  | ChangeLOG completeness check: fold this session's user-facing work (print fix, version-footer fix, favicon dark, pixel-diff) into Unreleased              | Parallel session started the sweep; verify nothing dropped         |~~ done — v0.2.0 CHANGELOG completed (17-40)
-~~| 10 | FEATURES.md refresh: ops page, retention card, robots, CSP report-only, rate limit, verify-all lane, pixel-diff tooling                                   | Honest inventory lags the code                                     |~~ done — FEATURES refreshed (17-40)
-~~| 11 | AGENTS.md: add verify-all.sh as THE probe command + benchmark command + pixel-diff usage                                                                  | Commands block still points at individual probes                   |~~ done — AGENTS commands block updated (17-40)
-~~| 12 | docs/http-stack.md: record the exact-Content-Length contract + benchmark ceiling numbers + the trailing-slash decision once pinned                        | Doctrine doc drifts behind code                                    |~~ done — http-stack.md doctrine updated (17-40)
-~~| 13 | Recording-throttle 429 path: verify a test/probe exists (parallel session added the throttle; coverage unconfirmed by this session)                       | Untested security-ish behavior                                     |~~ done — TestRecordingHandlerAnswers429WhenThrottled (security_test.go)
-~~| 14 | CSP report-only dry run: actually run it in a browser, collect violations, make the enforce/adjust call                                                   | F47 wired but the dry run itself hasn't happened                   |~~ → routed: CSP report-only sweep row
-~~| 15 | Favicon dark variant: confirm in real dark browser chrome (SVG `<style>` media-query support inside favicons varies)                                      | F45 unverified in situ                                             |~~ declined — verified theme-neutral the same day
-~~| 16 | Full dark-theme eyeball pass over the fresh 41-PNG corpus (M15/M17 changed visuals)                                                                       | Post-change review debt                                            |~~ → routed: dark-theme eyeball row
-~~| 17 | Golden review of the 6 goldens after the noindex meta landed (golden-pretty-diff.sh)                                                                      | Markup changed mid-session under the daemon                        |~~ existing — the bump watchlist (adoption map) is the process
-~~| 18 | pixel-diff: mask known-volatile regions (dashboard footer stamp) → tighten default tolerance                                                              | Alert precision                                                    |~~ merged — the pixel-diff practice row
-~~| 19 | pixel-diff: decide baseline strategy (machine-local documented vs committed corpus)                                                                       | See question 3                                                     |~~ → routed: ROADMAP pixel-diff baseline strategy
-~~| 20 | verify-all.sh `--fast` mode (contracts only)                                                                                                              | Habit-forming lane                                                 |~~ merged — the verify-all polish row
-~~| 21 | Review the uncommitted `flake.lock` + `AGENTS.md` changes the parallel session left (both were dirty at last check; tree now clean — confirm what landed) | Foreign-change hygiene                                             |~~ done — 35c96ca, a3ebda1, fdea674 landed; tree clean
-~~| 22 | Investigate the stale LSP wsl_v5 warning (ops_page_test.go:103) — restart or recalibrate                                                                  | Phantom-edit hazard                                                |~~ done — LSP restart (local act; CLI gate clean)
-~~| 23 | True clean-clone rehearsal of ensureCodegen in a scratch worktree                                                                                         | Fresh-clone path approximated only                                 |~~ → routed: clean-clone ensureCodegen row
-~~| 24 | Add BenchmarkConcurrentPoll to docs as the recorded poll ceiling                                                                                          | Numbers shouldn't live only in git history                         |~~ done — the poll ceiling recorded in http-stack.md
-~~| 25 | dependabot PR wave: triage the next batch (httputil/server_timing/go-etag trio grouping?)                                                                 | F61 verified the shape; PRs remain                                 |~~ → routed: dependabot confirm row
-~~| 26 | Production re-ingest dry run on a scratch host per F63 checklist                                                                                          | Prep → execution                                                   |~~ → routed: prod re-ingest row
-~~| 27 | >1MiB transcript policy: owner decision per the F62 one-pager                                                                                             | M20 gate                                                           |~~ → routed: >1MiB transcript policy row
-~~| 28 | Telnyx 2027-01 re-verify window: confirm the calendar entry exists (m27.9)                                                                                | AGENTS says "calendar entry" — verify it's real                    |~~ merged — the Telnyx quarterly checklist row
-~~| 29 | MOS poller + MOS card data (window-gated 2027-01)                                                                                                         | Dashboard shows "Not available yet"                                |~~ → routed: T15 MOS poller row
-~~| 30 | Webphone read-only deep link                                                                                                                              | Sibling integration from the SUPERB doctrine                       |~~ → routed: ROADMAP theme 3 (webphone)
-~~| 31 | NixOS module: fold the backup-rotation opinion into lens.nix comments/timer descriptions                                                                  | Opinion doc → host config                                          |~~ → routed: sibling backup-rotation opinion row
-~~| 32 | Upstream: re-check go-cqrs-lite#48/#49/#51/#55 state (mechanism-class watch)                                                                              | Fold-in watch prep                                                 |~~ existing — the upstream-filings ledger + fold-in watch
-~~| 33 | Evaluate upstreaming the per-file mtime convergence finding to templ (code-gen staleness semantics)                                                       | Possible D6 filing; verify-before-filing first                     |~~ → routed: ROADMAP templ codegen staleness idea
-~~| 34 | Screenshot-probe: surface count drift guard (KNOWN_SURFACES vs pages array duplication — one list would drift)                                            | Small tech debt from F33                                           |~~ merged — the verify-all polish row (drift guard)
-~~| 35 | screenshot-probe: skip detail discovery when no detail-* surface is wanted                                                                                | Startup latency on --only runs                                     |~~ merged — the verify-all polish row (skip detail discovery)
-~~| 36 | Add /ops + /api/ops to a browser probe contract (stale-verdict alert)                                                                                     | The staleness-live probe covers /frag/staleness, not /ops verdicts |~~ merged — the /ops hardening leftovers row
-~~| 37 | Retention card: live end-to-end proof (run purge -dry-run against a seeded aged DB through the UI path)                                                   | Card shows live truth; the aged-DB path is test-only so far        |~~ declined — retention surfacing verified done (13th pass)
-~~| 38 | Benchmark: /api/export.jsonl streaming memory bound under 10k rows                                                                                        | M16 covered list+transcript; export streaming unbenchmarked        |~~ merged — the export lane tests row
-~~| 39 | Backup: end-to-end restore drill re-run post-v0.9.0 deps (last drill older than the appkit bump)                                                          | Backup trust                                                       |~~ done — the restore drill is a named CI lane
-~~| 40 | Review golangci-lint pin floor note (v2.14 = go1.27.1) after the next toolchain bump                                                                      | CI pin rot risk                                                    |~~ declined — the pin floor is documented in AGENTS CI section
-~~| 41 | govulncheck + art-dupl lanes: confirm still advisory and green post-sweep                                                                                 | CI hygiene                                                         |~~ declined — advisory lanes verified green in the gates
-~~| 42 | Add the recording-proxy rate-limit knobs (limit/window) to serve flags if ops wants tuning                                                                | Currently hardcoded generous defaults                              |~~ merged — the recording negative paths row
-~~| 43 | robots.txt: confirm auth-gated pages return it unauthenticated BY DESIGN (documented in code; verify the docs say so too)                                 | Intent vs doc                                                      |~~ done — FEATURES robots row documents the intent
-~~| 44 | Consider `report-uri` collector endpoint for CSP reports (currently console-only dry run)                                                                 | F47 deepening                                                      |~~ → routed: ROADMAP CSP report-uri idea
-~~| 45 | Roadmap entry: screenshot corpus compression (41 PNGs per sweep → webp?)                                                                                  | Eyeball-pass ergonomics                                            |~~ → routed: ROADMAP corpus webp idea
-~~| 46 | Roadmap: i18n note — the UI copy is English-only; EU-format decision may reopen copy language                                                             | Post-M3                                                            |~~ → routed: ROADMAP i18n idea
-~~| 47 | Tech debt: perf_test.go golines finding (line 53) still unfixed at last check (foreign file)                                                              | Lint noise                                                         |~~ done — CLI gate 0 issues (verified twice that day)
-~~| 48 | Tech debt: `inputHash` includes app.css but styles rebuild triggers on ANY templ change (over-broad) — consider separate ledgers                          | Probe latency polish                                               |~~ declined — over-invalidation costs a 150 ms no-op rebuild
-~~| 49 | Document the two-session workflow lessons in the project (or global lessons.md): claim protocol, daemon gating                                            | Cross-project lesson candidate                                     |~~ declined — cross-project lessons belong in crush-config (by commit)
-~~| 50 | Celebrate + archive: annotate the 05-40 plan header for M12-M19 completion (M12-M13 annotated; the rest is the parallel session's to annotate)            | Plan hygiene                                                       |~~ done — the 05-40 plan header annotated
+| #  | Thing | Why / source                                                                                                                                              |
+| -- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~ | 1     | **Cut v0.2.0** (CHANGELOG sweep → tag → push)                                                                                                             |
+| ~~ | 2     | **Owner pack D1-D5 out the door**                                                                                                                         |
+| ~~ | 3     | **Pin the trailing-slash policy** (301 vs 404) and re-pin the test                                                                                        |
+| ~~ | 4     | PII enforcement implementation (post-M1 boundary)                                                                                                         |
+| ~~ | 5     | Dashboard cost panel                                                                                                                                      |
+| ~~ | 6     | Harvest this f-list into TODO_LIST/ROADMAP                                                                                                                |
+| ~~ | 7     | Mobile card-vs-scroll decision + build (post-M1)                                                                                                          |
+| ~~ | 8     | EU formats (post-M1): dates, numbers, CSV headers f-29, phone grouping f-33                                                                               |
+| ~~ | 9     | ChangeLOG completeness check: fold this session's user-facing work (print fix, version-footer fix, favicon dark, pixel-diff) into Unreleased              |
+| ~~ | 10    | FEATURES.md refresh: ops page, retention card, robots, CSP report-only, rate limit, verify-all lane, pixel-diff tooling                                   |
+| ~~ | 11    | AGENTS.md: add verify-all.sh as THE probe command + benchmark command + pixel-diff usage                                                                  |
+| ~~ | 12    | docs/http-stack.md: record the exact-Content-Length contract + benchmark ceiling numbers + the trailing-slash decision once pinned                        |
+| ~~ | 13    | Recording-throttle 429 path: verify a test/probe exists (parallel session added the throttle; coverage unconfirmed by this session)                       |
+| ~~ | 14    | CSP report-only dry run: actually run it in a browser, collect violations, make the enforce/adjust call                                                   |
+| ~~ | 15    | Favicon dark variant: confirm in real dark browser chrome (SVG `<style>` media-query support inside favicons varies)                                      |
+| ~~ | 16    | Full dark-theme eyeball pass over the fresh 41-PNG corpus (M15/M17 changed visuals)                                                                       |
+| ~~ | 17    | Golden review of the 6 goldens after the noindex meta landed (golden-pretty-diff.sh)                                                                      |
+| ~~ | 18    | pixel-diff: mask known-volatile regions (dashboard footer stamp) → tighten default tolerance                                                              |
+| ~~ | 19    | pixel-diff: decide baseline strategy (machine-local documented vs committed corpus)                                                                       |
+| ~~ | 20    | verify-all.sh `--fast` mode (contracts only)                                                                                                              |
+| ~~ | 21    | Review the uncommitted `flake.lock` + `AGENTS.md` changes the parallel session left (both were dirty at last check; tree now clean — confirm what landed) |
+| ~~ | 22    | Investigate the stale LSP wsl_v5 warning (ops_page_test.go:103) — restart or recalibrate                                                                  |
+| ~~ | 23    | True clean-clone rehearsal of ensureCodegen in a scratch worktree                                                                                         |
+| ~~ | 24    | Add BenchmarkConcurrentPoll to docs as the recorded poll ceiling                                                                                          |
+| ~~ | 25    | dependabot PR wave: triage the next batch (httputil/server_timing/go-etag trio grouping?)                                                                 |
+| ~~ | 26    | Production re-ingest dry run on a scratch host per F63 checklist                                                                                          |
+| ~~ | 27    | >1MiB transcript policy: owner decision per the F62 one-pager                                                                                             |
+| ~~ | 28    | Telnyx 2027-01 re-verify window: confirm the calendar entry exists (m27.9)                                                                                |
+| ~~ | 29    | MOS poller + MOS card data (window-gated 2027-01)                                                                                                         |
+| ~~ | 30    | Webphone read-only deep link                                                                                                                              |
+| ~~ | 31    | NixOS module: fold the backup-rotation opinion into lens.nix comments/timer descriptions                                                                  |
+| ~~ | 32    | Upstream: re-check go-cqrs-lite#48/#49/#51/#55 state (mechanism-class watch)                                                                              |
+| ~~ | 33    | Evaluate upstreaming the per-file mtime convergence finding to templ (code-gen staleness semantics)                                                       |
+| ~~ | 34    | Screenshot-probe: surface count drift guard (KNOWN_SURFACES vs pages array duplication — one list would drift)                                            |
+| ~~ | 35    | screenshot-probe: skip detail discovery when no detail-* surface is wanted                                                                                |
+| ~~ | 36    | Add /ops + /api/ops to a browser probe contract (stale-verdict alert)                                                                                     |
+| ~~ | 37    | Retention card: live end-to-end proof (run purge -dry-run against a seeded aged DB through the UI path)                                                   |
+| ~~ | 38    | Benchmark: /api/export.jsonl streaming memory bound under 10k rows                                                                                        |
+| ~~ | 39    | Backup: end-to-end restore drill re-run post-v0.9.0 deps (last drill older than the appkit bump)                                                          |
+| ~~ | 40    | Review golangci-lint pin floor note (v2.14 = go1.27.1) after the next toolchain bump                                                                      |
+| ~~ | 41    | govulncheck + art-dupl lanes: confirm still advisory and green post-sweep                                                                                 |
+| ~~ | 42    | Add the recording-proxy rate-limit knobs (limit/window) to serve flags if ops wants tuning                                                                |
+| ~~ | 43    | robots.txt: confirm auth-gated pages return it unauthenticated BY DESIGN (documented in code; verify the docs say so too)                                 |
+| ~~ | 44    | Consider `report-uri` collector endpoint for CSP reports (currently console-only dry run)                                                                 |
+| ~~ | 45    | Roadmap entry: screenshot corpus compression (41 PNGs per sweep → webp?)                                                                                  |
+| ~~ | 46    | Roadmap: i18n note — the UI copy is English-only; EU-format decision may reopen copy language                                                             |
+| ~~ | 47    | Tech debt: perf_test.go golines finding (line 53) still unfixed at last check (foreign file)                                                              |
+| ~~ | 48    | Tech debt: `inputHash` includes app.css but styles rebuild triggers on ANY templ change (over-broad) — consider separate ledgers                          |
+| ~~ | 49    | Document the two-session workflow lessons in the project (or global lessons.md): claim protocol, daemon gating                                            |
+| ~~ | 50    | Celebrate + archive: annotate the 05-40 plan header for M12-M19 completion (M12-M13 annotated; the rest is the parallel session's to annotate)            |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
 ~~1. **Trailing-slash policy — which canonical form do you want?** `/dashboard/`~~ → routed: ROADMAP trailing-slash open question
-   → 301 to `/dashboard` (current behavior, friendlier to stale bookmarks,
-   one extra mux registration per page) or exact-pattern 404 (simpler route
-   table, honest "this path does not exist")? Two sessions fought to a
-   draw and the test is deliberately unpinned until you call it.
+→ 301 to `/dashboard` (current behavior, friendlier to stale bookmarks,
+one extra mux registration per page) or exact-pattern 404 (simpler route
+table, honest "this path does not exist")? Two sessions fought to a
+draw and the test is deliberately unpinned until you call it.
 ~~2. **Cut v0.2.0 now?** All gates are green and the nav-id ETag fix (the~~ done — v0.2.0 cut AND pushed (7d15c6f)
-   session's biggest find) is unreleased. I will not tag or push without an
-   explicit go — say the word and it's a CHANGELOG sweep → tag → push.
+session's biggest find) is unreleased. I will not tag or push without an
+explicit go — say the word and it's a CHANGELOG sweep → tag → push.
 ~~3. **Pixel-diff baseline: machine-local or committed?** Committing a baseline~~ → routed: ROADMAP pixel-diff baseline strategy
-   corpus (~1-2 MB of PNGs) buys cross-session/cross-machine visual alerts
-   at repo-weight cost; keeping it in /tmp keeps the repo lean but the
-   baseline dies with the machine. Which trade do you want?
+corpus (~1-2 MB of PNGs) buys cross-session/cross-machine visual alerts
+at repo-weight cost; keeping it in /tmp keeps the repo lean but the
+baseline dies with the machine. Which trade do you want?
 
 ---
 

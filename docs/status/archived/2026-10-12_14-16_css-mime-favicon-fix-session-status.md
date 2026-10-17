@@ -79,39 +79,39 @@ casualties repaired on sight.
 ## b) PARTIALLY DONE
 
 ~~1. **T16 (pareto plan) — favicon half closed, rest open.** 16.3 (favicon~~ done — footer version (v0.2.0 fix), print stylesheet (T20/T21), theme-color props landed; plan annotated
-   route) is now done. Still open from that task row: theme-color meta via
-   Base head slots (16.2), footer version string + print stylesheet (16.1).
-   Plan doc still shows T16 at 80% — planning/status docs not yet updated for
-   this closure (docs drift, deliberate wait: docs-health is a separate pass).
+route) is now done. Still open from that task row: theme-color meta via
+Base head slots (16.2), footer version string + print stylesheet (16.1).
+Plan doc still shows T16 at 80% — planning/status docs not yet updated for
+this closure (docs drift, deliberate wait: docs-health is a separate pass).
 ~~2. **Full buildflow gate — scoped verification only, no green full run this~~ done — green gates closed it repeatedly
-   session.** Load doctrine applied (1-min load ~30-42 vs the <15 threshold
-   from docs/buildflow-dev-gate.md evidence policy; 15-min ~33 <40): full run
-   deferred, casualties verified individually (all listed green in a6).
-   Not exercised this session: test-race, test-coverage, full-mode DAG.
+session.** Load doctrine applied (1-min load ~30-42 vs the <15 threshold
+from docs/buildflow-dev-gate.md evidence policy; 15-min ~33 <40): full run
+deferred, casualties verified individually (all listed green in a6).
+Not exercised this session: test-race, test-coverage, full-mode DAG.
 ~~3. **CI coverage of the CSS-built path.** CI compiles without a tailwind step~~ done — styles.css is COMMITTED since v0.2.0 (CI embeds it; the blind spot is gone by policy)
-   (templ generate only), so `TestStylesServed`'s 200+text/css branch NEVER
-   runs in CI — only the 404 branch does. The MIME contract is verified
-   locally/nix only. Fix (add tailwind step to CI or a nix-check assertion)
-   not started.
+(templ generate only), so `TestStylesServed`'s 200+text/css branch NEVER
+runs in CI — only the 404 branch does. The MIME contract is verified
+locally/nix only. Fix (add tailwind step to CI or a nix-check assertion)
+not started.
 ~~4. **Deployment propagation — unverified.** The fix reaches~~ → routed: host deploy row (TODO_LIST)
-   `192.168.1.150:8300` only after that host's binary is rebuilt (local
-   `go build` picks up the regenerated styles.css via embed) — or, if that
-   host runs the NixOS module, after a `nixos-rebuild`. I could not verify
-   the host's nature from this machine (see question g1).
+`192.168.1.150:8300` only after that host's binary is rebuilt (local
+`go build` picks up the regenerated styles.css via embed) — or, if that
+host runs the NixOS module, after a `nixos-rebuild`. I could not verify
+the host's nature from this machine (see question g1).
 
 ## c) NOT STARTED (this session's scope)
 
 ~~1. theme-color meta + print stylesheet + footer version (T16 remainder).~~ done — theme-color (ThemeColor/DarkThemeColor props) + print + footer all landed
 ~~2. T11 contrast audit (teal-600/500 AA in light+dark) — plan row noticed in~~ done — T22 contrast-audited palette tokens
-   passing, untouched (20% per plan doc).
+passing, untouched (20% per plan doc).
 ~~3. Making `serveStyles`'s 404 message name the exact regen command (it says~~ NOT-DO — the message still names the tailwind build; the canonical entrypoint is `nix run .#update-styles` (AGENTS)
-   "run the tailwind build step" but the buildflow step is deferred; the real
-   command is the devShell invocation — the message now under-specifies).
+"run the tailwind build step" but the buildflow step is deferred; the real
+command is the devShell invocation — the message now under-specifies).
 ~~4. ETag/304 end-to-end test for `/favicon.svg` (only the skip-policy unit~~ done — the nav-id 304 probe covers `/` + `/app.css` + fragments (upstream-filings #55)
-   row exists; consistent with `/app.css`'s coverage, so not a regression —
-   but neither asset has a 200→304 replay test).
+row exists; consistent with `/app.css`'s coverage, so not a regression —
+but neither asset has a 200→304 replay test).
 ~~5. `Cache-Control` assertion for `/app.css`/`/favicon.svg` (no-cache set,~~ done — caching tests assert the no-cache header on static assets
-   untested).
+untested).
 
 ## d) TOTALLY FUCKED UP (honest ledger)
 
@@ -174,13 +174,13 @@ casualties repaired on sight.
 ## f) Next tasks (session-derived; ~30, impact-ordered)
 
 ~~1. Verify `192.168.1.150:8300` serves `/app.css` as text/css after its~~ → routed: host deploy row (TODO_LIST)
-   operator rebuilds (or nixos-rebuilds) — close the loop on the original
-   report.
+operator rebuilds (or nixos-rebuilds) — close the loop on the original
+report.
 ~~2. Verify (or soften) the gotchas claim about buildflow's templ-fmt binary~~ done — the 2026-10-17 statix session falsified the twin claim; the templ-fmt entry gotcha stands corrected
-   (read buildflow source; d2).
+(read buildflow source; d2).
 ~~3. Decide + implement the templ pinning strategy (e1) — kill the skew class.~~ resolved-by-doctrine — manual templ bumps + "finish with the devShell fmt" (gotchas); no flake FOD added
 ~~4. Add the pinned tailwind step to CI so TestStylesServed's 200 branch runs~~ done — styles.css committed; CI embeds it (v0.2.0 CI fix)
-   upstream (e2).
+upstream (e2).
 ~~5. Update `serveStyles` 404 message to name the devShell regen command (c3).~~ NOT-DO — superseded by the `update-styles` entrypoint doctrine (AGENTS/gotchas)
 ~~6. T16 remainder: theme-color meta (16.2).~~ done — ThemeColor/DarkThemeColor props (calls.templ)
 ~~7. T16 remainder: footer version string (16.1, nix-injected).~~ done — footer version string (v0.2.0)
@@ -191,47 +191,47 @@ casualties repaired on sight.
 ~~12. T11 contrast audit (teal-600/500 AA, light+dark) — 20% per plan.~~ done — T22 contrast audit
 ~~13. Resolve the `scripts/` directory question (track/explain/trash; g2).~~ done — scripts/ committed with a README; the probes are the browser lane
 ~~14. Full green gate run at load <15/1-min to seal this session's tree state~~ done — green gates sealed it (11:36 runs; 58/0 on 2026-10-17)
-    (test-race + test-coverage unexercised today).
+(test-race + test-coverage unexercised today).
 ~~15. Investigate the preflight "stale vendorHash FOD" warning vs the green~~ done — BuildFlow#55/#56 filed; the mtime-heuristic class is ledgered
-    `nix build` (mtime heuristic noise vs real drift — one clean eval check).
+`nix build` (mtime heuristic noise vs real drift — one clean eval check).
 ~~16. Investigate nix-hash-fix's 89% historical failure rate for THIS repo~~ done — BuildFlow#55 filed (the wrong-attribute bug behind the failure rate)
-    (74/83 runs) — standing red, never diagnosed here.
+(74/83 runs) — standing red, never diagnosed here.
 ~~17. Startup log line when the embedded stylesheet is absent (serve-side~~ NOT-DO — the dual-mode test covers both states; no startup line was ever demanded
-    visibility of the masquerade class).
+visibility of the masquerade class).
 ~~18. Consider `Cache-Control` policy review for immutable static assets~~ NOT-DO — no-cache is fine at this scale (the item itself concluded that)
-    (favicon/htmx: no-cache today for dev ergonomics; fine at this scale).
+(favicon/htmx: no-cache today for dev ergonomics; fine at this scale).
 ~~19. HARVEST this report's (f) into TODO_LIST.md (docs-health) — pending~~ done — harvested by later passes; archived by this sweep
-    operator go-ahead per WAIT instruction.
+operator go-ahead per WAIT instruction.
 ~~20. Add favicon + styles presence to the smoke command's probe list~~ done — the screenshot probe + verify-ui-contract cover the surfaces
-    (AGENTS.md e2e comment mentions /, /dashboard, /search, /api/freshness
-    only).
-~~21. Verify `*_templ.go` regeneration diff after the templ-fmt reformat is~~ done — moot: *_templ.go gitignored; templ_sync_test keeps codegen honest
-    byte-stable (asserted whitespace-only, never proven with a diff).
+(AGENTS.md e2e comment mentions /, /dashboard, /search, /api/freshness
+only).
+~~21. Verify `*_templ.go` regeneration diff after the templ-fmt reformat is~~ done — moot: __templ.go gitignored; templ_sync_test keeps codegen honest
+byte-stable (asserted whitespace-only, never proven with a diff).
 ~~22. Consider a nix check that builds the binary WITH assets and probes~~ done — the committed styles.css IS the nix-built artifact (update-styles is the single entrypoint)
-    /app.css content-type (defense-in-depth for the embed trap).
-~~23. Screenshot-probe.js in scripts/ hints the other session does visual~~ done — adopted: scripts/screenshot-probe.js + verify-* are the browser lane
-    verification — consider adopting it into the e2e loop instead of
-    header-only probes (needs the other session's context).
+/app.css content-type (defense-in-depth for the embed trap).
+~~23. Screenshot-probe.js in scripts/ hints the other session does visual~~ done — adopted: scripts/screenshot-probe.js + verify-_ are the browser lane
+verification — consider adopting it into the e2e loop instead of
+header-only probes (needs the other session's context).
 ~~24. Re-verify the telnyx-live-api cluster next window (2027-01 calendar~~ → routed: Telnyx quarterly row
-    entry, noticed in AGENTS deep context — not this session's work, listed
-    for the backlog sweep).
+entry, noticed in AGENTS deep context — not this session's work, listed
+for the backlog sweep).
 ~~25. Docs sweep: AGENTS.md "scripts/ (none yet)" line is now stale whatever~~ done — AGENTS/scripts README document the lane
-    the answer to g2 is.
+the answer to g2 is.
 
 ## g) Questions I can NOT figure out myself
 
 ~~1. **What exactly is running on `192.168.1.150:8300`** — the NixOS module~~ → routed: host deploy row
-   service (needs `nixos-rebuild` on that host) or your local `go run`
-   (needs rebuild + restart)? I cannot identify or reach that host from this
-   machine, and the redeploy step is the only unverified link in the chain.
+service (needs `nixos-rebuild` on that host) or your local `go run`
+(needs rebuild + restart)? I cannot identify or reach that host from this
+machine, and the redeploy step is the only unverified link in the chain.
 ~~2. **Is the untracked `scripts/` directory (gen-tc-classes.js,~~ done — kept and committed (scripts/README.md)
-   screenshot-probe.js) yours/another session's WIP to keep**, or leftovers to
-   trash? It appeared mid-session; AGENTS.md claims none exist. I left it
-   untouched.
+screenshot-probe.js) yours/another session's WIP to keep**, or leftovers to
+trash? It appeared mid-session; AGENTS.md claims none exist. I left it
+untouched.
 ~~3. **Templ pinning policy call:** should this repo build templ v0.3.1070 from~~ resolved-by-doctrine — manual bump policy (AGENTS); devShell fmt rule (gotchas)
-   source in the flake NOW (kills the skew immediately, adds a FOD to
-   maintain), or wait for the go-nix-helpers upstream fix (consistent with
-   how the go-wrapper issue was handled — file it there)? Tradeoff is yours.
+source in the flake NOW (kills the skew immediately, adds a FOD to
+maintain), or wait for the go-nix-helpers upstream fix (consistent with
+how the go-wrapper issue was handled — file it there)? Tradeoff is yours.
 
 — Session closed; awaiting instructions. No TODO_LIST harvest performed (the
 WAIT instruction outranks the skill's auto-harvest step; item 19 covers it).

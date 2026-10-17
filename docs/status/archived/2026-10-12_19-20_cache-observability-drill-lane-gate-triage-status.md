@@ -89,21 +89,21 @@ three gate failures and two rebuild storms trace to the overlap, not to code).
 ## b) PARTIALLY DONE
 
 ~~1. **One fully-green single `buildflow --build-mode dev` run**: best attempt~~ done — later green gates (11:36/12:00; 58/0 on 2026-10-17)
-   reached **76 success / 0 failed** in step results with only the `nix-build`
-   lane killed (OOM/timeout) — twice — during a concurrent session's load
-   bursts (15-min load 40→80). The casualty was verified individually
-   (direct `nix build` green on the same tree) per the documented
-   load-starvation doctrine, so the STATE is verified; the cosmetically-clean
-   single-run gate is not. dprint auto-fixed 3 doc files and nix-checker 2
-   files during the attempts (all formatting).
+reached **76 success / 0 failed** in step results with only the `nix-build`
+lane killed (OOM/timeout) — twice — during a concurrent session's load
+bursts (15-min load 40→80). The casualty was verified individually
+(direct `nix build` green on the same tree) per the documented
+load-starvation doctrine, so the STATE is verified; the cosmetically-clean
+single-run gate is not. dprint auto-fixed 3 doc files and nix-checker 2
+files during the attempts (all formatting).
 ~~2. **`go.sum` tidy delta**: the gate's module-update left the correct tidy~~ done — landed; CI tidy green since
-   pruning (stale `/go.mod` sums after the utils indirect→direct promotion);
-   it is the state CI's tidy check demands, but it landed uncommitted and its
-   fate belongs to the daemon sweep.
+pruning (stale `/go.mod` sums after the utils indirect→direct promotion);
+it is the state CI's tidy check demands, but it landed uncommitted and its
+fate belongs to the daemon sweep.
 ~~3. **TODO_LIST row inventory vs the concurrent session**: commits `ba6ec8f`~~ done — tenth pass closed both rows
-   (export-stall note on the list page) and `83fe566` (ingest.go shared
-   sequence extraction) close two backlog rows I did NOT touch; whether their
-   rows are already removed from TODO_LIST is unverified by me.
+(export-stall note on the list page) and `83fe566` (ingest.go shared
+sequence extraction) close two backlog rows I did NOT touch; whether their
+rows are already removed from TODO_LIST is unverified by me.
 
 ## c) NOT STARTED (this session)
 
@@ -144,125 +144,125 @@ Nothing data-destructive or wrong-shipped. The honest list of damage:
 ## e) WHAT WE SHOULD IMPROVE
 
 ~~1. **Gate precondition check**: tree-clean + load-quiet before `buildflow`~~ done-as-doctrine — the load policy + tree-freeze rule are the standing norm
-   runs; the triage rule is documented — make it a habit (or a wrapper).
+runs; the triage rule is documented — make it a habit (or a wrapper).
 ~~2. **Concurrency protocol**: claim TODO_LIST rows (`IN_PROGRESS` status or a~~ → routed: ROADMAP multi-agent open question
-   session tag) before starting work so two sessions don't regenerate the
-   same goldens or fight the same files. Today's overlap worked out; it need
-   not have.
+session tag) before starting work so two sessions don't regenerate the
+same goldens or fight the same files. Today's overlap worked out; it need
+not have.
 ~~3. **Read-the-source-first for third-party semantics**: two of my three test~~ done-as-doctrine — recorded (read-the-source lessons in gotchas)
-   corrections came from modeling a library off its prose instead of its call
-   sites (etag.go hooks) — the fix is cheap and mechanical.
+corrections came from modeling a library off its prose instead of its call
+sites (etag.go hooks) — the fix is cheap and mechanical.
 ~~4. **Golden determinism self-check**: a test that renders, scrubs, renders~~ done-in-part — TZ pinned via TestMain; the banner region stays a deliberate placeholder
-   again under a shifted clock (or just double-render diff) would have caught
-   both time bombs at capture time instead of at 17:00.
+again under a shifted clock (or just double-render diff) would have caught
+both time bombs at capture time instead of at 17:00.
 ~~5. **nix-build lane resilience**: OOM-kills under co-tenant load are now the~~ done-in-part — BuildFlow#45/#50 fixed upstream (v0.8.0 exit-75 + retry)
-   gate's dominant failure; a retry-with-backoff or a memory-aware skip (with
-   the doctrine's individual-verification fallback made explicit in the
-   failure message) would stop the thrash. Feeds the BuildFlow#45 evidence.
+gate's dominant failure; a retry-with-backoff or a memory-aware skip (with
+the doctrine's individual-verification fallback made explicit in the
+failure message) would stop the thrash. Feeds the BuildFlow#45 evidence.
 ~~6. **Hash-hygiene guard**: a flake check that fails when a `vendorHash` equals~~ NOT-DO — the paste bug never recurred; update-vendor-hash is the sanctioned path
-   its own `src` hash (trivially detectable nonsense) would have caught
-   today's cqrs-lint paste bug at eval time.
+its own `src` hash (trivially detectable nonsense) would have caught
+today's cqrs-lint paste bug at eval time.
 
 ## f) Up to 50 things to get done next (impact-ordered where possible)
 
 ~~1. Land or consciously discard the concurrent session's in-flight files~~ done — both landed (research report 399fd50; export stall test)
-   (`export_stall_test.go`, `docs/research/…audit.html`) — confirm their gate
-   state before stacking more work.
+(`export_stall_test.go`, `docs/research/…audit.html`) — confirm their gate
+state before stacking more work.
 ~~2. Reconcile TODO_LIST against commits `ba6ec8f`/`83fe566` (export-stall UI~~ done — tenth pass closed them
-   row: the list-page note shipped; the export-UI loud-fail surface may
-   remain) and remove/reword rows as done.
+row: the list-page note shipped; the export-UI loud-fail surface may
+remain) and remove/reword rows as done.
 ~~3. Get one fully-green `buildflow --build-mode dev` run on a quiet machine~~ done — green gates followed
-   (all 76+ steps including nix-build in a single run).
+(all 76+ steps including nix-build in a single run).
 ~~4. Cut **v0.2.0** (owner cadence): Unreleased now carries the HTTP stack +~~ done — v0.2.0 cut AND pushed (7d15c6f)
-   cache section + drill lane + export-stall note + ingest extraction.
+cache section + drill lane + export-stall note + ingest extraction.
 ~~5. Production re-ingest for ContentHash v2 (needs the deploy path).~~ → routed: prod re-ingest row
 ~~6. Deploy both hosts (`aiDids` option; `-max-age`/`-recording-timeout`~~ → routed: host deploy row
-   already wired in the sibling module).
+already wired in the sibling module).
 ~~7. Browser-level 304 + DOM-churn check (owner, no browser in agent env).~~ → routed: browser-level 304 row
 ~~8. Fold in go-etag#2 (Flush observability) + go-appkit#26 when upstream~~ → routed: fold-in watch row
-   lands; today's overflow counter gives `OnBufferOverflow` a consumer.
+lands; today's overflow counter gives `OnBufferOverflow` a consumer.
 ~~9. Fold in templ-components#48/#49/#50 when landed (retire local~~ → routed: fold-in watch row
-   workarounds).
+workarounds).
 ~~10. Decide the >1MiB transcript policy — `/api/ops buffer_overflows` now~~ → routed: >1MiB transcript policy row
-    gives the evidence source for the accept-vs-raise decision.
+gives the evidence source for the accept-vs-raise decision.
 ~~11. Coverage pass asserting the cache hot path (fragment conditional GET) in~~ done — caching.go at 100% (coverage pass)
-    caching_test/serve_test, not static stand-ins.
+caching_test/serve_test, not static stand-ins.
 ~~12. E2E cache-semantics hardening: `Vary: Accept-Encoding` on 304s,~~ done — Vary/Content-Length/HEAD/query landed (thirteenth pass); the timing-hop asserts remain their own row
-    `Content-Length` on buffered renders, HEAD/query/trailing-slash skip
-    variants, recording timing-hop budget asserts.
+`Content-Length` on buffered renders, HEAD/query/trailing-slash skip
+variants, recording timing-hop budget asserts.
 ~~13. Concurrent-poll hash-cost sanity probe (CPU ceiling under overlapping~~ done — BenchmarkConcurrentPoll (≈82/101 µs; AGENTS Commands)
-    30s/60s polls — hit_ratio now observable while it runs).
+30s/60s polls — hit_ratio now observable while it runs).
 ~~14. `/api/ops`: warn when the reported poller pass is stale (age lastPass) —~~ done — last_pass_age_seconds + stale verdict (v0.2.0)
-    the cache section now sets the payload precedent for a `warnings` array.
+the cache section now sets the payload precedent for a `warnings` array.
 ~~15. Export memory-budget test (pin `exportBatchSize` under bounded~~ done — TestExportMemoryBudgetStreamsPastOldCap
-    allocation).
+allocation).
 ~~16. Recording-proxy timeout tests → injected deadlines (kill the budget+sleep~~ → routed: recording timeout-test row
-    pattern).
+pattern).
 ~~17. Render the HTTP-stack audit as the library-deep-dive HTML report (or~~ done — the research report (399fd50)
-    confirm the concurrent session's draft is it).
+confirm the concurrent session's draft is it).
 ~~18. Sibling NixOS module: scrape `/metrics`, smoke-test with a real scraper.~~ done — T14 sibling scrape option + smoke
 ~~19. File the BuildFlow spawn-starvation mode upstream (evidence: today's~~ done — BuildFlow#50 filed
-    OOM-killed nix-build lane ×3).
+OOM-killed nix-build lane ×3).
 ~~20. Add the flake guard from §e.6 (vendorHash ≠ src hash check).~~ NOT-DO — never built; the paste bug never recurred
 ~~21. Add shellcheck + lychee to the devShell (gate currently nix-runs them~~ → routed: buildflow tooling triage row
-    WITHOUT project deps; "9 tools unavailable" health warnings).
+WITHOUT project deps; "9 tools unavailable" health warnings).
 ~~22. ANNOTATE + archive the 2026-10-11/12 status reports (this one joins the~~ done — this 2026-10-17 sweep
-    harvest set) per docs-health ANNOTATE mode.
+harvest set) per docs-health ANNOTATE mode.
 ~~23. R27.x advisory residue: vulnix re-triage (22 findings in today's gate —~~ → routed: R27.x advisory row
-    all nixpkgs build-toolchain CVEs), art-dupl pass, nix-checker cleanup,
-    branching-flow pass.
+all nixpkgs build-toolchain CVEs), art-dupl pass, nix-checker cleanup,
+branching-flow pass.
 ~~24. README screenshots (R27 residue).~~ done — docs/assets + README embeds (09eb780)
 ~~25. Resolve the templ version skew (flake pkgs.templ 0.3.1020 vs go.mod~~ resolved-by-doctrine — manual templ bumps + the devShell-fmt rule (gotchas)
-    0.3.1070) — go-nix-helpers upstream or flake bump.
+0.3.1070) — go-nix-helpers upstream or flake bump.
 ~~26. Watch dependabot-core#16538; owner decides gomod pinning.~~ → routed: dependabot-core#16538 watch row
 ~~27. Confirm the weekly dependabot run proposes bumps for the newly-direct~~ → routed: dependabot confirm row
-    deps (httputil, server_timing, go-etag/server).
+deps (httputil, server_timing, go-etag/server).
 ~~28. Live-verify Telnyx Detail Records + insights DTOs (2027-01 window).~~ → routed: Telnyx live-verify row
 ~~29. Schema v2: length-prefixed ContentHash field encoding (scheduled).~~ → routed: schema-v2 ContentHash row
 ~~30. PII policy enforcement (E164 + ParticipantHash are stored, unenforced).~~ → routed: PII enforcement row
 ~~31. Webphone read-only deep link (sibling-plan item).~~ → routed: ROADMAP theme 3 (webphone, sibling-side)
 ~~32. CI: consider a lane that rebuilds the flake's cqrs-lint tool so hash~~ done — cqrs-lint runs in gate + CI
-    drift like today's fails in CI, not only in devShell gates.
+drift like today's fails in CI, not only in devShell gates.
 ~~33. Consider surfacing `hit_ratio` on the dashboard UI (operator visibility~~ done — the /ops page shows cache stats (v0.2.0)
-    beyond /api/ops).
+beyond /api/ops).
 ~~34. `/api/ops` consumers: document the new `cache` section in~~ done — docs/http-stack.md carries the no-cache contract + poll ceiling
-    docs/http-stack.md (the doc's line 46 still calls the wiring future work).
+docs/http-stack.md (the doc's line 46 still calls the wiring future work).
 ~~35. Retire the "Wire the go-etag cache hooks" mention from~~ done — this sweep annotates 13-49
-    docs/status/2026-10-12_13-49 §f.10/11 as resolved (annotation pass).
+docs/status/2026-10-12_13-49 §f.10/11 as resolved (annotation pass).
 ~~36. Verify dprint's 3 auto-fixed files (FEATURES.md, docs/assets/README.md,~~ done — content-identical; gates green
-    docs/templ-components-adoption.md) are content-identical modulo
-    formatting.
+docs/templ-components-adoption.md) are content-identical modulo
+formatting.
 ~~37. Confirm the go.sum tidy pruning landed (daemon sweep) and CI's tidy step~~ done — CI tidy green since
-    stays green.
+stays green.
 ~~38. Double-check the scrubber's bare-date regex against a bucket label at~~ NOT-DO — the TZ pin made the class moot; scrubber self-tests exist
-    end-of-string (the `$` alternative) with a unit case in
-    TestGoldenScrubberCoversVolatileStrings.
+end-of-string (the `$` alternative) with a unit case in
+TestGoldenScrubberCoversVolatileStrings.
 ~~39. Extend TestGoldenScrubberCoversVolatileStrings to cover the two NEW~~ done-in-part — the TZ pin removed the wall-clock class the new patterns guarded
-    patterns (staleness region, bare dates) — currently only the original
-    five are self-tested.
+patterns (staleness region, bare dates) — currently only the original
+five are self-tested.
 ~~40. Decide whether `STALENESS_REGION`/`DATE` deserve named constants shared~~ NOT-DO — YAGNI unless reused (the item own conclusion)
-    between scrubber and any future assertion (YAGNI unless reused).
+between scrubber and any future assertion (YAGNI unless reused).
 ~~41. Review `composeOpsPayload`'s non-map poller wrap (`{"poller":…}`) — no~~ NOT-DO — the ops endpoint tests pin the payload contract
-    test covers it (no producer exists); add one or simplify the contract.
+test covers it (no producer exists); add one or simplify the contract.
 ~~42. Add a rate/A.B test for CacheCounters concurrency (`-race` covers the~~ NOT-DO — -race covers the counter paths
-    current tests; a hammer test would document the contract).
+current tests; a hammer test would document the contract).
 ~~43. Go-error-modernization sweep on the new code paths (errors.AsType~~ NOT-DO — no errors.AsType migration surface in this repo
-    policy) — new code returns none, confirm nothing to migrate.
+policy) — new code returns none, confirm nothing to migrate.
 ~~44. README: screenshot of `/api/ops` cache section (ops story).~~ NOT-DO — the /ops page is the ops story; no screenshot added
 45. CHANGELOG: when v0.2.0 is cut, fold today's Unreleased section under the
-    version heading (repo convention).
+version heading (repo convention).
 ~~46. docs/upstream-filings.md: add today's observation to BuildFlow#45~~ done — the starvation evidence lives in buildflow-dev-gate + the #45/#50 filings
-    evidence (three OOM-killed nix-build lanes under co-tenant load).
+evidence (three OOM-killed nix-build lanes under co-tenant load).
 47. Consider `On304`/`OnETagGenerated` upstream clarification request
-    (etag.go docs are accurate but subtle — "fires first during tag
-    resolution" cost me a test cycle; a doc PR candidate).
+(etag.go docs are accurate but subtle — "fires first during tag
+resolution" cost me a test cycle; a doc PR candidate).
 48. Verify the drill CI step's placement survives future step insertions
-    (it must stay after templ generation — currently implicit by position;
-    a comment says so, keep it true).
+(it must stay after templ generation — currently implicit by position;
+a comment says so, keep it true).
 49. Re-run `nix flake check` standalone once quiet (the gate's nix-flake-check
-    failure today was diagnostic-free and needs a clean verdict).
+failure today was diagnostic-free and needs a clean verdict).
 ~~50. Decide the session-collision policy question (§g.1) and write it into~~ → routed: ROADMAP multi-agent open question
-    AGENTS.md so the next concurrent session doesn't re-litigate it.
+AGENTS.md so the next concurrent session doesn't re-litigate it.
 
 ## g) Questions I cannot answer myself
 

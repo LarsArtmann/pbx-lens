@@ -51,37 +51,37 @@ Quick stats: **8 fully done · 4 partially done · 15+ not started · 0 repo-sta
 ## b) PARTIALLY DONE
 
 ~~1. **"9 tools unavailable (health check failed)"** — appears in EVERY gate run; I never~~ → routed: buildflow tooling triage row (TODO_LIST Low, 2026-10-17 sweep)
-   ran `--verbose` to enumerate them (only 3 are explained: markdown-lint, gitleaks,
-   codespell are on-demand). Unknown whether the other 6 matter.
+ran `--verbose` to enumerate them (only 3 are explained: markdown-lint, gitleaks,
+codespell are on-demand). Unknown whether the other 6 matter.
 ~~2. **Buildflow binary freshness** — 0eec15d-dirty vs BuildFlow HEAD 5d34fae (advisory~~ done — binary rebuilt 2026-10-11 23:23 (license-check green); staleness recurred → BuildFlow#56 + the clean-checkout TODO row
-   WARN every run). The documented fix (`nix build . && nix run .#reinstall` in the
-   BuildFlow repo) was NOT executed this session.
+WARN every run). The documented fix (`nix build . && nix run .#reinstall` in the
+BuildFlow repo) was NOT executed this session.
 ~~3. **file-size-check residuals** — 5 files over the 350-line max~~ done — generated *_templ.go gitignored (moot); the rest are accept-or-split advisories (R27.x row: server.go 617, search.go 443, telnyx_test.go 835)
-   (telnyx_test.go 749, dashboard_templ.go 652, detail_templ.go 497, calls_templ.go 390,
-   recording_test.go 371). Observed and reported; no splits done. Note: 3 of the 5 are
-   GENERATED `*_templ.go` files; the other session already fixed `telnyx.go` (380 → off
-   the list) via the `dto.go` extraction.
+(telnyx_test.go 749, dashboard_templ.go 652, detail_templ.go 497, calls_templ.go 390,
+recording_test.go 371). Observed and reported; no splits done. Note: 3 of the 5 are
+GENERATED `*_templ.go` files; the other session already fixed `telnyx.go` (380 → off
+the list) via the `dto.go` extraction.
 ~~4. **TODO_LIST harvest** — section (f) below is report-only; not yet routed into~~ done — third-pass TODO closure (02:34) + the docs-health AUDIT rebuilds
-   `TODO_LIST.md`/`ROADMAP.md` (docs-health HARVEST), pending owner go-ahead.
+`TODO_LIST.md`/`ROADMAP.md` (docs-health HARVEST), pending owner go-ahead.
 
 ## c) NOT STARTED (carried, unchanged, from before this session)
 
 ~~1. encoding/json v1→v2 swap (13 go-auto-upgrade findings; blocked on T4 stack decision).~~ resolved-as-policy — deliberate hold, waits for T4 (docs/buildflow-dev-gate.md jsonv2 bullet)
 ~~2. Rebuild/reinstall buildflow binary (see b2).~~ done — see b2 (rebuilt 23:23; recurrence tracked via BuildFlow#56)
 ~~3. Quarterly Telnyx live-API re-verification cluster — including the enrichment~~ → routed: Telnyx quarterly row (2027-01 window; TODO_LIST)
-   endpoints (`conversations-insights`, `detail_records`) that have NEVER been
-   live-verified (no key at implementation time).
+endpoints (`conversations-insights`, `detail_records`) that have NEVER been
+live-verified (no key at implementation time).
 ~~4. PII policy: `E164` + `ParticipantHash` exist but nothing enforces them on stored rows.~~ → routed: PII enforcement row (one-pager ready; TODO_LIST)
 ~~5. E003 owner question (flat `internal/calls` domain) — still open, decision documented~~ resolved — E003 documented HOLD (docs/cqrs-lint-policy.md)
-   as HOLD.
+as HOLD.
 ~~6. Upstream D6 filings status: go-cqrs-lite#62/#63/#64, go-nix-helpers#7,~~ done — all five re-verified OPEN at the 02:34 session (docs/upstream-filings.md)
-   treefmt-nix#545 — no upstream-state check this session.
+treefmt-nix#545 — no upstream-state check this session.
 ~~7. art-dupl (20+) / branching-flow (~69 infos) dedicated dedup/branching passes.~~ → routed: R27.x advisory row
 ~~8. statix findings (15) on `deploy/nixos/module-draft.nix` — the superseded design~~ done — statix repaired 2026-10-17 (file-level ignore; CHANGELOG Fixed 2026-10-17)
-   record; delete or fix.
+record; delete or fix.
 9. ~~`nix-flake-check`: `update-vendor-hash` app lacks `meta.description`~~ done at the 02:34 session (flake `meta.description` landed; `nix flake check` warning count 0)..
 ~~10. nix-store CVE advisories (vulnix, 22 findings: binutils 2.46/2.47, bison, coreutils,~~ → routed: R27.x advisory row (vulnix = documented advisory; CI govulncheck is the trusted lane)
-    gcc 10.4) — nixpkgs bump territory, advisory-class.
+gcc 10.4) — nixpkgs bump territory, advisory-class.
 ~~11. Inbound AI calls / DID interception path (direction is caller-declared today).~~ done — DID-direction shipped 2026-10-12 (`-ai-did` + DirectionResolver; CHANGELOG)
 ~~12. T9 agent transcripts as a second aggregate → module-boundary revisit trigger.~~ resolved — flat-domain HOLD with pre-agreed write/read seam (docs/cqrs-lint-policy.md, AGENTS.md)
 
@@ -128,21 +128,21 @@ Gate & environment:
 ~~1. Enumerate the "9 tools unavailable" via `buildflow --verbose` and triage each.~~ → routed: buildflow tooling triage row (TODO_LIST)
 ~~2. Rebuild/reinstall buildflow from HEAD; delete the freshness caveat in the docs.~~ done — see b2
 ~~3. Make the recording-proxy timeout tests load-robust (inject clock/budget) so~~ → routed: recording timeout-test row (TODO_LIST)
-   `-test.shuffle` under load can't flake them.
+`-test.shuffle` under load can't flake them.
 ~~4. Exclude GENERATED `*_templ.go` from file-size-check, or raise their cap (policy).~~ done-superseded — *_templ.go gitignored 2026-10-15; generated files left the check entirely
 ~~5. Split `telnyx_test.go` (749) along ingest/enrichment seams.~~ NOT-DO — accept-and-document (table-driven test file, 835 lines; R27.x triage)
 ~~6. Split `recording_test.go` (371) — proxy vs local-serving files.~~ NOT-DO — 445 lines, advisory class (R27.x row)
 ~~7. Install or explicitly skip the missing `interrogate` tool.~~ → routed: buildflow tooling triage row (interrogate missing from PATH)
 ~~8. Investigate the transient result-cache `SQLITE_BUSY` checkpoint warning (concurrent~~ NOT-DO — one-off transient, never reproduced; no filing exists (docs/upstream-filings.md)
-   gates share state?) — possible upstream filing.
+gates share state?) — possible upstream filing.
 ~~9. Decide GITHUB_TOKEN vs lychee-exclude for private-repo link checks (documented~~ → routed: lychee fleet policy rides the buildflow tooling triage row
-   undecided fleet policy).
+undecided fleet policy).
 10. ~~Add `meta.description` to the `update-vendor-hash` app.~~ done at the 02:34 session.
 ~~11. Bump nixpkgs for the vulnix CVE set (binutils/bison/coreutils/gcc) or document~~ → routed: R27.x advisory row
-    acceptance.
+acceptance.
 12. ~~Delete `deploy/nixos/module-draft.nix` (superseded design record) to zero the
-    statix findings, or annotate it as a record.~~ resolved: annotated as the SUPERSEDED
-    historical design record (header note, LANDED 2026-10-11 in the sibling).
+statix findings, or annotate it as a record.~~ resolved: annotated as the SUPERSEDED
+historical design record (header note, LANDED 2026-10-11 in the sibling).
 
 Code quality:
 ~~13. Dedicated art-dupl pass (20+ findings; commands.go mixins, Observation/CallView~~ → routed: R27.x row
@@ -214,16 +214,16 @@ pending repro.
 ## g) Questions I cannot figure out myself (3)
 
 ~~1. **Buildflow binary rebuild**: rebuilding from BuildFlow HEAD replaces the binary used~~ → routed: BuildFlow#56 + the clean-checkout gate row (TODO_LIST)
-   by ALL concurrent sessions on this box (3+ crush instances active today). Rebuild
-   now, or wait for a quiet window?
+by ALL concurrent sessions on this box (3+ crush instances active today). Rebuild
+now, or wait for a quiet window?
 ~~2. **file-size-check vs generated code**: `calls_templ.go` (390), `dashboard_templ.go`~~ done — *_templ.go gitignored; generated files out of the check
-   (652), `detail_templ.go` (497) are templ-GENERATED — splitting them means splitting
-   the .templ sources. Should the gate exclude generated files, or do you want the
-   templates themselves decomposed (real refactor, real risk)?
+(652), `detail_templ.go` (497) are templ-GENERATED — splitting them means splitting
+the .templ sources. Should the gate exclude generated files, or do you want the
+templates themselves decomposed (real refactor, real risk)?
 ~~3. **Timing-test policy**: should the 1 ms-budget recording tests be made~~ → routed: recording timeout-test row (TODO_LIST)
-   load-robust (injectable clock, larger budgets with artificial stall — semantics
-   change, ~1h work), or is "reproduce with the printed seed" an acceptable standing
-   triage when the box is loaded?
+load-robust (injectable clock, larger budgets with artificial stall — semantics
+change, ~1h work), or is "reproduce with the printed seed" an acceptable standing
+triage when the box is loaded?
 
 ---
 
