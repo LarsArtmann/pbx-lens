@@ -207,6 +207,7 @@ func TestIngestCDRDryRunReportsWithoutWrites(t *testing.T) {
 	dir := t.TempDir()
 	csv := filepath.Join(dir, "Master.csv")
 	row := `"John Doe","17287289311","2000","public","2026-10-09 19:51:25","2026-10-09 19:51:26","2026-10-09 19:51:51","26","25","NORMAL_CLEARING","f0e1d2c3-1111-4aaa-9aaa-000000000001","b0a9-2222",""`
+
 	if err := os.WriteFile(csv, []byte(row+"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -14,7 +15,7 @@ func renderToString(t *testing.T, c templ.Component) string {
 	t.Helper()
 
 	rec := httptest.NewRecorder()
-	templ.Handler(c).ServeHTTP(rec, httptest.NewRequest("GET", "/", nil))
+	templ.Handler(c).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 
 	return rec.Body.String()
 }
