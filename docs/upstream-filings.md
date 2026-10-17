@@ -6,22 +6,28 @@ Update these notes when upstream lands.
 **State check 2026-10-12 (read-only, gh api): all five filings still OPEN
 upstream — no upstream movement to fold in yet.**
 
-- **go-cqrs-lite#62**: sqliteengine binds filter values raw (`filter_clause.go:44`,
+**State check 2026-10-17 (gh, docs-health pass): CLOSED upstream —
+BuildFlow#45 (2026-10-12), #50 (2026-10-12), #55 (2026-10-16), #56
+(2026-10-16), go-cqrs-lite#62/#63/#64, go-appkit#26. Still OPEN:
+go-etag#2, go-nix-helpers#7, numtide/treefmt-nix#545,
+templ-components#48/#49/#50/#51/#55, dependabot-core#16538.**
+
+- **go-cqrs-lite#62** (CLOSED upstream 2026-10-17; fold-in = the 2027-01 watch): sqliteengine binds filter values raw (`filter_clause.go:44`,
   `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,
   Ge/Gt drop it, Eq never). In-repo fix stays: bind `rfc3339Nano` strings.
-- **go-cqrs-lite#63**: memory engine resolves filter/sort/cursor columns by Go FIELD name
+- **go-cqrs-lite#63** (CLOSED upstream 2026-10-17): memory engine resolves filter/sort/cursor columns by Go FIELD name
   (`typed_reader_scan.go:271` → `reflect.go:307`) vs sqlite's JSON keys.
-- **go-cqrs-lite#64**: cqrs-lint C009 `len(name) > 4` flags the bare `must` idiom;
+- **go-cqrs-lite#64** (CLOSED upstream 2026-10-17): cqrs-lint C009 `len(name) > 4` flags the bare `must` idiom;
   E005 doesn't recognize `system.RegisterCommand` (ADR-0123 root API).
 - **go-nix-helpers#7**: go-standard's templ formatter inherits treefmt-nix's `pkgs.go`
   wrap (`go-standard.nix:1297`) instead of the module's resolved goPkg (line 665).
 - **numtide/treefmt-nix#545**: already filed upstream 2026-10-02 — corroborating comment
   posted with our independent repro (nixpkgs go 1.26.8 vs floor 1.27.1).
-- **BuildFlow#45** (filed 2026-10-12): go-mod-update misreports a
+- **BuildFlow#45** (filed 2026-10-12; CLOSED upstream 2026-10-12): go-mod-update misreports a
   load-starved compile gate (`tool.timeout` kill) as "dependency bump
   introduced compile errors" and silently reverts go.mod/go.sum;
   source-verified chain + draft in `docs/drafts/`.
-- **BuildFlow#50** (filed 2026-10-12, plan T15): the general gate-level
+- **BuildFlow#50** (filed 2026-10-12, plan T15; CLOSED upstream 2026-10-12): the general gate-level
   behavior under #45 — spawn starvation (`errorfamily.Transient` +
   `tool.timeout`, `cmdrun_streaming.go:86`) still exits error with a
   `step_failure` verdict; the error registry's fix advice ("increase
@@ -47,7 +53,7 @@ upstream — no upstream movement to fold in yet.**
   log on the path. Real consumer proof: templ's per-section flush gave
   every pbx-lens HTML page zero ETags. Ask: `OnFlushed` hook or debug log.
   Draft: `docs/drafts/go-etag-server-flush-no-observability.md`.
-- **go-appkit#26** (filed 2026-10-12): testkit cleanup runs the full
+- **go-appkit#26** (filed 2026-10-12; CLOSED upstream 2026-10-17 — fold-in ready, TODO_LIST row): testkit cleanup runs the full
   production drain, so every `Serve` test pays the 5s default `DrainDelay`
   (v0.8.0 `testkit.go:80,179-181`, `config.go:18`) and the
   `Serve(tb, *Service)` shape gives tests no way to avoid it. Measured:
@@ -93,7 +99,7 @@ upstream — no upstream movement to fold in yet.**
   pinned by `TestNavIDIsDeterministic`. Mechanism re-verified at the pin
   2026-10-15. Draft:
   `docs/drafts/2026-10-15_templ-components_nav-id-etag-volatility.md`.
-- **BuildFlow#55** (filed 2026-10-15, plan 05-40 M5/F11): `nix-hash-fix`
+- **BuildFlow#55** (filed 2026-10-15, plan 05-40 M5/F11; CLOSED upstream 2026-10-16 — the binary on this machine may still predate the fix, answer-sheet §9): `nix-hash-fix`
   matches the stale hash by VALUE only, first lexical hit wins
   (`modules/nix-checker/stale_hash.go:53-63` at `d114f28ce`), so when the
   hash text exists on a second line (here: flake.nix's cqrs-lint
@@ -139,12 +145,12 @@ upstream, execute the local fold-in and delete the workaround + TODO row.
 
 | Filing                          | Fold-in action when it lands                                                                                                                                                                                          |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| go-cqrs-lite#62/#63             | re-evaluate the in-repo RFC3339 binding / field-name workarounds for deletion                                                                                                                                         |
-| go-cqrs-lite#64                 | drop any cqrs-lint C009/E005 suppressions this repo carries (docs/cqrs-lint-policy.md)                                                                                                                                |
+| go-cqrs-lite#62/#63             | CLOSED 2026-10-17 — re-evaluate the in-repo RFC3339 binding / field-name workarounds for deletion                                                                                                                    |
+| go-cqrs-lite#64                 | CLOSED 2026-10-17 — drop any cqrs-lint C009/E005 suppressions this repo carries (docs/cqrs-lint-policy.md)                                                                                                             |
 | go-nix-helpers#7                | bump the flake input; drop the local templ-formatter override if any                                                                                                                                                  |
 | numtide/treefmt-nix#545         | confirm the fix, remove the corroborating-comment note                                                                                                                                                                |
-| BuildFlow#45/#50/#55            | bump BuildFlow; re-run the gate on a load-starved machine (#50); retry a dirty-tree hash fix in a scratch repo (#55)                                                                                                  |
+| BuildFlow#45/#50/#55            | #45/#50/#55 all CLOSED (10-12/10-16) — bump BuildFlow; re-run the gate on a load-starved machine (#50); retry a dirty-tree hash fix in a scratch repo (#55, only after the local binary carries the fix)               |
 | dependabot-core#16538           | owner decides gomod pinning; re-check the dependabot PR behavior                                                                                                                                                      |
 | go-etag#2                       | bump; consider wiring OnFlushed when it exists                                                                                                                                                                        |
-| go-appkit#26                    | bump; adopt the no-drain-delay testkit constructor for tests                                                                                                                                                          |
+| go-appkit#26                    | CLOSED 2026-10-17 — bump; adopt the no-drain-delay testkit constructor for tests                                                                                                                                      |
 | templ-components#48/#49/#51/#55 | bump → run the adoption-map watchlist (docs/templ-components-adoption.md); retire `!items-stretch`, the focus ring CSS, hand-rolled match-log classes, and the pinned nav id + TestNavIDIsDeterministic as each lands |
