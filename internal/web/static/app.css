@@ -166,4 +166,10 @@ tr[role="link"]:focus-visible {
   .tc-log-line {
     break-inside: avoid;
   }
+
+  /* The ops cards are self-contained health sections (retention, poller,
+   * cache); a card split across printed pages reads as two half-truths. */
+  .lens-ops-card {
+    break-inside: avoid;
+  }
 }
