@@ -157,6 +157,7 @@
                     golangci-lint
                     gopls
                     govulncheck
+                    shellcheck
                     templ
                     tailwindcss_4
                     ;

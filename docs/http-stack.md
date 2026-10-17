@@ -109,6 +109,22 @@ Fragment Server-Timing budget (2026-10-15, empty-ish index, M8/F29):
 of magnitude under the 30 s/60 s poll intervals; polling cost is negligible
 per pass.
 
+## CSP report-only sweep (2026-10-17, Pareto P1-T7)
+
+`scripts/csp-sweep.js` boots the chain with `CSP_NONCE=1 CSP_REPORT_ONLY=1`
+(both flags: scripts carry no nonce attribute in non-nonce mode, so
+report-only alone would report every inline script against the empty
+`'nonce-'`), drives six surfaces (/ , /dashboard, /ops, /search,
+`/search?q=…`, a detail page) plus the theme-toggle and copy clicks, and
+collects `securitypolicyviolation` events. First run: REAL violations — two
+un-nonced library singleton scripts (the calls Table row-href script and the
+CopyButton scripts, once per button). Fix: thread the per-request nonce into
+`tableProps` and both copy affordances (the library already nonce-threads;
+we just never passed it). Re-run: ZERO violations — the nonce policy is
+**enforce-clean**. The enforce call: flip = enabling nonce mode
+(`CSP_NONCE=1`) in the deploy config; kept report-only as the standing
+opt-in until the next host deploy (owner gate, TODO_LIST).
+
 Concurrent-poll ceiling (2026-10-15, M11/F31, `BenchmarkConcurrentPoll`
 through the real middleware chain, parallel, dev box): 304 revalidation
 ≈ 82 µs/op, full 200 ≈ 101 µs/op → ~12k polls/s per box. At the 30 s

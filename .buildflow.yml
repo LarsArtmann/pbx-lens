@@ -4,3 +4,18 @@ default_step_timeout: 10m
 # (1 line -> 3415) on two gate runs (2026-10-12). Global exclude wins.
 exclude:
   - "*.min.js"
+# Tool dispositions (2026-10-17 triage, TODO row "Buildflow tooling triage
+# bundle"; full rationale in docs/buildflow-dev-gate.md):
+# - markdownlint: defaults fight the house format — wide evidence tables
+#   (650+ char cells) are deliberate, dprint owns markdown without
+#   reflowing; MD013/MD060 would red the gate on every table edit.
+# - lychee: needs the fleet GITHUB_TOKEN policy first (GitHub links in the
+#   docs 401/429 without it) — excluded until that decision exists.
+# - prettier + eslint: dprint owns JS formatting and the probe scripts are
+#   plain CommonJS verified by `node --check`; a second JS formatter/linter
+#   is split-brain, not coverage.
+skip_steps:
+  - markdownlint
+  - lychee
+  - prettier
+  - eslint

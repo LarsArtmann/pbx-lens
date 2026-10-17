@@ -260,10 +260,14 @@ func buildServiceConfig(
 	// nonce-based policy as CSP_NONCE, but as Report-Only — the browser
 	// logs would-be violations in its console without enforcing anything.
 	// The nonce middleware runs outer (appended above), so the per-request
-	// nonce is already in the request context here; a run needs
-	// CSP_REPORT_ONLY=1 (alone or with CSP_NONCE=1) and a console sweep of
-	// / and a detail page — zero violations means the enforced rollout is
-	// safe to flip.
+	// nonce is already in the request context here. A MEANINGFUL run needs
+	// CSP_REPORT_ONLY=1 WITH CSP_NONCE=1 (scripts carry no nonce attribute
+	// in non-nonce mode, so report-only alone reports every inline script
+	// against the empty 'nonce-'); scripts/csp-sweep.js drives it. The
+	// 2026-10-17 sweep found zero violations after fixing the two un-nonced
+	// singleton scripts it caught (table row-href, copy buttons) — the
+	// policy is enforce-clean; flipping means enabling nonce mode in the
+	// deploy config.
 	if os.Getenv("CSP_REPORT_ONLY") == "1" {
 		slog.Info("CSP report-only dry run enabled", "flag", "CSP_REPORT_ONLY")
 
