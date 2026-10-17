@@ -11,7 +11,7 @@
 > Refreshed 2026-10-17 (docs-health AUDIT + annotate/archive sweep): the whole
 > 2026-10-11→15 status-report corpus is annotated inline and archived under
 > `docs/status/archived/` (manifest in its README); harvest ledgers live in the
-> pass reports, most recently `docs/status/2026-10-15_17-40_harvest-pass.md` and
+> pass reports, most recently `docs/status/archived/2026-10-15_17-40_harvest-pass.md` and
 > `docs/status/2026-10-17_01-45_statix-silent-noop-repair-and-gate-revival.md`.
 > v0.2.0 is tagged and pushed; the lint/statix gate was revived 2026-10-17;
 > two new bounded rows entered the Low table from that sweep (buildflow tool

@@ -201,8 +201,7 @@ Invariants summary — read the full doc BEFORE touching its area:
   projection keys, the projection host's one-shot drain contract,
   full-recompute fold selection, FTS5 tokenization, retention
   tombstone-only deletes, drain-before-enrich, view→observation rebuild.
-- **docs/status/archived/** — 50 superseded session reports (≤2026-10-15; annotated
-  + archived by the 2026-10-17 sweep, manifest in its README)
+- **docs/status/archived/** — 50 superseded reports (≤2026-10-15; annotated + archived 2026-10-17, manifest in its README)
   with every open item resolved inline; CLOSED history — never harvest or
   re-open items from there (the living backlog is TODO_LIST.md).
 - **docs/telnyx-live-api.md** — live-verified API truths (field-as-param

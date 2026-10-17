@@ -7,6 +7,19 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-10-17 (status-corpus archive)
+
+- The whole 2026-10-11→15 status-report corpus (27 reports) was annotated
+  inline — every open item carries a verified done/routed/won't verdict —
+  and archived under `docs/status/archived/` with a per-file manifest; only
+  the newest report stays live as a harvest source. The living docs were
+  rebuilt around it: TODO_LIST collapsed to open work only (211 → 90 lines,
+  pass notes moved to the pass reports), two new bounded rows entered from
+  the sweep (buildflow tooling triage, recordings lookback audit), and the
+  version truths were refreshed (v0.2.0 in README/FEATURES, the archived
+  count in AGENTS.md, and the hash-repair line now warns off the
+  BuildFlow#55-corrupting `nix-hash-fix` step).
+
 ### Added — 2026-10-15 (test hardening)
 
 - The `internal/web` package pins its clock: a `TestMain` sets `time.Local`
