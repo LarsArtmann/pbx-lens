@@ -41,38 +41,38 @@ in this repo and the sibling — see §d.7).
 
 ## b. Partially done
 
-- **R1 clean full gate** — WAITING: the 15-min load refuses to drop below
+~~- **R1 clean full gate** — WAITING: the 15-min load refuses to drop below~~ done — run #5 green 75/75 at 11:36 (docs/buildflow-dev-gate.md)
   40 (45–90 all hour; a concurrent session shares the machine). A
   background watcher polls and will fire
   `BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` the moment load
   < 40. Every task's own verification (build + focused + full suite) is
   green; only the single clean gate sample + its `docs/buildflow-dev-gate.md`
   entry (m1.2) are pending.
-- **R5 sibling completion** — options landed and evals list; `nix flake
+~~- **R5 sibling completion** — options landed and evals list; `nix flake~~ done — sibling flake check green, pushed e7c0f8b; host re-deploys = the deploy row
   check` in the sibling still fails its pre-commit leg on TWO MORE
   unformatted files I did not touch (`tests/file-secrets-host.nix`,
   `tests/tls-mode-host.nix`) — formatting whack-a-mole at HEAD (see §d.6).
   Hosts are NOT re-deployed (no deploy path run from here).
-- **R27 polish** — m27.6 (Sparkline aria + week delta), m27.7 (keyset e2e
+~~- **R27 polish** — m27.6 (Sparkline aria + week delta), m27.7 (keyset e2e~~ done — m27.6-m27.9 landed (CHANGELOG); residue = the R27.x advisory row
   beyond page 1), m27.8 (`purge -json` + test), m27.9 (AGENTS load
   doctrine + quarter calendar + ROADMAP recorded decisions) are done;
   vulnix re-triage, art-dupl/branching passes, nix-checker cleanup, README
   screenshots are NOT (deferred honestly in the plan annotation).
-- **Timeout-test hardening** — the 1 ms flake is gone (budgets 50 ms /
+~~- **Timeout-test hardening** — the 1 ms flake is gone (budgets 50 ms /~~ → routed: recording timeout-test row (context-blocking verified)
   250 ms sleep, repro'd and fixed under load 106); the injected-deadline
   refactor remains as the TODO_LIST row.
 
 ## c. Not started
 
-- **R4 v0.1.0 release** — owner said YES; plan-gated on R1's green gate;
+~~- **R4 v0.1.0 release** — owner said YES; plan-gated on R1's green gate;~~ done — tagged 2026-10-12, on origin
   tag + GitHub release + install-doc check intentionally not done before
   the gate.
-- **R20** Telnyx live DTO verify (BLOCKED: no API key).
-- **R25** SegmentBar swap (BLOCKED: upstream release).
-- **R26** ContentHash v2 (BLOCKED: v2 gate; SCHEDULED).
-- DID-direction implementation (design note only; implementation row in
+~~- **R20** Telnyx live DTO verify (BLOCKED: no API key).~~ → routed: Telnyx live-verify row (TODO_LIST)
+~~- **R25** SegmentBar swap (BLOCKED: upstream release).~~ → routed: ROADMAP bump-watch re-eval
+~~- **R26** ContentHash v2 (BLOCKED: v2 gate; SCHEDULED).~~ → routed: schema-v2 row (TODO_LIST)
+~~- DID-direction implementation (design note only; implementation row in~~ done — shipped 2026-10-12 (-ai-did + DirectionResolver; CHANGELOG)
   TODO_LIST).
-- Nothing pushed: pbx-lens is ahead of origin (daemon commits + this
+~~- Nothing pushed: pbx-lens is ahead of origin (daemon commits + this~~ done — v0.1.0 + v0.2.0 tags and main pushed
   wave); the sibling and crush-config have unpushed local commits too.
 
 ## d. Totally fucked up (honest list)
@@ -132,84 +132,84 @@ in this repo and the sibling — see §d.7).
 
 ## f. Next tasks (ranked, ≤50)
 
-1. Run R1's full gate when load < 40; record the green sample in
+~~1. Run R1's full gate when load < 40; record the green sample in~~ done — run #5 green 75/75 at 11:36; m1.2 entry recorded (buildflow-dev-gate)
    `docs/buildflow-dev-gate.md` (m1.2); retire the "pending" wording.
-2. Fix the documented dprint command (`nix shell nixpkgs#dprint` or add
+~~2. Fix the documented dprint command (`nix shell nixpkgs#dprint` or add~~ done — dprint joined the devShell (07-56 a4)
    dprint to the devShell).
-3. If gate lint fires on `dashboardLocation`/`durationBuckets`
+~~3. If gate lint fires on `dashboardLocation`/`durationBuckets`~~ done — lint zero: nolint:gochecknoglobals with reasons (10-33)
    (gochecknoglobals): add justified nolint or refactor behind constructors.
-4. Verify CI green after push: templ regen + golangci v2.14 + tidy-diff
+~~4. Verify CI green after push: templ regen + golangci v2.14 + tidy-diff~~ done — CI green on the pushed tree (12-23 a5)
    with the promoted htmx require.
-5. R4: cut annotated tag v0.1.0, GitHub release from CHANGELOG, verify
+~~5. R4: cut annotated tag v0.1.0, GitHub release from CHANGELOG, verify~~ done — v0.1.0 released end-to-end (12-23 a5)
    `go install`/nix install paths read true.
-6. Coordinate with the concurrent session BEFORE tagging (release race).
-7. Push pbx-lens main (daemon + wave commits).
-8. Sibling: nixfmt the two straggler test files (or repo-wide `nix fmt`)
+~~6. Coordinate with the concurrent session BEFORE tagging (release race).~~ done — release executed clean (12:23 session)
+~~7. Push pbx-lens main (daemon + wave commits).~~ done — main + tags pushed (v0.1.0/v0.2.0 on origin)
+~~8. Sibling: nixfmt the two straggler test files (or repo-wide `nix fmt`)~~ done — sibling nix flake check ALL CHECKS PASSED (12-23 a7)
    and get `nix flake check` fully green.
-9. Sibling: push; host re-deploys (pbx, pbx-prod) with the new module
+~~9. Sibling: push; host re-deploys (pbx, pbx-prod) with the new module~~ done-in-part — sibling pushed; host re-deploys = the deploy row (TODO_LIST)
    options; update sibling docs for `pollMaxAge`/`recordingTimeout`.
-10. DID-direction implementation: mapper `DirectionResolver` + `-ai-did`
+~~10. DID-direction implementation: mapper `DirectionResolver` + `-ai-did`~~ done — DID-direction shipped 2026-10-12 (-ai-did; CHANGELOG)
     flag + fixtures (design: docs/did-direction-design.md).
-11. Sibling: `-ai-did` module option when 10 lands.
-12. Timeout-test hardening: injected deadlines instead of budget+sleep.
-13. `cmd/pbx-lens/ingest.go` extraction (shared open→gate→drain→rebuild).
-14. R27.1 vulnix re-triage after the next bump.
-15. R27.2 art-dupl pass (commands.go mixins, Observation/CallView overlap).
-16. R27.3 branching-flow pass (fold genuinely complex functions only).
-17. R27.4 nix-checker hash-bookkeeping cleanup.
-18. R27.5 README screenshots (four surfaces, auth-safe fixture).
-19. Watch dependabot-core#16538; answer maintainer questions with the PR#1
+~~11. Sibling: `-ai-did` module option when 10 lands.~~ done — aiDids option landed (sibling e7c0f8b)
+~~12. Timeout-test hardening: injected deadlines instead of budget+sleep.~~ → routed: recording timeout-test row (TODO_LIST)
+~~13. `cmd/pbx-lens/ingest.go` extraction (shared open→gate→drain→rebuild).~~ done — 83fe566 extraction
+~~14. R27.1 vulnix re-triage after the next bump.~~ → routed: R27.x advisory row
+~~15. R27.2 art-dupl pass (commands.go mixins, Observation/CallView overlap).~~ → routed: R27.x advisory row
+~~16. R27.3 branching-flow pass (fold genuinely complex functions only).~~ → routed: R27.x advisory row
+~~17. R27.4 nix-checker hash-bookkeeping cleanup.~~ → routed: R27.x advisory row
+~~18. R27.5 README screenshots (four surfaces, auth-safe fixture).~~ done — docs/assets convention + README screenshots (09eb780)
+~~19. Watch dependabot-core#16538; answer maintainer questions with the PR#1~~ → routed: dependabot-core#16538 watch row
     evidence.
-20. Watch BuildFlow#45; close it referencing the fix commits once CI
+~~20. Watch BuildFlow#45; close it referencing the fix commits once CI~~ done — BuildFlow#45 fixed v0.8.0 (issue closable with the fix)
     confirms.
-21. Owner: tick or drop the go-atomic-write draft's review box.
-22. Telnyx quarter calendar: live DTO re-verify window opens 2027-01 (R20
+~~21. Owner: tick or drop the go-atomic-write draft's review box.~~ → routed: go-atomic-write draft stays owner-gated (docs/drafts/README.md)
+~~22. Telnyx quarter calendar: live DTO re-verify window opens 2027-01 (R20~~ → routed: Telnyx quarterly row
     when a key exists).
-23. Keyset stall UX: surface `export_cursor_stalled` in the export UI
+~~23. Keyset stall UX: surface `export_cursor_stalled` in the export UI~~ done — export honesty note visible on the list page (ba6ec8f)
     (currently log-only).
-24. Consider range-picker presets (7/30-day buttons).
-25. Dashboard cost panel (theme-1 leftover).
-26. Search affordance: digits-only search hint chip in the UI.
-27. SSE upgrade path if poll volume ever matters (R9 note).
-28. Staleness fragment: carry filters if the banner ever shows filtered.
-29. Export memory: a budget test pinning `exportBatchSize` behavior.
-30. FEATURES evidence refs: keep new rows file-level (line refs rot).
-31. AGENTS.md line budget check (≈205/220) after next edit.
-32. TODO_LIST: flip the release + sibling rows DONE after 5/9 land.
-33. CHANGELOG: fold the release under the version heading when tagging.
-34. Plan file: re-annotate post-gate/release state (ANNOTATE, never
+~~24. Consider range-picker presets (7/30-day buttons).~~ done — 7/30-day window presets shipped
+~~25. Dashboard cost panel (theme-1 leftover).~~ → routed: ROADMAP theme 1 cost panel
+~~26. Search affordance: digits-only search hint chip in the UI.~~ done-superseded — R6 hint copy tells the digits truth (no chip needed)
+~~27. SSE upgrade path if poll volume ever matters (R9 note).~~ → routed: ROADMAP (R9 SSE note)
+~~28. Staleness fragment: carry filters if the banner ever shows filtered.~~ NOT-DO — banner renders on the unfiltered first page only, by design
+~~29. Export memory: a budget test pinning `exportBatchSize` behavior.~~ done — TestExportMemoryBudgetStreamsPastOldCap (ba6ec8f)
+~~30. FEATURES evidence refs: keep new rows file-level (line refs rot).~~ NOT-DO — line refs retained deliberately; audit passes re-verify them
+~~31. AGENTS.md line budget check (≈205/220) after next edit.~~ done — gate-enforced budget; AGENTS.md held at 219
+~~32. TODO_LIST: flip the release + sibling rows DONE after 5/9 land.~~ done — rows evolved (now the deploy row)
+~~33. CHANGELOG: fold the release under the version heading when tagging.~~ done — CHANGELOG v0.1.0 heading
+~~34. Plan file: re-annotate post-gate/release state (ANNOTATE, never~~ done — plans annotated (12-47/13-32/17-31 EXECUTED); this sweep does the rest
     rewrite).
-35. `nix run . -- version` re-verify after the tag.
-36. Re-tag vendorHash if go.mod moves before the release.
-37. Verify daemon sweep captured the dprint-reflowed files (5 files).
-38. Consider `docs/drafts/` README table (state per draft at a glance).
-39. Dependabot config: consider pinning gomod updates until #16538 fixes
+~~35. `nix run . -- version` re-verify after the tag.~~ done — verified (v0.1.0 + v0.2.0 receipts)
+~~36. Re-tag vendorHash if go.mod moves before the release.~~ done — vendorHash repaired via the sanctioned app (04-45)
+~~37. Verify daemon sweep captured the dprint-reflowed files (5 files).~~ done — daemon sweeps verified (07-56 a3)
+~~38. Consider `docs/drafts/` README table (state per draft at a glance).~~ done — docs/drafts/README.md table live
+~~39. Dependabot config: consider pinning gomod updates until #16538 fixes~~ → routed: dependabot-core#16538 watch row (owner pinning call)
     (owner call — the mangling risk is documented).
-40. Annotate §g answers into TODO_LIST/ROADMAP once decided.
-41. BuildFlow: cherry-pick the gate fix into any pinned release branch.
-42. pbx-lens CI: confirm the new e2e step passes on the first push.
-43. Check `go vet`/lint on `internal/web` fragment handlers (fresh code).
-44. Dashboard: extract the repeated `dateValue`/`dayFormat` constants if a
+~~40. Annotate §g answers into TODO_LIST/ROADMAP once decided.~~ done — §g answers resolved by events (R4 + recorded norms)
+~~41. BuildFlow: cherry-pick the gate fix into any pinned release branch.~~ done — v0.8.0 released with the fix
+~~42. pbx-lens CI: confirm the new e2e step passes on the first push.~~ done — CI green repeatedly since
+~~43. Check `go vet`/lint on `internal/web` fragment handlers (fresh code).~~ done — lint zero (10-33)
+~~44. Dashboard: extract the repeated `dateValue`/`dayFormat` constants if a~~ NOT-DO — never grew a third usage; lint clean
     third usage appears.
-45. Consider a `charts` sub-package if dashboard.templ grows again.
-46. `internal/cli` poller: consider counters for enrichment stats too.
-47. `/api/ops`: add lastPass age warning in the payload when stale.
-48. Backup drill: wire it into CI as a named step like the e2e probe.
-49. README: document the polling surfaces + `/api/ops` in the serve
+~~45. Consider a `charts` sub-package if dashboard.templ grows again.~~ NOT-DO — dashboard.go never grew past the trigger
+~~46. `internal/cli` poller: consider counters for enrichment stats too.~~ NOT-DO — no consumer ask; /api/ops covers ingest + cache
+~~47. `/api/ops`: add lastPass age warning in the payload when stale.~~ done — last_pass_age_seconds + stale verdict (v0.2.0)
+~~48. Backup drill: wire it into CI as a named step like the e2e probe.~~ done — named "Backup restore drill" CI step
+~~49. README: document the polling surfaces + `/api/ops` in the serve~~ done — README operational-surfaces block
     section.
-50. Post-release: harvest this report's §f into TODO_LIST (docs-health
+~~50. Post-release: harvest this report's §f into TODO_LIST (docs-health~~ done — harvested (sixth-ninth passes); archived by this sweep
     HARVEST) and archive this report when superseded.
 
 ## g. Questions I cannot answer myself
 
-1. **The release gate vs the machine**: load has not dropped below 40 all
+~~1. **The release gate vs the machine**: load has not dropped below 40 all~~ resolved — R4 executed on the standing approval (v0.1.0 tagged)
    hour (45–90, concurrent session). Options: (a) keep waiting for the
    quiet window (watcher armed), (b) run the gate NOW at over-budget load
    and record it as such, (c) postpone the release until the machine is
    genuinely quiet. Which do you want for v0.1.0?
-2. **The concurrent session** (its commits: ci.yml cqrs-lint casing, cdr
+~~2. **The concurrent session** (its commits: ci.yml cqrs-lint casing, cdr~~ resolved — concurrency norms recorded (ROADMAP open question)
    parser changelog here; webphone VM work in the sibling) — is it yours
    and safe to race, or should I hold the tag + pushes until it lands?
-3. **Sibling formatting**: want a single repo-wide `nix fmt` commit to end
+~~3. **Sibling formatting**: want a single repo-wide `nix fmt` commit to end~~ done — sibling green (flake check passed; pushed)
    the whack-a-mole (touches files another session may be editing), or
    per-file fixes only as the check names them?

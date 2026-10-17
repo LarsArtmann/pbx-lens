@@ -32,21 +32,21 @@ attempts ran at 40-48 and 40→84 — see d.5).
 
 ## b) PARTIALLY DONE
 
-1. **No single-pass green gate during THIS session.** Both `buildflow --build-mode dev` attempts starved (2 and 4 killed steps at load 40→84; zero findings-based failures). Every casualty then passed individually — the documented doctrine — and the last fully-green gates (01:16 full-mode, 02:34 dev) differ from this tree only by markdown + the one rename. Load at close is 8.9: one clean run is ~2 minutes away (see f.1).
-2. **check-rows uniformity is "documented-exception", not green.** Routed-heavy §f tables mix struck rows (`done`) with marker-routed rows (`r` = deliberately unstruck per the tool's kind semantics), so `check-rows` flags them PARTIAL. A reader sees every row resolved either way; the strict gate is not satisfiable for routed sweeps without weakening the `r` kind.
-3. **§a/§d/§e sections intentionally unmarked** (historical claims, confessions, process notes — not open work). A skimming reader could still misread §e "improvements" as open items; the archive README's "closed history" banner is the mitigation.
-4. **DOMAIN_LANGUAGE line-refs**: fixed the two found-drifted refs (cdr, map.go) + added rows, but did NOT sweep the remaining `domain.go:NN`-style refs (e.g. `domain.go:29` on the Call stream row); the real fix is the ROADMAP idea "drop to file-level refs".
-5. **Naming report-only nits**: 2 of 5 were closed long ago by P7; 3 remain open (cdr `shape` local, `ReasonRetention` ordering, `CostEnrichment` tuple return / `Client.Recording` getter) — documented, not fixed.
-6. **TODO_LIST BLOCKED-row evidence** is cited from this repo's reports; the sibling-repo half (`modules/telephony/lens.nix` option surface) was not re-verified cross-repo this session.
+~~1. **No single-pass green gate during THIS session.** Both `buildflow --build-mode dev` attempts starved (2 and 4 killed steps at load 40→84; zero findings-based failures). Every casualty then passed individually — the documented doctrine — and the last fully-green gates (01:16 full-mode, 02:34 dev) differ from this tree only by markdown + the one rename. Load at close is 8.9: one clean run is ~2 minutes away (see f.1).~~ done — run #5 closed green 75/75 at 11:36 (docs/buildflow-dev-gate.md)
+~~2. **check-rows uniformity is "documented-exception", not green.** Routed-heavy §f tables mix struck rows (`done`) with marker-routed rows (`r` = deliberately unstruck per the tool's kind semantics), so `check-rows` flags them PARTIAL. A reader sees every row resolved either way; the strict gate is not satisfiable for routed sweeps without weakening the `r` kind.~~ NOT-DO — tool semantics by design (the routed kind deliberately skips strikes); the closed-history banner is the mitigation
+~~3. **§a/§d/§e sections intentionally unmarked** (historical claims, confessions, process notes — not open work). A skimming reader could still misread §e "improvements" as open items; the archive README's "closed history" banner is the mitigation.~~ done — standing policy per the archive README banner (this 2026-10-17 sweep keeps it)
+~~4. **DOMAIN_LANGUAGE line-refs**: fixed the two found-drifted refs (cdr, map.go) + added rows, but did NOT sweep the remaining `domain.go:NN`-style refs (e.g. `domain.go:29` on the Call stream row); the real fix is the ROADMAP idea "drop to file-level refs".~~ done — R19: zero .go:NN refs remain in DOMAIN_LANGUAGE (07-13 wave)
+~~5. **Naming report-only nits**: 2 of 5 were closed long ago by P7; 3 remain open (cdr `shape` local, `ReasonRetention` ordering, `CostEnrichment` tuple return / `Client.Recording` getter) — documented, not fixed.~~ done — R18 naming closure (CHANGELOG v0.1.0; ReasonRetention = recorded permanent non-fix)
+~~6. **TODO_LIST BLOCKED-row evidence** is cited from this repo's reports; the sibling-repo half (`modules/telephony/lens.nix` option surface) was not re-verified cross-repo this session.~~ done — sibling options verified cross-repo (sixth pass; aiDids landed e7c0f8b)
 
 ## c) NOT STARTED (all routed, none executed — routing WAS this session's deliverable)
 
-1. Owner-blocked spine (TODO_LIST): prod re-ingest for ContentHash v2 · v0.1.0 tag · sibling `-max-age`/`-recording-timeout` values · SegmentBar swap · Telnyx live DTO verify · ContentHash v2 encoding.
-2. ROADMAP raw ideas: PII stored-row enforcement · DID-interception direction · htpasswd reload · per-IP limiting · slog · ops-metrics endpoint · FTS trigram/prefix search · export streaming · timezone decision · M20.1/M20.2 · SSE.
-3. BuildFlow#45 fix in the BuildFlow repo (own repo, direct fix possible — owner not ordered).
-4. The 3 remaining report-only naming nits.
-5. crush-config `references/lessons.md` entries (cross-project, by commit): "re-read living docs before overwrite under concurrent sessions", "piped exit codes need PIPESTATUS", "sibling repos are the first dependency search path" — routed repeatedly by reports, never committed.
-6. A one-clean-pass gate rerun at the now-low load.
+~~1. Owner-blocked spine (TODO_LIST): prod re-ingest for ContentHash v2 · v0.1.0 tag · sibling `-max-age`/`-recording-timeout` values · SegmentBar swap · Telnyx live DTO verify · ContentHash v2 encoding.~~ → routed: the owner-blocked spine IS the TODO_LIST blocked section (v0.1.0/v0.2.0 tagged since)
+~~2. ROADMAP raw ideas: PII stored-row enforcement · DID-interception direction · htpasswd reload · per-IP limiting · slog · ops-metrics endpoint · FTS trigram/prefix search · export streaming · timezone decision · M20.1/M20.2 · SSE.~~ → routed: ROADMAP raw ideas (all since shipped or parked as rows)
+~~3. BuildFlow#45 fix in the BuildFlow repo (own repo, direct fix possible — owner not ordered).~~ done — BuildFlow#45 fixed upstream v0.8.0
+~~4. The 3 remaining report-only naming nits.~~ done — R18 naming closure
+~~5. crush-config `references/lessons.md` entries (cross-project, by commit): "re-read living docs before overwrite under concurrent sessions", "piped exit codes need PIPESTATUS", "sibling repos are the first dependency search path" — routed repeatedly by reports, never committed.~~ → routed: crush-config references/lessons.md (by commit; 07-13 R23 landed one)
+~~6. A one-clean-pass gate rerun at the now-low load.~~ done — run #5 (11:36) green
 
 ## d) TOTALLY FUCKED UP (this session's own, honest)
 
@@ -74,74 +74,74 @@ attempts ran at 40-48 and 40→84 — see d.5).
 
 **Immediate (minutes, machine-doable now)**
 
-1. Run the one clean full gate at load ~9 (`BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` in the devShell) — closes b.1 with a green sample on this exact tree.
-2. Sweep DOMAIN_LANGUAGE's remaining `file.go:NN` refs to file-level (closes b.4; the ROADMAP idea).
-3. Fix the 3 remaining report-only naming nits or record them as permanent non-fixes in the naming review companion (closes b.5).
-4. Add a fixture self-test to the annotate driver corpus (locks d.1's class out).
-5. Re-verify the sibling `lens.nix` option surface for the TODO_LIST blocked row (b.6, cross-repo read).
+~~1. Run the one clean full gate at load ~9 (`BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` in the devShell) — closes b.1 with a green sample on this exact tree.~~ done — run #5 green (buildflow-dev-gate entry)
+~~2. Sweep DOMAIN_LANGUAGE's remaining `file.go:NN` refs to file-level (closes b.4; the ROADMAP idea).~~ done — R19 file-level refs
+~~3. Fix the 3 remaining report-only naming nits or record them as permanent non-fixes in the naming review companion (closes b.5).~~ done — R18 naming closure
+~~4. Add a fixture self-test to the annotate driver corpus (locks d.1's class out).~~ done — skill-side: annotate-status-items_test.sh (26 assertions) + annotate.go self-test
+~~5. Re-verify the sibling `lens.nix` option surface for the TODO_LIST blocked row (b.6, cross-repo read).~~ done — sixth-pass sibling verification
 
 **Owner-blocked spine (execute the moment the gate opens)**
 
-6. Dashboard day-bucket timezone decision (UTC vs Europe/Berlin) — asked 3×; changes `DashboardStatsQuery` + tests. Now the single consolidated ROADMAP open question.
-7. Production `-max-age` window + `-recording-timeout` exposure in the sibling NixOS module.
-8. v0.1.0 tag via go-release (CHANGELOG ready; gate green is the precondition — see #1).
-9. Prod re-ingest for ContentHash v2 (needs the prod deploy path).
-10. Telnyx live DTO verification (Detail Records + insights; needs an API key; quarterly cluster).
-11. Post-or-drop the docs/drafts/ set (7 drafts with unchecked owner boxes; BuildFlow#45 + go-atomic-write ask among them).
-12. Fix BuildFlow#45 in the BuildFlow repo (classify `tool.timeout`, no revert, + test).
-13. ContentHash v2 length-prefixed encoding at the schema-v2 gate.
-14. SegmentBar swap when templ-components publishes (dashboard hand-rolled bar).
-15. PII stored-row enforcement (E164/ParticipantHash become load-bearing; ROADMAP theme 4).
+~~6. Dashboard day-bucket timezone decision (UTC vs Europe/Berlin) — asked 3×; changes `DashboardStatsQuery` + tests. Now the single consolidated ROADMAP open question.~~ resolved — R2 Europe/Berlin (shipped; CHANGELOG v0.1.0)
+~~7. Production `-max-age` window + `-recording-timeout` exposure in the sibling NixOS module.~~ done — flags verified exposed; the deploy row remains
+~~8. v0.1.0 tag via go-release (CHANGELOG ready; gate green is the precondition — see #1).~~ done — v0.1.0 tagged 2026-10-12 (tag on origin)
+~~9. Prod re-ingest for ContentHash v2 (needs the prod deploy path).~~ → routed: prod re-ingest row (TODO_LIST)
+~~10. Telnyx live DTO verification (Detail Records + insights; needs an API key; quarterly cluster).~~ → routed: Telnyx live-verify row (TODO_LIST)
+~~11. Post-or-drop the docs/drafts/ set (7 drafts with unchecked owner boxes; BuildFlow#45 + go-atomic-write ask among them).~~ resolved — R12 owner verdict: annotate-and-keep (docs/drafts/README.md)
+~~12. Fix BuildFlow#45 in the BuildFlow repo (classify `tool.timeout`, no revert, + test).~~ done — BuildFlow#45 fixed v0.8.0
+~~13. ContentHash v2 length-prefixed encoding at the schema-v2 gate.~~ → routed: schema-v2 ContentHash row
+~~14. SegmentBar swap when templ-components publishes (dashboard hand-rolled bar).~~ → routed: ROADMAP SegmentBar re-eval on bump
+~~15. PII stored-row enforcement (E164/ParticipantHash become load-bearing; ROADMAP theme 4).~~ → routed: PII row (one-pager ready)
 
 **Product polish (ROADMAP themes, unranked within tier)**
 
-16. FTS5 substring number search (trigram/prefix index over E.164).
-17. Export streaming beyond `maxExportRows` (keyset loop).
-18. Dashboard date-range picker + duration histogram (deliver-or-strike decision first).
-19. Dashboard cost panel (CostMicros aggregation exists on CallView).
-20. Live SSE / auto-refresh (owner decision + implementation).
-21. htpasswd reload on SIGHUP/mtime.
-22. Per-IP rate limiting upgrade.
-23. `log/slog` adoption for poller/serve logs.
-24. Poller ops endpoint (per-source rejection counters).
-25. Wire `TestLiveServerEndToEnd` into the CI lane.
-26. Backup restore drill (end-to-end restore, not just `Verify`).
-27. Timeout-test hardening (injected deadlines; TODO_LIST Low row).
-28. `cmd/pbx-lens/ingest.go` shared-sequence extraction (TODO_LIST Low row).
-29. Sparkline `AriaLabel` + dashboard week-over-week deltas.
-30. README UI screenshots of the four surfaces.
+~~16. FTS5 substring number search (trigram/prefix index over E.164).~~ done — R6 digits shadow table (partial-number search)
+~~17. Export streaming beyond `maxExportRows` (keyset loop).~~ done — R7 keyset streaming exports
+~~18. Dashboard date-range picker + duration histogram (deliver-or-strike decision first).~~ done — R8 M20.1+M20.2 delivered
+~~19. Dashboard cost panel (CostMicros aggregation exists on CallView).~~ → routed: ROADMAP theme 1 cost panel
+~~20. Live SSE / auto-refresh (owner decision + implementation).~~ resolved — R9 htmx polling shipped
+~~21. htpasswd reload on SIGHUP/mtime.~~ done — R11 SIGHUP reload
+~~22. Per-IP rate limiting upgrade.~~ done — R13 per-address throttle
+~~23. `log/slog` adoption for poller/serve logs.~~ done — R14 slog adoption
+~~24. Poller ops endpoint (per-source rejection counters).~~ done — R15 + R26 cache section
+~~25. Wire `TestLiveServerEndToEnd` into the CI lane.~~ done — R17 named CI step
+~~26. Backup restore drill (end-to-end restore, not just `Verify`).~~ done — R16 restore drill
+~~27. Timeout-test hardening (injected deadlines; TODO_LIST Low row).~~ → routed: recording timeout-test row
+~~28. `cmd/pbx-lens/ingest.go` shared-sequence extraction (TODO_LIST Low row).~~ done — 83fe566 extraction
+~~29. Sparkline `AriaLabel` + dashboard week-over-week deltas.~~ done — CHANGELOG (week delta + Sparkline aria label)
+~~30. README UI screenshots of the four surfaces.~~ done — docs/assets convention + README embeds (09eb780)
 
 **Upstream / fleet**
 
-31. Track go-cqrs-lite#62/#63 landings → drop the in-repo `rfc3339Nano` binding workaround.
-32. Track go-nix-helpers#7 / treefmt-nix#545 → drop the flake `mkForce` templ wrapper.
-33. Watch go-cqrs-lite#64 → revisit `mustRegister` naming.
-34. File the Dependabot multi-module-requires-deletion bug (needs a minimal repro + permission).
-35. crush-config lessons.md commits (three candidate lessons, repeatedly routed).
-36. vulnix re-triage after the next BuildFlow/nixpkgs bump.
-37. BuildFlow upstream candidates: ecosystem-scoped health checks; blocked-step names in summaries; FOD mtime-heuristic phrasing.
+~~31. Track go-cqrs-lite#62/#63 landings → drop the in-repo `rfc3339Nano` binding workaround.~~ → routed: fold-in watch (docs/upstream-filings.md)
+~~32. Track go-nix-helpers#7 / treefmt-nix#545 → drop the flake `mkForce` templ wrapper.~~ → routed: fold-in watch (docs/upstream-filings.md)
+~~33. Watch go-cqrs-lite#64 → revisit `mustRegister` naming.~~ → routed: fold-in watch + docs/cqrs-lint-policy.md
+~~34. File the Dependabot multi-module-requires-deletion bug (needs a minimal repro + permission).~~ done — dependabot-core#16538 filed (R24)
+~~35. crush-config lessons.md commits (three candidate lessons, repeatedly routed).~~ → routed: crush-config references/lessons.md
+~~36. vulnix re-triage after the next BuildFlow/nixpkgs bump.~~ → routed: R27.x advisory row
+~~37. BuildFlow upstream candidates: ecosystem-scoped health checks; blocked-step names in summaries; FOD mtime-heuristic phrasing.~~ NOT-DO — not filed; BuildFlow#45/#50/#55/#56 cover the load/starvation class
 
 **Docs/process**
 
-38. Consider a `scripts/` home for the annotation driver (this session's is /tmp-only; a rerun for future reports would need it checked in — skill-asset dependency cut).
-39. Decide the status-report format policy officially (.md standing convention vs HTML canonical; the repo mixes .md reports + 5 HTML reviews).
-40. Quarterly Telnyx re-verify cluster calendar entry (due ~2027-01) + enrich endpoints inclusion.
-41. AGENTS.md: add "run the full gate only when 15-min load < ~40" as a Commands-block line (doctrine currently lives in docs/buildflow-dev-gate.md only).
-42. Prune ROADMAP/TODO_LIST again after the next dispatch (keep the freshness loop).
-43. Consider `RetireCallCmd` behind auth (write path in a read-only UI — owner call).
-44. Keyset-pagination e2e beyond page 1.
-45. art-dupl / branching-flow dedicated passes (advisory debt).
-46. nix-checker hash-bookkeeping cleanup pass.
-47. Machine-hygiene flag: the shared box's load spikes gate every session — worth an owner-level scheduling norm.
-48. Second `?pii=hash` docs matrix (which fields each mode covers; transcripts ship raw today).
-49. `purge -dry-run -json` for scripting.
-50. Celebrate + freeze: the 2026-10-11/12 execution era is fully closed and archived — the next session starts from a green, honest, consolidated doc set.
+~~38. Consider a `scripts/` home for the annotation driver (this session's is /tmp-only; a rerun for future reports would need it checked in — skill-asset dependency cut).~~ done — skill assets host annotate.go (docs-health skill)
+~~39. Decide the status-report format policy officially (.md standing convention vs HTML canonical; the repo mixes .md reports + 5 HTML reviews).~~ resolved — .md standing default (ROADMAP open question records it)
+~~40. Quarterly Telnyx re-verify cluster calendar entry (due ~2027-01) + enrich endpoints inclusion.~~ → routed: Telnyx quarterly checklist row
+~~41. AGENTS.md: add "run the full gate only when 15-min load < ~40" as a Commands-block line (doctrine currently lives in docs/buildflow-dev-gate.md only).~~ done — AGENTS Commands carries the load rule
+~~42. Prune ROADMAP/TODO_LIST again after the next dispatch (keep the freshness loop).~~ done — this 2026-10-17 sweep is that prune
+~~43. Consider `RetireCallCmd` behind auth (write path in a read-only UI — owner call).~~ → routed: ROADMAP RetireCallCmd open question
+~~44. Keyset-pagination e2e beyond page 1.~~ done — keyset pagination covered (pagination_test.go, web suite)
+~~45. art-dupl / branching-flow dedicated passes (advisory debt).~~ → routed: R27.x advisory row
+~~46. nix-checker hash-bookkeeping cleanup pass.~~ → routed: R27.x advisory row
+~~47. Machine-hygiene flag: the shared box's load spikes gate every session — worth an owner-level scheduling norm.~~ done — ROADMAP machine-hygiene norm
+~~48. Second `?pii=hash` docs matrix (which fields each mode covers; transcripts ship raw today).~~ done — FEATURES PII coverage matrix (R3)
+~~49. `purge -dry-run -json` for scripting.~~ done — purge -json (m27.8)
+~~50. Celebrate + freeze: the 2026-10-11/12 execution era is fully closed and archived — the next session starts from a green, honest, consolidated doc set.~~ done — celebrated; the corpus is closed by this 2026-10-17 sweep
 
 ## g) Questions only you can answer
 
-1. **Dashboard timezone (third-plus ask, now consolidated):** are "Calls today" and the 30-day buckets UTC (current, documented) or Europe/Berlin? It changes `DashboardStatsQuery` window math and its tests; every report since 09:35 has punted it.
-2. **Daemon history for docs passes:** this pass landed as ~9 `chore: auto-commit` commits with no logical units. Want structured commit messages for future passes (or a squash), or is daemon history accepted as-is forever?
-3. **Release + prod chain:** is "one clean gate at low load" (f.1) sufficient to cut v0.1.0, or must the sibling `-max-age`/prod-path decisions (#7/#9) land first so the first tag ships complete?
+~~1. **Dashboard timezone (third-plus ask, now consolidated):** are "Calls today" and the 30-day buckets UTC (current, documented) or Europe/Berlin? It changes `DashboardStatsQuery` window math and its tests; every report since 09:35 has punted it.~~ resolved — R2 Europe/Berlin
+~~2. **Daemon history for docs passes:** this pass landed as ~9 `chore: auto-commit` commits with no logical units. Want structured commit messages for future passes (or a squash), or is daemon history accepted as-is forever?~~ done — daemon history accepted as the standing norm (AGENTS.md)
+~~3. **Release + prod chain:** is "one clean gate at low load" (f.1) sufficient to cut v0.1.0, or must the sibling `-max-age`/prod-path decisions (#7/#9) land first so the first tag ships complete?~~ done — v0.1.0 + v0.2.0 tagged; release protocol encoded in the cut-release runbook row
 
 ---
 

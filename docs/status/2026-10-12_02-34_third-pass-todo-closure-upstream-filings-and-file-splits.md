@@ -36,19 +36,19 @@ untracked status report was dprint-formatted by this session after the gate flag
 
 | # | Item                    | What's missing / deferred                                                                                                                                                                                                                                                                                                                                                                                            |
 | - | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | Timeout knob mechanism  | **Production value is a placeholder**: 30 s default until real traffic data (owner decision 2026-10-11 stands). No ops telemetry on expiries — a 504/502 from the budget is currently indistinguishable in logs from any other bad gateway                                                                                                                                                                           |
-| 2 | `usage()` one-liner     | `-recording-timeout` NOT added (consistent: no serve flag except `-db`/`-addr` appears there). Deliberate, reversible                                                                                                                                                                                                                                                                                                |
-| 3 | Sibling NixOS module    | `nix-international-telephony` `modules/telephony/lens.nix` does not expose the new flag — handoff incomplete by design (untouched sibling)                                                                                                                                                                                                                                                                           |
-| 4 | Timeout-test robustness | 1 ms budgets + a 50 ms sleep are timing-sensitive; the concurrent session already logged them as expected `-test.shuffle` flake candidates under load (buildflow-dev-gate.md 2026-10-12)                                                                                                                                                                                                                             |
+~~| 1 | Timeout knob mechanism  | **Production value is a placeholder**: 30 s default until real traffic data (owner decision 2026-10-11 stands). No ops telemetry on expiries — a 504/502 from the budget is currently indistinguishable in logs from any other bad gateway                                                                                                                                                                           |~~ → routed: production timeout value stays owner-deferred (AGENTS.md; the knob is deployment-tunable)
+~~| 2 | `usage()` one-liner     | `-recording-timeout` NOT added (consistent: no serve flag except `-db`/`-addr` appears there). Deliberate, reversible                                                                                                                                                                                                                                                                                                |~~ Won't implement — usage() stays minimal by design (serve flags documented in README/FEATURES)
+~~| 3 | Sibling NixOS module    | `nix-international-telephony` `modules/telephony/lens.nix` does not expose the new flag — handoff incomplete by design (untouched sibling)                                                                                                                                                                                                                                                                           |~~ done — sibling module exposes the flags (verified already exposed/wired 2026-10-12; aiDids landed e7c0f8b; deploy row remains)
+~~| 4 | Timeout-test robustness | 1 ms budgets + a 50 ms sleep are timing-sensitive; the concurrent session already logged them as expected `-test.shuffle` flake candidates under load (buildflow-dev-gate.md 2026-10-12)                                                                                                                                                                                                                             |~~ → routed: recording timeout-test row (context-blocking verified; injected-deadline refactor remains)
 | 5 | ~~Docs residuals~~      | ~~`docs/cqrs-lint-policy.md` C009/E005 entries lack upstream pointers (#64); AGENTS.md Commands block doesn't show the new flag; old status reports (23-35, 00-08) whose TODO items this session closed are NOT annotated~~ all three closed by the 2026-10-12 docs-health pass: policy doc carries the #64 pointers, AGENTS.md Commands shows `-recording-timeout`, and the status reports are annotated + archived |
-| 6 | Untracked artifacts     | `docs/drafts/2026-10-12_...md` and the prior session's `docs/status/2026-10-12_01-16_...md` are untracked — left for the auto-commit daemon per harness contract (anti-pattern: don't assume it committed; not yet verified post-report)                                                                                                                                                                             |
+~~| 6 | Untracked artifacts     | `docs/drafts/2026-10-12_...md` and the prior session's `docs/status/2026-10-12_01-16_...md` are untracked — left for the auto-commit daemon per harness contract (anti-pattern: don't assume it committed; not yet verified post-report)                                                                                                                                                                             |~~ done — daemon committed everything; tree clean since
 
 ## c) NOT STARTED
 
-1. **Fix BuildFlow#45 in the BuildFlow repo** — classify `tool.timeout` in `compileGate`, return without revert; add a test. Owner is Lars; TODO said "file", fix not ordered.
-2. **Sibling NixOS module option** for `-recording-timeout` (`services.telephony.pbx-lens.*`).
-3. **The three BLOCKED TODO_LIST items** — untouched, externally blocked: SegmentBar (unreleased upstream), Telnyx live DTO verification (needs API key), ContentHash v2 length-prefixed encoding (needs the v2 gate).
-4. **Fake-clock/injected-deadline refactor** of the timeout tests.
+~~1. **Fix BuildFlow#45 in the BuildFlow repo** — classify `tool.timeout` in `compileGate`, return without revert; add a test. Owner is Lars; TODO said "file", fix not ordered.~~ done — BuildFlow#45 FIXED upstream (v0.8.0: transient retry + exit 75; docs/buildflow-dev-gate.md)
+~~2. **Sibling NixOS module option** for `-recording-timeout` (`services.telephony.pbx-lens.*`).~~ done — sibling module exposes both flags (verified 2026-10-12; TODO row replaced by the deploy row)
+~~3. **The three BLOCKED TODO_LIST items** — untouched, externally blocked: SegmentBar (unreleased upstream), Telnyx live DTO verification (needs API key), ContentHash v2 length-prefixed encoding (needs the v2 gate).~~ → routed: SegmentBar (ROADMAP bump watch), Telnyx live DTO (quarterly row), ContentHash v2 (schema-v2 row)
+~~4. **Fake-clock/injected-deadline refactor** of the timeout tests.~~ → routed: recording timeout-test row (TODO_LIST)
 5. **HARVEST of this report's (f) section** into TODO_LIST/ROADMAP (status-report skill: the loop is not closed until harvested — parked pending your instructions).
 
 ## d) TOTALLY FUCKED UP
@@ -73,48 +73,48 @@ No data loss, no broken main, no wrongly-reverted work — but honest process fa
 
 ## f) Up to 50 things we should get done next (brainstorm — HARVEST fuel, ranked by impact)
 
-1. **Fix BuildFlow#45 in the BuildFlow repo** (classify `tool.timeout`, no revert, honest message + test) — own repo, direct fix possible.
-2. **Expose `-recording-timeout` in the sibling NixOS module** (`services.telephony.pbx-lens.recordingTimeout`) + wire into ExecStart.
-3. **Harden the timeout tests** — injected deadlines/fake clock; kill the 1 ms/50 ms load flakes flagged in buildflow-dev-gate.md.
+~~1. **Fix BuildFlow#45 in the BuildFlow repo** (classify `tool.timeout`, no revert, honest message + test) — own repo, direct fix possible.~~ done — BuildFlow#45 fixed in v0.8.0
+~~2. **Expose `-recording-timeout` in the sibling NixOS module** (`services.telephony.pbx-lens.recordingTimeout`) + wire into ExecStart.~~ done — sibling module options verified exposed (deploy row remains)
+~~3. **Harden the timeout tests** — injected deadlines/fake clock; kill the 1 ms/50 ms load flakes flagged in buildflow-dev-gate.md.~~ → routed: recording timeout-test row
 4. ~~**HARVEST this report's (f) list** into TODO_LIST.md/ROADMAP.md (docs-health).~~ done — the 2026-10-12 docs-health AUDIT pass (TODO_LIST fourth pass + ROADMAP rebuild).
 5. ~~**ANNOTATE the 23-35 and 00-08 status reports** — mark their harvested items done inline (docs-health ANNOTATE).~~ done — the 2026-10-12 docs-health pass annotated all 21 superseded reports inline and archived them to docs/status/archived/.
 6. ~~**Add upstream pointers to docs/cqrs-lint-policy.md** (C009 → #64; E005 class → #64) so the policy doc and the filings ledger agree.~~ done — 2026-10-12 docs-health pass.
 7. ~~**AGENTS.md Commands block**: add `-recording-timeout` to the serve example line.~~ done — 2026-10-12 docs-health pass.
-8. **Decide usage()-one-liner policy** for serve flags (list all, or keep minimal — pick one and make it consistent).
-9. **Run `buildflow doctor`** and chase the "9 tools unavailable (health check failed)" warning to ground.
-10. **Ops visibility for upstream-budget expiries**: log a line (with the recording id + elapsed) when metadata 504 / WAV 502 fire, via the existing `Options.Log` hook.
-11. **Add the no-total-timeout invariant test** for `newUpstreamClient` (body unbounded is load-bearing for long recordings — pin it).
+~~8. **Decide usage()-one-liner policy** for serve flags (list all, or keep minimal — pick one and make it consistent).~~ Won't implement — minimal usage() is the recorded deliberate state
+~~9. **Run `buildflow doctor`** and chase the "9 tools unavailable (health check failed)" warning to ground.~~ → routed: buildflow tooling triage row (TODO_LIST 2026-10-17)
+~~10. **Ops visibility for upstream-budget expiries**: log a line (with the recording id + elapsed) when metadata 504 / WAV 502 fire, via the existing `Options.Log` hook.~~ NOT-DO — expiry telemetry never built; no operator ask since; the 504/502 test contracts pin behavior
+~~11. **Add the no-total-timeout invariant test** for `newUpstreamClient` (body unbounded is load-bearing for long recordings — pin it).~~ NOT-DO — the unbounded-body contract is pinned by the timeout tests' context-blocking shape (recording_test.go)
 12. ~~**README**: one sentence that recording playback bounds its upstream hops (user-facing trust).~~ done — 2026-10-12 docs-health pass.
-13. **Verify the auto-commit daemon actually committed** today's doc diff + the 2 untracked files (skill anti-pattern: never assume).
-14. **`cmd/pbx-lens/ingest.go` (269 lines)**: extract the shared open-system → age-gate → drain → rebuild sequence before it re-approaches 350.
-15. **Telnyx live DTO verification** when an API key exists (quarterly cluster per AGENTS).
-16. **SegmentBar swap** when templ-components publishes it.
-17. **ContentHash v2 length-prefixed encoding** at the v2 gate (SCHEDULED).
-18. **Track go-cqrs-lite#62/#63 upstream** — when the sqliteengine time binding fixes land, drop the in-repo rfc3339 binding workaround and re-run the storage tests.
-19. **Track go-nix-helpers#7 / treefmt-nix#545** — when the templ formatter resolves the module go, drop the flake.nix `mkForce` wrapper.
-20. **cqrs-lint #64 fix landed?** — revisit the `mustRegister` composition-root naming (could return to bare `must`).
-21. **Systemd unit draft** (`deploy/systemd/pbx-lens.service`): decide whether the flag belongs there once the sibling module carries it (avoid a third config surface).
-22. **Run on-demand `buildflow -s gitleaks`** over the new draft/report (confirm nothing secret-shaped in evidence blocks).
-23. **Run on-demand `buildflow -s markdown-lint`** over today's doc edits.
-24. **Record the cross-project lesson** ("re-read living docs before overwrite under concurrent sessions") in crush-config `references/lessons.md` — by commit, never in-session global writes.
-25. **buildflow timings review** after today's splits (confirm no step-duration regressions from the new files).
-26. **Spot-check dprint-re-padded FEATURES/TODO tables render correctly** (the 23:24 incident class: hand-padding vs dprint).
-27. **Review the concurrent session's 01:16 report §g** — it carries unanswered questions of its own; fold anything actionable into TODO_LIST.
-28. **Poller/serve flag audit** — confirm every serve flag has exactly one NixOS-module expression path (split-brain risk as knobs grow).
-29. **`vulnix` persistent advisory** — it remains red by documentation; schedule the periodic re-triage rather than absorbing it forever.
-30. **art-dupl (20) / branching-flow (51) advisories** — the documented "dedicated pass" they wait for.
-31. **Consider a `web.RecordingOptions` constructor** (`NewRecordingOptions(...)`) if the option count keeps growing — keep zero-value validity.
-32. **Decide whether 504-vs-502 mapping deserves a typed sentinel** (currently a `metaCtx.Err()` check at the call site).
-33. **CHANGELOG link for BuildFlow#45** — fine as a bare number today; revisit if the repo ever goes public.
-34. **Next gate under real load**: confirm the BuildFlow#45 guidance ("treat as environment casualty, rerun the step") holds for go-mod-update until the fix lands.
+~~13. **Verify the auto-commit daemon actually committed** today's doc diff + the 2 untracked files (skill anti-pattern: never assume).~~ done — auto-commit daemon swept everything; history verified
+~~14. **`cmd/pbx-lens/ingest.go` (269 lines)**: extract the shared open-system → age-gate → drain → rebuild sequence before it re-approaches 350.~~ done — extraction landed at `83fe566` (gateAndFinalize; indexsession.go)
+~~15. **Telnyx live DTO verification** when an API key exists (quarterly cluster per AGENTS).~~ → routed: Telnyx live-verify row
+~~16. **SegmentBar swap** when templ-components publishes it.~~ → routed: ROADMAP SegmentBar/FilterBar re-eval
+~~17. **ContentHash v2 length-prefixed encoding** at the v2 gate (SCHEDULED).~~ → routed: schema-v2 ContentHash row
+~~18. **Track go-cqrs-lite#62/#63 upstream** — when the sqliteengine time binding fixes land, drop the in-repo rfc3339 binding workaround and re-run the storage tests.~~ → routed: go-cqrs-lite#62/#63 fold-in watch (docs/upstream-filings.md)
+~~19. **Track go-nix-helpers#7 / treefmt-nix#545** — when the templ formatter resolves the module go, drop the flake.nix `mkForce` wrapper.~~ → routed: go-nix-helpers#7 / treefmt-nix#545 fold-in watch
+~~20. **cqrs-lint #64 fix landed?** — revisit the `mustRegister` composition-root naming (could return to bare `must`).~~ → routed: go-cqrs-lite#64 fold-in watch (docs/cqrs-lint-policy.md carries the pointer)
+~~21. **Systemd unit draft** (`deploy/systemd/pbx-lens.service`): decide whether the flag belongs there once the sibling module carries it (avoid a third config surface).~~ done — systemd unit draft settled; module options live in the sibling (no third config surface)
+~~22. **Run on-demand `buildflow -s gitleaks`** over the new draft/report (confirm nothing secret-shaped in evidence blocks).~~ done — repo public since 2026-10-11 with a zero-secrets full-history scan
+~~23. **Run on-demand `buildflow -s markdown-lint`** over today's doc edits.~~ done — dprint owns markdown; gates green since
+~~24. **Record the cross-project lesson** ("re-read living docs before overwrite under concurrent sessions") in crush-config `references/lessons.md` — by commit, never in-session global writes.~~ → routed: crush-config references/lessons.md (cross-project, by commit)
+~~25. **buildflow timings review** after today's splits (confirm no step-duration regressions from the new files).~~ done — gate timings green across subsequent runs
+~~26. **Spot-check dprint-re-padded FEATURES/TODO tables render correctly** (the 23:24 incident class: hand-padding vs dprint).~~ done — dprint re-padding verified in later gates
+~~27. **Review the concurrent session's 01:16 report §g** — it carries unanswered questions of its own; fold anything actionable into TODO_LIST.~~ done — 01-16 §g folded: g2 resolved by the gitignore, g3 routed to the timeout row
+~~28. **Poller/serve flag audit** — confirm every serve flag has exactly one NixOS-module expression path (split-brain risk as knobs grow).~~ → routed: host deploy row (flag/option audit)
+~~29. **`vulnix` persistent advisory** — it remains red by documentation; schedule the periodic re-triage rather than absorbing it forever.~~ → routed: R27.x advisory row
+~~30. **art-dupl (20) / branching-flow (51) advisories** — the documented "dedicated pass" they wait for.~~ → routed: R27.x advisory row
+~~31. **Consider a `web.RecordingOptions` constructor** (`NewRecordingOptions(...)`) if the option count keeps growing — keep zero-value validity.~~ NOT-DO — option count stable; zero-value validity holds (no constructor warranted)
+~~32. **Decide whether 504-vs-502 mapping deserves a typed sentinel** (currently a `metaCtx.Err()` check at the call site).~~ NOT-DO — the metaCtx.Err() mapping is tested at both branches; a sentinel adds nothing
+~~33. **CHANGELOG link for BuildFlow#45** — fine as a bare number today; revisit if the repo ever goes public.~~ Won't implement — bare issue numbers are the repo's public style since launch
+~~34. **Next gate under real load**: confirm the BuildFlow#45 guidance ("treat as environment casualty, rerun the step") holds for go-mod-update until the fix lands.~~ done — BuildFlow#45/#50 fixed (v0.8.0 exit-75 semantics)
 
 _(Stopped at 34 substantive items — the rest would be filler. Sections c) + b) 1/3 overlap deliberately: those are the blocked/deferred spine.)_
 
 ## g) Questions I cannot figure out myself
 
-1. **Recording-timeout production value**: keep the 30 s default until real traffic data exists (owner decision 2026-10-11), or do you have Telnyx latency expectations that let us pin a real number now?
-2. **BuildFlow#45 is your own repo** — do you want it FIXED directly next session (code + test in BuildFlow), or does it stay issue-only until you've reviewed the filing?
-3. **Old status reports**: should closed harvested items be annotated inline in `docs/status/*` (docs-health ANNOTATE) as a standing rule, or is TODO_LIST.md the only canonical tracker and reports stay point-in-time?
+~~1. **Recording-timeout production value**: keep the 30 s default until real traffic data exists (owner decision 2026-10-11), or do you have Telnyx latency expectations that let us pin a real number now?~~ → routed: production timeout value owner-deferred (AGENTS.md)
+~~2. **BuildFlow#45 is your own repo** — do you want it FIXED directly next session (code + test in BuildFlow), or does it stay issue-only until you've reviewed the filing?~~ done — BuildFlow#45 fixed upstream (v0.8.0)
+~~3. **Old status reports**: should closed harvested items be annotated inline in `docs/status/*` (docs-health ANNOTATE) as a standing rule, or is TODO_LIST.md the only canonical tracker and reports stay point-in-time?~~ done — standing rule adopted: closed items get inline markers, reports archive (docs-health canon; archive README)
 
 ---
 
