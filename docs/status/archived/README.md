@@ -3,16 +3,30 @@
 Closed history: every open item in these reports is resolved INLINE (each file
 carries `done` / `Won't implement` / `→ routed` strikethrough markers; the
 living backlog is [TODO_LIST.md](../../../TODO_LIST.md)). Do not harvest from
-here — terminal state. Archived 2026-10-12 by the docs-health AUDIT pass and
-2026-10-17 by the corpus-closing sweep (manifest below).
+here — terminal state. Archived 2026-10-12 by the docs-health AUDIT pass,
+2026-10-17 by the corpus-closing sweep, and 2026-10-17 (second pass) by the
+live-set close-out (manifests below).
+
+## Archive manifest (bulk sweep 2026-10-17, second docs-health pass — the live-set close-out)
+
+The four 2026-10-17 live reports were annotated inline against the day's
+executions (the 08:02→10:28 Pareto legs plus this pass) and archived; the
+live set is now empty, and the pass report of THIS sweep is the single
+harvest source going forward.
+
+| File                                                                           | Classification      | Deciding reason                                                                                                                        |
+| ------------------------------------------------------------------------------ | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-17_01-45_statix-silent-noop-repair-and-gate-revival.md                 | ANNOTATE → ARCHIVED | §b/§c/§f/§g fully dispositioned (postscript closures cited; CI-nix-lane/tripwire/config-verify routed to the new gate-hardening row)   |
+| 2026-10-17_05-01_docs-health-corpus-sweep-archive-and-living-doc-rebuild.md    | ANNOTATE → ARCHIVED | every §b/§c/§f/§g item done (P1 legs) or routed; §g2 answered BY THIS PASS (planning archive); §g3 → answer sheet §9                   |
+| 2026-10-17_08-02_pareto-plan-execution-p0p2-and-red-domain-test.md             | ANNOTATE → ARCHIVED | §b/§c/§f/§g closed by the 10:28 close-out receipts; the three §f specials (filings/csp-sweep/cut-release) routed to new TODO rows      |
+| 2026-10-17_10-28_pareto-closeout-red-test-fix-and-tail-tasks-status.md         | ANNOTATE → ARCHIVED | §f 1-18 ride TODO rows, 19-50 triaged by this pass into TODO rows + ROADMAP; the three §g questions staged on the answer sheet         |
 
 ## Archive manifest (bulk sweep 2026-10-17 — the corpus close-out)
 
 The whole 2026-10-11→15 live set annotated inline (verified against CHANGELOG,
-code, and the fold-in ledgers) and archived. Two files stay live on purpose:
-`2026-10-12_17-17` was folded into this sweep (its five bare residuals
-dispositioned), and `2026-10-17_01-45_statix-silent-noop-repair-and-gate-revival.md`
-remains the newest harvest source (its §f items ride TODO_LIST).
+code, and the fold-in ledgers) and archived. (Historical note: at sweep time
+`2026-10-12_17-17` was folded in and `2026-10-17_01-45` stayed live as the
+newest harvest source — both since archived by the manifests above.)
 
 | File                                                                           | Classification      | Deciding reason                                                                                                               |
 | ------------------------------------------------------------------------------ | ------------------- | ----------------------------------------------------------------------------------------------------------------------------- |

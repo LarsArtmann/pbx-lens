@@ -3,7 +3,7 @@
 <!-- Living doc extracted from AGENTS.md 2026-10-12 (220-line budget).
      The WHY behind the middleware chain, the ETag skip policy, and the
      render-buffering fix. Adoption history and considered-but-not-adopted
-     alternatives: docs/planning/2026-10-12_12-47_SUPERB-*.md. -->
+     alternatives: docs/planning/archived/2026-10-12_12-47_SUPERB-*.md. -->
 
 ## Middleware chain
 

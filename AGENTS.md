@@ -39,7 +39,7 @@ webphone later gets a read-only deep link, never a data dependency.
   everything). Considered and NOT adopted (appkit
   errorpages/security/realtime, templ-components errorpage, export
   rate-limiting, SSE-hub, Telnyx etag client, data-fingerprint fast-304,
-  go-atomic-write for backup staging): docs/planning/2026-10-12_12-47_*
+  go-atomic-write for backup staging): docs/planning/archived/2026-10-12_12-47_*
   - docs/drafts/.
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**
   `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run

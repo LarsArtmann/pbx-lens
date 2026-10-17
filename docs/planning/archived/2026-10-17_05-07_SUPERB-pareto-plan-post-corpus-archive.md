@@ -5,6 +5,16 @@
 
 # SUPERB Pareto Plan — post-corpus-archive execution (2026-10-17 05:07)
 
+> **EXECUTED (annotated 2026-10-17, second docs-health pass):** every task
+> executed across the day's two legs — P0-T3/T4 + the P1 trust bundle +
+> P2-T14..T19 by the 08:02 session, the red-test fix + T21-T27 tail + the
+> 30-commit push (remote CI green) by the 10:28 close-out; only the
+> load-gated full-gate receipt (P0-T2) remains, as the first TODO_LIST row.
+> Execution records: `docs/status/archived/2026-10-17_08-02_pareto-plan-execution-p0p2-and-red-domain-test.md`
+> and `docs/status/archived/2026-10-17_10-28_pareto-closeout-red-test-fix-and-tail-tasks-status.md`;
+> outcomes in `CHANGELOG.md` (2026-10-17 Unreleased entries). This file is a
+> historical snapshot — never rewritten; open work lives in `TODO_LIST.md`.
+
 > Input state: the 2026-10-17 corpus sweep closed the 2026-10-11→15 status-report era
 > (27 reports annotated + archived, 1,373 inline verdicts), rebuilt TODO_LIST to open-work-only,
 > and left local main ahead of a red remote. This plan ranks EVERYTHING still open.
