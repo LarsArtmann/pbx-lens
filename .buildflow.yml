@@ -15,6 +15,13 @@ exclude:
 #   in the gate doc); the equivalent check runs as the manual `nix build`
 #   step of every receipt procedure, and statix/deadnix/flake-check still
 #   cover the nix lane inside the gate.
+# statix invocation contract (2026-10-18, rehearsals row): the gate runs
+# BARE `statix check` (cwd = repo root, so the repo statix.toml applies —
+# do NOT pass explicit targets, they bypass its `ignore` list). statix
+# exits 0 on a config parse error and lints nothing: the no-op tripwire in
+# scripts/verify-all.sh plus the CI nix-lane job grep stderr for the
+# "config error" signature. Re-audit this contract whenever nixpkgs bumps
+# statix (ROADMAP statix-bump watch).
 skip_steps:
   - lychee
   - nix-build-verify

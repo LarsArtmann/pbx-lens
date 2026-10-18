@@ -7,6 +7,77 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-18 (pareto plan execution: gate hardening, probes, rehearsals)
+
+- **statix no-op tripwire** in `scripts/verify-all.sh`: the lane fails
+  loudly when statix prints its "config error" fail-open signature (exit 0,
+  lints nothing — the five-day October outage class); lint verdicts stay
+  BuildFlow's. Proven both ways with a fake fail-open binary (red) and real
+  statix (green).
+- **CI nix lane** (`nix-lint` job): statix (with the no-op tripwire) +
+  `deadnix --fail` + `nix fmt --ci`, every tool resolved through the
+  flake's locked nixpkgs rev. Each lane proven red on a seeded failure in a
+  throwaway clone before landing; green on remote CI.
+- **`ingest-telnyx -dry-run` parity** with ingest-cdr: report-only fetch
+  (conversations fetched / would-record / age-refused / fetch-rejected,
+  nothing written, no index), plus an `-api-base` override for stub-server
+  rehearsals. Pinned by a stub-API test that proves no index is created.
+- **`serve -wired-ops` dev fixture + fourth lane probe**
+  (`verify-ops-verdict.js`): a canned STALE poller snapshot exercises the
+  /ops stale-verdict alert and the /api/ops payload end-to-end — the
+  poller-wired composition the probes could never reach before.
+- **Recording-proxy timing-hop asserts** through the full served chain:
+  metadata/headers appear in Server-Timing within the upstream budget, no
+  body metric, and a stalling upstream fails fast at 502 without
+  stretching the header budget.
+- **FTS ranking corpus test**: a 106-view synthetic corpus pins bm25
+  ordering (term frequency; both-terms beats single-term heavyweight) and
+  the digit-shadow corners (runs inside longer numbers, overlapping
+  prefixes, FTS+digit dedupe).
+- **art-dupl verdict baseline** (`scripts/art-dupl-baseline.txt`) wired
+  into the CI duplication job: a diff against the accepted verdict warns
+  with the refresh procedure (34 groups / 2 shown at pin 0.9.0); a seeded
+  clone proves a new clone stands out. `verify-all` gains a
+  baseline-freshness warning (markup newer than the pixel baseline).
+- **`verify-all --baseline <dir>`** — the LENS_DIFF_BASELINE pixel-diff
+  hook as a lane flag; the print probe now asserts computed
+  `break-inside:avoid` on every `.lens-ops-card` (verified live: 3/3).
+
+### Changed — 2026-10-18 (pareto plan execution: docs, wiring, triage)
+
+- **AGENTS.md recording-proxy extraction** (218/219): the two-hop upstream
+  budget details moved to docs/http-stack.md (verified against
+  `internal/web/recording.go`: metadata context deadline +
+  `ResponseHeaderTimeout`, body unbounded).
+- **Pre-commit hook chain**: `.githooks/pre-commit` runs the AGENTS budget
+  gate, then delegates to any flake-installed hook (treefmt);
+  `core.hooksPath .githooks` is SET in the primary clone, routing the
+  auto-commit daemon through the gate. The CI budget job stays gated on
+  the lint-policy answer.
+- **Four upstream filing drafts staged** (docs/drafts/, filing owner-gated
+  per the verify-before-filing doctrine): CopyButton's empty-nonce
+  unconditioned singleton script (cross-refs #63/#24), Card's h3 TitleTag
+  default (12/12 call sites override it), statix's exit-0-on-config-error
+  footgun (upstream identified as molybdenumsoftware/statix; dupe search
+  clean), and the go-appkit testkit startTimeout saturation flake.
+- **TestCacheSemanticsHardening flake triaged** (the 2026-10-16 one-off):
+  root cause is go-appkit testkit's 5s startTimeout under runner
+  saturation — the same class upstream already outgrew on
+  leakSettleTimeout (5s→10s, proven twice); nothing in the test is
+  wall-clock dependent. 50x -race loop under load 140-200: green; triage
+  recorded in the test comment + the draft.
+- **cqrs-lint F009 suppression question resolved as documentation**:
+  v4.17.0 has no inline suppression and no per-path exclude; the policy
+  doc records the gap and the repo-wide-disable tradeoff.
+- **Golden scrubber contract test**: `TestGoldenScrubberCoversFooterStamp`
+  fails on footer-copy drift that would silently un-scrub the goldens;
+  the duplicated scripts/README codegen paragraphs merged (hash-primary
+  wins).
+- **Buildflow tooling triage re-verified** (29 doctor marks, all in the
+  documented dispositions; no new relevant tool) and the statix invocation
+  contract pinned in `.buildflow.yml` (bare `statix check`; re-audit on
+  nixpkgs bumps).
+
 ### Changed — 2026-10-17 (docs-health pass: live-set close-out + planning archive)
 
 - The four 2026-10-17 status reports were annotated inline (247 verdicts:
