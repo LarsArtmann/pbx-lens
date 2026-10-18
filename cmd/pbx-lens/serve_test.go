@@ -1,17 +1,23 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-appkit/testkit"
+	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/web"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -57,6 +63,217 @@ func get(tb testing.TB, client *http.Client, base, path string, headers map[stri
 // (Server-Timing, Compression, ETag, Version, Metrics) through the real
 // listener via appkit's testkit: the middlewares only earn their keep if
 // the served chain exhibits them.
+// timingDuration parses one `name;dur=X` pair out of a Server-Timing
+// header. Returns ok=false when the metric is absent — a MISSING metric is
+// a different failure than an over-budget one.
+func timingDuration(header, name string) (float64, bool) {
+	re := regexp.MustCompile(regexp.QuoteMeta(name) + `;dur=([0-9.]+)`)
+
+	m := re.FindStringSubmatch(header)
+	if m == nil {
+		return 0, false
+	}
+
+	dur, err := strconv.ParseFloat(m[1], 64)
+	if err != nil {
+		return 0, false
+	}
+
+	return dur, true
+}
+
+// TestRecordingProxyTimingHopBudget pins the two-hop budget contract
+// (T22/F87-F88) through the FULL served chain — the raw-mux recording
+// tests cannot see Server-Timing. The metadata and headers hops are each
+// named, measured before the first body write, and bounded by the
+// UpstreamTimeout; an upstream that stalls before its response headers
+// trips the hop deadline instead of stretching the budget (and the body,
+// once flowing, adds no header-budget time).
+func TestRecordingProxyTimingHopBudget(t *testing.T) {
+	const wavBytes = "RIFFfake-wav-payload"
+
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(150 * time.Millisecond)
+		w.Header().Set("Content-Type", "audio/wav")
+		_, _ = w.Write([]byte(wavBytes))
+	}))
+	t.Cleanup(upstream.Close)
+
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		switch r.URL.Path {
+		case "/v2/recordings/rec-1":
+			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":%q,"mp3":""}}}`, upstream.URL+"/audio.wav")
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(api.Close)
+
+	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
+	if err != nil {
+		t.Fatalf("open memory index: %v", err)
+	}
+
+	defer cleanup()
+
+	obs := calls.Observation{
+		NativeID: "conv-rec", Kind: calls.SourceTelnyxConversation,
+		Direction: calls.DirectionOutbound,
+		StartedAt: time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+		FromNumber: "+17287289311", ToNumber: "+15555550123",
+		RecordingRef: "rec-1",
+	}
+
+	if stats := cli.Ingest(t.Context(), sys, []calls.Observation{obs}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(t.Context(), sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	if err != nil {
+		t.Fatalf("build service config: %v", err)
+	}
+
+	svc, err := appkit.NewService(serviceConfig)
+	if err != nil {
+		t.Fatalf("new service: %v", err)
+	}
+
+	const hopBudget = 5 * time.Second
+
+	web.Register(svc.Mux, sys, web.Options{
+		Recordings: web.RecordingOptions{
+			Telnyx:          telnyx.NewClient("test-key", api.URL+"/v2"),
+			UpstreamTimeout: hopBudget,
+		},
+	})
+
+	ts := testkit.Serve(t, svc)
+	client := noAutoGzip()
+
+	resp, err := client.Get(ts.FullChainURL + "/calls/telnyx-conversation/conv-rec/recording")
+	if err != nil {
+		t.Fatalf("recording GET: %v", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusOK || string(body) != wavBytes {
+		t.Fatalf("recording = %d %q, want 200 with the proxied bytes", resp.StatusCode, body)
+	}
+
+	timing := resp.Header.Get("Server-Timing")
+
+	for _, name := range []string{"metadata", "headers"} {
+		dur, ok := timingDuration(timing, name)
+		if !ok {
+			t.Fatalf("Server-Timing %q missing the %q hop (streaming routes must time their pre-first-write hops)", timing, name)
+		}
+
+		if dur > float64(hopBudget.Milliseconds()) {
+			t.Errorf("%s hop = %.1fms, exceeds the %.0fs upstream budget", name, dur, hopBudget.Seconds())
+		}
+	}
+
+	if strings.Contains(timing, "body") {
+		t.Errorf("Server-Timing %q carries a body metric; only pre-first-write hops are timed", timing)
+	}
+}
+
+// TestRecordingProxySlowUpstreamStaysBounded proves the headers hop's
+// deadline fires on a stalling upstream (T22/F88): with a tiny hop budget
+// and an upstream that withholds response headers past it, the proxy fails
+// fast (502) and the Server-Timing header keeps its budget shape instead of
+// stretching to the stall.
+func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		time.Sleep(500 * time.Millisecond)
+		w.Header().Set("Content-Type", "audio/wav")
+		_, _ = w.Write([]byte("late"))
+	}))
+	t.Cleanup(upstream.Close)
+
+	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":{"id":"rec-1","download_urls":{"wav":"` + upstream.URL + `/audio.wav","mp3":""}}}`))
+	}))
+	t.Cleanup(api.Close)
+
+	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
+	if err != nil {
+		t.Fatalf("open memory index: %v", err)
+	}
+
+	defer cleanup()
+
+	obs := calls.Observation{
+		NativeID: "conv-rec", Kind: calls.SourceTelnyxConversation,
+		Direction: calls.DirectionOutbound,
+		StartedAt: time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+		FromNumber: "+17287289311", ToNumber: "+15555550123",
+		RecordingRef: "rec-1",
+	}
+
+	if stats := cli.Ingest(t.Context(), sys, []calls.Observation{obs}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(t.Context(), sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	if err != nil {
+		t.Fatalf("build service config: %v", err)
+	}
+
+	svc, err := appkit.NewService(serviceConfig)
+	if err != nil {
+		t.Fatalf("new service: %v", err)
+	}
+
+	const hopBudget = 60 * time.Millisecond
+
+	web.Register(svc.Mux, sys, web.Options{
+		Recordings: web.RecordingOptions{
+			Telnyx:          telnyx.NewClient("test-key", api.URL+"/v2"),
+			UpstreamTimeout: hopBudget,
+		},
+	})
+
+	ts := testkit.Serve(t, svc)
+	client := noAutoGzip()
+
+	resp, err := client.Get(ts.FullChainURL + "/calls/telnyx-conversation/conv-rec/recording")
+	if err != nil {
+		t.Fatalf("recording GET: %v", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	_, _ = io.Copy(io.Discard, resp.Body)
+
+	if resp.StatusCode != http.StatusBadGateway {
+		t.Errorf("stalled upstream status = %d, want 502 (the headers hop deadline fired)", resp.StatusCode)
+	}
+
+	timing := resp.Header.Get("Server-Timing")
+
+	if dur, ok := timingDuration(timing, "headers"); ok && dur > float64(hopBudget.Milliseconds())+100 {
+		t.Errorf("headers hop = %.1fms, stretched past the %s budget by a stalling upstream", dur, hopBudget)
+	}
+}
+
 func TestServeStackEndToEnd(t *testing.T) {
 	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
 	if err != nil {
