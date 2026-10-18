@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -398,14 +399,14 @@ func conditionalReplay(
 	tb.Helper()
 
 	var (
-		status  int
-		headers http.Header
-		body    string
-		etag    string
+		replayStatus  int
+		replayHeaders http.Header
+		replayBody    string
+		etag          string
 	)
 
 	for range 3 {
-		status, headers, body = get(tb, client, base, path, nil)
+		_, headers, body := get(tb, client, base, path, nil)
 
 		etag = headers.Get("ETag")
 		if etag == "" {
@@ -413,19 +414,15 @@ func conditionalReplay(
 		}
 
 		replay := map[string]string{"If-None-Match": etag}
-		for k, v := range extraHeaders {
-			replay[k] = v
-		}
+		maps.Copy(replay, extraHeaders)
 
-		var replayBody string
-
-		status, headers, replayBody = get(tb, client, base, path, replay)
-		if status != http.StatusOK || replayBody != body {
-			return status, headers, replayBody, etag
+		replayStatus, replayHeaders, replayBody = get(tb, client, base, path, replay)
+		if replayStatus != http.StatusOK || replayBody != body {
+			return replayStatus, replayHeaders, replayBody, etag
 		}
 	}
 
-	return status, headers, body, etag
+	return replayStatus, replayHeaders, replayBody, etag
 }
 
 // assertConditionalGET cycles a path through the full revalidation
@@ -720,32 +717,7 @@ func TestCacheSemanticsHardening(t *testing.T) {
 
 	// HEAD rides the same validators: a conditional HEAD answers 304 with
 	// no body, so a HEAD-based monitor gets the same revalidation economy.
-	// The tag comes from the conditionalReplay fetch above (fresh = the
-	// representation is stable right now); one stall-retry mirrors it.
-	for range 2 {
-		req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, ts.FullChainURL+"/frag/dashboard", nil)
-		if err != nil {
-			t.Fatalf("build HEAD request: %v", err)
-		}
-
-		req.Header.Set("If-None-Match", etag)
-
-		resp, err := client.Do(req)
-		if err != nil {
-			t.Fatalf("HEAD /frag/dashboard: %v", err)
-		}
-
-		headBody, _ := io.ReadAll(resp.Body)
-		_ = resp.Body.Close()
-
-		if resp.StatusCode == http.StatusNotModified && len(headBody) == 0 {
-			break
-		}
-
-		if resp.StatusCode != http.StatusNotModified || len(headBody) != 0 {
-			t.Errorf("conditional HEAD = %d with %d body bytes, want 304 with none", resp.StatusCode, len(headBody))
-		}
-	}
+	assertConditionalHEAD(t, client, ts.FullChainURL, "/frag/dashboard", etag)
 
 	// Buffered renders carry an exact Content-Length: render() writes the
 	// whole page in one Write, and a missing/_chunked length would break
@@ -762,6 +734,38 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	// Trailing-slash policy is intentionally unpinned here: the owning
 	// pass is still deciding between a canonical redirect and the mux's
 	// exact-pattern 404 (05-40 M11) — pin it once that settles.
+}
+
+// assertConditionalHEAD pins the HEAD-revalidation leg: a conditional HEAD
+// answers 304 with no body, so a HEAD-based monitor gets the same
+// revalidation economy. The caller supplies a FRESH tag (minted by
+// conditionalReplay against a stable representation); one retry rides out
+// a stamp-boundary tick between the minting and the HEAD.
+func assertConditionalHEAD(t *testing.T, client *http.Client, base, path, etag string) {
+	t.Helper()
+
+	for range 2 {
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, base+path, nil)
+		if err != nil {
+			t.Fatalf("build HEAD request: %v", err)
+		}
+
+		req.Header.Set("If-None-Match", etag)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("HEAD %s: %v", path, err)
+		}
+
+		headBody, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotModified && len(headBody) == 0 {
+			return
+		}
+
+		t.Errorf("conditional HEAD = %d with %d body bytes, want 304 with none", resp.StatusCode, len(headBody))
+	}
 }
 
 // benchRoundTrip issues one GET through the served chain and drains the
