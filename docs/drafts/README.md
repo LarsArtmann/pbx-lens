@@ -15,6 +15,9 @@
 | `2026-10-12_v0.2.0-release-notes.md`                             | —                       | local artifact — EXECUTED: v0.2.0 tagged 2026-10-15, gh release cut              |
 | `go-appkit-testkit-drain-delay-cost.md`                          | go-appkit#26            | FILED — CLOSED upstream 2026-10-17 (fold-in ready, TODO_LIST row)                |
 | `go-appkit-testkit-start-timeout-saturation.md`                  | —                       | LIVE — unfiled, owner review box unchecked by design (T6 triage, 2026-10-18)     |
+| `statix-exit0-config-error-footgun.md`                           | —                       | LIVE — unfiled, owner review box unchecked by design (T9, 2026-10-18; dupe search clean: molybdenumsoftware/statix) |
+| `templ-components-card-titletag-h3-level-skip.md`                | —                       | LIVE — unfiled, owner review box unchecked by design (T8, 2026-10-18; dupe search clean) |
+| `templ-components-copybutton-empty-nonce-unconditioned-script.md` | —                       | LIVE — unfiled, owner review box unchecked by design (T7, 2026-10-18; cross-refs #63/#24) |
 | `go-atomic-write-commit-primitive.md`                            | —                       | LIVE — unfiled, owner review box unchecked by design                             |
 | `go-cqrs-lite-cqrs-lint-c009-e005.md`                            | go-cqrs-lite#64         | FILED — CLOSED upstream 2026-10-17 (C009 half; E005 superseded by ADR-0123 note) |
 | `go-cqrs-lite-memory-engine-column-resolution.md`                | go-cqrs-lite#63         | FILED — CLOSED upstream 2026-10-17                                               |
