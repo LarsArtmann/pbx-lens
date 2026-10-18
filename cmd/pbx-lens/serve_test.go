@@ -120,8 +120,8 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 
 	obs := calls.Observation{
 		NativeID: "conv-rec", Kind: calls.SourceTelnyxConversation,
-		Direction: calls.DirectionOutbound,
-		StartedAt: time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+		Direction:  calls.DirectionOutbound,
+		StartedAt:  time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
 		FromNumber: "+17287289311", ToNumber: "+15555550123",
 		RecordingRef: "rec-1",
 	}
@@ -177,7 +177,11 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 	for _, name := range []string{"metadata", "headers"} {
 		dur, ok := timingDuration(timing, name)
 		if !ok {
-			t.Fatalf("Server-Timing %q missing the %q hop (streaming routes must time their pre-first-write hops)", timing, name)
+			t.Fatalf(
+				"Server-Timing %q missing the %q hop (streaming routes must time their pre-first-write hops)",
+				timing,
+				name,
+			)
 		}
 
 		if dur > float64(hopBudget.Milliseconds()) {
@@ -205,7 +209,9 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"data":{"id":"rec-1","download_urls":{"wav":"` + upstream.URL + `/audio.wav","mp3":""}}}`))
+		_, _ = w.Write(
+			[]byte(`{"data":{"id":"rec-1","download_urls":{"wav":"` + upstream.URL + `/audio.wav","mp3":""}}}`),
+		)
 	}))
 	t.Cleanup(api.Close)
 
@@ -218,8 +224,8 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 
 	obs := calls.Observation{
 		NativeID: "conv-rec", Kind: calls.SourceTelnyxConversation,
-		Direction: calls.DirectionOutbound,
-		StartedAt: time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+		Direction:  calls.DirectionOutbound,
+		StartedAt:  time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
 		FromNumber: "+17287289311", ToNumber: "+15555550123",
 		RecordingRef: "rec-1",
 	}

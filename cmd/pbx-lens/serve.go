@@ -217,17 +217,28 @@ func serve(args []string) {
 // cannedStaleOps is the -wired-ops fixture payload: the wire shape /api/ops
 // serves, carrying an unambiguous stale verdict (age 2h, stale=true).
 func cannedStaleOps() any {
+	const (
+		fixtureOfferedCDR     = 12
+		fixtureRecordedCDR    = 12
+		fixtureOfferedTelnyx  = 8
+		fixtureRecordedTelnyx = 8
+		fixturePassAgeSecs    = 7200.0
+	)
+
 	return map[string]any{
 		"sources": map[string]any{
 			"freeswitch-cdr": map[string]any{
-				"offered": 12, "recorded": 12, "corrected": 0, "rejected": []string{},
+				"offered": fixtureOfferedCDR, "recorded": fixtureRecordedCDR, "corrected": 0, "rejected": []string{},
 			},
 			"telnyx-conversation": map[string]any{
-				"offered": 8, "recorded": 8, "corrected": 0, "rejected": []string{},
+				"offered":   fixtureOfferedTelnyx,
+				"recorded":  fixtureRecordedTelnyx,
+				"corrected": 0,
+				"rejected":  []string{},
 			},
 		},
-		"last_pass":            time.Now().Add(-2 * time.Hour).UTC(),
-		"last_pass_age_seconds": 7200.0,
+		"last_pass":             time.Now().Add(-2 * time.Hour).UTC(),
+		"last_pass_age_seconds": fixturePassAgeSecs,
 		"stale":                 true,
 	}
 }
