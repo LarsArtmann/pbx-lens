@@ -3,7 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"flag"
 	"net/http"
 	"net/http/httptest"
@@ -275,7 +275,7 @@ func TestIngestTelnyxDryRunReportsWithoutWrites(t *testing.T) {
 		writeStubJSON := func(v any) {
 			w.Header().Set("Content-Type", "application/json")
 
-			if err := json.NewEncoder(w).Encode(v); err != nil {
+			if err := json.MarshalWrite(w, v); err != nil {
 				t.Errorf("encode stub response: %v", err)
 			}
 		}
