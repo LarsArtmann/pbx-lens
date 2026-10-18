@@ -55,11 +55,10 @@ function fail(msg) {
     console.log("/ops ->", resp.status());
 
     const alert = await page.evaluate(() => {
-      const el = [...document.querySelectorAll("[role='alert'], [role='status']")]
-        .find((n) => n.textContent.includes("Poller pass is stale"));
-      return el
-        ? { found: true, text: el.textContent.slice(0, 200) }
-        : { found: false };
+      const el = [...document.querySelectorAll("[role='alert'], [role='status']")].find((n) =>
+        n.textContent.includes("Poller pass is stale"),
+      );
+      return el ? { found: true, text: el.textContent.slice(0, 200) } : { found: false };
     });
     console.log("stale alert rendered:", alert.found, alert.found ? `(${alert.text.trim()}…)` : "");
     if (!alert.found) fail("-wired-ops /ops did not render the 'Poller pass is stale' alert");
