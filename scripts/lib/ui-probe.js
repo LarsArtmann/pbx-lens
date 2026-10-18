@@ -253,11 +253,15 @@ function seedProbeDB(bin, dbPath, opts = {}) {
 // A successful ping against a dead child means an older serve still owns
 // the port — captures would silently hit a stale binary + CSS, so it
 // fails loudly instead.
-function serveProbe(bin, dbPath, port) {
+function serveProbe(bin, dbPath, port, extraServeArgs = []) {
   const base = `http://127.0.0.1:${port}`;
-  const serve = spawn(bin, ["serve", "-db", dbPath, "-addr", `127.0.0.1:${port}`], {
-    stdio: "ignore",
-  });
+  const serve = spawn(
+    bin,
+    ["serve", "-db", dbPath, "-addr", `127.0.0.1:${port}`, ...extraServeArgs],
+    {
+      stdio: "ignore",
+    },
+  );
   const http = require("http");
   const deadline = Date.now() + 20000;
   return new Promise((resolve, reject) => {

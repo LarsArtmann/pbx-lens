@@ -92,6 +92,11 @@ func serve(args []string) {
 	cdrFile := fs.String("cdr-file", "", "FreeSWITCH Master.csv re-ingested every poll (empty = skip)")
 	webhookLog := fs.String("webhook-log", "", "receiver webhook JSONL re-ingested every poll (empty = skip)")
 	transcriptsDir := fs.String("transcripts-dir", "", "agent transcripts dir re-scanned every poll (empty = skip)")
+	wiredOps := fs.Bool(
+		"wired-ops",
+		false,
+		"dev probe fixture: serve a canned STALE poller snapshot on /ops and /api/ops instead of the live counters",
+	)
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
@@ -149,6 +154,16 @@ func serve(args []string) {
 
 	counters := cli.NewSourceCounters(*pollEvery)
 
+	// The probe fixture (T20): a canned STALE verdict (2h-old pass, past two
+	// poll intervals) so the browser probes can assert the stale alert
+	// renders without waiting on real poll cadences. Dev-only — a production
+	// serve must never flip it, the /ops page would cry wolf forever.
+	opsProvider := counters.SnapshotAny
+
+	if *wiredOps {
+		opsProvider = cannedStaleOps
+	}
+
 	recordings := web.RecordingOptions{RecordingsDir: *recordingsDir, UpstreamTimeout: *recTimeout}
 
 	var telnyxClient *telnyx.Client
@@ -168,7 +183,7 @@ func serve(args []string) {
 		sys,
 		web.Options{
 			Recordings: recordings, Search: index, Log: slogLog,
-			Ops: counters.SnapshotAny, Cache: cacheStats,
+			Ops: opsProvider, Cache: cacheStats,
 			RetentionMaxAge: *maxAge,
 		},
 	)
@@ -196,6 +211,24 @@ func serve(args []string) {
 	// timeout context here, or the server would die with it.
 	if err := svc.Run(context.Background()); err != nil {
 		fatal(err)
+	}
+}
+
+// cannedStaleOps is the -wired-ops fixture payload: the wire shape /api/ops
+// serves, carrying an unambiguous stale verdict (age 2h, stale=true).
+func cannedStaleOps() any {
+	return map[string]any{
+		"sources": map[string]any{
+			"freeswitch-cdr": map[string]any{
+				"offered": 12, "recorded": 12, "corrected": 0, "rejected": []string{},
+			},
+			"telnyx-conversation": map[string]any{
+				"offered": 8, "recorded": 8, "corrected": 0, "rejected": []string{},
+			},
+		},
+		"last_pass":            time.Now().Add(-2 * time.Hour).UTC(),
+		"last_pass_age_seconds": 7200.0,
+		"stale":                 true,
 	}
 }
 

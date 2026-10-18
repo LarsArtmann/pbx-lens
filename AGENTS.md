@@ -129,11 +129,10 @@ webphone later gets a read-only deep link, never a data dependency.
   ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
   Compression → ETag; the ordering doctrine, the ETag skip policy, the
   render-buffering trap, and the `Cache-Control: no-cache` revalidation contract) lives in
-  docs/http-stack.md — read it before touching caching or timing. Every UI
-  route is a query or a proxy, never a write. The recording proxy's two
-  upstream hops are bounded by `web.DefaultUpstreamTimeout` (30 s; `serve
-  -recording-timeout`): metadata fetch deadline + WAV response headers,
-  body streams unbounded. Exports and the dashboard STREAM via keyset
+  docs/http-stack.md — read it before touching caching, timing, or the
+  recording route (that doc also owns the recording proxy's two-hop
+  upstream budget). Every UI
+  route is a query or a proxy, never a write. Exports and the dashboard STREAM via keyset
   pagination (`StreamExportCalls`, 5k-row pages, memory-bounded, no row
   cap); the dashboard's day buckets resolve in Europe/Berlin (owner R2
   2026-10-12 — bare date filters too), an idle index drifts out of the
