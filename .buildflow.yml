@@ -2,8 +2,13 @@ default_step_timeout: 10m
 # Vendored browser assets must never be reformatted or linted: oxfmt's
 # webFilePatterns has no *.min.js exclude and pretty-printed htmx.min.js
 # (1 line -> 3415) on two gate runs (2026-10-12). Global exclude wins.
+# styles.css is GENERATED (flake-pinned tailwindcss; regenerate ONLY via
+# `nix run .#update-styles`) — prettier-format flagged it in the
+# 2026-10-18 full-gate receipt; a foreign formatter rewrite would re-red
+# the CSS gate (the 2026-10-15 incident class).
 exclude:
   - "*.min.js"
+  - "styles.css"
 # Tool dispositions (2026-10-17 triage, TODO row "Buildflow tooling triage
 # bundle"; full rationale in docs/buildflow-dev-gate.md):
 # - lychee: needs the fleet GITHUB_TOKEN policy first (GitHub links in the
