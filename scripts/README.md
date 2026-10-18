@@ -27,19 +27,16 @@ screenshots, 18107 verify, 18110 style, 18116 staleness) remain for
 reproducibility. A stale serve on a chosen port still fails loudly instead
 of capturing against a dead binary.
 
-Codegen bootstrap (M4/F14): every probe runs `lib.ensureCodegen()` first —
-it regenerates `*_templ.go` when a `.templ` is newer (go.mod-pinned
-`go tool templ`, NEVER the devShell templ — drift exists) and rebuilds
-`styles.css` when missing (flake-pinned tailwindcss via `nix develop -c`),
-so a clean checkout can't probe against empty or stale assets. `go:embed`
-is compile-time, so this runs BEFORE the binary build.
-
 Codegen bootstrap (M4/F14, hash-primary since 05-40 M12/F36): every probe
 runs `lib.ensureCodegen()` first — it hashes the `.templ` inputs + app.css
 into a ledger file (`.codegen-inputs.sha256`, gitignored) and regenerates
 whenever the hash moves (branch switches with lying mtimes) OR the per-file
 mtime fallback fires (each `*_templ.go` vs its own `.templ`; a missing
-generated file counts as stale). The old global-newest mtime comparison
+generated file counts as stale), so a clean checkout can't probe against
+empty or stale assets. The templ pass uses the go.mod-pinned `go tool templ`
+(NEVER the devShell templ — drift exists); the tailwind pass runs the
+flake-pinned `nix develop -c` builder (the committed styles.css refreshes
+ONLY via `nix run .#update-styles`). The old global-newest mtime comparison
 never converged — templ skips rewriting unchanged outputs, preserving their
 older mtimes — so every probe paid a no-op `templ generate`. The ledger and
 regeneration run before the binary build (`go:embed` is compile-time).

@@ -57,6 +57,19 @@ ExtraMiddlewares, in strict order:
 the pinned v0.6.1 (etag.go:67-88); wiring them into `/api/ops` counters is a
 TODO_LIST row.
 
+## Recording proxy: two bounded hops, unbounded body (T19 extraction, 2026-10-18)
+
+The recording proxy (`/recording` route, WAV with MP3 fallback) makes TWO
+upstream hops, both bounded by `web.DefaultUpstreamTimeout` (30 s; the serve
+flag `-recording-timeout` overrides): (1) the recording-metadata fetch
+deadline and (2) the WAV response-headers deadline. The BODY then streams
+unbounded (WriteTimeout is NoTimeout by contract) — a slow download never
+trips the hop budget, and the Server-Timing metrics name each hop
+(pre-first-write only, per the Server-Timing rule above). Total request
+lifetime is therefore bounded by hops + body size, never by a global
+deadline that would truncate large recordings (the former 30 s WriteTimeout
+did exactly that).
+
 ## Render buffering (the flush trap)
 
 `web.render` renders templ components into a `bytes.Buffer` and performs ONE

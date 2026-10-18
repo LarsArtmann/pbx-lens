@@ -60,6 +60,29 @@ func scrubVolatileTime(body string) string {
 	return body
 }
 
+// TestGoldenScrubberCoversFooterStamp pins the scrubber's contract against
+// the PolledRegion footer copy (T18/F71): if the copy drifts (wording or
+// attribute order), the volatile patterns silently stop matching and the
+// goldens would capture raw wall-clock stamps — flaking on seconds or
+// baking the minute into a "structure" snapshot. This test fails instead,
+// pointing at the pattern+replacement pair to update alongside the copy.
+func TestGoldenScrubberCoversFooterStamp(t *testing.T) {
+	body := `<time datetime="2026-10-18T01:23:45+02:00" tabindex="-1">Updated 01:23:45</time>`
+
+	// The optional-tabindex group is CONSUMED by the pattern and the
+	// replacement re-emits the element without it — the goldens' established
+	// shape (changing that is a golden -update sweep, not a scrub fix).
+	want := `<time datetime="SCRUBBED">Updated HH:MM:SS</time>`
+
+	if got := scrubVolatileTime(body); got != want {
+		t.Errorf(
+			"footer stamp scrub mismatch — a goldenVolatile pattern no longer matches the footer copy; update the pattern AND its goldenReplacements entry together with the copy change\n got %q\nwant %q",
+			got,
+			want,
+		)
+	}
+}
+
 func goldenPage(t *testing.T, mux *http.ServeMux, name, path string) {
 	t.Helper()
 
