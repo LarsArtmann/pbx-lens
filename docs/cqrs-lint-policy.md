@@ -63,6 +63,16 @@ DECISION.
   `time.NewTicker`; the scheduling module's durable TimerStore buys nothing
   for a stateless re-ingest loop whose only failure mode is "poll again next
   tick". Same class of one-shot/periodic CLI wait as P006.
+  Suppression-channel note (2026-10-18, T10): cqrs-lint v4.17.0 has NO
+  inline suppression (it does not consume `//nolint:...` or any
+  `//cqrs-lint:ignore` comment — verified against `pkg/rules/adoption/f009.go`
+  and the analyzer source) and no per-path exclude in the config loader; the
+  only channels are the preset's `rules.disable` list (repo-wide) and preset
+  choice. For one deliberate finding like this F009, repo-wide disable would
+  over-suppress, so the surviving channel is this documented-decision file.
+  If an inline-suppression mechanism lands upstream, migrate the surviving
+  warning-level findings to it (an upstream suggestion is drafted in
+  docs/drafts/ only if the owner wants one filed — none is queued).
 - **D014 (deliberate)**: `CallCorrected.Enrichment` carries no json tag
   because the field is not persisted as a flat column; the whole event
   payload is stored as the stream record. Adding a tag would be noise.
