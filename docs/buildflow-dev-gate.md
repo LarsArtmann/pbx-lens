@@ -215,20 +215,49 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   `git log -1` FIRST — if a daemon commit landed mid-run, re-run the
   failed step on the settled tree before diagnosing deeper.
 
-- **Gate tools trail module toolchain floors (paid for, 2026-10-15)**: the
-  go-appkit v0.9.0 bump moved go.mod's floor to 1.27.2, and the full gate
-  then failed TWO steps — `go` and `govalid` — with "requires go >= 1.27.2
-  (running go 1.27.0)": buildflow's bundled tool binaries are compiled in
-  its own nix closure, which still carried go 1.27.0. The repo's own
-  environments were already fine (devShell go_1_27 = 1.27.2, shell go
-  auto-switches), so `go build/test`, `golangci-lint`, and `nix build`
-  (exit 0, `pbx-lens 0.2.0` printed from the packaged binary) all passed
-  individually — the documented per-casualty fallback. `buildflow upgrade`
-  refuses (dirty-checkout build has no install channel). Fix belongs in
-  the BuildFlow repo (rebuild from a clean checkout so the closure picks
-  up current nixpkgs go); filed as BuildFlow#56. Until it lands: after
-  ANY go.mod floor bump, expect the buildflow gate's go/govalid steps to
-  fail first and verify them individually per this file's doctrine.
+- **Gate closed green in FULL mode from the clean checkout — the T2
+  receipt (2026-10-18 06:17, commit b4a9970, tree clean and daemon-quiet
+  throughout)**: `nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow
+  --build-mode full --max-time 15m` = **57 success, 0 failed, 0 skipped
+  (+5 via config)**, exit 0, wall 1m0.8s, run `20261018-041735-4709f40d`,
+  launched at load **14.41/35.00** — strictly inside the load policy. A
+  first run 6 minutes earlier (06:11, run `20261018-041204-bc0e3b6d`, wall
+  2m18.7s cold nix) also closed 57/0/0 with 1-min load 17.24 — 2.24 over
+  the 1-min threshold at launch after the 79-minute window wait; zero
+  starvation casualties either run and exit 0 (not 75), so both stand,
+  the strict one is the banked receipt. test-race ✔ (27.7s),
+  test-coverage ✔ (26.0s), nix-build ✔, nix-flake-check ✔,
+  license-check ✔, and go-generate/govalid ran green IN-GATE — the
+  BuildFlow#56 tool-floor fix holds (binary ef32fa0 reports go1.27.2).
+  The literal count is 57, not the 74 of the 2026-10-12 receipt: the
+  pipeline compiles 118 tools → 85 DAG nodes and the executed set drifts
+  with the fleet — bank the literal numbers per run. Findings: 292 across
+  14 tools; the receipt is CI-equivalent on lint because golangci-lint
+  reports ZERO findings (the advisory-gap bullet above is the doctrine).
+  The receipt surfaced two real nits, fixed immediately: dprint-format on
+  FEATURES.md (table padding) and prettier-format on the GENERATED
+  styles.css — excluded in `.buildflow.yml` next to `*.min.js` (scoped
+  `buildflow -s prettier-format` re-run clean). SQLITE_BUSY
+  resume-checkpoint warnings were state-DB contention noise; no step was
+  affected. The timing-regression verdicts at run end are load variance
+  against the baseline, not step failures.
+- **Gate tools trail module toolchain floors (paid for, 2026-10-15; CLOSED
+  2026-10-18)**: the go-appkit v0.9.0 bump moved go.mod's floor to 1.27.2,
+  and the full gate then failed TWO steps — `go` and `govalid` — with
+  "requires go >= 1.27.2 (running go 1.27.0)": buildflow's bundled tool
+  binaries are compiled in its own nix closure, which still carried go
+  1.27.0. The repo's own environments were already fine (devShell go_1_27
+  = 1.27.2, shell go auto-switches), so `go build/test`, `golangci-lint`,
+  and `nix build` all passed individually — the documented per-casualty
+  fallback that made the v0.2.0-era receipt a workaround instead of a
+  literal pass. Fix landed upstream: BuildFlow#56 CLOSED 2026-10-17, the
+  fleet binary rebuilt (ef32fa0, `buildflow version` reports go1.27.2),
+  and the 2026-10-18 T2 receipt above ran go-generate/govalid green
+  IN-GATE — the workaround is retired. Lesson kept: after ANY go.mod
+  floor bump, expect the gate's tool steps to trail until the fleet
+  binary rebuilds; if a stray `go-mod-*` step ever rewrites the go.mod
+  directive to `go 1.27`, restore it (`git restore go.mod`) — a 1.27
+  directive breaks `go list`.
 
 - **golangci findings are ADVISORY in the gate, FATAL in CI (paid for,
   2026-10-18, the ca31221 §e4 audit)**: the 00:37:27Z dev-gate green and

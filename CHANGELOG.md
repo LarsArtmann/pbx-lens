@@ -82,6 +82,29 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   documented dispositions; no new relevant tool) and the statix invocation
   contract pinned in `.buildflow.yml` (bare `statix check`; re-audit on
   nixpkgs bumps).
+- **The literal full-gate receipt exists** (T2, closes the v0.2.0-era
+  BuildFlow#56 workaround): full-mode gate from the clean checkout —
+  57 success / 0 failed / 0 skipped (+5 via config), exit 0, at load
+  14.41/35.00 (run `20261018-041735-4709f40d`; a second green run 6 min
+  earlier), test-race/coverage/nix-build/flake-check/license-check all ✔
+  and go-generate/govalid green IN-GATE on the rebuilt binary — go and
+  govalid are no longer verified individually. The gate doc gains the
+  receipt and the lint-parity doctrine: buildflow reports golangci
+  findings as ADVISORY (the ca31221 gate-green/CI-red incident, solved by
+  run evidence — the gate saw the same trio and passed the step), so a
+  receipt is CI-equivalent only with ZERO golangci findings; this one has
+  them. The generated styles.css joined `*.min.js` in the .buildflow.yml
+  exclude (prettier flagged it; foreign-formatter rewrite would re-red the
+  CSS gate).
+- **cut-release.sh rehearsed end-to-end** (T13): full body green on
+  b4a9970 — nix build, dev gate, all four probe suites (42 PNGs), and the
+  real remote-CI-green check — with abort-before-push proven by a
+  pre-created scratch v0.0.0 and every quiesce guard proven to fire
+  (dirty tree, unpushed HEAD, over-policy load at 34.80/61.08, and a
+  stubbed-gh red CI verdict). The `go list -m` retry loop stays
+  unimplemented: the tag guard makes the proxy tail unreachable in a
+  rehearsal, and no real release has shown the lag (YAGNI; the FAIL
+  message already instructs the retry). Receipt in scripts/README.
 
 ### Changed — 2026-10-17 (docs-health pass: live-set close-out + planning archive)
 

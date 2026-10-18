@@ -148,17 +148,16 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
 
 ## b) PARTIALLY DONE
 
-1. **T2 — the literal 70/70 full-gate receipt**: the session ran the DEV
-   gate to green (twice, the second time on the fix), and the load policy
-   window is OPEN right now (13.3/15.9/18.7) — but the FULL buildflow gate
-   from a clean checkout was never STARTED (the dispatch arrived as the
-   window opened). F6 (bank the receipt in docs/buildflow-dev-gate.md) and
-   F7 (close the v0.2.0 workaround note in CHANGELOG) wait on that run.
-2. **T13 — cut-release.sh full-body dry-run**: quiesce conditions are ALL
-   met at this moment (load in policy, clean tree, pushed HEAD `9c94f85`,
-   remote CI green) — the dry-run has not been attempted. F51 (the
-   `go list -m` sleep-10 → retry loop) is unknown until it runs; F52
-   (runbook receipt) waits on it.
+1. ~~**T2 — the literal 70/70 full-gate receipt**~~ → done 06:17 same
+   day: FULL-mode gate from the clean checkout = 57/0/0, exit 0, load
+   14.41/35.00 (receipt in docs/buildflow-dev-gate.md); F6 banked, F7
+   closed (the v0.2.0 BuildFlow#56 workaround retired, govalid green
+   in-gate).
+2. ~~**T13 — cut-release.sh full-body dry-run**~~ → done 06:19-06:24
+   same day: full body green (gate + 4 probe suites + real CI check) with
+   abort-before-push proven via a scratch v0.0.0, every quiesce guard
+   proven to fire; F51 dispositioned YAGNI (proxy tail unreachable in a
+   rehearsal), F52 receipt in scripts/README.
 3. **T7-T10 filings**: drafting, dupe-searching, and ledger staging are
    100% done; the actual FILED steps (issue creation, FILED banners, the
    gotchas statix issue-link F36) are 0% — an owner-go-ahead public act by
@@ -270,17 +269,16 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
 
 ## f) Top 50 things we should get done next
 
-1. **T2 NOW — the policy window is open (13.3/15.9/18.7) and decaying**:
-   run the full buildflow gate from the clean checkout; bank the literal
-   receipt (exit code + step counts + load at start) in
-   docs/buildflow-dev-gate.md.
+1. ~~**T2 NOW**~~ — done 2026-10-18 06:17 (57/0/0 receipt banked).
 2. F7 immediately after: close the v0.2.0 workaround note in the CHANGELOG
    release section, pointing at the fresh receipt.
-3. **T13 in the same window**: cut-release.sh full-body dry-run (guard
-   rails: dirty tree, unpushed HEAD, CI red); implement the `go list -m`
-   retry loop if it flakes; record the runbook receipt in scripts/README.
-4. Audit dev-gate vs CI lint step coverage (§e4) and record the matrix in
-   the gate doc — the dev gate must not be passable where CI is red.
+3. ~~**T13 in the same window**~~ — done 2026-10-18 06:24 (all guards
+   proven; `go list -m` loop = YAGNI; receipt in scripts/README).
+4. ~~Audit dev-gate vs CI lint step coverage (§e4)~~ — done 2026-10-18:
+   invocations identical dev/full/CI (`golangci-lint run ./...`, v2.14);
+   the gate classifies findings ADVISORY — the ca31221 run carried the
+   exact CI trio as advisories. Matrix + zero-findings receipt doctrine
+   in the gate doc.
 5. Owner: answer sheet §1-§11 (T1) — unblocks six High/Medium rows.
 6. Owner §g1: the 3d93fdf lint-policy intent (T12) — unblocks T5 and the
    CI budget job.

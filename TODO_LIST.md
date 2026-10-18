@@ -31,9 +31,12 @@
 
 ## Unblocked (owner answered, work remains)
 
-| Task                                                                                                                                                                                                          | Status    | Impact | Effort | Evidence                                                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------ |
-| Re-run the full buildflow gate from a clean checkout for the literal 70/70 receipt (BuildFlow#56 landed 2026-10-17: gate tools now meet the module go floor); close the workaround note in the v0.2.0 receipt | 🔴 `TODO` | Low    | 30min  | BuildFlow#56 CLOSED; load policy: 1-min < 15 AND 15-min < 40; docs/buildflow-dev-gate.md; CHANGELOG v0.2.0 receipt |
+None — the last unblocked row (the full-gate receipt) closed 2026-10-18
+(CHANGELOG). Every open row below is blocked on an owner answer, an
+external gate, or a scheduled window.
+
+| Task | Status | Impact | Effort | Evidence |
+| ---- | ------ | ------ | ------ | -------- |
 
 ## Blocked (owner / external gates)
 
@@ -65,7 +68,6 @@
 | Watch dependabot-core#16538 and answer maintainer questions; owner decides gomod pinning afterward                                                                                                                                                                                                                                                                       | 🔵 `BLOCKED` | Low    | 10min  | owner call pending (#16538 context); docs/status/archived/2026-10-12_10-33 §f.29/§f.30                                                                 |
 | Gate-hardening residue (one item gated on the lint-policy answer): `golangci-lint config verify` in pre-commit or CI — choose the surface per the 3d93fdf answer, then prove it rejects the historical gohumanize config (reverted)                                                                                                                                      | 🔵 `BLOCKED` | Low    | 30min  | the T12 lint-policy row below; docs/status/archived/2026-10-17_01-45 §f8; the tripwire + CI nix lane + flake triage landed 2026-10-18 (CHANGELOG)      |
 | Upstream filings queue — FILE the four staged drafts (owner go-ahead per filing): CopyButton empty-nonce unconditioned script (cross-refs #63/#24), Card TitleTag h3 level-skip, statix exit-0-on-config-error (all docs/drafts/, dupe searches clean), and optionally the go-appkit startTimeout saturation flake; cqrs-lint F009 resolved as documentation (no filing) | 🔵 `BLOCKED` | Low    | 30min  | docs/drafts/README.md (4 LIVE rows); docs/decisions/2026-10-17_owner-answer-sheet.md; docs/upstream-filings.md                                         |
-| Release/tooling rehearsals residue: cut-release.sh full-body dry-run on a quiet machine (+ `go list -m` retry loop if it flakes) — load policy 1-min < 15 AND 15-min < 40; the ingest-telnyx dry-run parity and the .buildflow.yml statix contract comment landed 2026-10-18                                                                                             | 🔵 `BLOCKED` | Low    | 30min  | docs/status/archived/2026-10-17_08-02 §f.23/45; `scripts/cut-release.sh`; load policy in AGENTS.md                                                     |
 | Lint-policy intent (daemon commit 3d93fdf): the `lll` exclusion scope, `run.go` "1.27" vs the 1.27.2 floor, tagliatelle rule changes — confirm deliberate or formalize/revert                                                                                                                                                                                            | 🔴 `TODO`    | Low    | 15min  | docs/status/archived/2026-10-17_01-45 §b2/§g1; `.golangci.yml`                                                                                         |
 | Hooks residue (CI variant, gated on the lint-policy answer): an AGENTS-budget CI job (`wc -l` gate mirroring the hook) — prove it fails on a 220-line seed (reverted). The hook chain + daemon routing landed 2026-10-18 (hooksPath set in the primary clone)                                                                                                            | 🔵 `BLOCKED` | Low    | 15min  | the T12 lint-policy row below; `.githooks/pre-commit`; scripts/README check-agents-budget row                                                          |
 
