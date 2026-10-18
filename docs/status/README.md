@@ -11,10 +11,11 @@ archived/** — the living backlog is [TODO_LIST.md](../../TODO_LIST.md).
 
 ## Live reports
 
-| Report                                                                        | State                                                   |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------- |
-| `2026-10-18_00-55_docs-health-pass-self-review-and-remote-ci-verdict.md`      | newest harvest source — self-review + remote-CI verdict |
-| `2026-10-18_00-18_docs-health-pass-live-set-closeout-and-planning-archive.md` | same-pass companion — the close-out ledger itself       |
+| Report                                                                        | State                                                                |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `2026-10-18_02-40_pareto-plan-execution-gate-hardening-probes-rehearsals.md`  | newest — pareto plan execution receipt; §e carries 3 owner questions |
+| `2026-10-18_00-55_docs-health-pass-self-review-and-remote-ci-verdict.md`      | self-review + remote-CI verdict (§g questions still open)            |
+| `2026-10-18_00-18_docs-health-pass-live-set-closeout-and-planning-archive.md` | same-pass companion — the close-out ledger itself                    |
 
 (A single live report is the steady state after the 2026-10-17 second pass:
 the previous sweep emptied the queue, so each new pass starts from one
