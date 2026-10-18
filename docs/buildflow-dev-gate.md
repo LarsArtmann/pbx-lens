@@ -230,6 +230,23 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   ANY go.mod floor bump, expect the buildflow gate's go/govalid steps to
   fail first and verify them individually per this file's doctrine.
 
+- **golangci findings are ADVISORY in the gate, FATAL in CI (paid for,
+  2026-10-18, the ca31221 §e4 audit)**: the 00:37:27Z dev-gate green and
+  the CI lint red landed on the SAME commit, and run
+  `20261018-003727-d08c3565` explains it — its step table shows
+  `golangci-lint success 1.3s` while its findings section carries the
+  exact CI trio (`gocyclo ×1, ineffassign ×1, modernize ×1`). Buildflow
+  reports lint findings as non-fatal advisories; CI's golangci action
+  exits non-zero on any finding. NOT a stale pass and NOT version skew:
+  no-cache dry-runs of dev AND full both plan the identical
+  `golangci-lint run --allow-parallel-runners ./...` (v2.14.0 in the
+  devShell = the CI pin; repo config read in all three lanes). Receipt
+  consequence: "N/N steps success" is NOT lint parity — a receipt is
+  CI-equivalent only when the run's findings section shows ZERO
+  golangci-lint entries (`buildflow explain <run-id> | grep
+  'golangci-lint:'` empty). The pre-push `golangci-lint run ./...`
+  discipline stays the belt to this braces.
+
 - **Tooling triage bundle (2026-10-17, TODO row closed)**: the recurring
   "N tools unavailable (health check failed)" warning is dispositioned.
   `buildflow doctor` marks 32 fleet-wide tools missing, but the gate only
