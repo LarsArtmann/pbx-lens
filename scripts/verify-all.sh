@@ -60,6 +60,9 @@ node scripts/verify-style-contract.js
 echo "=== verify-staleness-live ==="
 node scripts/verify-staleness-live.js
 
+echo "=== verify-ops-verdict ==="
+node scripts/verify-ops-verdict.js
+
 if [ "$FAST" -eq 1 ]; then
 	echo "verify-all: contracts passed (--fast: screenshot sweep skipped)"
 	exit 0

@@ -55,10 +55,10 @@ function fail(msg) {
     console.log("/ops ->", resp.status());
 
     const alert = await page.evaluate(() => {
-      const el = [...document.querySelectorAll("[role='alert'], .lens-alert, div")]
+      const el = [...document.querySelectorAll("[role='alert'], [role='status']")]
         .find((n) => n.textContent.includes("Poller pass is stale"));
       return el
-        ? { found: true, text: el.textContent.slice(0, 160) }
+        ? { found: true, text: el.textContent.slice(0, 200) }
         : { found: false };
     });
     console.log("stale alert rendered:", alert.found, alert.found ? `(${alert.text.trim()}…)` : "");
