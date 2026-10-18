@@ -11,12 +11,17 @@ T2 + cut-release dry-run T13 remain policy-gated: 1-min < 15 AND 15-min < 40).
   real statix green) and **T4 CI nix lane** (statix+deadnix+`nix fmt --ci`,
   lock-pinned via the flake's nixpkgs rev; each lane seeded-red in a
   throwaway clone first; GREEN on remote CI run 39079848906).
-- **T6 flake triage**: `TestCacheSemanticsHardening`'s 2026-10-16 CI one-off
-  root-caused to go-appkit testkit's `startTimeout = 5s` under saturation
-  (the 5.06s signature; the same class upstream already outgrew on
-  leakSettleTimeout). 50x -race loop under load 140-200: green. Draft filing
-  - test-comment triage record; nothing repo-side to inject (the constant
-    is upstream).
+- **T6 flake triage — CORRECTED IN-SESSION**: the first hypothesis
+  (go-appkit testkit's 5s startTimeout under saturation) was WRONG; the
+  dev gate REPRODUCED the failure live (`gzip conditional replay status =
+  200, want 304`) and exposed the real root cause: the rendered bodies
+  carry a 1-second-granularity stamp, so a conditional replay crossing a
+  second boundary legitimately answers 200 with a fresh tag. FIX: all
+  conditional legs in serve_test.go now run through a `conditionalReplay`
+  helper that re-tags until the representation is stable (a 200 with an
+  identical body still fails — that would be a real caching bug). The
+  misdiagnosed draft was retracted before filing; the test comment tells
+  the corrected story. 20x -race loop green post-fix.
 - **T14 `ingest-telnyx -dry-run`** parity (report-only fetch, no index,
   `-api-base` stub knob, stub-API test proving zero writes; README +
   FEATURES updated).

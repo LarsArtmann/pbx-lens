@@ -14,7 +14,6 @@
 | `2026-10-12_v0.1.0-release-notes.md`                              | —                       | local artifact — consumed at the v0.1.0 tag (2026-10-12)                                                            |
 | `2026-10-12_v0.2.0-release-notes.md`                              | —                       | local artifact — EXECUTED: v0.2.0 tagged 2026-10-15, gh release cut                                                 |
 | `go-appkit-testkit-drain-delay-cost.md`                           | go-appkit#26            | FILED — CLOSED upstream 2026-10-17 (fold-in ready, TODO_LIST row)                                                   |
-| `go-appkit-testkit-start-timeout-saturation.md`                   | —                       | LIVE — unfiled, owner review box unchecked by design (T6 triage, 2026-10-18)                                        |
 | `statix-exit0-config-error-footgun.md`                            | —                       | LIVE — unfiled, owner review box unchecked by design (T9, 2026-10-18; dupe search clean: molybdenumsoftware/statix) |
 | `templ-components-card-titletag-h3-level-skip.md`                 | —                       | LIVE — unfiled, owner review box unchecked by design (T8, 2026-10-18; dupe search clean)                            |
 | `templ-components-copybutton-empty-nonce-unconditioned-script.md` | —                       | LIVE — unfiled, owner review box unchecked by design (T7, 2026-10-18; cross-refs #63/#24)                           |

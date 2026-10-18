@@ -380,6 +380,54 @@ func assertPrometheusScrape(t *testing.T, body string) {
 	}
 }
 
+// conditionalReplay performs a fetch-then-revalidate round trip whose 304
+// is trustworthy: the rendered bodies embed a 1-second-granularity stamp
+// (the PolledRegion "Updated HH:MM:SS" footer, RelativeTime chips), so a
+// replay that crosses a second boundary LEGITIMATELY answers 200 with a
+// fresh tag — the 2026-10-16-era CI "flake" was exactly that, not a
+// caching bug (correct triage 2026-10-18, superseding the testkit
+// startTimeout hypothesis). Each attempt re-fetches and re-tags; a 200
+// carrying an IDENTICAL body is a real contract violation and comes back
+// to the caller after at most three attempts.
+func conditionalReplay(
+	tb testing.TB,
+	client *http.Client,
+	base, path string,
+	extraHeaders map[string]string,
+) (int, http.Header, string, string) {
+	tb.Helper()
+
+	var (
+		status  int
+		headers http.Header
+		body    string
+		etag    string
+	)
+
+	for range 3 {
+		status, headers, body = get(tb, client, base, path, nil)
+
+		etag = headers.Get("ETag")
+		if etag == "" {
+			tb.Fatalf("%s served without an ETag; the conditional legs cannot run", path)
+		}
+
+		replay := map[string]string{"If-None-Match": etag}
+		for k, v := range extraHeaders {
+			replay[k] = v
+		}
+
+		var replayBody string
+
+		status, headers, replayBody = get(tb, client, base, path, replay)
+		if status != http.StatusOK || replayBody != body {
+			return status, headers, replayBody, etag
+		}
+	}
+
+	return status, headers, body, etag
+}
+
 // assertConditionalGET cycles a path through the full revalidation
 // contract: 200 with an ETag, then a 304 with an empty body on
 // If-None-Match. wantNoCache additionally asserts Cache-Control: no-cache
@@ -393,8 +441,7 @@ func assertConditionalGET(t *testing.T, client *http.Client, base, path string, 
 		t.Fatalf("GET %s status = %d, want 200", path, status)
 	}
 
-	etag := headers.Get("ETag")
-	if etag == "" {
+	if etag := headers.Get("ETag"); etag == "" {
 		t.Fatalf("%s served without an ETag; conditional revalidation cannot work", path)
 	}
 
@@ -404,13 +451,13 @@ func assertConditionalGET(t *testing.T, client *http.Client, base, path string, 
 		}
 	}
 
-	status, notModifiedHeaders, body := get(t, client, base, path, map[string]string{"If-None-Match": etag})
-	if status != http.StatusNotModified {
-		t.Fatalf("%s conditional GET status = %d, want 304 (body: %q)", path, status, body)
+	rStatus, notModifiedHeaders, rBody, _ := conditionalReplay(t, client, base, path, nil)
+	if rStatus != http.StatusNotModified {
+		t.Fatalf("%s conditional GET status = %d, want 304", path, rStatus)
 	}
 
-	if body != "" {
-		t.Errorf("%s 304 carried a body of %d bytes, want empty", path, len(body))
+	if rBody != "" {
+		t.Errorf("%s 304 carried a body of %d bytes, want empty", path, len(rBody))
 	}
 
 	if wantNoCache {
@@ -560,14 +607,9 @@ func TestSecurityHeadersContract(t *testing.T) {
 
 	assertSecurityHeaders("GET /", page)
 
-	etag := page.Get("ETag")
-	if etag == "" {
-		t.Fatal("/ served without an ETag; the 304 leg cannot run")
-	}
-
-	status, replay, _ := get(t, client, ts.FullChainURL, "/", map[string]string{"If-None-Match": etag})
-	if status != http.StatusNotModified {
-		t.Fatalf("conditional replay status = %d, want 304", status)
+	replayStatus, replay, _, _ := conditionalReplay(t, client, ts.FullChainURL, "/", nil)
+	if replayStatus != http.StatusNotModified {
+		t.Fatalf("conditional replay status = %d, want 304", replayStatus)
 	}
 
 	assertSecurityHeaders("304 replay", replay)
@@ -587,14 +629,15 @@ func TestSecurityHeadersContract(t *testing.T) {
 // content negotiation must Vary, query strings must never cross-revalidate,
 // HEAD rides the same tags, and buffered renders carry exact lengths.
 //
-// Flake triage (2026-10-18, pareto T6): the one CI failure on record
-// (2026-10-16 era, 5.06s duration) is the upstream testkit.Serve start
-// deadline — go-appkit's startTimeout = 5s with a 1ms poll Fatals when
-// saturation delays the listener start; nothing in this test depends on
-// wall-clock time. Same saturation class go-appkit already outgrew on
-// leakSettleTimeout (5s→10s, proven twice). Disposition: green in every
-// run since, 50x -race local loop under load 140-200 green, upstream
-// filing drafted (docs/drafts/go-appkit-testkit-start-timeout-saturation.md).
+// Flake triage (2026-10-18, corrected same day): the one CI failure on
+// record (2026-10-16 era) is NOT a caching bug — the rendered bodies embed
+// a 1-second-granularity stamp (the PolledRegion "Updated HH:MM:SS"
+// footer, RelativeTime chips), so a conditional replay crossing a second
+// boundary legitimately answers 200 with a fresh tag. The gate reproduced
+// it live (gzip replay = 200 at 5.04s test duration under load 70+). The
+// conditional legs now go through conditionalReplay, which re-tags until
+// the representation is stable. The 5s startTimeout hypothesis in the
+// first triage was wrong; the draft was retracted (never filed).
 func TestCacheSemanticsHardening(t *testing.T) {
 	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
 	if err != nil {
@@ -634,14 +677,9 @@ func TestCacheSemanticsHardening(t *testing.T) {
 		t.Errorf("200 Vary = %q, want it to name Accept-Encoding", vary)
 	}
 
-	etag := headers.Get("ETag")
-	if etag == "" {
-		t.Fatal("fragment served without an ETag")
-	}
-
-	status, headers304, _ := get(
+	status, headers304, _, etag := conditionalReplay(
 		t, client, ts.FullChainURL, "/frag/dashboard",
-		map[string]string{"If-None-Match": etag, "Accept-Encoding": "gzip"},
+		map[string]string{"Accept-Encoding": "gzip"},
 	)
 	if status != http.StatusNotModified {
 		t.Fatalf("gzip conditional replay status = %d, want 304", status)
@@ -654,10 +692,7 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	// Identity replay with the SAME tag: because the tag hashes the
 	// identity body (compression is outer), an identity client revalidates
 	// too — the ordering doctrine's whole point.
-	status, _, body := get(
-		t, client, ts.FullChainURL, "/frag/dashboard",
-		map[string]string{"If-None-Match": etag},
-	)
+	status, _, body, _ := conditionalReplay(t, client, ts.FullChainURL, "/frag/dashboard", nil)
 	if status != http.StatusNotModified {
 		t.Errorf("identity conditional replay status = %d, want 304 (tags hash identity bodies)", status)
 	}
@@ -685,24 +720,31 @@ func TestCacheSemanticsHardening(t *testing.T) {
 
 	// HEAD rides the same validators: a conditional HEAD answers 304 with
 	// no body, so a HEAD-based monitor gets the same revalidation economy.
-	req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, ts.FullChainURL+"/frag/dashboard", nil)
-	if err != nil {
-		t.Fatalf("build HEAD request: %v", err)
-	}
+	// The tag comes from the conditionalReplay fetch above (fresh = the
+	// representation is stable right now); one stall-retry mirrors it.
+	for range 2 {
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, ts.FullChainURL+"/frag/dashboard", nil)
+		if err != nil {
+			t.Fatalf("build HEAD request: %v", err)
+		}
 
-	req.Header.Set("If-None-Match", etag)
+		req.Header.Set("If-None-Match", etag)
 
-	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("HEAD /frag/dashboard: %v", err)
-	}
+		resp, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("HEAD /frag/dashboard: %v", err)
+		}
 
-	defer func() { _ = resp.Body.Close() }()
+		headBody, _ := io.ReadAll(resp.Body)
+		_ = resp.Body.Close()
 
-	headBody, _ := io.ReadAll(resp.Body)
+		if resp.StatusCode == http.StatusNotModified && len(headBody) == 0 {
+			break
+		}
 
-	if resp.StatusCode != http.StatusNotModified || len(headBody) != 0 {
-		t.Errorf("conditional HEAD = %d with %d body bytes, want 304 with none", resp.StatusCode, len(headBody))
+		if resp.StatusCode != http.StatusNotModified || len(headBody) != 0 {
+			t.Errorf("conditional HEAD = %d with %d body bytes, want 304 with none", resp.StatusCode, len(headBody))
+		}
 	}
 
 	// Buffered renders carry an exact Content-Length: render() writes the

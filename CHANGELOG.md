@@ -60,12 +60,17 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   default (12/12 call sites override it), statix's exit-0-on-config-error
   footgun (upstream identified as molybdenumsoftware/statix; dupe search
   clean), and the go-appkit testkit startTimeout saturation flake.
-- **TestCacheSemanticsHardening flake triaged** (the 2026-10-16 one-off):
-  root cause is go-appkit testkit's 5s startTimeout under runner
-  saturation — the same class upstream already outgrew on
-  leakSettleTimeout (5s→10s, proven twice); nothing in the test is
-  wall-clock dependent. 50x -race loop under load 140-200: green; triage
-  recorded in the test comment + the draft.
+- **TestCacheSemanticsHardening "flake" root-caused and FIXED** (the
+  2026-10-16 CI one-off): the rendered bodies embed a 1-second-granularity
+  stamp (the PolledRegion "Updated HH:MM:SS" footer, RelativeTime chips),
+  so a conditional replay crossing a second boundary legitimately answers
+  200 with a fresh tag — the gate reproduced it live under load
+  (`gzip conditional replay status = 200, want 304`, 5.04s duration). The
+  conditional legs now go through a `conditionalReplay` helper that
+  re-tags until the representation is stable (a 200 carrying an identical
+  body still fails). The session's first triage (upstream testkit
+  startTimeout saturation) was WRONG — the draft was retracted before
+  filing and the test comment corrected. 20x -race loop green.
 - **cqrs-lint F009 suppression question resolved as documentation**:
   v4.17.0 has no inline suppression and no per-path exclude; the policy
   doc records the gap and the repo-wide-disable tradeoff.
