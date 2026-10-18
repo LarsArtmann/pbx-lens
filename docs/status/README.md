@@ -11,12 +11,13 @@ archived/** — the living backlog is [TODO_LIST.md](../../TODO_LIST.md).
 
 ## Live reports
 
-| Report                                                                        | State                                                                                                       |
-| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `2026-10-18_04-25_pareto-execution-flake-fix-and-gate-hardening.md`           | newest — pareto execution receipt; §f queue + §g questions; T2/T13 banked 2026-10-18 (addendum annotations) |
-| `2026-10-18_02-40_pareto-plan-execution-gate-hardening-probes-rehearsals.md`  | execution snapshot (its T6 section superseded by the 04-25 correction)                                      |
-| `2026-10-18_00-55_docs-health-pass-self-review-and-remote-ci-verdict.md`      | self-review + remote-CI verdict (§g questions still open)                                                   |
-| `2026-10-18_00-18_docs-health-pass-live-set-closeout-and-planning-archive.md` | same-pass companion — the close-out ledger itself                                                           |
+| Report                                                                        | State                                                                                                                                              |
+| ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `2026-10-18_06-55_t2-receipt-t13-rehearsal-lint-parity-doctrine.md`           | newest — T2 receipt + T13 rehearsal receipts; lint-parity doctrine (§e4 solved); refreshed §f queue + §g re-asks                                   |
+| `2026-10-18_04-25_pareto-execution-flake-fix-and-gate-hardening.md`           | pareto execution receipt; §f queue + §g questions; T2/T13 banked 2026-10-18 (addendum annotations; superseded as queue source by the 06-55 report) |
+| `2026-10-18_02-40_pareto-plan-execution-gate-hardening-probes-rehearsals.md`  | execution snapshot (its T6 section superseded by the 04-25 correction)                                                                             |
+| `2026-10-18_00-55_docs-health-pass-self-review-and-remote-ci-verdict.md`      | self-review + remote-CI verdict (§g questions still open)                                                                                          |
+| `2026-10-18_00-18_docs-health-pass-live-set-closeout-and-planning-archive.md` | same-pass companion — the close-out ledger itself                                                                                                  |
 
 (A single live report is the steady state after the 2026-10-17 second pass:
 the previous sweep emptied the queue, so each new pass starts from one
