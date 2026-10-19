@@ -3,7 +3,7 @@
   "repo": "LarsArtmann/pbx-lens",
   "forgejo": "lars/pbx-lens",
   "branch": "main",
-  "build": "go build -o work/bin/pbx-lens ./cmd/pbx-lens",
+  "build": "go tool templ generate ./internal/web/ && go build -o work/bin/pbx-lens ./cmd/pbx-lens",
   "export": [
     "work/bin/pbx-lens",
     "catalog",
