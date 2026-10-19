@@ -18,5 +18,6 @@ func catalogCmd(args []string) {
 		fatal(err)
 	}
 
-	fmt.Fprintf(os.Stdout, "catalog: wrote eventcatalog tree to %s\n", *output+"/eventcatalog") //nolint:erraudit // CLI output stream — write failures are not actionable
+	dir := *output + "/eventcatalog"
+	fmt.Fprintf(os.Stdout, "catalog: wrote eventcatalog tree to %s\n", dir) //nolint:erraudit // CLI output stream — write failures are not actionable
 }

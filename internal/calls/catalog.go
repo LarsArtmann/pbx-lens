@@ -33,7 +33,9 @@ func BuildCatalog() *catalog.Catalog {
 		catalog.Command[RecordCallCmd](
 			catalog.MessageID(CommandRecord),
 			catalog.WithName("Record Call"),
-			catalog.WithSummary("Records one call observation from a source snapshot; content-hash dedup makes re-ingest idempotent, a grown snapshot supersedes via call.corrected."),
+			catalog.WithSummary(
+				"Records one call observation from a source snapshot; content-hash dedup " +
+					"makes re-ingest idempotent, a grown snapshot supersedes via call.corrected."),
 		),
 		catalog.Command[EnrichCallCmd](
 			catalog.MessageID(CommandEnrich),
@@ -43,7 +45,9 @@ func BuildCatalog() *catalog.Catalog {
 		catalog.Command[RetireCallCmd](
 			catalog.MessageID(CommandRetire),
 			catalog.WithName("Retire Call"),
-			catalog.WithSummary("Retention tombstone addressed by stream identity alone: removes the call from the read model while the stream stays append-only."),
+			catalog.WithSummary(
+				"Retention tombstone addressed by stream identity alone: removes the call " +
+					"from the read model while the stream stays append-only."),
 		),
 		// --- Events (the write model emits these) ---
 		catalog.Event[CallObserved](
@@ -54,17 +58,23 @@ func BuildCatalog() *catalog.Catalog {
 		catalog.Event[CallCorrected](
 			catalog.MessageID(EventCorrected), catalog.Sends,
 			catalog.WithName("Call Corrected"),
-			catalog.WithSummary("A later snapshot from the same source superseded the stream's observation; the enrichment rides along so projection recomputes never lose cost/insight data."),
+			catalog.WithSummary(
+				"A later snapshot from the same source superseded the stream's observation; the " +
+					"enrichment rides along so projection recomputes never lose cost/insight data."),
 		),
 		catalog.Event[CallEnriched](
 			catalog.MessageID(EventEnriched), catalog.Sends,
 			catalog.WithName("Call Enriched"),
-			catalog.WithSummary("Derived data (cost, insight) landed; it refreshes independently of the observation identity and never triggers corrections."),
+			catalog.WithSummary(
+				"Derived data (cost, insight) landed; it refreshes independently of the " +
+					"observation identity and never triggers corrections."),
 		),
 		catalog.Event[CallRetired](
 			catalog.MessageID(EventRetired), catalog.Sends,
 			catalog.WithName("Call Retired"),
-			catalog.WithSummary("Retention tombstone: the call left every read-model surface; the payload carries only the policy reason, never call data."),
+			catalog.WithSummary(
+				"Retention tombstone: the call left every read-model surface; the payload " +
+					"carries only the policy reason, never call data."),
 		),
 	)
 

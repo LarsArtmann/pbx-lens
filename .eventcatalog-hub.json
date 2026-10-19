@@ -1,0 +1,24 @@
+{
+  "name": "pbx-lens",
+  "repo": "LarsArtmann/pbx-lens",
+  "forgejo": "lars/pbx-lens",
+  "branch": "main",
+  "build": "go build -o work/bin/pbx-lens ./cmd/pbx-lens",
+  "export": [
+    "work/bin/pbx-lens",
+    "catalog",
+    "-o",
+    "work/out/pbx-lens"
+  ],
+  "tree": "work/out/pbx-lens/eventcatalog",
+  "lint": {
+    "export": [
+      "work/bin/pbx-lens",
+      "catalog",
+      "-o",
+      "work/lint/pbx-lens",
+      "-plain"
+    ],
+    "tree": "work/lint/pbx-lens"
+  }
+}

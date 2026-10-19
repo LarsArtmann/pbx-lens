@@ -16,36 +16,36 @@ const (
 )
 
 func main() {
+	subcommands := map[string]func([]string){
+		"smoke":          smoke,
+		"ingest-cdr":     ingestCDR,
+		"ingest-telnyx":  ingestTelnyx,
+		"ingest-webhook": ingestWebhook,
+		"ingest-agent":   ingestAgent,
+		"serve":          serve,
+		"backup":         backupCmd,
+		"purge":          purgeCmd,
+		"catalog":        catalogCmd,
+	}
+
 	if len(os.Args) < minArgs {
 		usage()
 		os.Exit(exitUsage)
 	}
 
-	switch os.Args[1] {
-	case "version":
+	if os.Args[1] == "version" {
 		fmt.Println("pbx-lens " + version)
-	case "smoke":
-		smoke(os.Args[minArgs:])
-	case "ingest-cdr":
-		ingestCDR(os.Args[minArgs:])
-	case "ingest-telnyx":
-		ingestTelnyx(os.Args[minArgs:])
-	case "ingest-webhook":
-		ingestWebhook(os.Args[minArgs:])
-	case "ingest-agent":
-		ingestAgent(os.Args[minArgs:])
-	case "serve":
-		serve(os.Args[minArgs:])
-	case "backup":
-		backupCmd(os.Args[minArgs:])
-	case "purge":
-		purgeCmd(os.Args[minArgs:])
-	case "catalog":
-		catalogCmd(os.Args[minArgs:])
-	default:
+
+		return
+	}
+
+	run, ok := subcommands[os.Args[1]]
+	if !ok {
 		usage()
 		os.Exit(exitUsage)
 	}
+
+	run(os.Args[minArgs:])
 }
 
 func usage() {
