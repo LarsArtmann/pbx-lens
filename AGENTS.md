@@ -93,7 +93,9 @@ webphone later gets a read-only deep link, never a data dependency.
   go1.27.1), and the repo .golangci.yml enables `mnd` (local buildflow's
   lint may not) — run `golangci-lint run ./...` before pushing.
 - **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version
-  subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens`. Flag
+  subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog`
+  is the DB-free exception: `cli.RenderCatalog` renders the eventcatalog
+  tree the federation hub exports; see `.eventcatalog-hub.json`). Flag
   validation for the index-opening subcommands is shared: `requireDB` and
   `requireOneArg` in package main (messages derive from `fs.Name()`, so a new
   subcommand gets consistent rejections for free). The `internal/ingest` ROOT

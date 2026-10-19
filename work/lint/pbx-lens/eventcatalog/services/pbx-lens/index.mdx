@@ -1,0 +1,30 @@
+---
+id: pbx-lens
+name: PBX-Lens
+version: 1.0.0
+summary: 'Unified call-history index for pbx.artmann.tech: read-only ingest over FreeSWITCH CDRs, the Telnyx conversations/recordings APIs, and the receiver webhook JSONL into one searchable SQLite index.'
+owners:
+    - lars
+sends:
+    -   id: call.observed
+        version: 1.0.0
+    -   id: call.corrected
+        version: 1.0.0
+    -   id: call.enriched
+        version: 1.0.0
+    -   id: call.retired
+        version: 1.0.0
+receives:
+    -   id: call.record
+        version: 1.0.0
+    -   id: call.enrich
+        version: 1.0.0
+    -   id: call.retire
+        version: 1.0.0
+---
+
+# PBX-Lens
+
+Unified call-history index for pbx.artmann.tech: read-only ingest over FreeSWITCH CDRs, the Telnyx conversations/recordings APIs, and the receiver webhook JSONL into one searchable SQLite index.
+
+<NodeGraph />

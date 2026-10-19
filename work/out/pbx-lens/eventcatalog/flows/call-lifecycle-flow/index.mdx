@@ -1,0 +1,56 @@
+---
+id: call-lifecycle-flow
+name: Call Lifecycle
+version: 1.0.0
+summary: One call from source snapshot to enriched index entry — and out again at retention time
+owners:
+    - lars
+steps:
+    -   id: s1
+        title: Ingest source snapshot
+        service:
+            id: pbx-lens
+        next_step:
+            id: s2
+    -   id: s2
+        title: Call observed
+        message:
+            id: call.observed
+        next_step:
+            id: s3
+    -   id: s3
+        title: Pull Telnyx enrichment
+        externalSystem:
+            name: Telnyx conversations/recordings API
+            summary: Deliver cost and recording metadata for the observed call
+        next_step:
+            id: s4
+    -   id: s4
+        title: Call enriched
+        message:
+            id: call.enriched
+        next_step:
+            id: s5
+    -   id: s5
+        title: Persist to call index
+        container:
+            id: call-index
+        next_step:
+            id: s6
+    -   id: s6
+        title: Retire by retention policy
+        service:
+            id: pbx-lens
+        next_step:
+            id: s7
+    -   id: s7
+        title: Call retired
+        message:
+            id: call.retired
+---
+
+# Call Lifecycle
+
+One call from source snapshot to enriched index entry — and out again at retention time
+
+<NodeGraph />

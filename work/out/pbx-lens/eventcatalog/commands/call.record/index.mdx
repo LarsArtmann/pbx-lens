@@ -1,0 +1,13 @@
+---
+id: call.record
+name: Record Call
+version: 1.0.0
+summary: Records one call observation from a source snapshot; content-hash dedup makes re-ingest idempotent, a grown snapshot supersedes via call.corrected.
+consumers:
+    - pbx-lens-1.0.0
+schemaPath: schemas/schema.json
+---
+
+# Record Call
+
+Records one call observation from a source snapshot; content-hash dedup makes re-ingest idempotent, a grown snapshot supersedes via call.corrected.

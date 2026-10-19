@@ -1,0 +1,33 @@
+# PBX-Lens
+
+> Auto-generated catalog summary for LLM consumption.
+
+## PBX-Lens (pbx-lens)
+Unified call-history index for pbx.artmann.tech: read-only ingest over FreeSWITCH CDRs, the Telnyx conversations/recordings APIs, and the receiver webhook JSONL into one searchable SQLite index.
+
+### Commands
+- Record Call (v1.0.0): Records one call observation from a source snapshot; content-hash dedup makes re-ingest idempotent, a grown snapshot supersedes via call.corrected.
+- Enrich Call (v1.0.0): Attaches derived data (Telnyx cost, insight summary) to an observed call.
+- Retire Call (v1.0.0): Retention tombstone addressed by stream identity alone: removes the call from the read model while the stream stays append-only.
+
+### Events
+- Call Observed (v1.0.0) [sends]: A call snapshot landed in the index (new stream or content-identical replay).
+- Call Corrected (v1.0.0) [sends]: A later snapshot from the same source superseded the stream's observation; the enrichment rides along so projection recomputes never lose cost/insight data.
+- Call Enriched (v1.0.0) [sends]: Derived data (cost, insight) landed; it refreshes independently of the observation identity and never triggers corrections.
+- Call Retired (v1.0.0) [sends]: Retention tombstone: the call left every read-model surface; the payload carries only the policy reason, never call data.
+
+## Data Store: Call Index SQLite (call-index)
+Type: database
+Technology: sqlite
+Disposable, always re-derivable call index (event store + read model). Read-only over every source; no write-back path exists.
+
+## Flow: Call Lifecycle (call-lifecycle-flow)
+One call from source snapshot to enriched index entry — and out again at retention time
+Steps: 7
+
+## User: Lars Artmann (lars)
+
+## Domain: Telephony (telephony)
+Call capture, enrichment, and retention across the pbx.artmann.tech stack.
+Services: pbx-lens
+

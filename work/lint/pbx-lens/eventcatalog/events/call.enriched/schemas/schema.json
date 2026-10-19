@@ -1,0 +1,127 @@
+{
+  "type": "object",
+  "properties": {
+    "cost_currency": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "cost_micros": {
+      "type": "integer",
+      "nullable": false,
+      "deprecated": false
+    },
+    "direction": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "duration_secs": {
+      "type": "integer",
+      "nullable": false,
+      "deprecated": false
+    },
+    "from_number": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "hangup_cause": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "insight_summary": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "is_ai": {
+      "type": "boolean",
+      "nullable": false,
+      "deprecated": false
+    },
+    "kind": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "mos": {
+      "type": "number",
+      "nullable": false,
+      "deprecated": false
+    },
+    "native_id": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "recording_ref": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "started_at": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": false,
+      "deprecated": false
+    },
+    "to_number": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "transcript": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": false,
+            "deprecated": false
+          },
+          "role": {
+            "type": "string",
+            "nullable": false,
+            "deprecated": false
+          },
+          "text": {
+            "type": "string",
+            "nullable": false,
+            "deprecated": false
+          }
+        },
+        "required": [
+          "role",
+          "text",
+          "at"
+        ],
+        "nullable": false,
+        "deprecated": false
+      },
+      "nullable": false,
+      "deprecated": false
+    },
+    "transcript_excerpt": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    }
+  },
+  "required": [
+    "native_id",
+    "kind",
+    "direction",
+    "started_at",
+    "duration_secs",
+    "from_number",
+    "to_number",
+    "hangup_cause",
+    "is_ai",
+    "transcript_excerpt",
+    "recording_ref"
+  ]
+}

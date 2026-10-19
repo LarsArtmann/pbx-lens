@@ -141,10 +141,10 @@ func callLifecycleFlowSteps() []catalog.FlowStep {
 			NextStep: &catalog.FlowEdge{ID: "s5"},
 		},
 		{
-			ID:       "s5",
-			Title:    "Persist to call index",
+			ID:        "s5",
+			Title:     "Persist to call index",
 			DataStore: &catalog.FlowStepRef{ID: "call-index"},
-			NextStep: &catalog.FlowEdge{ID: "s6"},
+			NextStep:  &catalog.FlowEdge{ID: "s6"},
 		},
 		{
 			ID:       "s6",
