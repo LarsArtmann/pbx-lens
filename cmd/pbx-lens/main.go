@@ -40,6 +40,8 @@ func main() {
 		backupCmd(os.Args[minArgs:])
 	case "purge":
 		purgeCmd(os.Args[minArgs:])
+	case "catalog":
+		catalogCmd(os.Args[minArgs:])
 	default:
 		usage()
 		os.Exit(exitUsage)
@@ -55,7 +57,8 @@ func usage() {
 			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts |"+
 			" pbx-lens serve -db <dsn> [-addr 127.0.0.1:8300] |"+
 			" pbx-lens backup -db <dsn> -out <snapshot.db> |"+
-			" pbx-lens purge -db <dsn> -max-age <duration> [-dry-run]",
+			" pbx-lens purge -db <dsn> -max-age <duration> [-dry-run] |"+
+			" pbx-lens catalog -o <dir> [-plain]",
 	)
 }
 
