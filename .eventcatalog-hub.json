@@ -19,6 +19,6 @@
       "work/lint/pbx-lens",
       "-plain"
     ],
-    "tree": "work/lint/pbx-lens"
+    "tree": "work/lint/pbx-lens/eventcatalog"
   }
 }
