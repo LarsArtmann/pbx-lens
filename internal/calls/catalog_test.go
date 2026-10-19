@@ -88,7 +88,7 @@ func TestBuildCatalog(t *testing.T) {
 	if domain.ID != "telephony" {
 		t.Errorf("Domain.ID = %q, want telephony", domain.ID)
 	}
-	if !slices.Equal(domain.Services, []string{"pbx-lens"}) {
+	if len(domain.Services) != 1 || domain.Services[0] != "pbx-lens" {
 		t.Errorf("Domain.Services = %v, want [pbx-lens]", domain.Services)
 	}
 
