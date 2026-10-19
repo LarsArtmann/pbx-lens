@@ -55,8 +55,18 @@ func testService(t *testing.T, svc catalog.Service) {
 		ids  []string
 		dir  catalog.Direction
 	}{
-		{name: "commands", msgs: svc.Commands, ids: []string{"call.record", "call.enrich", "call.retire"}, dir: catalog.Receives},
-		{name: "events", msgs: svc.Events, ids: []string{"call.observed", "call.corrected", "call.enriched", "call.retired"}, dir: catalog.Sends},
+		{
+			name: "commands",
+			msgs: svc.Commands,
+			ids:  []string{"call.record", "call.enrich", "call.retire"},
+			dir:  catalog.Receives,
+		},
+		{
+			name: "events",
+			msgs: svc.Events,
+			ids:  []string{"call.observed", "call.corrected", "call.enriched", "call.retired"},
+			dir:  catalog.Sends,
+		},
 	}
 
 	ids := make([]string, 0, len(svc.Commands)+len(svc.Events))

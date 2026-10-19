@@ -34,7 +34,7 @@ func BuildCatalog() *catalog.Catalog {
 			catalog.MessageID(CommandRecord),
 			catalog.WithName("Record Call"),
 			catalog.WithSummary(
-				"Records one call observation from a source snapshot; content-hash dedup " +
+				"Records one call observation from a source snapshot; content-hash dedup "+
 					"makes re-ingest idempotent, a grown snapshot supersedes via call.corrected."),
 		),
 		catalog.Command[EnrichCallCmd](
@@ -46,7 +46,7 @@ func BuildCatalog() *catalog.Catalog {
 			catalog.MessageID(CommandRetire),
 			catalog.WithName("Retire Call"),
 			catalog.WithSummary(
-				"Retention tombstone addressed by stream identity alone: removes the call " +
+				"Retention tombstone addressed by stream identity alone: removes the call "+
 					"from the read model while the stream stays append-only."),
 		),
 		// --- Events (the write model emits these) ---
@@ -59,21 +59,21 @@ func BuildCatalog() *catalog.Catalog {
 			catalog.MessageID(EventCorrected), catalog.Sends,
 			catalog.WithName("Call Corrected"),
 			catalog.WithSummary(
-				"A later snapshot from the same source superseded the stream's observation; the " +
+				"A later snapshot from the same source superseded the stream's observation; the "+
 					"enrichment rides along so projection recomputes never lose cost/insight data."),
 		),
 		catalog.Event[CallEnriched](
 			catalog.MessageID(EventEnriched), catalog.Sends,
 			catalog.WithName("Call Enriched"),
 			catalog.WithSummary(
-				"Derived data (cost, insight) landed; it refreshes independently of the " +
+				"Derived data (cost, insight) landed; it refreshes independently of the "+
 					"observation identity and never triggers corrections."),
 		),
 		catalog.Event[CallRetired](
 			catalog.MessageID(EventRetired), catalog.Sends,
 			catalog.WithName("Call Retired"),
 			catalog.WithSummary(
-				"Retention tombstone: the call left every read-model surface; the payload " +
+				"Retention tombstone: the call left every read-model surface; the payload "+
 					"carries only the policy reason, never call data."),
 		),
 	)
@@ -99,7 +99,8 @@ func BuildCatalog() *catalog.Catalog {
 		Version:       CatalogVersion,
 		ContainerType: "database",
 		Technology:    "sqlite",
-		Summary:       "Disposable, always re-derivable call index (event store + read model). Read-only over every source; no write-back path exists.",
+		Summary: "Disposable, always re-derivable call index (event store + read model). " +
+			"Read-only over every source; no write-back path exists.",
 	})
 
 	// The call lifecycle as a first-class flow — the aggregate's visible
