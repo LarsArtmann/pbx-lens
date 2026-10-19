@@ -32,6 +32,7 @@ func BuildCatalog() *catalog.Catalog {
 		// --- Commands (the write model accepts these) ---
 		catalog.Command[RecordCallCmd](
 			catalog.MessageID(CommandRecord),
+			catalog.Owners("lars"),
 			catalog.WithName("Record Call"),
 			catalog.WithSummary(
 				"Records one call observation from a source snapshot; content-hash dedup "+
@@ -39,11 +40,13 @@ func BuildCatalog() *catalog.Catalog {
 		),
 		catalog.Command[EnrichCallCmd](
 			catalog.MessageID(CommandEnrich),
+			catalog.Owners("lars"),
 			catalog.WithName("Enrich Call"),
 			catalog.WithSummary("Attaches derived data (Telnyx cost, insight summary) to an observed call."),
 		),
 		catalog.Command[RetireCallCmd](
 			catalog.MessageID(CommandRetire),
+			catalog.Owners("lars"),
 			catalog.WithName("Retire Call"),
 			catalog.WithSummary(
 				"Retention tombstone addressed by stream identity alone: removes the call "+
@@ -52,11 +55,13 @@ func BuildCatalog() *catalog.Catalog {
 		// --- Events (the write model emits these) ---
 		catalog.Event[CallObserved](
 			catalog.MessageID(EventObserved), catalog.Sends,
+			catalog.Owners("lars"),
 			catalog.WithName("Call Observed"),
 			catalog.WithSummary("A call snapshot landed in the index (new stream or content-identical replay)."),
 		),
 		catalog.Event[CallCorrected](
 			catalog.MessageID(EventCorrected), catalog.Sends,
+			catalog.Owners("lars"),
 			catalog.WithName("Call Corrected"),
 			catalog.WithSummary(
 				"A later snapshot from the same source superseded the stream's observation; the "+
@@ -64,6 +69,7 @@ func BuildCatalog() *catalog.Catalog {
 		),
 		catalog.Event[CallEnriched](
 			catalog.MessageID(EventEnriched), catalog.Sends,
+			catalog.Owners("lars"),
 			catalog.WithName("Call Enriched"),
 			catalog.WithSummary(
 				"Derived data (cost, insight) landed; it refreshes independently of the "+
@@ -71,6 +77,7 @@ func BuildCatalog() *catalog.Catalog {
 		),
 		catalog.Event[CallRetired](
 			catalog.MessageID(EventRetired), catalog.Sends,
+			catalog.Owners("lars"),
 			catalog.WithName("Call Retired"),
 			catalog.WithSummary(
 				"Retention tombstone: the call left every read-model surface; the payload "+
