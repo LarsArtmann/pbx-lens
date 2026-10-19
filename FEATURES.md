@@ -34,6 +34,7 @@ Every label answers ONE question: does working code exist — and if not, why no
 | `serve` subcommand      | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/serve.go`                             | See Web UI table; e2e-verified live (`TestLiveServerEndToEnd`)                                                                              |
 | `backup` subcommand     | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/ops.go`; `internal/backup`            | `VACUUM INTO` + atomic rename + integrity verify; 5 tests                                                                                   |
 | `purge` subcommand      | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/ops.go`; `internal/retention`         | `-max-age` required; tombstone retirement; live e2e proven                                                                                  |
+| `catalog` subcommand    | 🟢 `FULLY_FUNCTIONAL` | `cmd/pbx-lens/catalog.go`; `internal/calls/catalog.go` | DB-free render of the event/command catalog (`-o <dir> [-plain]`); feeds the architecture-catalog hub via `.eventcatalog-hub.json`           |
 
 ## Ingest sources
 
