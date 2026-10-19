@@ -99,9 +99,11 @@ func BuildCatalog() *catalog.Catalog {
 		"Call capture, enrichment, and retention across the pbx.artmann.tech stack.",
 		catalogServiceID,
 	)
+	builder.ConfigureDomain("telephony", catalog.DomainOwners("lars"))
 
 	builder.AddDataStore(catalog.DataStore{
 		ID:            "call-index",
+		Owners:        []string{"lars"},
 		Name:          "Call Index SQLite",
 		Version:       CatalogVersion,
 		ContainerType: "database",
