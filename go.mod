@@ -6,6 +6,7 @@ require (
 	github.com/a-h/templ v0.3.1070
 	github.com/larsartmann/go-appkit v0.9.0
 	github.com/larsartmann/go-appkit/systemd v0.1.0
+	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.9.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0
 	github.com/larsartmann/go-cqrs-lite/event/v4 v4.15.1
@@ -68,7 +69,6 @@ require (
 	github.com/knadh/koanf/v2 v2.4.0 // indirect
 	github.com/larsartmann/go-branded-id v0.7.0 // indirect
 	github.com/larsartmann/go-codec v0.3.2 // indirect
-	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.9.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/claiming/v4 v4.0.2 // indirect
 	github.com/larsartmann/go-cqrs-lite/commandlifecycle/projections/v4 v4.2.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/commandlifecycle/v4 v4.3.1 // indirect
