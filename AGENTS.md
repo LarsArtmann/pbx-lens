@@ -25,9 +25,10 @@ webphone later gets a read-only deep link, never a data dependency.
 - **Engines:** sqlite (`EngineConfig{Driver: "sqlite", DSN}`) via pure-Go
   modernc.org/sqlite, memory for tests; `app.New(ctx, dsn)` with dsn == ""
   selecting memory is the one deploy knob.
-- **Language level:** go 1.27 + `GOEXPERIMENT=jsonv2` (fleet house style).
-  Nothing imports encoding/json/v2 yet; the env var becomes load-bearing
-  when a surface needs it.
+- **Language level:** go 1.27.2 in go.mod (the go-appkit v0.9.0 floor) +
+  `GOEXPERIMENT=jsonv2` (fleet house style). Nothing imports
+  encoding/json/v2 yet; the env var becomes load-bearing when a surface
+  needs it.
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
   (below) + `templ-components/htmx` (rides the root pin). No testify
   (banned; stdlib table-driven tests), no cobra, no ORM. Promotion
@@ -109,10 +110,10 @@ webphone later gets a read-only deep link, never a data dependency.
   helpers; directly unit-tested), `internal/backup` (VACUUM INTO snapshot
   - integrity verify), `internal/retention` (Policy/OldViews/Retire behind
     `purge`; `Policy.Admits` also gates serve-poller `-max-age`, 0 = keep
-    everything). The projection record key is ALWAYS
-    derived via `obs.StreamID().String()` — the last hand-built
-    `"StreamMarker:..."` literal (cli/agent.go CDR join) was found and removed
-    by the 2026-10-11 four-lens review; do not re-introduce one.
+    everything). Projection record keys are BARE (`calls.RecordKey` =
+    `StreamID.Get()`; go-cqrs-lite v4.6.0's adapter ID) — never hand-build
+    one, and read through `calls.LookupView` (its marker-prefixed fallback
+    keeps pre-v4.6.0 rows reachable; docs/gotchas.md has the incident).
     `calls.DefaultExcerptMax` (200 runes) is the domain-owned excerpt
     ceiling; every source mapper selects via `calls.Excerpt` (first user
     turn, fallback first turn). The serve htpasswd timing pad hashes at the
@@ -184,37 +185,35 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
 nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
 bash scripts/verify-all.sh            # THE browser lane: all four probe suites
                                       # (sequential, free ports, first-red-wins)
-GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/
-                                      # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
+GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/  # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
 node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd --save-baseline /tmp/pd
                                       # alert-only pixel diff vs baseline; footer stamp ≈0.04% px absorbed
 individual probes: verify-ui-contract.js (T20/T21), verify-style-contract.js (M1), verify-staleness-live.js, golden-pretty-diff.sh — scripts/README.md
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
-nix run .#update-vendor-hash          # repair vendorHash.nix after go.mod/go.sum
-                                      # changes; CLEAN tree only — never nix-hash-fix (BuildFlow#55)
+nix run .#update-vendor-hash          # after go.mod/go.sum; CLEAN tree only — never nix-hash-fix (BuildFlow#55)
 ```
 
-## Deep context (extracted to docs/ 2026-10-11 — 220-line limit)
+Receipt-grade commits: `git add … && git commit …` in ONE call (the daemon
+sweeps within seconds; amend only UNPUSHED; guard proofs assert the MESSAGE).
 
-Invariants summary — read the full doc BEFORE touching its area:
+## Deep context (docs/) — read the full doc BEFORE touching its area
 
-- **docs/gotchas.md** — every paid-for war story: `StreamMarker:`-prefixed
-  projection keys, the projection host's one-shot drain contract,
-  full-recompute fold selection, FTS5 tokenization, retention
-  tombstone-only deletes, drain-before-enrich, view→observation rebuild.
-- **docs/status/archived/** — 54 superseded reports (≤2026-10-17; three sweep manifests in its README; live set empty — reports archive once fully dispositioned); executed plans: docs/planning/archived/
-  with every open item resolved inline; CLOSED history — never harvest or
-  re-open items from there (the living backlog is TODO_LIST.md).
+- **docs/gotchas.md** — paid-for war stories: the bare-record-key flip and
+  its legacy fallback, the projection host's one-shot drain, full-recompute
+  fold selection, FTS5 tokenization, retention tombstone-only deletes,
+  drain-before-enrich, view→observation rebuild.
+- **docs/status/archived/** — 59 superseded reports; executed plans in
+  docs/planning/archived/ (manifests in each README). CLOSED history —
+  never harvest or re-open (living backlog: TODO_LIST.md).
 - **docs/telnyx-live-api.md** — live-verified API truths (field-as-param
-  filters, unstable timestamp precision, client-side recording
-  correlation, enrichment endpoint shapes); re-verify the cluster
-  quarterly (recordings live-verified 2026-10-12 — assistant recordings
-  are MP3-ONLY: empty `download_urls.wav`, populated mp3, see the doc;
-  enrichment still spec-verified only; next window opens 2027-01 —
-  calendar entry, m27.9).
-- **docs/cqrs-lint-policy.md** — every surviving cqrs-lint warning/info as
-  a documented decision (E003 flat-domain HOLD + pre-agreed seam).
-- **docs/buildflow-dev-gate.md** — gate traps (devShell requirement, load-starvation casualties) + advisory-findings rationale.
-- **docs/upstream-filings.md** — D6 filings (go-cqrs-lite#62/#63/#64,
-  go-nix-helpers#7, treefmt-nix#545) and their upstream state.
-- **docs/http-stack.md**, **docs/templ-components-adoption.md** (living truth for the middleware chain and the component map), **docs/research/2026-10-12_http-stack-adoption-audit.html** (12-47 deep-dive snapshot + NOT-adopted doctrine table).
+  filters, timestamp precision, client-side recording correlation,
+  enrichment shapes); re-verify quarterly (recordings live-verified
+  2026-10-12 — MP3-ONLY: empty wav, populated mp3; enrichment
+  spec-verified only; window 2027-01, m27.9).
+- **docs/cqrs-lint-policy.md** — every surviving cqrs-lint finding as a
+  documented decision (E003 flat-domain HOLD + pre-agreed seam).
+- **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
+- **docs/upstream-filings.md** — every filing ledger and its upstream state.
+- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware
+  chain, component map), **docs/research/2026-10-12_http-stack-adoption-audit.html**
+  (12-47 deep-dive + NOT-adopted doctrine).

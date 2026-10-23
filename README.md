@@ -65,12 +65,14 @@ pbx-lens ingest-telnyx -db /var/lib/pbx-lens/calls.db -since 48h
 Flags: `-key-file` (default reads `$TELNYX_API_KEY`), `-since` (Go duration
 or RFC3339 timestamp, default `48h`), `-direction` (`outbound` default —
 Telnyx conversation metadata exposes no direction field), `-limit N`
-(max conversations, 0 = all). Conversations are correlated with their
-recordings via `call_control_id`; each call's Observation carries a transcript
-excerpt and the recording reference. Like `ingest-cdr`, `-dry-run` fetches
-the window and prints the would-record report without touching any index
-(no `-db` required); `-api-base` points the fetch at a stub server for
-rehearsals.
+(max conversations, 0 = all), `-ai-did` (conversations touching these DIDs
+index as inbound regardless of the declared direction), `-max-age` (refuse
+older conversations; `0` keeps everything). Conversations are correlated
+with their recordings via `call_control_id`; each call's Observation carries
+a transcript excerpt and the recording reference. Like `ingest-cdr`,
+`-dry-run` fetches the window and prints the would-record report without
+touching any index (no `-db` required); `-api-base` points the fetch at a
+stub server for rehearsals.
 
 ### Serve the call-history UI
 
@@ -213,10 +215,21 @@ URLs read-only; pbx-lens never links back into webphone and holds no
 webphone data. Bookmark and share freely — an unknown id renders a 404,
 never a wrong call.
 
+### Export the event/command catalog
+
+```console
+pbx-lens catalog -o docs/catalog       # DB-free: renders an EventCatalog project tree
+```
+
+Message schemas are derived from the command/event structs by reflection, so
+the catalog cannot drift from the domain. `.eventcatalog-hub.json` points the
+architecture-catalog hub at the exported tree (`-plain` emits plain
+frontmatter-ID refs for the hub's governance lint).
+
 ## Project layout
 
 - `cmd/pbx-lens/` — CLI (`version`, `smoke`, `ingest-cdr`, `ingest-telnyx`,
-  `ingest-webhook`, `ingest-agent`, `serve`, `backup`)
+  `ingest-webhook`, `ingest-agent`, `serve`, `backup`, `purge`, `catalog`)
 - `internal/calls/` — domain (Observation, invariants, idempotency) + read model
 - `internal/cli/` — tested command internals: flags, dispatch loop, projection drain, poller, search rebuild
 - `internal/ingest/` — source parsers/mappers (`cdr`, `telnyx`, `webhook`, `agent`)

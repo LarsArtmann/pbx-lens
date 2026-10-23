@@ -8,13 +8,19 @@ each one cost real debugging time. Telnyx live-API specifics live in
 [buildflow-dev-gate.md](buildflow-dev-gate.md). AGENTS.md keeps the
 invariants summary; this file keeps the war stories.
 
-- **Projection record keys carry the `StreamMarker:` prefix (2026-10-11):**
-  `cmd.StreamID().String()` returns `"StreamMarker:<kind>:<native-id>"` and
-  that marker-ful string IS the call_views record key (the folds key by the
-  event record ID). Polling `reader.Get` with a hand-built
-  `"telnyx-conversation:x"` key always misses — cost ~1h of debugging that
-  looked like a flaky projection engine. Always derive keys via
-  `obs.StreamID().String()`.
+- **Projection record keys are BARE; only history carries the marker
+  (2026-10-11, corrected 2026-10-23):** the folds key by the adapter's
+  `EventWithID.ID`, which go-cqrs-lite **v4.6.0** flipped from
+  `StreamID.String()` (`"StreamMarker:<kind>:<native-id>"`) to the bare
+  `StreamID.Get()` value. The key form is a LIBRARY contract, not ours: a
+  routine module bump silently moved every write while our readers kept
+  asking for the marked form — detail pages 404'd and every projection
+  lookup missed (the 2026-10-23 repair). Never hand-build a key: derive it
+  via `calls.RecordKey(obs.StreamID())`, and read through
+  `calls.LookupView`, which falls back to `LegacyRecordKey` so rows written
+  before v4.6.0 stay reachable. Retiring a legacy row still cannot delete
+  it (the remove fold derives the bare key from the record); the one-time
+  read-model rebuild in TODO_LIST is what retires the fallback.
 - **The projection host is a one-shot batch drainer (2026-10-11):** workers
   drain the journal from their checkpoint, then EXIT; `Start` refuses with
   `projectionhost.already_started` until `Stop` resets the host, and `Stop`
