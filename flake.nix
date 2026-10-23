@@ -107,7 +107,11 @@
         in
         {
           treefmt = {
-            projectRootFile = "go.mod";
+            # flake.nix, not go.mod, marks the root: both sit at the tree
+            # base, but BuildFlow's nix-fmt round-trip detect copies only
+            # the flake pair into its temp dir — a go.mod root marker made
+            # every detect run die on "could not find tree-root" (2026-10-23).
+            projectRootFile = lib.mkForce "flake.nix";
             programs = {
               deadnix.enable = true;
               statix.enable = true;
