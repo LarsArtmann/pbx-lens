@@ -310,14 +310,15 @@ invocation the `ignore` glob matches.
 go-appkit v0.9.0 declares `go 1.27.2`, and `go mod tidy` (go ≥1.23) promotes
 the main module's go directive to the highest dependency floor — hand-editing
 `go 1.27` back in is silently reverted on the next tidy (observed live: edit
-+ `toolchain go1.27.2` line → tidy folded it right back to `go 1.27.2`).
-BuildFlow's go-version-auto-configure flags any patch component in the go
-directive ("must be major.minor only") — with go-appkit pinned at v0.9.0 that
-warning CANNOT be fixed repo-side; treat it as documented accepted noise, not
-a finding to chase. Also from the same run: govulncheck's GO-2026-6809
-(crypto/x509) is fixed in go1.27.3 — the repo's environments (nix go_1_27,
-setup-go latest-patch) already ship it; only stale global go binaries report
-it, so a stdlib vuln "finding" can be purely a toolchain-version artifact.
+
+- `toolchain go1.27.2` line → tidy folded it right back to `go 1.27.2`).
+  BuildFlow's go-version-auto-configure flags any patch component in the go
+  directive ("must be major.minor only") — with go-appkit pinned at v0.9.0 that
+  warning CANNOT be fixed repo-side; treat it as documented accepted noise, not
+  a finding to chase. Also from the same run: govulncheck's GO-2026-6809
+  (crypto/x509) is fixed in go1.27.3 — the repo's environments (nix go_1_27,
+  setup-go latest-patch) already ship it; only stale global go binaries report
+  it, so a stdlib vuln "finding" can be purely a toolchain-version artifact.
 
 ## A concurrent session's dirty tree fakes red gates (paid for, 2026-10-23)
 
