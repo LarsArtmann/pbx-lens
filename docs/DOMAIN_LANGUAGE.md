@@ -56,9 +56,61 @@ none — never that a page filtered one out.
   parties the same number), and `Recording tail` (the recording runs well past
   the last turn).
 - **Turn times** come from Telnyx's `sent_at`, never `created_at` — the latter
-  is persistence time and can be a full minute late.
+  is persistence time and can be a full minute late. Measured 2026-10-23 over
+  the account's whole history: all 25 of 25 conversations carried wrong turn
+  times under `created_at`, so this correction rewrote every Telnyx stream
+  once (247 spoken turns, 37 markers across 6 streams).
 - **A second ASR layer** is an owner-gated, clearly labelled variant that must
   never overwrite a source transcript.
+
+## Signal thresholds — the single home for the NUMBERS (2026-10-23)
+
+The vocabularies live above; the numbers live here, so a reader never has to
+reverse-engineer `templ` or a scorer to learn what a bar actually is.
+
+| Signal | Bar | Where it fires | What it does NOT mean |
+| --- | --- | --- | --- |
+| `no user turn` badge | `len(Transcript) > 0 && CountRole(user) == 0` | call detail page (`internal/web/detail.templ`) | not "the caller said nothing" — the SOURCE closed no turn |
+| `source markers` badge | `len(SourceEvents) > 0` | call detail page | markers are not speech; they are the source's own notes |
+| `self-dial` badge | `FromNumber != "" && FromNumber == ToNumber` | call detail page | not proof of a misconfiguration — a test dial looks identical |
+| `Recording tail` badge | recording end − last turn START ≥ **20 s** | call detail page (`transcriptTailThreshold`) | not "nobody spoke"; it means the source stopped annotating long before the line dropped. 20 s, not 30: the forensic call's tail was 29.2 s while the far end was still speaking at 44.3 s |
+| bench `no-user-turn` rule | `expectations.expectsUserTurns` tri-state | `inkasso-bench` (pbx-artmann `internal/inkassobench`) | absent ⇒ **WARN** (fact, not verdict); `true` ⇒ **FAIL** (a real conversation must have a user turn); `false` ⇒ rule off (voicemail/answering-machine fixtures). The offline modes (`--transcript`, `--conversation`) always WARN — an archived call cannot prove the collector failed |
+
+Two rules of interpretation, worth more than the table:
+
+- **A WARN is a fact about the source; a FAIL is a claim about the agent.** Never
+  promote the first to the second without a live call that could have had a
+  user turn.
+- **Span vs tail are different questions.** The forensic report asked for the
+  speech span (first to last speech in the AUDIO); the page renders the
+  transcript tail (last recorded TURN to line end). Both are honest; they
+  disagree whenever the recognizer lost the audio, which is exactly the case
+  the badge exists to expose.
+
+## Additive fields and the schema version (2026-10-23)
+
+`ContentHash` is the observation's identity, and the decider answers an equal
+hash with a no-op. That makes a field which is persisted but NOT hashed
+(`SourceEvents`) invisible to history: it lands only when something else moves
+the hash.
+
+- **The mechanism:** `calls.ObservationSchemaVersion` (and
+  `EnrichmentSchemaVersion`) rides the hash pre-image. Bumping it forces
+  exactly ONE correction per re-ingested stream — the deliberate, sized
+  alternative to silent drift. Bump it only when an unhashed field must reach
+  history, and never for a cosmetic edit.
+- **The backfill:** `pbx-lens refresh -db <dsn>` fetches from the source and
+  classifies every stream (new / stale / additive-only / unchanged /
+  unbuildable) WITHOUT writing; `-apply` re-ingests and rebuilds the search
+  index. It defaults to an unbounded look-back, because the 48 h poll window
+  is exactly what leaves history behind.
+- **The detector:** `additive-only` in that report is the alarm for "the hashes
+  match but the stored row lacks data the source has" — the class that would
+  otherwise never heal.
+- **Delivery is never automatic for Telnyx history.** Local-file sources
+  (CDR, webhook log, agent transcripts) re-parse on every poller pass and heal
+  for free; Telnyx conversations cost API budget, so the backfill stays an
+  explicit operator command.
 
 ## Read-time call join (2026-10-23)
 
