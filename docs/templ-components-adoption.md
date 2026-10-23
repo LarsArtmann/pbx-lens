@@ -46,6 +46,9 @@
    `GOEXPERIMENT=jsonv2 go test ./internal/web/ -run TestGoldenPages
    -update`, REVIEW the diff, then commit; the plain suite must go green
    without `-update` afterwards.
+6. **Art-dupl baseline:** refresh `scripts/art-dupl-baseline.txt` whenever
+   the bump changes the clone set (the CI job diffs against it and warns;
+   a seeded duplicate must still stand out).
 
 ## Corpus trim decision (T17, 2026-10-12): KEEP the full corpus
 
