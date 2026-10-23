@@ -74,7 +74,7 @@ webphone later gets a read-only deep link, never a data dependency.
   real binary (the default `["."]` built the package-less root and shipped
   an empty result); treefmt runs nixfmt + deadnix + statix only (BuildFlow
   owns Go formatting). DevShell (mkShellNoCC): go/golangci-lint/gopls/
-  govulncheck/dprint/templ/tailwindcss_4/cqrs-lint, GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2.
+  govulncheck/dprint/templ/tailwindcss_4/cqrs-lint/vulnix, GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2.
   UI codegen is a package preBuild (`templGenerationPolicy = "preBuild"`:
   templ generate + tailwindcss → styles.css). styles.css is COMMITTED (CI
   embeds it; nix preBuild still regenerates; 2026-10-15 v0.2.0 CI fix);
@@ -133,11 +133,10 @@ webphone later gets a read-only deep link, never a data dependency.
   Compression → ETag; the ordering doctrine, the ETag skip policy, the
   render-buffering trap, and the `Cache-Control: no-cache` revalidation contract) lives in
   docs/http-stack.md — read it before touching caching, timing, or the
-  recording route (that doc also owns the recording proxy's two-hop
-  upstream budget). Every UI
-  route is a query or a proxy, never a write. Exports and the dashboard STREAM via keyset
-  pagination (`StreamExportCalls`, 5k-row pages, memory-bounded, no row
-  cap); the dashboard's day buckets resolve in Europe/Berlin (owner R2
+  recording route (that doc owns the recording proxy's two-hop budget).
+  Every UI route is a query or a proxy, never a write. Exports and the
+  dashboard STREAM via keyset pagination (`StreamExportCalls`, 5k-row pages,
+  memory-bounded, no row cap); day buckets resolve in Europe/Berlin (R2
   2026-10-12 — bare date filters too), an idle index drifts out of the
   chart. htmx polling (R9): `/frag/dashboard` 30 s, `/frag/staleness`
   60 s, runtime self-hosted at `/static/htmx.min.js` — no CDN.
@@ -149,14 +148,12 @@ webphone later gets a read-only deep link, never a data dependency.
   (`modules/telephony/lens.nix`, backup + purge timers;
   `deploy/nixos/module-draft.nix` is a superseded design record).
   The per-call detail page is a READ-TIME join (`CallDetailPage`): the
-  requested source row is completed from the sibling row that observed the
-  same call — only the FreeSWITCH uuid is shared (CDR ↔ agent-transcript;
-  Telnyx and webhook ids live in other key spaces), the requested row's
-  facts and identity always win, and `Also indexed as` names what was
-  borrowed. Local WAVs resolve by the dialplan's stems plus a `{uuid}_*`
-  sweep, because a FreeSWITCH row indexes no `RecordingRef`. The LIST and
-  dashboard still show one row per source (an AI call appears twice) — the
-  open decision lives in TODO_LIST.
+  requested row is completed from its sibling (only the FreeSWITCH uuid is
+  shared — CDR ↔ agent-transcript; Telnyx/webhook ids live elsewhere); the
+  requested row's facts and identity win and `Also indexed as` names what was
+  borrowed. Local WAVs resolve by dialplan stems + a `{uuid}_*` sweep (a CDR
+  row indexes no `RecordingRef`). LIST/dashboard stay one-row-per-source
+  (an AI call appears twice) — open decision in TODO_LIST.
 
 ## Domain
 
@@ -202,27 +199,20 @@ nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.m
 nix run .#update-vendor-hash          # after go.mod/go.sum; CLEAN tree only — never nix-hash-fix (BuildFlow#55)
 ```
 
-Receipt-grade commits: `git add … && git commit …` in ONE call (the daemon
-sweeps within seconds; amend only UNPUSHED; guard proofs assert the MESSAGE).
+Receipt-grade commits: `git add … && git commit …` in ONE call; amend only
+UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit.
 
 ## Deep context (docs/) — read the full doc BEFORE touching its area
 
-- **docs/gotchas.md** — paid-for war stories: the bare-record-key flip and
-  its legacy fallback, the projection host's one-shot drain, full-recompute
-  fold selection, FTS5 tokenization, retention tombstone-only deletes,
-  drain-before-enrich, view→observation rebuild.
-- **docs/status/archived/** — 59 superseded reports; executed plans in
-  docs/planning/archived/ (manifests in each README). CLOSED history —
-  never harvest or re-open (living backlog: TODO_LIST.md).
-- **docs/telnyx-live-api.md** — live-verified API truths (field-as-param
-  filters, timestamp precision, client-side recording correlation,
-  enrichment shapes); re-verify quarterly (recordings live-verified
-  2026-10-12 — MP3-ONLY: empty wav, populated mp3; enrichment
-  spec-verified only; window 2027-01, m27.9).
-- **docs/cqrs-lint-policy.md** — every surviving cqrs-lint finding as a
-  documented decision (E003 flat-domain HOLD + pre-agreed seam).
+- **docs/gotchas.md** — war stories: the bare-record-key flip + fallback,
+  the projection host's one-shot drain, full-recompute folds, FTS5
+  tokenization, tombstone-only deletes, drain-before-enrich, rebuild.
+- **docs/status/archived/** + **docs/planning/archived/** — 59 reports and
+  every executed plan (manifests in each README): CLOSED history, never
+  harvest or re-open (living backlog: TODO_LIST.md).
+- **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
+- **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision.
 - **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
 - **docs/upstream-filings.md** — every filing ledger and its upstream state.
 - **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware
-  chain, component map), **docs/research/2026-10-12_http-stack-adoption-audit.html**
-  (12-47 deep-dive + NOT-adopted doctrine).
+  chain, component map), **docs/research/...http-stack-adoption-audit.html**.

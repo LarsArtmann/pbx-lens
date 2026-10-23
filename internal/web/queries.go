@@ -346,11 +346,10 @@ func siblingKinds(kind calls.SourceKind) []calls.SourceKind {
 		return []calls.SourceKind{calls.SourceAgentTranscript}
 	case calls.SourceAgentTranscript:
 		return []calls.SourceKind{calls.SourceFreeSwitchCDR}
-	case calls.SourceWebhookLog, calls.SourceTelnyxConversation:
+	default:
+		// Telnyx conversations and the webhook log key their own id spaces.
 		return nil
 	}
-
-	return nil
 }
 
 // CallDetailPage reads one call for the detail page and fills the facts a

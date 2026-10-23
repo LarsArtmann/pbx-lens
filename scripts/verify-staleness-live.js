@@ -16,7 +16,6 @@
 // Usage: node scripts/verify-staleness-live.js [--port 18116] [--out /tmp/lens-stale]
 "use strict";
 
-const fs = require("fs");
 const path = require("path");
 const probe = require("./lib/ui-probe");
 
@@ -29,10 +28,7 @@ const arg = (name, dflt) => {
 const OUT = arg("--out", "/tmp/lens-stale");
 const DB = path.join(OUT, "lens.db");
 
-function fail(msg) {
-  console.error("FAIL:", msg);
-  process.exitCode = 1;
-}
+const fail = probe.fail;
 
 async function forceStalenessPoll(page) {
   return page.evaluate(async () => {
@@ -52,29 +48,21 @@ async function forceStalenessPoll(page) {
   const BASE = `http://127.0.0.1:${PORT}`;
   console.log("port:", PORT);
 
-  probe.ensureCodegen();
-  const puppeteer = probe.ensurePuppeteer();
-  const bin = probe.buildProbeBinary(OUT);
   // Fresh DB every run: seedProbeDB keeps existing DBs (stream-identity
   // no-op), but THIS probe's whole premise is "newest call is 48h old" —
   // a reused DB carries seedFreshAgentTurn's now-ts turn from the last
   // run, the 48h seeding silently no-ops, and the banner never renders
   // (both phases then fail, as observed 2026-10-15). Reset like the
   // screenshot probe's empty-index phase does.
-  for (const suffix of ["", "-shm", "-wal"]) {
-    if (fs.existsSync(DB + suffix)) fs.rmSync(DB + suffix);
-  }
-  probe.seedProbeDB(bin, DB, { smokeArgs: ["-age", "48h"] });
-  const serve = await probe.serveProbe(bin, DB, PORT);
-  const browser = await puppeteer.launch({
-    executablePath: probe.findChromium(),
-    headless: "new",
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
+  const { serve, browser, page } = await probe.launchProbe({
+    outDir: OUT,
+    dbPath: DB,
+    port: PORT,
+    seedOpts: { smokeArgs: ["-age", "48h"] },
+    resetDb: true,
   });
 
   try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 900 });
     await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
 
     const staleBefore = await page.evaluate(() =>

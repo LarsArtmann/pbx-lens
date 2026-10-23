@@ -1,0 +1,29 @@
+{
+  "_fixture_note": "Fetched live 2026-10-23 from GET /v2/ai/conversations/acea3e91-5464-42c1-9439-57296942687a. system_prompt removed: the persona canon lives in the scenario file, a fixture copy invites drift.",
+  "created_at": "2026-10-18T03:23:28.232063Z",
+  "error": null,
+  "id": "acea3e91-5464-42c1-9439-57296942687a",
+  "in_transit_region": null,
+  "insight_group_id": null,
+  "insight_id": null,
+  "json_schema": null,
+  "last_message_at": "2026-10-18T03:24:03.725833Z",
+  "metadata": {
+    "assistant_id": "assistant-ce5d8cb7-5edb-4752-af98-77a0563d2296",
+    "assistant_version_id": "20261009T200654344842",
+    "call_control_id": "v3:AVcZ6I8jnuBObsEHom-WJOeCHThwS5kbLrCet3O5X82EMq70B-ctLQ",
+    "call_leg_id": "48e27936-caa3-11f1-aa9f-02420aef89a0",
+    "call_session_id": "48dea0f4-caa3-11f1-96b9-02420aef89a0",
+    "from": "+17287289311",
+    "telnyx_agent_target": "+17287289311",
+    "telnyx_conversation_channel": "phone_call",
+    "telnyx_end_user_target": "+17287289311",
+    "telnyx_end_user_target_verified": false,
+    "to": "+17287289311"
+  },
+  "name": "Voice Assistant Conversation",
+  "number_of_messages": 4,
+  "pii_redaction": "disabled",
+  "retention_in_hours": null,
+  "use_insights_for_memory": false
+}

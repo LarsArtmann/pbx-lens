@@ -260,3 +260,34 @@ func TestSiblingKinds(t *testing.T) {
 		}
 	}
 }
+
+// TestRecordingStemSweepFindsUnknownDialplanName pins the general fix: a
+// destination the dialplan invents later (here a made-up suffix) must still
+// resolve through the {uuid}_* sweep, not silently orphan the audio.
+func TestRecordingStemSweepFindsUnknownDialplanName(t *testing.T) {
+	dir := t.TempDir()
+
+	wav := []byte("RIFF-unknown-stem-recording")
+	if err := os.WriteFile(filepath.Join(dir, joinUUID+"_conference_room_9.wav"), wav, 0o600); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	mux := newTestServerWith(t,
+		Options{Recordings: RecordingOptions{RecordingsDir: dir}},
+		aiAgentCDR(),
+	)
+
+	status, audio, _ := getWithHeaders(t, mux, "/calls/freeswitch-cdr/"+joinUUID+"/recording")
+	if status != 200 {
+		t.Fatalf("recording status = %d, want 200 (body: %s)", status, audio)
+	}
+
+	if audio != string(wav) {
+		t.Errorf("recording body = %q, want the local file bytes", audio)
+	}
+
+	_, body := getBody(t, mux, "/calls/freeswitch-cdr/"+joinUUID)
+	if !strings.Contains(body, joinUUID+"_conference_room_9.wav") {
+		t.Error("detail page does not name the swept recording file")
+	}
+}

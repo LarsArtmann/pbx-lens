@@ -1,0 +1,25 @@
+{
+  "_fixture_note": "Fetched live 2026-10-23 from GET /v2/recordings/2ffb2d8a-6b59-463e-951e-fed416b659ff. Presigned download URLs blanked: they expire in 10 minutes and look like secrets.",
+  "call_control_id": "v3:AVcZ6I8jnuBObsEHom-WJOeCHThwS5kbLrCet3O5X82EMq70B-ctLQ",
+  "call_leg_id": "48e27936-caa3-11f1-aa9f-02420aef89a0",
+  "call_session_id": "48dea0f4-caa3-11f1-96b9-02420aef89a0",
+  "channels": "dual",
+  "conference_id": null,
+  "connection_id": "3048844541827221178",
+  "created_at": "2026-10-18T03:24:15",
+  "download_urls": {
+    "mp3": "",
+    "wav": ""
+  },
+  "duration_millis": 45060,
+  "from": "+17287289311",
+  "id": "2ffb2d8a-6b59-463e-951e-fed416b659ff",
+  "initiated_by": "OutboundAPI",
+  "record_type": "recording",
+  "recording_ended_at": "2026-10-18T03:24:14.770161Z",
+  "recording_started_at": "2026-10-18T03:23:29.710172Z",
+  "source": "call",
+  "status": "completed",
+  "to": "+17287289311",
+  "updated_at": "2026-10-18T03:24:15"
+}

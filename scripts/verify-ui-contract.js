@@ -30,18 +30,12 @@ const path = require("path");
 const probe = require("./lib/ui-probe");
 
 const args = process.argv.slice(2);
-const arg = (name, dflt) => {
-  const i = args.indexOf(name);
-  return i >= 0 ? args[i + 1] : dflt;
-};
+const arg = (name, dflt) => probe.arg(args, name, dflt);
 
 const OUT = arg("--out", "/tmp/lens-verify");
 const DB = path.join(OUT, "lens.db");
 
-function fail(msg) {
-  console.error("FAIL:", msg);
-  process.exitCode = 1;
-}
+const fail = probe.fail;
 
 (async () => {
   // --port is optional (M4/F13): omit it and the OS hands over a free port.
@@ -49,21 +43,9 @@ function fail(msg) {
   const BASE = `http://127.0.0.1:${PORT}`;
   console.log("port:", PORT);
 
-  probe.ensureCodegen();
-  const puppeteer = probe.ensurePuppeteer();
-  const bin = probe.buildProbeBinary(OUT);
-  probe.seedProbeDB(bin, DB);
-  const serve = await probe.serveProbe(bin, DB, PORT);
-  const browser = await puppeteer.launch({
-    executablePath: probe.findChromium(),
-    headless: "new",
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
-  });
+  const { serve, browser, page } = await probe.launchProbe({ outDir: OUT, dbPath: DB, port: PORT });
 
   try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 900 });
-
     // --- Contract D: keyboard walk (plan M5/F16) --------------------------
     // A keyboard user must reach the clickable table rows by tabbing, and
     // the row must show the app.css focus ring (inset teal outline) when

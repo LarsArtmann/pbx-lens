@@ -22,6 +22,7 @@ answers; 05-40: owner-gated M-items; mos-poller-design: the 2027-01 window).
 | 2026-10-12_13-32_SUPERB-templ-ui-pareto-plan.md                    | ARCHIVED       | EXECUTED table 2026-10-12 16:12 (all 27 tasks); execution record 15-20                              |
 | 2026-10-12_17-31_SUPERB-verification-closure-and-ops-hardening.md  | ARCHIVED       | EXECUTED 2026-10-12 ~20:30 (T1-T17 done, T18 routed to TODO rows); execution record 20-30           |
 | 2026-10-17_05-07_SUPERB-pareto-plan-post-corpus-archive.md         | ARCHIVED       | EXECUTED header 2026-10-17 (08:02 + 10:28 legs; only the load-gated receipt remains, as a TODO row) |
+| 2026-10-18_01-01_SUPERB-pareto-plan-post-liveset-closeout.md       | ARCHIVED       | EXECUTED 2026-10-18 (T2-T23); per-row verdicts + §6 ledger (2026-10-23 docs-health pass)            |
 
 Historical citations: reports archived before this move cite the old
 `docs/planning/...` paths — `git log --follow <file>` resolves them; living

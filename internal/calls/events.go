@@ -20,6 +20,11 @@ const (
 const StreamType = "Call"
 
 func (o Observation) ContentHash() string {
+	// SourceEvents is intentionally NOT hashed: it carries the source's
+	// non-speech markers (idle notices, tool calls), which are diagnostic
+	// annotation rather than observation identity. Hashing it would fork
+	// every stored call_views row the moment a marker is persisted, so the
+	// transcript stays the only hashed speech surface (see SourceEvent).
 	h := sha256.New()
 	_, _ = fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s\n%s",
 		o.NativeID, o.Kind, o.Direction, o.StartedAt.UTC().UnixNano(), o.DurationSecs,

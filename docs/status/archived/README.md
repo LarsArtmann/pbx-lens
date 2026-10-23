@@ -4,8 +4,32 @@ Closed history: every open item in these reports is resolved INLINE (each file
 carries `done` / `Won't implement` / `→ routed` strikethrough markers; the
 living backlog is [TODO_LIST.md](../../../TODO_LIST.md)). Do not harvest from
 here — terminal state. Archived 2026-10-12 by the docs-health AUDIT pass,
-2026-10-17 by the corpus-closing sweep, and 2026-10-17 (second pass) by the
-live-set close-out (manifests below).
+2026-10-17 by the corpus-closing sweep, 2026-10-17 (second pass) by the
+live-set close-out, and 2026-10-23 by the post-receipt sweep (manifests below).
+
+## Archive manifest (sweep 2026-10-23 — post-receipt live set)
+
+The five 2026-10-18 reports were annotated inline against the day's receipts
+(gate 57/0/0, cut-release rehearsal, lint-parity doctrine) and against the
+follow-on work through 2026-10-23 (catalog export, read-model key repair,
+upstream re-verify); every row carries its own verdict. check-rows ran
+COMPLETE on every file BEFORE the move. The surviving queue was harvested
+into TODO_LIST (stamp churn, buildflow filing decision, release decision,
+poll-exec wrapper, probe residue, prettier devShell) and ROADMAP (flake-record
+convention, test-complexity policy, client-side stamp rendering).
+
+| File                                                                        | Classification      | Deciding reason                                                                                                                             |
+| --------------------------------------------------------------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-18_00-18_docs-health-pass-live-set-closeout-and-planning-archive.md | ANNOTATE → ARCHIVED | its own pass ledger; every §a/§b/§c/§d/§e/§f row dispositioned (receipt banked 06:17; dprint policy routed to ROADMAP)                      |
+| 2026-10-18_00-55_docs-health-pass-self-review-and-remote-ci-verdict.md      | ANNOTATE → ARCHIVED | self-review + remote-CI verdict; all §a executed, §f 1-33 landed or routed (rows), §g 1/3 → TODO rows, §g 2 → ROADMAP                       |
+| 2026-10-18_02-40_pareto-plan-execution-gate-hardening-probes-rehearsals.md  | ANNOTATE → ARCHIVED | execution snapshot superseded by the 06-55 receipts; every shipped bullet carries done, every gate an arrow to its TODO row                 |
+| 2026-10-18_04-25_pareto-execution-flake-fix-and-gate-hardening.md           | ANNOTATE → ARCHIVED | the 50-item queue triaged row by row (executed, routed, or NOT-DO with a reason); its §e4 audit shipped as the gate-doc doctrine at b4a9970 |
+| 2026-10-18_06-55_t2-receipt-t13-rehearsal-lint-parity-doctrine.md           | ANNOTATE → ARCHIVED | newest report; every §f row routed to a live TODO row, §b watches routed, §c owner gates unchanged                                          |
+
+The same pass archived the executed plan
+[docs/planning/archived/2026-10-18_01-01_SUPERB-pareto-plan-post-liveset-closeout.md](../../planning/archived/2026-10-18_01-01_SUPERB-pareto-plan-post-liveset-closeout.md)
+— its T2-T23 rows shipped 2026-10-18 and every other row carries a per-row
+verdict (routed) or the §6 landing-place ledger.
 
 ## Archive manifest (bulk sweep 2026-10-17, second docs-health pass — the live-set close-out)
 

@@ -123,6 +123,41 @@ type TranscriptTurn struct {
 	At   time.Time `json:"at,omitzero"`
 }
 
+// CountRole reports how many turns a role spoke. Zero is a finding, not an
+// absence: an AI-agent transcript with no user turn means the recognizer never
+// closed a turn for the far end (2026-10-23 forensic call), so the page and
+// the tests ask this question in the same place.
+func CountRole(turns []TranscriptTurn, role TurnRole) int {
+	count := 0
+
+	for _, turn := range turns {
+		if turn.Role == role {
+			count++
+		}
+	}
+
+	return count
+}
+
+// SourceEvent is one message the source recorded that is NOT a spoken
+// transcript turn: its idle markers (Telnyx writes "[long silence]" when no
+// user turn arrived), tool calls, and blank-text rows. It exists because a
+// transcript with no user turn must never render as if nobody spoke unless
+// the source itself said so — the marker is the source's own admission, and
+// dropping it made a two-sided call look one-sided (2026-10-23 forensic
+// report: a live human greeting was recorded, mapped away, and reported as
+// "the caller did not respond").
+//
+// SourceEvents are deliberately OUTSIDE ContentHash: Transcript is the hashed
+// identity, so persisting markers here cannot fork a stored view (see
+// ContentHash). Role keeps the source's raw vocabulary rather than TurnRole,
+// because a marker is not a speaker.
+type SourceEvent struct {
+	Role string    `json:"role"`
+	Text string    `json:"text"`
+	At   time.Time `json:"at,omitzero"`
+}
+
 type Observation struct {
 	NativeID          NativeID         `json:"native_id"`
 	Kind              SourceKind       `json:"kind"`
@@ -135,6 +170,7 @@ type Observation struct {
 	IsAI              bool             `json:"is_ai"`
 	TranscriptExcerpt string           `json:"transcript_excerpt"`
 	Transcript        []TranscriptTurn `json:"transcript,omitempty"`
+	SourceEvents      []SourceEvent    `json:"source_events,omitempty"`
 	RecordingRef      string           `json:"recording_ref"`
 
 	// MOS is the call's Mean Opinion Score when the source reports one

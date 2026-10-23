@@ -1,0 +1,68 @@
+[
+  {
+    "created_at": "2026-10-18T03:24:18.577365Z",
+    "ended_at": null,
+    "metadata": null,
+    "name": null,
+    "reasoning": null,
+    "role": "system",
+    "sent_at": "2026-10-18T03:24:03.725833Z",
+    "text": "[long silence]",
+    "tool_call_id": null,
+    "tool_calls": null,
+    "tool_choice": null,
+    "tools": null
+  },
+  {
+    "created_at": "2026-10-18T03:24:18.312755Z",
+    "ended_at": "2026-10-18T03:23:53.725098Z",
+    "metadata": {
+      "assistant_id": "assistant-ce5d8cb7-5edb-4752-af98-77a0563d2296",
+      "audio_first_token_duration_ms": 217,
+      "end_user_perceived_latency_ms": 687,
+      "llm_first_token_duration_ms": 190,
+      "request_id": "973f1891-0563-4dc7-bee1-3d5672369c78",
+      "start_speaking_plan_extra_wait_duration_ms": 0,
+      "transcription_duration_ms": 0
+    },
+    "name": "Assistant",
+    "reasoning": null,
+    "role": "assistant",
+    "sent_at": "2026-10-18T03:23:45.544000Z",
+    "text": "Ich rufe wegen einer offenen Rechnung an. Bitte richten Sie aus: Mara von Lars Artmann habe wegen einer offenen Rechnung angerufen. Auf Wiederhören.",
+    "tool_call_id": null,
+    "tool_calls": null,
+    "tool_choice": null,
+    "tools": null
+  },
+  {
+    "created_at": "2026-10-18T03:24:18.046913Z",
+    "ended_at": null,
+    "metadata": null,
+    "name": null,
+    "reasoning": null,
+    "role": "system",
+    "sent_at": "2026-10-18T03:23:44.785775Z",
+    "text": "[long silence]",
+    "tool_call_id": null,
+    "tool_calls": null,
+    "tool_choice": null,
+    "tools": null
+  },
+  {
+    "created_at": "2026-10-18T03:24:17.786391Z",
+    "ended_at": "2026-10-18T03:23:34.785306Z",
+    "metadata": {
+      "assistant_id": "assistant-ce5d8cb7-5edb-4752-af98-77a0563d2296"
+    },
+    "name": "Assistant",
+    "reasoning": null,
+    "role": "assistant",
+    "sent_at": "2026-10-18T03:23:30.693850Z",
+    "text": "Guten Tag, hier ist Mara von Lars Artmann. Ist Lars am Apparat?",
+    "tool_call_id": null,
+    "tool_calls": null,
+    "tool_choice": null,
+    "tools": null
+  }
+]

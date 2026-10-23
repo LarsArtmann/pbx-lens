@@ -91,7 +91,7 @@ deleted to CHANGELOG per the list's own discipline.
 
 1. Go-ahead to FILE the four staged drafts (docs/drafts/README.md LIVE rows)? **→ TODO_LIST (filings queue row)**
 2. 3d93fdf lint-policy intent (unblocks T5 residue + the CI budget job). **→ TODO_LIST (lint-policy row)**
-~~3. Quiet-window calendar slot for T2 (gate receipt) + T13 (release dry-run).~~ done at `b4a9970`
+   ~~3. Quiet-window calendar slot for T2 (gate receipt) + T13 (release dry-run).~~ done at `b4a9970`
 
 ## f) Risks / notes for the next session
 

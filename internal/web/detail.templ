@@ -106,7 +106,12 @@ func sourceBadge(kind calls.SourceKind) templ.Component {
 	return display.Badge(display.BadgeProps{Text: string(kind), Type: display.BadgeNeutral, Pill: true})
 }
 
-// detailMain is the Split's primary column: facts card, then transcript.
+// detailMain is the Split's primary column: facts card, then transcript,
+// then the source's own non-speech log. The empty state branches on whether
+// the source wrote anything at all: "no transcript" and "the source recorded
+// no spoken turn, and said so in its own log" are different facts, and the
+// 2026-10-23 forensic call was misread precisely because the page rendered
+// both as "the caller did not respond".
 templ detailMain(nonce string, page DetailPage, query string) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@detailFacts(nonce, page)
@@ -114,11 +119,13 @@ templ detailMain(nonce string, page DetailPage, query string) {
 			@transcriptPane(page.Transcript, query)
 		} else {
 			@display.EmptyState(display.EmptyStateProps{
-				Title: "No transcript",
-				Description: "No source recorded a transcript for this call yet " +
-					"(human calls, or the agent transcript file is not ingested).",
-				Icon: icons.Microphone,
+				Title:       noTranscriptTitle(page),
+				Description: noTranscriptDescription(page),
+				Icon:        icons.Microphone,
 			})
+		}
+		if len(page.SourceEvents) > 0 {
+			@sourceEventPane(page.SourceEvents)
 		}
 	}
 }
@@ -158,6 +165,9 @@ func detailItems(nonce string, page DetailPage) []display.DefinitionItem {
 			Detail: view.InsightSummary,
 		})
 	}
+	// Diagnostics append only when they fire, so a clean call's facts card
+	// keeps its historical shape (and its golden).
+	items = append(items, diagnosticItems(view)...)
 	// Provenance for the joined facts: the page fills the transcript or the
 	// parties from the sibling source row that observed the same call, and
 	// never hides that it did.
@@ -223,6 +233,150 @@ templ transcriptPane(turns []calls.TranscriptTurn, query string) {
 			@transcriptMatchLog(turns, query)
 		}
 	}
+}
+
+// sourceEventPane renders the source's own non-speech entries verbatim:
+// idle markers (Telnyx writes "[long silence]" when no user turn arrived),
+// tool calls, blank rows. It is visually subordinate to the transcript on
+// purpose — it explains silence, it is not speech — but it is never hidden,
+// because the markers are the source admitting what it did not hear.
+templ sourceEventPane(events []calls.SourceEvent) {
+	@display.Card(display.CardProps{Title: "Source log", ID: "source-log", TitleTag: display.HeadingTagH2}) {
+		<p class="mb-2 text-xs text-gray-500 dark:text-gray-400">
+			Entries the source wrote that are not spoken turns. They are quoted as written, never interpreted.
+		</p>
+		<div class="tc-log text-start border-y border-gray-200 py-3 font-mono text-[0.8125rem] leading-relaxed text-gray-500 dark:border-gray-700 dark:text-gray-500" role="log" aria-label="Source log">
+			for _, event := range events {
+				<div class="tc-log-line tc-log-line-still italic">
+					<span class="me-2 inline-block min-w-12 font-medium not-italic">{ event.Role }</span>
+					if event.Text == "" {
+						<span>(empty)</span>
+					} else {
+						<span>{ event.Text }</span>
+					}
+					if !event.At.IsZero() {
+						<span class="ms-2 text-xs not-italic">{ event.At.Local().Format("15:04:05") }</span>
+					}
+				</div>
+			}
+		</div>
+	}
+}
+
+// noTranscriptTitle separates "nothing was recorded" from "the source
+// recorded markers but no speech" — the second is a finding, not a gap.
+func noTranscriptTitle(page DetailPage) string {
+	if len(page.SourceEvents) > 0 {
+		return "No spoken turns recorded"
+	}
+
+	return "No transcript"
+}
+
+// noTranscriptDescription states what the SOURCE did, never a guess about
+// the call. When markers exist they are the source's own record that no user
+// turn arrived, so the copy points at the log instead of shrugging.
+func noTranscriptDescription(page DetailPage) string {
+	if len(page.SourceEvents) == 0 {
+		return "No source recorded a transcript for this call yet " +
+			"(human calls, or the agent transcript file is not ingested)."
+	}
+
+	return "The source wrote " + strconv.Itoa(len(page.SourceEvents)) +
+		" non-speech entries for this call and no spoken turn; they are quoted below. " +
+		"That is the source's own record, not a UI filter — usually a greeting collision, " +
+		"a hangup mid-sentence, or audio that never reached the recognizer."
+}
+
+// transcriptTailThreshold is the "the source stopped writing long before the
+// line dropped" bar. The 2026-10-23 forensic call ended 29.2 s after its last
+// recorded turn start (45.06 s recording, last turn at 15.83 s) while the far
+// end was still speaking at 44.3 s, so a 30 s bar would have missed the very
+// case this signal exists for; 20 s catches it without flagging a call that
+// ends on a normal goodbye.
+const transcriptTailThreshold = 20 * time.Second
+
+// diagnosticItems are the call-fact additions that fire only when something
+// about the recording, the transcript or the parties is worth a second look.
+// Every signal is derived from facts already on the view: no extra source
+// call, no inference.
+func diagnosticItems(view calls.CallView) []display.DefinitionItem {
+	var items []display.DefinitionItem
+
+	userTurns := 0
+
+	for _, turn := range view.Transcript {
+		if turn.Role == calls.TurnRoleUser {
+			userTurns++
+		}
+	}
+
+	if len(view.Transcript) > 0 && userTurns == 0 {
+		items = append(items, display.DefinitionItem{
+			Term:   "User turns",
+			Detail: "0 — every recorded turn is the assistant's",
+			DetailComponent: display.Badge(display.BadgeProps{
+				Text: "no user turn", Type: display.BadgeWarning, Pill: true,
+			}),
+		})
+	}
+
+	if len(view.SourceEvents) > 0 {
+		items = append(items, display.DefinitionItem{
+			Term:   "Source log",
+			Detail: strconv.Itoa(len(view.SourceEvents)) + " non-speech entries the source wrote itself",
+			DetailComponent: display.Badge(display.BadgeProps{
+				Text: "source markers", Type: display.BadgeNeutral, Pill: true,
+			}),
+		})
+	}
+
+	if view.FromNumber != "" && view.FromNumber == view.ToNumber {
+		items = append(items, display.DefinitionItem{
+			Term:   "Legs",
+			Detail: "both parties are the same number",
+			DetailComponent: display.Badge(display.BadgeProps{
+				Text: "self-dial", Type: display.BadgeWarning, Pill: true,
+			}),
+		})
+	}
+
+	if tail, ok := transcriptTail(view); ok && tail >= transcriptTailThreshold {
+		items = append(items, display.DefinitionItem{
+			Term:   "Recording tail",
+			Detail: clockDuration(tail) + " after the last recorded turn",
+			DetailComponent: display.Badge(display.BadgeProps{
+				Text: clockDuration(tail) + " unlogged", Type: display.BadgeWarning, Pill: true,
+			}),
+		})
+	}
+
+	return items
+}
+
+// transcriptTail reports how long the call ran past the last turn's start.
+// Turn times are truncated to whole seconds and sources without per-turn
+// stamps leave At zero, so a transcript with no usable stamp yields false and
+// the signal stays off rather than guessing.
+func transcriptTail(view calls.CallView) (time.Duration, bool) {
+	var last time.Time
+
+	for _, turn := range view.Transcript {
+		if turn.At.After(last) {
+			last = turn.At
+		}
+	}
+
+	if last.IsZero() || view.DurationSecs <= 0 || view.StartedAt.IsZero() {
+		return 0, false
+	}
+
+	tail := time.Duration(view.DurationSecs)*time.Second - last.Sub(view.StartedAt)
+	if tail < 0 {
+		return 0, false
+	}
+
+	return tail, true
 }
 
 // transcriptMatchLog hand-rolls the scrollback line loop for the ?q= path:

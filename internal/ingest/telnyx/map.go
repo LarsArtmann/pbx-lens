@@ -70,7 +70,7 @@ func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts Map
 	// The messages API serves NEWEST-FIRST; the observation must be
 	// order-independent, so sort chronologically here (regression:
 	// TestExcerptOrderIndependent).
-	turns := turnsByTime(msgs)
+	turns, events := turnsByTime(msgs)
 
 	from := conv.MetadataString("telnyx_agent_target")
 	to := conv.MetadataString("telnyx_end_user_target")
@@ -91,6 +91,7 @@ func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts Map
 		IsAI:              conv.MetadataString("assistant_id") != "",
 		TranscriptExcerpt: calls.Excerpt(turns, opts.ExcerptMax),
 		Transcript:        turns,
+		SourceEvents:      events,
 	}
 
 	if rec != nil {
@@ -127,35 +128,42 @@ func durationSecs(conv Conversation, rec *Recording) int {
 
 const millisPerSec = 1000
 
-// turnsByTime maps wire messages to domain transcript turns in chronological
-// order. Timestamps truncate to whole seconds BEFORE entering the turn: the
-// live API is precision-unstable (nanoseconds in one response, microseconds
-// minutes later), and sub-second noise must never reach ContentHash
-// (AGENTS 2026-10-10).
-func turnsByTime(msgs []Message) []calls.TranscriptTurn {
+// turnsByTime maps wire messages to domain transcript turns and source events
+// in chronological order. Timestamps truncate to whole seconds BEFORE entering
+// the turn: the live API is precision-unstable (nanoseconds in one response,
+// microseconds minutes later), and sub-second noise must never reach
+// ContentHash (AGENTS 2026-10-10).
+//
+// Neither return value drops a message. Spoken turns become TranscriptTurn;
+// everything else (idle markers like "[long silence]", tool calls, blank-text
+// rows) becomes a SourceEvent. The earlier shape `continue`d on those rows,
+// which is how a two-sided call could render as a silent one: the source had
+// written its own admission that no user turn arrived, and the mapper threw
+// the admission away (2026-10-23 forensic report).
+func turnsByTime(msgs []Message) ([]calls.TranscriptTurn, []calls.SourceEvent) {
 	sorted := slices.Clone(msgs)
 	slices.SortStableFunc(sorted, func(a, b Message) int {
-		return a.CreatedAt.Compare(b.CreatedAt.Time)
+		return a.SpokeAt().Compare(b.SpokeAt())
 	})
 
 	turns := make([]calls.TranscriptTurn, 0, len(sorted))
+	events := make([]calls.SourceEvent, 0, len(sorted))
+
 	for _, m := range sorted {
 		role := calls.TurnRole(m.Role)
-		if role != calls.TurnRoleUser && role != calls.TurnRoleAssistant {
-			continue
-		}
-
 		text := strings.TrimSpace(m.Text)
-		if text == "" {
+		at := m.SpokeAt().Truncate(time.Second).UTC()
+
+		spoken := (role == calls.TurnRoleUser || role == calls.TurnRoleAssistant) && text != ""
+
+		if spoken {
+			turns = append(turns, calls.TranscriptTurn{Role: role, Text: text, At: at})
+
 			continue
 		}
 
-		turns = append(turns, calls.TranscriptTurn{
-			Role: role,
-			Text: text,
-			At:   m.CreatedAt.Truncate(time.Second).UTC(),
-		})
+		events = append(events, calls.SourceEvent{Role: m.Role, Text: text, At: at})
 	}
 
-	return turns
+	return turns, events
 }

@@ -4,7 +4,8 @@ Browser-level UI instruments (dev tooling only — puppeteer-core installs
 into a scratch prefix under /tmp on first use; nothing enters the Go module
 graph, the flake, or package.json). Shared bootstrap lives in
 `lib/ui-probe.js` (chromium discovery, scratch install, probe-binary build,
-corpus seeding, serve lifecycle).
+corpus seeding, serve lifecycle) — the five single-serve probes boot through
+`lib.launchProbe()`; screenshot-probe keeps its bespoke multi-phase flow.
 
 | Script                     | What it proves / captures                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | When to run                                                                  |
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
@@ -48,7 +49,8 @@ contract probes assert different failure domains (DOM copy behavior,
 computed style truth, timed staleness transitions) with different browser
 lifecycles; merging them would couple unrelated failures and bloat each
 run with the others' setup. Shared plumbing (chromium discovery, scratch
-puppeteer, build/seed/serve) already lives in `lib/ui-probe.js`, so the
+puppeteer, build/seed/serve, the browser page itself) lives in
+`lib/ui-probe.js` — single-serve probes boot via `launchProbe()` — so the
 duplication cost merging would have removed is already paid once.
 
 Smoke seeding flags (M3): `smoke -age 48h` backdates the seeded call

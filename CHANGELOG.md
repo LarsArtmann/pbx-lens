@@ -7,6 +7,42 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-10-23 (docs-health audit: corpus closed, living docs re-verified)
+
+- **The 2026-10-18 status live set is closed**: all five reports annotated
+  inline (394 verdicts — executed, routed to a specific TODO row, or NOT-DO
+  with a reason; every 04-25 §f queue row and every 06-55 §f row now carries
+  its own disposition) and archived with a per-file manifest. The executed
+  01-01 Pareto plan moved to `docs/planning/archived/` with an EXECUTED
+  header and per-row verdicts on all 24 task rows, 96 fine-breakdown rows,
+  and the §6 landing-place ledger. check-rows ran COMPLETE on every file
+  before the move.
+- **Harvested into the live backlog**: TODO_LIST rebuilt to 32 verified-open
+  rows (new: stamp-churn doctrine, buildflow filing decision, patch-vs-minor
+  release decision, poll-exec gate wrapper, probe residue, prettier
+  devShell, vendor-hash re-verify after the go.mod bump); ROADMAP gained the
+  flake-record convention, the test-complexity policy, and client-side stamp
+  rendering. Upstream state re-verified with `gh`: go-appkit#26 CLOSED,
+  go-etag#2 / go-nix-helpers#7 / treefmt-nix#545 / templ-components
+  #48/#49/#50/#51/#55 still OPEN.
+- **The projection-key gotcha was corrected, not just re-worded**: the
+  2026-10-11 "keys carry the `StreamMarker:` prefix" entry now states the
+  post-v4.6.0 truth (bare `calls.RecordKey`, `LegacyRecordKey` fallback via
+  `LookupView`) — the old text described exactly the read path the 2026-10-23
+  repair had to remove.
+- **Living-doc drift fixed against code**: AGENTS.md now says go 1.27.2 (the
+  go.mod floor), documents bare record keys, the receipt-commit discipline
+  (add+commit in one call; amend only unpushed; a guard proof asserts the
+  guard's message), and 59 archived reports — at 219/219 budget. README
+  gained the `catalog` usage section, `purge`/`catalog` in the CLI layout,
+  and the missing ingest-telnyx flags (`-ai-did`, `-max-age`). CONTRIBUTING
+  lost the stale "nix build is BROKEN" claim and gained the hooksPath +
+  commit-message norms. FEATURES lists the serve flags and the now-seven-job
+  CI lane. The gate doc re-verified the tooling counts (65 passed /
+  3 warnings / 30 missing-tool failures, all dispositioned), the HTTP-stack
+  doc carries the recording-timing test pointer, and the templ-components
+  bump watchlist gained the art-dupl baseline step.
+
 ### Added — 2026-10-19 (event/command catalog export)
 
 - **`catalog` subcommand**: `pbx-lens catalog -o <dir> [-plain]` renders the
@@ -46,9 +82,14 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   renders the player whenever the server resolved a local file (naming it
   under the player) and explains honestly when no file exists.
 - Proofs: `detail_join_test.go` pins the join in both directions, the
-  `{uuid}_ai_agent` / `{uuid}_pstn` stems, the honest no-file state, and the
-  merge precedence (primary facts, enrichment, identity); `go test ./...`
-  green, golangci-lint 0 findings, nolint ledger green.
+  `{uuid}_ai_agent` / `{uuid}_pstn` stems, the unknown-destination sweep, the
+  honest no-file state, and the merge precedence (primary facts, enrichment,
+  identity); `go test ./...` and `go test -race ./internal/web` green,
+  `nix build .#pbx-lens` green (sandboxed checkPhase included),
+  golangci-lint 0 findings, nolint ledger green. Also proven against the real
+  binary with a fixture corpus: the page renders the turns, the player, the
+  resolved filename and "Also indexed as", and both recording routes answer
+  200 with the file bytes.
 
 ### Fixed — 2026-10-23 (read-model row keys follow the projection adapter's bare form)
 

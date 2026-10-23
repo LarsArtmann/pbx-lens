@@ -29,6 +29,7 @@ type CallView struct {
 	IsAI              bool             `json:"is_ai"`
 	TranscriptExcerpt string           `json:"transcript_excerpt"`
 	Transcript        []TranscriptTurn `json:"transcript,omitempty"`
+	SourceEvents      []SourceEvent    `json:"source_events,omitempty"`
 	RecordingRef      string           `json:"recording_ref"`
 	CostMicros        int64            `json:"cost_micros,omitempty"`
 	CostCurrency      string           `json:"cost_currency,omitempty"`
@@ -50,6 +51,7 @@ func ViewFrom(obs Observation, enr Enrichment) CallView {
 		IsAI:              obs.IsAI,
 		TranscriptExcerpt: obs.TranscriptExcerpt,
 		Transcript:        obs.Transcript,
+		SourceEvents:      obs.SourceEvents,
 		RecordingRef:      obs.RecordingRef,
 		CostMicros:        enr.CostMicros,
 		CostCurrency:      enr.CostCurrency,
@@ -77,6 +79,7 @@ func (v CallView) Observation() Observation {
 		IsAI:              v.IsAI,
 		TranscriptExcerpt: v.TranscriptExcerpt,
 		Transcript:        v.Transcript,
+		SourceEvents:      v.SourceEvents,
 		RecordingRef:      v.RecordingRef,
 		MOS:               v.MOS,
 	}

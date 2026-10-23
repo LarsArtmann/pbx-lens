@@ -27,18 +27,12 @@ const path = require("path");
 const probe = require("./lib/ui-probe");
 
 const args = process.argv.slice(2);
-const arg = (name, dflt) => {
-  const i = args.indexOf(name);
-  return i >= 0 ? args[i + 1] : dflt;
-};
+const arg = (name, dflt) => probe.arg(args, name, dflt);
 
 const OUT = arg("--out", "/tmp/lens-style-verify");
 const DB = path.join(OUT, "lens.db");
 
-function fail(msg) {
-  console.error("FAIL:", msg);
-  process.exitCode = 1;
-}
+const fail = probe.fail;
 
 const VIOLET = ["124, 58, 237", "139, 92, 246"];
 
@@ -48,21 +42,9 @@ const VIOLET = ["124, 58, 237", "139, 92, 246"];
   const BASE = `http://127.0.0.1:${PORT}`;
   console.log("port:", PORT);
 
-  probe.ensureCodegen();
-  const puppeteer = probe.ensurePuppeteer();
-  const bin = probe.buildProbeBinary(OUT);
-  probe.seedProbeDB(bin, DB);
-  const serve = await probe.serveProbe(bin, DB, PORT);
-  const browser = await puppeteer.launch({
-    executablePath: probe.findChromium(),
-    headless: "new",
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
-  });
+  const { serve, browser, page } = await probe.launchProbe({ outDir: OUT, dbPath: DB, port: PORT });
 
   try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 900 });
-
     // --- S1 + S2: the ds-brand bridge, light then dark ------------------
     await page.goto(`${BASE}/dashboard`, { waitUntil: "networkidle0" });
 

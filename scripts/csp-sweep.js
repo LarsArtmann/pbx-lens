@@ -20,10 +20,7 @@ const path = require("path");
 const probe = require("./lib/ui-probe");
 
 const args = process.argv.slice(2);
-const arg = (name, dflt) => {
-  const i = args.indexOf(name);
-  return i >= 0 ? args[i + 1] : dflt;
-};
+const arg = (name, dflt) => probe.arg(args, name, dflt);
 
 const OUT = arg("--out", "/tmp/lens-csp");
 const DB = path.join(OUT, "lens.db");
@@ -33,19 +30,11 @@ const DB = path.join(OUT, "lens.db");
   const BASE = `http://127.0.0.1:${PORT}`;
   console.log("port:", PORT);
 
-  probe.ensureCodegen();
-  const puppeteer = probe.ensurePuppeteer();
-  const bin = probe.buildProbeBinary(OUT);
-  probe.seedProbeDB(bin, DB);
-
-  process.env.CSP_NONCE = "1";
-  process.env.CSP_REPORT_ONLY = "1";
-
-  const serve = await probe.serveProbe(bin, DB, PORT);
-  const browser = await puppeteer.launch({
-    executablePath: probe.findChromium(),
-    headless: "new",
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
+  const { serve, browser } = await probe.launchProbe({
+    outDir: OUT,
+    dbPath: DB,
+    port: PORT,
+    serveEnv: { CSP_NONCE: "1", CSP_REPORT_ONLY: "1" },
   });
 
   const violations = [];

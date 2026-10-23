@@ -26,31 +26,21 @@ const arg = (name, dflt) => {
 const OUT = arg("--out", "/tmp/lens-ops-verdict");
 const DB = path.join(OUT, "lens.db");
 
-function fail(msg) {
-  console.error("FAIL:", msg);
-  process.exitCode = 1;
-}
+const fail = probe.fail;
 
 (async () => {
   const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
   const BASE = `http://127.0.0.1:${PORT}`;
   console.log("port:", PORT);
 
-  probe.ensureCodegen();
-  const puppeteer = probe.ensurePuppeteer();
-  const bin = probe.buildProbeBinary(OUT);
-  probe.seedProbeDB(bin, DB);
-  const serve = await probe.serveProbe(bin, DB, PORT, ["-wired-ops"]);
-  const browser = await puppeteer.launch({
-    executablePath: probe.findChromium(),
-    headless: "new",
-    args: ["--no-sandbox", "--disable-dev-shm-usage"],
+  const { serve, browser, page } = await probe.launchProbe({
+    outDir: OUT,
+    dbPath: DB,
+    port: PORT,
+    serveArgs: ["-wired-ops"],
   });
 
   try {
-    const page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 900 });
-
     const resp = await page.goto(`${BASE}/ops`, { waitUntil: "networkidle0" });
     console.log("/ops ->", resp.status());
 

@@ -253,12 +253,13 @@ function seedProbeDB(bin, dbPath, opts = {}) {
 // A successful ping against a dead child means an older serve still owns
 // the port — captures would silently hit a stale binary + CSS, so it
 // fails loudly instead.
-function serveProbe(bin, dbPath, port, extraServeArgs = []) {
+function serveProbe(bin, dbPath, port, extraServeArgs = [], envOverrides = {}) {
   const base = `http://127.0.0.1:${port}`;
   const serve = spawn(
     bin,
     ["serve", "-db", dbPath, "-addr", `127.0.0.1:${port}`, ...extraServeArgs],
     {
+      env: { ...process.env, ...envOverrides },
       stdio: "ignore",
     },
   );
@@ -301,6 +302,52 @@ function stopProbe(serve) {
   });
 }
 
+// arg returns the value following `name` in argv, or dflt. Every
+// instrument shares the same --port/--out convention, so the parser lives
+// here instead of a private copy per script (jscpd pair source).
+function arg(args, name, dflt) {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : dflt;
+}
+
+// fail marks the probe verdict red without aborting the run: a probe that
+// found N contract breaks reports all of them, then exits nonzero.
+function fail(msg) {
+  console.error("FAIL:", msg);
+  process.exitCode = 1;
+}
+
+// launchProbe runs the shared browser-instrument bootstrap: codegen,
+// puppeteer scratch install, probe binary build, corpus seeding, serve,
+// and a headless chromium page at 1280x900. Variants: seedOpts forwards to
+// seedProbeDB (corpus flags like the staleness age), serveArgs forwards to
+// serveProbe (dev fixtures like -wired-ops), serveEnv overrides the
+// serve's environment (CSP flags) without leaking into the caller, and
+// resetDb deletes dbPath (+ sqlite sidecars) before seeding — for probes
+// whose premise a reused DB silently defeats. Resolves { serve, browser,
+// page }; the caller owns teardown (browser.close() + stopProbe(serve))
+// in its finally block.
+async function launchProbe({ outDir, dbPath, port, seedOpts = {}, serveArgs = [], serveEnv = {}, resetDb = false }) {
+  ensureCodegen();
+  const puppeteer = ensurePuppeteer();
+  const bin = buildProbeBinary(outDir);
+  if (resetDb) {
+    for (const suffix of ["", "-shm", "-wal"]) {
+      if (fs.existsSync(dbPath + suffix)) fs.rmSync(dbPath + suffix);
+    }
+  }
+  seedProbeDB(bin, dbPath, seedOpts);
+  const serve = await serveProbe(bin, dbPath, port, serveArgs, serveEnv);
+  const browser = await puppeteer.launch({
+    executablePath: findChromium(),
+    headless: "new",
+    args: ["--no-sandbox", "--disable-dev-shm-usage"],
+  });
+  const page = await browser.newPage();
+  await page.setViewport({ width: 1280, height: 900 });
+  return { serve, browser, page };
+}
+
 // findFreePort asks the OS for an unused loopback port (plan M4/F13): the
 // stale-port stumble is the probe suite's most common friction, so callers
 // can default to a free port instead of a pinned one.
@@ -318,12 +365,15 @@ function findFreePort() {
 
 module.exports = {
   SCRATCH,
+  arg,
   buildProbeBinary,
   ensureCodegen,
   ensurePuppeteer,
   ensureScratchDeps,
+  fail,
   findChromium,
   findFreePort,
+  launchProbe,
   repoRoot,
   seedFreshAgentTurn,
   seedProbeDB,

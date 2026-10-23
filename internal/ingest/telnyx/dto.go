@@ -3,6 +3,7 @@ package telnyx
 import (
 	"encoding/json"
 	"strconv"
+	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/wire"
 )
@@ -30,6 +31,25 @@ type Message struct {
 	Text      string        `json:"text"`
 	CreatedAt wire.FlexTime `json:"created_at"`
 	SentAt    wire.FlexTime `json:"sent_at"`
+}
+
+// SpokeAt is when the message happened on the call, not when its row was
+// written. Telnyx stamps created_at at PERSISTENCE: the whole four-message log
+// of the 2026-10-18 mara/callee call landed inside one second
+// (03:24:17.786-03:24:18.577) a full minute after the speech it describes,
+// while sent_at carries the real dispatch times (03:23:30.693-03:24:03.725).
+// Anchoring a turn on created_at therefore produced turn times that cannot be
+// matched against the recording, which is why the lens could not show that the
+// far end spoke at 0.3 s while the assistant's greeting ran to 4.3 s.
+//
+// Falls back to created_at for rows that carry no sent_at, so fixtures and
+// sources without the field keep their historical behaviour.
+func (m Message) SpokeAt() time.Time {
+	if !m.SentAt.IsZero() {
+		return m.SentAt.Time
+	}
+
+	return m.CreatedAt.Time
 }
 
 type DownloadURLs struct {

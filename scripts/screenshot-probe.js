@@ -20,10 +20,7 @@ const path = require("path");
 const probe = require("./lib/ui-probe");
 
 const args = process.argv.slice(2);
-const arg = (name, dflt) => {
-  const i = args.indexOf(name);
-  return i >= 0 ? args[i + 1] : dflt;
-};
+const arg = (name, dflt) => probe.arg(args, name, dflt);
 
 const OUT = arg("--out", "/tmp/lens-shots");
 const DB = path.join(OUT, "lens.db");

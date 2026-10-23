@@ -160,6 +160,7 @@
                     shellcheck
                     templ
                     tailwindcss_4
+                    vulnix
                     ;
                 }
                 ++ [
