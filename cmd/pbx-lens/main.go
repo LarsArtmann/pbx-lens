@@ -20,6 +20,7 @@ func main() {
 		"smoke":          smoke,
 		"ingest-cdr":     ingestCDR,
 		"ingest-telnyx":  ingestTelnyx,
+		"refresh":        refresh,
 		"ingest-webhook": ingestWebhook,
 		"ingest-agent":   ingestAgent,
 		"serve":          serve,
@@ -53,6 +54,7 @@ func usage() {
 		os.Stderr,
 		"usage: pbx-lens version | pbx-lens smoke [-db path] | pbx-lens ingest-cdr -db <dsn> <Master.csv> |"+
 			" pbx-lens ingest-telnyx -db <dsn> [-key-file path] [-since 48h] [-direction outbound] [-limit N] |"+
+			" pbx-lens refresh -db <dsn> [-key-file path] [-since 0] [-limit N] [-apply] |"+
 			" pbx-lens ingest-webhook -db <dsn> <inbound.jsonl> |"+
 			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts |"+
 			" pbx-lens serve -db <dsn> [-addr 127.0.0.1:8300] |"+
