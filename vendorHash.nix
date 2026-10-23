@@ -6,4 +6,4 @@
 # repo lived through that day (corruption a61ba8c, restore 48a63df) — it
 # RECURRED 18:33 via the stale binary 518739c on a docs-dirty tree
 # (corruption 62bcca6; restored by hand from the probe log's `got:` value).
-"sha256-gHfzvwf+/m1v7TUCJluZJMVY09mRSqy6TGqJkrvDuEA="
+"sha256-Zr2f+VNxuATZ6PXZuTY2ssC1PgCvUR59iQbkTV/OZWY="
