@@ -328,7 +328,15 @@ function fail(msg) {
 // page }; the caller owns teardown (browser.close() + stopProbe(serve))
 // in its finally block. Also returns `bin` (the probe binary path) for
 // mid-run ingests and `puppeteer` for multi-page callers.
-async function launchProbe({ outDir, dbPath, port, seedOpts = {}, serveArgs = [], serveEnv = {}, resetDb = false }) {
+async function launchProbe({
+  outDir,
+  dbPath,
+  port,
+  seedOpts = {},
+  serveArgs = [],
+  serveEnv = {},
+  resetDb = false,
+}) {
   ensureCodegen();
   const puppeteer = ensurePuppeteer();
   const bin = buildProbeBinary(outDir);
