@@ -7,6 +7,21 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-19 (event/command catalog export)
+
+- **`catalog` subcommand**: `pbx-lens catalog -o <dir> [-plain]` renders the
+  calls aggregate's command/event catalog as an EventCatalog project tree —
+  no database, no network. Message schemas are derived from the Go structs by
+  reflection (`internal/calls.BuildCatalog`), so the catalog tracks the
+  domain instead of a hand-maintained copy; the service, domain, data store,
+  and the call-lifecycle flow are declared as first-class entries.
+- **`.eventcatalog-hub.json`** wires the repo into the architecture-catalog
+  hub: the export entry renders the tree, the lint entry renders the
+  `-plain` variant for the hub's frontmatter-ID governance checks.
+- **`docs/nolint-ledger.md`** gained the catalog command's single
+  suppression (`erraudit` on the CLI status-line write, a non-actionable
+  output stream), keeping the ledger-completeness check green.
+
 ### Fixed — 2026-10-23 (read-model row keys follow the projection adapter's bare form)
 
 - **Every read-model row key now flows through `internal/calls.RecordKey`**

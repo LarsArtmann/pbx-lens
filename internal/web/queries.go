@@ -404,47 +404,68 @@ func CallDetailPage(
 // row's. A primary that already carries a fact keeps its own version — the
 // requested row is the authority for what it observed.
 func mergeCall(primary, sibling calls.CallView) (calls.CallView, bool) {
-	changed := false
+	transcriptJoined := fillTranscript(&primary, sibling)
+	fromJoined := fillString(&primary.FromNumber, sibling.FromNumber)
+	toJoined := fillString(&primary.ToNumber, sibling.ToNumber)
+	causeJoined := fillString(&primary.HangupCause, sibling.HangupCause)
+	durationJoined := fillDuration(&primary.DurationSecs, sibling.DurationSecs)
+	startJoined := fillStartedAt(&primary.StartedAt, sibling.StartedAt)
+	aiJoined := fillFlag(&primary.IsAI, sibling.IsAI)
 
-	if len(primary.Transcript) == 0 && len(sibling.Transcript) > 0 {
-		primary.Transcript = sibling.Transcript
+	return primary, transcriptJoined || fromJoined || toJoined || causeJoined ||
+		durationJoined || startJoined || aiJoined
+}
 
-		if primary.TranscriptExcerpt == "" {
-			primary.TranscriptExcerpt = sibling.TranscriptExcerpt
-		}
-
-		changed = true
+func fillTranscript(primary *calls.CallView, sibling calls.CallView) bool {
+	if len(primary.Transcript) > 0 || len(sibling.Transcript) == 0 {
+		return false
 	}
 
-	if primary.FromNumber == "" && sibling.FromNumber != "" {
-		primary.FromNumber = sibling.FromNumber
-		changed = true
+	primary.Transcript = sibling.Transcript
+
+	if primary.TranscriptExcerpt == "" {
+		primary.TranscriptExcerpt = sibling.TranscriptExcerpt
 	}
 
-	if primary.ToNumber == "" && sibling.ToNumber != "" {
-		primary.ToNumber = sibling.ToNumber
-		changed = true
+	return true
+}
+
+func fillString(destination *string, source string) bool {
+	if *destination != "" || source == "" {
+		return false
 	}
 
-	if primary.DurationSecs == 0 && sibling.DurationSecs > 0 {
-		primary.DurationSecs = sibling.DurationSecs
-		changed = true
+	*destination = source
+
+	return true
+}
+
+func fillDuration(destination *int, source int) bool {
+	if *destination != 0 || source == 0 {
+		return false
 	}
 
-	if primary.HangupCause == "" && sibling.HangupCause != "" {
-		primary.HangupCause = sibling.HangupCause
-		changed = true
+	*destination = source
+
+	return true
+}
+
+func fillStartedAt(destination *time.Time, source time.Time) bool {
+	if !destination.IsZero() || source.IsZero() {
+		return false
 	}
 
-	if primary.StartedAt.IsZero() && !sibling.StartedAt.IsZero() {
-		primary.StartedAt = sibling.StartedAt
-		changed = true
+	*destination = source
+
+	return true
+}
+
+func fillFlag(destination *bool, source bool) bool {
+	if *destination || !source {
+		return false
 	}
 
-	if !primary.IsAI && sibling.IsAI {
-		primary.IsAI = true
-		changed = true
-	}
+	*destination = source
 
-	return primary, changed
+	return true
 }

@@ -304,12 +304,13 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   row; CI's govulncheck lane is the trusted CVE gate), and the stale
   binary-freshness advisory (P1-T12, owner-gated rebuild).
   Verification: `buildflow --dry-run` shows 37 ok / 1 warn / 0 fail with
-  2 user-intent skips and no dead-config warnings. Re-verified 2026-10-18
-  (pareto T23): `buildflow doctor` now marks 29 tools — every one falls in
-  a disposition above (cargo/python/js-ts/docker/proto no-match class,
-  codespell on-demand, gci via golangci-lint, vulnix advisory row, lychee
-  config skip); the dry-run warning lists the same shape (9 unavailable =
-  cosmetic, 5 skipped: markdown-lint/gitleaks/codespell on-demand by
-  design, lychee + nix-build-verify deliberate config skips). No NEW
-  relevant tool surfaced; the count drift is the fleet's tool list moving,
-  not a policy change.
+  2 user-intent skips and no dead-config warnings. Re-verified 2026-10-23
+  (docs-health pass; the `29 tools` receipt had aged): `buildflow doctor`
+  = 65 passed / 3 warnings / 30 failed, and every failure is a fleet tool
+  that lives in the devShell or targets a language with no files here
+  (dprint/shellcheck/prettier/pytest/ruff/tsc/vulnix/lychee/... — the
+  dispositions above plus "devShell-only, not on PATH"). The warnings are
+  the BuildFlow binary predating its HEAD, go.mod freshness, go-line
+  churn, the FOD-hash advisory, and AGENTS size. Counts drift with the
+  fleet's tool list, never with this repo's policy: judge a doctor run by
+  whether every mark fits a disposition, not by the number.

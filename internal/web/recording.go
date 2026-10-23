@@ -245,6 +245,7 @@ func (s *server) serveLocalRecording(w http.ResponseWriter, r *http.Request, vie
 		return
 	}
 
+	//nolint:gosec // path is resolved from directory entries or basename-locked stems — never caller input verbatim
 	http.ServeFile(w, r, path)
 }
 
