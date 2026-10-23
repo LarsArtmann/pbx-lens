@@ -5,7 +5,7 @@
 
 # Archived execution plans
 
-Fully executed and annotated plans. Each carries an EXECUTED header pointing
+9 closed plans. Fully executed and annotated; each carries an EXECUTED header pointing
 at its archived execution reports and the CHANGELOG receipts — the plan text
 itself is a historical snapshot, never rewritten. Open work lives in
 [TODO_LIST.md](../../../TODO_LIST.md). The three plans still in

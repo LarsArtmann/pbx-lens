@@ -25,6 +25,15 @@ const arg = (name, dflt) => probe.arg(args, name, dflt);
 const OUT = arg("--out", "/tmp/lens-shots");
 const DB = path.join(OUT, "lens.db");
 
+// fail records a contract violation (the checks below have a right answer,
+// unlike the alert-only pixel diff). Collected rather than thrown so one bad
+// surface does not cost the rest of the corpus; the run still ends red.
+const failures = [];
+function fail(message) {
+  failures.push(message);
+  console.error(`FAIL: ${message}`);
+}
+
 // --only <name[,name…]> (plan 05-40 M12/F33): capture a subset instead of
 // the full sweep — an eyeball pass on one page shouldn't pay for the whole
 // corpus. Names are the capture labels (calls, dashboard, detail-a,
@@ -408,6 +417,11 @@ const NEEDS_DISCOVERY =
     console.log(`DONE: ${n} PNGs in ${OUT}`);
   } finally {
     await probe.stopProbe(serve);
+  }
+
+  if (failures.length > 0) {
+    console.error(`${failures.length} contract failure(s): ${failures.join("; ")}`);
+    process.exitCode = 1;
   }
 })().catch((e) => {
   console.error(e);
