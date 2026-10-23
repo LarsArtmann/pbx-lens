@@ -317,6 +317,24 @@ function fail(msg) {
   process.exitCode = 1;
 }
 
+// probeSession resolves the CLI preamble every instrument opens with:
+// --out (default outDefault), --port (a free OS port when omitted, M4/F13),
+// and the derived lens.db path + base URL. args/arg stay exposed for
+// probes with extra flags (screenshot-probe's --only/--themes).
+async function probeSession(outDefault) {
+  const args = process.argv.slice(2);
+  const port = args.includes("--port") ? arg(args, "--port", null) : await findFreePort();
+  const outDir = arg(args, "--out", outDefault);
+  return {
+    args,
+    arg: (name, dflt) => arg(args, name, dflt),
+    outDir,
+    dbPath: path.join(outDir, "lens.db"),
+    port,
+    base: `http://127.0.0.1:${port}`,
+  };
+}
+
 // launchProbe runs the shared browser-instrument bootstrap: codegen,
 // puppeteer scratch install, probe binary build, corpus seeding, serve,
 // and a headless chromium page at 1280x900. Variants: seedOpts forwards to
@@ -383,6 +401,7 @@ module.exports = {
   findChromium,
   findFreePort,
   launchProbe,
+  probeSession,
   repoRoot,
   seedFreshAgentTurn,
   seedProbeDB,

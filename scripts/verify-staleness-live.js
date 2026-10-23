@@ -43,9 +43,7 @@ async function forceStalenessPoll(page) {
 }
 
 (async () => {
-  // --port is optional (M4/F13): omit it and the OS hands over a free port.
-  const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
-  const BASE = `http://127.0.0.1:${PORT}`;
+  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-stale");
   console.log("port:", PORT);
 
   // Fresh DB every run: seedProbeDB keeps existing DBs (stream-identity

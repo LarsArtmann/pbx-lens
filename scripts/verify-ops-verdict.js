@@ -29,8 +29,7 @@ const DB = path.join(OUT, "lens.db");
 const fail = probe.fail;
 
 (async () => {
-  const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
-  const BASE = `http://127.0.0.1:${PORT}`;
+  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-ops-verdict");
   console.log("port:", PORT);
 
   const { serve, browser, page } = await probe.launchProbe({

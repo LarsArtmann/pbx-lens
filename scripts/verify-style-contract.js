@@ -23,23 +23,14 @@
 // Usage: node scripts/verify-style-contract.js [--port 18110] [--out /tmp/lens-style-verify]
 "use strict";
 
-const path = require("path");
 const probe = require("./lib/ui-probe");
-
-const args = process.argv.slice(2);
-const arg = (name, dflt) => probe.arg(args, name, dflt);
-
-const OUT = arg("--out", "/tmp/lens-style-verify");
-const DB = path.join(OUT, "lens.db");
 
 const fail = probe.fail;
 
 const VIOLET = ["124, 58, 237", "139, 92, 246"];
 
 (async () => {
-  // --port is optional (M4/F13): omit it and the OS hands over a free port.
-  const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
-  const BASE = `http://127.0.0.1:${PORT}`;
+  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-style-verify");
   console.log("port:", PORT);
 
   const { serve, browser, page } = await probe.launchProbe({ outDir: OUT, dbPath: DB, port: PORT });
