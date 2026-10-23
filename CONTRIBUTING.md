@@ -36,9 +36,10 @@ Commit messages that matter (receipts, doctrine, reversions) should be
 created in the SAME tool call as the final edit — the auto-commit daemon
 sweeps changed files within seconds and will otherwise take the message.
 
-Project conventions (stack constraints, domain rules, deliberate lint
-non-fixes) live in [AGENTS.md](AGENTS.md); the vocabulary in
-[docs/DOMAIN_LANGUAGE.md](docs/DOMAIN_LANGUAGE.md).
+Project conventions (stack constraints, domain rules) live in
+[AGENTS.md](AGENTS.md); every surviving lint suppression is justified in
+[docs/nolint-ledger.md](docs/nolint-ledger.md) (the pre-commit hook and CI
+check it); the vocabulary in [docs/DOMAIN_LANGUAGE.md](docs/DOMAIN_LANGUAGE.md).
 
 ## Reporting Issues
 
