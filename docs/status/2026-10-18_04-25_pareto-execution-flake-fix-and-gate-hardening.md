@@ -17,13 +17,13 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
 
 ## a) FULLY DONE
 
-1. **T3 — statix no-op tripwire** (`scripts/verify-all.sh`): the lane fails
+~~1. **T3 — statix no-op tripwire** (`scripts/verify-all.sh`): the lane fails~~ done — T3 tripwire landed (357283e)
    loudly on statix's fail-open signature ("config error" on stderr, exit 0,
    lints nothing — the five-day October outage class). Proven both ways: a
    fake fail-open statix on PATH turns the lane red BEFORE any probe runs
    (exit 1); real statix passes through to green contracts. Skips cleanly
    when statix is off PATH. Documented in the scripts/README lane row.
-2. **T4 — CI nix lane** (`.github/workflows/ci.yml` `nix-lint` job): statix
+~~2. **T4 — CI nix lane** (`.github/workflows/ci.yml` `nix-lint` job): statix~~ done — T4 CI nix lane landed (cfbd139); green on remote CI
    (with the no-op tripwire logic) + `deadnix --fail` + `nix fmt --ci`, every
    tool resolved through the FLAKE'S LOCKED nixpkgs rev (via
    `nix flake metadata` → `NIXPKGS_REF`) so a tool release can never flip a
@@ -32,24 +32,24 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
    `--no-hardlinks` clone before landing. GREEN on remote CI. Also surfaced
    an upstream-adjacent fact: deadnix exits 0 on UNPARSEABLE files (the fmt
    lane covers that hole — noted in the job comment).
-3. **T14 — `ingest-telnyx -dry-run` parity** with ingest-cdr: report-only
+~~3. **T14 — `ingest-telnyx -dry-run` parity** with ingest-cdr: report-only~~ done — T14 -dry-run parity landed (CHANGELOG 2026-10-18)
    fetch ("N conversations fetched, N would-record, N age-refused, N
    fetch-rejected — nothing written"), no `-db` required, no index opened,
    enrichment correctly absent (it reads the read model). New `-api-base`
    flag for stub-server rehearsals. Pinned by `TestIngestTelnyxDryRunReports
    WithoutWrites`: an httptest Telnyx stub, both conversations' message
    lists walked, zero entries added to the temp dir. README + FEATURES rows.
-4. **T15 — csp-sweep per-surface console attribution**: console CSP messages
+~~4. **T15 — csp-sweep per-surface console attribution**: console CSP messages~~ done — T15 csp-sweep attribution landed
    now carry the navigating surface (`${surface} (console)`) via a
    `consoleSurface` variable reset per navigation, including a dedicated
    attribution for the copy-click phase. Full re-run: zero violations across
    all 6 surfaces, exit 0.
-5. **T16 — `verify-all --baseline <dir>` wrapper** (the LENS_DIFF_BASELINE
+~~5. **T16 — `verify-all --baseline <dir>` wrapper** (the LENS_DIFF_BASELINE~~ done — T16 baseline flag + print-probe assert landed
    hook as a lane flag; wins over the env var; missing-arg guard exits 2 —
    observed live) **+ print-probe `break-inside` computed-style assert** on
    every `.lens-ops-card` (live run: `["avoid","avoid","avoid"]`, RC 0, no
    card → loud failure). README doctrine updated.
-6. **T17 — art-dupl verdict baseline**: `scripts/art-dupl-baseline.txt`
+~~6. **T17 — art-dupl verdict baseline**: `scripts/art-dupl-baseline.txt`~~ done — T17 art-dupl baseline + freshness warning landed
    (exact-output, 34 clone groups / 2 shown at pin 0.9.0) checked in; the CI
    duplication job diffs fresh output against it and warns with the refresh
    procedure. Seeded-clone proof: a real 10-line duplicate pair stands out
@@ -57,7 +57,7 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
    verify-all: when internal/web markup is newer than the pixel baseline
    dir, the lane warns (never fails) with the re-save command — proven with
    a back-dated dir.
-7. **T18 — golden-scrubber contract test** (`TestGoldenScrubberCoversFooter
+~~7. **T18 — golden-scrubber contract test** (`TestGoldenScrubberCoversFooter~~ done — T18 scrubber test + scripts/README merge landed
    Stamp`): pins the scrubber↔footer-copy contract by exact-match output;
    if the footer copy drifts, this test fails with a pointer to update the
    pattern+replacement pair instead of the goldens silently capturing raw
@@ -65,20 +65,20 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
    group is consumed by design (goldens' established shape).
    **scripts/README codegen paragraphs merged** (the two competing
    "Codegen bootstrap" blocks → one hash-primary paragraph).
-8. **T19 — AGENTS.md recording-proxy extraction**: the two-hop upstream
+~~8. **T19 — AGENTS.md recording-proxy extraction**: the two-hop upstream~~ done — T19 AGENTS extraction landed (219 lines)
    budget details moved to `docs/http-stack.md` — verified against
    `internal/web/recording.go` first (hop 1 = `context.WithTimeout` on the
    metadata fetch; hop 2 = `transport.ResponseHeaderTimeout`; body
    unbounded; Server-Timing pre-first-write only). AGENTS at 218/219
    (budget check green, now enforced on every commit — see #14).
-9. **T20 — `-wired-ops` serve fixture + fourth lane probe**: `serve
+~~9. **T20 — `-wired-ops` serve fixture + fourth lane probe**: `serve~~ done — T20 -wired-ops probe landed
    -wired-ops` swaps the live counters for a canned STALE snapshot (mnd-
    clean named constants); `scripts/verify-ops-verdict.js` boots that
    composition in a real browser, asserts the "Poller pass is stale" alert
    with the canned 2h age, and checks `/api/ops` answers `stale: true` with
    both canned source rows. Wired into verify-all (both modes); `serveProbe`
    gained a backward-compatible `extraServeArgs` parameter. ALL PASS live.
-10. **T21 — FTS ranking corpus test** (`internal/search/ranking_corpus_test
+~~10. **T21 — FTS ranking corpus test** (`internal/search/ranking_corpus_test~~ done — T21 ranking corpus landed
     .go`): a 106-view synthetic corpus (100 fillers with digit-restricted
     number tails + 6 instrumented targets) pins bm25 ORDER (term frequency:
     rank-hot before rank-cold; both-terms document outranks the single-term
@@ -87,14 +87,14 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
     isolating one, full-number query deduping the FTS and digit legs).
     Expectation corrected once against reality (rank-both legitimately
     matches "thermostat" too). Full package green; gci-fixed.
-11. **T22 — recording-proxy timing-hop asserts** through the FULL served
+~~11. **T22 — recording-proxy timing-hop asserts** through the FULL served~~ done — T22 timing-hop asserts landed
     chain (`cmd/pbx-lens/serve_test.go`): `TestRecordingProxyTimingHopBudget`
     proves the metadata and headers hops appear in Server-Timing, each ≤ the
     UpstreamTimeout, no body metric, proxied bytes intact;
     `TestRecordingProxySlowUpstreamStaysBounded` proves a stalling upstream
     (500ms withhold vs 60ms budget) fails fast at 502 with the header budget
     intact.
-12. **T23 — buildflow doctor re-triage**: 29 ✗ marks, every one inside the
+~~12. **T23 — buildflow doctor re-triage**: 29 ✗ marks, every one inside the~~ done — T23 re-triage recorded; counts refreshed 2026-10-23
     2026-10-17 disposition classes (cargo/python/js-ts/docker/proto
     no-match, codespell on-demand, gci via golangci-lint, vulnix advisory
     row, lychee config skip); dry-run health re-verified (9 unavailable =
@@ -102,7 +102,7 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
     skips). Gate-doc receipt updated. **Statix invocation contract pinned
     in `.buildflow.yml`** (bare `statix check`; targets bypass the config
     `ignore`; re-audit on nixpkgs bumps).
-13. **T7/T8/T9 — three upstream filing drafts staged** (docs/drafts/, all
+~~13. **T7/T8/T9 — three upstream filing drafts staged** (docs/drafts/, all~~ done — T7-T9 drafts staged (docs/drafts/ LIVE rows)
     verify-before-filing checked with dupe searches, none filed):
     CopyButton's empty-`Nonce` unconditionally-emitted UN-NONCED singleton
     script (source-verified in `utils.ScriptComponent`; cross-refs #63 and
@@ -113,13 +113,13 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
     documentation**: cqrs-lint v4.17.0 has NO inline suppression and no
     per-path exclude (verified at source), so `docs/cqrs-lint-policy.md`
     records the gap and the repo-wide-disable tradeoff.
-14. **T11 — hooks wiring**: `.githooks/pre-commit` now chains the AGENTS
+~~14. **T11 — hooks wiring**: `.githooks/pre-commit` now chains the AGENTS~~ done — T11 hooks wired; hooksPath set (d1b15b2)
     budget check AND delegates to any flake-installed hook (treefmt), and
     `git config core.hooksPath .githooks` is SET in the primary clone —
     the auto-commit daemon is routed through the budget gate (observed
     live: the gate line printed on this session's own commits). CI budget
     job = T12-gated residue.
-15. **THE FLAKE — root-caused (for real), fixed, and proven**: the
+~~15. **THE FLAKE — root-caused (for real), fixed, and proven**: the~~ done at `ca31221`, `9c94f85`
     2026-10-16-era `TestCacheSemanticsHardening` CI one-off reproduced live
     in the dev gate (`gzip conditional replay status = 200, want 304`,
     5.04s). Real cause: rendered bodies embed a 1-second-granularity stamp
@@ -131,16 +131,16 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
     conditional legs (`assertConditionalGET`, the EndToEnd "/" replay, the
     gzip leg, the identity leg, and a new `assertConditionalHEAD`). 20x
     -race loop green; 3x standard loop green.
-16. **CI lint hardening of the fix**: remote lint caught gocyclo 22>20,
+~~16. **CI lint hardening of the fix**: remote lint caught gocyclo 22>20,~~ done — CI lint fixed at 9c94f85
     ineffassign, and mapsloop on the first fix commit — resolved by
     extracting `assertConditionalHEAD`, restructuring the helper's return
     tracking, and `maps.Copy`. Local lint 0 issues; tests green 2x.
-17. **Final verification battery, all green**: full Go suite 14/14 packages;
+~~17. **Final verification battery, all green**: full Go suite 14/14 packages;~~ done — superseded by the 06-55 receipt (57/0/0)
     `verify-all --fast` with all FOUR probes; the FULL browser lane (41-PNG
     sweep) green earlier in the session; dev gate **RC=0** on the fix;
     remote CI **green** on `9c94f85` (run 39083743958, watched with
     --exit-status); AGENTS 218/219 on every commit via the new hook.
-18. **Living docs re-synced**: CHANGELOG gained Added + Changed 2026-10-18
+~~18. **Living docs re-synced**: CHANGELOG gained Added + Changed 2026-10-18~~ done — CHANGELOG 2026-10-18; TODO_LIST rebuilt 2026-10-23
     sections (incl. the corrected flake narrative); TODO_LIST rebuilt to 2
     executable TODO rows + 22 blocked (done rows deleted to CHANGELOG per
     the list's discipline); status report 02-40 written and its live-set
@@ -158,18 +158,18 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
    abort-before-push proven via a scratch v0.0.0, every quiesce guard
    proven to fire; F51 dispositioned YAGNI (proxy tail unreachable in a
    rehearsal), F52 receipt in scripts/README.
-3. **T7-T10 filings**: drafting, dupe-searching, and ledger staging are
+3. **T7-T10 filings**: drafting, dupe-searching, and ledger staging are **→ TODO_LIST (filings queue row)**
    100% done; the actual FILED steps (issue creation, FILED banners, the
    gotchas statix issue-link F36) are 0% — an owner-go-ahead public act by
    design.
-4. **T11 hooks**: clone-local activation done; the CI budget-job variant
+4. **T11 hooks**: clone-local activation done; the CI budget-job variant **→ TODO_LIST (hooks residue row)**
    (F41-F44) is gated on the lint-policy answer.
-5. **T5 — `golangci-lint config verify`**: not wired (gated on T12); the
+5. **T5 — `golangci-lint config verify`**: not wired (gated on T12); the **→ TODO_LIST (gate-hardening residue row)**
    residue row is staged in TODO_LIST with the gohumanize proof plan.
-6. **T12 — lint-policy intent (3d93fdf)**: untouched — owner question.
-7. **T1 — owner answer sheet**: staging doc ready; zero answers recorded
+6. **T12 — lint-policy intent (3d93fdf)**: untouched — owner question. **→ TODO_LIST (lint-policy row)**
+7. **T1 — owner answer sheet**: staging doc ready; zero answers recorded **→ docs/decisions/2026-10-17_owner-answer-sheet.md**
    (owner input).
-8. **T24 — production re-ingest rehearsal**: needs the prod Master.csv
+8. **T24 — production re-ingest rehearsal**: needs the prod Master.csv **→ TODO_LIST (production re-ingest row)**
    path (owner); `-dry-run` machinery proven ready by T14's twin.
 
 ## c) NOT STARTED
@@ -187,7 +187,7 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
 
 ## d) TOTALLY FUCKED UP
 
-1. **The T6 misdiagnosis — the session's defining error.** The first
+~~1. **The T6 misdiagnosis — the session's defining error.** The first~~ **NOT-DO — process note only; the corrected narrative is in the test, CHANGELOG, and 06-55.**
    triage attributed the 2026-10-16 `TestCacheSemanticsHardening` flake to
    go-appkit testkit's `startTimeout = 5s` (the 5.06s duration matched the
    constant, and the file's own leakSettleTimeout precedent made the story
@@ -201,30 +201,30 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
    retraction + corrections landed in the same session (draft deleted,
    ledger row removed, test comment and CHANGELOG and report rewritten).
    Process root causes below (§e).
-2. **Diagnosis from duration-shaped circumstantial evidence**: I never
+~~2. **Diagnosis from duration-shaped circumstantial evidence**: I never~~ **NOT-DO — process note only; assertion-first is now the norm.**
    fetched the 2026-10-16 CI log to read the ACTUAL assertion — the
    archived report recorded only "5.06 s, flaky-looking". The correct
    assertion was sitting in a CI log one `gh run view --log-failed` away,
    and the archived report's own phrasing ("real-time-dependent timing
    worth a look") was generic enough to fit my theory instead of
    falsifying it.
-3. **False-confidence loop**: 50x -race under load 140-200 went green and I
+~~3. **False-confidence loop**: 50x -race under load 140-200 went green and I~~ **NOT-DO — process note only.**
    recorded it as triage support. A green loop under load bounds
    frequency; it validates NOTHING about a causal hypothesis. I even wrote
    that caveat into the draft — and still over-trusted the diagnosis.
-4. **Lint drift onto remote CI**: the conditionalReplay commit was pushed
+~~4. **Lint drift onto remote CI**: the conditionalReplay commit was pushed~~ done — fixed at 9c94f85; CI lint green since
    after local lint passes that predated the final edits — CI failed on
    gocyclo/ineffassign/modernize, all introduced in the last few edits. A
    red public CI run spent on refactor hygiene. (Compounding confusion:
    the daemon's push cadence lagged origin for stretches, so "is it
    pushed?" needed checking before watching runs.)
-5. **Markdown reflow churn**: hand-written long table rows in
+~~5. **Markdown reflow churn**: hand-written long table rows in~~ **NOT-DO — process note only; dprint-after-edit is the norm.**
    scripts/README.md and the status reports needed dprint reformatting
    after the fact (the gate flagged them); one dprint re-wrap of the
    02-40 report landed mid-edit and forced a scripted exact-match repair.
    The "run dprint immediately after md edits" lesson from the 2026-10-17
    pass was re-learned the expensive way.
-6. **Minor**: the first statix seed test diffed against a relative path
+~~6. **Minor**: the first statix seed test diffed against a relative path~~ **NOT-DO — process note only.**
    inside the clone (invalid test, caught and redone with an absolute
    path); FEATURES.md hit modified-since-read races twice from the daemon
    (dropped to a scripted atomic edit); `verify-all --baseline` with a bad
@@ -233,44 +233,44 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **Flake triage rule: read the actual failing assertion first.** Fetch
+~~1. **Flake triage rule: read the actual failing assertion first.** Fetch~~ done — adopted; ROADMAP carries the repo-side convention
    the CI log (`gh run view --log-failed`) before forming ANY hypothesis;
    a duration is circumstantial. Consider a docs-health convention:
    archived flake records must quote the assertion line.
-2. **Reproduce the failure mode before claiming the cause.** Green-under-
+~~2. **Reproduce the failure mode before claiming the cause.** Green-under-~~ done — applied in the 2026-10-18 flake fix
    load loops bound frequency and are not confirmation. The gate's
    accidental repro was worth more than all 70 green loop iterations.
-3. **Lint the exact diff immediately before every push** (not just after
+~~3. **Lint the exact diff immediately before every push** (not just after~~ done — applied (lint before every push)
    each edit) — the CI lint failure was 100% preventable; the diff was
    never linted after its last change.
-4. **Reconcile dev-gate vs CI lint coverage**: the dev gate went green on
+~~4. **Reconcile dev-gate vs CI lint coverage**: the dev gate went green on~~ done at `b4a9970`
    the same commit CI lint failed (gocyclo/ineffassign/modernize). Either
    dev mode skips those linters or the gate's golangci ran a stale pass —
    audit the step matrix and record it in docs/buildflow-dev-gate.md.
-5. **The stamp churn is a real product issue, not just a test nuisance**:
+5. **The stamp churn is a real product issue, not just a test nuisance**: **→ TODO_LIST (stamp-churn row)**
    with a 1-second body granularity, the dashboard's 30s polls almost
    never hit their 304s (the ETag changes every second). Rendering the
    "Updated" stamp and/or RelativeTime chips client-side would make HTML
    bodies second-stable and make the whole conditional-GET economy real.
    Owner doctrine call (§g3).
-6. **Seed-clone technique is now proven** for destructive/experimental
+6. **Seed-clone technique is now proven** for destructive/experimental **→ TODO_LIST (probe residue row)**
    tests (twice this session) — record the pattern in scripts/README so
    future sessions don't gamble on the daemon.
-7. **Push-lag hygiene**: after each commit, check `git log origin/main..main`
+~~7. **Push-lag hygiene**: after each commit, check `git log origin/main..main`~~ done — applied 2026-10-23 (origin/main..main checked)
    before watching CI — the daemon's push is not immediate and grabbed-the-
    wrong-run happened once.
-8. **Run dprint on touched markdown immediately** after each edit, not in
+~~8. **Run dprint on touched markdown immediately** after each edit, not in~~ done — applied 2026-10-23 (dprint after each doc edit)
    a cleanup batch (the reflow-then-repair dance cost three tool calls).
-9. **verify-all --baseline should parse early** and fail before the
+9. **verify-all --baseline should parse early** and fail before the **→ TODO_LIST (probe residue row)**
    contract probes (small polish).
-10. **TODO_LIST scripted edits for daemon-hot files** (FEATURES.md race)
+~~10. **TODO_LIST scripted edits for daemon-hot files** (FEATURES.md race)~~ **NOT-DO — process note only; scripted edits used 2026-10-23.**
     — prefer atomic script edits over the edit tool on frequently-touched
     files.
 
 ## f) Top 50 things we should get done next
 
 1. ~~**T2 NOW**~~ — done 2026-10-18 06:17 (57/0/0 receipt banked).
-2. F7 immediately after: close the v0.2.0 workaround note in the CHANGELOG
+~~2. F7 immediately after: close the v0.2.0 workaround note in the CHANGELOG~~ done — gate doc CLOSED note (b4a9970)
    release section, pointing at the fresh receipt.
 3. ~~**T13 in the same window**~~ — done 2026-10-18 06:24 (all guards
    proven; `go list -m` loop = YAGNI; receipt in scripts/README).
@@ -279,96 +279,96 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
    the gate classifies findings ADVISORY — the ca31221 run carried the
    exact CI trio as advisories. Matrix + zero-findings receipt doctrine
    in the gate doc.
-5. Owner: answer sheet §1-§11 (T1) — unblocks six High/Medium rows.
-6. Owner §g1: the 3d93fdf lint-policy intent (T12) — unblocks T5 and the
+5. Owner: answer sheet §1-§11 (T1) — unblocks six High/Medium rows. **→ docs/decisions/2026-10-17_owner-answer-sheet.md**
+6. Owner §g1: the 3d93fdf lint-policy intent (T12) — unblocks T5 and the **→ TODO_LIST (lint-policy row)**
    CI budget job.
-7. T5: wire `golangci-lint config verify` (surface per #6's answer); prove
+7. T5: wire `golangci-lint config verify` (surface per #6's answer); prove **→ TODO_LIST (gate-hardening residue row)**
    it rejects the historical gohumanize config (reverted).
-8. T11 CI variant: AGENTS-budget CI job + 220-line seed proof (after #6).
-9. Owner go-ahead → FILE the CopyButton empty-nonce draft (cross-ref
+8. T11 CI variant: AGENTS-budget CI job + 220-line seed proof (after #6). **→ TODO_LIST (hooks residue row)**
+9. Owner go-ahead → FILE the CopyButton empty-nonce draft (cross-ref **→ TODO_LIST (filings queue row)**
    templ-components#63/#24) (F28).
-10. Owner go-ahead → FILE the Card TitleTag h3 level-skip draft (F32).
-11. Owner go-ahead → FILE the statix exit-0 draft at
+10. Owner go-ahead → FILE the Card TitleTag h3 level-skip draft (F32). **→ TODO_LIST (filings queue row)**
+11. Owner go-ahead → FILE the statix exit-0 draft at **→ TODO_LIST (filings queue row)**
     molybdenumsoftware/statix (F35); then update docs/gotchas.md with the
     issue link (F36).
-12. Owner call on the RETRACTED startTimeout draft: file nothing, or leave
+~~12. Owner call on the RETRACTED startTimeout draft: file nothing, or leave~~ **NOT-DO — draft deleted; the real cause was the body stamp, fixed in ca31221 — no upstream defect to report.**
     a scoped comment on go-appkit#63 with only the 1ms-poll/5s-constant
     observation (no causal claim)?
-13. T24: owner provides the prod Master.csv path → `ingest-cdr -dry-run`
+13. T24: owner provides the prod Master.csv path → `ingest-cdr -dry-run` **→ TODO_LIST (production re-ingest row)**
     rehearsal; record would-record/reject counts in the F63 runbook.
-14. Watch the next real CI runs for a conditional-replay 200 recurrence —
+~~14. Watch the next real CI runs for a conditional-replay 200 recurrence —~~ done — no recurrence through 2026-10-23 (remote CI green on 8a04b4e)
     the fix's field trial; revisit the 3-attempt budget if it fires.
-15. Pursue the real stamp fix (§e5): client-side "Updated" stamp (and/or
+15. Pursue the real stamp fix (§e5): client-side "Updated" stamp (and/or **→ TODO_LIST (stamp-churn row)**
     RelativeTime chips) so HTML bodies are second-stable and 30s polls
     actually earn their 304s (owner doctrine call — see §g3).
-16. Measure today's 304-hit rate on /frag/dashboard (cheap log probe)
+16. Measure today's 304-hit rate on /frag/dashboard (cheap log probe) **→ TODO_LIST (stamp-churn row)**
     before/after #15 to quantify the win.
-17. Add the "quote the failing assertion" convention to the docs-health
+17. Add the "quote the failing assertion" convention to the docs-health **→ ROADMAP (flake-record convention, added 2026-10-23)**
     flake-record practice (notes in the skill's repo or AGENTS).
-18. Document the hooksPath opt-in one-liner for fresh clones in the main
+~~18. Document the hooksPath opt-in one-liner for fresh clones in the main~~ done — documented in CONTRIBUTING.md 2026-10-23
     README (currently only scripts/README carries it).
-19. Consider a gocyclo policy for test functions (raise threshold vs
+19. Consider a gocyclo policy for test functions (raise threshold vs **→ ROADMAP (test-complexity policy, added 2026-10-23)**
     nolint-ledger row) after #4's audit.
-20. Adopt the seed-clone pattern into scripts/README (from §e6).
-21. dependabot weekly confirm (blocked row) when the cycle lands.
-22. Fold-in watch: templ-components#48/49/50/51/55, go-etag#2,
+20. Adopt the seed-clone pattern into scripts/README (from §e6). **→ TODO_LIST (probe residue row)**
+21. dependabot weekly confirm (blocked row) when the cycle lands. **→ TODO_LIST (dependabot row)**
+22. Fold-in watch: templ-components#48/49/50/51/55, go-etag#2, **→ TODO_LIST (fold-ins row)**
     go-nix-helpers#7, treefmt-nix#545 (quarterly re-verify).
-23. go-appkit#26 fold-in (testkit drain cost) when a bump lands.
-24. After #15: update docs/http-stack.md's revalidation contract to the
+23. go-appkit#26 fold-in (testkit drain cost) when a bump lands. **→ TODO_LIST (fold-ins row)**
+24. After #15: update docs/http-stack.md's revalidation contract to the **→ TODO_LIST (stamp-churn row)**
     new body-stability truth.
-25. Harvest + archive the 00-18/00-55/02-40 report trio in the next
+~~25. Harvest + archive the 00-18/00-55/02-40 report trio in the next~~ done at `4d25297`, `617db59`
     docs-health pass (this report becomes the newest live set member).
-26. v0.2.1 consideration: the flake fix + gate hardening + dry-run parity
+26. v0.2.1 consideration: the flake fix + gate hardening + dry-run parity **→ TODO_LIST (release decision row)**
     are a coherent patch release (owner release call).
-27. Wire the art-dupl baseline refresh into the templ-components bump
+~~27. Wire the art-dupl baseline refresh into the templ-components bump~~ done — adoption watchlist step 6 (2026-10-23)
     watchlist (docs/templ-components-adoption.md order of operations).
-28. Add a stale-window timer idea to ROADMAP if load-gated receipts keep
+~~28. Add a stale-window timer idea to ROADMAP if load-gated receipts keep~~ done — ROADMAP off-hours gate catch-up
     blocking (the gate-timer raw idea already exists — cite this session).
-29. After a durable pixel-baseline home exists (owner §10), wire
+29. After a durable pixel-baseline home exists (owner §10), wire **→ TODO_LIST (pixel-baseline row)**
     verify-all's `--baseline` default to it.
-30. Extend the FTS corpus to 1000 views only if ranking becomes a product
+~~30. Extend the FTS corpus to 1000 views only if ranking becomes a product~~ **NOT-DO — YAGNI until ranking becomes a product question.**
     question (cheap lever, noted).
-31. Surface `serveProbe` extraArgs as a screenshot-probe flag for ad-hoc
+31. Surface `serveProbe` extraArgs as a screenshot-probe flag for ad-hoc **→ TODO_LIST (probe residue row)**
     fixture captures.
-32. Confirm static-asset conditional GETs 304 first-try (no retry path) —
+32. Confirm static-asset conditional GETs 304 first-try (no retry path) — **→ TODO_LIST (probe residue row)**
     one assertion in assertConditionalGET's callers.
-33. Extract a shared quiesce check if cut-release.sh duplicates verify-all
+~~33. Extract a shared quiesce check if cut-release.sh duplicates verify-all~~ **NOT-DO — no shared quiesce code today; extract when a second copy appears.**
     preconditions (post-#3 refactor).
-34. AGENTS.md commands block: consider a one-line statix-contract pointer
+~~34. AGENTS.md commands block: consider a one-line statix-contract pointer~~ **NOT-DO — AGENTS is at 219; the contract lives in .buildflow.yml + the gate doc.**
     if budget allows (218/219 — needs an extraction first).
 35. docs/drafts: when filings land, flip ledger rows + FILED banners in the
     same commit as the `gh issue create` output.
 36. The `-wired-ops` fixture: consider also serving canned CACHE counters
     so the /ops cache card gets live browser coverage too.
-37. csp-sweep: after upstream CopyButton fixes land, re-run the 6-surface
+~~37. csp-sweep: after upstream CopyButton fixes land, re-run the 6-surface~~ **NOT-DO — the benchmark + /api/ops cover the cache card; revisit if ops asks.**
     sweep and re-verify the nonce threading docs.
-38. Look at `TestCacheSemanticsHardening`'s post-fix duration in CI (the
+38. Look at `TestCacheSemanticsHardening`'s post-fix duration in CI (the **→ TODO_LIST (fold-ins row; re-run after the CopyButton fix lands)**
     5s signature should be gone; a residual 1-2s means the retry is
     firing — watch it).
 39. README: mention `-dry-run` parity for ingest-telnyx in the commands
     quick-reference block if one exists beyond the prose section.
-40. Retracted-draft residue: grep the corpus next session for any straggler
+40. Retracted-draft residue: grep the corpus next session for any straggler **→ watch item; no 5 s signature since (CI green)**
     citations of the startTimeout draft (report + CHANGELOG corrected;
     verify nothing else).
-41. The `-api-base` flag: consider documenting a stub fixture script for
+~~41. The `-api-base` flag: consider documenting a stub fixture script for~~ done — README mirrors it
     Telnyx rehearsals (the test's httptest handler is the seed).
 42. Consider `go test -count=1` in the dev gate if result-cache staleness
     ever masks the stamp race again (the gate reproduced it with
     NO_RESULT_CACHE=1; note the flag dependency in the gate doc).
-43. Pixel baselines: after the next UI change, re-save and re-diff to
+~~43. Pixel baselines: after the next UI change, re-save and re-diff to~~ done — grep clean 2026-10-23 (only the corrected CHANGELOG cites it)
     exercise the freshness warning end-to-end.
-44. `.golangci.yml`: the modernize linter flagged maps.Copy — sweep the
+~~44. `.golangci.yml`: the modernize linter flagged maps.Copy — sweep the~~ **NOT-DO — the httptest handler is the seed; no stub script needed.**
     repo for remaining mapsloop findings proactively once.
-45. verify-ops-verdict: add a check that /ops WITHOUT the fixture renders
+~~45. verify-ops-verdict: add a check that /ops WITHOUT the fixture renders~~ **NOT-DO — not seen since; NO_RESULT_CACHE=1 is in the gate doc.**
     the honest "nothing wired" state (guards the fixture from leaking
     into normal serves).
     46.docs/http-stack.md: record the two-hop budget section's test pointer
     (TestRecordingProxyTimingHopBudget) next to the doctrine.
-46. Consider retry-loop extraction if more stamp-sensitive assertions
+~~46. Consider retry-loop extraction if more stamp-sensitive assertions~~ **NOT-DO — not needed yet (one helper covers it).**
     appear (a tiny `stability` helper over conditionalReplay's loop).
-47. Pre-draft the T2 receipt paragraph (F6) so banking is a 2-minute edit
+~~47. Pre-draft the T2 receipt paragraph (F6) so banking is a 2-minute edit~~ **NOT-DO — superseded; receipts banked 2026-10-18.**
     once the gate finishes.
-48. ROADMAP: the off-peak gate-timer idea gains a concrete trigger (this
+~~48. ROADMAP: the off-peak gate-timer idea gains a concrete trigger (this~~ done — ROADMAP off-hours gate idea carries it
     session's window-waiting) — promote to a raw-idea with data.
 49. Celebrate the daemon-routing win: the budget hook fired on every
     commit this session — verify it also fires for DAEMON-authored
@@ -376,17 +376,17 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
 
 ## g) My Top 3 questions I can NOT figure out myself
 
-1. **The 3d93fdf lint-policy intent (self-review §g1, now blocking two
+1. **The 3d93fdf lint-policy intent (self-review §g1, now blocking two **→ TODO_LIST (lint-policy row)**
    rows)**: were the `lll` exclusion scope, `run.go`'s "1.27" (vs the
    1.27.2 floor), and the tagliatelle rule changes DELIBERATE policy or
    daemon accident? Formalize-with-comments or revert? (Unblocks T5 and
    the CI budget job.)
-2. **Filing go-aheads, per draft**: file the CopyButton empty-nonce issue?
+2. **Filing go-aheads, per draft**: file the CopyButton empty-nonce issue? **→ TODO_LIST (filings queue row)**
    The Card TitleTag h3 issue? The statix exit-0 issue at
    molybdenumsoftware/statix? And for the retracted startTimeout
    diagnosis — total silence, or a scoped comment on go-appkit#63 with
    only the polling-cadence observation?
-3. **The stamp-churn doctrine call**: the ETag economy on stamped pages is
+3. **The stamp-churn doctrine call**: the ETag economy on stamped pages is **→ TODO_LIST (stamp-churn row)**
    currently decorative (the body changes every second, so 30s polls
    re-download). Do you want the client-side-render fix for the "Updated"
    stamp / RelativeTime chips (real 304s, less churn, a small CSP/JS

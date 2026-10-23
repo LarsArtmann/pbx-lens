@@ -487,9 +487,13 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	// The recordings directory is the server's to know: resolve the call's
 	// on-disk WAV here so the template can offer the player (the CDR row's
 	// RecordingRef is empty by design — FreeSWITCH recordings are local
-	// files named after the call uuid, not an indexed reference).
-	if path, ok := s.localRecordingPath(page.CallView); ok {
-		page.LocalRecording = filepath.Base(path)
+	// files named after the call uuid, not an indexed reference). Only the
+	// uuid-keyed sources are probed: a Telnyx id must not trigger a
+	// directory walk for an audio file that naming scheme cannot hold.
+	if localRecordingKind(page.Kind) {
+		if path, ok := s.localRecordingPath(page.CallView); ok {
+			page.LocalRecording = filepath.Base(path)
+		}
 	}
 
 	// Search deep link (?q=, plan T21): when the query matches transcript
