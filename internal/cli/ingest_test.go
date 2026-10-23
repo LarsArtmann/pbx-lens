@@ -61,9 +61,9 @@ func viewKey(t *testing.T, obs calls.Observation) string {
 		t.Fatalf("StreamID: %v", err)
 	}
 
-	// StreamID.String() carries the StreamMarker prefix; it IS the
-	// projection's record key.
-	return sid.String()
+	// calls.RecordKey owns the projection's record-key format: the bare
+	// stream value (projectionadapter v4.6.0+).
+	return calls.RecordKey(sid)
 }
 
 func TestIngestRecordsCorrectsAndRejects(t *testing.T) {

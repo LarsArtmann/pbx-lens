@@ -47,7 +47,7 @@ func Ingest(ctx context.Context, sys *system.System, observations []calls.Observ
 		}
 
 		supersedes := false
-		if view, found, viewErr := reader.Get(ctx, cmd.StreamID().String()); viewErr == nil && found {
+		if view, found, viewErr := reader.Get(ctx, calls.RecordKey(cmd.StreamID())); viewErr == nil && found {
 			supersedes = view.ContentHash != obs.ContentHash()
 		}
 

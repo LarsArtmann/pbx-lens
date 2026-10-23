@@ -308,7 +308,7 @@ func CallDetail(ctx context.Context, sys *system.System, kind, nativeID string) 
 
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
-	view, found, err := reader.Get(ctx, sid.String())
+	view, found, err := calls.LookupView(ctx, reader, sid)
 	if err != nil || !found {
 		return calls.CallView{}, false, err
 	}

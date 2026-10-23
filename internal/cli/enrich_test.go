@@ -246,7 +246,7 @@ func TestEnrichTelnyxCallsCountsMissingAndRejects(t *testing.T) {
 
 	missing := EnrichmentSeed{
 		ConversationID: "ghost",
-		StreamKey:      ghostKey.String(),
+		StreamKey:      calls.RecordKey(ghostKey),
 	}
 
 	stats, err := EnrichTelnyxCalls(ctx, sys, client, []EnrichmentSeed{missing}, time.Now().UTC())
@@ -279,7 +279,7 @@ func telnyxView(
 
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
-	view, found, err := reader.Get(ctx, sid.String())
+	view, found, err := reader.Get(ctx, calls.RecordKey(sid))
 	if err != nil || !found {
 		t.Fatalf("view %s: found=%t err=%v", sid, found, err)
 	}

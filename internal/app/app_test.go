@@ -101,7 +101,7 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 		t.Fatalf("idempotent re-dispatch must succeed, got %v", err)
 	}
 
-	view := awaitView(t, ctx, sys, cmd.StreamID().String())
+	view := awaitView(t, ctx, sys, calls.RecordKey(cmd.StreamID()))
 	if view.Kind != calls.SourceTelnyxConversation || view.Direction != calls.DirectionOutbound {
 		t.Fatalf("view kind/direction wrong: %+v", view)
 	}
@@ -132,7 +132,7 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 		_ = sys2.Close()
 	}()
 
-	replayed := awaitView(t, ctx, sys2, cmd.StreamID().String())
+	replayed := awaitView(t, ctx, sys2, calls.RecordKey(cmd.StreamID()))
 	if !reflect.DeepEqual(replayed, view) {
 		t.Fatalf("replayed view differs:\n got %+v\nwant %+v", replayed, view)
 	}

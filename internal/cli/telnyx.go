@@ -60,7 +60,7 @@ func SeedsFor(admitted []calls.Observation, seeds []EnrichmentSeed) []Enrichment
 	admittedKeys := make(map[string]struct{}, len(admitted))
 	for _, obs := range admitted {
 		if sid, sidErr := obs.StreamID(); sidErr == nil {
-			admittedKeys[sid.String()] = struct{}{}
+			admittedKeys[calls.RecordKey(sid)] = struct{}{}
 		}
 	}
 
@@ -133,7 +133,7 @@ func FetchTelnyxObservations(
 
 		seed := EnrichmentSeed{ConversationID: conv.ID, CallControlID: conv.MetadataString("call_control_id")}
 		if sid, sidErr := obs.StreamID(); sidErr == nil {
-			seed.StreamKey = sid.String()
+			seed.StreamKey = calls.RecordKey(sid)
 		}
 
 		observations = append(observations, obs)

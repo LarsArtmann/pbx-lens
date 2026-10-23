@@ -48,9 +48,9 @@ func FetchAgentObservations(
 }
 
 // cdrViewFor looks up the joined freeswitch-cdr view by call uuid. The key
-// derives from the observation's stream identity, so the projection's
-// record-key format (including any library marker prefix) stays owned by the
-// stream id type, never re-typed at a call site.
+// derives from the observation's stream identity through calls.LookupView, so
+// the projection's record-key format stays owned by one place, never re-typed
+// at a call site.
 func cdrViewFor(ctx context.Context, reader *metaengine.TypedReader[calls.CallView], callUUID string) *calls.CallView {
 	obs := calls.Observation{NativeID: calls.NativeID(callUUID), Kind: calls.SourceFreeSwitchCDR}
 
@@ -59,7 +59,7 @@ func cdrViewFor(ctx context.Context, reader *metaengine.TypedReader[calls.CallVi
 		return nil
 	}
 
-	view, found, err := reader.Get(ctx, sid.String())
+	view, found, err := calls.LookupView(ctx, reader, sid)
 	if err != nil || !found {
 		return nil
 	}

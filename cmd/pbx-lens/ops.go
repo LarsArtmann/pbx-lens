@@ -79,7 +79,7 @@ func smoke(args []string) {
 	deadline := time.Now().Add(projectionDeadline)
 
 	for {
-		view, found, err := reader.Get(ctx, cmd.StreamID().String())
+		view, found, err := reader.Get(ctx, calls.RecordKey(cmd.StreamID()))
 		if err != nil {
 			fatal(err)
 		}
