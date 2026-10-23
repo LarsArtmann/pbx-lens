@@ -75,8 +75,11 @@ type CallListPage struct {
 // listScanBatch is one keyset batch of the list walk. It is intentionally
 // larger than a page: collapsing a call's duplicate source row drops rows
 // from the batch, and a batch that exactly fills the page would otherwise
-// cost an extra round trip per dropped row.
-const listScanBatch = 4 * pageSize
+// cost an extra round trip per dropped row. A var so tests can shrink it and
+// walk the batch seams deterministically.
+//
+//nolint:gochecknoglobals // test-shrinkable batch size (keyset seam tests)
+var listScanBatch = 4 * pageSize
 
 // ListCalls runs the query against the read model, newest first, collapsing a
 // call's duplicate source rows into its representative row (see
