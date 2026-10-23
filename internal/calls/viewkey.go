@@ -36,19 +36,3 @@ func LookupView(
 
 	return reader.Get(ctx, LegacyRecordKey(sid))
 }
-
-// StreamRowExists reports whether the read model holds any row for the
-// stream, across both row-key generations (see LookupView). It is the cheap
-// form of LookupView for callers that only need presence, never the row.
-func StreamRowExists(
-	ctx context.Context,
-	reader *metaengine.TypedReader[CallView],
-	sid id.StreamID,
-) (bool, error) {
-	found, err := reader.Exists(ctx, RecordKey(sid))
-	if err != nil || found {
-		return found, err
-	}
-
-	return reader.Exists(ctx, LegacyRecordKey(sid))
-}

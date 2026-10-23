@@ -52,7 +52,10 @@ func supersedingStreamID(view calls.CallView) (id.StreamID, bool) {
 }
 
 // supersededBySibling reports whether view is the redundant half of a call
-// the index also holds as its representative row.
+// the index also holds as its representative row. Presence goes through
+// LookupView, not Exists: sqliteengine's SetBackend reads a different table
+// than the map-backed rows this index writes, so Exists answers false for a
+// row Get finds (verified 2026-10-23 — see docs/gotchas.md).
 func supersededBySibling(
 	ctx context.Context,
 	reader *metaengine.TypedReader[calls.CallView],
@@ -63,7 +66,9 @@ func supersededBySibling(
 		return false, nil
 	}
 
-	return calls.StreamRowExists(ctx, reader, sid)
+	_, found, err := calls.LookupView(ctx, reader, sid)
+
+	return found, err
 }
 
 // listRepresentative resolves one scanned row into the row the list shows and
