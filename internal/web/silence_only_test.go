@@ -26,8 +26,16 @@ func silenceOnlyObservation() calls.Observation {
 		ToNumber:     "+17287289311",
 		IsAI:         true,
 		Transcript: []calls.TranscriptTurn{
-			{Role: calls.TurnRoleAssistant, Text: "Guten Tag, hier ist Mara von Lars Artmann.", At: started.Add(1 * time.Second)},
-			{Role: calls.TurnRoleAssistant, Text: "Ich rufe wegen einer offenen Rechnung an.", At: started.Add(16 * time.Second)},
+			{
+				Role: calls.TurnRoleAssistant,
+				Text: "Guten Tag, hier ist Mara von Lars Artmann.",
+				At:   started.Add(1 * time.Second),
+			},
+			{
+				Role: calls.TurnRoleAssistant,
+				Text: "Ich rufe wegen einer offenen Rechnung an.",
+				At:   started.Add(16 * time.Second),
+			},
 		},
 		SourceEvents: []calls.SourceEvent{
 			{Role: "system", Text: "[long silence]", At: started.Add(15 * time.Second)},

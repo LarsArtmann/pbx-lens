@@ -346,8 +346,11 @@ func siblingKinds(kind calls.SourceKind) []calls.SourceKind {
 		return []calls.SourceKind{calls.SourceAgentTranscript}
 	case calls.SourceAgentTranscript:
 		return []calls.SourceKind{calls.SourceFreeSwitchCDR}
+	case calls.SourceTelnyxConversation, calls.SourceWebhookLog:
+		// Both key their own id spaces; neither joins on the uuid.
+		return nil
 	default:
-		// Telnyx conversations and the webhook log key their own id spaces.
+		// A future kind opts in explicitly; no silent sibling guesswork.
 		return nil
 	}
 }
