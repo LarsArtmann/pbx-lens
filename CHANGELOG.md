@@ -36,11 +36,6 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   bar, the `no user turn` / `self-dial` / `source markers` badge conditions,
   and the bench's `expectsUserTurns` tri-state — so nobody has to read `templ`
   or the scorer to learn what a bar means.
-- **The Python driver's key load is lazy and file-overridable**
-  (`PBX_TELNYX_API_KEY_FILE`), because the self-dial refusal, the calling
-  window and the usage text must all work without a secret file. The guard
-  proof lives in pbx-artmann (`TestDriverRefusesOurOwnAgentDIDs`).
-
 ### Changed — 2026-10-23 (gate triage: probe bootstrap deduplicated, tooling residuals resolved)
 
 - **Probe bootstrap deduplicated**: the five single-serve browser probes
