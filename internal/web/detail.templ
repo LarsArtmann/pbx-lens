@@ -41,22 +41,22 @@ templ staleLive(filters ListCallsQuery, staleFor time.Duration, stale bool) {
 }
 
 // detailRoute is the per-call page: metadata, transcript, recording player.
-// Everything is read from the one CallView snapshot.
-// detailRoute is the per-call page: metadata, transcript, recording player.
-// Everything is read from the one CallView snapshot. query carries the
-// search deep link (?q=, plan T21): it turns the transcript into a
-// match-marked log with per-turn anchors.
-templ detailRoute(nonce string, view calls.CallView, query string) {
-	@shell(nonce, callTitle(view), "/") {
+// The page model joins the sibling source rows for the same call (a CDR and
+// its agent transcript are two rows of one call), so whichever row the
+// operator opened the page tells the whole story. query carries the search
+// deep link (?q=, plan T21): it turns the transcript into a match-marked log
+// with per-turn anchors.
+templ detailRoute(nonce string, page DetailPage, query string) {
+	@shell(nonce, callTitle(page.CallView), "/") {
 		@display.PageHeader(display.PageHeaderProps{
-			Title:             callTitle(view),
-			SubtitleComponent: sourceBadge(view.Kind),
-			Breadcrumb:        detailBreadcrumbs(view),
-			Action:            nativeIDCopy(nonce, view),
+			Title:             callTitle(page.CallView),
+			SubtitleComponent: sourceBadge(page.Kind),
+			Breadcrumb:        detailBreadcrumbs(page.CallView),
+			Action:            nativeIDCopy(nonce, page.CallView),
 		})
 		@layout.Split(layout.SplitProps{
-			Main:  detailMain(nonce, view, query),
-			Aside: recordingCard(view),
+			Main:  detailMain(nonce, page, query),
+			Aside: recordingCard(page),
 		})
 	}
 }

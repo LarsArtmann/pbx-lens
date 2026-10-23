@@ -315,3 +315,136 @@ func CallDetail(ctx context.Context, sys *system.System, kind, nativeID string) 
 
 	return view, true, nil
 }
+
+// DetailPage is the per-call page model: the requested source row plus what
+// the OTHER sources recorded for the same call. The read model deliberately
+// keeps one row per source (no source's truth is rewritten or merged at
+// ingest); the operator-facing page joins them because a call is one call,
+// not one row.
+type DetailPage struct {
+	calls.CallView
+
+	// JoinedFrom names the sibling source rows the page had to consult to
+	// complete this call. Empty when the requested row already carried the
+	// transcript and the parties.
+	JoinedFrom []calls.SourceKind
+
+	// LocalRecording is the basename of the on-disk WAV resolved for the
+	// call. Empty when none exists; the caller resolves it (it owns the
+	// recordings directory).
+	LocalRecording string
+}
+
+// siblingKinds lists the other source rows that describe the same real-world
+// call under the SAME native id. FreeSWITCH's call uuid is shared by its CDR
+// and the voice agent's per-call transcript; the receiver webhook log keys
+// Telnyx's call_control_id and Telnyx conversations key their own
+// conversation id, so neither participates in the uuid join.
+func siblingKinds(kind calls.SourceKind) []calls.SourceKind {
+	switch kind {
+	case calls.SourceFreeSwitchCDR:
+		return []calls.SourceKind{calls.SourceAgentTranscript}
+	case calls.SourceAgentTranscript:
+		return []calls.SourceKind{calls.SourceFreeSwitchCDR}
+	case calls.SourceWebhookLog, calls.SourceTelnyxConversation:
+		return nil
+	}
+
+	return nil
+}
+
+// CallDetailPage reads one call for the detail page and fills the facts a
+// single source cannot know from its sibling rows. An unreadable sibling row
+// is an error, not a silent partial page: a masked failure would render the
+// exact "nothing available" lie this page exists to prevent.
+func CallDetailPage(
+	ctx context.Context,
+	sys *system.System,
+	kind, nativeID string,
+) (DetailPage, bool, error) {
+	view, found, err := CallDetail(ctx, sys, kind, nativeID)
+	if err != nil || !found {
+		return DetailPage{}, found, err
+	}
+
+	page := DetailPage{CallView: view}
+
+	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
+
+	for _, siblingKind := range siblingKinds(view.Kind) {
+		obs := calls.Observation{NativeID: view.NativeID, Kind: siblingKind}
+
+		sid, streamErr := obs.StreamID()
+		if streamErr != nil {
+			continue
+		}
+
+		sibling, siblingFound, siblingErr := calls.LookupView(ctx, reader, sid)
+		if siblingErr != nil {
+			return DetailPage{}, false, siblingErr
+		}
+
+		if !siblingFound {
+			continue
+		}
+
+		merged, changed := mergeCall(page.CallView, sibling)
+		if changed {
+			page.CallView = merged
+			page.JoinedFrom = append(page.JoinedFrom, siblingKind)
+		}
+	}
+
+	return page, true, nil
+}
+
+// mergeCall fills the primary view's gaps from a sibling source row. Only
+// facts the primary source cannot know move across: identity (Kind, NativeID,
+// ContentHash), enrichment, and the recording reference stay the primary
+// row's. A primary that already carries a fact keeps its own version — the
+// requested row is the authority for what it observed.
+func mergeCall(primary, sibling calls.CallView) (calls.CallView, bool) {
+	changed := false
+
+	if len(primary.Transcript) == 0 && len(sibling.Transcript) > 0 {
+		primary.Transcript = sibling.Transcript
+
+		if primary.TranscriptExcerpt == "" {
+			primary.TranscriptExcerpt = sibling.TranscriptExcerpt
+		}
+
+		changed = true
+	}
+
+	if primary.FromNumber == "" && sibling.FromNumber != "" {
+		primary.FromNumber = sibling.FromNumber
+		changed = true
+	}
+
+	if primary.ToNumber == "" && sibling.ToNumber != "" {
+		primary.ToNumber = sibling.ToNumber
+		changed = true
+	}
+
+	if primary.DurationSecs == 0 && sibling.DurationSecs > 0 {
+		primary.DurationSecs = sibling.DurationSecs
+		changed = true
+	}
+
+	if primary.HangupCause == "" && sibling.HangupCause != "" {
+		primary.HangupCause = sibling.HangupCause
+		changed = true
+	}
+
+	if primary.StartedAt.IsZero() && !sibling.StartedAt.IsZero() {
+		primary.StartedAt = sibling.StartedAt
+		changed = true
+	}
+
+	if !primary.IsAI && sibling.IsAI {
+		primary.IsAI = true
+		changed = true
+	}
+
+	return primary, changed
+}

@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -464,7 +465,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
-	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
+	page, found, err := CallDetailPage(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
 
 	stop()
 
@@ -483,20 +484,28 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// The recordings directory is the server's to know: resolve the call's
+	// on-disk WAV here so the template can offer the player (the CDR row's
+	// RecordingRef is empty by design — FreeSWITCH recordings are local
+	// files named after the call uuid, not an indexed reference).
+	if path, ok := s.localRecordingPath(page.CallView); ok {
+		page.LocalRecording = filepath.Base(path)
+	}
+
 	// Search deep link (?q=, plan T21): when the query matches transcript
 	// turns, one redirect lands the browser on the first match's anchor.
 	// The URL fragment never reaches the server, so the at param breaks
 	// the would-be redirect loop — its presence means "already jumped".
 	if query != "" && !r.URL.Query().Has("at") {
-		if first, ok := firstMatchedTurn(view.Transcript, query); ok {
+		if first, ok := firstMatchedTurn(page.Transcript, query); ok {
 			//nolint:gosec // same-origin by construction, pinned by TestSearchJumpTargetSameOrigin
-			http.Redirect(w, r, searchJumpTarget(view, query, first), http.StatusFound)
+			http.Redirect(w, r, searchJumpTarget(page.CallView, query, first), http.StatusFound)
 
 			return
 		}
 	}
 
-	render(w, r, detailRoute(nonce(r), view, query))
+	render(w, r, detailRoute(nonce(r), page, query))
 }
 
 // serveStyles serves the Tailwind-built stylesheet (styles.css, produced by

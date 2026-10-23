@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -76,7 +77,12 @@ func (s *server) recording(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if view.RecordingRef == "" && view.Kind != calls.SourceFreeSwitchCDR {
+	// The local-file kinds own their recording by call uuid, not by an
+	// indexed reference: the FreeSWITCH CDR and the agent transcript of the
+	// same call both address {uuid}_*.wav through the same resolver.
+	localKinds := view.Kind == calls.SourceFreeSwitchCDR || view.Kind == calls.SourceAgentTranscript
+
+	if view.RecordingRef == "" && !localKinds {
 		http.Error(w, "no recording reference indexed for this call", http.StatusNotFound)
 
 		return
@@ -85,9 +91,9 @@ func (s *server) recording(w http.ResponseWriter, r *http.Request) {
 	switch view.Kind {
 	case calls.SourceTelnyxConversation:
 		s.proxyTelnyxRecording(w, r, view.RecordingRef)
-	case calls.SourceFreeSwitchCDR:
+	case calls.SourceFreeSwitchCDR, calls.SourceAgentTranscript:
 		s.serveLocalRecording(w, r, view)
-	case calls.SourceWebhookLog, calls.SourceAgentTranscript:
+	case calls.SourceWebhookLog:
 		fallthrough
 	default:
 		http.Error(w, "source kind "+string(view.Kind)+" records no playable audio", http.StatusNotFound)
@@ -232,6 +238,26 @@ func (s *server) serveLocalRecording(w http.ResponseWriter, r *http.Request, vie
 		return
 	}
 
+	path, found := s.localRecordingPath(view)
+	if !found {
+		http.Error(w, "no local recording file found for this call", http.StatusNotFound)
+
+		return
+	}
+
+	http.ServeFile(w, r, path)
+}
+
+// localRecordingPath resolves the call's WAV on disk. Candidates cover the
+// dialplan's known namings first (cheap stat calls, no directory walk), then a
+// {uuid}-prefixed sweep because the dialplan owns the stem suffix and grows
+// new ones — {uuid}_ai_agent (the voice agent) and {uuid}_pstn (outbound)
+// were both invisible to the two-stem guess that shipped before 2026-10-23.
+func (s *server) localRecordingPath(view calls.CallView) (string, bool) {
+	if s.recordings.RecordingsDir == "" {
+		return "", false
+	}
+
 	for _, stem := range localRecordingStems(view) {
 		name := filepath.Base(stem)
 		if name != stem { // paranoia: reject anything path-shaped
@@ -239,24 +265,48 @@ func (s *server) serveLocalRecording(w http.ResponseWriter, r *http.Request, vie
 		}
 
 		path := filepath.Join(s.recordings.RecordingsDir, name+".wav")
-		if _, err := os.Stat(path); err != nil {
+		if _, err := os.Stat(path); err == nil {
+			return path, true
+		}
+	}
+
+	return s.scanLocalRecording(view)
+}
+
+// scanLocalRecording is the dialplan-agnostic fallback: the first
+// {uuid}_*.wav in the recordings directory. Names only — never joined from
+// caller input — so no candidate can escape the directory.
+func (s *server) scanLocalRecording(view calls.CallView) (string, bool) {
+	prefix := string(view.NativeID) + "_"
+	if view.NativeID == "" {
+		return "", false
+	}
+
+	entries, err := os.ReadDir(s.recordings.RecordingsDir)
+	if err != nil {
+		return "", false
+	}
+
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".wav") || !strings.HasPrefix(name, prefix) {
 			continue
 		}
 
-		http.ServeFile(w, r, path)
-
-		return
+		return filepath.Join(s.recordings.RecordingsDir, name), true
 	}
 
-	http.Error(w, "no local recording file found for this call", http.StatusNotFound)
+	return "", false
 }
 
 // localRecordingStemCandidates bounds the candidate stems below (ref,
-// {uuid}_{dest}, bare uuid).
-const localRecordingStemCandidates = 3
+// {uuid}_{dest}, {uuid}_ai_agent, {uuid}_pstn, bare uuid).
+const localRecordingStemCandidates = 5
 
 // localRecordingStems lists candidate file stems, most specific first: the
-// indexed ref, then the {uuid}_{dest} dialplan naming, then the bare uuid.
+// indexed ref, the {uuid}_{dest} dialplan naming, the two fixed dialplan
+// destinations that differ from the CDR's destination_number (the agent
+// route and the outbound PSTN route), then the bare uuid.
 func localRecordingStems(view calls.CallView) []string {
 	stems := make([]string, 0, localRecordingStemCandidates)
 
@@ -267,6 +317,12 @@ func localRecordingStems(view calls.CallView) []string {
 	if dest := view.ToNumber; dest != "" {
 		stems = append(stems, string(view.NativeID)+"_"+dest)
 	}
+
+	if view.IsAI {
+		stems = append(stems, string(view.NativeID)+"_ai_agent")
+	}
+
+	stems = append(stems, string(view.NativeID)+"_pstn")
 
 	return append(stems, string(view.NativeID))
 }
