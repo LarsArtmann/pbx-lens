@@ -186,19 +186,21 @@ func TestListCollapseSurvivesPageBoundary(t *testing.T) {
 }
 
 func TestListCollapseKeepsTimestampTiesWhole(t *testing.T) {
-	// A shrinkable batch puts the batch seam inside a timestamp group the
-	// collapse also touches; the tie set must keep every call exactly once.
+	// A timestamp group is never split by the batch seam: with a batch that
+	// exactly holds the whole group, the probe row proves the walk is done and
+	// every call still renders once (the +1 probe is what tells an exhausted
+	// tie group from a walk with older rows).
 	previousBatch := listScanBatch
 
-	listScanBatch = 3
+	listScanBatch = 6
 
 	t.Cleanup(func() { listScanBatch = previousBatch })
 
-	// Four calls at the SAME instant, each with a CDR and a transcript.
+	// Three calls at the SAME instant, each with a CDR and a transcript.
 	started := testCallStarted()
-	seeded := make([]calls.Observation, 0, 8)
+	seeded := make([]calls.Observation, 0, 6)
 
-	for i := range 4 {
+	for i := range 3 {
 		cdr, transcript := aiCallFixture(fmt.Sprintf("uuid-tie-%d", i), started)
 		transcript.StartedAt = started // the tie under test
 		seeded = append(seeded, cdr, transcript)
@@ -209,8 +211,38 @@ func TestListCollapseKeepsTimestampTiesWhole(t *testing.T) {
 		t.Fatalf("ListCalls: %v", err)
 	}
 
-	if len(page.Rows) != 4 {
-		t.Fatalf("ties dropped or duplicated: rows = %d, want 4", len(page.Rows))
+	if len(page.Rows) != 3 {
+		t.Fatalf("ties dropped or duplicated: rows = %d, want 3", len(page.Rows))
+	}
+
+	if page.NextOlder != "" {
+		t.Error("an exhausted tie group must not offer an older walk")
+	}
+}
+
+func TestListStallsLoudlyOnOversizedTieGroup(t *testing.T) {
+	// A group wider than one batch cannot be walked by a started_at keyset;
+	// the list must say so instead of silently truncating (the export's
+	// documented failure mode, applied to the page).
+	previousBatch := listScanBatch
+
+	listScanBatch = 4
+
+	t.Cleanup(func() { listScanBatch = previousBatch })
+
+	started := testCallStarted()
+	seeded := make([]calls.Observation, 0, 8)
+
+	for i := range 4 {
+		cdr, transcript := aiCallFixture(fmt.Sprintf("uuid-wide-%d", i), started)
+		transcript.StartedAt = started
+		seeded = append(seeded, cdr, transcript)
+	}
+
+	if _, err := ListCalls(t.Context(), newTestSystem(t, seeded...), ListCallsQuery{}); err == nil {
+		t.Fatal("an unwalkable tie group must fail loudly")
+	} else if !strings.Contains(err.Error(), "list_cursor_stalled") {
+		t.Errorf("stall error = %v, want the list_cursor_stalled code", err)
 	}
 }
 

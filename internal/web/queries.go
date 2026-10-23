@@ -95,15 +95,25 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 	seen := make(map[string]struct{})
 
 	for {
-		batch, err := reader.Scan(ctx, listOptionsAt(query, cursor, listScanBatch)...)
+		// The probe row (one past the batch) proves whether an older row
+		// exists at all — a batch that exactly fills itself must not be
+		// mistaken for a walk with more to read.
+		batch, err := reader.Scan(ctx, listOptionsAt(query, cursor, listScanBatch+1)...)
 		if err != nil {
 			return CallListPage{}, err
 		}
 
+		more := len(batch) > listScanBatch
+		if more {
+			batch = batch[:listScanBatch]
+		}
+
+		start := len(rows)
+
 		for _, view := range batch {
-			// The cursor binds inclusively so a timestamp group spanning a
-			// batch boundary cannot lose rows; the tie set skips the ones
-			// this walk already emitted.
+			// The cursor binds inclusively so a timestamp group is never cut
+			// off at a batch seam; the tie set skips what this walk already
+			// emitted.
 			if !cursor.IsZero() && view.StartedAt.Equal(cursor) {
 				if _, done := seen[dedupeKey(view)]; done {
 					continue
@@ -126,11 +136,20 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 			}
 		}
 
-		if len(rows) > pageSize || len(batch) < listScanBatch {
+		if len(rows) > pageSize || !more {
 			break
 		}
 
-		cursor = advanceCursor(cursor, batch, seen)
+		next := advanceCursor(cursor, batch, seen)
+		if next.Equal(cursor) && len(rows) == start {
+			return CallListPage{}, errorfamily.NewRejection(
+				"lens.web.list_cursor_stalled",
+				"more than one batch of calls share started_at "+rfc3339Nano(cursor)+
+					"; narrow the list with from/to filters",
+			)
+		}
+
+		cursor = next
 	}
 
 	page := CallListPage{}
