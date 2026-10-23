@@ -47,6 +47,13 @@ addition from the concurrent session (signal thresholds + additive-field
 doctrine). It must be committed, never reverted — this plan treats it as the
 canonical home the README/FEATURES/AGENTS entries point to.
 
+**Live addendum (17:10, while this plan was being written):** the concurrent
+same-day session is landing this documentation itself — `FEATURES.md` gained
+the `refresh` row and `docs/DOMAIN_LANGUAGE.md` grew the additive-field
+doctrine during the planning window. **Re-check T3 before starting it:** the
+row may already be partly DONE; at 17:10 README, AGENTS, and CHANGELOG still
+lacked the surface, so T3 shrinks to those three plus a verification pass.
+
 ---
 
 ## 2. The Pareto answer
