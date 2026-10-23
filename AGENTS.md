@@ -170,6 +170,24 @@ webphone later gets a read-only deep link, never a data dependency.
   immutable).
 - Read model: `call_views` collection, one `CallView` per stream, folded from
   `call.observed` via `metaengine.OnRecordTyped`.
+- **Transcript truth: the lens performs NO speech-to-text.** `Transcript` is a
+  verbatim mapping of the source's own turns (Telnyx `user`/`assistant`; the
+  FreeSWITCH agent's `caller`/`agent`), so a transcript with no user turn means
+  THE SOURCE wrote none — never that this page filtered one out. The source's
+  non-speech rows (Telnyx `system` idle markers such as `[long silence]`, tool
+  calls, blank text) land in `SourceEvents` and render as a muted "Source log";
+  they are deliberately OUTSIDE `ContentHash`, because hashing them would fork
+  every stored view. Match idle markers on role and shape only — the wording is
+  explicitly not a contract. `[long silence]` means "no user turn arrived", NOT
+  "the caller was silent": the 2026-10-23 forensic call had a human greeting
+  and a closing line in the audio and zero user turns in the log (a greeting
+  collision plus a turn that never closed before teardown). Three call-fact
+  signals fire on that shape: `no user turn`, `self-dial` (both parties the
+  same number) and `Recording tail` (the recording runs well past the last
+  turn). Turn times come from Telnyx's `sent_at`, never `created_at` — the
+  latter is persistence time and can be a full minute late. A second ASR layer
+  is an owner-gated, clearly labelled variant that must never overwrite a
+  source transcript.
 
 ## Commands
 
