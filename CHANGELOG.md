@@ -7,6 +7,40 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-23 (additive fields get a mechanism: schema version + `refresh` backfill)
+
+- **`ObservationSchemaVersion` / `EnrichmentSchemaVersion` ride the hash
+  pre-image.** A field that is persisted but deliberately unhashed
+  (`SourceEvents`) reached history only by luck — the decider answers an
+  equal `ContentHash` with a no-op. Bumping the version forces exactly one
+  correction per re-ingested stream; v1 → v2 is that deliberate bump.
+- **`ContentHash` is now length-prefixed and named.** The retired
+  newline-joined pre-image could collide when a byte moved across a field
+  boundary (`"ab"+"c"` vs `"a"+"bc"`), so two different observations could
+  claim one identity. Pinned by `TestContentHashSeparatesFieldBoundaries`;
+  `TestContentHashSchemaVersionMovesTheHash` pins that a bump really moves it.
+- **`pbx-lens refresh`** classifies every fetched stream against the read
+  model WITHOUT writing (new / stale / additive-only / unchanged /
+  unbuildable) and, with `-apply`, re-ingests and rebuilds the search index.
+  `additive-only` is the alarm for "hashes match but the stored row is
+  missing source data", the class that otherwise never heals. Unbounded
+  look-back by default; tested end to end against a stub API.
+- **Measured correction wave (live, 2026-10-23, the whole account history):**
+  **25 of 25** Telnyx conversations carry wrong turn times under
+  `created_at` — every one of them rewrites once — plus 6 zero-user-turn
+  conversations and 37 source markers to persist, over 247 spoken turns. A
+  `-tags live` test (`TestCorrectionWave`) re-runs the measurement before any
+  future deploy: read-only, no index opened.
+- **Signal thresholds documented in one place**
+  (`docs/DOMAIN_LANGUAGE.md` § Signal thresholds): the 20 s recording-tail
+  bar, the `no user turn` / `self-dial` / `source markers` badge conditions,
+  and the bench's `expectsUserTurns` tri-state — so nobody has to read `templ`
+  or the scorer to learn what a bar means.
+- **The Python driver's key load is lazy and file-overridable**
+  (`PBX_TELNYX_API_KEY_FILE`), because the self-dial refusal, the calling
+  window and the usage text must all work without a secret file. The guard
+  proof lives in pbx-artmann (`TestDriverRefusesOurOwnAgentDIDs`).
+
 ### Changed — 2026-10-23 (gate triage: probe bootstrap deduplicated, tooling residuals resolved)
 
 - **Probe bootstrap deduplicated**: the five single-serve browser probes

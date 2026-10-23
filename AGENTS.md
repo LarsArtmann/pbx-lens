@@ -181,6 +181,12 @@ buildflow --build-mode dev            # the quality gate (lint+format+test);
                                       # FULL only when loadavg 15-min < 40, else
                                       # verify casualties (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
+GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens refresh -db /tmp/lens.db [-apply]
+                                      # additive-field backfill: classify every fetched stream
+                                      # (new/stale/additive-only/unchanged) and write NOTHING; -apply
+                                      # re-ingests + rebuilds search. The measurement half of an
+                                      # ObservationSchemaVersion bump (docs/DOMAIN_LANGUAGE.md
+                                      # § Additive fields). Unbounded look-back by default.
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
                                       # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go
                                       # http probe (curl banned); styles.css is committed — after

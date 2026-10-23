@@ -86,6 +86,26 @@ a transcript excerpt and the recording reference. Like `ingest-cdr`,
 touching any index (no `-db` required); `-api-base` points the fetch at a
 stub server for rehearsals.
 
+### Backfill history after a schema change (`refresh`)
+
+```console
+pbx-lens refresh -db /var/lib/pbx-lens/calls.db            # classify only, writes nothing
+pbx-lens refresh -db /var/lib/pbx-lens/calls.db -apply     # re-ingest what is stale
+```
+
+`ContentHash` decides identity, and the decider answers an equal hash with a
+no-op — so a field that is persisted but deliberately unhashed (the source's
+non-speech markers) lands only when something else moves the hash. A
+`calls.ObservationSchemaVersion` bump is how that is requested; `refresh` is
+how it is delivered. It classifies every fetched stream (new, stale,
+additive-only, unchanged, unbuildable) and prints the counts first, because
+the counts ARE the measurement: how many streams will one deploy rewrite?
+`-apply` then re-ingests and rebuilds the search index. Unlike
+`ingest-telnyx` it looks back without a window by default — the 48 h poll
+window is exactly what leaves history behind. Local-file sources (CDR,
+webhook log, agent transcripts) need none of this: every poll pass re-parses
+them for free.
+
 ### Serve the call-history UI
 
 ```console
@@ -241,7 +261,8 @@ frontmatter-ID refs for the hub's governance lint).
 ## Project layout
 
 - `cmd/pbx-lens/` — CLI (`version`, `smoke`, `ingest-cdr`, `ingest-telnyx`,
-  `ingest-webhook`, `ingest-agent`, `serve`, `backup`, `purge`, `catalog`)
+  `refresh`, `ingest-webhook`, `ingest-agent`, `serve`, `backup`, `purge`,
+  `catalog`)
 - `internal/calls/` — domain (Observation, invariants, idempotency) + read model
 - `internal/cli/` — tested command internals: flags, dispatch loop, projection drain, poller, search rebuild
 - `internal/ingest/` — source parsers/mappers (`cdr`, `telnyx`, `webhook`, `agent`)
