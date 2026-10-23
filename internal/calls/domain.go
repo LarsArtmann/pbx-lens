@@ -233,13 +233,23 @@ type Enrichment struct {
 // the web display must never disagree on it.
 const MicrosPerUnit = 1_000_000
 
+// EnrichmentSchemaVersion is the enrichment's derived-content revision, the
+// same mechanism as ObservationSchemaVersion (see events.go): the decider
+// answers an unchanged enrichment hash with a no-op, so an additive field
+// reaches already-enriched streams only after one deliberate bump. The zero
+// Enrichment keeps answering "" — "nothing enriched yet" is not a revision.
+const EnrichmentSchemaVersion = 2
+
 func (e Enrichment) Hash() string {
 	if e == (Enrichment{}) {
 		return ""
 	}
 
 	h := sha256.New()
-	_, _ = fmt.Fprintf(h, "%d\n%s\n%s", e.CostMicros, e.CostCurrency, e.InsightSummary)
+	writeHashedField(h, "schema", strconv.Itoa(EnrichmentSchemaVersion))
+	writeHashedField(h, "cost_micros", strconv.FormatInt(e.CostMicros, 10))
+	writeHashedField(h, "cost_currency", e.CostCurrency)
+	writeHashedField(h, "insight_summary", e.InsightSummary)
 
 	return hex.EncodeToString(h.Sum(nil))
 }

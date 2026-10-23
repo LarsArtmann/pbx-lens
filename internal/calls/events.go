@@ -4,6 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"hash"
+	"strconv"
 
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
@@ -19,25 +21,70 @@ const (
 
 const StreamType = "Call"
 
+// ObservationSchemaVersion is the revision of the observation's DERIVED
+// content — the shape ContentHash hashes, not the shape it stores.
+//
+// It is the answer to the additive-field drift class (2026-10-23 forensic
+// report, TODO additive-refresh-mechanism): an observation field that is
+// persisted but deliberately NOT hashed (SourceEvents) reaches a stored row
+// only when the hash moves, and the decider answers an equal hash with a
+// no-op (decider.go Record). Adding such a field therefore needs one
+// deliberate, whole-corpus correction, and this constant is how it is
+// requested: bump it when an additive field must reach history, then run the
+// backfill (`pbx-lens refresh`) once. Bump it ONLY for that reason — every
+// bump re-derives every re-ingested stream exactly once.
+//
+// History: 1 = the newline-joined, delimiter-ambiguous pre-image used until
+// 2026-10-23; 2 = length-prefixed fields, named, plus this version token.
+const ObservationSchemaVersion = 2
+
 func (o Observation) ContentHash() string {
+	return o.contentHash(ObservationSchemaVersion)
+}
+
+// contentHash is the pre-image builder for one schema revision. The version
+// is a parameter (not read from the constant) so tests can prove a bump
+// actually moves the hash — the property a silent rename would otherwise
+// break.
+func (o Observation) contentHash(schema int) string {
 	// SourceEvents is intentionally NOT hashed: it carries the source's
 	// non-speech markers (idle notices, tool calls), which are diagnostic
 	// annotation rather than observation identity. Hashing it would fork
 	// every stored call_views row the moment a marker is persisted, so the
 	// transcript stays the only hashed speech surface (see SourceEvent).
+	// The cost of that choice is the schema-version mechanism above.
 	h := sha256.New()
-	_, _ = fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s\n%s",
-		o.NativeID, o.Kind, o.Direction, o.StartedAt.UTC().UnixNano(), o.DurationSecs,
-		o.FromNumber, o.ToNumber, o.HangupCause, o.IsAI, o.TranscriptExcerpt,
-		transcriptHash(o.Transcript), o.RecordingRef)
+	writeHashedField(h, "schema", strconv.Itoa(schema))
+	writeHashedField(h, "native_id", string(o.NativeID))
+	writeHashedField(h, "kind", string(o.Kind))
+	writeHashedField(h, "direction", string(o.Direction))
+	writeHashedField(h, "started_at_nanos", strconv.FormatInt(o.StartedAt.UTC().UnixNano(), 10))
+	writeHashedField(h, "duration_secs", strconv.Itoa(o.DurationSecs))
+	writeHashedField(h, "from_number", o.FromNumber)
+	writeHashedField(h, "to_number", o.ToNumber)
+	writeHashedField(h, "hangup_cause", o.HangupCause)
+	writeHashedField(h, "is_ai", strconv.FormatBool(o.IsAI))
+	writeHashedField(h, "transcript_excerpt", o.TranscriptExcerpt)
+	writeHashedField(h, "transcript", transcriptHash(o.Transcript))
+	writeHashedField(h, "recording_ref", o.RecordingRef)
 
-	// MOS joins the hash only when reported, so a source that never carries
-	// it keeps the exact hash it had before the field existed.
+	// MOS joins the hash only when reported: a source that never carries a
+	// score contributes no bytes at all, so an unscored call cannot be
+	// mistaken for a scored one that happens to score zero.
 	if o.MOS != 0 {
-		_, _ = fmt.Fprintf(h, "\nmos=%g", o.MOS)
+		writeHashedField(h, "mos", strconv.FormatFloat(o.MOS, 'g', -1, 64))
 	}
 
 	return hex.EncodeToString(h.Sum(nil))
+}
+
+// writeHashedField writes one named, length-prefixed field into a hash
+// pre-image. The length prefix is what makes field boundaries unambiguous:
+// under the previous newline-joined encoding, moving a byte from one field to
+// the next ("ab"+"c" vs "a"+"bc") could produce the same digest, so two
+// different observations could claim one identity.
+func writeHashedField(h hash.Hash, name, value string) {
+	_, _ = fmt.Fprintf(h, "%s=%d:%s\n", name, len(value), value)
 }
 
 func transcriptHash(turns []TranscriptTurn) string {
@@ -47,7 +94,9 @@ func transcriptHash(turns []TranscriptTurn) string {
 
 	h := sha256.New()
 	for _, turn := range turns {
-		_, _ = fmt.Fprintf(h, "%s\x00%s\x00%d\x00", turn.Role, turn.Text, turn.At.UTC().Unix())
+		writeHashedField(h, "turn.role", string(turn.Role))
+		writeHashedField(h, "turn.text", turn.Text)
+		writeHashedField(h, "turn.at", strconv.FormatInt(turn.At.UTC().Unix(), 10))
 	}
 
 	return hex.EncodeToString(h.Sum(nil))

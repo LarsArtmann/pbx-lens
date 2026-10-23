@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -71,18 +72,28 @@ func TestValidate(t *testing.T) {
 func TestContentHashMOSOnlyWhenReported(t *testing.T) {
 	obs := validObservation()
 
-	// The MOS==0 hash must equal the pre-MOS algorithm byte-for-byte: that
-	// is the contract that lets older streams (and re-polled CDR rows without
-	// a score) keep their historical identity after the field was added. If
-	// the base format ever changes intentionally, update this golden too.
+	// An unreported MOS contributes zero bytes: the pre-image is exactly the
+	// named fields below, with no mos entry. That is the contract which lets a
+	// source that never carries a score stop at version-level identity instead
+	// of pretending to be a scored call. (The absolute digest is versioned —
+	// see ObservationSchemaVersion — so this pins the FIELD SET, not the bytes.)
 	h := sha256.New()
-	_, _ = fmt.Fprintf(h, "%s\n%s\n%s\n%d\n%d\n%s\n%s\n%s\n%t\n%s\n%s\n%s",
-		obs.NativeID, obs.Kind, obs.Direction, obs.StartedAt.UTC().UnixNano(), obs.DurationSecs,
-		obs.FromNumber, obs.ToNumber, obs.HangupCause, obs.IsAI, obs.TranscriptExcerpt,
-		transcriptHash(obs.Transcript), obs.RecordingRef)
+	writeHashedField(h, "schema", strconv.Itoa(ObservationSchemaVersion))
+	writeHashedField(h, "native_id", string(obs.NativeID))
+	writeHashedField(h, "kind", string(obs.Kind))
+	writeHashedField(h, "direction", string(obs.Direction))
+	writeHashedField(h, "started_at_nanos", strconv.FormatInt(obs.StartedAt.UTC().UnixNano(), 10))
+	writeHashedField(h, "duration_secs", strconv.Itoa(obs.DurationSecs))
+	writeHashedField(h, "from_number", obs.FromNumber)
+	writeHashedField(h, "to_number", obs.ToNumber)
+	writeHashedField(h, "hangup_cause", obs.HangupCause)
+	writeHashedField(h, "is_ai", strconv.FormatBool(obs.IsAI))
+	writeHashedField(h, "transcript_excerpt", obs.TranscriptExcerpt)
+	writeHashedField(h, "transcript", transcriptHash(obs.Transcript))
+	writeHashedField(h, "recording_ref", obs.RecordingRef)
 
 	if got := obs.ContentHash(); got != hex.EncodeToString(h.Sum(nil)) {
-		t.Error("a MOS-less observation must hash exactly as before the MOS field existed")
+		t.Error("an unreported MOS must contribute no bytes to the pre-image")
 	}
 
 	scored := obs
@@ -97,6 +108,35 @@ func TestContentHashMOSOnlyWhenReported(t *testing.T) {
 	rescored.MOS = 3.1
 	if rescored.ContentHash() == scored.ContentHash() {
 		t.Error("different MOS values must hash differently")
+	}
+}
+
+func TestContentHashSchemaVersionMovesTheHash(t *testing.T) {
+	obs := validObservation()
+
+	if obs.contentHash(1) == obs.contentHash(2) {
+		t.Fatal("a schema bump must produce a different hash — otherwise an additive field never reaches history")
+	}
+
+	if obs.ContentHash() != obs.contentHash(ObservationSchemaVersion) {
+		t.Fatal("ContentHash must be the pre-image of the shipped schema version")
+	}
+}
+
+func TestContentHashSeparatesFieldBoundaries(t *testing.T) {
+	// Under the retired newline-joined encoding these two observations could
+	// collide: the same concatenated bytes, different field values. The
+	// length-prefixed pre-image must keep them apart.
+	left := validObservation()
+	left.TranscriptExcerpt = "ab"
+	left.FromNumber = "+1728728931"
+
+	right := validObservation()
+	right.TranscriptExcerpt = "a"
+	right.FromNumber = "+17287289311"
+
+	if left.ContentHash() == right.ContentHash() {
+		t.Fatal("shifting a byte across a field boundary must not keep the identity")
 	}
 }
 
