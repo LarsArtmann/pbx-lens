@@ -107,7 +107,7 @@ Sorted by tier, then impact, then effort. `Value` is operator value.
 
 ---
 
-## 4. Fine breakdown (≤12 min per step; all 27 tasks)
+## 4. Fine breakdown (≤12 min per step; 130 steps covering all 27 tasks)
 
 Sorted by tier, then task order. `min` is the step budget.
 
