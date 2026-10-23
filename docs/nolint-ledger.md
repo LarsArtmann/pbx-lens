@@ -8,7 +8,7 @@
 
 # Nolint ledger
 
-Every `//nolint:` in `internal/` (non-test, non-generated), with the reason
+Every `//nolint:` in `internal/` and `cmd/` (non-test, non-generated), with the reason
 it survives. Inline comments are the primary home; this ledger is the
 survivable copy. When removing the suppressed condition, delete both.
 
@@ -21,3 +21,4 @@ survivable copy. When removing the suppressed condition, delete both.
 | `internal/web/server.go:445`   | gosec            | The search-jump redirect is same-origin by construction: fixed `/calls/` prefix, path-escaped identity, query-escaped search text. Property pinned by `TestSearchJumpTargetSameOrigin`. |
 | `internal/web/dashboard.go:34` | gochecknoglobals | `dashboardLocation` is injectable so tests can pin the zone (save/restore) without a config knob on the query.                                                                          |
 | `internal/web/dashboard.go:92` | gochecknoglobals | `durationBuckets` is a declarative histogram table, read-only — a struct-of-data table, not mutable state.                                                                              |
+| `cmd/pbx-lens/catalog.go:23`   | erraudit         | CLI output stream: a failing write of the "wrote eventcatalog tree" status line has no recovery action and must not mask the command's real result.                                     |
