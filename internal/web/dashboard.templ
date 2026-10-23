@@ -25,7 +25,7 @@ templ dashboardRoute(nonce string, stats DashboardStats, now time.Time, fragURL 
 		})
 		@windowPresets(stats)
 		@rangeForm(stats)
-		@dashboardLive(stats, now, fragURL)
+		@dashboardLive(nonce, stats, now, fragURL)
 	}
 }
 
@@ -81,7 +81,7 @@ templ rangeForm(stats DashboardStats) {
 // most one interval. The timestamp footer is the liveness pill — when it
 // freezes, polling has stalled. Without JS the server-rendered content is
 // the same fallback the page always had.
-templ dashboardLive(stats DashboardStats, now time.Time, fragURL string) {
+templ dashboardLive(nonce string, stats DashboardStats, now time.Time, fragURL string) {
 	@htmx.PolledRegion(htmx.PolledRegionProps{
 		URL:           fragURL,
 		Every:         "30s",
@@ -89,7 +89,7 @@ templ dashboardLive(stats DashboardStats, now time.Time, fragURL string) {
 	}) {
 		@statCards(stats, now)
 		@layout.Split(layout.SplitProps{
-			Main:  dashboardMain(stats),
+			Main:  dashboardMain(nonce, stats),
 			Aside: dashboardAside(stats),
 		})
 	}
@@ -97,12 +97,83 @@ templ dashboardLive(stats DashboardStats, now time.Time, fragURL string) {
 
 // dashboardMain is the Split's wide column: volume, durations, then the
 // hour-by-weekday density heatmap.
-templ dashboardMain(stats DashboardStats) {
+templ dashboardMain(nonce string, stats DashboardStats) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@volumeCard(stats)
 		@durationCard(stats)
+		@segmentsCard(nonce, stats)
 		@heatmapCard(stats)
 	}
+}
+
+// segmentsCard is north-star slice 2 (plan T7): the window's traffic split by
+// OUR numbers and by the outside party, each row a drill-through into the
+// filtered call list. It answers "who calls what", the question the operator
+// asks first and the UI could not answer at all.
+templ segmentsCard(nonce string, stats DashboardStats) {
+	@display.Card(display.CardProps{Title: "Who calls what", TitleTag: display.HeadingTagH2}) {
+		if len(stats.TopNumbers) == 0 && len(stats.TopPeers) == 0 {
+			@display.SimpleEmptyState("No numbers in the window yet.")
+		} else {
+			<h3 class="break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm">
+				Our numbers
+			</h3>
+			<div class="mt-2">
+				@segmentTable(nonce, stats.TopNumbers)
+			</div>
+			<h3 class="break-after-avoid dark:text-white font-medium leading-6 mt-6 text-gray-900 text-sm">
+				Counterparties
+			</h3>
+			<div class="mt-2">
+				@segmentTable(nonce, stats.TopPeers)
+			</div>
+		}
+	}
+}
+
+// segmentTable renders one breakdown. Rows carry the number filter as their
+// href, so a click narrows the list instead of leaving the operator to retype
+// the number.
+templ segmentTable(nonce string, segments []Segment) {
+	if len(segments) == 0 {
+		<p class="dark:text-gray-400 text-gray-500 text-sm">No calls in this window.</p>
+	} else {
+		@display.Table(display.TableProps{
+			Headers:     []string{"Number", "Calls", "AI", "Avg", "Spend"},
+			Striped:     true,
+			Hover:       true,
+			CellPadding: display.TableCellPaddingCompact,
+			LazyRows:    true,
+			Nonce:       nonce,
+			Rows:        segmentRows(segments),
+		})
+	}
+}
+
+// segmentRows maps the typed segments onto display rows. Spend renders only
+// when the segment actually carried prices (never a confident zero).
+func segmentRows(segments []Segment) []display.TableRow {
+	rows := make([]display.TableRow, 0, len(segments))
+
+	for _, segment := range segments {
+		spend := "—"
+		if segment.HasCost() {
+			spend = costText(segment.CostMicros, "")
+		}
+
+		rows = append(rows, display.TableRow{
+			Href: segment.Href(),
+			Cells: []display.TableCell{
+				{Text: segment.Number},
+				{Text: strconv.Itoa(segment.Calls)},
+				{Text: percent(segment.AIRatio())},
+				{Text: clockDuration(segment.AvgDuration())},
+				{Text: spend},
+			},
+		})
+	}
+
+	return rows
 }
 
 // heatmapCard is the "when do calls happen" density grid (plan T19):

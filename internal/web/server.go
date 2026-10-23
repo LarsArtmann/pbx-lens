@@ -336,7 +336,7 @@ func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, dashboardLive(stats, s.now(), fragURL))
+	render(w, r, dashboardLive(nonce(r), stats, s.now(), fragURL))
 }
 
 // parseRange reads the dashboard's date-range picker (from/to only — list

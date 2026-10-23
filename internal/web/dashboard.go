@@ -138,7 +138,11 @@ type DashboardStats struct {
 	CostWeek     WeekDelta
 	// HourDay buckets call starts by weekday (Mon-first) x hour of day in
 	// the dashboard zone — the "when do calls happen" heatmap (plan T19).
-	HourDay   [7][24]int
+	HourDay [7][24]int
+	// Segments (north-star slice 2): the window grouped by the PBX-side
+	// number (TopNumbers) and by the outside party (TopPeers), top N by volume.
+	TopNumbers []Segment
+	TopPeers   []Segment
 	ByDay     []DayVolume
 	Durations []DurationBucket
 	Week      WeekDelta
@@ -243,6 +247,8 @@ func DashboardStatsQuery(
 		dayIndex:       dayIndex,
 		today:          today,
 		costCurrencies: make(map[string]int, 1),
+		numberSegments: make(map[string]*Segment),
+		peerSegments:   make(map[string]*Segment),
 	}
 
 	err := streamRepresentativeCalls(ctx, sys, filters, func(view calls.CallView) error {
@@ -262,6 +268,8 @@ func DashboardStatsQuery(
 	stats.Week = weekDelta(stats.ByDay)
 	stats.CostWeek = costWeekDelta(stats.ByDay)
 	stats.CostCurrency = unanimousCurrency(acc.costCurrencies)
+	stats.TopNumbers = topSegments(acc.numberSegments, segmentLimit)
+	stats.TopPeers = topSegments(acc.peerSegments, segmentLimit)
 
 	return stats, nil
 }
@@ -353,6 +361,10 @@ type statsAccumulator struct {
 	// costCurrencies counts the priced calls per currency, so the window can
 	// report one currency only when every priced call agreed on it.
 	costCurrencies map[string]int
+	// Segment tallies by PBX-side number and by outside party; keys are the
+	// observed numbers, values the running aggregate.
+	numberSegments map[string]*Segment
+	peerSegments   map[string]*Segment
 }
 
 func (a statsAccumulator) view(view calls.CallView) {
@@ -413,6 +425,17 @@ func (a statsAccumulator) view(view calls.CallView) {
 		if idx, ok := a.dayIndex[day]; ok {
 			stats.ByDay[idx].CostKnown++
 			stats.ByDay[idx].CostMicros += view.CostMicros
+		}
+	}
+
+	// Segments: which of our numbers carries the traffic, and who calls it.
+	if ours, peer := callParties(view); ours != "" || peer != "" {
+		if ours != "" {
+			accumulateSegment(a.numberSegments, ours, view)
+		}
+
+		if peer != "" {
+			accumulateSegment(a.peerSegments, peer, view)
 		}
 	}
 }

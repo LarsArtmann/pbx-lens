@@ -25,10 +25,15 @@ const pageSize = 50
 type ListCallsQuery struct {
 	Direction calls.Direction
 	AI        *bool
-	From      time.Time
-	To        time.Time
-	Before    time.Time
-	After     time.Time
+	// Number narrows to calls that have this number on EITHER side (the
+	// PBX's own number or the counterpart's). It is the segment drill-down:
+	// "show me every call with this DID" cannot be a single column filter
+	// because the side depends on the call's direction.
+	Number string
+	From   time.Time
+	To     time.Time
+	Before time.Time
+	After  time.Time
 }
 
 // CallRow is the list-page view model — the UI never touches domain types.
@@ -394,6 +399,13 @@ func scanFilters(query ListCallsQuery) []metaengine.ScanOption {
 
 	if query.AI != nil {
 		opts = append(opts, metaengine.WithFilter("is_ai", metaengine.FilterEq, *query.AI))
+	}
+
+	if query.Number != "" {
+		opts = append(opts, metaengine.WithOr(
+			metaengine.FilterSpec{Column: "from_number", Op: metaengine.FilterEq, Value: query.Number},
+			metaengine.FilterSpec{Column: "to_number", Op: metaengine.FilterEq, Value: query.Number},
+		))
 	}
 
 	if !query.From.IsZero() {

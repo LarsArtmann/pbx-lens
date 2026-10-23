@@ -179,6 +179,15 @@ templ filterForm(filters ListCallsQuery, action string) {
 			},
 			BaseProps: utils.BaseProps{Class: "w-36"},
 		})
+		@forms.Input(forms.InputProps{
+			Name:        "number",
+			Type:        forms.InputSearch,
+			Label:       "Number",
+			Value:       filters.Number,
+			Placeholder: "+49…",
+			MaxLength:   maxNumberFilterLen,
+			BaseProps:   utils.BaseProps{Class: "w-40"},
+		})
 		@forms.DatePicker(forms.DatePickerProps{
 			Name:      "from",
 			Label:     "From",
@@ -221,7 +230,7 @@ func aiValue(ai *bool) string {
 }
 
 func hasFilters(filters ListCallsQuery) bool {
-	return filters.Direction != "" || filters.AI != nil ||
+	return filters.Direction != "" || filters.AI != nil || filters.Number != "" ||
 		!filters.From.IsZero() || !filters.To.IsZero() ||
 		!filters.Before.IsZero() || !filters.After.IsZero()
 }
@@ -306,6 +315,10 @@ func listPageHref(filters ListCallsQuery, param string, value string) string {
 		query.Set("ai", v)
 	}
 
+	if filters.Number != "" {
+		query.Set("number", filters.Number)
+	}
+
 	if !filters.From.IsZero() {
 		query.Set("from", dateValue(filters.From))
 	}
@@ -336,6 +349,10 @@ func filtersQueryString(filters ListCallsQuery) string {
 
 	if v := aiValue(filters.AI); v != "" {
 		query.Set("ai", v)
+	}
+
+	if filters.Number != "" {
+		query.Set("number", filters.Number)
 	}
 
 	if !filters.From.IsZero() {
