@@ -139,31 +139,39 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 
 		var byColumn map[string]string
 
-		var mosRaw string
+		var extras []string
 
 		switch len(fields) {
 		case len(fields13):
 			byColumn = zip(fields13, fields)
 		case len(fields18):
 			byColumn = zip(fields18, fields)
-		case len(fields13) + 1:
-			// mod_cdr_csv appends extra configured fields AFTER the template;
-			// this deployment's only extra field is rtp_audio_in_mos. The
-			// parse below rejects anything outside the MOS scale, so a
-			// different extra field degrades to "no MOS" rather than a bad
-			// value.
-			byColumn = zip(fields13, fields[:len(fields13)])
-			mosRaw = fields[len(fields13)]
-		case len(fields18) + 1:
-			byColumn = zip(fields18, fields[:len(fields18)])
-			mosRaw = fields[len(fields18)]
 		default:
-			res.Skipped++
+			// mod_cdr_csv appends the template's extra configured fields
+			// AFTER the built-in ones. The content-typed classifier below
+			// reads each extra column by its VALUE (a MOS score, a direction
+			// word, or neither), so the deployment can add rtp_audio_in_mos
+			// and call_direction in any order without the parser hard-coding
+			// a position. A row longer than the built-in template plus
+			// maxExtraColumns stays a skipped row rather than a guessed parse
+			// (the same guard the exact-length cases had).
+			switch {
+			case len(fields) > len(fields13) && len(fields) <= len(fields13)+maxExtraColumns:
+				byColumn = zip(fields13, fields[:len(fields13)])
+				extras = fields[len(fields13):]
+			case len(fields) > len(fields18) && len(fields) <= len(fields18)+maxExtraColumns:
+				byColumn = zip(fields18, fields[:len(fields18)])
+				extras = fields[len(fields18):]
+			default:
+				res.Skipped++
 
-			continue
+				continue
+			}
 		}
 
-		obs, err := observation(byColumn, opts, mosRaw)
+		mos, declaredDirection := classifyExtras(extras)
+
+		obs, err := observation(byColumn, opts, mos, declaredDirection)
 		if err != nil {
 			res.Skipped++
 
@@ -201,6 +209,11 @@ func zip(names, values []string) map[string]string {
 // cdrMOSMax is FreeSWITCH's Mean Opinion Score ceiling (the 1..5 scale).
 const cdrMOSMax = 5.0
 
+// maxExtraColumns bounds the trailing extra columns this parser accepts
+// (rtp_audio_in_mos, call_direction). A longer row is a parse mismatch, not
+// a wider deployment.
+const maxExtraColumns = 2
+
 // parseMOS accepts a reported rtp_audio_in_mos value; anything empty,
 // unparseable, or outside the MOS scale reads as "not reported" (0).
 func parseMOS(raw string) float64 {
@@ -216,7 +229,45 @@ func parseMOS(raw string) float64 {
 	return v
 }
 
-func observation(byColumn map[string]string, opts ParseOptions, mosRaw string) (calls.Observation, error) {
+// classifyExtras reads the template's trailing extra columns by VALUE: a
+// score in the MOS scale is the quality report, an "inbound"/"outbound" word
+// is the dialplan's own direction verdict, and anything else is ignored (the
+// historical "garbage extra column degrades to no data" behaviour). Reading
+// by value instead of by position lets the sibling template add
+// call_direction without re-ordering the MOS column or breaking old exports.
+func classifyExtras(extras []string) (mos float64, direction calls.Direction) {
+	for _, raw := range extras {
+		if parsed, ok := parseDeclaredDirection(raw); ok {
+			direction = parsed
+
+			continue
+		}
+
+		if score := parseMOS(raw); score > 0 {
+			mos = score
+		}
+	}
+
+	return mos, direction
+}
+
+// parseDeclaredDirection accepts the sibling template's call_direction
+// column, and nothing else: an unknown word must never be read as a verdict.
+func parseDeclaredDirection(raw string) (calls.Direction, bool) {
+	declared := calls.Direction(strings.ToLower(strings.TrimSpace(raw)))
+	if !declared.Valid() {
+		return "", false
+	}
+
+	return declared, true
+}
+
+func observation(
+	byColumn map[string]string,
+	opts ParseOptions,
+	mos float64,
+	declared calls.Direction,
+) (calls.Observation, error) {
 	started, err := time.Parse(stampLayout, byColumn["start_stamp"])
 	if err != nil {
 		return calls.Observation{}, fmt.Errorf("start_stamp %q: %w", byColumn["start_stamp"], err)
@@ -227,27 +278,80 @@ func observation(byColumn map[string]string, opts ParseOptions, mosRaw string) (
 	obs := calls.Observation{
 		NativeID:     calls.NativeID(byColumn["uuid"]),
 		Kind:         calls.SourceFreeSwitchCDR,
-		Direction:    direction(byColumn["context"]),
+		Direction:    direction(byColumn, declared),
 		StartedAt:    started.UTC(),
 		DurationSecs: billsec,
 		FromNumber:   byColumn["caller_id_number"],
 		ToNumber:     byColumn["destination_number"],
 		HangupCause:  byColumn["hangup_cause"],
 		IsAI:         opts.isAI(byColumn["destination_number"]),
-		MOS:          parseMOS(mosRaw),
+		MOS:          mos,
 	}
 
 	return obs, obs.Validate()
 }
 
-// direction derives the call leg orientation from the FreeSWITCH dialplan:
-// calls that ended in the "public" context came in from outside.
-func direction(dialplanContext string) calls.Direction {
-	if dialplanContext == "public" {
+// Direction derivation, in precedence order:
+//
+//  1. A template-declared call_direction column — the dialplan's own verdict,
+//     authoritative when present.
+//  2. The "public" context — an a-leg that never left the inbound dialplan.
+//  3. The transfer heuristic: an external caller ringing an internal
+//     extension arrived from outside. This is what the context column cannot
+//     say: the sibling dialplan transfers every inbound DID into "default",
+//     so an inbound AI call's a-leg ends in the default context and used to
+//     index as OUTBOUND (live evidence 2026-10-23: 4084757593 → 9100).
+//  4. Otherwise outbound.
+func direction(byColumn map[string]string, declared calls.Direction) calls.Direction {
+	if declared.Valid() {
+		return declared
+	}
+
+	if byColumn["context"] == "public" {
+		return calls.DirectionInbound
+	}
+
+	if isInternalExtension(byColumn["destination_number"]) && isExternalNumber(byColumn["caller_id_number"]) {
 		return calls.DirectionInbound
 	}
 
 	return calls.DirectionOutbound
+}
+
+// internalExtensionMaxDigits is the longest number an extension plan uses
+// (the deployment's agent extension is 9100; four-digit plans are the norm).
+const internalExtensionMaxDigits = 6
+
+// externalNumberMinDigits is the shortest PSTN number: a national subscriber
+// number is never shorter, and internal extensions never reach it.
+const externalNumberMinDigits = 7
+
+// isInternalExtension reports a bare dialplan extension: digits only, no
+// international prefix, no more digits than an extension plan allocates.
+func isInternalExtension(number string) bool {
+	trimmed := strings.TrimSpace(number)
+	if trimmed == "" || strings.HasPrefix(trimmed, "+") || len(trimmed) > internalExtensionMaxDigits {
+		return false
+	}
+
+	return isAllDigits(trimmed)
+}
+
+// isExternalNumber reports a PSTN number, bare or E.164.
+func isExternalNumber(number string) bool {
+	trimmed := strings.TrimPrefix(strings.TrimSpace(number), "+")
+
+	return len(trimmed) >= externalNumberMinDigits && isAllDigits(trimmed)
+}
+
+func isAllDigits(value string) bool {
+	for _, char := range value {
+		if char < '0' || char > '9' {
+			return false
+		}
+	}
+
+	return value != ""
 }
 
 func atoi(s string) int {
