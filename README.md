@@ -1,7 +1,15 @@
 # pbx-lens
 
-One sqlite database answering, for every call the PBX ever saw: who, when,
-how long, AI or human, and where the transcript lives.
+The insights and analytics platform for every call your PBX ever saw: who
+called whom, when, how long, AI or human, what it cost, how good it was, and
+where the transcript and recording live.
+
+One sqlite index turns four disagreeing sources — FreeSWITCH CDRs, Telnyx
+conversations/recordings, the receiver webhook log, and agent transcripts —
+into one queryable history, then answers the operator's questions over it:
+volume and seasonality, AI-vs-human mix, duration and MOS quality, cost per
+call, hangup causes, transcript search, and machine-readable exports for
+whatever comes next.
 
 pbx-lens is READ-ONLY over every source: it parses FreeSWITCH CDR exports and
 calls Telnyx read APIs (conversations, messages, recordings). It never writes
@@ -14,11 +22,15 @@ composition root + metaengine sqlite engine).
 
 ## Status
 
-Core ingest, enrichment (cost + AI insight summaries), and the read-only web
-UI (list, detail, search, dashboard, export) all work; Telnyx ingest is
-live-proven (8 real conversations double-ingested with zero duplicate
-events). See [FEATURES.md](FEATURES.md) for the honest inventory and
-[ROADMAP.md](ROADMAP.md) for direction.
+Core ingest, enrichment (cost + AI insight summaries), and the read-only
+analytics surface (list, detail, FTS search, dashboard, `/ops`, streaming
+export) all work; Telnyx ingest is live-proven (8 real conversations
+double-ingested with zero duplicate events). The dashboard is the current
+analytics front door: volume, duration distribution, weekday×hour density,
+AI/human mix, and MOS, all filterable by window. Deeper analytics
+(segmentation by DID, cost trends, quality/anomaly views, saved views) is the
+active direction — see [FEATURES.md](FEATURES.md) for the honest inventory,
+including the analytics gaps, and [ROADMAP.md](ROADMAP.md) for the path.
 
 ## Installation
 

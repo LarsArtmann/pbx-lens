@@ -1,6 +1,8 @@
 # AGENTS.md — pbx-lens
 
-Unified call-history index for pbx.artmann.tech (the SUPERB plan:
+The call insights and analytics platform for pbx.artmann.tech — north star:
+the most superb insights and analytics platform over this PBX's calls (the
+SUPERB plan:
 `pbx-artmann/docs/planning/2026-10-09_20-28_SUPERB-pbx-lens-call-index-and-woolly-golive.md`).
 Read-only over every source: FreeSWITCH CDRs, Telnyx conversations/recordings
 APIs, the receiver webhook JSONL. The index DB is disposable and always
