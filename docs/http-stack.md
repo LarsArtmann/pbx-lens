@@ -68,15 +68,19 @@ trips the hop budget, and the Server-Timing metrics name each hop
 (pre-first-write only, per the Server-Timing rule above). Total request
 lifetime is therefore bounded by hops + body size, never by a global
 deadline that would truncate large recordings (the former 30 s WriteTimeout
-did exactly that).
+did exactly that). Pinned end-to-end by
+`TestRecordingProxyTimingHopBudget` (both hops appear in Server-Timing
+within the budget, no body metric) and
+`TestRecordingProxySlowUpstreamStaysBounded` (a stalling upstream fails fast
+at 502 without stretching the header budget).
 
 ## Render buffering (the flush trap)
 
 `web.render` renders templ components into a `bytes.Buffer` and performs ONE
 atomic write. templ's streaming writer flushes per section; go-etag bails to
 untagged streaming on any Flush — without the buffer, HTML pages got ZERO
-ETags. Found by live probe, not by tests. A future gotchas.md entry tracks
-this (TODO_LIST).
+ETags. Found by live probe, not by tests; the war story lives in
+docs/gotchas.md.
 
 Exact `Content-Length` on buffered identity renders (2026-10-15, plan
 M11/F29): the buffer alone still shipped chunked at 25k+ bytes — Go's

@@ -80,6 +80,15 @@ rides its own trigger — the actionable bounded versions live in TODO_LIST):
 - Split the CHANGELOG Unreleased pile at v0.3.0 (three sections deep)
 - Cadence: schedule the next Pareto pass BEFORE new work accretes (the
   plan-after-plan pattern that closed both prior queues)
+- Flake records must quote the failing assertion line (2026-10-23 harvest
+  from the 04-25 misdiagnosis): a duration is circumstantial evidence, and
+  an archived report that omits the assertion lets the next session
+  re-theorize instead of reading. Applies to reports in this repo; the
+  cross-project half belongs in crush-config's lessons.
+- Test-function complexity policy (2026-10-23 harvest): gocyclo flagged the
+  conditional-replay helper at 22>20 during the 2026-10-18 flake fix —
+  decide once whether test files get a raised threshold, a nolint-ledger
+  row, or plain extraction. One decision, then the config or the row.
 
 ### 3. Ecosystem integration (plan phase 4)
 
@@ -121,6 +130,12 @@ versions):
   (D1); the change itself is one central helper, all surfaces
 - i18n note (2026-10-15): the UI copy is English-only; the D1 EU-format
   decision may reopen the copy-language question for the operator audience
+- Client-side stamp rendering (2026-10-23 harvest): the dashboard's 30 s
+  htmx polls almost never earn their 304s because every rendered body
+  embeds a per-second "Updated HH:MM:SS" stamp (plus RelativeTime chips).
+  Moving those client-side would make the conditional-GET economy real —
+  a product tradeoff (JS on the critical path, CSP nonce work), so it waits
+  for the owner call; the bounded row is in TODO_LIST.
 
 ## Non-goals
 
