@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -22,8 +24,14 @@ const refreshFindingLimit = 20
 //
 // Unlike ingest-telnyx it defaults to an UNBOUNDED look-back: its whole reason
 // to exist is history the 48 h poll window can no longer reach. It also skips
-// the enrichment pass, which owns its own hash and its own budget.
+// the enrichment pass, which owns its own hash and its own API budget.
 func refresh(args []string) {
+	if err := runRefresh(args, os.Stdout); err != nil {
+		fatal(err)
+	}
+}
+
+func runRefresh(args []string, out io.Writer) error {
 	fs := flag.NewFlagSet("refresh", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
 	keyFile := fs.String("key-file", "", "Telnyx API key file (default: $TELNYX_API_KEY)")
@@ -43,26 +51,28 @@ func refresh(args []string) {
 	apply := fs.Bool("apply", false, "dispatch the corrections (default: classify and report only)")
 	_ = fs.Parse(args)
 
-	requireDB(fs, *db)
+	if *db == "" {
+		return fmt.Errorf("refresh: -db is required")
+	}
 
 	key, err := cli.ResolveKey(*keyFile)
 	if err != nil {
-		fatal(err)
+		return err
 	}
 
 	sinceAt, err := cli.ParseSince(*since)
 	if err != nil {
-		fatal(err)
+		return err
 	}
 
 	dir, err := cli.ParseDirection(*direction)
 	if err != nil {
-		fatal(err)
+		return err
 	}
 
 	ctx, sys, cleanup, err := openIndexSession(*db)
 	if err != nil {
-		fatal(err)
+		return err
 	}
 
 	defer cleanup()
@@ -74,44 +84,49 @@ func refresh(args []string) {
 		Limit:     *limit,
 	})
 	if err != nil {
-		fatal(err)
+		return err
 	}
 
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
 	report, err := cli.ClassifyRefresh(ctx, reader, observations)
 	if err != nil {
-		fatal(err)
+		return err
 	}
 
-	printRefreshReport(report, fetchRejects)
+	printRefreshReport(out, report, fetchRejects)
 
 	if !*apply {
-		fmt.Printf(
+		_, _ = fmt.Fprintf(
+			out,
 			"refresh: classify-only — nothing written. %d stream(s) would be written; re-run with -apply to backfill.\n",
 			report.Rewrites(),
 		)
 
-		return
+		return nil
 	}
 
 	stats := cli.Ingest(ctx, sys, observations)
 	if err := finalizeIngest(ctx, sys, *db); err != nil {
-		fatal(err)
+		return err
 	}
 
-	fmt.Printf(
+	_, _ = fmt.Fprintf(
+		out,
 		"refresh: applied — %d recorded, %d corrected, %d rejected (search index rebuilt)\n",
 		stats.Recorded, stats.Corrected, len(stats.Rejected),
 	)
-	printRejected(stats.Rejected)
+
+	printRejectedTo(out, stats.Rejected)
+
+	return nil
 }
 
 // printRefreshReport prints the classification counts first (they are the
 // deliverable) and then at most refreshFindingLimit findings that are worth an
 // operator's attention — unchanged streams are pure noise.
-func printRefreshReport(report cli.RefreshReport, fetchRejects []string) {
-	fmt.Printf("refresh: %d conversations fetched, %s\n", report.Total, report.String())
+func printRefreshReport(out io.Writer, report cli.RefreshReport, fetchRejects []string) {
+	_, _ = fmt.Fprintf(out, "refresh: %d conversations fetched, %s\n", report.Total, report.String())
 
 	printed := 0
 
@@ -121,16 +136,16 @@ func printRefreshReport(report cli.RefreshReport, fetchRejects []string) {
 		}
 
 		if printed == refreshFindingLimit {
-			fmt.Printf("  … %d further finding(s) not shown\n", countActionable(report)-refreshFindingLimit)
+			_, _ = fmt.Fprintf(out, "  … %d further finding(s) not shown\n", countActionable(report)-refreshFindingLimit)
 
 			break
 		}
 
-		fmt.Printf("  %s %s — %s\n", finding.Outcome, finding.Stream, finding.Reason)
+		_, _ = fmt.Fprintf(out, "  %s %s — %s\n", finding.Outcome, finding.Stream, finding.Reason)
 		printed++
 	}
 
-	printRejected(fetchRejects)
+	printRejectedTo(out, fetchRejects)
 }
 
 func countActionable(report cli.RefreshReport) int {
@@ -143,4 +158,10 @@ func countActionable(report cli.RefreshReport) int {
 	}
 
 	return count
+}
+
+func printRejectedTo(out io.Writer, rejected []string) {
+	for _, reason := range rejected {
+		_, _ = fmt.Fprintf(out, "  rejected: %s\n", reason)
+	}
 }
