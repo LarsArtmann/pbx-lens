@@ -148,6 +148,15 @@ webphone later gets a read-only deep link, never a data dependency.
   the NixOS module LANDED in nix-international-telephony 2026-10-11
   (`modules/telephony/lens.nix`, backup + purge timers;
   `deploy/nixos/module-draft.nix` is a superseded design record).
+  The per-call detail page is a READ-TIME join (`CallDetailPage`): the
+  requested source row is completed from the sibling row that observed the
+  same call — only the FreeSWITCH uuid is shared (CDR ↔ agent-transcript;
+  Telnyx and webhook ids live in other key spaces), the requested row's
+  facts and identity always win, and `Also indexed as` names what was
+  borrowed. Local WAVs resolve by the dialplan's stems plus a `{uuid}_*`
+  sweep, because a FreeSWITCH row indexes no `RecordingRef`. The LIST and
+  dashboard still show one row per source (an AI call appears twice) — the
+  open decision lives in TODO_LIST.
 
 ## Domain
 
