@@ -145,7 +145,7 @@ type DashboardStats struct {
 	TopPeers   []Segment
 	// Quality (north-star slice 3): hangup causes plus the per-call truth
 	// signals, each over its own denominator.
-	Quality QualityRollup
+	Quality   QualityRollup
 	ByDay     []DayVolume
 	Durations []DurationBucket
 	Week      WeekDelta

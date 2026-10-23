@@ -48,8 +48,8 @@ func Rate(count, denominator int) (float64, bool) {
 
 // qualityAccumulator folds one representative call into the rollup.
 type qualityAccumulator struct {
-	rollup  *QualityRollup
-	causes  map[string]int
+	rollup *QualityRollup
+	causes map[string]int
 }
 
 func newQualityAccumulator(rollup *QualityRollup) qualityAccumulator {

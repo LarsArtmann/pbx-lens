@@ -173,16 +173,23 @@ func hangupBars(causes []HangupCauseCount, total int) []display.BarChartBar {
 // out: "Calls" over "Of". A zero denominator renders an em dash, never 0%.
 func signalRows(rollup QualityRollup) []display.TableRow {
 	return []display.TableRow{
-		signalRow("No user turn", rollup.NoUserTurn, rollup.Transcripts, "transcripts"),
-		signalRow("Self-dial", rollup.SelfDial, rollup.PartiesKnown, "calls with both parties"),
-		signalRow("Recording tail ≥ 20 s", rollup.RecordingTail, rollup.TailEligible, "timed transcripts"),
+		signalRow("No user turn", rollup.NoUserTurn, rollup.Transcripts, "transcript", "transcripts"),
+		signalRow("Self-dial", rollup.SelfDial, rollup.PartiesKnown, "call with both parties", "calls with both parties"),
+		signalRow("Recording tail ≥ 20 s", rollup.RecordingTail, rollup.TailEligible, "timed transcript", "timed transcripts"),
 	}
 }
 
-func signalRow(label string, count, denominator int, population string) display.TableRow {
+// signalRow renders one rate with its population named, so "1" never has to
+// be read without knowing what it is one OF.
+func signalRow(label string, count, denominator int, singular, plural string) display.TableRow {
 	share := "—"
 	if ratio, ok := Rate(count, denominator); ok {
 		share = percent(ratio)
+	}
+
+	population := plural
+	if denominator == 1 {
+		population = singular
 	}
 
 	return display.TableRow{
