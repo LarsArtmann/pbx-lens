@@ -7,6 +7,24 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-23 (read-model row keys follow the projection adapter's bare form)
+
+- **Every read-model row key now flows through `internal/calls.RecordKey`**
+  (the bare `StreamID.Get()` value). go-cqrs-lite's `projectionadapter`
+  v4.6.0 flipped `EventWithID.ID` from the marker-prefixed `String()` form
+  to the bare value, so the index's own readers, ingest supersede check,
+  ops inspector, enrichment seeds and tests were all asking for a key no
+  fold writes any more: detail pages 404'd and every projection lookup
+  missed. `projection.go` needed no change (the folds always used the
+  adapter's ID); the drift was entirely on the read side.
+- **`calls.LookupView` keeps historical rows readable**: it tries the
+  canonical bare key, then the marker-prefixed key that rows written under
+  v4.5.x still carry. Retiring a legacy row still cannot remove it (the
+  library's remove fold derives the bare key from the record) — the
+  one-time read-model rebuild in TODO_LIST closes that.
+- Proofs: `go test ./...` green, the lint/ledger step green, and a nix
+  build of `packages.pbx-lens` (sandboxed `checkPhase` included).
+
 ### Added — 2026-10-18 (pareto plan execution: gate hardening, probes, rehearsals)
 
 - **statix no-op tripwire** in `scripts/verify-all.sh`: the lane fails
