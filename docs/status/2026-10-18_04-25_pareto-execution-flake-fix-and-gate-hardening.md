@@ -174,12 +174,12 @@ fix. Machine load fell 143 → 13 during the run; the full-gate policy window
 
 ## c) NOT STARTED
 
-- The T2 full-gate run itself (window open, decaying — time-sensitive).
-- The T13 dry-run itself (same window).
-- All FILED steps for the staged drafts (owner-gated).
-- T5 wiring + T11's CI job (T12-gated).
-- T1, T24 (owner-gated).
-- Everything in the plan's §6 external register: 2027-01 Telnyx window (MOS
+- ~~The T2 full-gate run itself (window open, decaying — time-sensitive).~~ done at `b4a9970`
+- ~~The T13 dry-run itself (same window).~~ done at `b4a9970`, `e8fea85`
+- All FILED steps for the staged drafts (owner-gated). **→ TODO_LIST (filings queue row)**
+- T5 wiring + T11's CI job (T12-gated). **→ TODO_LIST (gate-hardening + hooks residue rows)**
+- T1, T24 (owner-gated). **→ answer sheet + TODO_LIST (re-ingest row)**
+- Everything in the plan's §6 external register: 2027-01 Telnyx window (MOS **→ TODO_LIST / ROADMAP (every §6 item has a landing place)**
   poller, DTO live-verify, fold-ins), host deploys (`aiDids`), CSP
   enforce-mode flip, mobile implementation, PII enforcement, schema v2,
   v0.3.0 cut, vulnix/nix-checker pass, quarterly cadences — untouched by

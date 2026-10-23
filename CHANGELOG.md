@@ -22,6 +22,34 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   suppression (`erraudit` on the CLI status-line write, a non-actionable
   output stream), keeping the ledger-completeness check green.
 
+### Fixed — 2026-10-23 (a call's detail page now shows its transcript and its recording)
+
+- **Cross-source detail join**: `CallDetailPage` (internal/web/queries.go)
+  completes the requested source row from the sibling row that observed the
+  same call. FreeSWITCH's call uuid is shared by the CDR and the voice
+  agent's transcript, so a CDR page now renders the transcript and a
+  transcript page now renders the parties/duration even when the ingest-time
+  join missed (transcript written before the CDR landed). The requested row
+  stays the authority: its own facts, identity, ContentHash, enrichment and
+  recording reference are never overwritten, and the joined source is named
+  on the page ("Also indexed as"). Telnyx and webhook rows are NOT joined —
+  their native ids live in different key spaces.
+- **Local FreeSWITCH recordings resolve again**: the dialplan owns the WAV
+  stem (`{uuid}_{destination}`), and two of its namings matched neither
+  candidate the proxy tried: the agent route writes `{uuid}_ai_agent.wav`
+  and outbound PSTN writes `{uuid}_pstn.wav`. The resolver keeps the cheap
+  stat ladder and adds a `{uuid}_*.wav` sweep, so a new dialplan destination
+  cannot silently orphan audio again.
+- **The recording card keys on what exists**: a FreeSWITCH row indexes no
+  `RecordingRef` at all, so the card used to claim "no recording" for a call
+  whose WAV was on disk (and whose recording route served it). It now
+  renders the player whenever the server resolved a local file (naming it
+  under the player) and explains honestly when no file exists.
+- Proofs: `detail_join_test.go` pins the join in both directions, the
+  `{uuid}_ai_agent` / `{uuid}_pstn` stems, the honest no-file state, and the
+  merge precedence (primary facts, enrichment, identity); `go test ./...`
+  green, golangci-lint 0 findings, nolint ledger green.
+
 ### Fixed — 2026-10-23 (read-model row keys follow the projection adapter's bare form)
 
 - **Every read-model row key now flows through `internal/calls.RecordKey`**
