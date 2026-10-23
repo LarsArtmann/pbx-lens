@@ -15,6 +15,11 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
+// maxNumberFilterLen bounds the list's number filter. An E.164 number is 16
+// characters; the cap leaves room for the source's own separators and still
+// rejects a paste of somebody's whole contact card.
+const maxNumberFilterLen = 32
+
 // pageSize caps one rendered page (bounding-tables doctrine: no unbounded
 // table ever ships; older calls walk via the keyset cursor).
 const pageSize = 50

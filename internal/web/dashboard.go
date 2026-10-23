@@ -143,6 +143,9 @@ type DashboardStats struct {
 	// number (TopNumbers) and by the outside party (TopPeers), top N by volume.
 	TopNumbers []Segment
 	TopPeers   []Segment
+	// Quality (north-star slice 3): hangup causes plus the per-call truth
+	// signals, each over its own denominator.
+	Quality QualityRollup
 	ByDay     []DayVolume
 	Durations []DurationBucket
 	Week      WeekDelta
@@ -249,6 +252,7 @@ func DashboardStatsQuery(
 		costCurrencies: make(map[string]int, 1),
 		numberSegments: make(map[string]*Segment),
 		peerSegments:   make(map[string]*Segment),
+		quality:        newQualityAccumulator(&stats.Quality),
 	}
 
 	err := streamRepresentativeCalls(ctx, sys, filters, func(view calls.CallView) error {
@@ -270,6 +274,7 @@ func DashboardStatsQuery(
 	stats.CostCurrency = unanimousCurrency(acc.costCurrencies)
 	stats.TopNumbers = topSegments(acc.numberSegments, segmentLimit)
 	stats.TopPeers = topSegments(acc.peerSegments, segmentLimit)
+	acc.quality.finish()
 
 	return stats, nil
 }
@@ -365,6 +370,7 @@ type statsAccumulator struct {
 	// observed numbers, values the running aggregate.
 	numberSegments map[string]*Segment
 	peerSegments   map[string]*Segment
+	quality        qualityAccumulator
 }
 
 func (a statsAccumulator) view(view calls.CallView) {
@@ -427,6 +433,8 @@ func (a statsAccumulator) view(view calls.CallView) {
 			stats.ByDay[idx].CostMicros += view.CostMicros
 		}
 	}
+
+	a.quality.view(view)
 
 	// Segments: which of our numbers carries the traffic, and who calls it.
 	if ours, peer := callParties(view); ours != "" || peer != "" {

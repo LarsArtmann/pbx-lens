@@ -202,6 +202,17 @@ func parseFilters(r *http.Request) (ListCallsQuery, error) {
 		return ListCallsQuery{}, err
 	}
 
+	if number := strings.TrimSpace(r.URL.Query().Get("number")); number != "" {
+		if len(number) > maxNumberFilterLen {
+			return ListCallsQuery{}, errorfamily.NewRejection(
+				"lens.web.bad_number",
+				"number is longer than "+strconv.Itoa(maxNumberFilterLen)+" characters; paste one number at a time",
+			)
+		}
+
+		query.Number = number
+	}
+
 	for _, field := range []struct {
 		name   string
 		target *time.Time
@@ -291,7 +302,7 @@ func staleness(filters ListCallsQuery, page CallListPage) (time.Duration, bool) 
 // to walking it): direction/ai/from/to change what the list means;
 // before/after only change where in the same list you stand.
 func hasTypedFilters(filters ListCallsQuery) bool {
-	return filters.Direction != "" || filters.AI != nil ||
+	return filters.Direction != "" || filters.AI != nil || filters.Number != "" ||
 		!filters.From.IsZero() || !filters.To.IsZero()
 }
 

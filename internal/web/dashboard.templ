@@ -102,7 +102,96 @@ templ dashboardMain(nonce string, stats DashboardStats) {
 		@volumeCard(stats)
 		@durationCard(stats)
 		@segmentsCard(nonce, stats)
+		@qualityCard(stats)
 		@heatmapCard(stats)
+	}
+}
+
+// qualityCard is north-star slice 3 (plan T8): how the window's calls ended,
+// plus the truth signals the detail page shows one call at a time. Every rate
+// names its own denominator in the "Of" column — a rate over the wrong
+// population is worse than no rate at all.
+templ qualityCard(stats DashboardStats) {
+	@display.Card(display.CardProps{Title: "How calls end", TitleTag: display.HeadingTagH2}) {
+		if stats.Total == 0 {
+			@display.SimpleEmptyState("No calls in the window yet.")
+		} else {
+			<div class="gap-6 grid md:grid-cols-2">
+				<div>
+					<h3 class="break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm">
+						Hangup causes
+					</h3>
+					<div class="mt-2">
+						@display.BarChart(display.BarChartProps{
+							Bars:         hangupBars(stats.Quality.HangupCauses, stats.Quality.Calls),
+							Orient:       display.BarHorizontal,
+							ShowValues:   true,
+							EmptyMessage: "No hangup causes recorded",
+						})
+					</div>
+				</div>
+				<div>
+					<h3 class="break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm">
+						Source truths
+					</h3>
+					<div class="mt-2">
+						@display.Table(display.TableProps{
+							Headers:     []string{"Signal", "Calls", "Of", "Share"},
+							Striped:     true,
+							CellPadding: display.TableCellPaddingCompact,
+							Rows:        signalRows(stats.Quality),
+						})
+					</div>
+				</div>
+			</div>
+		}
+	}
+}
+
+// hangupBars maps the ordered causes onto chart bars; the tooltip carries the
+// exact count and share, so the bar length never has to be read precisely.
+func hangupBars(causes []HangupCauseCount, total int) []display.BarChartBar {
+	bars := make([]display.BarChartBar, 0, len(causes))
+
+	for _, cause := range causes {
+		tooltip := strconv.Itoa(cause.Calls) + " calls"
+		if ratio, ok := Rate(cause.Calls, total); ok {
+			tooltip += " (" + percent(ratio) + ")"
+		}
+
+		bars = append(bars, display.BarChartBar{
+			Label:   cause.Cause,
+			Value:   float64(cause.Calls),
+			Tooltip: cause.Cause + ": " + tooltip,
+		})
+	}
+
+	return bars
+}
+
+// signalRows renders the three standing rates with their populations spelled
+// out: "Calls" over "Of". A zero denominator renders an em dash, never 0%.
+func signalRows(rollup QualityRollup) []display.TableRow {
+	return []display.TableRow{
+		signalRow("No user turn", rollup.NoUserTurn, rollup.Transcripts, "transcripts"),
+		signalRow("Self-dial", rollup.SelfDial, rollup.PartiesKnown, "calls with both parties"),
+		signalRow("Recording tail ≥ 20 s", rollup.RecordingTail, rollup.TailEligible, "timed transcripts"),
+	}
+}
+
+func signalRow(label string, count, denominator int, population string) display.TableRow {
+	share := "—"
+	if ratio, ok := Rate(count, denominator); ok {
+		share = percent(ratio)
+	}
+
+	return display.TableRow{
+		Cells: []display.TableCell{
+			{Text: label},
+			{Text: strconv.Itoa(count)},
+			{Text: strconv.Itoa(denominator) + " " + population},
+			{Text: share},
+		},
 	}
 }
 
