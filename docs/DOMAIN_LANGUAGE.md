@@ -36,6 +36,44 @@
 | Voice log                       | The transcript's presentation form: a terminal-style, top-down, tone-tagged line log (library Scrollback; the `?q=` search path hand-rolls the same look with per-turn anchors). A transcript is READING content, not a replay — no stagger animation.                              | `web.transcriptPane`, `internal/web/detail.templ`      |
 | Signal palette                  | The teal theming contract: `app.css` overrides the library's semantic tokens (`--color-tc-primary/-hover/-info`) after the theme import, so every library blue re-skins from one block. Raw `*-blue-*` classes in pbx-lens templates are banned (gate: `TestNoRawPaletteClasses`).  | `internal/web/static/app.css`, `palette_gate_test.go`  |
 
+## Transcript truth (2026-10-23)
+
+**The lens performs NO speech-to-text.** `Transcript` is a verbatim mapping of
+the source's own turns (Telnyx `user`/`assistant`; the FreeSWITCH agent's
+`caller`/`agent`), so a transcript with no user turn means THE SOURCE wrote
+none — never that a page filtered one out.
+
+- **`SourceEvents`** — the source's non-speech rows (Telnyx `system` idle
+  markers such as `[long silence]`, tool calls, blank text). They render as a
+  muted "Source log" and are deliberately OUTSIDE `ContentHash`: hashing them
+  would fork every stored view.
+- **Idle markers** — match on role and shape only; the wording is explicitly
+  not a contract. `[long silence]` means "no user turn arrived", NOT "the
+  caller was silent". The 2026-10-23 forensic call had a human greeting and a
+  closing line in the audio and zero user turns in the log (a greeting
+  collision plus a turn that never closed before teardown).
+- **Call-fact signals** on that shape: `no user turn`, `self-dial` (both
+  parties the same number), and `Recording tail` (the recording runs well past
+  the last turn).
+- **Turn times** come from Telnyx's `sent_at`, never `created_at` — the latter
+  is persistence time and can be a full minute late.
+- **A second ASR layer** is an owner-gated, clearly labelled variant that must
+  never overwrite a source transcript.
+
+## Read-time call join (2026-10-23)
+
+The per-call detail page is a READ-TIME join (`CallDetailPage`): the requested
+source row is completed from its sibling row that observed the same call.
+
+- **What joins:** only the FreeSWITCH uuid is shared (CDR ↔ agent-transcript);
+  Telnyx and webhook ids live in other key spaces, so they never participate.
+- **Precedence:** the requested row's facts and identity always win;
+  `Also indexed as` names what was borrowed.
+- **Local WAVs** resolve by the dialplan's stems plus a `{uuid}_*` sweep,
+  because a FreeSWITCH row indexes no `RecordingRef`.
+- **The list and dashboard** still show one row per source (an AI call appears
+  twice); the open decision lives in TODO_LIST.
+
 ## Bounded contexts
 
 | Term         | Telnyx context                                                                            | FreeSWITCH context                                                                                   |
