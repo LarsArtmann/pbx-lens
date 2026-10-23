@@ -72,7 +72,11 @@ func TestParseFallbackTemplateWithQuirks(t *testing.T) {
 		t.Fatalf("uuid column wrong: %+v", obs)
 	}
 
-	if obs.DurationSecs != 9 || obs.Direction != calls.DirectionOutbound {
+	// An inbound PSTN call transferred into "default": destination 2000 is an
+	// internal extension and the caller is an external number, so the transfer
+	// heuristic reads it as inbound even though the context column no longer
+	// says "public". This fixture IS the live shape the heuristic exists for.
+	if obs.DurationSecs != 9 || obs.Direction != calls.DirectionInbound {
 		t.Fatalf("mapped fields wrong: %+v", obs)
 	}
 }
@@ -240,5 +244,122 @@ func TestParseFallbackTemplateWithAppendedMOS(t *testing.T) {
 
 	if mos := obs.MOS; mos != 3.9 {
 		t.Fatalf("18-column template must parse the appended MOS, got %v", mos)
+	}
+}
+
+// fixtureInboundTransferredDID is the live 2026-10-23 shape: an external
+// caller reaches the AI DID, the dialplan transfers the a-leg into "default",
+// and the CDR's context column therefore says nothing about the orientation.
+const fixtureInboundTransferredDID = `"","4084757593","9100","default","2026-10-23 09:14:02","2026-10-23 09:14:03","2026-10-23 09:15:11","69","68","NORMAL_CLEARING","11112222-3333-4444-8555-666677778888","",""
+`
+
+func TestParseDirectionFromTransferredInboundDID(t *testing.T) {
+	t.Parallel()
+
+	res, err := Parse(strings.NewReader(fixtureInboundTransferredDID))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 1 {
+		t.Fatalf("got %d observations, want 1", len(res.Observations))
+	}
+
+	obs := res.Observations[0]
+	if obs.Direction != calls.DirectionInbound {
+		t.Fatalf("external caller to an internal extension is inbound, got %q", obs.Direction)
+	}
+
+	if !obs.IsAI {
+		t.Error("destination 9100 must still badge AI")
+	}
+}
+
+// fixtureDeclaredDirection is the 13-column default template with the
+// sibling's two extra columns: rtp_audio_in_mos and call_direction.
+const fixtureDeclaredDirection = `"","4084757593","9100","default","2026-10-23 09:14:02","2026-10-23 09:14:03","2026-10-23 09:15:11","69","68","NORMAL_CLEARING","11112222-3333-4444-8555-666677778888","","","4.1","outbound"
+` + `"","1000","+4930123456","default","2026-10-23 10:00:00","2026-10-23 10:00:02","2026-10-23 10:01:00","60","58","NORMAL_CLEARING","99992222-3333-4444-8555-666677778889","","","outbound","4.2"
+`
+
+func TestParseDeclaredDirectionColumnWins(t *testing.T) {
+	t.Parallel()
+
+	res, err := Parse(strings.NewReader(fixtureDeclaredDirection))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 2 || res.Skipped != 0 {
+		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
+	}
+
+	// Row one looks inbound by the heuristic (external caller → internal
+	// extension), but the dialplan declares outbound; the declaration wins.
+	if got := res.Observations[0].Direction; got != calls.DirectionOutbound {
+		t.Errorf("declared direction ignored: got %q", got)
+	}
+
+	if mos := res.Observations[0].MOS; mos != 4.1 {
+		t.Errorf("MOS = %v, want 4.1 alongside a declared direction", mos)
+	}
+
+	// Row two puts the extras in the opposite order: both are still read by
+	// value, so the parser does not depend on the template's column order.
+	if got := res.Observations[1].Direction; got != calls.DirectionOutbound {
+		t.Errorf("reordered extras: direction = %q, want outbound", got)
+	}
+
+	if mos := res.Observations[1].MOS; mos != 4.2 {
+		t.Errorf("reordered extras: MOS = %v, want 4.2", mos)
+	}
+}
+
+func TestParseRejectsOverlongExtraColumns(t *testing.T) {
+	t.Parallel()
+
+	line := `"","1000","+4930123456","default","2026-10-23 10:00:00","","","60","58","NORMAL_CLEARING","aaaabbbb-3333-4444-8555-666677778890","","","4.2","outbound","extra"`
+
+	res, err := Parse(strings.NewReader(line))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 0 || res.Skipped != 1 {
+		t.Fatalf("a row wider than the known extras is a mismatch: %d observations, %d skipped",
+			len(res.Observations), res.Skipped)
+	}
+}
+
+func TestParseDirectionHeuristicEdges(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name     string
+		context  string
+		caller   string
+		dest     string
+		expected calls.Direction
+	}{
+		{"public context stays inbound", "public", "4084757593", "9100", calls.DirectionInbound},
+		{"internal outbound call", "default", "1000", "+4930123456", calls.DirectionOutbound},
+		{"internal to internal stays outbound", "default", "1000", "2000", calls.DirectionOutbound},
+		{"external to external stays outbound", "default", "+14084757593", "+4930123456", calls.DirectionOutbound},
+		{"empty partners stay outbound", "default", "", "", calls.DirectionOutbound},
+	}
+
+	for _, testCase := range cases {
+		t.Run(testCase.name, func(t *testing.T) {
+			t.Parallel()
+
+			byColumn := map[string]string{
+				"context":            testCase.context,
+				"caller_id_number":   testCase.caller,
+				"destination_number": testCase.dest,
+			}
+
+			if got := direction(byColumn, ""); got != testCase.expected {
+				t.Errorf("direction = %q, want %q", got, testCase.expected)
+			}
+		})
 	}
 }
