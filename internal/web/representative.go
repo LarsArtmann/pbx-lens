@@ -79,21 +79,16 @@ func listRepresentative(
 	reader *metaengine.TypedReader[calls.CallView],
 	view calls.CallView,
 ) (calls.CallView, bool, error) {
-	sid, ok := supersedingStreamID(view)
-	if !ok {
-		return mergeSibling(ctx, reader, view)
-	}
-
-	sibling, found, err := calls.LookupView(ctx, reader, sid)
+	superseded, err := supersededBySibling(ctx, reader, view)
 	if err != nil {
 		return view, false, err
 	}
 
-	if found {
+	if superseded {
 		return view, false, nil
 	}
 
-	return view, true, nil
+	return mergeSibling(ctx, reader, view)
 }
 
 // mergeSibling fills the representative row's gaps from the other sources

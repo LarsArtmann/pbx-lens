@@ -50,6 +50,21 @@ func (r CallRow) Href() string {
 	return fmt.Sprintf("/calls/%s/%s", url.PathEscape(string(r.Kind)), url.PathEscape(r.NativeID))
 }
 
+// callRow maps a stored view onto the list's display row.
+func callRow(view calls.CallView) CallRow {
+	return CallRow{
+		Kind:      view.Kind,
+		NativeID:  string(view.NativeID),
+		When:      view.StartedAt,
+		From:      view.FromNumber,
+		To:        view.ToNumber,
+		Direction: view.Direction,
+		Duration:  time.Duration(view.DurationSecs) * time.Second,
+		IsAI:      view.IsAI,
+		Excerpt:   view.TranscriptExcerpt,
+	}
+}
+
 // CallListPage is one rendered page plus the cursors for both keyset walks.
 type CallListPage struct {
 	Rows      []CallRow
@@ -92,9 +107,9 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 				}
 			}
 
-			representative, show, err := listRepresentative(ctx, reader, view)
-			if err != nil {
-				return CallListPage{}, err
+			representative, show, repErr := listRepresentative(ctx, reader, view)
+			if repErr != nil {
+				return CallListPage{}, repErr
 			}
 
 			if !show {
@@ -163,7 +178,47 @@ var exportBatchSize = 5_000
 // seen-key set, so a page boundary inside a timestamp group cannot drop rows.
 // A group so large it stalls the cursor (more than one batch of calls inside
 // a single nanosecond) fails loudly instead of truncating silently.
+//
+// It is deliberately the PER-SOURCE walk: an export is a forensic dump, so
+// each source row appears under its own kind and native id exactly as stored.
+// Operator-facing aggregates use streamRepresentativeCalls instead.
 func StreamExportCalls(
+	ctx context.Context,
+	sys *system.System,
+	query ListCallsQuery,
+	fn func(calls.CallView) error,
+) error {
+	return streamViews(ctx, sys, query, fn)
+}
+
+// streamRepresentativeCalls is streamViews with the duplicate-source collapse
+// applied: a call whose CDR and agent transcript are both indexed is visited
+// once, as its CDR row (see representative.go). Every operator-facing
+// aggregate counts this walk, never the per-source one.
+func streamRepresentativeCalls(
+	ctx context.Context,
+	sys *system.System,
+	query ListCallsQuery,
+	fn func(calls.CallView) error,
+) error {
+	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
+
+	return streamViews(ctx, sys, query, func(view calls.CallView) error {
+		superseded, err := supersededBySibling(ctx, reader, view)
+		if err != nil {
+			return err
+		}
+
+		if superseded {
+			return nil
+		}
+
+		return fn(view)
+	})
+}
+
+// streamViews is the keyset walk every streaming reader shares.
+func streamViews(
 	ctx context.Context,
 	sys *system.System,
 	query ListCallsQuery,
@@ -277,9 +332,11 @@ func ExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery) 
 	return views, nil
 }
 
-// listOptions builds the shared scan options for the list page and the
-// export dump: newest first, with the same typed filters.
-func listOptions(query ListCallsQuery, limit int) []metaengine.ScanOption {
+// listOptionsAt builds one list-walk batch: newest first, with the same
+// typed filters, bounded below by the live keyset cursor (inclusive, so the
+// tie set can skip what this walk already emitted) or the caller's own
+// exclusive Before on the first batch.
+func listOptionsAt(query ListCallsQuery, cursor time.Time, limit int) []metaengine.ScanOption {
 	opts := append([]metaengine.ScanOption{
 		metaengine.WithSort("started_at", true),
 		metaengine.WithLimit(limit),
@@ -290,7 +347,10 @@ func listOptions(query ListCallsQuery, limit int) []metaengine.ScanOption {
 	// sqlite (the driver renders it "2006-01-02 15:04:05 -0700 MST", and the
 	// 'T' vs ' ' format difference silently corrupts same-day comparisons).
 	// Verified against eq/le/ge/lt; upstream sqliteengine issue filed.
-	if !query.Before.IsZero() {
+	switch {
+	case !cursor.IsZero():
+		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLe, rfc3339Nano(cursor)))
+	case !query.Before.IsZero():
 		opts = append(opts, metaengine.WithFilter("started_at", metaengine.FilterLt, rfc3339Nano(query.Before)))
 	}
 

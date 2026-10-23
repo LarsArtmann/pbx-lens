@@ -111,7 +111,8 @@ type WeekDelta struct {
 
 // DashboardStats is the quality-dashboard view model (T25): totals, AI
 // share, average duration, and the per-day volume series. Aggregation
-// streams over the same filtered scan the export uses — memory stays at
+// streams over the filtered scan through the representative-row walk (one
+// call counts once, however many sources described it) — memory stays at
 // one keyset page, and the index is re-derivable.
 type DashboardStats struct {
 	Total       int
@@ -197,7 +198,7 @@ func DashboardStatsQuery(
 
 	acc := statsAccumulator{stats: &stats, dayIndex: dayIndex, today: today}
 
-	err := StreamExportCalls(ctx, sys, filters, func(view calls.CallView) error {
+	err := streamRepresentativeCalls(ctx, sys, filters, func(view calls.CallView) error {
 		acc.view(view)
 		totalDuration += time.Duration(view.DurationSecs) * time.Second
 
