@@ -16,18 +16,10 @@
 // Usage: node scripts/csp-sweep.js [--port 18108] [--out /tmp/lens-csp]
 "use strict";
 
-const path = require("path");
 const probe = require("./lib/ui-probe");
 
-const args = process.argv.slice(2);
-const arg = (name, dflt) => probe.arg(args, name, dflt);
-
-const OUT = arg("--out", "/tmp/lens-csp");
-const DB = path.join(OUT, "lens.db");
-
 (async () => {
-  const PORT = args.includes("--port") ? arg("--port", null) : await probe.findFreePort();
-  const BASE = `http://127.0.0.1:${PORT}`;
+  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-csp");
   console.log("port:", PORT);
 
   const { serve, browser } = await probe.launchProbe({
