@@ -57,36 +57,71 @@ type CallListPage struct {
 	NextNewer string // empty when this page is the head of the walk
 }
 
-// ListCalls runs the query against the read model, newest first.
+// listScanBatch is one keyset batch of the list walk. It is intentionally
+// larger than a page: collapsing a call's duplicate source row drops rows
+// from the batch, and a batch that exactly fills the page would otherwise
+// cost an extra round trip per dropped row.
+const listScanBatch = 4 * pageSize
+
+// ListCalls runs the query against the read model, newest first, collapsing a
+// call's duplicate source rows into its representative row (see
+// representative.go) so the pager and the operator both see one call per call.
 func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (CallListPage, error) {
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
-	// fetch one extra row to detect whether an older page exists
-	views, err := reader.Scan(ctx, listOptions(query, pageSize+1)...)
-	if err != nil {
-		return CallListPage{}, err
-	}
+	// Collect one extra row to detect whether an older page exists.
+	rows := make([]CallRow, 0, pageSize+1)
 
-	page := CallListPage{Rows: make([]CallRow, 0, min(len(views), pageSize))}
+	var cursor time.Time
 
-	for _, view := range views {
-		if len(page.Rows) == pageSize {
-			page.NextOlder = views[pageSize-1].StartedAt.UTC().Format(time.RFC3339)
+	seen := make(map[string]struct{})
 
+	for {
+		batch, err := reader.Scan(ctx, listOptionsAt(query, cursor, listScanBatch)...)
+		if err != nil {
+			return CallListPage{}, err
+		}
+
+		for _, view := range batch {
+			// The cursor binds inclusively so a timestamp group spanning a
+			// batch boundary cannot lose rows; the tie set skips the ones
+			// this walk already emitted.
+			if !cursor.IsZero() && view.StartedAt.Equal(cursor) {
+				if _, done := seen[dedupeKey(view)]; done {
+					continue
+				}
+			}
+
+			representative, show, err := listRepresentative(ctx, reader, view)
+			if err != nil {
+				return CallListPage{}, err
+			}
+
+			if !show {
+				continue
+			}
+
+			rows = append(rows, callRow(representative))
+
+			if len(rows) > pageSize {
+				break
+			}
+		}
+
+		if len(rows) > pageSize || len(batch) < listScanBatch {
 			break
 		}
 
-		page.Rows = append(page.Rows, CallRow{
-			Kind:      view.Kind,
-			NativeID:  string(view.NativeID),
-			When:      view.StartedAt,
-			From:      view.FromNumber,
-			To:        view.ToNumber,
-			Direction: view.Direction,
-			Duration:  time.Duration(view.DurationSecs) * time.Second,
-			IsAI:      view.IsAI,
-			Excerpt:   view.TranscriptExcerpt,
-		})
+		cursor = advanceCursor(cursor, batch, seen)
+	}
+
+	page := CallListPage{}
+
+	if len(rows) > pageSize {
+		page.Rows = rows[:pageSize]
+		page.NextOlder = page.Rows[pageSize-1].When.UTC().Format(time.RFC3339)
+	} else {
+		page.Rows = rows
 	}
 
 	// A newer page exists whenever any row sorts above this page's top row;
