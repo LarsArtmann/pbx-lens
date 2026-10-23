@@ -54,7 +54,7 @@ async function forceStalenessPoll(page) {
   // run, the 48h seeding silently no-ops, and the banner never renders
   // (both phases then fail, as observed 2026-10-15). Reset like the
   // screenshot probe's empty-index phase does.
-  const { serve, browser, page } = await probe.launchProbe({
+  const { bin, serve, browser, page } = await probe.launchProbe({
     outDir: OUT,
     dbPath: DB,
     port: PORT,

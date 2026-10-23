@@ -296,6 +296,16 @@ func noTranscriptDescription(page DetailPage) string {
 // ends on a normal goodbye.
 const transcriptTailThreshold = 20 * time.Second
 
+// diagnosticDetail renders a signal badge WITH its explanation. The library's
+// DefinitionItem shows DetailComponent INSTEAD of Detail, so a badge-only entry
+// would hide the sentence that says what fired and what it means.
+templ diagnosticDetail(props display.BadgeProps, note string) {
+	<div class="flex flex-wrap items-center gap-2">
+		@display.Badge(props)
+		<span class="text-xs text-gray-500 dark:text-gray-400">{ note }</span>
+	</div>
+}
+
 // diagnosticItems are the call-fact additions that fire only when something
 // about the recording, the transcript or the parties is worth a second look.
 // Every signal is derived from facts already on the view: no extra source
@@ -312,42 +322,38 @@ func diagnosticItems(view calls.CallView) []display.DefinitionItem {
 	}
 
 	if len(view.Transcript) > 0 && userTurns == 0 {
+		note := "0 — every recorded turn is the assistant's"
 		items = append(items, display.DefinitionItem{
-			Term:   "User turns",
-			Detail: "0 — every recorded turn is the assistant's",
-			DetailComponent: display.Badge(display.BadgeProps{
-				Text: "no user turn", Type: display.BadgeWarning, Pill: true,
-			}),
+			Term:            "User turns",
+			Detail:          note,
+			DetailComponent: diagnosticDetail(display.BadgeProps{Text: "no user turn", Type: display.BadgeWarning, Pill: true}, note),
 		})
 	}
 
 	if len(view.SourceEvents) > 0 {
+		note := strconv.Itoa(len(view.SourceEvents)) + " non-speech entries the source wrote itself"
 		items = append(items, display.DefinitionItem{
-			Term:   "Source log",
-			Detail: strconv.Itoa(len(view.SourceEvents)) + " non-speech entries the source wrote itself",
-			DetailComponent: display.Badge(display.BadgeProps{
-				Text: "source markers", Type: display.BadgeNeutral, Pill: true,
-			}),
+			Term:            "Source log",
+			Detail:          note,
+			DetailComponent: diagnosticDetail(display.BadgeProps{Text: "source markers", Type: display.BadgeNeutral, Pill: true}, note),
 		})
 	}
 
 	if view.FromNumber != "" && view.FromNumber == view.ToNumber {
+		const note = "both parties are the same number"
 		items = append(items, display.DefinitionItem{
-			Term:   "Legs",
-			Detail: "both parties are the same number",
-			DetailComponent: display.Badge(display.BadgeProps{
-				Text: "self-dial", Type: display.BadgeWarning, Pill: true,
-			}),
+			Term:            "Legs",
+			Detail:          note,
+			DetailComponent: diagnosticDetail(display.BadgeProps{Text: "self-dial", Type: display.BadgeWarning, Pill: true}, note),
 		})
 	}
 
 	if tail, ok := transcriptTail(view); ok && tail >= transcriptTailThreshold {
+		note := clockDuration(tail) + " elapsed after the last recorded turn started"
 		items = append(items, display.DefinitionItem{
-			Term:   "Recording tail",
-			Detail: clockDuration(tail) + " after the last recorded turn",
-			DetailComponent: display.Badge(display.BadgeProps{
-				Text: clockDuration(tail) + " unlogged", Type: display.BadgeWarning, Pill: true,
-			}),
+			Term:            "Recording tail",
+			Detail:          note,
+			DetailComponent: diagnosticDetail(display.BadgeProps{Text: clockDuration(tail) + " unlogged", Type: display.BadgeWarning, Pill: true}, note),
 		})
 	}
 

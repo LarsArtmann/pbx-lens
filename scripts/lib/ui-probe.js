@@ -326,7 +326,8 @@ function fail(msg) {
 // resetDb deletes dbPath (+ sqlite sidecars) before seeding — for probes
 // whose premise a reused DB silently defeats. Resolves { serve, browser,
 // page }; the caller owns teardown (browser.close() + stopProbe(serve))
-// in its finally block.
+// in its finally block. Also returns `bin` (the probe binary path) for
+// mid-run ingests and `puppeteer` for multi-page callers.
 async function launchProbe({ outDir, dbPath, port, seedOpts = {}, serveArgs = [], serveEnv = {}, resetDb = false }) {
   ensureCodegen();
   const puppeteer = ensurePuppeteer();
@@ -345,7 +346,7 @@ async function launchProbe({ outDir, dbPath, port, seedOpts = {}, serveArgs = []
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 1280, height: 900 });
-  return { serve, browser, page };
+  return { bin, puppeteer, serve, browser, page };
 }
 
 // findFreePort asks the OS for an unused loopback port (plan M4/F13): the

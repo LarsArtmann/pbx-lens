@@ -7,6 +7,32 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-10-23 (gate triage: probe bootstrap deduplicated, tooling residuals resolved)
+
+- **Probe bootstrap deduplicated**: the five single-serve browser probes
+  (verify-ui-contract, verify-style-contract, verify-staleness-live,
+  verify-ops-verdict, csp-sweep) boot through a shared
+  `lib/ui-probe.js launchProbe()` (codegen → puppeteer → binary → seed →
+  serve → 1280×900 page; `seedOpts`/`serveArgs`/`serveEnv`/`resetDb`
+  variants replace each probe's private fork of the sequence), and the
+  per-script `arg()` parsers delegate to `probe.arg`. Clears all three
+  jscpd clone pairs; screenshot-probe keeps its bespoke multi-phase flow.
+  All lanes verified green (verify-all).
+- **vendorHash advisory dispositioned without a repair**: `nix build` is
+  green with the landed hash — the 2026-10-23 go.mod change was the go
+  DIRECTIVE only (tidy pinning go-appkit's 1.27.2 floor), so the
+  doctor's FOD-hash-freshness mtime heuristic misfired; no
+  update-vendor-hash run needed (TODO row closed).
+- **DevShell gains vulnix** (the BuildFlow fallback ran it via
+  `nix run nixpkgs#vulnix` without project deps, and a stale `./result`
+  from a dirty tree crashed it; `nix build .# -o result` refreshes the
+  scan target). The stale BuildFlow binary (ed9ce48) was rebuilt and
+  reinstalled (3509b30) per its own preflight remediation, clearing the
+  toolchain-skew failures in go-fix/license-check. The govulncheck
+  GO-2026-6809 report is a toolchain-version artifact (fixed in go1.27.3;
+  nix go_1_27 and CI setup-go already ship it). War stories recorded in
+  docs/gotchas.md.
+
 ### Changed — 2026-10-23 (docs-health audit: corpus closed, living docs re-verified)
 
 - **The 2026-10-18 status live set is closed**: all five reports annotated
