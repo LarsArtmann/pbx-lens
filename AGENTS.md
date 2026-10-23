@@ -181,12 +181,7 @@ buildflow --build-mode dev            # the quality gate (lint+format+test);
                                       # FULL only when loadavg 15-min < 40, else
                                       # verify casualties (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
-GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens refresh -db /tmp/lens.db [-apply]
-                                      # additive-field backfill: classify every fetched stream
-                                      # (new/stale/additive-only/unchanged) and write NOTHING; -apply
-                                      # re-ingests + rebuilds search. The measurement half of an
-                                      # ObservationSchemaVersion bump (docs/DOMAIN_LANGUAGE.md
-                                      # § Additive fields). Unbounded look-back by default.
+GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens refresh -db /tmp/lens.db [-apply]  # additive-field backfill: classify, then -apply; see docs/DOMAIN_LANGUAGE.md
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
                                       # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go
                                       # http probe (curl banned); styles.css is committed — after
@@ -221,5 +216,4 @@ UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit.
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision.
 - **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
 - **docs/upstream-filings.md** — every filing ledger and its upstream state.
-- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware
-  chain, component map), **docs/research/...http-stack-adoption-audit.html**.
+- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware chain, component map), **docs/research/...http-stack-adoption-audit.html**.
