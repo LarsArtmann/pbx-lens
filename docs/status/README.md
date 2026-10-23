@@ -11,9 +11,9 @@ archived/** — the living backlog is [TODO_LIST.md](../../TODO_LIST.md).
 
 ## Live reports
 
-| Report                                                                    | State                                                                                                                                                            |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `2026-10-23_16-21_buildflow-44-of-72-triage-probe-dedup-gate-recovery.md` | live — gate triage + probe-bootstrap dedup receipts; §f is a brainstorm (not commitments); §g 3 owner questions; harvested 2026-10-23 for the bounded rows below |
+| Report                                                                    | State                                                                                                                                                                                    |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `2026-10-23_16-21_buildflow-44-of-72-triage-probe-dedup-gate-recovery.md` | live — gate triage + probe-bootstrap dedup receipts; §f is a brainstorm (not commitments); §g holds three owner questions; its bounded items were harvested into TODO_LIST on 2026-10-23 |
 
 The 2026-10-23 docs-health pass annotated and archived the five 2026-10-18
 reports (manifest in archived/README.md) and harvested their surviving queue
