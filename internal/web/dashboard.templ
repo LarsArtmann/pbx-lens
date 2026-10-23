@@ -163,13 +163,70 @@ func heatmapColumnLabels() []string {
 	return labels
 }
 
-// dashboardAside is the Split's narrow column: mix, trend, quality.
+// dashboardAside is the Split's narrow column: mix, spend, trend, quality.
 templ dashboardAside(stats DashboardStats) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@aiHumanCard(stats)
+		@spendCard(stats)
 		@trendCard(stats)
 		@mosCard(stats)
 	}
+}
+
+// spendCard is north-star slice 1 (plan T6): what the window cost, at what
+// rate, and how that moved against the previous week. Every figure carries its
+// own denominator, so a window with no priced calls renders the honest empty
+// state instead of a 0-spend claim (Verschlimmbesserung guard 3).
+templ spendCard(stats DashboardStats) {
+	@display.Card(display.CardProps{Title: "Spend", TitleTag: display.HeadingTagH2}) {
+		if !stats.HasCostData() {
+			@display.SimpleEmptyState("No cost data yet — prices arrive with the Telnyx Detail Records.")
+		} else {
+			<div class="flex items-baseline justify-between gap-3">
+				<span class="text-3xl font-semibold tabular-nums text-gray-900 dark:text-gray-100">
+					{ costText(stats.CostMicros, stats.CostCurrency) }
+				</span>
+				<span class="text-sm tabular-nums text-gray-600 dark:text-gray-300">
+					{ costPerMinuteText(stats) }
+				</span>
+			</div>
+			<p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{ pricedCallsText(stats) }</p>
+			if stats.CostWeek.HasBaseline {
+				<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{ weekChangeLabel(stats.CostWeek) }</p>
+			}
+			<div class="mt-3">
+				@display.Sparkline(display.SparklineProps{
+					Values:    stats.DailyCost(),
+					Filled:    true,
+					Width:     260,
+					Height:    40,
+					AriaLabel: "Spend per day over the last " + strconv.Itoa(stats.WindowDays) + " days",
+				})
+			</div>
+		}
+	}
+}
+
+// pricedCallsText states the denominator: how many of the window's calls
+// actually carried a price. A rate over an unknown subset is not a rate.
+func pricedCallsText(stats DashboardStats) string {
+	return strconv.Itoa(stats.CostKnown) + " of " + strconv.Itoa(stats.Total) + " calls priced"
+}
+
+// costPerMinuteText renders the mean spend per billed minute. Three decimals
+// keep sub-cent rates legible without faking precision.
+func costPerMinuteText(stats DashboardStats) string {
+	return strconv.FormatFloat(stats.CostPerMinute(), 'f', 3, 64) + " " + currencyLabel(stats.CostCurrency) + "/min"
+}
+
+// currencyLabel renders the window's currency, and says so when the priced
+// calls disagree (their totals are then unit-less by construction).
+func currencyLabel(currency string) string {
+	if currency == "" {
+		return "mixed"
+	}
+
+	return currency
 }
 
 // statCards is the headline row: total, today, AI share, average duration.

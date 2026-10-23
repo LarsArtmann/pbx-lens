@@ -23,6 +23,8 @@ const dayFormat = "2006-01-02"
 const (
 	weekDays     = 7   // one WeekDelta half-window
 	percentScale = 100 // ratio to percent
+
+	secondsPerMinute = 60 // cost rate denominator
 )
 
 // dashboardLocation buckets dashboard days (R2, owner decision 2026-10-12):
@@ -62,12 +64,15 @@ func startOfDay(t time.Time) time.Time {
 
 // DayVolume is one day's call count in the dashboard window. MOSKnown is
 // the subset of that day's calls whose source reported a quality score;
-// MOSSum feeds AvgMOS.
+// MOSSum feeds AvgMOS. CostKnown is the priced subset and CostMicros its
+// spend, in the same currency the window reports.
 type DayVolume struct {
-	Day      string // YYYY-MM-DD, dashboard zone
-	Calls    int
-	MOSKnown int
-	MOSSum   float64
+	Day        string // YYYY-MM-DD, dashboard zone
+	Calls      int
+	MOSKnown   int
+	MOSSum     float64
+	CostKnown  int
+	CostMicros int64
 }
 
 // AvgMOS is the day's mean MOS, or 0 when no call that day reported one;
@@ -123,6 +128,14 @@ type DashboardStats struct {
 	MOSKnown    int     // calls whose source reported a MOS score
 	MOSSum      float64 // sum of reported scores; AvgMOS divides by MOSKnown
 	WindowDays  int
+	// Spend (north-star slice 1): enrichment-derived, so every figure carries
+	// its own denominator. A call with no reported cost contributes nothing —
+	// no zero is ever averaged into a rate that claims to cover the window.
+	CostMicros   int64
+	CostKnown    int
+	CostSeconds  int
+	CostCurrency string // the single currency the priced calls share; "" = mixed/unknown
+	CostWeek     WeekDelta
 	// HourDay buckets call starts by weekday (Mon-first) x hour of day in
 	// the dashboard zone — the "when do calls happen" heatmap (plan T19).
 	HourDay   [7][24]int
@@ -154,6 +167,35 @@ func (s DashboardStats) AIRatio() float64 {
 	}
 
 	return float64(s.AICalls) / float64(s.Total)
+}
+
+// HasCostData reports whether any call in the window carried a price. False
+// means the cost card renders its "no data" state, never a 0 spend.
+func (s DashboardStats) HasCostData() bool { return s.CostKnown > 0 }
+
+// CostPerMinute is the mean spend per billed minute across the priced calls,
+// in currency units, or 0 when none reported a cost (or none billed a
+// second). Dividing by the priced calls' own seconds keeps a partially
+// priced window honest.
+func (s DashboardStats) CostPerMinute() float64 {
+	if s.CostSeconds <= 0 {
+		return 0
+	}
+
+	units := float64(s.CostMicros) / calls.MicrosPerUnit
+
+	return units / (float64(s.CostSeconds) / secondsPerMinute)
+}
+
+// DailyCost is the per-day spend series for the window, in currency units
+// (micros are an API detail; the chart axis is money).
+func (s DashboardStats) DailyCost() []float64 {
+	values := make([]float64, 0, len(s.ByDay))
+	for _, day := range s.ByDay {
+		values = append(values, float64(day.CostMicros)/calls.MicrosPerUnit)
+	}
+
+	return values
 }
 
 // DashboardStatsQuery computes the dashboard aggregates over the read
@@ -196,7 +238,12 @@ func DashboardStatsQuery(
 
 	var totalDuration time.Duration
 
-	acc := statsAccumulator{stats: &stats, dayIndex: dayIndex, today: today}
+	acc := statsAccumulator{
+		stats:          &stats,
+		dayIndex:       dayIndex,
+		today:          today,
+		costCurrencies: make(map[string]int, 1),
+	}
 
 	err := streamRepresentativeCalls(ctx, sys, filters, func(view calls.CallView) error {
 		acc.view(view)
@@ -213,8 +260,52 @@ func DashboardStatsQuery(
 	}
 
 	stats.Week = weekDelta(stats.ByDay)
+	stats.CostWeek = costWeekDelta(stats.ByDay)
+	stats.CostCurrency = unanimousCurrency(acc.costCurrencies)
 
 	return stats, nil
+}
+
+// costWeekDelta compares the newest 7 days' spend with the previous 7, in the
+// same shape the volume delta uses. A currency that only exists in the newer
+// week has no baseline to compare against, exactly like a quiet first week.
+func costWeekDelta(days []DayVolume) WeekDelta {
+	if len(days) < 2*weekDays {
+		return WeekDelta{}
+	}
+
+	var thisWeek, lastWeek int64
+
+	for _, day := range days[len(days)-weekDays:] {
+		thisWeek += day.CostMicros
+	}
+
+	for _, day := range days[len(days)-2*weekDays : len(days)-weekDays] {
+		lastWeek += day.CostMicros
+	}
+
+	if lastWeek == 0 {
+		return WeekDelta{HasBaseline: false}
+	}
+
+	return WeekDelta{
+		Pct:         float64(thisWeek-lastWeek) / float64(lastWeek) * percentScale,
+		HasBaseline: true,
+	}
+}
+
+// unanimousCurrency reports the currency every priced call used, or "" when
+// they disagree (a total summed across currencies would be a lie).
+func unanimousCurrency(seen map[string]int) string {
+	if len(seen) != 1 {
+		return ""
+	}
+
+	for currency := range seen {
+		return currency
+	}
+
+	return ""
 }
 
 // weekDelta compares the newest 7 day buckets with the previous 7. The
@@ -259,6 +350,9 @@ type statsAccumulator struct {
 	stats    *DashboardStats
 	dayIndex map[string]int
 	today    string
+	// costCurrencies counts the priced calls per currency, so the window can
+	// report one currency only when every priced call agreed on it.
+	costCurrencies map[string]int
 }
 
 func (a statsAccumulator) view(view calls.CallView) {
@@ -303,6 +397,22 @@ func (a statsAccumulator) view(view calls.CallView) {
 		if idx, ok := a.dayIndex[day]; ok {
 			stats.ByDay[idx].MOSKnown++
 			stats.ByDay[idx].MOSSum += view.MOS
+		}
+	}
+
+	// Spend: only a reported price counts. CostMicros == 0 with a currency is
+	// "priced at nothing" as often as it is "not priced"; the enrichment
+	// contract writes a positive micros value for a priced call, so > 0 is
+	// the only honest "known" test.
+	if view.CostMicros > 0 {
+		stats.CostKnown++
+		stats.CostMicros += view.CostMicros
+		stats.CostSeconds += view.DurationSecs
+		a.costCurrencies[view.CostCurrency]++
+
+		if idx, ok := a.dayIndex[day]; ok {
+			stats.ByDay[idx].CostKnown++
+			stats.ByDay[idx].CostMicros += view.CostMicros
 		}
 	}
 }
