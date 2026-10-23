@@ -68,6 +68,20 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   3 warnings / 30 missing-tool failures, all dispositioned), the HTTP-stack
   doc carries the recording-timing test pointer, and the templ-components
   bump watchlist gained the art-dupl baseline step.
+- **The product framing is now the analytics platform**: README leads with
+  the operator questions the index answers (who/when/how long/AI or human,
+  cost, quality, transcript) instead of "call-history index"; FEATURES gained an honest
+  Insights & analytics maturity table (13 capabilities, including the gaps:
+  cost analytics, segmentation, quality rollup, saved views, anomaly
+  detection are PLANNED); ROADMAP gained theme 0 — the north star plus
+  cost/segmentation/quality/anomaly/delivery raw ideas; TODO_LIST carries
+  the first three bounded slices (dashboard cost card, top-DID/counterpart
+  segmentation, quality rollup), all read-only over data already ingested.
+- **Extracted, not appended** (the AGENTS 219-line rule): the transcript-truth
+  and read-time call-join invariants moved from AGENTS.md to
+  `docs/DOMAIN_LANGUAGE.md` (both sections carry the full rules; AGENTS keeps
+  one-line pointers), and `work/**` joined the dprint excludes so generated
+  catalog output stops reporting as unformatted.
 
 ### Added — 2026-10-19 (event/command catalog export)
 

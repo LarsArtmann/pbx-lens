@@ -16,6 +16,62 @@
 
 ## Themes
 
+### 0. North star — the most superb insights and analytics platform over this PBX
+
+The bar, stated plainly: any question the operator can ask about the phone
+system's history should be answerable from this index — without a SQL client,
+without asking a developer, and without the answer being subtly wrong.
+
+"Superb" means four properties, and every raw idea below serves at least one:
+
+- **Complete** — no call, cost, quality, or transcript question dead-ends.
+- **Honest** — every number is either real or visibly labelled as missing
+  (MOS zero = "not reported"; no rounded-up statuses; gaps shown as gaps).
+- **Fast** — aggregates answer in one query pass on a real index, not a
+  sample; the poll economy (ETag/304) keeps the UI cheap to leave open.
+- **Composable** — anything the UI cannot answer leaves through the streaming
+  export (JSONL/CSV) into a notebook or warehouse unchanged.
+
+Raw ideas, grouped by the question they unlock (none is a commitment; each
+graduates to TODO_LIST when triggered):
+
+**Cost intelligence** — "what does the phone system cost, and where?"
+
+- Spend trend per week/month with the same window semantics as volume
+- Cost per minute, cost per call, and cost per DID/agent
+- AI-vs-human cost split (the AI share today is only a call-count slice)
+
+**Segmentation** — "who is calling whom, and what do they want?"
+
+- Top DIDs and top counterpart numbers, with drill-through into the filtered list
+- Source mix per period (FreeSWITCH vs Telnyx vs webhook vs agent transcript)
+- Direction and AI-ness broken down by segment rather than globally
+
+**Quality** — "are calls getting worse?"
+
+- MOS trend per DID/agent once the MOS poller lands (2027-01 window)
+- Failure and hangup-cause breakdown; no-user-turn and recording-tail rates
+  as standing quality signals (they exist per call today — see
+  docs/DOMAIN_LANGUAGE.md § Transcript truth)
+- Answer-rate and short-call (abandoned) analysis where the source supports it
+
+**Anomaly and baseline** — "is today unusual?"
+
+- Expected-volume bands from the weekday×hour history, with a quiet alert
+- MOS or failure-rate regression detection against a rolling baseline
+- Ingest-coverage analytics: per-source rows/day, gaps, staleness SLOs
+
+**Delivery** — "make it part of my routine"
+
+- Saved views (filter state in the URL/client; no server write path needed)
+- Scheduled report exports (a cron'd `export.jsonl` + a digest rendered from it)
+- A warehouse-grade export (Parquet/duckdb) once the CSV/JSONL path shows a
+  real consumer
+
+**Demand-gated** — outcome/disposition analytics (conversion, resolution):
+no current source carries a business outcome, so this waits for a source that
+does. Not planned; recorded so it is not re-discovered as a "missing feature".
+
 ### 1. The complete consumer surface (plan phase 2 — closing gaps)
 
 One index is only worth building if every question about a call is answerable
@@ -24,8 +80,8 @@ MOS. Everything this theme's raw ideas named landed 2026-10-12 (partial
 number search, date-range picker, duration histogram, streaming export) —
 the remaining follow-on idea:
 
-- Cost panel on the dashboard (the data is in `CostMicros`; the histogram
-  card pattern is there to copy)
+- Cost panel on the dashboard — promoted to theme 0 (cost intelligence);
+  the data is in `CostMicros` and the histogram card pattern is there to copy
 
 ### 2. Autonomy and operations (plan phase 3 — hardening)
 
