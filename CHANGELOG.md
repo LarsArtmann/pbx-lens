@@ -43,13 +43,16 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   header and per-row verdicts on all 24 task rows, 96 fine-breakdown rows,
   and the §6 landing-place ledger. check-rows ran COMPLETE on every file
   before the move.
-- **Harvested into the live backlog**: TODO_LIST rebuilt to 32 verified-open
-  rows (new: stamp-churn doctrine, buildflow filing decision, patch-vs-minor
-  release decision, poll-exec gate wrapper, probe residue, prettier
-  devShell, vendor-hash re-verify after the go.mod bump); ROADMAP gained the
-  flake-record convention, the test-complexity policy, and client-side stamp
-  rendering. Upstream state re-verified with `gh`: go-appkit#26 CLOSED,
-  go-etag#2 / go-nix-helpers#7 / treefmt-nix#545 / templ-components
+- **Harvested into the live backlog**: TODO_LIST rebuilt to verified-open
+  rows only (new: stamp-churn doctrine, buildflow filing decision,
+  patch-vs-minor release decision, poll-exec gate wrapper, probe residue,
+  prettier devShell, plus the three analytics slices, the probe-sweep re-run
+  and the detect-only findings triage harvested from the 2026-10-23 gate
+  report); ROADMAP gained theme 0, the flake-record convention, the
+  test-complexity policy, and client-side stamp rendering. The vendor-hash
+  row was opened and closed the same day (the advisory was a heuristic
+  misfire; `nix build` is green). Upstream state re-verified with `gh`:
+  go-appkit#26 CLOSED, go-etag#2 / go-nix-helpers#7 / treefmt-nix#545 / templ-components
   #48/#49/#50/#51/#55 still OPEN.
 - **The projection-key gotcha was corrected, not just re-worded**: the
   2026-10-11 "keys carry the `StreamMarker:` prefix" entry now states the

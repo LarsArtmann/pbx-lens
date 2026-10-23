@@ -237,6 +237,16 @@ versions):
 - **Status-report format policy** (m27.9): reports are hand-written .md
   today; HTML default came from tooling, not from the owner. Standing
   default: .md + mermaid unless the owner says otherwise.
+- **Gate meaning while an external dependency is red** (2026-10-23): the
+  vulnix step fails on `nvd.nist.gov` read timeouts, not on a finding. Is a
+  gate with one red external-dependency step "green"? Options: keep it red as
+  an honest signal (the session's lean), skip it in config until the feed
+  recovers, or split the gate into repo-facts vs network-facts lanes. Owner
+  call; until then "gate green" carries an asterisk.
+- **BuildFlow filing batch** (2026-10-23): two verified candidates (nix-fmt/
+  treefmt `projectRootFile` roundtrip; go-version-auto-configure vs `go mod
+  tidy` floor promotion) join the filing queue — they are public acts and
+  wait for the same per-filing go-ahead as the templ-components drafts.
 - **Machine-hygiene norm** (m27.9): the full gate only runs at 15-min load
   < 40; below that, casualties verify individually
   (docs/buildflow-dev-gate.md). Recorded as the standing norm so future

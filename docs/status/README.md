@@ -11,14 +11,15 @@ archived/** — the living backlog is [TODO_LIST.md](../../TODO_LIST.md).
 
 ## Live reports
 
-None. The 2026-10-23 docs-health pass annotated and archived the five
-2026-10-18 reports (its own manifest is in archived/README.md), harvesting
-their surviving queue into TODO_LIST (stamp churn, buildflow filing
-decision, release decision, poll-exec wrapper, probe residue, prettier
-devShell) and ROADMAP.
+| Report                                                                    | State                                                                                                                                                            |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `2026-10-23_16-21_buildflow-44-of-72-triage-probe-dedup-gate-recovery.md` | live — gate triage + probe-bootstrap dedup receipts; §f is a brainstorm (not commitments); §g 3 owner questions; harvested 2026-10-23 for the bounded rows below |
 
-The next report written here becomes the single harvest source, as in every
-prior pass.
+The 2026-10-23 docs-health pass annotated and archived the five 2026-10-18
+reports (manifest in archived/README.md) and harvested their surviving queue
+into TODO_LIST (stamp churn, buildflow filing decision, release decision,
+poll-exec wrapper, probe residue, prettier devShell) and ROADMAP. The
+2026-10-23 report above is the current single harvest source.
 
 ## Archive
 
