@@ -107,30 +107,34 @@ func sourceBadge(kind calls.SourceKind) templ.Component {
 }
 
 // detailMain is the Split's primary column: facts card, then transcript.
-templ detailMain(nonce string, view calls.CallView, query string) {
+templ detailMain(nonce string, page DetailPage, query string) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
-		@detailFacts(nonce, view)
-		if len(view.Transcript) > 0 {
-			@transcriptPane(view.Transcript, query)
+		@detailFacts(nonce, page)
+		if len(page.Transcript) > 0 {
+			@transcriptPane(page.Transcript, query)
 		} else {
 			@display.EmptyState(display.EmptyStateProps{
-				Title:       "No transcript",
-				Description: "This source recorded no transcript (human calls, or the transcript file is not ingested yet).",
-				Icon:        icons.Microphone,
+				Title: "No transcript",
+				Description: "No source recorded a transcript for this call yet " +
+					"(human calls, or the agent transcript file is not ingested).",
+				Icon: icons.Microphone,
 			})
 		}
 	}
 }
 
-templ detailFacts(nonce string, view calls.CallView) {
+templ detailFacts(nonce string, page DetailPage) {
 	@display.Card(display.CardProps{Title: "Call facts", TitleTag: display.HeadingTagH2}) {
-		@display.DefinitionList(display.DefinitionListProps{Items: detailItems(nonce, view)})
+		@display.DefinitionList(display.DefinitionListProps{Items: detailItems(nonce, page)})
 	}
 }
 
 // detailItems builds the term/detail pairs in display order. Conditional
-// facts (cost, insight) append only when the source actually carries them.
-func detailItems(nonce string, view calls.CallView) []display.DefinitionItem {
+// facts (cost, insight, joined sources) append only when the page actually
+// carries them.
+func detailItems(nonce string, page DetailPage) []display.DefinitionItem {
+	view := page.CallView
+
 	items := []display.DefinitionItem{
 		{Term: "From", Detail: stringOrDash(view.FromNumber), DetailComponent: copyDetail(nonce, view.FromNumber, "from number")},
 		{Term: "To", Detail: stringOrDash(view.ToNumber), DetailComponent: copyDetail(nonce, view.ToNumber, "to number")},
@@ -154,8 +158,37 @@ func detailItems(nonce string, view calls.CallView) []display.DefinitionItem {
 			Detail: view.InsightSummary,
 		})
 	}
+	// Provenance for the joined facts: the page fills the transcript or the
+	// parties from the sibling source row that observed the same call, and
+	// never hides that it did.
+	if len(page.JoinedFrom) > 0 {
+		items = append(items, display.DefinitionItem{
+			Term:            "Also indexed as",
+			Detail:          joinedSourceText(page.JoinedFrom),
+			DetailComponent: joinedSourceBadges(page.JoinedFrom),
+		})
+	}
 
 	return items
+}
+
+// joinedSourceText is the plain-text twin of the badge list (DefinitionItem
+// Detail stays the honest fallback when the component does not render).
+func joinedSourceText(kinds []calls.SourceKind) string {
+	names := make([]string, 0, len(kinds))
+	for _, kind := range kinds {
+		names = append(names, string(kind))
+	}
+
+	return strings.Join(names, ", ")
+}
+
+templ joinedSourceBadges(kinds []calls.SourceKind) {
+	<span class="inline-flex flex-wrap items-center gap-2">
+		for _, kind := range kinds {
+			@sourceBadge(kind)
+		}
+	</span>
 }
 
 // copyDetail returns the copyable variant of a facts value; nil keeps the
@@ -307,16 +340,30 @@ func turnTagClass(role calls.TurnRole) string {
 
 // recordingCard offers playback. The audio src is the proxy route — the
 // Telnyx signed URL never reaches the browser; local recordings stream from
-// the same route when the file exists on disk.
-templ recordingCard(view calls.CallView) {
+// the same route when the file exists on disk. The two sources are
+// independent: a FreeSWITCH call indexes no RecordingRef at all (its audio is
+// a local WAV named after the call uuid), so the card keys on what the server
+// actually resolved, never on one field's emptiness.
+templ recordingCard(page DetailPage) {
 	@display.Card(display.CardProps{Title: "Recording", TitleTag: display.HeadingTagH2}) {
-		if view.RecordingRef == "" {
-			@display.SimpleEmptyState("No recording reference indexed for this call.")
-		} else {
-			<audio controls preload="none" class="w-full" src={ recordingHref(view) }></audio>
+		if page.RecordingRef != "" || page.LocalRecording != "" {
+			<audio controls preload="none" class="w-full" src={ recordingHref(page.CallView) }></audio>
 			<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">Streams server-side; the source URL never reaches the browser.</p>
+			if page.LocalRecording != "" {
+				<p class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">{ page.LocalRecording }</p>
+			}
+		} else if localRecordingKind(page.Kind) {
+			@display.SimpleEmptyState("No recording file found on disk for this call.")
+		} else {
+			@display.SimpleEmptyState("No recording reference indexed for this call.")
 		}
 	}
+}
+
+// localRecordingKind reports whether this source addresses a local WAV by
+// call uuid (the same resolver the recording route uses).
+func localRecordingKind(kind calls.SourceKind) bool {
+	return kind == calls.SourceFreeSwitchCDR || kind == calls.SourceAgentTranscript
 }
 
 templ notFoundPage(nonce string, message string) {
