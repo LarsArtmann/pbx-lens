@@ -12,6 +12,12 @@ BuildFlow#45 (2026-10-12), #50 (2026-10-12), #55 (2026-10-16), #56
 go-etag#2, go-nix-helpers#7, numtide/treefmt-nix#545,
 templ-components#48/#49/#50/#51/#55, dependabot-core#16538.**
 
+**State check 2026-10-23 (gh, docs-health audit): unchanged — same CLOSED
+set; go-appkit#26 confirmed CLOSED (fold-in still pending), and go-etag#2,
+go-nix-helpers#7, numtide/treefmt-nix#545 plus templ-components
+#48/#49/#50/#51/#55 re-confirmed OPEN. Two new BuildFlow candidates were
+diagnosed this day and are staged, not filed (report 2026-10-23_16-21 §b3).**
+
 - **go-cqrs-lite#62** (CLOSED upstream 2026-10-17; fold-in = the 2027-01 watch): sqliteengine binds filter values raw (`filter_clause.go:44`,
   `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,
   Ge/Gt drop it, Eq never). In-repo fix stays: bind `rfc3339Nano` strings.

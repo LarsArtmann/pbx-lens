@@ -3,7 +3,6 @@ package calls
 import (
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 	"strconv"
 	"strings"
 	"testing"
