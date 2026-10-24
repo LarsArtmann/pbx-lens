@@ -7,6 +7,23 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-24 (catalog infra truth: containers, channel, read/write edges)
+
+- **The pbx.artmann.tech lineage renders in the federated catalog**:
+  FreeSWITCH and Telnyx are declared as external-system containers
+  (`AccessMode read-only`; FreeSWITCH `Authoritative` — it is the system
+  of record for which calls happened), the service wires
+  `readsFrom(freeswitch, telnyx)` + `writesTo(call-index)` so the
+  visualiser draws the data-source edges, and the receiver-webhook JSONL
+  feed is the first channel (`pbx-receiver-webhook`, http). No infra
+  repo exports anything — the lens describes its sources. Tests cover
+  the three containers, the channel, and both edge lists; export diff
+  verified (the `source_events` schema drift in the diff was
+  pre-existing domain drift against a stale baseline). Repo hygiene in
+  the same pass: `/work/` gitignored and the daemon-committed binary +
+  lint trees untracked (kills the standing go-structure-linter
+  "binary tracked in git" error).
+
 ### Changed — 2026-10-24 (dedup to zero, pass 2: hidden production clones extracted, gate recalibrated to zero groups)
 
 - **Audited the suppressed bucket and extracted four real production clone
