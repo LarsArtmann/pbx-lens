@@ -86,7 +86,11 @@ webphone later gets a read-only deep link, never a data dependency.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
   govulncheck, art-dupl (warning-only). Dependabot watches github-actions +
-  gomod. BuildFlow stays the LOCAL gate; the flake's generic
+  gomod. art-dupl 2026-10-24 audit: the one harmful clone (4x serve-stack
+  bootstrap in serve_test.go) was extracted into `serveTestStack`; every
+  remaining group is a reviewed signature-level match between .templ helpers
+  with different business rules — accepted, don't relitigate without a
+  body-level clone appearing. BuildFlow stays the LOCAL gate; the flake's generic
   apps.test/apps.lint stay module-generated conveniences, not a second
   gate. Every Go-compiling CI job runs `go tool templ generate` first
   (`*_templ.go` are gitignored; the templ CLI is pinned by a go.mod `tool`
