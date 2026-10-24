@@ -954,25 +954,92 @@
         <section id="strengths">
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            The audit found no anti-pattern usage. What follows is the baseline the
+            findings build on — each item cites where it lives.
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>Theming happens at the token layer, exactly once</strong>
+                <span>app.css rebinds the tc tokens to the teal signal palette in one
+                @theme block after the imports; the Heatmap's off-chain
+                --ds-brand-rgb pair is re-bridged with two named guards
+                (TestCSSGateBridgesHeatmapBrandToTeal + verify-style-contract.js).
+                A census of every .templ file found zero hand-written bg-blue-*</span>
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
+                <strong>Shell discipline beats upstream defaults</strong>
+                <span>pageProps sets the per-request nonce, self-hosts the htmx
+                runtime, forces noindex, and pins the theme-color pair
+                (calls.templ:18-38); the deterministic nav ID defeats the
+                EnsureID-random-id / never-304 trap — fixed locally as M8/F28
+                before it was filed upstream as #55</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Accessibility is probed, not hoped for</strong>
+                <span>all twelve page-level Cards pass TitleTag h2 so headings never
+                skip a level under the page h1; the UI contract probe asserts the
+                heading order; the MOS gauge's aria-valuenow is asserted in tests;
+                #49's missing row-focus ring is hand-compensated
+                (app.css:124) until upstream lands</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>CSP is handled end to end</strong>
+                <span>the per-request nonce threads through Base, ThemeToggle,
+                CopyButton's singleton script and the shell's error pipeline
+                (page.templ:16-26; nonce_csp_test.go pins it)</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Rejections are recorded with adopt triggers</strong>
+                <span>LineChart (fixed-pixel SVG in a responsive card), DataTable
+                (no sort-capable query behind it) and AppShell (&lt;6 destinations)
+                are rejected in docs/templ-components-adoption.md with the exact
+                condition that would flip each row; the keyset pager deliberately
+                composes Buttons instead of page-number Pagination
+                (calls.templ:108-122)</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The bump ritual is written down</strong>
+                <span>a six-step version-bump watchlist (corpus regen, map re-audit,
+                hand-rolled re-check, filings re-read, goldens, art-dupl baseline)
+                exists precisely because a skipped step shipped the 2026-10-12
+                hamburger/dark-shade breakage</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The upstream relationship is live</strong>
+                <span>four filings (#48 #49 #50 #51) are tracked with documented local
+                workarounds; RelativeTime's day-precision windows are pinned by
+                TestRelativeTimeDayPrecisionContract even though the component lives
+                in the library</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The compiled-CSS artifact rule is honored and measured</strong>
+                <span>the full 6,405-class corpus is scanned, styles.css is committed
+                and CI-embedded, and the trim tradeoff (~17 KiB gzipped) is recorded
+                with its revisit trigger (T17) instead of left as folklore</span>
               </div>
             </div>
           </div>
@@ -980,113 +1047,433 @@
 
         <!-- Findings -->
         <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
-
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
-            <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
-            </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
-            <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
-            </div>
-          </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
-            <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
-            </p>
-          </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
-            <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
-            </p>
-          </div>
-        </section>
-
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+          <h2><span class="num">01</span>Capability assessment</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            Seven findings, ordered by impact. The full 38-row inventory behind the
+            score lives in the appendix; only the non-green rows are cards here.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
+
+          <div class="issue issue-important" id="format">
+            <span class="severity severity-important"
+              >Missed opportunity &middot; High impact</span
+            >
+            <h3>utils/format is duplicated by hand — two duration dialects ship in one product</h3>
+            <div class="where">
+              internal/web/calls.templ:383-422 &middot; internal/web/dashboard.templ:711-714 &middot;
+              adopted half: internal/web/ops.go:202, ops.templ:65, ops.templ:169
+            </div>
+            <p>
+              The pinned version ships format.ClockDuration, format.CompactDuration,
+              format.StringOrDash and format.Percent
+              (utils@v1.23.0/format/format.go:75-155, tested upstream). pbx-lens adopts
+              CompactDuration and Percent on the ops page only, then hand-rolls four
+              twins elsewhere: clockDuration (identical output sub-day; the library adds
+              a ≥1d tier), compactDuration (renders "1m00s"/"12h05m" where the library
+              renders "1m"/"12h5m" — so /ops and the staleness banner disagree on the
+              same concept), stringOrDash (byte-identical), and percent (identical
+              output today because every ratio source guards zero, but missing the
+              library's NaN→"—" hardening). Roughly 40 consumer lines duplicate a module
+              already in the dependency graph. Honest correction: this morning's
+              dedup pass accepted clockDuration/compactDuration as "different documented
+              business rules" — the library alternative shows the better resolution is
+              deletion via adoption.
+            </p>
+            <pre><code><span class="tok-comment">// Before: two dialects, four local twins</span>
+<span class="tok-keyword">func</span> <span class="tok-function">compactDuration</span>(d time.Duration) <span class="tok-type">string</span> {
+    <span class="tok-keyword">if</span> rounded &lt; time.Minute { <span class="tok-keyword">return</span> rounded.String() }
+    ...
+}
+
+<span class="tok-comment">// After: one dialect, owned upstream</span>
+<span class="tok-keyword">import</span> <span class="tok-string">"github.com/larsartmann/templ-components/utils/format"</span>
+format.CompactDuration(age)  <span class="tok-comment">// "42s", "1m30s", "12h30m" — everywhere</span></code></pre>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Replace the four helpers with format.*; keep mosGaugePercent (domain
+              mapping, not a duplicate); refresh goldens — compactDuration's copy
+              changes ("1m00s"→"1m", "12h05m"→"12h5m") while clockDuration and
+              stringOrDash are byte-identical for all reachable inputs; flip the
+              adoption map's format row (it still says "not yet adopted" while two
+              functions are in service).
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="pin">
+            <span class="severity severity-important"
+              >Version gap &middot; Medium impact</span
+            >
+            <h3>One minor behind — v1.24.0 fixes ARIA nesting in two components pbx-lens renders</h3>
+            <div class="where">
+              go.mod:24-27 (v1.23.0) &middot; upstream CHANGELOG [1.24.0], 2026-10-23
+            </div>
+            <p>
+              v1.24.0 fixes invalid ARIA nesting in display.CopyButton (rendered on the
+              detail page with a threaded nonce) and turns display.Heatmap from a leaf
+              image role around a table into honest table semantics (rendered on the
+              dashboard, guard-tested M1). Upstream HEAD is v1.24.0 + three docs
+              commits — there is nothing to wait for beyond the ritual.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Run the six-step watchlist on a clean tree; the art-dupl baseline is part
+              of it because a bump that shifts the clone set reds the CI gate by design.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="zerotime">
+            <span class="severity severity-important"
+              >Rough edge &middot; Medium impact</span
+            >
+            <h3>RelativeTime renders zero-time noise for a poller that never ran (#52)</h3>
+            <div class="where">
+              internal/web/ops.templ:123 &middot; upstream #52 OPEN
+            </div>
+            <p>
+              The ops page explicitly models "unknown" (StaleKnown=false renders a
+              neutral verdict badge) — but the "Last pass" row renders
+              RelativeTime(p.LastPass) unguarded. A zero time.Time produces
+              "Jan 1, 0001"-based text; upstream has no EmptyText escape (#52 open).
+              Reachable between serve start and the first completed poll pass, and in
+              any never-polled state.
+            </p>
+            <pre><code><span class="tok-comment">// Before: zero time renders date noise</span>
+{Term: <span class="tok-string">"Last pass"</span>,
+    DetailComponent: display.RelativeTime(display.RelativeTimeProps{Time: p.LastPass})},
+
+<span class="tok-comment">// After: the modeled state gets words, not noise</span>
+<span class="tok-keyword">if</span> p.LastPass.IsZero() {
+    row.Detail = <span class="tok-string">"never"</span>
+} <span class="tok-keyword">else</span> {
+    row.DetailComponent = display.RelativeTime(...)
 }</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Guard consumer-side now; comment on #52 with the ops-poller use case —
+              the EmptyText escape belongs upstream too.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="barchart">
+            <span class="severity severity-important"
+              >Upstream limitation &middot; Medium impact</span
+            >
+            <h3>BarChart (vertical) rides two open filings on a live local workaround</h3>
+            <div class="where">
+              internal/web/dashboard.templ:441 &middot; #48 OPEN &middot; #59 OPEN
+            </div>
+            <p>
+              #48: the documented Height alone still renders 0px bars because
+              items-end defeats the definite height — hence the local
+              Height + !items-stretch workaround (commented in place). #59: uncapped
+              flex-1 bars, negative values clamped to 0% height, no zero-baseline
+              option. Today's 30-day volume series works; MOS bars or cost series with
+              negatives would hit the wall.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Action</strong>
+              Keep the workaround and its comment; re-read both filings on every bump
+              (watchlist step 4) — their landing deletes local code.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="mapdoc">
+            <span class="severity severity-nice"
+              >Docs defect &middot; Low impact</span
+            >
+            <h3>The adoption map — the repo's single source of truth — has a broken table</h3>
+            <div class="where">docs/templ-components-adoption.md:69-80</div>
+            <p>
+              Twelve component rows (PieChart through errorpage) sit after the "Corpus
+              trim decision" prose with no header row, so markdown renders them as
+              loose paragraphs — the bump re-audit reads exactly those rows. The
+              SegmentBar/format/FilterBar row also still calls format "not yet
+              adopted" while ops.go:202 and ops.templ:169 use two of its functions.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Move the rows back under the main table; split the format claim into
+              adopted (Percent, CompactDuration) vs remaining (Bytes, ClockDuration,
+              StringOrDash, CompactCount).
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="sparkline">
+            <span class="severity severity-nice"
+              >Watch &middot; Low impact</span
+            >
+            <h3>Sparkline's fixed-size contract is the same complaint that rejected LineChart</h3>
+            <div class="where">dashboard.templ (2 sites) &middot; #60 OPEN</div>
+            <p>
+              #60: fixed width/height attributes, min/max normalization hides the
+              series sign. For volume sparklines (values ≥ 0) the sign concern is void;
+              the sizing constraint is the exact reason LineChart was rejected with an
+              adopt trigger. No action — re-judge only if the dashboard card layout
+              changes.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="watchlist">
+            <span class="severity severity-nice"
+              >Watch &middot; Low impact</span
+            >
+            <h3>Upstream items whose landing deletes local code</h3>
+            <div class="where">
+              #49 (row focus ring — app.css:124 workaround) &middot; #51 (ScrollbackLine
+              id/class hook — transcriptMatchLog hand-rolled) &middot; #63 (CopyButton
+              singleton script inert in htmx-swapped fragments — detail page is a full
+              render today) &middot; #61 / #54 (typed enums and Pill usage make
+              pbx-lens immune)
+            </div>
+            <p>
+              Each is a one-line re-check in watchlist step 4; each fix upstream folds a
+              workaround or unlocks the transcript match-log cleanup.
+            </p>
           </div>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+        <!-- Version currency -->
+        <section id="versions">
+          <h2><span class="num">02</span>Version currency</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            The pin is v1.23.0; the latest published release is v1.24.0 (2026-10-23);
+            upstream HEAD is three docs-only commits past it. One minor behind, with
+            two fixes that land on rendered components.
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Version</th>
+                <th>Type</th>
+                <th>Notable change</th>
+                <th>Relevance</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>v1.24.0</td>
+                <td class="no">Fixed</td>
+                <td>Invalid ARIA nesting in <code>display.CopyButton</code> (and CodeBlock)</td>
+                <td class="no">High — rendered on the detail page</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>v1.24.0</td>
+                <td class="no">Fixed</td>
+                <td><code>display.Heatmap</code> no longer puts a leaf image role around a table</td>
+                <td class="no">High — rendered on the dashboard (M1)</td>
+              </tr>
+              <tr>
+                <td>v1.24.0</td>
+                <td>Changed</td>
+                <td><code>display.Prose</code> + the <code>.tc-prose</code> class family</td>
+                <td class="yes">None — no longform content today</td>
+              </tr>
+              <tr>
+                <td>v1.24.0</td>
+                <td>Changed</td>
+                <td>Unified colour/position types; tc lint entry point</td>
+                <td class="yes">Low — typed enums already in use</td>
+              </tr>
+              <tr>
+                <td>v1.24.0</td>
+                <td>Fixed</td>
+                <td>datastar.PolledRegion timestamp contrast (WCAG 4.5:1)</td>
+                <td class="yes">None — datastar module unused</td>
+              </tr>
+              <tr>
+                <td>v1.24.0+3</td>
+                <td>Chore</td>
+                <td>Docs packets; replace directives re-added post-release</td>
+                <td class="yes">None — safe to target</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Pin parity is already house style</strong>
+            pbx-lens's own duplication gate regenerates its baseline with the pin, in
+            the same change — the templ-components bump ritual (watchlist steps 1–6)
+            is the same discipline applied to a UI dependency.
+          </div>
+        </section>
+
+        <!-- Action plan -->
+        <section id="plan">
+          <h2><span class="num">03</span>Action plan</h2>
+          <p>
+            Pareto-ranked by impact × ease. Items 5–7 are blocked upstream — their
+            priority realizes the day the filings land.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Adopt utils/format wholesale; delete the four local twins (F1)</td>
+                <td class="yes">5</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">20</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Bump to v1.24.0 via the six-step watchlist (F2)</td>
+                <td class="yes">4</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">16</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Guard the ops "Last pass" zero time (F3)</td>
+                <td class="yes">3</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">15</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Repair the adoption map table + format row (F5)</td>
+                <td>2</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">10</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Fold transcriptMatchLog into ScrollbackLine when #51 lands</td>
+                <td class="yes">3</td>
+                <td>2</td>
+                <td>6 — blocked</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Drop the !items-stretch workaround when #48 lands</td>
+                <td>2</td>
+                <td>2</td>
+                <td>4 — blocked</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>Drop the row-focus CSS when #49 lands</td>
+                <td>2</td>
+                <td>2</td>
+                <td>4 — blocked</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>Track #63 before any CopyButton-in-fragment use</td>
+                <td>1</td>
+                <td class="yes">3</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>Comment on #52 with the ops-poller use case</td>
+                <td>1</td>
+                <td class="yes">3</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>Re-judge Sparkline if the dashboard layout changes (#60)</td>
+                <td>1</td>
+                <td>1</td>
+                <td>1</td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">04</span>Appendix — capability inventory</h2>
+          <p>
+            All 38 capabilities graded. N/A rows carry their reason — an unexplained
+            N/A reads as "not checked".
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>Status</th>
+                <th>Evidence / reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>layout.Base / DefaultPageProps</td><td class="yes">Fully</td><td>calls.templ:18-38 — nonce, self-hosted htmx, noindex, theme-color pair</td></tr>
+              <tr><td>2</td><td>layout.Container / Split / Stack</td><td class="yes">Fully</td><td>replaced hand-rolled wrappers, 2026-10-12 (adoption map)</td></tr>
+              <tr><td>3</td><td>SimpleNav / ThemeToggle / Footer / Breadcrumbs</td><td class="yes">Fully</td><td>calls.templ:40-55 (deterministic ID), page.templ:34</td></tr>
+              <tr><td>4</td><td>layout.AppShell</td><td>N/A</td><td>3-destination IA; recorded rejection + revisit trigger</td></tr>
+              <tr><td>5</td><td>layout.Minimal / ThemeScript / MetaRefresh</td><td>N/A</td><td>Base covers theming; htmx polling owns freshness</td></tr>
+              <tr><td>6</td><td>display.PageHeader</td><td class="yes">Fully</td><td>5 sites; Action slots (export, copy)</td></tr>
+              <tr><td>7</td><td>display.Table (+Row.Href, CellPadding)</td><td class="yes">Fully</td><td>calls list + ops table; #49 gap compensated (app.css:124)</td></tr>
+              <tr><td>8</td><td>display.Card (TitleTag)</td><td class="yes">Fully</td><td>16 sites; h2 discipline probed</td></tr>
+              <tr><td>9</td><td>display.StatCard / Grid</td><td class="yes">Fully</td><td>dashboard row, icons + tones</td></tr>
+              <tr><td>10</td><td>display.BarChart (vertical)</td><td>Partially</td><td>4 sites; #48/#59 open, workaround at dashboard.templ:441</td></tr>
+              <tr><td>11</td><td>display.Sparkline</td><td>Partially</td><td>2 sites; #60 fixed-size contract; volumes ≥ 0</td></tr>
+              <tr><td>12</td><td>display.PieChart (Donut)</td><td class="yes">Fully</td><td>AI/human mix w/ legend + center label</td></tr>
+              <tr><td>13</td><td>display.Heatmap</td><td class="yes">Fully</td><td>M1; brand bridge double-guarded; v1.24.0 ARIA fix pending bump</td></tr>
+              <tr><td>14</td><td>display.Scrollback (transcript)</td><td class="yes">Fully</td><td>Stagger:false semantics; tone remap via tc-tag-*</td></tr>
+              <tr><td>15</td><td>Scrollback ?q= match path</td><td>Partially</td><td>hand-rolled transcriptMatchLog; blocked on #51 (OPEN)</td></tr>
+              <tr><td>16</td><td>EmptyState / SimpleEmptyState</td><td class="yes">Fully</td><td>11 sites</td></tr>
+              <tr><td>17</td><td>display.DefinitionList</td><td class="yes">Fully</td><td>5 sites; DetailComponent slot in use</td></tr>
+              <tr><td>18</td><td>display.ListNote</td><td class="yes">Fully</td><td>truncation notices</td></tr>
+              <tr><td>19</td><td>display.Badge</td><td class="yes">Fully</td><td>verdict badges (Pill); Dot unused → #54 immune</td></tr>
+              <tr><td>20</td><td>display.RelativeTime</td><td>Partially</td><td>day-precision contract pinned; #52 zero-time reaches ops page</td></tr>
+              <tr><td>21</td><td>display.CopyButton</td><td class="yes">Fully</td><td>nonce threaded (2026-10-17 sweep); full-render page dodges #63</td></tr>
+              <tr><td>22</td><td>forms.Form / Select / DatePicker</td><td class="yes">Fully</td><td>inline filter row replaced hand-rolled flex</td></tr>
+              <tr><td>23</td><td>forms.Input (Search)</td><td class="yes">Fully</td><td>/search page</td></tr>
+              <tr><td>24</td><td>Other form controls (Textarea, Toggle, …)</td><td>N/A</td><td>read-only tool — no write forms exist</td></tr>
+              <tr><td>25</td><td>FilterBar / FilterChips / SegmentedControl</td><td>N/A</td><td>adopt trigger recorded: only when the filter form outgrows the row</td></tr>
+              <tr><td>26</td><td>feedback.Alert</td><td class="yes">Fully</td><td>staleness + MOS placeholder</td></tr>
+              <tr><td>27</td><td>feedback.CircularProgress</td><td class="yes">Fully</td><td>MOS gauge; aria-valuenow asserted in tests</td></tr>
+              <tr><td>28</td><td>ToastContainer + htmx.GlobalErrorHandling</td><td class="yes">Fully</td><td>shell-level error pipeline (page.templ:17,23)</td></tr>
+              <tr><td>29</td><td>htmx.PolledRegion</td><td class="yes">Fully</td><td>30s dashboard / 60s staleness cadences</td></tr>
+              <tr><td>30</td><td>icons</td><td class="yes">Fully</td><td>5 names for current needs; 102-name breadth N/A for an internal tool</td></tr>
+              <tr><td>31</td><td>utils/format</td><td>Partially</td><td>2/6 adopted (ops only); 4 local twins — finding F1</td></tr>
+              <tr><td>32</td><td>utils/wire (library)</td><td>N/A</td><td>htmx-only shop; pbx-lens internal/wire is an unrelated own package</td></tr>
+              <tr><td>33</td><td>utils (BaseProps, EnsureID, …)</td><td class="yes">Fully</td><td>consumed via props; nav ID pins the EnsureID trap (#55)</td></tr>
+              <tr><td>34</td><td>datastar module</td><td>N/A</td><td>htmx-only by stack decision</td></tr>
+              <tr><td>35</td><td>charts/echarts module</td><td>N/A</td><td>zero-JS SVG charts suffice</td></tr>
+              <tr><td>36</td><td>errorpage module</td><td>N/A</td><td>appkit shell + hand-rolled responses (recorded 2026-10-12)</td></tr>
+              <tr><td>37</td><td>LineChart / DataTable</td><td>N/A</td><td>recorded rejections with adopt triggers</td></tr>
+              <tr><td>38</td><td>Interactive overlays & misc (Modal, Tabs, Kanban, …)</td><td>N/A</td><td>no overlay/tab/workspace use case in a 3-page read-only tool</td></tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Scoring derivation.</strong> N = 38 rows; 10 N/A → A = 28
+            applicable. Green = 23 × 1.0; partially used = 5 × 0.5; missed = 0;
+            misused = 0. Score = round(100 × 25.5 / 28) =
+            <strong>91/100 — very high</strong> (band ≥ 85).
+          </p>
+          <p><strong>How to verify</strong> (re-derive every number):</p>
+          <pre><code># component census (the 33-claimed call sites)
+grep -hoE "@(display|forms|feedback|layout|navigation|htmx|icons|format|utils)\.[A-Za-z]+" internal/web/*.templ | sort | uniq -c | sort -rn
+
+# version currency
+grep templ-components go.mod
+go list -m -versions github.com/larsartmann/templ-components
+
+# library capability ground truth at the pin
+sed -n '75,155p' "$(go env GOMODCACHE)"/github.com/larsartmann/templ-components/utils@v1.23.0/format/format.go
+
+# upstream filing states
+gh issue list -R LarsArtmann/templ-components --state open
+
+# the local twins (finding F1)
+grep -n "func clockDuration\|func compactDuration\|func stringOrDash\|func percent" internal/web/*.templ</code></pre>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-24 &middot; Reviewed against templ-components v1.23.0
+            (pin) / v1.24.0 (published) &middot; Every claim verified against source
+            code, the module cache, and live upstream issue state where noted
           </p>
         </footer>
       </main>
