@@ -77,12 +77,16 @@ func runRefresh(args []string, out io.Writer) error {
 
 	defer cleanup()
 
-	observations, _, fetchRejects, err := cli.FetchTelnyxObservations(ctx, telnyx.NewClient(key, *apiBase), cli.TelnyxOptions{
-		Since:     sinceAt,
-		Direction: dir,
-		AIDIDs:    telnyx.ParseAIDIDs(*aiDID),
-		Limit:     *limit,
-	})
+	observations, _, fetchRejects, err := cli.FetchTelnyxObservations(
+		ctx,
+		telnyx.NewClient(key, *apiBase),
+		cli.TelnyxOptions{
+			Since:     sinceAt,
+			Direction: dir,
+			AIDIDs:    telnyx.ParseAIDIDs(*aiDID),
+			Limit:     *limit,
+		},
+	)
 	if err != nil {
 		return err
 	}
@@ -136,7 +140,11 @@ func printRefreshReport(out io.Writer, report cli.RefreshReport, fetchRejects []
 		}
 
 		if printed == refreshFindingLimit {
-			_, _ = fmt.Fprintf(out, "  … %d further finding(s) not shown\n", countActionable(report)-refreshFindingLimit)
+			_, _ = fmt.Fprintf(
+				out,
+				"  … %d further finding(s) not shown\n",
+				countActionable(report)-refreshFindingLimit,
+			)
 
 			break
 		}

@@ -187,6 +187,6 @@ yields 26.
 
 ---
 
-*Snapshot per status-report skill; `.md` at explicit operator demand
+_Snapshot per status-report skill; `.md` at explicit operator demand
 (standing repo convention). Sections b.1/d.1 correct the session's own
-final summary — the correction is the point. WAITING FOR INSTRUCTIONS.*
+final summary — the correction is the point. WAITING FOR INSTRUCTIONS._

@@ -67,7 +67,8 @@ func TestDashboardQualityRollupUsesItsOwnDenominators(t *testing.T) {
 		t.Errorf("recording tail = %d/%d, want 1/2 timed transcripts", rollup.RecordingTail, rollup.TailEligible)
 	}
 
-	if len(rollup.HangupCauses) != 2 || rollup.HangupCauses[0].Cause != "NORMAL_CLEARING" || rollup.HangupCauses[0].Calls != 2 {
+	if len(rollup.HangupCauses) != 2 || rollup.HangupCauses[0].Cause != "NORMAL_CLEARING" ||
+		rollup.HangupCauses[0].Calls != 2 {
 		t.Errorf("hangup causes = %+v, want NORMAL_CLEARING x2 first", rollup.HangupCauses)
 	}
 }
@@ -84,7 +85,13 @@ func TestDashboardQualityRollupFoldsTheLongTail(t *testing.T) {
 		seeded = append(seeded, obs)
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), newTestSystem(t, seeded...), started.Add(time.Hour), ListCallsQuery{}, dashboardWindowDays)
+	stats, err := DashboardStatsQuery(
+		t.Context(),
+		newTestSystem(t, seeded...),
+		started.Add(time.Hour),
+		ListCallsQuery{},
+		dashboardWindowDays,
+	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
@@ -120,7 +127,8 @@ func TestQualityEmptyWindowIsHonest(t *testing.T) {
 
 	_, body := getBody(t, newTestServer(t), "/dashboard")
 
-	if !strings.Contains(body, "What calls end with nothing indexed") && !strings.Contains(body, "No calls in the window yet.") {
+	if !strings.Contains(body, "What calls end with nothing indexed") &&
+		!strings.Contains(body, "No calls in the window yet.") {
 		t.Error("an empty window must explain itself, not render 0% rates")
 	}
 

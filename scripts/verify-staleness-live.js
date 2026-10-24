@@ -33,7 +33,12 @@ async function forceStalenessPoll(page) {
 }
 
 (async () => {
-  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-stale");
+  const {
+    outDir: OUT,
+    dbPath: DB,
+    port: PORT,
+    base: BASE,
+  } = await probe.probeSession("/tmp/lens-stale");
   console.log("port:", PORT);
 
   // Fresh DB every run: seedProbeDB keeps existing DBs (stream-identity

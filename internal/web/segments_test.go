@@ -68,7 +68,13 @@ func TestDashboardSegmentsRankByVolumeAndCap(t *testing.T) {
 		}
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), newTestSystem(t, seeded...), started.Add(time.Hour), ListCallsQuery{}, dashboardWindowDays)
+	stats, err := DashboardStatsQuery(
+		t.Context(),
+		newTestSystem(t, seeded...),
+		started.Add(time.Hour),
+		ListCallsQuery{},
+		dashboardWindowDays,
+	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}

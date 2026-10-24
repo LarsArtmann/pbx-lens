@@ -101,7 +101,7 @@ self_test() {
 	printf '```\n[example](./nope.md)\n```\n[u](https://example.com) [a](#anchor) [r](/abs)\n' >"$dir/fenced.md"
 	local extracted
 	extracted=$(links_of "$dir/fenced.md")
-	if [ -n "$(printf '%s\n' "$extracted" | sed -n 's/^\.\///p' | grep -v '^http' | grep -v '^#' | grep -v '^/' )" ]; then
+	if [ -n "$(printf '%s\n' "$extracted" | sed -n 's/^\.\///p' | grep -v '^http' | grep -v '^#' | grep -v '^/')" ]; then
 		echo "FAIL: extraction leaked a fenced/absolute link: $extracted" >&2
 		failures=$((failures + 1))
 	else

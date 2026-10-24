@@ -19,7 +19,12 @@ const probe = require("./lib/ui-probe");
 const fail = probe.fail;
 
 (async () => {
-  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-ops-verdict");
+  const {
+    outDir: OUT,
+    dbPath: DB,
+    port: PORT,
+    base: BASE,
+  } = await probe.probeSession("/tmp/lens-ops-verdict");
   console.log("port:", PORT);
 
   const { serve, browser, page } = await probe.launchProbe({

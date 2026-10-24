@@ -30,7 +30,12 @@ const fail = probe.fail;
 const VIOLET = ["124, 58, 237", "139, 92, 246"];
 
 (async () => {
-  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-style-verify");
+  const {
+    outDir: OUT,
+    dbPath: DB,
+    port: PORT,
+    base: BASE,
+  } = await probe.probeSession("/tmp/lens-style-verify");
   console.log("port:", PORT);
 
   const { serve, browser, page } = await probe.launchProbe({ outDir: OUT, dbPath: DB, port: PORT });

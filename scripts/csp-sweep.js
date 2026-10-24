@@ -19,7 +19,12 @@
 const probe = require("./lib/ui-probe");
 
 (async () => {
-  const { outDir: OUT, dbPath: DB, port: PORT, base: BASE } = await probe.probeSession("/tmp/lens-csp");
+  const {
+    outDir: OUT,
+    dbPath: DB,
+    port: PORT,
+    base: BASE,
+  } = await probe.probeSession("/tmp/lens-csp");
   console.log("port:", PORT);
 
   const { serve, browser } = await probe.launchProbe({
