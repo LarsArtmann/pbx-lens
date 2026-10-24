@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>templ-components — Adoption & Utilization Audit — pbx-lens</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -850,9 +850,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>LIBRARY DEEP DIVE</span>
+      <span>2026-10-24</span>
+      <span>PBX-LENS · CONSUMER AUDIT</span>
     </div>
 
     <div class="layout">
@@ -864,7 +864,8 @@
           <a href="#scorecard">Scorecard</a>
           <a href="#strengths">Strengths</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#versions">Version currency</a>
+          <a href="#plan">Action plan</a>
           <a href="#appendix">Appendix</a>
         </nav>
       </aside>
@@ -880,36 +881,43 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-10-24</div>
+          <h1>templ-components — Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            How pbx-lens, a read-only call-insights dashboard, consumes its own UI
+            library: 33 components wired across six page surfaces, theming and
+            accessibility handled ahead of upstream defaults — and one real gap,
+            hand-rolled formatting helpers that duplicate
+            <code>utils/format</code> at the pinned version.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Pinned: v1.23.0</span>
+            <span class="tag">Published: v1.24.0</span>
+            <span class="tag teal">Adoption: 91/100 — very high</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+            <div class="score">91</div>
+            <div class="label">Adoption score (very high)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">23/28</div>
+            <div class="label">Capabilities fully leveraged</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">5</div>
+            <div class="label">Partially-used findings</div>
           </div>
-          <div class="score-card score-bad">
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Anti-patterns</div>
+          </div>
+          <div class="score-card score-warn">
             <div class="score">1</div>
-            <div class="label">Blockers</div>
-          </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+            <div class="label">Minor version behind (v1.24.0 has ARIA fixes)</div>
           </div>
         </section>
 
@@ -917,14 +925,28 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            pbx-lens treats templ-components as a system, not a CSS kit. Thirty-three
+            distinct components across layout, navigation, display, forms, feedback,
+            htmx, icons and utils are wired into the six page surfaces; the token
+            chain is re-skinned to the signal palette in exactly one place; and every
+            library trap the codebase has met so far is pinned by a named guard
+            (CSS gate, palette gate, relative-time contract, heading-order probe).
+            This is what a model consumer looks like — with two gaps worth closing.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            The one real gap is <code>utils/format</code>: pbx-lens hand-rolls
+            <code>clockDuration</code>, <code>compactDuration</code>,
+            <code>stringOrDash</code> and <code>percent</code>
+            (internal/web/calls.templ:383-422, internal/web/dashboard.templ:711-714)
+            while the pinned version already ships
+            <code>format.ClockDuration</code>, <code>format.CompactDuration</code>,
+            <code>format.StringOrDash</code> and <code>format.Percent</code> — and the
+            ops page already uses two of them. Result: the product renders
+            <em>two different compact-duration dialects</em> for the same concept
+            ("1m" on /ops vs "1m00s" in the staleness banner). Second: the pin is one
+            minor behind, and v1.24.0 (2026-10-23) ships ARIA-nesting fixes for two
+            components pbx-lens renders today (Heatmap, CopyButton).
           </div>
         </section>
 
