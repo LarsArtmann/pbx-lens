@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -52,7 +53,7 @@ func runRefresh(args []string, out io.Writer) error {
 	_ = fs.Parse(args)
 
 	if *db == "" {
-		return fmt.Errorf("refresh: -db is required")
+		return errors.New("refresh: -db is required")
 	}
 
 	key, err := cli.ResolveKey(*keyFile)
