@@ -47,10 +47,9 @@
    -update`, REVIEW the diff, then commit; the plain suite must go green
    without `-update` afterwards.
 6. **Art-dupl baseline:** a bump that changes the clone set turns the CI
-   duplication gate red (`.templ` signature matches move with the library) —
-   review the new/shifted groups, then refresh with
-   `art-dupl baseline -t 4 . --baseline-path scripts/art-dupl-baseline.json`
-   (acceptance table: docs/art-dupl-baseline.md).
+   duplication gate red — review the new/shifted groups, then refresh with
+   `art-dupl baseline -t 4 --min-lines 2 . --baseline-path scripts/art-dupl-baseline.json`
+   (gate contract + acceptance table: docs/art-dupl-baseline.md).
 
 ## Corpus trim decision (T17, 2026-10-12): KEEP the full corpus
 

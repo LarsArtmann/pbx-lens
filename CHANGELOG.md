@@ -7,6 +7,28 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-10-24 (dedup to zero, pass 2: hidden production clones extracted, gate recalibrated to zero groups)
+
+- **Audited the suppressed bucket and extracted four real production clone
+  groups the default report (and therefore the gate) could not see.** In
+  `internal/web`: the `serveStyles`/`serveHtmx`/`serveFavicon` trio collapsed
+  into a `staticAsset` table (path/contentType/missingMsg) with one `serve`
+  method; `list`+`stalenessFragment` now share `queryListStaleness` (typed
+  `listStaleness` result, so the two trailing bools cannot transpose);
+  `dashboard`+`dashboardFragment` share `queryDashboardStats`; the export
+  format preamble moved into `beginExportResponse(w, r, contentType,
+  disposition)`. Behavior identical — error strings, timing labels, header
+  order preserved; full test suite green.
+- **Duplication gate recalibrated from "23 pinned groups" to "zero groups".**
+  `--min-lines 2` drops the 1-line signature/type-expression matches
+  (parameter lists like `(v string)` — shape coincidence, not duplication),
+  so `scripts/art-dupl-baseline.json` now records an EMPTY accepted set: any
+  new multi-line clone group fails CI. Both directions re-proven (clean tree
+  exit 0; seeded 12-statement cross-package clone exit 2). Remaining hidden
+  groups re-audited: test scaffolding only (self-contained tests by design).
+  docs/art-dupl-baseline.md rewritten for the zero-group contract, including
+  the suppressed-bucket audit duty after pin bumps.
+
 ### Changed — 2026-10-24 (dedup to zero: the accepted clone verdict is now a CI gate, not prose)
 
 - **art-dupl lane upgraded from warning-only text diff to a hash baseline

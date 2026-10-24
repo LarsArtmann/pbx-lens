@@ -85,17 +85,21 @@ webphone later gets a read-only deep link, never a data dependency.
   break via `nix run .#update-vendor-hash` on a CLEAN tree — never the nix-hash-fix step (BuildFlow#55 corrupts) and never paste hashes by hand.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
-  govulncheck, art-dupl (BASELINE GATE: `art-dupl check -t 4 .` against
-  `scripts/art-dupl-baseline.json` fails the lane on any clone group not in
-  the baseline — acceptance table + refresh procedure in
-  docs/art-dupl-baseline.md; the directory arg is load-bearing, explicit
-  file lists shrink the detection universe and miss .templ source).
+  govulncheck, art-dupl (ZERO-GROUP GATE: `art-dupl check -t 4 --min-lines 2 .`
+  against `scripts/art-dupl-baseline.json`, which records ZERO accepted groups —
+  any new multi-line clone fails the lane; `--min-lines 2` suppresses 1-line
+  signature/type-expression matches (shape coincidence, not duplication);
+  mechanics, refresh procedure, and the suppressed-bucket audit duty:
+  docs/art-dupl-baseline.md; the directory arg is load-bearing, explicit file
+  lists shrink the detection universe and miss .templ source).
   Dependabot watches github-actions +
-  gomod. art-dupl 2026-10-24 audit: the one harmful clone (4x serve-stack
-  bootstrap in serve_test.go) was extracted into `serveTestStack`; every
+  gomod. art-dupl 2026-10-24, two audit passes: the 4x serve-stack bootstrap
+  and four production clone groups hidden in the SUPPRESSED bucket (the
+  default report hides real clones there) were extracted — staticAsset table,
+  queryListStaleness, queryDashboardStats, beginExportResponse; every
   remaining group is a reviewed signature-level match between .templ helpers
-  with different business rules — accepted, and pinned as a gate (not
-  prose): a body-level clone appearing now fails CI until reviewed. BuildFlow stays the LOCAL gate; the flake's generic
+  with different business rules, suppressed by calibration and enforced as a
+  gate. BuildFlow stays the LOCAL gate; the flake's generic
   apps.test/apps.lint stay module-generated conveniences, not a second
   gate. Every Go-compiling CI job runs `go tool templ generate` first
   (`*_templ.go` are gitignored; the templ CLI is pinned by a go.mod `tool`
