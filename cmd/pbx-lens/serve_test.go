@@ -30,6 +30,36 @@ func noAutoGzip() *http.Client {
 	return &http.Client{Transport: &http.Transport{DisableCompression: true}}
 }
 
+// serveTestStack boots the exact composition serve builds, over a fresh
+// in-memory index, on an ephemeral listener: every stack-level contract test
+// shares it so the stack under test cannot drift between suites. The client
+// is the gzip-transparent-off one (see noAutoGzip); base is the full-chain
+// URL (https through to the app handler).
+func serveTestStack(tb testing.TB) (base string, client *http.Client) {
+	sys, cleanup, err := cli.OpenSystem(tb.Context(), "")
+	if err != nil {
+		tb.Fatalf("open memory index: %v", err)
+	}
+
+	tb.Cleanup(cleanup)
+
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	if err != nil {
+		tb.Fatalf("build service config: %v", err)
+	}
+
+	svc, err := appkit.NewService(serviceConfig)
+	if err != nil {
+		tb.Fatalf("new service: %v", err)
+	}
+
+	web.Register(svc.Mux, sys, web.Options{})
+
+	ts := testkit.Serve(tb, svc)
+
+	return ts.FullChainURL, noAutoGzip()
+}
+
 // get issues a GET against the served chain and returns status plus the
 // response for header inspection. It takes testing.TB so benchmarks can
 // share the same round-trip path.
@@ -282,39 +312,19 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 }
 
 func TestServeStackEndToEnd(t *testing.T) {
-	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
-	if err != nil {
-		t.Fatalf("open memory index: %v", err)
-	}
-
-	defer cleanup()
-
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
-	if err != nil {
-		t.Fatalf("build service config: %v", err)
-	}
-
-	svc, err := appkit.NewService(serviceConfig)
-	if err != nil {
-		t.Fatalf("new service: %v", err)
-	}
-
-	web.Register(svc.Mux, sys, web.Options{})
-
-	ts := testkit.Serve(t, svc)
-	client := noAutoGzip()
+	base, client := serveTestStack(t)
 
 	// The cacheable surfaces: revalidation (200 → ETag → 304) and gzip on
 	// both the embedded asset and the hot 30s poll fragment. Fragment routes
 	// additionally carry Cache-Control: no-cache on the 200 AND the 304, so
 	// browsers and htmx polls revalidate instead of serving stale HTML.
-	assertConditionalGET(t, client, ts.FullChainURL, "/static/htmx.min.js", false)
-	assertGzip(t, client, ts.FullChainURL, "/static/htmx.min.js")
-	assertConditionalGET(t, client, ts.FullChainURL, "/frag/dashboard", true)
-	assertGzip(t, client, ts.FullChainURL, "/frag/dashboard")
-	assertConditionalGET(t, client, ts.FullChainURL, "/ops", true)
+	assertConditionalGET(t, client, base, "/static/htmx.min.js", false)
+	assertGzip(t, client, base, "/static/htmx.min.js")
+	assertConditionalGET(t, client, base, "/frag/dashboard", true)
+	assertGzip(t, client, base, "/frag/dashboard")
+	assertConditionalGET(t, client, base, "/ops", true)
 
-	status, headers, _ := get(t, client, ts.FullChainURL, "/frag/staleness", nil)
+	status, headers, _ := get(t, client, base, "/frag/staleness", nil)
 	if status != http.StatusOK {
 		t.Fatalf("GET staleness fragment status = %d, want 200", status)
 	}
@@ -330,14 +340,14 @@ func TestServeStackEndToEnd(t *testing.T) {
 		)
 	}
 
-	_, headers, _ = get(t, client, ts.FullChainURL, "/dashboard", nil)
+	_, headers, _ = get(t, client, base, "/dashboard", nil)
 
 	timing := headers.Get("Server-Timing")
 	if !strings.Contains(timing, "total") || !strings.Contains(timing, "stats") {
 		t.Errorf("dashboard Server-Timing = %q, want total + stats entries", timing)
 	}
 
-	status, _, body := get(t, client, ts.FullChainURL, "/version", nil)
+	status, _, body := get(t, client, base, "/version", nil)
 	if status != http.StatusOK {
 		t.Fatalf("GET /version status = %d, want 200", status)
 	}
@@ -346,7 +356,7 @@ func TestServeStackEndToEnd(t *testing.T) {
 		t.Errorf("/version body %q does not carry the build version %q", body, version)
 	}
 
-	status, _, metricsBody := get(t, client, ts.FullChainURL, "/metrics", nil)
+	status, _, metricsBody := get(t, client, base, "/metrics", nil)
 	if status != http.StatusOK {
 		t.Fatalf("GET /metrics status = %d, want 200", status)
 	}
@@ -558,27 +568,7 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 // The appkit default's X-Frame-Options: DENY must survive the inner
 // overwrite, so the composition keeps its framing lockout.
 func TestSecurityHeadersContract(t *testing.T) {
-	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
-	if err != nil {
-		t.Fatalf("open memory index: %v", err)
-	}
-
-	defer cleanup()
-
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
-	if err != nil {
-		t.Fatalf("build service config: %v", err)
-	}
-
-	svc, err := appkit.NewService(serviceConfig)
-	if err != nil {
-		t.Fatalf("new service: %v", err)
-	}
-
-	web.Register(svc.Mux, sys, web.Options{})
-
-	ts := testkit.Serve(t, svc)
-	client := noAutoGzip()
+	base, client := serveTestStack(t)
 
 	wantHeaders := map[string]string{
 		"Referrer-Policy":        securityReferrerPolicy,
@@ -597,14 +587,14 @@ func TestSecurityHeadersContract(t *testing.T) {
 		}
 	}
 
-	status, page, _ := get(t, client, ts.FullChainURL, "/", nil)
+	status, page, _ := get(t, client, base, "/", nil)
 	if status != http.StatusOK {
 		t.Fatalf("GET / status = %d, want 200", status)
 	}
 
 	assertSecurityHeaders("GET /", page)
 
-	replayStatus, replay, _, _ := conditionalReplay(t, client, ts.FullChainURL, "/", nil)
+	replayStatus, replay, _, _ := conditionalReplay(t, client, base, "/", nil)
 	if replayStatus != http.StatusNotModified {
 		t.Fatalf("conditional replay status = %d, want 304", replayStatus)
 	}
@@ -612,7 +602,7 @@ func TestSecurityHeadersContract(t *testing.T) {
 	assertSecurityHeaders("304 replay", replay)
 
 	for _, path := range []string{"/app.css", "/api/export.csv", "/api/export.jsonl"} {
-		status, headers, _ := get(t, client, ts.FullChainURL, path, nil)
+		status, headers, _ := get(t, client, base, path, nil)
 		if status != http.StatusOK {
 			t.Fatalf("GET %s status = %d, want 200", path, status)
 		}
@@ -636,34 +626,14 @@ func TestSecurityHeadersContract(t *testing.T) {
 // the representation is stable. The 5s startTimeout hypothesis in the
 // first triage was wrong; the draft was retracted (never filed).
 func TestCacheSemanticsHardening(t *testing.T) {
-	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
-	if err != nil {
-		t.Fatalf("open memory index: %v", err)
-	}
-
-	defer cleanup()
-
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
-	if err != nil {
-		t.Fatalf("build service config: %v", err)
-	}
-
-	svc, err := appkit.NewService(serviceConfig)
-	if err != nil {
-		t.Fatalf("new service: %v", err)
-	}
-
-	web.Register(svc.Mux, sys, web.Options{})
-
-	ts := testkit.Serve(t, svc)
-	client := noAutoGzip()
+	base, client := serveTestStack(t)
 
 	// Vary: the compression layer sits OUTER of the ETag layer, so tags
 	// hash identity bodies — but any cache between here and the browser
 	// must still be told the representation varies with Accept-Encoding,
 	// on the 200 AND on the 304.
 	status, headers, _ := get(
-		t, client, ts.FullChainURL, "/frag/dashboard",
+		t, client, base, "/frag/dashboard",
 		map[string]string{"Accept-Encoding": "gzip"},
 	)
 	if status != http.StatusOK {
@@ -675,7 +645,7 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	}
 
 	status, headers304, _, etag := conditionalReplay(
-		t, client, ts.FullChainURL, "/frag/dashboard",
+		t, client, base, "/frag/dashboard",
 		map[string]string{"Accept-Encoding": "gzip"},
 	)
 	if status != http.StatusNotModified {
@@ -689,7 +659,7 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	// Identity replay with the SAME tag: because the tag hashes the
 	// identity body (compression is outer), an identity client revalidates
 	// too — the ordering doctrine's whole point.
-	status, _, body, _ := conditionalReplay(t, client, ts.FullChainURL, "/frag/dashboard", nil)
+	status, _, body, _ := conditionalReplay(t, client, base, "/frag/dashboard", nil)
 	if status != http.StatusNotModified {
 		t.Errorf("identity conditional replay status = %d, want 304 (tags hash identity bodies)", status)
 	}
@@ -700,7 +670,7 @@ func TestCacheSemanticsHardening(t *testing.T) {
 
 	// Query strings must never cross-revalidate: the filtered page is a
 	// different document, and /'s tag must not stand in for it.
-	_, rootHeaders, _ := get(t, client, ts.FullChainURL, "/", nil)
+	_, rootHeaders, _ := get(t, client, base, "/", nil)
 	rootTag := rootHeaders.Get("ETag")
 
 	if rootTag == "" {
@@ -708,7 +678,7 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	}
 
 	status, _, _ = get(
-		t, client, ts.FullChainURL, "/?direction=inbound",
+		t, client, base, "/?direction=inbound",
 		map[string]string{"If-None-Match": rootTag},
 	)
 	if status != http.StatusOK {
@@ -717,12 +687,12 @@ func TestCacheSemanticsHardening(t *testing.T) {
 
 	// HEAD rides the same validators: a conditional HEAD answers 304 with
 	// no body, so a HEAD-based monitor gets the same revalidation economy.
-	assertConditionalHEAD(t, client, ts.FullChainURL, "/frag/dashboard", etag)
+	assertConditionalHEAD(t, client, base, "/frag/dashboard", etag)
 
 	// Buffered renders carry an exact Content-Length: render() writes the
 	// whole page in one Write, and a missing/_chunked length would break
 	// progress UX on slow LAN links for zero streaming benefit.
-	status, pageHeaders, pageBody := get(t, client, ts.FullChainURL, "/", nil)
+	status, pageHeaders, pageBody := get(t, client, base, "/", nil)
 	if status != http.StatusOK {
 		t.Fatalf("GET / status = %d, want 200", status)
 	}
@@ -805,29 +775,9 @@ func benchRoundTrip(b *testing.B, client *http.Client, url, etag string) int {
 //
 //	GOEXPERIMENT=jsonv2 go test ./cmd/pbx-lens -bench BenchmarkConcurrentPoll -benchmem
 func BenchmarkConcurrentPoll(b *testing.B) {
-	sys, cleanup, err := cli.OpenSystem(b.Context(), "")
-	if err != nil {
-		b.Fatalf("open memory index: %v", err)
-	}
+	base, client := serveTestStack(b)
 
-	defer cleanup()
-
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
-	if err != nil {
-		b.Fatalf("build service config: %v", err)
-	}
-
-	svc, err := appkit.NewService(serviceConfig)
-	if err != nil {
-		b.Fatalf("new service: %v", err)
-	}
-
-	web.Register(svc.Mux, sys, web.Options{})
-
-	ts := testkit.Serve(b, svc)
-	client := noAutoGzip()
-
-	_, headers, _ := get(b, client, ts.FullChainURL, "/frag/dashboard", nil)
+	_, headers, _ := get(b, client, base, "/frag/dashboard", nil)
 
 	tag := headers.Get("ETag")
 
@@ -845,7 +795,7 @@ func BenchmarkConcurrentPoll(b *testing.B) {
 		b.Run(bb.name, func(b *testing.B) {
 			b.RunParallel(func(pb *testing.PB) {
 				for pb.Next() {
-					benchRoundTrip(b, client, ts.FullChainURL+"/frag/dashboard", bb.etag)
+					benchRoundTrip(b, client, base+"/frag/dashboard", bb.etag)
 				}
 			})
 		})
