@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>go-cqrs-lite catalog &amp; testing modules — Adoption &amp; Utilization Audit</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -850,9 +850,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>LIBRARY DEEP DIVE</span>
+      <span>2026-10-24</span>
+      <span>PBX-LENS &middot; GO-CQRS-LITE MODULES</span>
     </div>
 
     <div class="layout">
@@ -864,7 +864,9 @@
           <a href="#scorecard">Scorecard</a>
           <a href="#strengths">Strengths</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#versions">Version currency</a>
+          <a href="#opportunities">Opportunities</a>
+          <a href="#target">Target state</a>
           <a href="#appendix">Appendix</a>
         </nav>
       </aside>
@@ -880,36 +882,46 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-10-24</div>
+          <h1>
+            go-cqrs-lite <code>catalog</code> &amp; testing modules —
+            Adoption &amp; Utilization Audit
+          </h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            How pbx-lens uses (and skips) the catalog documentation kit, the
+            systemscenario / scenario / testutil testing stack, and the
+            benchkit benchmarking suite. Feature-by-feature gap analysis with
+            a scored 24-row capability inventory; every claim cited to code
+            or library source.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Pinned: catalog v4.9.0</span>
+            <span class="tag">Latest: catalog v4.10.0</span>
+            <span class="tag teal">Adoption: 58/100 &middot; moderate</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
-          <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+          <div class="score-card score-warn">
+            <div class="score">58</div>
+            <div class="label">Adoption score / 100 (moderate)</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">6/12</div>
+            <div class="label">Capabilities fully leveraged</div>
           </div>
-          <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
+          <div class="score-card score-warn">
+            <div class="score">4</div>
+            <div class="label">Missed opportunities</div>
           </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Misuses / anti-patterns</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">8</div>
+            <div class="label">Modules one release wave behind</div>
           </div>
         </section>
 
@@ -917,14 +929,44 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            This audit covers three go-cqrs-lite families from the consumer
+            side: the <code>catalog/v4</code> documentation kit (builder,
+            schema reflection, seven exporters, docserver), the testing stack
+            (<code>systemscenario</code> v4.2.x, <code>scenario/v4</code>,
+            <code>testutil/v4</code>, <code>systemtest</code>,
+            <code>eventtest</code>), and the benchmarking stack
+            (<code>benchkit</code>, <code>cqrs-bench</code>,
+            <code>metaengine/bench</code>). It is the first deep dive on this
+            dependency for pbx-lens; the only earlier research report
+            (2026-10-12 http-stack adoption audit) covers the appkit UI trio
+            and does not overlap.
+          </p>
+          <p>
+            The verdict splits cleanly down the middle. The catalog core is
+            used superbly — the typed builder, reflection-derived schemas,
+            the flow/channel/external-system federation modeling, and BOTH
+            export trees (render + governance lint) are wired end-to-end into
+            the eventcatalog-hub federation. The testing stack is the mirror
+            image: pbx-lens hand-rolls, in one test file, exactly the job
+            systemscenario ships — and none of the four testing modules is
+            imported anywhere. The benchmarking stack is correctly unused:
+            benchkit's factories are the v1 <code>stack.Bundle</code> that
+            ADR-0123 removes in v5, and pbx-lens's four own
+            <code>go test -bench</code> benchmarks already own the app-level
+            lane that benchkit's own decision matrix assigns to that tool.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            The catalog story needs no rescue — it is the reference adoption
+            in the fleet. The one structural gap is testing:
+            <code>internal/app/app_test.go:32-76</code> hand-builds a
+            projection-host harness with a 20 ms poll loop and manual
+            close/reboot choreography that systemscenario replaces with
+            <code>System(t, ctx, domain, deploy)</code>, deterministic
+            <code>ThenQuery</code> polling, and depth specs for exactly the
+            invariants pbx-lens sells (idempotent re-ingest, tombstone
+            retirement, optimistic concurrency). Ride the 2026-10-24 pin wave
+            first (one sweep, eight modules), then adopt the harness.
           </div>
         </section>
 
@@ -932,25 +974,91 @@
         <section id="strengths">
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            Six of the twelve applicable capabilities are fully leveraged —
+            and they are the load-bearing ones. These build the baseline the
+            findings section improves on.
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>Typed catalog builder with reflection-derived schemas</strong>
+                <span>Every command and event is declared through the generic
+                <code>catalog.Command[T]</code>/<code>catalog.Event[T]</code>
+                surface, so message schemas derive from the domain structs and
+                can never drift; the test pins that schemas are non-nil
+                (internal/calls/catalog.go:24-86, catalog_test.go:105-107).</span>
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
+                <strong>Both export trees, per the library's two-exports doctrine</strong>
+                <span>The default composite-ID tree feeds the hub's renderer and
+                the <code>-plain</code> tree feeds <code>@eventcatalog/linter</code>
+                governance — exactly the split
+                <code>eventcatalog.WithPlainRefIDs</code> was built for
+                (cmd/pbx-lens/catalog.go:13-24, internal/cli/catalog.go:15-30,
+                .eventcatalog-hub.json:9-22).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Full federation modeling</strong>
+                <span>Domains, user-of-record, read-only data stores with
+                access modes, the webhook channel, and a seven-step call
+                lifecycle flow with an external Telnyx actor — the hub's
+                visualiser edges all resolve
+                (internal/calls/catalog.go:88-236).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Producer/consumer graph derivation rides for free</strong>
+                <span>Because every event carries <code>catalog.Sends</code>,
+                <code>Catalog.DeriveProducersConsumers</code> (which the
+                EventCatalog exporter runs automatically) enriches the union
+                with correct producer edges — zero extra work
+                (go-cqrs-lite catalog/coeffects.go:12-35).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The bare stream-key contract is honored</strong>
+                <span>Projection keys go through
+                <code>calls.RecordKey&nbsp;=&nbsp;StreamID.Get()</code>, matching
+                projectionadapter v4.6.x's bare <code>EventWithID.ID</code> —
+                the exact bug class go-cqrs-lite spent the 2026-10-17/23 waves
+                eradicating (AGENTS.md, docs/gotchas.md).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Right benchmarking lane, correctly chosen</strong>
+                <span>Four app-owned Go benchmarks cover the real hot paths —
+                concurrent poll, 10k export stream, 10k list, ETag hash cost
+                (cmd/pbx-lens/serve_test.go:777,
+                internal/web/export_consumer_test.go:145,
+                internal/web/perf_test.go:88,148). benchkit's own matrix
+                assigns exactly this lane to <code>go test -bench</code>.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Two footguns avoided, not stumbled into</strong>
+                <span>benchkit was not adopted despite the tempting name: its
+                factories return the v1 <code>stack.Bundle</code> that v5
+                deletes (benchkit/README.md:8-13), and its workloads are
+                library-owned synthetic types, not pluggable domain folds.
+                Likewise <code>systemtest</code> stays untouched — its README
+                says plainly it is "not a consumer import target"
+                (systemtest/README.md:27-29).</span>
               </div>
             </div>
           </div>

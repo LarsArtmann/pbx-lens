@@ -30,6 +30,12 @@ internal/web/.codegen-inputs.sha256
 *.wav
 *.pcm
 
+# Build/export scratch (the .eventcatalog-hub.json recipes write binaries and
+# export trees here; the auto-commit daemon committed them whenever a local
+# build ran — 28 MB binaries as tracked files, the go-structure-linter
+# "binary tracked in git" error). Generated, always rebuildable.
+/work/
+
 # >>> buildflow-managed (.gitignore) >>>
 # Auto-managed by buildflow. Edit outside these markers; this block is regenerated on `buildflow --fix`.
 
