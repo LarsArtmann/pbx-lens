@@ -106,9 +106,11 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /api/export.csv", web.exportCSV)
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
 	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
-	mux.HandleFunc("GET /app.css", stylesAsset.serve)
-	mux.HandleFunc("GET /static/htmx.min.js", htmxAsset.serve)
-	mux.HandleFunc("GET /favicon.svg", faviconAsset.serve)
+
+	for route, asset := range staticRoutes {
+		mux.HandleFunc(route, asset.serve)
+	}
+
 	mux.HandleFunc("GET /robots.txt", serveRobots)
 }
 
@@ -558,32 +560,30 @@ func (a staticAsset) serve(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(src)
 }
 
-// stylesAsset serves the Tailwind-built stylesheet (styles.css, produced by
-// the build pipeline). Source css files are never served.
-var stylesAsset = staticAsset{
-	path:        "static/styles.css",
-	contentType: "text/css; charset=utf-8",
-	missingMsg:  "styles not built (run the tailwind build step)",
-}
-
-// htmxAsset serves the self-hosted htmx runtime (R9): the polled regions
-// need it, and a LAN-bound ops tool must not reach a public CDN for its
-// JavaScript. Pinned at htmx.org 2.0.10 — the exact version templ-components
-// layout.DefaultPageProps pins upstream.
-var htmxAsset = staticAsset{
-	path:        "static/htmx.min.js",
-	contentType: "text/javascript; charset=utf-8",
-	missingMsg:  "htmx runtime missing from the build",
-}
-
-// faviconAsset serves the self-hosted lens mark: layout.Base pins
-// /favicon.svg upstream (DefaultPageProps), so without this route every
-// page load logs a 404 in the browser console. Self-hosted for the same
-// LAN-isolation reason as the htmx runtime — no CDN reach-out.
-var faviconAsset = staticAsset{
-	path:        "static/favicon.svg",
-	contentType: "image/svg+xml",
-	missingMsg:  "favicon missing from the build",
+// staticRoutes maps each embedded build artifact to its route: the
+// Tailwind-built stylesheet (/app.css, produced by the build pipeline —
+// source css files are never served), the self-hosted htmx runtime (R9: a
+// LAN-bound ops tool must not reach a public CDN for its JavaScript; pinned
+// at htmx.org 2.0.10, the exact version templ-components
+// layout.DefaultPageProps pins upstream), and the lens-mark favicon
+// (layout.Base pins /favicon.svg upstream, else every page load logs a 404
+// in the browser console).
+var staticRoutes = map[string]staticAsset{ //nolint:gochecknoglobals // declarative route table, read-only
+	"GET /app.css": {
+		path:        "static/styles.css",
+		contentType: "text/css; charset=utf-8",
+		missingMsg:  "styles not built (run the tailwind build step)",
+	},
+	"GET /static/htmx.min.js": {
+		path:        "static/htmx.min.js",
+		contentType: "text/javascript; charset=utf-8",
+		missingMsg:  "htmx runtime missing from the build",
+	},
+	"GET /favicon.svg": {
+		path:        "static/favicon.svg",
+		contentType: "image/svg+xml",
+		missingMsg:  "favicon missing from the build",
+	},
 }
 
 // ops serves the operator counters (R15 poller per-source ingest health,
