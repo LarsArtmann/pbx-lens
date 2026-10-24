@@ -69,8 +69,10 @@ What deliberately remains, and why:
 - **Test scaffolding (the suppressed/non-actionable buckets)**: per-test
   `OpenSystem`+`Fatalf` bootstraps, `ctx`/`t.Parallel`/fixture setup pairs,
   `newTestServer`/`openTestIndex` prologues. Self-contained tests are the
-  design (audit item 19/20); the one real full-stack repetition was already
-  extracted (`serveTestStack`, 2026-10-24).
+  design (audit item 19/20); real full-stack repetitions are extracted when
+  they appear (`serveTestStack` in internal/web, 2026-10-24; `openPollHarness`
+  in internal/cli, third pass — a verbatim 27-line fixture block invisible to
+  `check` because test files are auto-excluded, yet a real drift risk).
 
 If a group's code changes shape, its hash changes and the lane goes red even
 though the count is unchanged — that is the desired strictness: a verdict
@@ -88,3 +90,10 @@ change deserves eyes, then a reviewed refresh.
 - 2026-10-24 (second pass): audited the suppressed bucket, extracted the four
   hidden production clone groups above, recalibrated with `--min-lines 2` —
   baseline now records zero groups; the gate means "no clones accepted."
+- 2026-10-24 (third pass): a t-10 `--show-suppressed` audit surfaced a real
+  27-line test clone in internal/cli (identical system + webhook-fixture +
+  index harness copied across both poll-pass tests) — invisible to the gate
+  (test files auto-excluded) but a genuine drift risk. Extracted as
+  `openPollHarness` (+ `webhookHangupLine`), fixture bytes unchanged; the
+  third inline literal in the counters test moved onto the shared
+  `webhookPollLine` helper. Gate verified still at zero groups.

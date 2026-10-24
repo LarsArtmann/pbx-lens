@@ -205,6 +205,7 @@ func openPollHarness(t *testing.T) (context.Context, *system.System, *search.Ind
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 
 	start := time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC)
+
 	line := webhookPollLine("poll-1", start, "+17287289311", "+15555550123") + "\n" +
 		webhookHangupLine("poll-1", start.Add(26*time.Second))
 	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
@@ -235,7 +236,8 @@ func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
 
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 
-	line := webhookPollLine("ops-1", time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC), "+17287289311", "+15555550123") + "\n"
+	line := webhookPollLine("ops-1", time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+		"+17287289311", "+15555550123") + "\n"
 	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
 		t.Fatalf("write webhook log: %v", err)
 	}
