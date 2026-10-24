@@ -26,7 +26,8 @@ func TestBuildCatalog(t *testing.T) {
 
 	testService(t, cat.Services[0])
 	testDomain(t, cat)
-	testDataStore(t, cat)
+	testDataStores(t, cat)
+	testChannel(t, cat)
 	testFlow(t, cat)
 
 	if len(cat.Users) != 1 || cat.Users[0].ID != "lars" {
@@ -47,6 +48,14 @@ func testService(t *testing.T, svc catalog.Service) {
 
 	if svc.Summary == "" {
 		t.Error("Service.Summary is empty")
+	}
+
+	if !slices.Equal(svc.ReadsFrom, []catalog.DataStoreID{"freeswitch", "telnyx"}) {
+		t.Errorf("Service.ReadsFrom = %v, want [freeswitch telnyx]", svc.ReadsFrom)
+	}
+
+	if !slices.Equal(svc.WritesTo, []catalog.DataStoreID{"call-index"}) {
+		t.Errorf("Service.WritesTo = %v, want [call-index]", svc.WritesTo)
 	}
 
 	cases := []struct {
@@ -128,15 +137,58 @@ func testDomain(t *testing.T, cat *catalog.Catalog) {
 	}
 }
 
-func testDataStore(t *testing.T, cat *catalog.Catalog) {
+func testDataStores(t *testing.T, cat *catalog.Catalog) {
 	t.Helper()
 
-	if len(cat.DataStores) != 1 {
-		t.Fatalf("len(DataStores) = %d, want 1", len(cat.DataStores))
+	wantIDs := []string{"call-index", "freeswitch", "telnyx"}
+	if len(cat.DataStores) != len(wantIDs) {
+		t.Fatalf("len(DataStores) = %d, want %d", len(cat.DataStores), len(wantIDs))
 	}
 
-	if cat.DataStores[0].ID != "call-index" {
-		t.Errorf("DataStores[0].ID = %q, want call-index", cat.DataStores[0].ID)
+	for i, want := range wantIDs {
+		ds := cat.DataStores[i]
+
+		if string(ds.ID) != want {
+			t.Errorf("DataStores[%d].ID = %q, want %q", i, ds.ID, want)
+		}
+
+		if !slices.Equal(ds.Owners, []string{"lars"}) {
+			t.Errorf("DataStores[%d] (%s).Owners = %v, want [lars]", i, ds.ID, ds.Owners)
+		}
+
+		if string(ds.Version) != CatalogVersion {
+			t.Errorf("DataStores[%d] (%s).Version = %q, want %q", i, ds.ID, ds.Version, CatalogVersion)
+		}
+
+		if ds.Summary == "" {
+			t.Errorf("DataStores[%d] (%s) has an empty summary", i, ds.ID)
+		}
+	}
+}
+
+func testChannel(t *testing.T, cat *catalog.Catalog) {
+	t.Helper()
+
+	if len(cat.Channels) != 1 {
+		t.Fatalf("len(Channels) = %d, want 1", len(cat.Channels))
+	}
+
+	channel := cat.Channels[0]
+
+	if channel.ID != "pbx-receiver-webhook" {
+		t.Errorf("Channel.ID = %q, want pbx-receiver-webhook", channel.ID)
+	}
+
+	if !slices.Equal(channel.Owners, []string{"lars"}) {
+		t.Errorf("Channel.Owners = %v, want [lars]", channel.Owners)
+	}
+
+	if string(channel.Version) != CatalogVersion {
+		t.Errorf("Channel.Version = %q, want %q", channel.Version, CatalogVersion)
+	}
+
+	if channel.Summary == "" {
+		t.Error("Channel.Summary is empty")
 	}
 }
 

@@ -92,7 +92,17 @@ func BuildCatalog() *catalog.Catalog {
 		Name:  "Lars Artmann",
 		Email: "git@lars.software",
 	})
-	builder.ConfigureService(catalogServiceID, catalog.ServiceOwners("lars"))
+
+	// Read-only over every source system; the disposable index is the
+	// only write target. These container links are the visualiser edges
+	// that make the pbx.artmann.tech lineage visible (FreeSWITCH and
+	// Telnyx are modeled as external containers, not services — the
+	// infra repos themselves export nothing).
+	builder.ConfigureService(catalogServiceID,
+		catalog.ServiceOwners("lars"),
+		catalog.ServiceReadsFrom("freeswitch", "telnyx"),
+		catalog.ServiceWritesTo("call-index"),
+	)
 
 	builder.AddDomain(
 		"telephony", "Telephony", CatalogVersion,
@@ -110,6 +120,51 @@ func BuildCatalog() *catalog.Catalog {
 		Technology:    "sqlite",
 		Summary: "Disposable, always re-derivable call index (event store + read model). " +
 			"Read-only over every source; no write-back path exists.",
+	})
+
+	// The source systems the lens reads. External containers, so the
+	// visualiser shows the five-project lineage without the infra repos
+	// exporting anything: nix-international-telephony runs FreeSWITCH,
+	// Telnyx is the carrier, and the webhook feed below is bridged by
+	// pbx-artmann's receiver.
+	builder.AddDataStore(catalog.DataStore{
+		ID:            "freeswitch",
+		Owners:        []string{"lars"},
+		Name:          "FreeSWITCH",
+		Version:       CatalogVersion,
+		ContainerType: "external-system",
+		Technology:    "freeswitch",
+		AccessMode:    "read-only",
+		Authoritative: true,
+		Summary: "The pbx.artmann.tech softswitch (nix-international-telephony): SIP " +
+			"registrations, call routing, and Master.csv CDRs — the system of record " +
+			"for which calls happened.",
+	})
+	builder.AddDataStore(catalog.DataStore{
+		ID:            "telnyx",
+		Owners:        []string{"lars"},
+		Name:          "Telnyx",
+		Version:       CatalogVersion,
+		ContainerType: "external-system",
+		Technology:    "telnyx-api",
+		AccessMode:    "read-only",
+		Summary: "Carrier APIs (conversations, recordings, messaging): thread and media " +
+			"metadata pulled read-only by the lens; inbound events arrive through the " +
+			"receiver webhook feed.",
+	})
+
+	// The receiver webhook feed: the stack's webhook bridge writes
+	// inbound call/message notifications as JSONL and the lens ingests
+	// them as observations. A channel — transport, not an actor — so it
+	// documents the feed without pretending to be a service.
+	builder.AddChannel(catalog.Channel{
+		ID:      "pbx-receiver-webhook",
+		Name:    "PBX Receiver Webhook Feed",
+		Version: CatalogVersion,
+		Summary: "Inbound call and message notifications from the pbx.artmann.tech " +
+			"webhook receiver, landed as JSONL and ingested read-only by the lens.",
+		Protocols: []catalog.Protocol{"http"},
+		Owners:    []string{"lars"},
 	})
 
 	// The call lifecycle as a first-class flow — the aggregate's visible
