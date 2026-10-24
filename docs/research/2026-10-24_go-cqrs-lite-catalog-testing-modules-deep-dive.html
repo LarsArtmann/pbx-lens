@@ -975,8 +975,10 @@
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
             Six of the twelve applicable capabilities are fully leveraged —
-            and they are the load-bearing ones. These build the baseline the
-            findings section improves on.
+            and they are the load-bearing ones. The final two entries are
+            not scored rows but earn their place by avoidance: the right
+            benchmarking lane, and two footguns never stumbled into. These
+            build the baseline the findings section improves on.
           </p>
 
           <div class="strengths">
@@ -1067,112 +1069,582 @@
         <!-- Findings -->
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
-
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
-            <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
-            </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
-            <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
-            </div>
-          </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
-            <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
-            </p>
-          </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
-            <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
-            </p>
-          </div>
-        </section>
-
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            Seven findings, ordered by impact. Five carry a Missed
+            Opportunity grade — four unscored-otherwise rows plus the
+            release-wave currency finding (F2) — and two are partially-used
+            notes. Zero anti-patterns: nothing in pbx-lens uses these
+            modules against their grain.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
+
+          <!-- F1 -->
+          <div class="issue issue-critical" id="missed-systemscenario">
+            <span class="severity severity-critical"
+              >Missed Opportunity &middot; High impact</span
+            >
+            <h3>
+              systemscenario unused — app_test.go hand-rolls its exact job
+            </h3>
+            <div class="where">
+              internal/app/app_test.go:32-138 &middot; the only test file that
+              boots the system
+            </div>
+            <p>
+              systemscenario (ADR-0153, systemscenario/v4.2.1) boots the SAME
+              <code>DomainConfig</code>/<code>DeploymentConfig</code> the
+              production binary uses and drives Given/When/Then chains with a
+              frozen <code>ManualClock</code> — its stated property is that
+              "harness tests cannot drift from production wiring; there is
+              nothing to re-declare" (systemscenario/README.md, doc.go:14-16).
+              pbx-lens instead hand-builds the harness in app_test.go:
+              <code>startProjections</code> (lines 32-52) manually
+              goroutines, cancels, and joins the projection host;
+              <code>awaitView</code> (lines 54-76) polls
+              <code>metaengine.NewReader.Get</code> in a 20 ms sleep loop with
+              a blind 5 s deadline; the replay test (lines 117-138) manually
+              closes, re-boots, and re-wires a second system. That is four
+              hand-rolled responsibilities the library owns — and the poll
+              loop reports only "did not converge", while
+              <code>ThenQuery</code> reports the LAST probe outcome plus the
+              last query error, distinguishing a stalled projection from
+              wrong data (README "Timeout honesty").
+            </p>
+            <p>
+              The depth specs systemscenario v4.2.0 added map one-to-one onto
+              pbx-lens's selling points: the idempotency spec (same command
+              twice → event exactly once, redelivery a success no-op) is the
+              content-hash re-ingest contract; <code>ThenQueryEventuallyFails</code>
+              is the retention-tombstone story (a row that vanishes once the
+              projection catches up); the OCC spec pins
+              <code>event.ErrVersionConflict</code> through the Conflict
+              family; <code>DelayedDriver</code> adds journal-latency chaos;
+              <code>SubscribeSSE</code> asserts the browser wire path. A full
+              scenario costs ~1.2-1.8 ms and ~9 MB (BenchmarkScenarioBoot,
+              README "Cost of a scenario") — hundreds of scenarios stay in
+              seconds.
+            </p>
+            <pre><code><span class="tok-keyword">func</span> <span class="tok-function">TestCallLifecycle</span>(t *testing.T) {
+    ctx := context.Background()
+    sc := systemscenario.<span class="tok-function">System</span>(t, ctx, domainConfig(), systemscenario.<span class="tok-function">SQLite</span>(t))
+
+    sc.<span class="tok-function">Given</span>().<span class="tok-function">Command</span>(mustRecord(sampleObservation())).
+        <span class="tok-function">When</span>(sameObservationAgain).   <span class="tok-comment">// content-hash replay</span>
+        <span class="tok-function">ThenNoEvents</span>().               <span class="tok-comment">// idempotent re-ingest</span>
+        <span class="tok-function">ThenQuery</span>(viewQuery(sc, ctx), expectedCallView)
 }</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Add <code>go get github.com/larsartmann/go-cqrs-lite/systemscenario/v4</code>
+              (test-only import; rides the already-approved go-cqrs-lite
+              family) and port app_test.go's three helpers onto it. Keep the
+              SQLite-leg replay test — <code>systemscenario.SQLite(t)</code>
+              is file-backed under <code>t.TempDir()</code> precisely so
+              reopen-style assertions stay honest. Caveat: the module is
+              marked Experimental (rides system's status, systemscenario/README.md
+              "Status") — acceptable for tests, revisit at v5.
+            </div>
+          </div>
+
+          <!-- F2 -->
+          <div class="issue issue-important" id="version-wave">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium-high impact &middot; trivial
+              ease</span
+            >
+            <h3>Eight modules are one release wave behind</h3>
+            <div class="where">go.mod:9-19 vs go-cqrs-lite tags of 2026-10-23/24</div>
+            <p>
+              The 2026-10-24 "disk-truth tail wave" shipped 14 tags; pbx-lens
+              pins the graph as of 2026-10-16. The gap is one minor plus
+              patches, all non-breaking, and it carries capabilities this
+              audit scores as missed: <code>catalog/v4.10.0</code> is where
+              <code>catalog/architecture</code> (the self-contained HTML
+              reference, ADR-0159/0160) first appears — verified via
+              <code>git ls-tree catalog/v4.9.0</code> (absent) vs
+              <code>git tag --contains</code> (v4.10.0). Also in the wave:
+              metaengine v4.20.0 turns layout-plan stamping on by default, so
+              a column-type drift in <code>call_views</code> now WARNs at boot
+              instead of applying silently, and fixes a CatchUpEngine
+              double-fold under concurrent applies; system v4.15.2-4 completes
+              the bare stream-key migration pbx-lens already coded for.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              One sweep: <code>go get</code> the eight tags (catalog v4.10.0,
+              system v4.15.4, metaengine v4.20.0, sqliteengine v4.6.0, event
+              v4.15.2, id v4.7.3, schema v4.7.1, projectionadapter v4.6.2),
+              then <code>nix run .#update-vendor-hash</code> on a clean tree,
+              then the full gate. Verify <code>calls.RecordKey</code> lookups
+              against the bumped adapter — the co-released
+              projectionadapter/system pair is the pin graph this repo was
+              bitten by once before (docs/gotchas.md).
+            </div>
+          </div>
+
+          <!-- F3 -->
+          <div class="issue issue-important" id="missed-queries">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Medium impact</span
+            >
+            <h3>catalog.Query unused — the read surface is absent from the hub</h3>
+            <div class="where">
+              internal/calls/catalog.go:32-85 &middot; declares 3 commands +
+              4 events, 0 queries
+            </div>
+            <p>
+              The builder supports
+              <code>catalog.Query[T](id)</code> as a first-class message kind
+              (catalog/README.md:98), and
+              <code>validateService</code> lint-checks queries alongside
+              commands and events (catalog/validate.go:117-122). pbx-lens's
+              catalog declares the write-side vocabulary (record, enrich,
+              retire) and the event stream, but none of its read queries —
+              search, dashboard aggregates, the detail join — even though
+              those are real reads over the read model (five
+              <code>metaengine.NewReader[CallView]</code> scan sites in
+              internal/web/queries.go, plus the
+              <code>metaengine.Query[callLookup, CallView]</code> at
+              internal/calls/projection.go:94). The hub union therefore
+              documents
+              half the service: a consumer sees what pbx-lens records but not
+              what it answers. Since the commands are equally internal (this
+              is a read-only lens with no inter-service callers), the
+              inconsistency is one of completeness, not of architecture.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Declare the aggregate's query vocabulary the same way:
+              <code>catalog.Query[SearchCallsQuery](catalog.MessageID("call.search"), …)</code>
+              etc. in BuildCatalog, keeping id parity with the query names in
+              internal/web/queries.go.
+            </div>
+          </div>
+
+          <!-- F4 -->
+          <div class="issue issue-important" id="missed-scenario-dsl">
+            <span class="severity severity-important"
+              >Missed Opportunity &middot; Low-medium impact</span
+            >
+            <h3>scenario/v4 decider DSL unused — decide variants asserted by hand</h3>
+            <div class="where">
+              internal/calls/commands_test.go, domain_test.go &middot; plain
+              stdlib asserts
+            </div>
+            <p>
+              scenario/v4.4.3 is the functional-core tier: pure
+              Given/When/Then over a decider with zero infrastructure —
+              <code>scenario.Given[Cmd,State](t, fold, init, events…)</code>,
+              order-sensitive <code>Then(types…)</code>,
+              <code>ThenError</code>, <code>ThenState</code>, plus
+              <code>GivenProjection</code> folds (scenario/README.md). pbx-lens
+              tests its decide functions (Record/Enrich/Retire, supersede
+              paths, the tombstone) with hand-written arrange-act-assert
+              blocks per case. The DSL's value here is the vacuous guard (a
+              scenario that never asserts fails) and refold-from-scratch
+              isolation between assertions — both eliminate real
+              test-smell classes in growing decide-variant suites. The richer
+              event-corrected/supersede matrix is the natural first target.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              If systemscenario (F1) is adopted, adopt scenario/v4 in the same
+              sweep for the decider-pure loops — it is that module's stated
+              fast-path companion ("use scenario for fast decider-pure unit
+              loops", systemscenario/README.md).
+            </div>
+          </div>
+
+          <!-- F5 -->
+          <div class="issue issue-important" id="bootstrap-files">
+            <span class="severity severity-important"
+              >Partially Used &middot; Low impact</span
+            >
+            <h3>
+              WithSkipBootstrapFiles not passed — the render export re-emits
+              hub-owned files
+            </h3>
+            <div class="where">
+              internal/cli/catalog.go:15-30 &middot; the CLI has no
+              skip-bootstrap switch
+            </div>
+            <p>
+              <code>eventcatalog.WithSkipBootstrapFiles()</code>
+              (catalog/eventcatalog/options.go:7-21) exists exactly for
+              per-service exports into a federation hub: the hub keeps its
+              OWN <code>eventcatalog.config.js</code>/<code>package.json</code>,
+              and sources re-emitting them create first-wins merge hazards.
+              The fleet norm is skip-at-source — the mesh-demo source passes
+              <code>-skip-bootstrap</code> in the hub's own job script
+              (eventcatalog-hub/work/source-jobs.sh:24,29). pbx-lens's export
+              cannot pass the option at all: RenderCatalog only threads
+              <code>plain</code>. No live defect — verified in the hub's
+              merge.py:7-9,877-889, bootstrap files are NEVER copied and a
+              test asserts the leak cannot happen — but pbx-lens deviates
+              from the fleet norm and relies on the hub's defense.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Add a <code>-skip-bootstrap</code> flag (default on for hub
+              exports) to <code>catalogCmd</code> that appends
+              <code>eventcatalog.WithSkipBootstrapFiles()</code> to the
+              exporter options in RenderCatalog.
+            </div>
+          </div>
+
+          <!-- F6 -->
+          <div class="issue issue-important" id="catalog-validate">
+            <span class="severity severity-important"
+              >Partially Used &middot; Low impact</span
+            >
+            <h3>
+              Catalog.Validate() unused — the test hand-rolls its duplicate-ID
+              check
+            </h3>
+            <div class="where">
+              internal/calls/catalog_test.go:113-119 vs catalog/validate.go:25-74
+            </div>
+            <p>
+              The library ships <code>(*Catalog).Validate() []Violation</code>
+              covering empty titles/versions, empty service IDs, message
+              ID-or-name rules, duplicate message IDs across the whole
+              catalog, and operation path/method consistency. The pbx-lens
+              test re-implements one slice of that — the sorted-ids duplicate
+              scan (catalog_test.go:113-119) — by hand, while the rest of
+              the test asserts domain-owned facts (directions, owners,
+              reads-from/writes-to edges, flow step count) that Validate
+              deliberately does not cover. The hand-rolled half is pure
+              duplication; the domain half is exactly right.
+            </p>
+            <pre><code><span class="tok-comment">// after the structural asserts:</span>
+<span class="tok-keyword">if</span> viols := cat.<span class="tok-function">Validate</span>(); <span class="tok-function">len</span>(viols) &gt; <span class="tok-number">0</span> {
+    t.Fatalf(<span class="tok-string">"catalog invalid: %v"</span>, viols)
+}</code></pre>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Replace lines 113-119 with the <code>cat.Validate()</code> call
+              above; keep every domain-specific assert as-is. Also fixes the
+              gocognit&gt;25 warning on <code>testService</code> by shrinking it.
+            </div>
+          </div>
+
+          <!-- F7 -->
+          <div class="issue issue-nice" id="architecture-reference">
+            <span class="severity severity-nice"
+              >Missed Opportunity &middot; Low impact &middot; blocked on F2</span
+            >
+            <h3>
+              catalog/architecture reference unexported (needs the v4.10.0
+              bump)
+            </h3>
+            <div class="where">not used anywhere &middot; capability ships in catalog v4.10.0</div>
+            <p>
+              <code>catalog/architecture</code> renders the catalog as ONE
+              self-contained .html file — sidebar, per-resource sections,
+              Ctrl/Cmd-K search, light/dark, zero dependencies beyond stdlib,
+              no Node toolchain (catalog/architecture/doc.go:1-23); ADR-0160
+              selections cut redacted slices via
+              <code>WithInclude</code>/<code>WithExclude</code>, and
+              docserver streams the same bytes at
+              <code>/docs/architecture</code>. For pbx-lens this would put a
+              attachable, email-able architecture reference one flag away —
+              useful for audits and the planned golvie story. Honest weight:
+              low. The federation hub already renders the union for browsers;
+              this adds a self-contained artifact, not a capability the hub
+              lacks.
+            </p>
+            <pre><code>exp := architecture.<span class="tok-function">NewExporter</span>(architecture.<span class="tok-function">WithTitle</span>(<span class="tok-string">"PBX-Lens"</span>))
+<span class="tok-function">_</span> = exp.<span class="tok-function">ExportFile</span>(calls.<span class="tok-function">BuildCatalog</span>(), <span class="tok-string">"docs/architecture.html"</span>)</code></pre>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              After the F2 pin bump, add an <code>-architecture</code> switch
+              to the catalog command writing the single file next to the
+              eventcatalog tree.
+            </div>
           </div>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+        <!-- Version currency -->
+        <section id="versions">
+          <h2><span class="num">02</span>Version currency</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            Pinned graph (go.mod:9-19) vs the local go-cqrs-lite checkout
+            (id/v4.7.3-103-gb66800e51; tags verified 2026-10-24). Nothing
+            breaking is in the gap; the wave is feature work and hardening.
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Module</th>
+                <th>Pinned → latest</th>
+                <th>What the gap carries</th>
+                <th>Relevance</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>catalog</td>
+                <td>v4.9.0 → v4.10.0</td>
+                <td>
+                  <code>catalog/architecture</code> reference exporter +
+                  docserver <code>/docs/architecture</code> (ADR-0159/0160)
+                </td>
+                <td class="yes">High — unlocks F7</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>metaengine</td>
+                <td>v4.19.0 → v4.20.0</td>
+                <td>
+                  Layout-plan stamping default-ON (schema-type-drift WARN at
+                  boot); CatchUpEngine double-fold fix under concurrent
+                  applies
+                </td>
+                <td class="yes">Medium — guards call_views drift</td>
+              </tr>
+              <tr>
+                <td>system</td>
+                <td>v4.15.1 → v4.15.4</td>
+                <td>
+                  Bare stream keys + sticky legacy resolution pinned;
+                  typed-decoder projection fixes
+                </td>
+                <td class="yes">Medium — pbx-lens already codes bare keys</td>
+              </tr>
+              <tr>
+                <td>metaengine/sqliteengine</td>
+                <td>v4.5.3 → v4.6.0</td>
+                <td>Rides the wave (typed WAL hardening line)</td>
+                <td>Low-medium</td>
+              </tr>
+              <tr>
+                <td>event / id / schema / projectionadapter</td>
+                <td>
+                  v4.15.1/4.7.2/4.7.0/4.6.1 → v4.15.2/4.7.3/4.7.1/4.6.2
+                </td>
+                <td>Patch rides; projectionadapter co-released with system</td>
+                <td>Low — but keep the co-release pair aligned</td>
+              </tr>
+              <tr>
+                <td>systemscenario</td>
+                <td>not pinned → v4.2.1</td>
+                <td>
+                  The BDD harness itself (depth specs, payload-hash goldens,
+                  SSE assertions)
+                </td>
+                <td class="yes">High — F1</td>
+              </tr>
+              <tr>
+                <td>benchkit</td>
+                <td>not pinned → v4.7.0</td>
+                <td>
+                  v1 <code>stack.Bundle</code> factories, scheduled for v5
+                  removal — correctly not adopted
+                </td>
+                <td class="no">None by design</td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Opportunities -->
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities</h2>
+          <p>
+            Pareto-ranked by impact × ease. The first two items deliver most
+            of the value; items 3-5 are an afternoon together.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>
+                  Ride the 2026-10-24 pin wave (eight modules, one sweep,
+                  update-vendor-hash on a clean tree)
+                </td>
+                <td class="yes">4</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">20</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>
+                  Adopt systemscenario for the app-level suite; port the
+                  hand-rolled harness; add idempotency + tombstone depth specs
+                </td>
+                <td class="yes">5</td>
+                <td>3</td>
+                <td><span class="highlight">15</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Swap the hand-rolled duplicate-ID check for cat.Validate()</td>
+                <td>2</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">10</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Declare catalog.Query messages for the read surface</td>
+                <td>3</td>
+                <td>3</td>
+                <td><span class="highlight">9</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Add -skip-bootstrap to the catalog command (fleet norm)</td>
+                <td>2</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">8</span></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>
+                  Export the architecture reference HTML (after opportunity 1)
+                </td>
+                <td>2</td>
+                <td>3</td>
+                <td><span class="highlight">6</span></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>scenario/v4 for decide-variant unit loops</td>
+                <td>2</td>
+                <td>3</td>
+                <td><span class="highlight">6</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Target state -->
+        <section id="target">
+          <h2><span class="num">04</span>What the target state looks like</h2>
+          <p>
+            If opportunities 1-4 land, the app-level test suite reads as
+            behavior specs over the real composition root — no goroutine
+            choreography, no sleep loops, and the suite's fixtures are
+            compiled from the same DomainConfig the binary boots:
+          </p>
+          <pre><code><span class="tok-comment">// one-time: lift the DomainConfig literal out of app.New into an</span>
+<span class="tok-comment">// exported helper so tests and the binary share it verbatim</span>
+<span class="tok-keyword">func</span> <span class="tok-function">TestRecordIsIdempotentByContentHash</span>(t *testing.T) {
+    sc := systemscenario.<span class="tok-function">System</span>(t, context.Background(),
+        app.<span class="tok-function">DomainConfig</span>(), systemscenario.<span class="tok-function">SQLite</span>(t))
+
+    sc.<span class="tok-function">Given</span>().<span class="tok-function">Command</span>(mustRecord(sampleObservation())).
+        <span class="tok-function">When</span>(mustRecord(sampleObservation())).  <span class="tok-comment">// same snapshot, re-ingested</span>
+        <span class="tok-function">ThenNoEvents</span>().                         <span class="tok-comment">// replay writes nothing</span>
+        <span class="tok-function">ThenQuery</span>(viewQuery(sc, ctx), expectedView)  <span class="tok-comment">// poll, honest timeout report</span>
+}
+
+<span class="tok-keyword">func</span> <span class="tok-function">TestRetireTombstonesTheView</span>(t *testing.T) {
+    sc := systemscenario.<span class="tok-function">System</span>(t, context.Background(), app.DomainConfig(), systemscenario.<span class="tok-function">Memory</span>())
+
+    sc.<span class="tok-function">Given</span>().<span class="tok-function">Command</span>(mustRecord(sampleObservation())).
+        <span class="tok-function">When</span>(retireCmd(<span class="tok-string">"retention:age"</span>)).
+        <span class="tok-function">Then</span>(<span class="tok-string">"call.retired"</span>).
+        <span class="tok-function">ThenQueryEventuallyFails</span>(viewQuery(sc, ctx))  <span class="tok-comment">// row vanishes when projection catches up</span>
+}</code></pre>
+          <div class="callout callout-teal">
+            <strong>This is the target</strong>
+            The harness deletes ~45 lines of lifecycle plumbing
+            (startProjections, awaitView, the manual reboot), converts the
+            20 ms poll into the library's honest-timeout assertion, and makes
+            each pbx-lens invariant a named, readable spec. The catalog side
+            of the house is already at this standard — nothing to change
+            there beyond opportunities 3-5.
+          </div>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">05</span>Appendix — capability inventory &amp; verification</h2>
+          <p>
+            The full 24-row inventory behind the score. Grading: Fully
+            Leveraged = 1, Partially Used = 0.5, Missed = 0, Misused = 0.
+            Score = round(100 × (6×1 + 2×0.5) / 12) =
+            <span class="highlight">58/100</span> (moderate band, 50-69).
+            Twelve of 24 rows are Not Applicable — each with its reason; an
+            unexplained N/A would inflate the score.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability (source)</th>
+                <th>Grade</th>
+                <th>Evidence / N-A reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Typed builder: services, commands, events (catalog builder)</td><td class="yes">Fully</td><td>internal/calls/catalog.go:24-86</td></tr>
+              <tr><td>2</td><td>Schema reflection auto-derivation (catalog/schema)</td><td class="yes">Fully</td><td>schema pinned non-nil, catalog_test.go:105-107</td></tr>
+              <tr><td>3</td><td>Flow + external-actor modeling (catalog flows)</td><td class="yes">Fully</td><td>catalog.go:174-236, 7 steps asserted</td></tr>
+              <tr><td>4</td><td>DataStores / channels / access modes (catalog resources)</td><td class="yes">Fully</td><td>catalog.go:114-168</td></tr>
+              <tr><td>5</td><td>Owners + DeriveProducersConsumers graph (catalog/coeffects.go:12)</td><td class="yes">Fully</td><td>rides catalog.Sends markers</td></tr>
+              <tr><td>6</td><td>Governance export via WithPlainRefIDs (eventcatalog/options.go:23)</td><td class="yes">Fully</td><td>cli flag + .eventcatalog-hub.json lint tree</td></tr>
+              <tr><td>7</td><td>WithSkipBootstrapFiles at source (options.go:7)</td><td>Partial</td><td>finding F5; hub defends (merge.py:877-889)</td></tr>
+              <tr><td>8</td><td>Catalog.Validate() in tests (validate.go:25)</td><td>Partial</td><td>finding F6; dup-ID check hand-rolled</td></tr>
+              <tr><td>9</td><td>catalog.Query message kind (README:98)</td><td class="no">Missed</td><td>finding F3; 0 queries declared</td></tr>
+              <tr><td>10</td><td>architecture reference exporter (v4.10.0, ADR-0159/0160)</td><td class="no">Missed</td><td>finding F7; blocked on pin bump</td></tr>
+              <tr><td>11</td><td>asyncapi exporter</td><td>N/A</td><td>no external message consumer; hub renders MDX</td></tr>
+              <tr><td>12</td><td>openapi exporter + REST operations</td><td>N/A</td><td>read API is UI-only behind htpasswd, no API contract consumers</td></tr>
+              <tr><td>13</td><td>d2 diagram exporter</td><td>N/A</td><td>hub visualiser covers graphs</td></tr>
+              <tr><td>14</td><td>docserver docs UI</td><td>N/A</td><td>hub serves the docs site</td></tr>
+              <tr><td>15</td><td>simple builder facade</td><td>N/A</td><td>full builder already canonical; cqrs-lint F002 accepts it</td></tr>
+              <tr><td>16</td><td>httptyped / huma REST declarations</td><td>N/A</td><td>no REST operations declared</td></tr>
+              <tr><td>17</td><td>Registry.MarkDemo</td><td>N/A</td><td>production content, not demo</td></tr>
+              <tr><td>18</td><td>systemscenario BDD harness (ADR-0153)</td><td class="no">Missed</td><td>finding F1; hand-rolled in app_test.go</td></tr>
+              <tr><td>19</td><td>scenario/v4 decider-pure DSL</td><td class="no">Missed</td><td>finding F4; decide variants asserted by hand</td></tr>
+              <tr><td>20</td><td>testutil rapidgen property generators (doc.go:39-46)</td><td>N/A</td><td>generators cover CQRS primitives, not domain values; domain properties belong to systemscenario's oracle pattern</td></tr>
+              <tr><td>21</td><td>testutil NewCmd / NoopCommandHandler</td><td>N/A</td><td>typed command ctors differ from BasicCommand shape</td></tr>
+              <tr><td>22</td><td>event/v4/eventtest journal fakes</td><td>N/A</td><td>no hand-wired journals; tests boot the system or stay pure</td></tr>
+              <tr><td>23</td><td>systemtest suites</td><td>N/A</td><td>"not a consumer import target" (systemtest/README.md:27-29)</td></tr>
+              <tr><td>24</td><td>benchkit / cqrs-bench / metaengine-bench</td><td>N/A</td><td>v1 stack.Bundle factories (v5-removed), synthetic workloads; app lane owned by 4 go benchmarks</td></tr>
+            </tbody>
+          </table>
+
+          <h3 style="margin-top: 2rem">How to verify</h3>
+          <p>Re-derive every claim from the repo:</p>
+          <pre><code><span class="tok-comment"># 1. The score. Count appendix rows (24), applicable rows (12),</span>
+<span class="tok-comment">#    grades as printed: 6×1 + 2×0.5 + 4×0 → 58/100.</span>
+
+<span class="tok-comment"># 2. The testing modules are unimported (only go.sum hash lines hit):</span>
+rg -n <span class="tok-string">"systemscenario|scenario/v4|testutil/v4|benchkit"</span> --type go .
+
+<span class="tok-comment"># 3. The hand-rolled harness finding:</span>
+sed -n <span class="tok-string">'32,76p'</span> internal/app/app_test.go
+
+<span class="tok-comment"># 4. Catalog usage surface:</span>
+rg -n <span class="tok-string">'catalog\.'</span> internal/calls/catalog.go internal/cli/catalog.go
+
+<span class="tok-comment"># 5. Pins vs latest tags (local checkout /home/lars/projects/go-cqrs-lite):</span>
+sed -n <span class="tok-string">'9,19p'</span> go.mod
+git -C ../go-cqrs-lite tag --list <span class="tok-string">'catalog/v4*'</span> | sort -V | tail -1
+
+<span class="tok-comment"># 6. architecture ships in v4.10.0, not the pinned v4.9.0:</span>
+git -C ../go-cqrs-lite ls-tree catalog/v4.9.0 --name-only catalog/ | grep architecture   <span class="tok-comment"># empty</span>
+git -C ../go-cqrs-lite tag --contains ec4547144 --list <span class="tok-string">'catalog/*'</span>   <span class="tok-comment"># catalog/v4.10.0</span>
+
+<span class="tok-comment"># 7. The hub's bootstrap-file defense:</span>
+sed -n <span class="tok-string">'1,9p;870,890p'</span> ../eventcatalog-hub/merge.py</code></pre>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-10-24 &middot; Audited against go-cqrs-lite
+            checkout id/v4.7.3-103-gb66800e51 (latest tags 2026-10-24) and
+            pbx-lens pins of go.mod &middot; All claims verified against
+            source; verification commands in the appendix
           </p>
         </footer>
       </main>
