@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -27,34 +28,7 @@ func (l *pollTestLog) printf(msg string, args ...any) {
 }
 
 func TestPollOnceIngestsAndRebuildsSearch(t *testing.T) {
-	ctx := context.Background()
-
-	sys, cleanup, err := OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
-
-	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
-
-	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
-		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
-		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
-		"\n" +
-		`{"received_at":"2026-10-10T09:00:26Z","remote":"198.51.100.7","body":{"data":` +
-		`{"event_type":"call.hangup","occurred_at":"2026-10-10T09:00:26Z","payload":` +
-		`{"call_control_id":"poll-1","hangup_cause":"normal_clearing"}}}}`
-	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
-		t.Fatalf("write webhook log: %v", err)
-	}
-
-	index, err := search.Open(ctx, filepath.Join(t.TempDir(), "poll.db"))
-	if err != nil {
-		t.Fatalf("search.Open: %v", err)
-	}
-
-	t.Cleanup(func() { _ = index.Close() })
+	ctx, sys, index, webhookLog := openPollHarness(t)
 
 	logs := &pollTestLog{}
 	PollOnce(ctx, sys, index, PollConfig{WebhookLog: webhookLog}, logs.printf)
@@ -74,34 +48,7 @@ func TestPollOnceIngestsAndRebuildsSearch(t *testing.T) {
 }
 
 func TestPollOnceIsIdempotentAcrossPasses(t *testing.T) {
-	ctx := context.Background()
-
-	sys, cleanup, err := OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
-
-	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
-
-	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
-		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
-		`{"call_control_id":"poll-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
-		"\n" +
-		`{"received_at":"2026-10-10T09:00:26Z","remote":"198.51.100.7","body":{"data":` +
-		`{"event_type":"call.hangup","occurred_at":"2026-10-10T09:00:26Z","payload":` +
-		`{"call_control_id":"poll-1","hangup_cause":"normal_clearing"}}}}`
-	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
-		t.Fatalf("write webhook log: %v", err)
-	}
-
-	index, err := search.Open(ctx, filepath.Join(t.TempDir(), "poll.db"))
-	if err != nil {
-		t.Fatalf("search.Open: %v", err)
-	}
-
-	t.Cleanup(func() { _ = index.Close() })
+	ctx, sys, index, webhookLog := openPollHarness(t)
 
 	PollOnce(ctx, sys, index, PollConfig{WebhookLog: webhookLog}, func(string, ...any) {})
 	PollOnce(ctx, sys, index, PollConfig{WebhookLog: webhookLog}, func(string, ...any) {})
@@ -219,15 +166,59 @@ func TestPollOnceAgeCutoffRejectsOverAgeObservations(t *testing.T) {
 	}
 }
 
-// webhookPollLine renders one initiated+hangup webhook pair as JSONL for a
-// call with the given id and start time (the hangup carries no distinct
-// timestamp; the parser keys the observation off the initiated event).
+// webhookPollLine renders the initiated event of one polled call as a JSONL
+// line (the parser keys the observation off the initiated event, so a bare
+// initiated line is already a complete observation; pair it with
+// webhookHangupLine for a finished call).
 func webhookPollLine(callID string, at time.Time, from, to string) string {
 	stamp := at.Format(time.RFC3339)
 
 	return `{"received_at":"` + stamp + `","remote":"198.51.100.7","body":{"data":` +
 		`{"event_type":"call.initiated","occurred_at":"` + stamp + `","payload":` +
 		`{"call_control_id":"` + callID + `","direction":"incoming","from":"` + from + `","to":"` + to + `"}}}}`
+}
+
+// webhookHangupLine completes a polled call with its hangup event.
+func webhookHangupLine(callID string, at time.Time) string {
+	stamp := at.Format(time.RFC3339)
+
+	return `{"received_at":"` + stamp + `","remote":"198.51.100.7","body":{"data":` +
+		`{"event_type":"call.hangup","occurred_at":"` + stamp + `","payload":` +
+		`{"call_control_id":"` + callID + `","hangup_cause":"normal_clearing"}}}}`
+}
+
+// openPollHarness gives a poll test the full stack: a memory system, a search
+// index, and a webhook log holding one completed call (poll-1). Shared so the
+// pass tests exercise the same fixture instead of verbatim copies that drift.
+func openPollHarness(t *testing.T) (context.Context, *system.System, *search.Index, string) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	sys, cleanup, err := OpenSystem(ctx, "")
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
+
+	start := time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC)
+	line := webhookPollLine("poll-1", start, "+17287289311", "+15555550123") + "\n" +
+		webhookHangupLine("poll-1", start.Add(26*time.Second))
+	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
+		t.Fatalf("write webhook log: %v", err)
+	}
+
+	index, err := search.Open(ctx, filepath.Join(t.TempDir(), "poll.db"))
+	if err != nil {
+		t.Fatalf("search.Open: %v", err)
+	}
+
+	t.Cleanup(func() { _ = index.Close() })
+
+	return ctx, sys, index, webhookLog
 }
 
 func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
@@ -244,10 +235,7 @@ func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
 
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 
-	line := `{"received_at":"2026-10-10T09:00:00Z","remote":"198.51.100.7","body":{"data":` +
-		`{"event_type":"call.initiated","occurred_at":"2026-10-10T09:00:00Z","payload":` +
-		`{"call_control_id":"ops-1","direction":"incoming","from":"+17287289311","to":"+15555550123"}}}}` +
-		"\n"
+	line := webhookPollLine("ops-1", time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC), "+17287289311", "+15555550123") + "\n"
 	if err := os.WriteFile(webhookLog, []byte(line), 0o600); err != nil {
 		t.Fatalf("write webhook log: %v", err)
 	}
