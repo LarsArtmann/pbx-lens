@@ -1,8 +1,7 @@
 # AGENTS.md — pbx-lens
 
 The call insights and analytics platform for pbx.artmann.tech — north star:
-the most superb insights and analytics platform over this PBX's calls (the
-SUPERB plan:
+the superb call-insights platform (the SUPERB plan:
 `pbx-artmann/docs/planning/2026-10-09_20-28_SUPERB-pbx-lens-call-index-and-woolly-golive.md`).
 Read-only over every source: FreeSWITCH CDRs, Telnyx conversations/recordings
 APIs, the receiver webhook JSONL. The index DB is disposable and always
@@ -28,9 +27,8 @@ webphone later gets a read-only deep link, never a data dependency.
   modernc.org/sqlite, memory for tests; `app.New(ctx, dsn)` with dsn == ""
   selecting memory is the one deploy knob.
 - **Language level:** go 1.27.2 in go.mod (the go-appkit v0.9.0 floor) +
-  `GOEXPERIMENT=jsonv2` (fleet house style). Nothing imports
-  encoding/json/v2 yet; the env var becomes load-bearing when a surface
-  needs it.
+  `GOEXPERIMENT=jsonv2` (fleet house style; nothing imports encoding/json/v2
+  yet — the env var becomes load-bearing when a surface needs it).
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
   (below) + `templ-components/htmx` (rides the root pin). No testify
   (banned; stdlib table-driven tests), no cobra, no ORM. Promotion
@@ -43,11 +41,10 @@ webphone later gets a read-only deep link, never a data dependency.
   errorpages/security/realtime, templ-components errorpage, export
   rate-limiting, SSE-hub, Telnyx etag client, data-fingerprint fast-304,
   go-atomic-write for backup staging): docs/planning/archived/2026-10-12_12-47_*
-  - docs/drafts/.
+  and docs/drafts/.
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**
   `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
-  owns SIGINT/SIGTERM + graceful drain; requires go ≥ 1.27.2 — the go.mod
-  directive mirrors that floor), `templ-components` v1.23.0
+  owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.23.0
   (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1070
   (codegen; manual bumps only — a dependabot templ PR mangles this go.mod).
   Stay on the PUBLISHED templ-components version — no local replace
@@ -68,9 +65,8 @@ webphone later gets a read-only deep link, never a data dependency.
   repo lives in docs/templ-components-adoption.md (skill docs drift ahead
   of the pinned tag; check the map before importing anything new; it also
   carries the version-bump watchlist: gen-tc-classes → map re-audit →
-  hand-rolled re-check → filings re-read → golden `-update`, run in order
-  on every bump — the 2026-10-15 v1.23.0 sweep initially skipped it and
-  the map/corpus were reconciled after the fact).
+  hand-rolled re-check → filings re-read → golden `-update`, in order on
+  every bump — the v1.23.0 sweep skipped it once and paid for it).
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's
   pattern): `subPackages = ["./cmd/pbx-lens"]` wires the package to the
   real binary (the default `["."]` built the package-less root and shipped
@@ -86,21 +82,15 @@ webphone later gets a read-only deep link, never a data dependency.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
   govulncheck, art-dupl (ZERO-GROUP GATE: `art-dupl check -t 4 --min-lines 2 .`
-  against `scripts/art-dupl-baseline.json`, which records ZERO accepted groups —
-  any new multi-line clone fails the lane; `--min-lines 2` suppresses 1-line
-  signature/type-expression matches (shape coincidence, not duplication);
-  mechanics, refresh procedure, and the suppressed-bucket audit duty:
-  docs/art-dupl-baseline.md; the directory arg is load-bearing, explicit file
-  lists shrink the detection universe and miss .templ source).
-  Dependabot watches github-actions +
-  gomod. art-dupl 2026-10-24, two audit passes: the 4x serve-stack bootstrap
-  and four production clone groups hidden in the SUPPRESSED bucket (the
-  default report hides real clones there) were extracted — staticAsset table,
-  queryListStaleness, queryDashboardStats, beginExportResponse; every
-  remaining group is a reviewed signature-level match between .templ helpers
-  with different business rules, suppressed by calibration and enforced as a
-  gate. BuildFlow stays the LOCAL gate; the flake's generic
-  apps.test/apps.lint stay module-generated conveniences, not a second
+  vs `scripts/art-dupl-baseline.json`, which records ZERO accepted groups —
+  any new multi-line clone fails the lane; `--min-lines 2` drops 1-line
+  signature/type matches, which are shape coincidence, not duplication.
+  TRAP: the default report hides a suppressed bucket that CAN hold real
+  clones — the 2026-10-24 second pass extracted four production clones
+  from it; audit with `--show-suppressed` after pin bumps. docs/art-dupl-baseline.md
+  owns mechanics/history/refresh). Dependabot watches github-actions + gomod.
+  BuildFlow stays the LOCAL gate; the flake's
+  generic apps.test/apps.lint stay module-generated conveniences, not a second
   gate. Every Go-compiling CI job runs `go tool templ generate` first
   (`*_templ.go` are gitignored; the templ CLI is pinned by a go.mod `tool`
   directive — `go run github.com/a-h/templ/cmd/templ` FAILS: CLI-only deps
@@ -157,11 +147,11 @@ webphone later gets a read-only deep link, never a data dependency.
   60 s, runtime self-hosted at `/static/htmx.min.js` — no CDN.
   `/favicon.svg` (embedded lens mark) satisfies layout.Base's default
   favicon link, which otherwise 404s on every page load. `/api/ops` (R15)
-  serves the poller's per-source counters behind the same auth. systemd
-  draft `deploy/systemd/pbx-lens.service` (Type=notify, LoadCredential);
-  the NixOS module LANDED in nix-international-telephony 2026-10-11
-  (`modules/telephony/lens.nix`, backup + purge timers;
-  `deploy/nixos/module-draft.nix` is a superseded design record).
+  serves the poller's per-source counters behind the same auth. The NixOS
+  module LANDED in nix-international-telephony 2026-10-11
+  (`modules/telephony/lens.nix`, backup + purge timers); the systemd unit
+  `deploy/systemd/pbx-lens.service` and `deploy/nixos/module-draft.nix` are
+  draft/superseded records.
   Detail page = READ-TIME join (`CallDetailPage`; rules in
   docs/DOMAIN_LANGUAGE.md § "Read-time call join").
 
@@ -196,16 +186,13 @@ buildflow --build-mode dev            # the quality gate (lint+format+test);
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens refresh -db /tmp/lens.db [-apply]  # additive-field backfill: classify, then -apply; see docs/DOMAIN_LANGUAGE.md
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
-                                      # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go
-                                      # http probe (curl banned); styles.css is committed — after
-                                      # app.css changes rebuild ONLY via `nix run .#update-styles`
-                                      # (any foreign/unminified build re-reds the CSS gate;
-                                      # go:embed is compile-time; /app.css MIME trap: docs/gotchas.md);
-                                      # -recording-timeout bounds
-                                      # proxy upstream hops (default web.DefaultUpstreamTimeout, 30 s)
+                                      # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go http
+                                      # probe (curl banned); after app.css changes rebuild ONLY via
+                                      # `nix run .#update-styles` (a foreign build re-reds the CSS gate;
+                                      # /app.css MIME trap: docs/gotchas.md); -recording-timeout bounds
+                                      # proxy upstream hops (default 30 s)
 nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
-bash scripts/verify-all.sh            # THE browser lane: all four probe suites
-                                      # (sequential, free ports, first-red-wins)
+bash scripts/verify-all.sh            # THE browser lane: four probe suites, sequential, first-red-wins
 GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/  # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
 node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd --save-baseline /tmp/pd
                                       # alert-only pixel diff vs baseline; footer stamp ≈0.04% px absorbed
@@ -222,9 +209,9 @@ UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit.
 - **docs/gotchas.md** — war stories: the bare-record-key flip + fallback,
   the projection host's one-shot drain, full-recompute folds, FTS5
   tokenization, tombstone-only deletes, drain-before-enrich, rebuild.
-- **docs/status/archived/** + **docs/planning/archived/** — 59 reports and
-  every executed plan (manifests in each README): CLOSED history, never
-  harvest or re-open (living backlog: TODO_LIST.md).
+- **docs/status/archived/** + **docs/planning/archived/** — 59 reports, every
+  executed plan (manifests in each README): CLOSED history — never harvest
+  or re-open (living backlog: TODO_LIST.md).
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision.
 - **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
