@@ -85,12 +85,17 @@ webphone later gets a read-only deep link, never a data dependency.
   break via `nix run .#update-vendor-hash` on a CLEAN tree — never the nix-hash-fix step (BuildFlow#55 corrupts) and never paste hashes by hand.
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
-  govulncheck, art-dupl (warning-only). Dependabot watches github-actions +
+  govulncheck, art-dupl (BASELINE GATE: `art-dupl check -t 4 .` against
+  `scripts/art-dupl-baseline.json` fails the lane on any clone group not in
+  the baseline — acceptance table + refresh procedure in
+  docs/art-dupl-baseline.md; the directory arg is load-bearing, explicit
+  file lists shrink the detection universe and miss .templ source).
+  Dependabot watches github-actions +
   gomod. art-dupl 2026-10-24 audit: the one harmful clone (4x serve-stack
   bootstrap in serve_test.go) was extracted into `serveTestStack`; every
   remaining group is a reviewed signature-level match between .templ helpers
-  with different business rules — accepted, don't relitigate without a
-  body-level clone appearing. BuildFlow stays the LOCAL gate; the flake's generic
+  with different business rules — accepted, and pinned as a gate (not
+  prose): a body-level clone appearing now fails CI until reviewed. BuildFlow stays the LOCAL gate; the flake's generic
   apps.test/apps.lint stay module-generated conveniences, not a second
   gate. Every Go-compiling CI job runs `go tool templ generate` first
   (`*_templ.go` are gitignored; the templ CLI is pinned by a go.mod `tool`

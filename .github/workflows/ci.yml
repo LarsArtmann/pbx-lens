@@ -143,7 +143,7 @@ jobs:
         run: "$(go env GOPATH)/bin/cqrs-lint ."
 
   duplication:
-    name: Code Duplication Check
+    name: Code Duplication Gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -154,32 +154,22 @@ jobs:
           cache: true
 
       - name: Install art-dupl
-        run: go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@v0.6.2
+        run: go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@v0.9.0
 
-      - name: Check for harmful code duplication
-        # Warning-only at t=4 (the fleet production gate): duplication here
-        # surfaces for review instead of failing the lane. The checked-in
-        # baseline (scripts/art-dupl-baseline.txt) holds the accepted
-        # verdict — a diff means the verdict CHANGED (new clone, moved
-        # lines, or an art-dupl bump), which deserves eyes even when the
-        # count alone stays quiet. Refresh after a reviewed change with:
-        #   find . -name '*.go' -not -path './vendor/*' -not -name '*_templ.go' \
-        #     | LC_ALL=C sort | xargs art-dupl -t 4 > scripts/art-dupl-baseline.txt
-        run: |
-          FRESH="$(find . -name '*.go' -not -path './vendor/*' -not -name '*_templ.go' \
-            | LC_ALL=C sort | xargs art-dupl -t 4 2>/dev/null)"
-          echo "$FRESH" > /tmp/dupl-fresh.txt
-          RESULT=$(echo "$FRESH" | wc -l)
-          if [ "$RESULT" -gt 0 ]; then
-            echo "::warning::Found $RESULT lines of duplication (t=4). Review needed."
-          else
-            echo "No harmful duplication detected (t=4 production gate)."
-          fi
-          if ! diff -u scripts/art-dupl-baseline.txt /tmp/dupl-fresh.txt; then
-            echo "::warning::art-dupl verdict drifted from scripts/art-dupl-baseline.txt (accepted verdict: 2 shown clone groups / 34 detected at pin 0.9.0). If the change is reviewed-and-accepted (or the art-dupl pin moved), refresh the baseline with the command in ci.yml."
-          else
-            echo "art-dupl verdict matches the accepted baseline."
-          fi
+      - name: Gate new code duplication
+        # Gate, not prose: scripts/art-dupl-baseline.json pins every accepted
+        # clone group (acceptance table + refresh procedure:
+        # docs/art-dupl-baseline.md). check fails ONLY on groups whose hash
+        # is absent from the baseline, i.e. newly introduced duplication —
+        # the 2026-10-24 audit's "don't relitigate without a body-level
+        # clone appearing" rule, enforced. The directory arg (.) is
+        # load-bearing: explicit file lists shrink the detection universe
+        # (.templ files are source and must be scanned; *_templ.go generated
+        # code stays auto-excluded). The pin must match the baseline
+        # generator; after a pin bump regenerate the baseline in the same
+        # change:
+        #   art-dupl baseline -t 4 . --baseline-path scripts/art-dupl-baseline.json
+        run: art-dupl check -t 4 . --baseline-path scripts/art-dupl-baseline.json
 
   styles-freshness:
     name: Styles Freshness Guard

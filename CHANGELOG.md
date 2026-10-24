@@ -7,6 +7,23 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-10-24 (dedup to zero: the accepted clone verdict is now a CI gate, not prose)
+
+- **art-dupl lane upgraded from warning-only text diff to a hash baseline
+  gate.** `scripts/art-dupl-baseline.json` (23 groups, generated at t=4 in
+  directory mode so `.templ` source is scanned) replaces
+  `scripts/art-dupl-baseline.txt`; CI runs `art-dupl check` and FAILS on any
+  clone group whose hash is not pinned — the 2026-10-24 audit's "a body-level
+  clone appearing" trigger, enforced instead of remembered. Acceptance table
+  and refresh procedure: docs/art-dupl-baseline.md; pin moved to v0.9.0 to
+  match the baseline generator.
+- **Verified zero harmful clones at both thresholds.** At the t=4 fleet gate
+  the only shown group is the `beginExportWithPII` call pair (helper already
+  extracted, per-format header values differ); at t=5 type-aware all 20
+  actionable groups are signature/expression matches between .templ helpers
+  with distinct business rules. Gate proven both directions with live
+  probes: clean tree exits 0, a seeded cross-package clone exits red.
+
 ### Added — 2026-10-23 (additive fields get a mechanism: schema version + `refresh` backfill)
 
 - **`ObservationSchemaVersion` / `EnrichmentSchemaVersion` ride the hash
