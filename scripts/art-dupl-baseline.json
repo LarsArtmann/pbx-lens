@@ -1,0 +1,15 @@
+{
+  "version": "1.0",
+  "threshold": 4,
+  "recordedAt": "2026-10-24T10:07:30.167806698Z",
+  "entries": [
+    {
+      "hash": "f2cb861922d37121",
+      "files": [
+        "./internal/web/export.go",
+        "./internal/web/export.go"
+      ],
+      "tokens": 8
+    }
+  ]
+}
