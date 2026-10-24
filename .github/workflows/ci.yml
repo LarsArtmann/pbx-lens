@@ -161,15 +161,18 @@ jobs:
         # clone group (acceptance table + refresh procedure:
         # docs/art-dupl-baseline.md). check fails ONLY on groups whose hash
         # is absent from the baseline, i.e. newly introduced duplication —
-        # the 2026-10-24 audit's "don't relitigate without a body-level
-        # clone appearing" rule, enforced. The directory arg (.) is
+        # the 2026-10-24 audit's rule, enforced. The directory arg (.) is
         # load-bearing: explicit file lists shrink the detection universe
         # (.templ files are source and must be scanned; *_templ.go generated
-        # code stays auto-excluded). The pin must match the baseline
-        # generator; after a pin bump regenerate the baseline in the same
-        # change:
-        #   art-dupl baseline -t 4 . --baseline-path scripts/art-dupl-baseline.json
-        run: art-dupl check -t 4 . --baseline-path scripts/art-dupl-baseline.json
+        # code stays auto-excluded). --min-lines 2 is the calibration that
+        # drove the report to zero: 1-line groups are signature/type
+        # expression matches (parameter lists like (v string), not
+        # duplication), so the gate contract is "zero clone groups; any new
+        # multi-line clone goes red" (both directions proven 2026-10-24).
+        # The pin must match the baseline generator; after a pin bump
+        # regenerate the baseline in the same change:
+        #   art-dupl baseline -t 4 --min-lines 2 . --baseline-path scripts/art-dupl-baseline.json
+        run: art-dupl check -t 4 --min-lines 2 . --baseline-path scripts/art-dupl-baseline.json
 
   styles-freshness:
     name: Styles Freshness Guard
