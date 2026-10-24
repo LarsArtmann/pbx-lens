@@ -172,7 +172,7 @@ func TestStylesServed(t *testing.T) {
 	// http.Error 404 answers text/plain, which browsers report as a
 	// stylesheet MIME refusal (strict MIME checking), not as a 404.
 	recorder := httptest.NewRecorder()
-	serveStyles(recorder, httptest.NewRequest(http.MethodGet, "/app.css", nil))
+	stylesAsset.serve(recorder, httptest.NewRequest(http.MethodGet, "/app.css", nil))
 
 	if _, err := fs.ReadFile(staticFS, "static/styles.css"); err != nil {
 		if recorder.Code != http.StatusNotFound {

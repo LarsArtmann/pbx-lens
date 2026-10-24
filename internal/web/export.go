@@ -23,13 +23,15 @@ func exportHeader() []string {
 	}
 }
 
-// beginExportWithPII is the shared preamble of both export formats: the
-// gate plus the X-Pii-Mode response header (art-dupl clone pair, plan
-// T5.2). The format-specific Content-Type/Disposition stay at the call
-// sites.
-func (s *server) beginExportWithPII(
+// beginExportResponse is the shared preamble of both export formats: the
+// request gate, the X-Pii-Mode response header, and the format's own
+// Content-Type/Disposition pair. A false return already wrote the error
+// response.
+func (s *server) beginExportResponse(
 	w http.ResponseWriter,
 	r *http.Request,
+	contentType string,
+	disposition string,
 ) (ListCallsQuery, PIIMode, bool) {
 	query, pii, ok := s.beginExport(w, r)
 	if !ok {
@@ -37,6 +39,8 @@ func (s *server) beginExportWithPII(
 	}
 
 	w.Header().Set("X-Pii-Mode", piiHeaderValue(pii))
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", disposition)
 
 	return query, pii, true
 }
@@ -45,13 +49,15 @@ func (s *server) beginExportWithPII(
 // (D5). One JSON object per line, newest first, so any consumer can tail or
 // pipe it.
 func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
-	query, pii, ok := s.beginExportWithPII(w, r)
+	query, pii, ok := s.beginExportResponse(
+		w,
+		r,
+		"application/x-ndjson; charset=utf-8",
+		`attachment; filename="pbx-lens-calls.jsonl"`,
+	)
 	if !ok {
 		return
 	}
-
-	w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.jsonl"`)
 
 	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
 		applyPII(pii, &view)
@@ -80,13 +86,15 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 // exportCSV streams the filtered call index as CSV (D5).
 func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
-	query, pii, ok := s.beginExportWithPII(w, r)
+	query, pii, ok := s.beginExportResponse(
+		w,
+		r,
+		"text/csv; charset=utf-8",
+		`attachment; filename="pbx-lens-calls.csv"`,
+	)
 	if !ok {
 		return
 	}
-
-	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="pbx-lens-calls.csv"`)
 
 	writer := csv.NewWriter(w)
 

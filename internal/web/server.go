@@ -106,9 +106,9 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /api/export.csv", web.exportCSV)
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
 	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
-	mux.HandleFunc("GET /app.css", serveStyles)
-	mux.HandleFunc("GET /static/htmx.min.js", serveHtmx)
-	mux.HandleFunc("GET /favicon.svg", serveFavicon)
+	mux.HandleFunc("GET /app.css", stylesAsset.serve)
+	mux.HandleFunc("GET /static/htmx.min.js", htmxAsset.serve)
+	mux.HandleFunc("GET /favicon.svg", faviconAsset.serve)
 	mux.HandleFunc("GET /robots.txt", serveRobots)
 }
 
@@ -157,12 +157,26 @@ func (s *server) logf(msg string, args ...any) {
 	}
 }
 
-func (s *server) list(w http.ResponseWriter, r *http.Request) {
+// listStaleness is the list page plus its staleness-banner inputs — the
+// shared read behind the list page and its polled region.
+type listStaleness struct {
+	filters  ListCallsQuery
+	page     CallListPage
+	staleFor time.Duration
+	stale    bool
+}
+
+// queryListStaleness is the shared body of the list page and its polled
+// staleness region: parse the filters, read the page under the "query"
+// Server-Timing span, and derive the banner inputs. Bad filters and index
+// failures already wrote their error response; callers that get ok only
+// render.
+func (s *server) queryListStaleness(w http.ResponseWriter, r *http.Request) (listStaleness, bool) {
 	filters, err := parseFilters(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
-		return
+		return listStaleness{}, false
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
@@ -173,12 +187,21 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
 
-		return
+		return listStaleness{}, false
 	}
 
 	staleFor, stale := staleness(filters, page)
 
-	render(w, r, listRoute(nonce(r), page, filters, staleFor, stale))
+	return listStaleness{filters: filters, page: page, staleFor: staleFor, stale: stale}, true
+}
+
+func (s *server) list(w http.ResponseWriter, r *http.Request) {
+	view, ok := s.queryListStaleness(w, r)
+	if !ok {
+		return
+	}
+
+	render(w, r, listRoute(nonce(r), view.page, view.filters, view.staleFor, view.stale))
 }
 
 // parseFilters turns query parameters into the typed query; garbage values
@@ -306,12 +329,15 @@ func hasTypedFilters(filters ListCallsQuery) bool {
 		!filters.From.IsZero() || !filters.To.IsZero()
 }
 
-// dashboard serves the quality-dashboard page (T25). The from/to picker
-// narrows the underlying scan; the cards region polls for updates (R9).
-func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
+// queryDashboardStats is the shared body of the dashboard page and its
+// polled region: resolve the range picker, read the stats under the
+// "stats" Server-Timing span. Bad ranges and index failures already wrote
+// their error response; callers that get ok only render. The fragment URL
+// rides along so the polled region re-requests the same range and window.
+func (s *server) queryDashboardStats(w http.ResponseWriter, r *http.Request) (DashboardStats, string, bool) {
 	filters, fragURL, window, ok := parseRange(w, r)
 	if !ok {
-		return
+		return DashboardStats{}, "", false
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
@@ -322,6 +348,17 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
 
+		return DashboardStats{}, "", false
+	}
+
+	return stats, fragURL, true
+}
+
+// dashboard serves the quality-dashboard page (T25). The from/to picker
+// narrows the underlying scan; the cards region polls for updates (R9).
+func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
+	stats, fragURL, ok := s.queryDashboardStats(w, r)
+	if !ok {
 		return
 	}
 
@@ -331,19 +368,8 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 // dashboardFragment is the polled region payload (R9): the same live cards
 // the page renders, without the shell — the region replaces itself.
 func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
-	filters, fragURL, window, ok := parseRange(w, r)
+	stats, fragURL, ok := s.queryDashboardStats(w, r)
 	if !ok {
-		return
-	}
-
-	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, s.now(), filters, window)
-
-	stop()
-
-	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
-
 		return
 	}
 
@@ -449,27 +475,12 @@ func parseRangeDates(w http.ResponseWriter, r *http.Request, filters *ListCallsQ
 // stalenessFragment re-checks the freshness banner (R9): the polled region
 // re-renders the banner, or nothing once the index is fresh again.
 func (s *server) stalenessFragment(w http.ResponseWriter, r *http.Request) {
-	filters, err := parseFilters(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-
+	view, ok := s.queryListStaleness(w, r)
+	if !ok {
 		return
 	}
 
-	stop := servertiming.MeasureServerTiming(r.Context(), "query")
-	page, err := ListCalls(r.Context(), s.sys, filters)
-
-	stop()
-
-	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
-
-		return
-	}
-
-	staleFor, stale := staleness(filters, page)
-
-	render(w, r, staleLive(filters, staleFor, stale))
+	render(w, r, staleLive(view.filters, view.staleFor, view.stale))
 }
 
 func (s *server) detail(w http.ResponseWriter, r *http.Request) {
@@ -523,55 +534,56 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	render(w, r, detailRoute(nonce(r), page, query))
 }
 
-// serveStyles serves the Tailwind-built stylesheet (styles.css, produced by
-// the build pipeline). Source css files are never served.
-func serveStyles(w http.ResponseWriter, _ *http.Request) {
-	styles, err := fs.ReadFile(staticFS, "static/styles.css")
+// staticAsset is one embedded build artifact served verbatim: a missing
+// artifact (a build that skipped its codegen step) rejects with the
+// asset's own hint, and every response revalidates on each load
+// (no-cache) instead of caching stale.
+type staticAsset struct {
+	path        string
+	contentType string
+	missingMsg  string
+}
+
+func (a staticAsset) serve(w http.ResponseWriter, _ *http.Request) {
+	src, err := fs.ReadFile(staticFS, a.path)
 	if err != nil {
-		http.Error(w, "styles not built (run the tailwind build step)", http.StatusNotFound)
+		http.Error(w, a.missingMsg, http.StatusNotFound)
 
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/css; charset=utf-8")
+	w.Header().Set("Content-Type", a.contentType)
 	w.Header().Set("Cache-Control", "no-cache")
-	_, _ = w.Write(styles)
+
+	_, _ = w.Write(src)
 }
 
-// serveHtmx serves the self-hosted htmx runtime (R9): the polled regions
+// stylesAsset serves the Tailwind-built stylesheet (styles.css, produced by
+// the build pipeline). Source css files are never served.
+var stylesAsset = staticAsset{
+	path:        "static/styles.css",
+	contentType: "text/css; charset=utf-8",
+	missingMsg:  "styles not built (run the tailwind build step)",
+}
+
+// htmxAsset serves the self-hosted htmx runtime (R9): the polled regions
 // need it, and a LAN-bound ops tool must not reach a public CDN for its
 // JavaScript. Pinned at htmx.org 2.0.10 — the exact version templ-components
 // layout.DefaultPageProps pins upstream.
-func serveHtmx(w http.ResponseWriter, _ *http.Request) {
-	src, err := fs.ReadFile(staticFS, "static/htmx.min.js")
-	if err != nil {
-		http.Error(w, "htmx runtime missing from the build", http.StatusNotFound)
-
-		return
-	}
-
-	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
-	w.Header().Set("Cache-Control", "no-cache")
-
-	_, _ = w.Write(src)
+var htmxAsset = staticAsset{
+	path:        "static/htmx.min.js",
+	contentType: "text/javascript; charset=utf-8",
+	missingMsg:  "htmx runtime missing from the build",
 }
 
-// serveFavicon serves the self-hosted lens mark: layout.Base pins
+// faviconAsset serves the self-hosted lens mark: layout.Base pins
 // /favicon.svg upstream (DefaultPageProps), so without this route every
 // page load logs a 404 in the browser console. Self-hosted for the same
 // LAN-isolation reason as the htmx runtime — no CDN reach-out.
-func serveFavicon(w http.ResponseWriter, _ *http.Request) {
-	src, err := fs.ReadFile(staticFS, "static/favicon.svg")
-	if err != nil {
-		http.Error(w, "favicon missing from the build", http.StatusNotFound)
-
-		return
-	}
-
-	w.Header().Set("Content-Type", "image/svg+xml")
-	w.Header().Set("Cache-Control", "no-cache")
-
-	_, _ = w.Write(src)
+var faviconAsset = staticAsset{
+	path:        "static/favicon.svg",
+	contentType: "image/svg+xml",
+	missingMsg:  "favicon missing from the build",
 }
 
 // ops serves the operator counters (R15 poller per-source ingest health,
