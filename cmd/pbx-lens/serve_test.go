@@ -50,10 +50,13 @@ func serveTestStack(tb testing.TB) (string, *http.Client) {
 		tb.Fatalf("build service config: %v", err)
 	}
 
-	svc, err := appkit.NewService(serviceConfig)
-	if err != nil {
-		tb.Fatalf("new service: %v", err)
-	}
+	// testkit.NewService (appkit v0.9.0) applies test-safe defaults —
+	// ephemeral loopback addr + NoDrainDelay. Building the service with
+	// appkit.NewService directly makes EVERY stack test pay the production
+	// 5 s drain delay at teardown (appkit#26's trap, re-paid here until
+	// 2026-10-25: TestServeStackEndToEnd was 5.04 s of which 5.005 s was
+	// drain).
+	svc := testkit.NewService(tb, serviceConfig)
 
 	web.Register(svc.Mux, sys, web.Options{})
 
@@ -181,10 +184,7 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 		t.Fatalf("build service config: %v", err)
 	}
 
-	svc, err := appkit.NewService(serviceConfig)
-	if err != nil {
-		t.Fatalf("new service: %v", err)
-	}
+	svc := testkit.NewService(t, serviceConfig)
 
 	const hopBudget = 5 * time.Second
 
@@ -295,10 +295,7 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 		t.Fatalf("build service config: %v", err)
 	}
 
-	svc, err := appkit.NewService(serviceConfig)
-	if err != nil {
-		t.Fatalf("new service: %v", err)
-	}
+	svc := testkit.NewService(t, serviceConfig)
 
 	const hopBudget = 60 * time.Millisecond
 

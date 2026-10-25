@@ -84,11 +84,11 @@ Brainstorm, not commitment. Provenance: **[S]** this session, **[C]** carried op
 ~~3. [S] Action ③: ops "Last pass" guard — `p.LastPass.IsZero()` renders "never" instead of zero-time RelativeTime.~~ h c1c2ed0,ec89cce
 ~~4. [S] Action ④: restore the adoption map's 12 orphaned rows under the main table; split the format row into adopted vs remaining.~~ h ec89cce,c1c2ed0
 ~~5. [S] Annotate this morning's dedup report + baseline doc: the clockDuration/compactDuration acceptance is superseded by F1 (until ① lands, then the note becomes "resolved by adoption").~~ h ec89cce,c1c2ed0
-6. [S] `buildflow --build-mode dev` before next push (still not run today, two sessions of changes).
+~~6. [S] `buildflow --build-mode dev` before next push (still not run today, two sessions of changes).~~ v
 ~~7. [S] Full `golangci-lint run ./...` before next push.~~ h ec89cce
-8. [S] Comment on upstream #52 with the ops-poller "never ran" use case (EmptyText escape belongs upstream).
-9. [S] Verify the two inferred immunity claims at call sites: Badge Dot truly unused (#54); Grid typed enums only (#61).
-10. [S] Rule for CopyButton: never render inside an htmx-swapped fragment until #63 ships a page-level script mount.
+~~8. [S] Comment on upstream #52 with the ops-poller "never ran" use case (EmptyText escape belongs upstream).~~ v posted 2026-10-25 as issuecomment-6393164087; draft in docs/drafts/
+~~9. [S] Verify the two inferred immunity claims at call sites: Badge Dot truly unused (#54); Grid typed enums only (#61).~~ v zero Dot: usages; single Grid call site uses the typed enum display.GridCols4; recorded in docs/upstream-filings.md
+~~10. [S] Rule for CopyButton: never render inside an htmx-swapped fragment until #63 ships a page-level script mount.~~ v recorded in the adoption map CopyButton row (docs/templ-components-adoption.md)
 
 **Dedup program (carried):**
 ~~11. [C] HARVEST both status reports into TODO_LIST.md (docs-health HARVEST).~~ h ec89cce
@@ -100,14 +100,14 @@ Brainstorm, not commitment. Provenance: **[S]** this session, **[C]** carried op
 17. [C] Re-check internal/ingest for clone pressure on next mapper change.
 
 **Docs health:**
-18. [S] Create docs/research/README.md index (3 reports: http-stack, go-cqrs-lite, templ-components).
+~~18. [S] Create docs/research/README.md index (3 reports: http-stack, go-cqrs-lite, templ-components).~~ v docs/research/README.md created 2026-10-25 (3 reports indexed)
 19. [C] ANNOTATE reports non-destructively as items land.
-20. [S] Decide CHANGELOG policy for docs-only sessions (likely: none).
+~~20. [S] Decide CHANGELOG policy for docs-only sessions (likely: none).~~ v decided: none for docs-only sessions; policy recorded in docs/research/README.md
 21. [C] FEATURES.md sync on next feature change.
 22. [C] Archived reports stay CLOSED — never harvest.
 
 **Deep-dive program:**
-23. [S] Re-run this audit after ①+② land — expect ~94/100 (pin row + ARIA rows flip green); the delta proves the actions moved the number.
+~~23. [S] Re-run this audit after ①+② land — expect ~94/100 (pin row + ARIA rows flip green); the delta proves the actions moved the number.~~ v census re-run + delta appendix appended to the report (score 91→~93-94: format row flips, pin current; #49/#51 rows stay half)
 24. [S] Deep-dive go-appkit (the unaudited third of the UI trio).
 25. [S] Deep-dive a-h/templ itself (codegen usage: props patterns, `templ.WithChildren` escape hatch — never audited).
 26. [B] Keep the adoption map's per-component truth ahead of the skill docs (it drifted once; F5 shows it can rot locally too).

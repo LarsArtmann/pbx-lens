@@ -1,0 +1,81 @@
+# 2026/10/25 05:22:18.839512 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw nativeID: "conv-p2"
+# 2026/10/25 05:22:18.839548 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw direction: "inbound"
+# 2026/10/25 05:22:18.839572 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw duration: 0
+# 2026/10/25 05:22:18.839587 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw cause: "no_answer"
+# 2026/10/25 05:22:18.839786 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw nativeID: "conv-p2"
+# 2026/10/25 05:22:18.839803 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw direction: "inbound"
+# 2026/10/25 05:22:18.839815 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw duration: 3406
+# 2026/10/25 05:22:18.839825 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw cause: "normal_clearing"
+# 2026/10/25 05:22:18.840101 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw nativeID: "conv-p1"
+# 2026/10/25 05:22:18.840116 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw direction: "inbound"
+# 2026/10/25 05:22:18.840255 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw duration: 98
+# 2026/10/25 05:22:18.840268 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw cause: "no_answer"
+# 2026/10/25 05:22:18.841161 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw nativeID: "conv-p2"
+# 2026/10/25 05:22:18.841189 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw direction: "inbound"
+# 2026/10/25 05:22:18.841279 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw duration: 0
+# 2026/10/25 05:22:18.841288 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw cause: "no_answer"
+# 2026/10/25 05:22:18.841986 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw nativeID: "conv-p3"
+# 2026/10/25 05:22:18.842005 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw direction: "outbound"
+# 2026/10/25 05:22:18.842026 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw duration: 0
+# 2026/10/25 05:22:18.842037 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw cause: "normal_clearing"
+# 2026/10/25 05:22:18.842415 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw nativeID: "conv-p3"
+# 2026/10/25 05:22:18.842427 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw direction: "outbound"
+# 2026/10/25 05:22:18.842442 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw duration: 1799
+# 2026/10/25 05:22:18.842449 [TestPropertyProjectedRowEqualsPureFold] [rapid] draw cause: "normal_clearing"
+# 
+v0.4.8#5385830357368523589
+0x18b52919a8c144
+0x1
+0x2bed744c4fcc8
+0x0
+0x6f60eeb07d8c2
+0x349be1e2e506f
+0x0
+0x17551cb339f1b7
+0x1
+0x15c77d71bbc66f
+0x1
+0x91753b72f45a2
+0x0
+0x1702ae5d640899
+0x1e2d9829c41530
+0xd4e
+0x151579fd038af6
+0x0
+0x1679dae2f8758a
+0x0
+0x188e2c6b1adac3
+0x0
+0x1297d29809e912
+0x1285e1534a6215
+0x62
+0xd4fdc54bfecf4
+0x1
+0x184b0228ca985e
+0x3
+0x1
+0x7a1cd36d7a8b3
+0x0
+0x15f95a7f4113f4
+0x595e17e1cc9ce
+0x0
+0x11b57f4b42c3f6
+0x1
+0x109322d5918e1c
+0x2
+0x128ace18e08e52
+0x1
+0x8a94918b0c88c
+0x37c9e36a2ecf4
+0x0
+0x18a24e9c6c6fbd
+0x0
+0xf686e72013559
+0x2
+0x101a5b007d8f4a
+0x1
+0x1022cf866415f2
+0x18e0d52a3c868c
+0x707
+0x99c545a95f1ca
+0x0

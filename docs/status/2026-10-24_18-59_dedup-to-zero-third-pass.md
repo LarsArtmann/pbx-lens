@@ -67,7 +67,7 @@ Brainstorm, not commitment list. Provenance marked: **[S]** session-derived, **[
 
 **Immediate follow-ups (this change-set):**
 ~~1. [S] Harvest this report's (f) into `TODO_LIST.md` (docs-health HARVEST).~~ h ec89cce
-2. [S] Run `buildflow --build-mode dev` on the session change-set before next push.
+~~2. [S] Run `buildflow --build-mode dev` on the session change-set before next push.~~ v gate run completed with a starvation verdict (nix-build deadline at loadavg 50-66, concurrent session); all five casualty classes individually verified green per docs/buildflow-dev-gate.md
 ~~3. [S] Full `golangci-lint run ./...` before next push (repo rule).~~ h ec89cce
 4. [S] Decide CHANGELOG: entry for the harness extraction, or explicitly skip (test-only).
 5. [S] Answer g1 (zero-harmful vs zero-visible) and record the verdict in the baseline doc.
@@ -78,11 +78,11 @@ Brainstorm, not commitment list. Provenance marked: **[S]** session-derived, **[
 8. [B] On next `internal/web` test changes, verify all full-stack tests actually use `serveTestStack`.
 9. [B] Keep the zero-group gate contract: new multi-line clone → extract, never baseline-accept without review.
 10. [B] After any art-dupl pin bump: regenerate baseline + suppressed audit in the same change (pin parity).
-11. [S] Baseline doc: make explicit that `check` auto-excludes test files (why the poller clone was invisible) — currently implied, not stated.
+~~11. [S] Baseline doc: make explicit that `check` auto-excludes test files (why the poller clone was invisible) — currently implied, not stated.~~ v explicit since the third pass ("invisible to the gate because test files are auto-excluded" in docs/art-dupl-baseline.md)
 12. [B] If a third function ever shares one of the accepted signatures, re-litigate that accept (drift trigger).
 13. [B] Keep `--min-lines 2` calibration; any real 1-line clone class → recalibrate with proof both directions.
 14. [B] Quarterly full suppressed-bucket review as cheap hygiene (calendar, not ritual).
-15. [S] Consider noting the third pass in the AGENTS.md art-dupl bullet (currently says "second pass" only) — minor, optional.
+~~15. [S] Consider noting the third pass in the AGENTS.md art-dupl bullet (currently says "second pass" only) — minor, optional.~~ v done 2026-10-25 (AGENTS.md art-dupl bullet now says "second pass ... third pass same day")
 16. [B] When ingest mappers next change, re-check `internal/ingest` for clone pressure (historically clean; watch only).
 
 **Docs health loop:**

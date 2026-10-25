@@ -1,5 +1,8 @@
 # Process prep checklists (plan 05-40 M20, F62–F65) — 2026-10-15
 
+> Audited 2026-10-25: F61/F62/F64/F65 stand as written (F62 and F64 are still
+> owner-gated). F63's step 5 now names `refresh` for the Telnyx leg.
+
 Three bounded prep items landed as one page; each is executable the moment
 its external gate opens. F61 (dependabot) was verified separately.
 
@@ -14,9 +17,11 @@ note; the dependabot-core#16538 owner decision stays with the owner.
 
 ## F62 — >1 MiB transcript policy (one-pager, owner decides)
 
-- **State:** the ingest scanner caps a single line at 1 MiB
-  (`internal/ingest/ingest.go` NewScanner); the web render buffer warns
-  via `OnBufferOverflow` past its limit; exports stream unbounded.
+- **State:** the ingest scanner starts at 64 KiB and caps a single line at
+  1 MiB (`internal/ingest/ingest.go` `scannerInitialBuf`/`scannerMaxLine`);
+  the web response buffer warns via `OnBufferOverflow` past the ETag
+  library's ceiling (the counter surfaces as `buffer_overflows` on
+  `/api/ops`); exports stream unbounded.
 - **Option 1 (recommended):** accept untagged — a >1 MiB transcript line
   is a pathological capture (a stuck ASR loop), not data to preserve; the
   scanner error names the file+line, the operator re-ingests after
@@ -37,8 +42,11 @@ PII option A). Checklist:
 2. `pbx-lens backup -db …` (verified snapshot first, always).
 3. Stop pollers (`systemctl stop pbx-lens-ingest…` or the module timers).
 4. Move the old DSN aside (`calls.db` → `calls.db.v1`), create fresh.
-5. Re-run every ingest command against the sources (CDR Master.csv files,
-   Telnyx `-since` deep window, webhook JSONL, transcripts dir).
+5. Re-run every ingest command against the sources. Local-file sources
+   (CDR Master.csv files, webhook JSONL, transcripts dir) re-parse on the
+   next pass and heal for free. Telnyx costs API budget, so its leg is
+   `pbx-lens refresh -db <dsn>` — classify-only first (the counts are the
+   measurement), then `-apply`; it looks back without a window by default.
 6. Verify: row counts per source vs `/api/ops` counters; spot-check three
    known calls (deep links keep working — stream ids are source-native).
 7. Re-point serve at the new DSN; `restore-drill` test is the CI-level

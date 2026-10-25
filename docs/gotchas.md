@@ -332,3 +332,18 @@ for interleaved commits and re-run the failing step against the settled tree
 first. Corollary: a "stale FOD hash" preflight warning can be an mtime
 heuristic misfire (go DIRECTIVE change, no dep change) — a green `nix build`
 is the verdict, not the warning.
+
+## `reader.Exists` answers false for rows `reader.Get` finds (paid for, 2026-10-25)
+
+The collapse of duplicate source rows needed "does the CDR sibling exist?" —
+and the obvious call, `metaengine.TypedReader.Exists`, is a trap for this
+collection: it prefers the engine's `SetBackend`, and sqliteengine's set
+table is a DIFFERENT table from the map-backed rows `metaengine.Query`
+projections write. Verified live: `Get("freeswitch-cdr:uuid")` returned the
+row while `Exists("freeswitch-cdr:uuid")` returned false, with no error. The
+symptom is silent under-collapse (every AI call still rendered twice).
+
+Use `calls.LookupView` (a `Get`) for presence. It also accepts the legacy
+marker-prefixed key, so pre-flip rows answer correctly. Regression:
+`internal/web/representative_test.go` seeds a CDR + transcript pair and
+asserts ONE list row.

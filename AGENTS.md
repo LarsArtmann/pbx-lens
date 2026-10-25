@@ -66,19 +66,25 @@ webphone later gets a read-only deep link, never a data dependency.
   of the pinned tag; check the map before importing anything new; it also
   carries the version-bump watchlist: gen-tc-classes → map re-audit →
   hand-rolled re-check → filings re-read → golden `-update`, in order on
-  every bump — the v1.23.0 sweep skipped it once and paid for it).
+  every bump — the v1.23.0 sweep skipped it once and paid for it; the
+  corpus script resolves GOMODCACHE + version via `go env`/`go list -m`
+  and exits non-zero on an empty scan). Pin: v1.24.0. **utils/format is ADOPTED (2026-10-24)** — never hand-roll
+  duration/percent/dash formatting; `format.ClockDuration/CompactDuration/
+  StringOrDash/Percent` are the one dialect ("1m", not "1m00s"); keep
+  `mosGaugePercent` (domain math). Goldens gotcha: the refresh pattern
+  must be `-run 'TestGolden'` — plain `TestGoldenPages` silently skips
+  `TestGoldenOpsPage`.
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's
   pattern): `subPackages = ["./cmd/pbx-lens"]` wires the package to the
   real binary (the default `["."]` built the package-less root and shipped
   an empty result); treefmt runs nixfmt + deadnix + statix only (BuildFlow
-  owns Go formatting). DevShell (mkShellNoCC): go/golangci-lint/gopls/
-  govulncheck/dprint/templ/tailwindcss_4/cqrs-lint/vulnix, GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2.
-  UI codegen is a package preBuild (`templGenerationPolicy = "preBuild"`:
+  owns Go formatting). DevShell sets GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2
+  (package list: the `nix develop` command line). UI codegen is a package preBuild (`templGenerationPolicy = "preBuild"`:
   templ generate + tailwindcss → styles.css). styles.css is COMMITTED (CI
   embeds it; nix preBuild still regenerates; 2026-10-15 v0.2.0 CI fix);
   *_templ.go stays gitignored.
   `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
-  break via `nix run .#update-vendor-hash` on a CLEAN tree — never the nix-hash-fix step (BuildFlow#55 corrupts) and never paste hashes by hand.
+  break via `nix run .#update-vendor-hash` on a CLEAN tree (never nix-hash-fix, BuildFlow#55).
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
   govulncheck, art-dupl (ZERO-GROUP GATE: `art-dupl check -t 4 --min-lines 2 .`
@@ -86,9 +92,8 @@ webphone later gets a read-only deep link, never a data dependency.
   any new multi-line clone fails the lane; `--min-lines 2` drops 1-line
   signature/type matches, which are shape coincidence, not duplication.
   TRAP: the default report hides a suppressed bucket that CAN hold real
-  clones — the 2026-10-24 second pass extracted four production clones
-  from it; audit with `--show-suppressed` after pin bumps. docs/art-dupl-baseline.md
-  owns mechanics/history/refresh). Dependabot watches github-actions + gomod.
+  clones (four were extracted 2026-10-24); audit with `--show-suppressed`
+  after pin bumps. docs/art-dupl-baseline.md owns mechanics/history). Dependabot watches github-actions + gomod.
   BuildFlow stays the LOCAL gate; the flake's
   generic apps.test/apps.lint stay module-generated conveniences, not a second
   gate. Every Go-compiling CI job runs `go tool templ generate` first
@@ -145,25 +150,26 @@ webphone later gets a read-only deep link, never a data dependency.
   2026-10-12 — bare date filters too), an idle index drifts out of the
   chart. htmx polling (R9): `/frag/dashboard` 30 s, `/frag/staleness`
   60 s, runtime self-hosted at `/static/htmx.min.js` — no CDN.
-  `/favicon.svg` (embedded lens mark) satisfies layout.Base's default
-  favicon link, which otherwise 404s on every page load. `/api/ops` (R15)
+  `/favicon.svg` (embedded lens mark) satisfies layout.Base's default favicon
+  link; `/api/ops` (R15)
   serves the poller's per-source counters behind the same auth. The NixOS
-  module LANDED in nix-international-telephony 2026-10-11
-  (`modules/telephony/lens.nix`, backup + purge timers); the systemd unit
-  `deploy/systemd/pbx-lens.service` and `deploy/nixos/module-draft.nix` are
-  draft/superseded records.
+  module LANDED in nix-international-telephony (`modules/telephony/lens.nix`,
+  backup + purge timers).
   Detail page = READ-TIME join (`CallDetailPage`; rules in
-  docs/DOMAIN_LANGUAGE.md § "Read-time call join").
+  docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List + dashboard collapse
+  duplicate source rows onto the representative row (CDR first;
+  `internal/web/representative.go`), export stays per-source. Analytics: spend,
+  "who calls what" segments (`?number=` drill-through), "how calls end" rates —
+  every figure carries its own denominator.
 
 ## Domain
 
 - `Observation` = one source row. `SourceKind`: freeswitch-cdr |
   telnyx-conversation | webhook-log | agent-transcript. `Direction`:
   inbound | outbound; a Telnyx conversation touching a configured AI DID
-  (`-ai-did`, `telnyx.DIDDirectionResolver`) indexes inbound regardless of
-  the declared direction — the DID set is deployment config, not state.
-  Numbers stay raw as observed; `E164` + `ParticipantHash` exist for the
-  planned PII policy and are NOT enforced on stored fields yet.
+  (`-ai-did`) indexes inbound regardless of the declared direction. Numbers
+  stay raw; `E164`/`ParticipantHash` exist for the planned PII policy and are
+  NOT enforced yet.
 - Stream id = `<kind>:<native-id>` — deterministic: re-ingest is the same
   stream, `call.record` is idempotent (same ContentHash replays to zero
   events; a changed hash on a live stream = parsing bug, CDR rows are
@@ -180,35 +186,29 @@ webphone later gets a read-only deep link, never a data dependency.
 ```console
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
-buildflow --build-mode dev            # the quality gate (lint+format+test);
-                                      # FULL only when loadavg 15-min < 40, else
-                                      # verify casualties (docs/buildflow-dev-gate.md)
+buildflow --build-mode dev            # the quality gate; FULL only when loadavg
+                                      # 15-min < 40 (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens refresh -db /tmp/lens.db [-apply]  # additive-field backfill: classify, then -apply; see docs/DOMAIN_LANGUAGE.md
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
-                                      # UI e2e: probe /, /dashboard, /search, /api/freshness with a Go http
-                                      # probe (curl banned); after app.css changes rebuild ONLY via
-                                      # `nix run .#update-styles` (a foreign build re-reds the CSS gate;
-                                      # /app.css MIME trap: docs/gotchas.md); -recording-timeout bounds
-                                      # proxy upstream hops (default 30 s)
-nix develop                           # devShell: go, golangci-lint, gopls, govulncheck, dprint, cqrs-lint
+                                      # UI e2e via a Go http probe (curl banned); app.css rebuilds ONLY
+                                      # via `nix run .#update-styles` (docs/gotchas.md: MIME trap)
+nix develop                           # go, golangci-lint, gopls, govulncheck, dprint, templ,
+                                      # tailwindcss_4, cqrs-lint, vulnix, oxlint, prettier, shellcheck
 bash scripts/verify-all.sh            # THE browser lane: four probe suites, sequential, first-red-wins
 GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/  # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
-node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd --save-baseline /tmp/pd
-                                      # alert-only pixel diff vs baseline; footer stamp ≈0.04% px absorbed
-individual probes: verify-ui-contract.js (T20/T21), verify-style-contract.js (M1), verify-staleness-live.js, golden-pretty-diff.sh — scripts/README.md
+node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd   # alert-only pixel diff (scripts/README.md)
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # after go.mod/go.sum; CLEAN tree only — never nix-hash-fix (BuildFlow#55)
 ```
 
 Receipt-grade commits: `git add … && git commit …` in ONE call; amend only
-UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit.
+UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit code.
 
 ## Deep context (docs/) — read the full doc BEFORE touching its area
 
-- **docs/gotchas.md** — war stories: the bare-record-key flip + fallback,
-  the projection host's one-shot drain, full-recompute folds, FTS5
-  tokenization, tombstone-only deletes, drain-before-enrich, rebuild.
+- **docs/gotchas.md** — war stories: record keys, the one-shot drain,
+  full-recompute folds, FTS5, tombstones, drain-before-enrich, `Exists`.
 - **docs/status/archived/** + **docs/planning/archived/** — 59 reports, every
   executed plan (manifests in each README): CLOSED history — never harvest
   or re-open (living backlog: TODO_LIST.md).
@@ -216,4 +216,4 @@ UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit.
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision.
 - **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
 - **docs/upstream-filings.md** — every filing ledger and its upstream state.
-- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware chain, component map), **docs/research/...http-stack-adoption-audit.html**.
+- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware chain, component map), **docs/research/README.md** (the deep-dive index).

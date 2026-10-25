@@ -35,9 +35,16 @@ func TestReIngestSameSnapshotIsANoOp(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	sc := systemscenario.System(t, ctx, app.DomainConfig(), systemscenario.Memory())
+	sc := systemscenario.System(
+		t,
+		ctx,
+		app.DomainConfig(),
+		systemscenario.Memory(),
+		systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
+	)
 
 	obs := sampleObservation()
+
 	cmd, err := calls.NewRecordCommand(obs)
 	if err != nil {
 		t.Fatal(err)
@@ -59,9 +66,16 @@ func TestRetireTombstonesTheViewRow(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	sc := systemscenario.System(t, ctx, app.DomainConfig(), systemscenario.Memory())
+	sc := systemscenario.System(
+		t,
+		ctx,
+		app.DomainConfig(),
+		systemscenario.Memory(),
+		systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
+	)
 
 	obs := sampleObservation()
+
 	cmd, err := calls.NewRecordCommand(obs)
 	if err != nil {
 		t.Fatal(err)

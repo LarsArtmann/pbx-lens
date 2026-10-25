@@ -15,6 +15,22 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
+// scenarioAwaitTimeout is the poll-await budget for the scenario assertions.
+// The library default (5 s) is honest for an idle box; under `-race` on a
+// loaded machine the projection host can take longer to catch up, and the
+// assertion is about EVENTUAL convergence, not latency — a 5 s miss is a
+// flake, not a defect (paid for 2026-10-25: this test reddened the gate while
+// passing 2 of 3 local runs).
+const scenarioAwaitTimeout = 15 * time.Second
+
+// Sentinel errors for the view assertions: the linter (err113) requires
+// static errors, and a scenario's query callback is a real error path.
+var (
+	errViewType      = errors.New("view query returned an unexpected type")
+	errViewDirection = errors.New("view kind/direction mismatch")
+	errViewFields    = errors.New("view fields mismatch")
+)
+
 func sampleObservation() calls.Observation {
 	return calls.Observation{
 		NativeID:          "conv-e2e-1",
@@ -71,6 +87,7 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 	dsn := filepath.Join(t.TempDir(), "lens.db")
 
 	obs := sampleObservation()
+
 	cmd, err := calls.NewRecordCommand(obs)
 	if err != nil {
 		t.Fatal(err)
@@ -78,7 +95,13 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 
 	key := calls.RecordKey(cmd.StreamID())
 
-	sc := systemscenario.System(t, ctx, app.DomainConfig(), app.DeploymentConfig(dsn))
+	sc := systemscenario.System(
+		t,
+		ctx,
+		app.DomainConfig(),
+		app.DeploymentConfig(dsn),
+		systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
+	)
 
 	var view calls.CallView
 
@@ -87,15 +110,15 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 		ThenQueryFunc(viewReader(sc.System(), key), func(got any) error {
 			v, ok := got.(calls.CallView)
 			if !ok {
-				return fmt.Errorf("view query returned %T", got)
+				return fmt.Errorf("%w: %T", errViewType, got)
 			}
 
 			if v.Kind != calls.SourceTelnyxConversation || v.Direction != calls.DirectionOutbound {
-				return fmt.Errorf("view kind/direction wrong: %+v", v)
+				return fmt.Errorf("%w: %+v", errViewDirection, v)
 			}
 
 			if !v.IsAI || v.DurationSecs != 26 || v.NativeID != "conv-e2e-1" {
-				return fmt.Errorf("view fields wrong: %+v", v)
+				return fmt.Errorf("%w: %+v", errViewFields, v)
 			}
 
 			view = v
@@ -107,7 +130,13 @@ func TestSqliteEndToEndAndReplay(t *testing.T) {
 		t.Fatalf("view content hash mismatch: %q", view.ContentHash)
 	}
 
-	replayed := systemscenario.System(t, ctx, app.DomainConfig(), app.DeploymentConfig(dsn))
+	replayed := systemscenario.System(
+		t,
+		ctx,
+		app.DomainConfig(),
+		app.DeploymentConfig(dsn),
+		systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
+	)
 	replayed.When(cmd).
 		ThenNoEvents().
 		ThenQuery(viewReader(replayed.System(), key), view)

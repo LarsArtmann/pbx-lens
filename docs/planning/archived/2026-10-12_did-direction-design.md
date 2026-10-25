@@ -1,5 +1,9 @@
 <!-- docs/did-direction-design.md — R22 design note (2026-10-12).
-     Design only: no code here. The actionable slice lives in TODO_LIST.md. -->
+     AUDITED + CLOSED 2026-10-25 (docs-health): the Telnyx side shipped
+     2026-10-12 (`-ai-did` + telnyx.DIDDirectionResolver); the CDR side's
+     "already true" claim was DISPROVEN live 2026-10-23 and fixed in
+     `internal/ingest/cdr/cdr.go` (declared call_direction → context →
+     transfer heuristic). Archived to docs/planning/archived/. -->
 
 # DID-interception direction auto-detect
 
@@ -12,6 +16,10 @@ polled conversation with the caller-declared `-poll-direction outbound`
 (serve default). An inbound customer call to the AI therefore indexes as
 `outbound` — the list filter `?direction=inbound` silently misses it, and
 the dashboard's AI-share-by-direction split lies.
+
+> **SHIPPED 2026-10-12**: `-ai-did` + `telnyx.DIDDirectionResolver` (mapper
+> option, before the observation is built) — exactly recommendation 1 below.
+> The rejected alternative stayed rejected.
 
 ## The true signal: the DID path
 
@@ -52,10 +60,16 @@ Two candidate plug-points, one recommended:
   the flag lands (sibling-side follow-up).
 - False positives are bounded: a customer calling FROM an AI DID number is
   not a real shape (DIDs do not originate calls).
-- The CDR side stays untouched (context-derived direction is already true).
+- ~~The CDR side stays untouched (context-derived direction is already true).~~
+  **WRONG, proven live 2026-10-23**: an inbound DID is `transfer`red into the
+  `default` context, so the a-leg's CDR indexed OUTBOUND (4084757593 → 9100).
+  Fixed in `internal/ingest/cdr/cdr.go`: a template-declared
+  `call_direction` column wins, then `context == "public"`, then the transfer
+  heuristic (external caller → internal extension = inbound).
 
-## Scope slice (when picked up)
+## Scope slice (CLOSED)
 
 Mapper option + flag + fixture tests (AI-DID to-number → inbound; non-DID
-to-number → declared direction; empty DID set → exactly today's behavior)
-is a bounded TODO_LIST row — see "Direction auto-detect" there.
+to-number → declared direction; empty DID set → exactly today's behavior) —
+all shipped 2026-10-12; the sibling module option (`aiDids`) landed in
+nix-international-telephony e7c0f8b. No open work remains in this note.

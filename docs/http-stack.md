@@ -142,6 +142,14 @@ we just never passed it). Re-run: ZERO violations — the nonce policy is
 (`CSP_NONCE=1`) in the deploy config; kept report-only as the standing
 opt-in until the next host deploy (owner gate, TODO_LIST).
 
+**The nonce has ONE source in this stack: `httputil.WithNonce`.** Handlers read
+it through `internal/web/nonce(r)` → `httputil.NonceFromRequest`. templ ships
+its own reader (`templ.GetNonce(ctx)`), but it looks up a DIFFERENT context
+key — it returns `""` here, and in nonce mode that is a silently blocked
+script, not an error. Do not "simplify" the helper to `templ.GetNonce` unless
+the middleware is replaced too (2026-10-25 go-appkit/templ deep dive, finding
+F4).
+
 Concurrent-poll ceiling (2026-10-15, M11/F31, `BenchmarkConcurrentPoll`
 through the real middleware chain, parallel, dev box): 304 revalidation
 ≈ 82 µs/op, full 200 ≈ 101 µs/op → ~12k polls/s per box. At the 30 s

@@ -7,6 +7,113 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-25 (the analytics surface: spend, segments, quality — on true counts)
+
+- **One call is one row on the list and the dashboard.** A CDR and an agent
+  transcript describe the same call under one uuid, so an AI call used to
+  appear twice and the dashboard counted its volume twice. The operator-facing
+  surfaces now collapse duplicates onto the REPRESENTATIVE row (CDR first,
+  transcript only as fallback) and let the representative absorb the facts only
+  its sibling recorded (the opening line). The export deliberately stays
+  per-source: a forensic dump carries every row under its own identity.
+  `internal/web/representative.go`; the list walk keeps page size honest by
+  scanning ahead and fails loudly on an unwalkable timestamp group
+  (`list_cursor_stalled`, the export's documented failure mode applied to the
+  page).
+- **CDR direction derivation** (`internal/ingest/cdr/cdr.go`): the dialplan
+  transfers every inbound DID into `default`, so the a-leg's `context` column
+  said nothing and inbound AI calls indexed as OUTBOUND (live example
+  4084757593 → 9100). Precedence is now: a template-declared `call_direction`
+  column (read by VALUE, so the deployment can add columns without re-ordering
+  the MOS field) → `context == "public"` → the transfer heuristic (external
+  caller ringing an internal extension = inbound). Re-ingesting the CDR file
+  heals existing rows through one `call.corrected` per stream.
+- **Dashboard "Spend" card** (north-star slice 1): window spend, cost per
+  billed minute, week-over-week delta, and a daily spend sparkline, built on
+  `Enrichment.CostMicros`. Every figure names its denominator ("N of M calls
+  priced"); no priced call renders an honest empty state, and a mixed-currency
+  window says "mixed" instead of summing units it cannot add.
+- **"Who calls what" segmentation** (slice 2): the top five of OUR numbers and
+  the top five counterparties by volume, each with calls, AI share, average
+  duration and spend — and each row drills through into the filtered call list
+  via a new `?number=` filter that matches either side of a call.
+- **"How calls end" quality rollup** (slice 3): hangup-cause distribution plus
+  standing rates for `no user turn`, `self-dial` and the recording tail, each
+  over its OWN population (transcripts, calls with both parties, timed
+  transcripts) so a quiet window cannot fake a 0% rate.
+- **Four non-browser gates**, each with a `--self-test` that seeds the failure
+  it exists to catch: `scripts/check-js-lint.sh` (oxlint `no-undef` over the
+  probe scripts — the `bin is not defined` class that shipped 2026-10-23),
+  `scripts/check-docs-counts.sh` (corpus counts re-derived from the tree),
+  `scripts/check-doc-links.sh` (relative links across living docs), and
+  `scripts/poll-gate.sh` (load poll that `exec`s the full gate so the
+  receipt's START LOAD is the load the loop verified). The first three also
+  run in the pre-commit hook; all four run at the head of `verify-all.sh`.
+
+### Changed — 2026-10-25 (templ-components v1.24.0, one formatting dialect, lint at zero)
+
+- **templ-components bumped v1.23.0 → v1.24.0** through the six-step
+  watchlist: ARIA fixes land for the two components this repo renders
+  (Heatmap, CopyButton gains a `data-tc-copy-status` role="status"
+  announcement), scrollable tables emit `role="region"`, and the detail
+  page's Split column renders `<div>` instead of `<aside>`. Goldens
+  reviewed; the class corpus regenerates machine-independently now (the
+  script resolves the module cache through `go env`/`go list -m` after the
+  v1.21.0-era hardcoded paths silently scanned nothing and shipped an
+  empty corpus) and refuses to write one.
+- **One duration dialect.** `utils/format` is adopted wholesale: the four
+  hand-rolled twins (`clockDuration`, `compactDuration`, `stringOrDash`,
+  `percent`) are deleted (−46 lines) in favor of the library's
+  `ClockDuration`/`CompactDuration`/`StringOrDash`/`Percent` — the
+  staleness banner copy changes accordingly ("1m00s" → "1m"), NaN/Inf
+  percentages degrade to an em dash instead of rendering "NaN%".
+  `mosGaugePercent` stays (MOS-to-gauge mapping is domain math).
+- **The ops page says "never"** for a poller that has not completed a
+  pass, instead of rendering the zero time as "Jan 1, 0001"
+  (RelativeTime has no empty escape upstream — commented on
+  templ-components#52 with the use case; the local guard retires when an
+  EmptyText prop ships).
+- **Lint findings at zero:** the four standing complexity findings are
+  fixed by extraction, not suppressed — `ParseWithOptions` (row→template
+  classification into `mapRow`), the dashboard accumulator (`viewMOS`/
+  `viewCost`/`viewSegments`), `ListCalls` (the keyset walk's row loop and
+  newer-page probe into `fillListPage`/`newerPageCursor`), and the
+  catalog test's message assertions. Behavior pinned by the existing
+  suites; `golangci-lint run ./...` exits clean.
+
+### Changed — 2026-10-25 (honesty pass: docs corrected, findings triaged, gate de-noised)
+
+- **Static assets must revalidate on the FIRST replay.** `assertConditionalGET`
+  tolerates a re-tag because a rendered page embeds a timestamp; a static asset
+  is byte-identical, so `/static/htmx.min.js` and `/app.css` now go through
+  `assertFirstTryRevalidation` — a 200 on the first conditional GET is a
+  failure, not a retry.
+- **`verify-all.sh` parses its own flags before running anything**, so a
+  typo'd `--baseline` fails in a second instead of after four browser suites.
+- **`docs/backup-rotation-opinion.md` corrected:** the app publishes ONE
+  fixed-path snapshot (`index.db`, atomically replaced and verified), so
+  "rotate the app's staging files" was a no-op; versioned retention lives
+  entirely with the host backup tool.
+- **`docs/did-direction-design.md` closed and archived:** both halves shipped
+  (`-ai-did` 2026-10-12, CDR derivation 2026-10-25); its "the CDR side stays
+  untouched" claim was disproven live and is annotated inline.
+- **`docs/process-prep-2026-10-15.md`:** the scanner ceiling is 64 KiB → 1 MiB
+  (`scannerMaxLine`), and the ContentHash-v2 runbook names `refresh` for the
+  Telnyx leg (local sources re-parse for free).
+- **`docs/followons-2026-10-15.md`:** F56's cost-panel sketch is marked
+  EXECUTED — the Detail-Records enrichment, not the MOS window, supplied the
+  data.
+- **Findings triage closed in writing:** `docs/buildflow-dev-gate.md` now
+  dispositions the detect-only lanes (art-dupl 101 / branching-flow 116 /
+  file-size 16) and names all ten "tools unavailable" entries;
+  `docs/cqrs-lint-policy.md` gained F021/F026/F031 plus the time-typed-field
+  entries. Two real fixes fell out: a named-return lint finding in the CDR
+  mapper, and AGENTS.md's stale go-cqrs-lite version reference (which the
+  linter reads as drift).
+- **`prettier` and `oxlint` joined the devShell** — the prettier-format step
+  no longer falls back to `nix run nixpkgs#prettier` (~2.7 s + a warning per
+  run), and the JS gate finds its tool in the shell it documents.
+
 ### Added — 2026-10-24 (catalog infra truth: containers, channel, read/write edges)
 
 - **The pbx.artmann.tech lineage renders in the federated catalog**:

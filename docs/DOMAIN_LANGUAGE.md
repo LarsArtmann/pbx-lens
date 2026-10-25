@@ -123,17 +123,20 @@ source row is completed from its sibling row that observed the same call.
   `Also indexed as` names what was borrowed.
 - **Local WAVs** resolve by the dialplan's stems plus a `{uuid}_*` sweep,
   because a FreeSWITCH row indexes no `RecordingRef`.
-- **The list and dashboard** still show one row per source (an AI call appears
-  twice); the open decision lives in TODO_LIST.
+- **The list and dashboard** collapse duplicates into the REPRESENTATIVE row
+  (CDR first, transcript only as fallback): one call renders once, and a call
+  keeps the facts only its sibling recorded (the CDR cannot know the opening
+  line). The export deliberately stays per-source — a forensic dump carries
+  every row under its own identity (`internal/web/representative.go`).
 
 ## Bounded contexts
 
-| Term         | Telnyx context                                                                            | FreeSWITCH context                                                                                   |
-| ------------ | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| Conversation | An AI assistant's message thread (`/ai/conversations`) — the unit ingested                | Not a concept; a call is the CDR row identified by `uuid`                                            |
-| Duration     | Recording `duration_millis` when a recording matched, else `last_message_at − created_at` | `billsec` from the CDR row                                                                           |
-| Direction    | Caller-declared at ingest (`-direction` flag); no source field                            | Derived: dialplan `context == "public"` means inbound                                                |
-| AI-ness      | `assistant_id` present in conversation metadata                                           | Destination badge: `destination_number` matching an AI extension (`cdr.ParseOptions.AIDestinations`) |
+| Term         | Telnyx context                                                                                                             | FreeSWITCH context                                                                                                                                             |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Conversation | An AI assistant's message thread (`/ai/conversations`) — the unit ingested                                                 | Not a concept; a call is the CDR row identified by `uuid`                                                                                                      |
+| Duration     | Recording `duration_millis` when a recording matched, else `last_message_at − created_at`                                  | `billsec` from the CDR row                                                                                                                                     |
+| Direction    | Caller-declared at ingest (`-direction` flag), overridden to inbound when the To number is a configured AI DID (`-ai-did`) | Derived in precedence order: template `call_direction` column → `context == "public"` → external caller ringing an internal extension (the transfer heuristic) |
+| AI-ness      | `assistant_id` present in conversation metadata                                                                            | Destination badge: `destination_number` matching an AI extension (`cdr.ParseOptions.AIDestinations`)                                                           |
 
 ## Time vocabulary (owner R2, 2026-10-12; audited 2026-10-15)
 

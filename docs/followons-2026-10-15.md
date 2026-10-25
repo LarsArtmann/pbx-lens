@@ -1,20 +1,28 @@
 # Follow-on sketches (plan 05-40 M18, F56–F58) — 2026-10-15
 
-## F56 — dashboard cost panel (sketch; data does not support it yet)
+> Audited 2026-10-25: F56 SHIPPED (see its entry), F57 stands as the opinion
+> record (sibling-module fold is a TODO row), F58 was already closed. The file
+> stays as the reasoning record; nothing here is open work except F57's
+> sibling wording.
 
-The dashboard renders per-window volume/duration/AI share. A cost panel
-needs per-call cost, and today NO source carries an ingested cost value:
-Telnyx conversation objects expose no price (cost lives in Detail
-Records — see the MOS poller design, same 2027-01 window), and FreeSWITCH
-CDRs carry no billing columns in the vanilla templates this repo parses.
+## F56 — dashboard cost panel — **EXECUTED 2026-10-25**
 
-**Sketch for when Detail Records land:** a fourth StatCard ("Est. cost,
-window") fed by `sum(cost)` over windowed calls, nullable exactly like
-MOS (honest placeholder until the first score arrives); CSV/JSONL exports
-gain the cost column; the PII read-boundary treatment does not apply
-(cost is not personal data). Effort after the window: ~half a day. No
-code now — the data dependency is the gate, and the MOS design doc
-already carries the wire shape (ScoreRecord grows a Cost field).
+~~The dashboard renders per-window volume/duration/AI share. A cost panel
+needs per-call cost, and today NO source carries an ingested cost value.~~
+**Superseded:** the Detail-Records enrichment pass writes
+`Enrichment.CostMicros`/`CostCurrency` onto already-observed calls
+(`internal/cli/enrich.go`), so the data dependency this sketch waited for
+is satisfied by the poller, not by the MOS window.
+
+Shipped: the dashboard's "Spend" card (`internal/web/dashboard.go`
+`DashboardStats.Cost*`, `internal/web/dashboard.templ` `spendCard`) renders
+window spend, cost per billed minute, the week-over-week delta, and a daily
+spend sparkline. Every figure carries its own denominator ("N of M calls
+priced"), a window with no priced calls renders the honest empty state, and
+a mixed-currency window refuses to name one currency. Exports already carry
+the cost column (`CostMicros`/`CostCurrency` in `internal/web/export.go`).
+The sketch's "fourth StatCard" became a card in the aside (the headline grid
+is a fixed four-up).
 
 ## F57 — backup rotation (opinion: host-tool boundary)
 

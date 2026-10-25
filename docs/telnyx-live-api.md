@@ -33,13 +33,16 @@ fold into the next quarterly pass). Upstream filing status lives in
 `conv.CreatedAt.UTC()` compiles, but `last.After(first)` does NOT accept a
 FlexTime argument; write `.Time.After(x.Time)` explicitly.
 
-## Direction is caller-declared
+## Direction is caller-declared — with a DID override (2026-10-12)
 
 The conversation→Observation direction is caller-declared (MapOptions.
 Direction, CLI `-direction`): Telnyx conversation metadata exposes no
 direction field (docs read 2026-10-10), so this deployment's assistant
-calls default to outbound. Revisit when inbound AI calls land (the DID
-interception path).
+calls default to outbound. The DID interception path SHIPPED: a
+conversation whose To number is in the configured AI-DID set indexes
+INBOUND regardless of the declared direction (`telnyx.DIDDirectionResolver`,
+CLI `-ai-did`, sibling module option `aiDids`). The DID set is deployment
+config, so the result stays deterministic across polls.
 
 ## Recording correlation is client-side
 
