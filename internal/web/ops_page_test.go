@@ -1,12 +1,17 @@
 package web
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/cli"
 )
 
 // opsCounters exercises the ETag middleware once per outcome (tag, 304) so
@@ -297,6 +302,103 @@ func TestOpsPageRetentionCountsOverAge(t *testing.T) {
 	for _, want := range []string{"Past the window now", "2 call(s) past the retention window", "call.retired"} {
 		if !strings.Contains(body, want) {
 			t.Errorf("/ops retention card missing %q (body: %s)", want, body)
+		}
+	}
+}
+
+func TestIngestCoverageQueryFoldsPerKind(t *testing.T) {
+	now := time.Date(2026, 10, 25, 12, 0, 0, 0, time.UTC)
+	seed := []calls.Observation{
+		func() calls.Observation {
+			obs := webObservation("conv-a", now.Add(-2*time.Hour))
+			return obs
+		}(),
+		func() calls.Observation {
+			obs := webObservation("conv-b", now.Add(-48*time.Hour))
+			return obs
+		}(),
+		func() calls.Observation {
+			obs := webObservation("cdr-1", now.Add(-30*24*time.Hour))
+			obs.Kind = calls.SourceFreeSwitchCDR
+			return obs
+		}(),
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "coverage.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	if stats := cli.Ingest(ctx, sys, seed); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	rows, err := IngestCoverageQuery(ctx, sys, now)
+	if err != nil {
+		t.Fatalf("IngestCoverageQuery: %v", err)
+	}
+
+	if len(rows) != 2 {
+		t.Fatalf("coverage rows = %d, want 2 kinds", len(rows))
+	}
+
+	byKind := map[calls.SourceKind]CoverageRow{}
+	for _, row := range rows {
+		byKind[row.Kind] = row
+	}
+
+	telnyx := byKind[calls.SourceTelnyxConversation]
+	if telnyx.Views != 2 || !telnyx.Newest.Equal(now.Add(-2*time.Hour)) || !telnyx.Oldest.Equal(now.Add(-48*time.Hour)) {
+		t.Errorf("telnyx coverage = %+v, want 2 views over the right span", telnyx)
+	}
+
+	if telnyx.Stale(now) {
+		t.Error("a 2h-old newest row is inside the SLO and must not flag")
+	}
+
+	cdr := byKind[calls.SourceFreeSwitchCDR]
+	if cdr.Views != 1 || !cdr.Stale(now) {
+		t.Errorf("cdr coverage = %+v, want 1 view flagged stale past the SLO", cdr)
+	}
+}
+
+func TestOpsPageAndAPICarryCoverage(t *testing.T) {
+	observation := webObservation("conv-a", time.Now().Add(-time.Hour))
+
+	mux := newTestServerWith(t,
+		Options{Ops: opsPollerPayload()},
+		observation,
+	)
+
+	_, page := getBody(t, mux, "/ops")
+	for _, want := range []string{"Index coverage", "telnyx-conversation", "Rows indexed"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("ops page missing coverage element %q", want)
+		}
+	}
+
+	status, body := getBody(t, mux, "/api/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /api/ops status = %d, want 200", status)
+	}
+
+	for _, want := range []string{
+		`"coverage":[`,
+		`"kind":"telnyx-conversation"`,
+		`"views":1`,
+		`"stale":false`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/api/ops missing coverage key %q", want)
 		}
 	}
 }
