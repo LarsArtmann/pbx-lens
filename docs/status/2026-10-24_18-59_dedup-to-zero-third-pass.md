@@ -135,4 +135,20 @@ Brainstorm, not commitment list. Provenance marked: **[S]** session-derived, **[
 
 ---
 
+## Post-session correction (appended 2026-10-24, same day — non-destructive)
+
+This report's acceptance of `clockDuration`/`compactDuration` as intentional
+shape coincidence is **superseded**: the afternoon templ-components deep dive
+(docs/research/2026-10-24_templ-components-deep-dive.html, finding F1) showed
+`utils/format` at the pin ships both helpers (plus `StringOrDash`/`Percent`).
+They were undetected dependency duplication, not shape coincidence; question
+(g).1's premise ("merging genuinely different formatters") was wrong — they
+were the SAME formatter, hand-rolled twice. All three locals were deleted
+when utils/format was adopted (plan T4,
+docs/planning/2026-10-24_19-32_SUPERB-data-truth-and-ui-debt-plan.md);
+`mosBars`/`volumeBars` and `mosGaugePercent` keep their accepted verdicts.
+Lesson: grep the dependency graph before accepting a signature pair.
+
+---
+
 *Point-in-time snapshot; goes stale by design. Harvest section (f) into `TODO_LIST.md` via docs-health when the session continues; annotate this file non-destructively as items land.*

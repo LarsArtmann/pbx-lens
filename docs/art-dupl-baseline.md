@@ -58,14 +58,23 @@ the default report, all in `internal/web`) were extracted:
 
 What deliberately remains, and why:
 
-- **1-line signature/type matches (~23 groups, invisible at `--min-lines 2`)**:
+- **1-line signature/type matches (~21 groups, invisible at `--min-lines 2`)**:
   same signatures, different documented business rules — `mosBars` (empty
   slot stays, never a 0.0 dip) vs `volumeBars` (all-zero series suppressed);
-  `clockDuration` (3:45) vs `compactDuration` (42s); `noTranscriptTitle` vs
-  `noTranscriptDescription` (distinct copy semantics); `percent` (ratio
-  format) vs `mosGaugePercent` (gauge clamp). Reviewed body-by-body in the
+  `noTranscriptTitle` vs `noTranscriptDescription` (distinct copy semantics);
+  `percent` (ratio format) vs `mosGaugePercent` (gauge clamp). Reviewed body-by-body in the
   2026-10-24 audit; an abstraction would take more parameters than each
   duplicated line count.
+  **Superseded 2026-10-24 (later the same day):** the templ-components deep
+  dive (docs/research/2026-10-24_templ-components-deep-dive.html, F1) found
+  `utils/format` at the pin ships `ClockDuration`, `CompactDuration`,
+  `StringOrDash`, and `Percent` — so the morning's acceptance of
+  `clockDuration`/`compactDuration` (and the local `percent`) as intentional
+  shape coincidence was wrong: they were undetected dependency duplication.
+  All three locals were deleted when the library package was adopted (T4 of
+  docs/planning/2026-10-24_19-32_SUPERB-data-truth-and-ui-debt-plan.md);
+  only `mosGaugePercent` remains, and it stays — it maps MOS onto the gauge
+  scale (domain math), it does not format.
 - **Test scaffolding (the suppressed/non-actionable buckets)**: per-test
   `OpenSystem`+`Fatalf` bootstraps, `ctx`/`t.Parallel`/fixture setup pairs,
   `newTestServer`/`openTestIndex` prologues. Self-contained tests are the
@@ -97,3 +106,8 @@ change deserves eyes, then a reviewed refresh.
   `openPollHarness` (+ `webhookHangupLine`), fixture bytes unchanged; the
   third inline literal in the counters test moved onto the shared
   `webhookPollLine` helper. Gate verified still at zero groups.
+- 2026-10-24 (same-day correction): the utils/format adoption (plan T4)
+  deleted the `clockDuration`/`compactDuration`/`percent` locals this doc's
+  deliberate-remainder list had accepted hours earlier — grep the dependency
+  graph BEFORE accepting a signature pair as shape coincidence (lesson
+  recorded; see the annotated bullet above).
