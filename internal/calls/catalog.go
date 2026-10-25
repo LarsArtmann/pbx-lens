@@ -137,9 +137,9 @@ func BuildCatalog() *catalog.Catalog {
 		Owners:        []string{catalogOwner},
 		Name:          "FreeSWITCH",
 		Version:       CatalogVersion,
-		ContainerType: "external-system",
+		ContainerType: "other",
 		Technology:    "freeswitch",
-		AccessMode:    "read-only",
+		AccessMode:    "read",
 		Authoritative: true,
 		Summary: "The pbx.artmann.tech softswitch (nix-international-telephony): SIP " +
 			"registrations, call routing, and Master.csv CDRs — the system of record " +
@@ -150,9 +150,9 @@ func BuildCatalog() *catalog.Catalog {
 		Owners:        []string{catalogOwner},
 		Name:          "Telnyx",
 		Version:       CatalogVersion,
-		ContainerType: "external-system",
+		ContainerType: "externalSaaS",
 		Technology:    "telnyx-api",
-		AccessMode:    "read-only",
+		AccessMode:    "read",
 		Summary: "Carrier APIs (conversations, recordings, messaging): thread and media " +
 			"metadata pulled read-only by the lens; inbound events arrive through the " +
 			"receiver webhook feed.",
