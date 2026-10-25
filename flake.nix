@@ -101,8 +101,11 @@
             doCheck = false;
             # The monorepo root carries a go.work; without this, `go mod
             # vendor` in the modules FOD runs in workspace mode and dies.
+            # vendorHash re-derived 2026-10-25 after a Go toolchain bump
+            # changed the vendored tree (the old hash had been cached, so the
+            # devShell only broke once the FOD had to rebuild).
             env.GOWORK = "off";
-            vendorHash = "sha256-pSKF10b8z37reu+8k5lqxBgr+7M/5Whkz5RJDAPuhwY=";
+            vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
           };
         in
         {
