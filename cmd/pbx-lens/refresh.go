@@ -53,7 +53,7 @@ func runRefresh(args []string, out io.Writer) error {
 	_ = fs.Parse(args)
 
 	if *db == "" {
-		return errors.New("refresh: -db is required")
+		return errDBRequired
 	}
 
 	key, err := cli.ResolveKey(*keyFile)

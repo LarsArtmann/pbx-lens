@@ -235,7 +235,10 @@ func parseMOS(raw string) float64 {
 // historical "garbage extra column degrades to no data" behaviour). Reading
 // by value instead of by position lets the sibling template add
 // call_direction without re-ordering the MOS column or breaking old exports.
-func classifyExtras(extras []string) (mos float64, direction calls.Direction) {
+func classifyExtras(extras []string) (float64, calls.Direction) {
+	mos := 0.0
+	direction := calls.Direction("")
+
 	for _, raw := range extras {
 		if parsed, ok := parseDeclaredDirection(raw); ok {
 			direction = parsed
