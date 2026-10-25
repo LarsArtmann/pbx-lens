@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -15,6 +16,43 @@ import (
 	"github.com/larsartmann/templ-components/utils/format"
 )
 
+// copyLinkAction is the canonical share-link affordance (plan P14): the
+// path+query that reconstructs the current view, copied as text. The server
+// builds it — never window.location — so it stays free of volatile params.
+func copyLinkAction(nonce string, ariaLabel string, path string) templ.Component {
+	return display.CopyButton(display.CopyButtonProps{
+		Text:      path,
+		Label:     "Copy link",
+		AriaLabel: ariaLabel,
+		Nonce:     nonce,
+	})
+}
+
+// canonicalDashboardPath is the shareable address of the current dashboard
+// view (plan P14): the window preset and/or the active date range — the
+// exact inputs the page reads back — and nothing else.
+func canonicalDashboardPath(stats DashboardStats) string {
+	query := make(url.Values)
+
+	if stats.WindowDays == 7 || stats.WindowDays == 30 {
+		query.Set("window", strconv.Itoa(stats.WindowDays))
+	}
+
+	if !stats.rangeFrom.IsZero() {
+		query.Set("from", dateValue(stats.rangeFrom))
+	}
+
+	if !stats.rangeTo.IsZero() {
+		query.Set("to", dateValue(stats.rangeTo))
+	}
+
+	if len(query) == 0 {
+		return "/dashboard"
+	}
+
+	return "/dashboard?" + query.Encode()
+}
+
 // dashboardRoute is the quality-dashboard page (T25): a date-range picker,
 // then the live cards region (stat cards, volume, AI/human split, trend,
 // durations, MOS).
@@ -23,6 +61,7 @@ templ dashboardRoute(nonce string, stats DashboardStats, now time.Time, fragURL 
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Dashboard",
 			Subtitle: "Index health and call quality at a glance",
+			Action:   copyLinkAction(nonce, "Copy a shareable link to this dashboard view", canonicalDashboardPath(stats)),
 		})
 		@windowPresets(stats)
 		@rangeForm(stats)

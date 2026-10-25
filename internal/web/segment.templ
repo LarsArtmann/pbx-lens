@@ -18,6 +18,7 @@ templ segmentRoute(nonce string, number string, stats DashboardStats, now time.T
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    number,
 			Subtitle: "Every call involving this number on either side, last 30 days",
+			Action:   copyLinkAction(nonce, "Copy a shareable link to this number's trend page", "/segments/"+number),
 		})
 		<div class="mb-4">
 			@display.Button(display.ButtonProps{

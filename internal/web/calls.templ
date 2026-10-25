@@ -1,6 +1,7 @@
 package web
 
 import (
+	"encoding/json"
 	"net/url"
 	"runtime/debug"
 	"time"
@@ -91,11 +92,58 @@ templ listPage(nonce string, page CallListPage, filters ListCallsQuery) {
 	}
 }
 
+// recentViewsCard is the client-side recent-views region (plan P14): the
+// script records filtered views in localStorage and renders the five most
+// recent as one-click links. The server renders only the stable container —
+// the page body stays byte-stable for the ETag contract, and no-JS visitors
+// lose nothing they had before.
+templ recentViewsCard(filters ListCallsQuery) {
+	<div id="recent-views" data-filters={ recentViewFiltersJSON(filters) } class="mb-6"></div>
+	<script src="/static/recent-views.js" defer></script>
+}
+
+// recentViewFiltersJSON encodes the list's USER-FACING filters for the
+// recent-views script; pager cursors are transport state, not a view, so
+// they never ride along. Unfiltered views record nothing — the head page
+// is one click away anyway. encoding/json over a string map emits sorted
+// keys, so the attribute is deterministic for the ETag.
+func recentViewFiltersJSON(filters ListCallsQuery) string {
+	payload := map[string]string{}
+
+	if filters.Direction != "" {
+		payload["direction"] = string(filters.Direction)
+	}
+
+	if v := aiValue(filters.AI); v != "" {
+		payload["ai"] = v
+	}
+
+	if filters.Number != "" {
+		payload["number"] = filters.Number
+	}
+
+	if !filters.From.IsZero() {
+		payload["from"] = dateValue(filters.From)
+	}
+
+	if !filters.To.IsZero() {
+		payload["to"] = dateValue(filters.To)
+	}
+
+	encoded, err := json.Marshal(payload)
+	if err != nil {
+		return "{}" // unreachable for a string map; stay honest on the wire
+	}
+
+	return string(encoded)
+}
+
 // exportHonestyNote is the export contract as visible text (plan T10.1):
 // the header button's tooltip names it, but tooltips hide — an operator
 // scanning the page sees the stall semantics spelled out under the table.
 // The marker code is the machine-readable string consumers grep for; the
-// rejection id names the stall class for the ops log.templ exportHonestyNote() {
+// rejection id names the stall class for the ops log.
+templ exportHonestyNote() {
 	<div class="mt-4 border-gray-200 border-t px-4 py-2.5 text-gray-500 text-xs dark:border-gray-700 dark:text-gray-400" role="note">
 		Exports stream every matching call with no row cap. If a single
 		timestamp groups more calls than one page can carry, the file ends
