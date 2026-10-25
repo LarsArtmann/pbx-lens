@@ -599,7 +599,7 @@ var staticRoutes = map[string]staticAsset{ //nolint:gochecknoglobals // declarat
 // source from the latest pass, plus the cache hit ratio and overflow count,
 // so ingest and cache health are visible without shelling into the host.
 // The route sits behind the same auth middleware as every other route.
-func (s *server) opsHandler(w http.ResponseWriter, _ *http.Request) {
+func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 	var poller any
 
 	if s.ops != nil {
@@ -623,7 +623,7 @@ func (s *server) opsHandler(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	payload, err := json.Marshal(composeOpsPayload(poller, cache))
+	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context())))
 	if err != nil {
 		http.Error(w, "encoding ops counters failed: "+err.Error(), http.StatusInternalServerError)
 
@@ -635,27 +635,76 @@ func (s *server) opsHandler(w http.ResponseWriter, _ *http.Request) {
 	_, _ = w.Write(append(payload, '\n'))
 }
 
+// coverageWire is the machine view of one source's index coverage (plan
+// P17): what the source delivered and how fresh its newest row is. Stale
+// is the gap flag against the coverageStaleAfter SLO ceiling.
+type coverageWire struct {
+	Kind             string    `json:"kind"`
+	Views            int       `json:"views"`
+	Oldest           time.Time `json:"oldest"`
+	Newest           time.Time `json:"newest"`
+	NewestAgeSeconds float64   `json:"newest_age_seconds"`
+	Stale            bool      `json:"stale"`
+}
+
+// coverageWire computes the JSON coverage section; nil when the walk fails
+// (the key is simply absent — consumers treat absence as unknown, never as
+// an empty index).
+func (s *server) coverageWire(ctx context.Context) []coverageWire {
+	rows, err := IngestCoverageQuery(ctx, s.sys, s.now())
+	if err != nil {
+		s.logf("ingest coverage walk failed: %v", err)
+
+		return nil
+	}
+
+	wire := make([]coverageWire, 0, len(rows))
+
+	for _, row := range rows {
+		wire = append(wire, coverageWire{
+			Kind:             string(row.Kind),
+			Views:            row.Views,
+			Oldest:           row.Oldest,
+			Newest:           row.Newest,
+			NewestAgeSeconds: row.NewestAge(s.now()).Seconds(),
+			Stale:            row.Stale(s.now()),
+		})
+	}
+
+	return wire
+}
+
 // composeOpsPayload merges the independent counter sources into one
 // top-level payload: the poller section keeps the keys it always had
 // (sources, last_pass) and the cache section joins as a sibling, so R15
-// consumers parse unchanged. A non-map poller payload (custom embeds) gets
-// wrapped under "poller" rather than merged.
-func composeOpsPayload(poller any, cache *CacheStats) any {
-	if cache == nil {
+// consumers parse unchanged. Coverage (plan P17) rides as its own key for
+// the same reason. A non-map poller payload (custom embeds) gets wrapped
+// under "poller" rather than merged.
+func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire) any {
+	if cache == nil && len(coverage) == 0 {
 		return poller
 	}
 
-	if pollerMap, ok := poller.(map[string]any); ok {
-		merged := make(map[string]any, len(pollerMap)+1)
-		maps.Copy(merged, pollerMap)
-		merged["cache"] = *cache
+	pollerMap, merged := poller.(map[string]any)
+	if !merged {
+		pollerMap = make(map[string]any, 3)
 
-		return merged
+		if poller != nil {
+			pollerMap["poller"] = poller
+		}
+	} else {
+		copied := make(map[string]any, len(pollerMap)+2)
+		maps.Copy(copied, pollerMap)
+		pollerMap = copied
 	}
 
-	if poller == nil {
-		return map[string]any{"cache": *cache}
+	if cache != nil {
+		pollerMap["cache"] = *cache
 	}
 
-	return map[string]any{"poller": poller, "cache": *cache}
+	if len(coverage) > 0 {
+		pollerMap["coverage"] = coverage
+	}
+
+	return pollerMap
 }

@@ -2,6 +2,7 @@ package web
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/feedback"
@@ -29,6 +30,7 @@ templ opsRoute(nonce string, snap opsSnapshot) {
 		} else {
 			@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 				@opsRetentionCard(snap.Retention)
+				@opsCoverageCard(snap.Coverage, snap.CoverageNow)
 				if snap.Poller != nil {
 					@opsPollerCard(*snap.Poller)
 				}
@@ -37,6 +39,54 @@ templ opsRoute(nonce string, snap opsSnapshot) {
 				}
 			}
 		}
+	}
+}
+
+// opsCoverageCard answers "is the index drying up" (plan P17): what each
+// source delivered (the RAW row counts, siblings included) and how old its
+// newest row is. A row past the SLO ceiling flags as a gap; a kind with no
+// rows is absent here — "never seen" is a different fact from "went
+// quiet", and the empty table says so.
+templ opsCoverageCard(coverage []CoverageRow, now time.Time) {
+	@display.Card(display.CardProps{Title: "Index coverage", TitleTag: display.HeadingTagH2, Class: "lens-ops-card"}) {
+		if coverage == nil {
+			<p class="dark:text-gray-400 text-gray-500 text-sm">Coverage unavailable — the index walk failed; check the serve logs.</p>
+		} else if len(coverage) == 0 {
+			<p class="dark:text-gray-400 text-gray-500 text-sm">No rows indexed yet — run an ingest command and reload.</p>
+		} else {
+			@display.Table(opsCoverageTable(coverage, now))
+		}
+	}
+}
+
+// opsCoverageTable maps the coverage rows onto the display table.
+func opsCoverageTable(coverage []CoverageRow, now time.Time) display.TableProps {
+	rows := make([]display.TableRow, 0, len(coverage))
+
+	for _, row := range coverage {
+		kind := string(row.Kind)
+		age := format.CompactDuration(row.NewestAge(now))
+		gap := ""
+
+		if row.Stale(now) {
+			gap = " — GAP, past the " + format.CompactDuration(coverageStaleAfter) + " SLO"
+		}
+
+		rows = append(rows, display.TableRow{
+			Cells: []display.TableCell{
+				{Text: kind},
+				{Text: strconv.Itoa(row.Views)},
+				{Text: age + gap},
+			},
+		})
+	}
+
+	return display.TableProps{
+		Headers:     []string{"Source", "Rows indexed", "Newest row"},
+		Striped:     true,
+		Hover:       false,
+		CellPadding: display.TableCellPaddingCompact,
+		Rows:        rows,
 	}
 }
 

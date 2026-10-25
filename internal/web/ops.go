@@ -30,8 +30,11 @@ type opsSnapshot struct {
 	// Coverage is the per-source index coverage (plan P17): what each source
 	// actually delivered and how fresh its newest row is. Nil when the walk
 	// failed — the card then says so instead of showing a fake empty table.
-	Coverage []CoverageRow
-	Wired    bool
+	// CoverageNow is the clock the ages were computed against (frozen in
+	// tests, so the card stays deterministic).
+	Coverage    []CoverageRow
+	CoverageNow time.Time
+	Wired       bool
 }
 
 // retentionSnapshot is the /ops retention card's view: the configured
@@ -107,6 +110,7 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 		s.logf("ingest coverage walk failed: %v", err)
 	} else {
 		snap.Coverage = coverage
+		snap.CoverageNow = s.now()
 	}
 
 	return snap
