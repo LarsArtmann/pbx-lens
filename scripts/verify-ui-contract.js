@@ -179,7 +179,10 @@ const fail = probe.fail;
     // renders chips; they must survive navigation to the unfiltered head.
     await page.goto(`${BASE}/?direction=inbound`, { waitUntil: "networkidle0" });
     const chip = await page
-      .$eval("#recent-views a", (el) => ({ href: el.getAttribute("href"), text: el.textContent.trim() }))
+      .$eval("#recent-views a", (el) => ({
+        href: el.getAttribute("href"),
+        text: el.textContent.trim(),
+      }))
       .catch(() => null);
     if (!chip) fail("recent views recorded no chip for the filtered view");
     console.log("recent view chip:", chip.text, "->", chip.href);
@@ -187,7 +190,8 @@ const fail = probe.fail;
     if (!chip.text.includes("inbound")) fail(`recent chip label = ${chip.text}`);
 
     const respChip = await page.goto(`${BASE}${chip.href}`, { waitUntil: "networkidle0" });
-    if (![200, 304].includes(respChip.status())) fail(`recent chip navigation status ${respChip.status()}`);
+    if (![200, 304].includes(respChip.status()))
+      fail(`recent chip navigation status ${respChip.status()}`);
 
     await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
     const persisted = await page.$("#recent-views a");
