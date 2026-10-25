@@ -83,8 +83,10 @@ research complete but no code written.
      re-armed pre-commit docs-links hook REFUSED it (a proof of the local
      gate in itself). CI on the PR: **Guard Self-Tests = FAILURE** while
      every other job that matters stayed green — the red receipt is
-     captured, the break was surgical. PR #4 + branch still open at report
-     time; closing them is §f item 1.
+     captured, the break was surgical. Run
+     `40194004724`/job `121170835402` (Guard Self-Tests fail, 7 s; Build &
+     Test, Lint, Styles, Duplication, Nix, cqrs-lint, vulncheck all pass).
+     PR #4 + branch closed after capture (§f item 1).
 
 ## b) Partially done
 
