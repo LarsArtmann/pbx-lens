@@ -347,3 +347,40 @@ Use `calls.LookupView` (a `Get`) for presence. It also accepts the legacy
 marker-prefixed key, so pre-flip rows answer correctly. Regression:
 `internal/web/representative_test.go` seeds a CDR + transcript pair and
 asserts ONE list row.
+
+## versions.json lies; git tags are the truth (verified, 2026-10-25)
+
+The go-cqrs-lite checkout's `versions.json` said systemscenario v4.2.0 while
+the actual latest tag was v4.2.1 (and other modules drift the same way). Any
+"what version shipped X?" question must be answered with
+`git -C <checkout> tag --contains <commit>` and `git merge-base --is-ancestor`,
+never with versions.json. Filing upstream about it is on the watchlist.
+
+## The layout-stamp drift WARN never covered call_views (correction, 2026-10-25)
+
+The 2026-10-24 audit's F2 claimed metaengine v4.20.0's layout-stamp drift
+WARN closed "a live silent-drift exposure" on call_views. Wrong mechanism:
+the stamp only records collections registered WITH a layout plan (declared
+filter/sort fields, or the `columnarLayout` opt-in). `call_views` registers
+neither — `BuildLayoutPlan` derives columns from filter+sort fields only —
+so registration skips the plan entirely and there is nothing to stamp or
+drift. The WARN mechanism itself is real (proven on a scratch collection:
+same field names, changed column TYPES across two boots of one engine →
+`metaengine: layout stamp drift ... recorded=v1:… declared=v1:…`). T21
+verdict: the `WithLayoutStampsDisabled` opt-out is NOT needed — nothing
+stamps. Consequence for boot logs: a quiet stamp section is normal here.
+
+## systemscenario Then* windows are cumulative since the FIRST act (paid for, 2026-10-25)
+
+`markActStart` fires once per scenario: every Then*/ThenNoEvents measures
+the journal delta since the FIRST When act, not since the most recent one.
+A second `When(cmd).ThenNoEvents()` inside one scenario sees the first
+act's events and "fails". Structure instead: one act per scenario, seed
+history with `Given(sc.Event(...))`, and use `systemscenario.Adopt` for a
+second scenario over the same booted system (fresh baseline). Also:
+`ThenEventsSatisfy` is act-scoped the same way — journal-shape assertions
+belong at t-level via `System().EventStore()` (the documented escape
+hatch). And a race fixture that appends out-of-band INSIDE a decide
+(`AppendBatch` mid-handler) rolls the whole dispatch transaction back
+silently — the OCC loser is better proven at the store's `Save` gate or
+with true concurrent dispatches.
