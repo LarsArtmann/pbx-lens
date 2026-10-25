@@ -53,29 +53,29 @@ func (o Observation) contentHash(schema int) string {
 	// every stored call_views row the moment a marker is persisted, so the
 	// transcript stays the only hashed speech surface (see SourceEvent).
 	// The cost of that choice is the schema-version mechanism above.
-	h := sha256.New()
-	writeHashedField(h, "schema", strconv.Itoa(schema))
-	writeHashedField(h, "native_id", string(o.NativeID))
-	writeHashedField(h, "kind", string(o.Kind))
-	writeHashedField(h, "direction", string(o.Direction))
-	writeHashedField(h, "started_at_nanos", strconv.FormatInt(o.StartedAt.UTC().UnixNano(), 10))
-	writeHashedField(h, "duration_secs", strconv.Itoa(o.DurationSecs))
-	writeHashedField(h, "from_number", o.FromNumber)
-	writeHashedField(h, "to_number", o.ToNumber)
-	writeHashedField(h, "hangup_cause", o.HangupCause)
-	writeHashedField(h, "is_ai", strconv.FormatBool(o.IsAI))
-	writeHashedField(h, "transcript_excerpt", o.TranscriptExcerpt)
-	writeHashedField(h, "transcript", transcriptHash(o.Transcript))
-	writeHashedField(h, "recording_ref", o.RecordingRef)
+	hasher := sha256.New()
+	writeHashedField(hasher, "schema", strconv.Itoa(schema))
+	writeHashedField(hasher, "native_id", string(o.NativeID))
+	writeHashedField(hasher, "kind", string(o.Kind))
+	writeHashedField(hasher, "direction", string(o.Direction))
+	writeHashedField(hasher, "started_at_nanos", strconv.FormatInt(o.StartedAt.UTC().UnixNano(), 10))
+	writeHashedField(hasher, "duration_secs", strconv.Itoa(o.DurationSecs))
+	writeHashedField(hasher, "from_number", o.FromNumber)
+	writeHashedField(hasher, "to_number", o.ToNumber)
+	writeHashedField(hasher, "hangup_cause", o.HangupCause)
+	writeHashedField(hasher, "is_ai", strconv.FormatBool(o.IsAI))
+	writeHashedField(hasher, "transcript_excerpt", o.TranscriptExcerpt)
+	writeHashedField(hasher, "transcript", transcriptHash(o.Transcript))
+	writeHashedField(hasher, "recording_ref", o.RecordingRef)
 
 	// MOS joins the hash only when reported: a source that never carries a
 	// score contributes no bytes at all, so an unscored call cannot be
 	// mistaken for a scored one that happens to score zero.
 	if o.MOS != 0 {
-		writeHashedField(h, "mos", strconv.FormatFloat(o.MOS, 'g', -1, 64))
+		writeHashedField(hasher, "mos", strconv.FormatFloat(o.MOS, 'g', -1, 64))
 	}
 
-	return hex.EncodeToString(h.Sum(nil))
+	return hex.EncodeToString(hasher.Sum(nil))
 }
 
 // writeHashedField writes one named, length-prefixed field into a hash

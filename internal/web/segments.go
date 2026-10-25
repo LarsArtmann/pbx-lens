@@ -57,7 +57,7 @@ func (s Segment) Href() string {
 // destination is our number; an outbound call's caller-ID is. A source row
 // with no parties (an agent transcript can legitimately carry neither yet)
 // yields empty strings, and the caller skips that side.
-func callParties(view calls.CallView) (ours, peer string) {
+func callParties(view calls.CallView) (string, string) {
 	if view.Direction == calls.DirectionInbound {
 		return view.ToNumber, view.FromNumber
 	}

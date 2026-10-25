@@ -18,6 +18,8 @@ import (
 // thousand-line terminal dump is not.
 const refreshFindingLimit = 20
 
+var errDBRequired = errors.New("refresh: -db is required")
+
 // refresh is the one-shot backfill verb of the additive-field doctrine (see
 // calls.ObservationSchemaVersion): fetch the source, classify every stream
 // against the stored read model, and — only with -apply — re-ingest what the

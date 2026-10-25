@@ -13,6 +13,11 @@ const (
 	// catalogServiceID is the service id in the catalog and the federation
 	// hub union — keep in sync with the repo's .eventcatalog-hub.json name.
 	catalogServiceID = "pbx-lens"
+
+	// catalogOwner is the owner-of-record user id in the catalog and the
+	// federation hub (catalog.home.lan): the service page links to this
+	// user; the hub renders owner cards from it.
+	catalogOwner = "lars"
 )
 
 // BuildCatalog constructs the event/command catalog for the calls aggregate.
@@ -32,7 +37,7 @@ func BuildCatalog() *catalog.Catalog {
 		// --- Commands (the write model accepts these) ---
 		catalog.Command[RecordCallCmd](
 			catalog.MessageID(CommandRecord),
-			catalog.Owners("lars"),
+			catalog.Owners(catalogOwner),
 			catalog.WithName("Record Call"),
 			catalog.WithSummary(
 				"Records one call observation from a source snapshot; content-hash dedup "+
@@ -40,13 +45,13 @@ func BuildCatalog() *catalog.Catalog {
 		),
 		catalog.Command[EnrichCallCmd](
 			catalog.MessageID(CommandEnrich),
-			catalog.Owners("lars"),
+			catalog.Owners(catalogOwner),
 			catalog.WithName("Enrich Call"),
 			catalog.WithSummary("Attaches derived data (Telnyx cost, insight summary) to an observed call."),
 		),
 		catalog.Command[RetireCallCmd](
 			catalog.MessageID(CommandRetire),
-			catalog.Owners("lars"),
+			catalog.Owners(catalogOwner),
 			catalog.WithName("Retire Call"),
 			catalog.WithSummary(
 				"Retention tombstone addressed by stream identity alone: removes the call "+
@@ -55,13 +60,13 @@ func BuildCatalog() *catalog.Catalog {
 		// --- Events (the write model emits these) ---
 		catalog.Event[CallObserved](
 			catalog.MessageID(EventObserved), catalog.Sends,
-			catalog.Owners("lars"),
+			catalog.Owners(catalogOwner),
 			catalog.WithName("Call Observed"),
 			catalog.WithSummary("A call snapshot landed in the index (new stream or content-identical replay)."),
 		),
 		catalog.Event[CallCorrected](
 			catalog.MessageID(EventCorrected), catalog.Sends,
-			catalog.Owners("lars"),
+			catalog.Owners(catalogOwner),
 			catalog.WithName("Call Corrected"),
 			catalog.WithSummary(
 				"A later snapshot from the same source superseded the stream's observation; the "+
@@ -69,7 +74,7 @@ func BuildCatalog() *catalog.Catalog {
 		),
 		catalog.Event[CallEnriched](
 			catalog.MessageID(EventEnriched), catalog.Sends,
-			catalog.Owners("lars"),
+			catalog.Owners(catalogOwner),
 			catalog.WithName("Call Enriched"),
 			catalog.WithSummary(
 				"Derived data (cost, insight) landed; it refreshes independently of the "+
@@ -77,7 +82,7 @@ func BuildCatalog() *catalog.Catalog {
 		),
 		catalog.Event[CallRetired](
 			catalog.MessageID(EventRetired), catalog.Sends,
-			catalog.Owners("lars"),
+			catalog.Owners(catalogOwner),
 			catalog.WithName("Call Retired"),
 			catalog.WithSummary(
 				"Retention tombstone: the call left every read-model surface; the payload "+
@@ -88,7 +93,7 @@ func BuildCatalog() *catalog.Catalog {
 	// Owner-of-record for the federation hub (catalog.home.lan): the service
 	// page links to this user; the hub renders owner cards from it.
 	builder.AddUser(catalog.User{
-		ID:    "lars",
+		ID:    catalogOwner,
 		Name:  "Lars Artmann",
 		Email: "git@lars.software",
 	})
@@ -99,7 +104,7 @@ func BuildCatalog() *catalog.Catalog {
 	// Telnyx are modeled as external containers, not services — the
 	// infra repos themselves export nothing).
 	builder.ConfigureService(catalogServiceID,
-		catalog.ServiceOwners("lars"),
+		catalog.ServiceOwners(catalogOwner),
 		catalog.ServiceReadsFrom("freeswitch", "telnyx"),
 		catalog.ServiceWritesTo("call-index"),
 	)
@@ -109,7 +114,7 @@ func BuildCatalog() *catalog.Catalog {
 		"Call capture, enrichment, and retention across the pbx.artmann.tech stack.",
 		catalogServiceID,
 	)
-	builder.ConfigureDomain("telephony", catalog.DomainOwners("lars"))
+	builder.ConfigureDomain("telephony", catalog.DomainOwners(catalogOwner))
 
 	builder.AddDataStore(catalog.DataStore{
 		ID:            "call-index",
