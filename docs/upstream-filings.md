@@ -18,6 +18,14 @@ go-nix-helpers#7, numtide/treefmt-nix#545 plus templ-components
 #48/#49/#50/#51/#55 re-confirmed OPEN. Two new BuildFlow candidates were
 diagnosed this day and are staged, not filed (report 2026-10-23_16-21 §b3).**
 
+**State check 2026-10-25 (plan T13): templ-components #52/#54/#59/#60/#61/#63
+re-confirmed OPEN; the ops use case was COMMENTED on #52
+(issuecomment-6393164087, draft in docs/drafts/), and the two inferred
+immunity claims verified at pbx-lens call sites: Badge `Dot: true` has ZERO
+usages (#54 cannot bite), Grid is used once with the typed enum
+`display.GridCols4` (dashboard.templ:403) — no runtime-composed arbitrary
+class (#61 cannot bite).**
+
 - **go-cqrs-lite#62** (CLOSED upstream 2026-10-17; fold-in = the 2027-01 watch): sqliteengine binds filter values raw (`filter_clause.go:44`,
   `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,
   Ge/Gt drop it, Eq never). In-repo fix stays: bind `rfc3339Nano` strings.

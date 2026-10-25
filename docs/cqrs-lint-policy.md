@@ -54,7 +54,15 @@ DECISION.
   upcast. Adding an upcaster is mandatory work at v2, not now.
 - **C013 (deliberate)**: `CallView.StartedAt time.Time` — the view is
   serialized as JSON (not CBOR epoch) and `ViewFrom` forces `.UTC()`, so no
-  timezone is lost in the sqlite round-trip.
+  timezone is lost in the sqlite round-trip. The same reasoning covers the
+  2026-10-25 F025-shaped warning on the same field (rule id F025, message
+  "timezone may be lost in SQL storage"): the stored form is the RFC3339Nano
+  TEXT the queries bind, not a driver-native time.
+- **C013-adjacent (deliberate): `SourceEvent.At time.Time`** — markers are
+  display-only (a source's own non-speech notes, truncated to whole seconds
+  at the mapper) and never participate in ordering or filtering; the JSON
+  payload keeps the zone. A CBOR epoch round-trip on a display field is not a
+  correctness risk here.
 - **P006 (deliberate)**: the smoke command polls `reader.Get` with a 20 ms
   sleep under a 5 s context deadline — a one-shot CLI convergence wait, no
   hot path. `Watcher.Watch` is change-only (no current-value replay), so
@@ -76,10 +84,29 @@ DECISION.
 - **D014 (deliberate)**: `CallCorrected.Enrichment` carries no json tag
   because the field is not persisted as a flat column; the whole event
   payload is stored as the stream record. Adding a tag would be noise.
-- **F026 (deliberate at v1)**: the readers in `internal/cli/agent.go` scan
-  bounded result sets (transcripts, recent recordings); `WithPrefetch` only
-  pays off on large cursor pages. Revisit when a source grows past a few
-  hundred rows/pass.
+- **F026 (inapplicable, verified 2026-10-25)**: `WithPrefetch` is not a
+  ScanOption — it attaches a `PrefetchCache` to the READER and only caches
+  results for CURSOR-based pagination (`typed_reader_scan.go:59`), while
+  every reader in this repo pages by a `started_at` filter. The rule fires on
+  `internal/retention.OldViews` (one bounded scan, `maxScan`) and the
+  agent-source readers (bounded result sets); prefetch would cache nothing.
+  Non-fix; the rule's own suggestion text is inaccurate for filter-paged
+  scans (an upstream-filing candidate, not filed).
+- **F031 (false positive at helper-built scans)**: "Scan without WithLimit"
+  fires on `internal/web/queries.go` at the list walk and the NextNewer
+  probe. Both DO bound the result: the walk passes `WithLimit(listScanBatch+1)`
+  at the call site (spelled out 2026-10-25) and the probe carries
+  `WithLimit(1)` inside its option slice. The rule reads the Scan arguments
+  literally and cannot see a limit inside a slice built by a helper. The
+  absence of a limit is a real bug class, so the limit stays VISIBLE at the
+  walk call site; the probe slice keeps the helper shape. Non-fix.
+- **F021 (accepted: four folds are the contract)**: `call_views` needs four
+  create folds (`call.observed`, `call.corrected`, `call.enriched`) plus the
+  retirement remove — one per event type, each a FULL recompute of the row
+  (the pairing rule in AGENTS: a create fold with an update fold stores a
+  zero view). Batching them would mean one handler per event type anyway;
+  write amplification is one row write per event, which is the model, not an
+  accident.
 - **B004/B005 (informational)**: `cqrs-gen` constructors and
   `decider.StrictApply` were both considered; StrictApply rejected above
   (loses the Corruption family), and handwritten constructors stay because
