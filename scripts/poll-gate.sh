@@ -71,8 +71,14 @@ read_load() {
 }
 
 # ready reports whether the 15-minute figure is below the threshold.
+# Only the 15m FIELD may arm the gate: passing the whole "1m 5m 15m"
+# triple made awk compare STRINGS ("39.25 59.36 65.13" < "40" is
+# lexicographically true), and the gate armed at 15m=65 — caught by the
+# receipt itself on 2026-10-25, which is why the triple is printed.
 ready() {
-	awk -v figure="$1" -v ceiling="$threshold" 'BEGIN { exit !(figure < ceiling) }'
+	local _1 _5 l15
+	read -r _1 _5 l15 <<<"$1"
+	awk -v figure="$l15" -v ceiling="$threshold" 'BEGIN { exit !(figure < ceiling) }'
 }
 
 self_test() {
@@ -94,6 +100,19 @@ self_test() {
 		else
 			echo "PASS: over-policy load refuses with $exit_not_ready"
 		fi
+	fi
+
+	# Not ready, and ONLY the 15m figure counts: the 2026-10-25 production
+	# arm (1m=39.25, 15m=65.13) happened because the whole triple was
+	# compared as one string. This fixture is the seeded proof it cannot
+	# come back — a low 1m must never launder a hot 15m past the policy.
+	printf '39.25 59.36 65.13 1/100 1\n' >"$dir/hot-tail"
+	if POLL_GATE_LOAD_FILE="$dir/hot-tail" POLL_GATE_EXEC="echo GATE-RAN" \
+		"$0" --once >/dev/null 2>&1; then
+		echo "FAIL: a quiet 1m armed the gate over a hot 15m (the string-compare bug)" >&2
+		failures=$((failures + 1))
+	else
+		echo "PASS: hot 15m behind a quiet 1m still refuses"
 	fi
 
 	# Ready: the gate runs, and the receipt line names the verified load.
