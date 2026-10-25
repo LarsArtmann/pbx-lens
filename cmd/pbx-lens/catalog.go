@@ -11,7 +11,11 @@ import (
 func catalogCmd(args []string) {
 	fs := flag.NewFlagSet("catalog", flag.ExitOnError)
 	output := fs.String("o", "docs/catalog", "directory to write the catalog into")
-	plain := fs.Bool("plain", false, "emit plain frontmatter-ID refs (governance lint exports; always skips bootstrap files)")
+	plain := fs.Bool(
+		"plain",
+		false,
+		"emit plain frontmatter-ID refs (governance lint exports; always skips bootstrap files)",
+	)
 	skipBootstrap := fs.Bool("skip-bootstrap", false,
 		"omit the generated bootstrap files (the merging hub owns its site title, core pin, and dependencies)")
 	architecture := fs.Bool("architecture", false,
