@@ -134,6 +134,7 @@ func BuildCatalog() *catalog.Catalog {
 		catalog.ServiceOwners(catalogOwner),
 		catalog.ServiceReadsFrom("freeswitch", "telnyx"),
 		catalog.ServiceWritesTo("call-index"),
+		catalog.ServiceRepository("go", "https://github.com/LarsArtmann/pbx-lens"),
 	)
 
 	builder.AddDomain(

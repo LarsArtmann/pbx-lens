@@ -3,6 +3,7 @@ package cli
 import (
 	"path/filepath"
 
+	"github.com/larsartmann/go-cqrs-lite/catalog/v4/architecture"
 	"github.com/larsartmann/go-cqrs-lite/catalog/v4/eventcatalog"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -25,10 +26,28 @@ func RenderCatalog(output string, plain, skipBootstrap bool) error {
 		opts = append(opts, eventcatalog.WithSkipBootstrapFiles())
 	}
 
-	err := eventcatalog.NewExporter(dir, opts...).Export(calls.BuildCatalog())
+	cat := calls.BuildCatalog()
+
+	err := eventcatalog.NewExporter(dir, opts...).Export(cat)
 	if err != nil {
 		return errorfamily.WrapInfrastructure(err, "lens.cli.catalog",
 			"export eventcatalog tree to "+dir)
+	}
+
+	return nil
+}
+
+// RenderArchitecture writes the self-contained architecture reference HTML
+// (catalog v4.10.0's exporter, inlined assets) next to the eventcatalog
+// tree. Same pure render as RenderCatalog: no database, no network.
+func RenderArchitecture(output string) error {
+	path := filepath.Join(output, "architecture.html")
+
+	err := architecture.NewExporter(architecture.WithTitle(calls.CatalogTitle)).
+		ExportFile(calls.BuildCatalog(), path)
+	if err != nil {
+		return errorfamily.WrapInfrastructure(err, "lens.cli.catalog",
+			"export architecture reference to "+path)
 	}
 
 	return nil
