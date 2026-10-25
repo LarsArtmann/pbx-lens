@@ -509,6 +509,55 @@ type DetailPage struct {
 	// call. Empty when none exists; the caller resolves it (it owns the
 	// recordings directory).
 	LocalRecording string
+
+	// CounterpartHistory answers "who called this number before?" for the
+	// call's outside party: how many representative calls in the index
+	// involved the number and when the newest one started. Nil when the
+	// call carries no counterpart number.
+	CounterpartHistory *CounterpartHistory
+}
+
+// CounterpartHistory is the detail-page summary of one outside party. It
+// joins nothing new — it re-walks the same representative scan the segment
+// card aggregates, filtered to the number, so both surfaces count the same
+// calls the same way.
+type CounterpartHistory struct {
+	Number   string
+	Calls    int
+	LastSeen time.Time
+}
+
+// counterpartHistory scans the index for the call's outside party. The
+// number arrives via callParties (direction decides ours-vs-theirs), the
+// same grouping the "Who calls what" tables use — clicking through from a
+// segment row and opening any of its calls must agree.
+func counterpartHistory(ctx context.Context, sys *system.System, view calls.CallView) (*CounterpartHistory, error) {
+	_, theirs := callParties(view)
+	if theirs == "" {
+		return nil, nil
+	}
+
+	history := &CounterpartHistory{Number: theirs}
+
+	err := streamRepresentativeCalls(ctx, sys, ListCallsQuery{Number: theirs}, func(other calls.CallView) error {
+		history.Calls++
+		if other.StartedAt.After(history.LastSeen) {
+			history.LastSeen = other.StartedAt
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if history.Calls == 0 {
+		// Unreachable in practice (this call itself matches the filter),
+		// but the type stays honest: no calls, no history.
+		return nil, nil
+	}
+
+	return history, nil
 }
 
 // siblingKinds lists the other source rows that describe the same real-world
@@ -572,6 +621,13 @@ func CallDetailPage(
 			page.JoinedFrom = append(page.JoinedFrom, siblingKind)
 		}
 	}
+
+	history, historyErr := counterpartHistory(ctx, sys, page.CallView)
+	if historyErr != nil {
+		return DetailPage{}, false, historyErr
+	}
+
+	page.CounterpartHistory = history
 
 	return page, true, nil
 }

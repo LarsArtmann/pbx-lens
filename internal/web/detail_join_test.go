@@ -1,6 +1,7 @@
 package web
 
 import (
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -289,5 +290,68 @@ func TestRecordingStemSweepFindsUnknownDialplanName(t *testing.T) {
 	_, body := getBody(t, mux, "/calls/freeswitch-cdr/"+joinUUID)
 	if !strings.Contains(body, joinUUID+"_conference_room_9.wav") {
 		t.Error("detail page does not name the swept recording file")
+	}
+}
+
+// TestDetailCounterpartHistoryCountsEveryCall pins the "who called this
+// number before?" join: every representative call involving the detail
+// call's outside party counts once (a CDR+transcript pair is ONE call), the
+// newest one names the "latest", and the item drills into ?number=.
+func TestDetailCounterpartHistoryCountsEveryCall(t *testing.T) {
+	t.Parallel()
+
+	base := joinStarted()
+	theirs := "+15557770111"
+
+	// Three calls with the same counterpart, the third the newest; the
+	// CDR+transcript pair shares one uuid so it must collapse to one call.
+	first := webObservation("hist-first", base)
+	first.FromNumber = "9100"
+	first.ToNumber = theirs
+
+	pairCDR := aiAgentCDR()
+	pairCDR.FromNumber = "9100"
+	pairCDR.ToNumber = theirs
+	pairCDR.StartedAt = base.Add(time.Hour)
+
+	newest := webObservation("hist-newest", base.Add(2*time.Hour))
+	newest.FromNumber = "9100"
+	newest.ToNumber = theirs
+
+	// A call to a DIFFERENT counterpart must not count.
+	other := webObservation("hist-other", base.Add(3*time.Hour))
+	other.FromNumber = "9100"
+	other.ToNumber = "+15559999999"
+
+	sys := newTestSystem(t, first, pairCDR, aiAgentTranscript(), newest, other)
+
+	page, found, err := CallDetailPage(t.Context(), sys, string(calls.SourceTelnyxConversation), "hist-newest")
+	if err != nil || !found {
+		t.Fatalf("CallDetailPage: found=%v err=%v", found, err)
+	}
+
+	if page.CounterpartHistory == nil {
+		t.Fatal("CounterpartHistory = nil for a call with a counterpart")
+	}
+
+	if page.CounterpartHistory.Number != theirs {
+		t.Errorf("counterpart = %q, want %q", page.CounterpartHistory.Number, theirs)
+	}
+
+	if page.CounterpartHistory.Calls != 3 {
+		t.Errorf("counterpart calls = %d, want 3 (the pair collapses to one)", page.CounterpartHistory.Calls)
+	}
+
+	if !page.CounterpartHistory.LastSeen.Equal(newest.StartedAt) {
+		t.Errorf("last seen = %v, want the newest call %v", page.CounterpartHistory.LastSeen, newest.StartedAt)
+	}
+
+	_, body := getBody(t, muxForSystem(sys), "/calls/telnyx-conversation/hist-newest")
+	if !strings.Contains(body, "3 calls with "+theirs) {
+		t.Error("detail page missing the counterpart history line")
+	}
+
+	if !strings.Contains(body, "/?number="+url.QueryEscape(theirs)) {
+		t.Error("counterpart history does not drill into ?number=")
 	}
 }
