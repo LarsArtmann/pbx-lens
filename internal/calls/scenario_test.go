@@ -24,7 +24,7 @@ import (
 // stream stays the pinned idempotent no-op.
 
 var (
-	errEnrichBeforeObserved   = errorfamily.NewRejection("call.enrich.before_observed", "target")
+	errEnrichBeforeObserved  = errorfamily.NewRejection("call.enrich.before_observed", "target")
 	errEnrichAfterRetired    = errorfamily.NewRejection("call.enrich.after_retired", "target")
 	errRetireBeforeObserved  = errorfamily.NewRejection("call.retire.before_observed", "target")
 	errCorrectedAfterRetired = errorfamily.NewRejection("call.corrected.after_retired", "target")
