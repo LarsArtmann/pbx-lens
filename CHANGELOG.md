@@ -7,6 +7,16 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-25 (per-number segment pages)
+
+- **A segment row now opens its own trend page** (`/segments/{number}`,
+  plan P16): the dashboard's stat cards, volume chart, and quality card,
+  narrowed to every call involving the number on either side. The page
+  reuses the dashboard's own components and query so the numbers can
+  never disagree with the table that linked here; unknown numbers render
+  an honest empty state, and the flat filtered call list remains one
+  click away. Golden `page_segments` + focused tests pin it.
+
 ### Added — 2026-10-25 (transcript-mode search)
 
 - **Search answers "what was SAID" now** (`?mode=transcript`, plan P15):
