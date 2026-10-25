@@ -129,15 +129,40 @@ defect was found and fixed in the go-appkit deep dive. Full browser lane green
 24. **`nix build` green** and **`go test ./...` green**; `golangci-lint` 0
     issues; `dprint check` clean; AGENTS at 218/219; all four new gates
     self-test green.
+25. **THE DEV SHELL WAS BROKEN AND IS FIXED** (found while chasing the gate):
+    the `cqrs-lint` fixed-output derivation's `vendorHash` in `flake.nix` no
+    longer matched the vendored tree (a Go toolchain bump changed
+    `go mod vendor` output; the old hash had been cached, so nothing noticed
+    until the FOD had to rebuild). `nix develop -c true` failed with
+    `got: sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=`. Re-derived in
+    ONE atomic edit (no fake-hash placeholder — the 2026-10-25 "interrupted
+    repair left a placeholder" incident happened exactly that way), then
+    verified: `nix develop -c true` exit 0, and every devShell tool runs
+    (dprint, golangci-lint, cqrs-lint).
+26. **`dprint check` green across the whole tree** — two files left unformatted
+    by concurrent sessions (`docs/upstream-filings.md`, the 06-51 report) were
+    formatted (semantically neutral).
 
 ## b) PARTIALLY DONE
 
-1. **BuildFlow gate receipt.** A full `--build-mode dev` run earlier failed on
-   three steps: `test-race` (the flake above — fixed), `nix-build` (vendorHash
-   mismatch left by an interrupted repair in a concurrent session — a concurrent
-   commit re-landed it and `nix build` is green), and `nix-hash-fix:diagnose`
-   (its own 1 s deadline firing). A fresh run is in flight as this is written;
-   the earlier failure is NOT yet replaced by a green receipt.
+1. **BuildFlow gate receipt.** Three runs this session were red, all on
+   ENVIRONMENT or CASUALTY grounds, not on a repo defect:
+   - run 1: `test-race` (the app-scenario flake — FIXED), `nix-build`
+     (vendorHash left as a placeholder by an interrupted concurrent repair — a
+     concurrent commit re-landed it, `nix build` green), `nix-hash-fix:diagnose`
+     (its own 1 s deadline).
+   - runs 2/3: 15-min load **100–106**, 1-min load **160** (concurrent agent
+     sessions). Failures were starvation: `nix-build` killed at its 35 s step
+     deadline, `govalid-generate` killed after 42 s, `nix-flake-check`
+     unrecognized eval failure, `dprint-format:detect` and
+     `golangci-lint:detect` failing inside a starved shell. BuildFlow itself
+     reported "1 lost to starvation".
+     Every casualty was then verified individually and green: `dprint check` 0,
+     `golangci-lint run ./...` 0 issues, `cqrs-lint .` 19 findings (all
+     policy-documented), `go test ./...` green, `nix build` green,
+     `nix develop -c true` green. **No green gate receipt exists for this
+     session** — the documented rule (FULL only under 15-min load 40) was not
+     met once.
 2. **Per-segment spend** renders as a total only; spend-per-minute per segment
    is not rendered (FEATURES marks that row partially functional).
 3. **The `?number=` filter** is wired into the list, the pager, the staleness
@@ -226,6 +251,7 @@ Everything owner- or calendar-gated in TODO_LIST's `BLOCKED` section:
 ## f) Up to 50 things we should get done next
 
 Architecture / correctness
+
 1. Replace the per-call sibling lookup in the list/dashboard with a read-model
    projection of "call is represented" if profiling shows the extra Get hurts
    (measure first: 50 rows/page today).
@@ -248,42 +274,42 @@ Architecture / correctness
 Gates / tooling
 11. Wire `check-docs-counts.sh` + `check-doc-links.sh` into CI.
 12. Add a CI job that runs the four `--self-test` modes (`poll-gate`,
-    `check-js-lint`, `check-docs-counts`, `check-doc-links`).
+`check-js-lint`, `check-docs-counts`, `check-doc-links`).
 13. Add `shellcheck` to the pre-commit chain (it is in the devShell already and
-    reported zero findings when trialled).
+reported zero findings when trialled).
 14. Add `oxlint` to CI (it is now in the devShell and the config is committed).
 15. Teach `scripts/verify-all.sh` a `--no-browser` mode so CI can run the
-    non-browser half without chromium.
+non-browser half without chromium.
 16. Make `poll-gate.sh` the documented receipt entry point in
-    docs/buildflow-dev-gate.md and scripts/README (done in README; gate doc
-    still describes the old loop).
+docs/buildflow-dev-gate.md and scripts/README (done in README; gate doc
+still describes the old loop).
 17. Add a `--strict-await` lint idea: fail tests whose scenario awaits exceed a
-    budget.
+budget.
 18. Grow the docs-count gate to verify the FEATURES row counts per status
-    (green/yellow/grey) — they drift silently too.
+(green/yellow/grey) — they drift silently too.
 
 Product / analytics
 19. Ship the next analytics slice: anomaly/baseline detection (volume, MOS,
-    failure rate) — needs the trend baselines that now exist.
+failure rate) — needs the trend baselines that now exist.
 20. Saved views: encode the filter set in the URL (mostly done) + a small
-    "recent views" cookie/localStorage layer, no server write path.
+"recent views" cookie/localStorage layer, no server write path.
 21. A per-DID detail page (segment → its own trend card) instead of a filtered
-    list.
+list.
 22. Quality rollup: per-number quality (which DIDs produce the bad calls).
 23. Cost intelligence: currency-aware totals with a daily FX note if Telnyx ever
-    mixes currencies.
+mixes currencies.
 24. Demand-gated outcome analytics (documented in ROADMAP theme 0) — needs a
-    business question first.
+business question first.
 
 Docs / memory
 25. Add a README "Analytics" section describing the three dashboard cards and
-    the `?number=` drill-through.
+the `?number=` drill-through.
 26. Document the analytics denominators in DOMAIN_LANGUAGE (a short
-    "denominators" subsection).
+"denominators" subsection).
 27. Record the `assertFirstTryRevalidation` contract in docs/http-stack.md.
 28. Add the v4 baseline generation to scripts/README's pixel-diff doctrine.
 29. Extract the CDR direction rules from the `AGENTS`-compressed sentence into a
-    dedicated docs section (they now live in code comments + DOMAIN_LANGUAGE).
+dedicated docs section (they now live in code comments + DOMAIN_LANGUAGE).
 30. Add a `docs/status/README.md` reminder that the count gate enforces it.
 
 Owner-gated (still blocked, in priority order)
@@ -301,20 +327,20 @@ Owner-gated (still blocked, in priority order)
 Upstream / sibling
 41. Fold go-etag#2 when it lands; re-run the filing ledger quarterly.
 42. Fold templ-components #48/#49/#51/#55/#59/#60/#61/#63 as they close (the
-    watchlist in docs/templ-components-adoption.md is the re-check list).
+watchlist in docs/templ-components-adoption.md is the re-check list).
 43. Land the corrected backup-rotation wording in `lens.nix` timer comments.
 44. Land `call_direction` in the sibling CDR template.
 45. Re-run the templ-components audit delta after the next bump (~94 predicted).
 
 Verification depth
 46. Run the browser 304/htmx DOM-churn check the owner still owes (server-side
-    proof exists).
+proof exists).
 47. Add a golden for the dashboard's populated-spend state (today only the empty
-    state is golden).
+state is golden).
 48. Add a benchmark for the segment aggregation over a large window.
 49. Add a test that the `?number=` drill-through survives a page walk.
 50. Re-measure `BenchmarkConcurrentPoll` after the analytics cards (they add
-    render work to the polled fragment).
+render work to the polled fragment).
 
 ## g) Questions only the owner can answer
 
@@ -350,6 +376,11 @@ bash scripts/check-agents-budget.sh AGENTS.md   # 218/219
 nix build                                       # green, result/bin/pbx-lens 20.7 MB
 ```
 
-Open at write time: one fresh `buildflow --build-mode dev` run (the earlier one
-reddened on the now-fixed `test-race` flake, the now-fixed vendorHash, and
-`nix-hash-fix`'s own 1 s deadline).
+Late additions after the first draft, both verified: the **cqrs-lint vendorHash
+repair** (devShell was broken: `nix develop -c true` failed; fixed and proven)
+and the **whole-tree dprint check** (two concurrent-session files formatted).
+
+Final gate verdict: **no green BuildFlow receipt** — three runs were red on
+environment (15-min load 100–106, 1-min 160) and on steps since fixed
+(`test-race` flake, cqrs-lint vendorHash); each casualty was verified green
+individually. That is the honest state, not a green claim.
