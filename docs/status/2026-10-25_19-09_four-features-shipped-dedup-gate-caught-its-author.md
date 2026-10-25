@@ -245,7 +245,7 @@ in testdata; test claims in living docs 62 → 71 (all real, gate-checked).
     practice (YAGNI until then — the constant is documented).
 20. Consider absolute-URL canonical links (host-aware) if pasting paths
     proves awkward — owner question, not assumed.
-21–50. The remaining 17-24 plan tail (P11–P19 fine steps), the 10-46 open
+    21–50. The remaining 17-24 plan tail (P11–P19 fine steps), the 10-46 open
     items already folded there, and the §f lists of 15-39 (items 24–30),
     16-58 (21–30), 17-12 (20–25) — all harvested into TODO_LIST by item 9
     above; nothing new invented here.
