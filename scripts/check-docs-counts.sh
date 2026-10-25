@@ -58,7 +58,7 @@ run_checks() {
 	live_status=$(count_files docs/status)
 
 	check "AGENTS.md archived reports" \
-		"$(count_claim AGENTS.md '\<([0-9]+) reports and')" "$archived_status"
+		"$(count_claim AGENTS.md '\<([0-9]+) reports')" "$archived_status"
 	check "docs/status/README.md closed reports" \
 		"$(count_claim docs/status/README.md '\<([0-9]+) closed reports')" "$archived_status"
 	check "docs/planning/archived/README.md closed plans" \

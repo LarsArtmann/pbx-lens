@@ -13,6 +13,9 @@
 # --baseline <dir> (2026-10-18): alert-only pixel diff against that baseline
 # directory (same hook as LENS_DIFF_BASELINE, as a lane flag).
 #
+# Before any probe, the lane runs the non-browser gates: the statix no-op
+# tripwire, the docs-count gate and the doc-link gate (both self-tested).
+#
 # Usage: bash scripts/verify-all.sh [--fast | [--baseline <dir>] screenshot-probe args...]
 #   e.g. bash scripts/verify-all.sh --only dashboard --themes light
 set -euo pipefail
@@ -43,6 +46,16 @@ statix_tripwire() {
 	echo "statix-tripwire: config parses (no-op tripwire green)"
 }
 statix_tripwire
+
+# Docs-truth gates (plan T12, 2026-10-23): the corpus counts the living docs
+# state and every relative link between them. Both are subsecond and both
+# catch a class the browser probes cannot see — a doc that lies about its own
+# archive, or a citation that no longer resolves.
+echo "=== check-docs-counts ==="
+bash scripts/check-docs-counts.sh
+
+echo "=== check-doc-links ==="
+bash scripts/check-doc-links.sh
 
 if [ "${1:-}" = "--fast" ]; then
 	shift

@@ -26,13 +26,15 @@ living_docs() {
 		-not -path './result*' | sort
 }
 
-# links_of prints one link target per line, skipping fenced code blocks (where
-# `](…)` is usually an example, not a link).
+# links_of prints one link target per line, skipping fenced code blocks and
+# inline code spans — both regularly contain `](…)` that is NOT a link (a Go
+# generic signature such as `system.RegisterCommand[T, S](sys, ...)` was the
+# first false positive this gate produced).
 links_of() {
 	awk '
 		/^[[:space:]]*```/ { fence = !fence; next }
 		fence { next }
-		{ print }
+		{ gsub(/`[^`]*`/, ""); print }
 	' "$1" | grep -oE '\]\([^)]*\)' | sed -E 's/^\]\((.*)\)$/\1/'
 }
 
