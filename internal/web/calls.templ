@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"net/url"
 	"runtime/debug"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/larsartmann/templ-components/layout"
 	"github.com/larsartmann/templ-components/navigation"
 	"github.com/larsartmann/templ-components/utils"
+	"github.com/larsartmann/templ-components/utils/format"
 )
 
 func pageProps(nonce string, title string) layout.PageProps {
@@ -213,7 +213,7 @@ templ staleBanner(staleFor time.Duration) {
 	@feedback.Alert(feedback.AlertProps{
 		Type:    feedback.FeedbackWarning,
 		Title:   "Index may be stale",
-		Message: "Newest indexed call is " + compactDuration(staleFor) + " old — run the poller or an ingest command.",
+		Message: "Newest indexed call is " + format.CompactDuration(staleFor) + " old — run the poller or an ingest command.",
 	})
 }
 
@@ -264,12 +264,12 @@ func tableProps(nonce string, rows []CallRow) display.TableProps {
 			Href: row.Href(),
 			Cells: []display.TableCell{
 				{Content: display.RelativeTime(display.RelativeTimeProps{Time: row.When})},
-				{Text: stringOrDash(row.From)},
-				{Text: stringOrDash(row.To)},
+				{Text: format.StringOrDash(row.From)},
+				{Text: format.StringOrDash(row.To)},
 				{Content: directionBadge(string(row.Direction))},
 				{Content: whoBadge(row.IsAI)},
-				{Text: clockDuration(row.Duration)},
-				{Text: stringOrDash(row.Excerpt)},
+				{Text: format.ClockDuration(row.Duration)},
+				{Text: format.StringOrDash(row.Excerpt)},
 			},
 		})
 	}
@@ -376,49 +376,6 @@ func filtersQueryString(filters ListCallsQuery) string {
 	}
 
 	return "?" + query.Encode()
-}
-
-// stringOrDash renders an empty participant/excerpt as an em dash — real
-// CDRs carry unknown parties and the table must say so honestly.
-func stringOrDash(s string) string {
-	if s == "" {
-		return "—"
-	}
-
-	return s
-}
-
-// clockDuration renders 3:45 / 1:02:03 display durations.
-func clockDuration(d time.Duration) string {
-	if d < 0 {
-		d = 0
-	}
-
-	total := int(d.Seconds())
-	hours, rem := total/3600, total%3600
-	minutes, seconds := rem/60, rem%60
-
-	if hours > 0 {
-		return fmt.Sprintf("%d:%02d:%02d", hours, minutes, seconds)
-	}
-
-	return fmt.Sprintf("%d:%02d", minutes, seconds)
-}
-
-// compactDuration renders operator-style durations (42s, 1m30s) for the
-// staleness banner.
-func compactDuration(d time.Duration) string {
-	rounded := d.Round(time.Second)
-	if rounded < time.Minute {
-		return rounded.String()
-	}
-
-	minutes := int(rounded.Minutes())
-	if minutes < 60 {
-		return fmt.Sprintf("%dm%02ds", minutes, int(rounded.Seconds())%60)
-	}
-
-	return fmt.Sprintf("%dh%02dm", int(rounded.Hours()), minutes%60)
 }
 
 // buildVersion extracts an honest short version from Go build info: the

@@ -11,6 +11,7 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/layout"
 	"github.com/larsartmann/templ-components/navigation"
+	"github.com/larsartmann/templ-components/utils/format"
 )
 
 // listRoute is the full list page: shell + optional staleness banner + the
@@ -143,15 +144,15 @@ func detailItems(nonce string, page DetailPage) []display.DefinitionItem {
 	view := page.CallView
 
 	items := []display.DefinitionItem{
-		{Term: "From", Detail: stringOrDash(view.FromNumber), DetailComponent: copyDetail(nonce, view.FromNumber, "from number")},
-		{Term: "To", Detail: stringOrDash(view.ToNumber), DetailComponent: copyDetail(nonce, view.ToNumber, "to number")},
+		{Term: "From", Detail: format.StringOrDash(view.FromNumber), DetailComponent: copyDetail(nonce, view.FromNumber, "from number")},
+		{Term: "To", Detail: format.StringOrDash(view.ToNumber), DetailComponent: copyDetail(nonce, view.ToNumber, "to number")},
 		{Term: "Started", Detail: view.StartedAt.Local().Format("Jan 2, 2006 15:04:05")},
-		{Term: "Duration", Detail: clockDuration(time.Duration(view.DurationSecs) * time.Second)},
+		{Term: "Duration", Detail: format.ClockDuration(time.Duration(view.DurationSecs) * time.Second)},
 		// Direction/Who ride the same badges the calls table uses — one
 		// vocabulary across pages.
 		{Term: "Direction", Detail: string(view.Direction), DetailComponent: directionBadge(string(view.Direction))},
 		{Term: "Who", Detail: whoText(view.IsAI), DetailComponent: whoBadge(view.IsAI)},
-		{Term: "Hangup cause", Detail: stringOrDash(view.HangupCause)},
+		{Term: "Hangup cause", Detail: format.StringOrDash(view.HangupCause)},
 	}
 	if view.CostMicros != 0 {
 		items = append(items, display.DefinitionItem{
@@ -349,11 +350,11 @@ func diagnosticItems(view calls.CallView) []display.DefinitionItem {
 	}
 
 	if tail, ok := transcriptTail(view); ok && tail >= transcriptTailThreshold {
-		note := clockDuration(tail) + " elapsed after the last recorded turn started"
+		note := format.ClockDuration(tail) + " elapsed after the last recorded turn started"
 		items = append(items, display.DefinitionItem{
 			Term:            "Recording tail",
 			Detail:          note,
-			DetailComponent: diagnosticDetail(display.BadgeProps{Text: clockDuration(tail) + " unlogged", Type: display.BadgeWarning, Pill: true}, note),
+			DetailComponent: diagnosticDetail(display.BadgeProps{Text: format.ClockDuration(tail) + " unlogged", Type: display.BadgeWarning, Pill: true}, note),
 		})
 	}
 
@@ -552,7 +553,7 @@ func whoText(isAI bool) string {
 
 func costText(micros int64, currency string) string {
 	units := strconv.FormatFloat(float64(micros)/calls.MicrosPerUnit, 'f', -1, 64)
-	return units + " " + stringOrDash(currency)
+	return units + " " + format.StringOrDash(currency)
 }
 
 func recordingHref(view calls.CallView) string {

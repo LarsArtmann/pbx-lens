@@ -12,6 +12,7 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/layout"
 	"github.com/larsartmann/templ-components/utils"
+	"github.com/larsartmann/templ-components/utils/format"
 )
 
 // dashboardRoute is the quality-dashboard page (T25): a date-range picker,
@@ -156,7 +157,7 @@ func hangupBars(causes []HangupCauseCount, total int) []display.BarChartBar {
 	for _, cause := range causes {
 		tooltip := strconv.Itoa(cause.Calls) + " calls"
 		if ratio, ok := Rate(cause.Calls, total); ok {
-			tooltip += " (" + percent(ratio) + ")"
+			tooltip += " (" + format.Percent(ratio) + ")"
 		}
 
 		bars = append(bars, display.BarChartBar{
@@ -184,7 +185,7 @@ func signalRows(rollup QualityRollup) []display.TableRow {
 func signalRow(label string, count, denominator int, singular, plural string) display.TableRow {
 	share := "—"
 	if ratio, ok := Rate(count, denominator); ok {
-		share = percent(ratio)
+		share = format.Percent(ratio)
 	}
 
 	population := plural
@@ -262,8 +263,8 @@ func segmentRows(segments []Segment) []display.TableRow {
 			Cells: []display.TableCell{
 				{Text: segment.Number},
 				{Text: strconv.Itoa(segment.Calls)},
-				{Text: percent(segment.AIRatio())},
-				{Text: clockDuration(segment.AvgDuration())},
+				{Text: format.Percent(segment.AIRatio())},
+				{Text: format.ClockDuration(segment.AvgDuration())},
 				{Text: spend},
 			},
 		})
@@ -423,7 +424,7 @@ templ statCards(stats DashboardStats, now time.Time) {
 			Tone:  display.StatTonePurple,
 		})
 		@display.StatCard(display.StatCardProps{
-			Value: clockDuration(stats.AvgDuration),
+			Value: format.ClockDuration(stats.AvgDuration),
 			Label: "Avg duration",
 			Icon:  icons.Clock,
 			Tone:  display.StatToneYellow,
@@ -705,12 +706,7 @@ func aiShare(stats DashboardStats) string {
 		return "—"
 	}
 
-	return percent(stats.AIRatio())
-}
-
-// percent renders a [0,1] ratio as "NN.N%" — one decimal, honest above 100.
-func percent(ratio float64) string {
-	return strconv.FormatFloat(ratio*100, 'f', 1, 64) + "%"
+	return format.Percent(stats.AIRatio())
 }
 
 // mosGaugePercent maps MOS (1–5) onto the 0–100 gauge: 1.0 bottoms out at
