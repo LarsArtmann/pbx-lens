@@ -314,3 +314,21 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   churn, the FOD-hash advisory, and AGENTS size. Counts drift with the
   fleet's tool list, never with this repo's policy: judge a doctor run by
   whether every mark fits a disposition, not by the number.
+
+### The gate's "N tools unavailable (health check failed)" list, named (2026-10-23)
+
+`buildflow --dry-run --verbose` names every entry; the count is 10 and each
+one has a standing disposition. Nothing here is repo work.
+
+| Tool                                           | Why it reports unavailable                                                                                                                           | Disposition                                                                                                                                                                                                                                                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jest-test`, `vitest-test`, `js-coverage` (c8) | no JS test runner: this repo has no `package.json` project                                                                                           | accepted — the probe scripts are self-contained instruments, not a test suite; their contracts are proven by `--self-test` lanes and the browser probes                                                                                                                                           |
+| `knip`, `madge`                                | no JS dependency graph to analyse                                                                                                                    | accepted — no JS module graph exists                                                                                                                                                                                                                                                              |
+| `publint`, `svelte-check`, `vue-tsc`           | no publishable JS package, no Svelte/Vue sources                                                                                                     | accepted — never applicable                                                                                                                                                                                                                                                                       |
+| `interrogate`                                  | no Python sources                                                                                                                                    | accepted — never applicable                                                                                                                                                                                                                                                                       |
+| `oxlint-auto-configure`                        | the repo now carries `scripts`-owning `.oxlintrc.json`, which differs from the fleet-generated config (advisory: "drift detected", nothing modified) | accepted and INTENTIONAL: the file enables `no-undef` with browser+node globals (the 2026-10-23 `bin is not defined` class); regenerating from the fleet default would replace an explicit rule set with an implicit one. Reconcile only if the fleet starts shipping a config with `no-undef` on |
+
+The five "skipped via config" entries are the documented on-demand tools
+(`markdown-lint`, `gitleaks`, `codespell`) plus `lychee`/`nix-build-verify`
+from `.buildflow.yml`. Re-run `buildflow --dry-run --verbose` after any
+fleet tool-list bump and add the new name here instead of re-diagnosing it.

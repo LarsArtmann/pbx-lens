@@ -137,36 +137,11 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 
 		fields := normalize(row)
 
-		var byColumn map[string]string
+		byColumn, extras, ok := mapRow(fields, fields13, fields18)
+		if !ok {
+			res.Skipped++
 
-		var extras []string
-
-		switch len(fields) {
-		case len(fields13):
-			byColumn = zip(fields13, fields)
-		case len(fields18):
-			byColumn = zip(fields18, fields)
-		default:
-			// mod_cdr_csv appends the template's extra configured fields
-			// AFTER the built-in ones. The content-typed classifier below
-			// reads each extra column by its VALUE (a MOS score, a direction
-			// word, or neither), so the deployment can add rtp_audio_in_mos
-			// and call_direction in any order without the parser hard-coding
-			// a position. A row longer than the built-in template plus
-			// maxExtraColumns stays a skipped row rather than a guessed parse
-			// (the same guard the exact-length cases had).
-			switch {
-			case len(fields) > len(fields13) && len(fields) <= len(fields13)+maxExtraColumns:
-				byColumn = zip(fields13, fields[:len(fields13)])
-				extras = fields[len(fields13):]
-			case len(fields) > len(fields18) && len(fields) <= len(fields18)+maxExtraColumns:
-				byColumn = zip(fields18, fields[:len(fields18)])
-				extras = fields[len(fields18):]
-			default:
-				res.Skipped++
-
-				continue
-			}
+			continue
 		}
 
 		mos, declaredDirection := classifyExtras(extras)
@@ -186,6 +161,36 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 	}
 
 	return res, nil
+}
+
+// mapRow classifies one normalized CSV row against the two built-in
+// templates and returns its column map plus any extra fields, reporting
+// false for a row that is a parse mismatch rather than a guess (the caller
+// counts it as skipped).
+//
+// mod_cdr_csv appends the template's extra configured fields AFTER the
+// built-in ones. The content-typed classifier (classifyExtras) reads each
+// extra column by its VALUE (a MOS score, a direction word, or neither), so
+// the deployment can add rtp_audio_in_mos and call_direction in any order
+// without the parser hard-coding a position. A row longer than the built-in
+// template plus maxExtraColumns stays a skipped row rather than a guessed
+// parse (the same guard the exact-length cases had).
+func mapRow(fields, fields13, fields18 []string) (map[string]string, []string, bool) {
+	switch len(fields) {
+	case len(fields13):
+		return zip(fields13, fields), nil, true
+	case len(fields18):
+		return zip(fields18, fields), nil, true
+	}
+
+	switch {
+	case len(fields) > len(fields13) && len(fields) <= len(fields13)+maxExtraColumns:
+		return zip(fields13, fields[:len(fields13)]), fields[len(fields13):], true
+	case len(fields) > len(fields18) && len(fields) <= len(fields18)+maxExtraColumns:
+		return zip(fields18, fields[:len(fields18)]), fields[len(fields18):], true
+	default:
+		return nil, nil, false
+	}
 }
 
 func normalize(row []string) []string {

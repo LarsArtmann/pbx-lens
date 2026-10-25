@@ -120,33 +120,12 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 
 		start := len(rows)
 
-		for _, view := range batch {
-			// The cursor binds inclusively so a timestamp group is never cut
-			// off at a batch seam; the tie set skips what this walk already
-			// emitted.
-			if !cursor.IsZero() && view.StartedAt.Equal(cursor) {
-				if _, done := seen[dedupeKey(view)]; done {
-					continue
-				}
-			}
-
-			representative, show, repErr := listRepresentative(ctx, reader, view)
-			if repErr != nil {
-				return CallListPage{}, repErr
-			}
-
-			if !show {
-				continue
-			}
-
-			rows = append(rows, callRow(representative))
-
-			if len(rows) > pageSize {
-				break
-			}
+		stop, err := fillListPage(ctx, reader, batch, cursor, seen, &rows)
+		if err != nil {
+			return CallListPage{}, err
 		}
 
-		if len(rows) > pageSize || !more {
+		if stop || !more {
 			break
 		}
 
@@ -171,29 +150,86 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 		page.Rows = rows
 	}
 
-	// A newer page exists whenever any row sorts above this page's top row;
-	// the cursor back to it is that top row's timestamp. The probe scan
-	// carries only the typed filters — both walk cursors bound below the top
-	// row and must not narrow the probe.
-	if len(page.Rows) > 0 {
-		top := page.Rows[0].When
+	nextNewer, err := newerPageCursor(ctx, reader, query, page.Rows)
+	if err != nil {
+		return CallListPage{}, err
+	}
 
-		probe := append(scanFilters(query),
-			metaengine.WithFilter("started_at", metaengine.FilterGt, rfc3339Nano(top)),
-			metaengine.WithLimit(1),
-		)
+	page.NextNewer = nextNewer
 
-		newer, err := reader.Scan(ctx, probe...)
-		if err != nil {
-			return CallListPage{}, err
+	return page, nil
+}
+
+// fillListPage emits the batch's representative rows into rows until the
+// page is one row past full (the older-page sentinel) or the batch ends.
+// It reports whether the caller must stop walking (page full). The cursor
+// binds inclusively so a timestamp group is never cut off at a batch seam;
+// the tie set skips what this walk already emitted.
+func fillListPage(
+	ctx context.Context,
+	reader *metaengine.TypedReader[calls.CallView],
+	batch []calls.CallView,
+	cursor time.Time,
+	seen map[string]struct{},
+	rows *[]CallRow,
+) (bool, error) {
+	for _, view := range batch {
+		if !cursor.IsZero() && view.StartedAt.Equal(cursor) {
+			if _, done := seen[dedupeKey(view)]; done {
+				continue
+			}
 		}
 
-		if len(newer) > 0 {
-			page.NextNewer = top.UTC().Format(time.RFC3339)
+		representative, show, err := listRepresentative(ctx, reader, view)
+		if err != nil {
+			return false, err
+		}
+
+		if !show {
+			continue
+		}
+
+		*rows = append(*rows, callRow(representative))
+
+		if len(*rows) > pageSize {
+			return true, nil
 		}
 	}
 
-	return page, nil
+	return false, nil
+}
+
+// newerPageCursor reports the cursor back to the newer page when any row
+// sorts above this page's top row: the cursor is that top row's timestamp.
+// The probe scan carries only the typed filters — both walk cursors bound
+// below the top row and must not narrow the probe.
+func newerPageCursor(
+	ctx context.Context,
+	reader *metaengine.TypedReader[calls.CallView],
+	query ListCallsQuery,
+	rows []CallRow,
+) (string, error) {
+	if len(rows) == 0 {
+		return "", nil
+	}
+
+	top := rows[0].When
+
+	probe := append(scanFilters(query),
+		metaengine.WithFilter("started_at", metaengine.FilterGt, rfc3339Nano(top)),
+		metaengine.WithLimit(1),
+	)
+
+	newer, err := reader.Scan(ctx, probe...)
+	if err != nil {
+		return "", err
+	}
+
+	if len(newer) == 0 {
+		return "", nil
+	}
+
+	return top.UTC().Format(time.RFC3339), nil
 }
 
 // exportBatchSize is one keyset page of a streaming export (R7): memory

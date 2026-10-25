@@ -65,7 +65,12 @@ func serveTestStack(tb testing.TB) (string, *http.Client) {
 // get issues a GET against the served chain and returns status plus the
 // response for header inspection. It takes testing.TB so benchmarks can
 // share the same round-trip path.
-func get(tb testing.TB, client *http.Client, base, path string, headers map[string]string) (int, http.Header, string) {
+func get(
+	tb testing.TB,
+	client *http.Client,
+	base, path string,
+	headers map[string]string,
+) (int, http.Header, string) {
 	tb.Helper()
 
 	req, err := http.NewRequestWithContext(tb.Context(), http.MethodGet, base+path, nil)
@@ -137,7 +142,11 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 
 		switch r.URL.Path {
 		case "/v2/recordings/rec-1":
-			fmt.Fprintf(w, `{"data":{"id":"rec-1","download_urls":{"wav":%q,"mp3":""}}}`, upstream.URL+"/audio.wav")
+			fmt.Fprintf(
+				w,
+				`{"data":{"id":"rec-1","download_urls":{"wav":%q,"mp3":""}}}`,
+				upstream.URL+"/audio.wav",
+			)
 		default:
 			http.NotFound(w, r)
 		}
@@ -218,12 +227,20 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 		}
 
 		if dur > float64(hopBudget.Milliseconds()) {
-			t.Errorf("%s hop = %.1fms, exceeds the %.0fs upstream budget", name, dur, hopBudget.Seconds())
+			t.Errorf(
+				"%s hop = %.1fms, exceeds the %.0fs upstream budget",
+				name,
+				dur,
+				hopBudget.Seconds(),
+			)
 		}
 	}
 
 	if strings.Contains(timing, "body") {
-		t.Errorf("Server-Timing %q carries a body metric; only pre-first-write hops are timed", timing)
+		t.Errorf(
+			"Server-Timing %q carries a body metric; only pre-first-write hops are timed",
+			timing,
+		)
 	}
 }
 
@@ -243,7 +260,9 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 	api := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write(
-			[]byte(`{"data":{"id":"rec-1","download_urls":{"wav":"` + upstream.URL + `/audio.wav","mp3":""}}}`),
+			[]byte(
+				`{"data":{"id":"rec-1","download_urls":{"wav":"` + upstream.URL + `/audio.wav","mp3":""}}}`,
+			),
 		)
 	}))
 	t.Cleanup(api.Close)
@@ -303,13 +322,24 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 	_, _ = io.Copy(io.Discard, resp.Body)
 
 	if resp.StatusCode != http.StatusBadGateway {
-		t.Errorf("stalled upstream status = %d, want 502 (the headers hop deadline fired)", resp.StatusCode)
+		t.Errorf(
+			"stalled upstream status = %d, want 502 (the headers hop deadline fired)",
+			resp.StatusCode,
+		)
 	}
 
 	timing := resp.Header.Get("Server-Timing")
 
-	if dur, ok := timingDuration(timing, "headers"); ok && dur > float64(hopBudget.Milliseconds())+100 {
-		t.Errorf("headers hop = %.1fms, stretched past the %s budget by a stalling upstream", dur, hopBudget)
+	if dur, ok := timingDuration(
+		timing,
+		"headers",
+	); ok &&
+		dur > float64(hopBudget.Milliseconds())+100 {
+		t.Errorf(
+			"headers hop = %.1fms, stretched past the %s budget by a stalling upstream",
+			dur,
+			hopBudget,
+		)
 	}
 }
 
@@ -333,7 +363,10 @@ func TestServeStackEndToEnd(t *testing.T) {
 	}
 
 	if headers.Get("ETag") != "" {
-		t.Errorf("staleness fragment carries ETag %q; the age it embeds changes every response", headers.Get("ETag"))
+		t.Errorf(
+			"staleness fragment carries ETag %q; the age it embeds changes every response",
+			headers.Get("ETag"),
+		)
 	}
 
 	if cc := headers.Get("Cache-Control"); cc != "no-cache" {
@@ -376,11 +409,17 @@ func assertPrometheusScrape(t *testing.T, body string) {
 	t.Helper()
 
 	if !strings.Contains(body, "# HELP") || !strings.Contains(body, "# TYPE") {
-		t.Errorf("/metrics body is not Prometheus text format (missing # HELP/# TYPE), got:\n%.200s", body)
+		t.Errorf(
+			"/metrics body is not Prometheus text format (missing # HELP/# TYPE), got:\n%.200s",
+			body,
+		)
 	}
 
 	if !strings.Contains(body, "appkit_build_info") {
-		t.Errorf("/metrics missing appkit_build_info (host version panels read it), got:\n%.200s", body)
+		t.Errorf(
+			"/metrics missing appkit_build_info (host version panels read it), got:\n%.200s",
+			body,
+		)
 	}
 
 	for i, line := range strings.Split(body, "\n") {
@@ -455,9 +494,19 @@ func assertFirstTryRevalidation(t *testing.T, client *http.Client, base, path st
 		t.Fatalf("%s served without an ETag; conditional revalidation cannot work", path)
 	}
 
-	status, replayHeaders, replayBody := get(t, client, base, path, map[string]string{"If-None-Match": etag})
+	status, replayHeaders, replayBody := get(
+		t,
+		client,
+		base,
+		path,
+		map[string]string{"If-None-Match": etag},
+	)
 	if status != http.StatusNotModified {
-		t.Fatalf("%s conditional GET status = %d on the first replay, want 304 (no retry path for assets)", path, status)
+		t.Fatalf(
+			"%s conditional GET status = %d on the first replay, want 304 (no retry path for assets)",
+			path,
+			status,
+		)
 	}
 
 	if replayBody != "" {
@@ -507,7 +556,11 @@ func assertConditionalGET(t *testing.T, client *http.Client, base, path string, 
 
 	if wantNoCache {
 		if cc := notModifiedHeaders.Get("Cache-Control"); cc != "no-cache" {
-			t.Errorf("%s 304 Cache-Control = %q, want no-cache (the header must survive revalidation)", path, cc)
+			t.Errorf(
+				"%s 304 Cache-Control = %q, want no-cache (the header must survive revalidation)",
+				path,
+				cc,
+			)
 		}
 	}
 }
@@ -539,7 +592,10 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 	}
 
 	if plain.WriteTimeout != appkit.NoTimeout {
-		t.Errorf("WriteTimeout = %v, want NoTimeout (exports and recordings stream unbounded)", plain.WriteTimeout)
+		t.Errorf(
+			"WriteTimeout = %v, want NoTimeout (exports and recordings stream unbounded)",
+			plain.WriteTimeout,
+		)
 	}
 
 	if plain.Version != version {
@@ -551,7 +607,10 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 	}
 
 	if got := len(plain.ExtraMiddlewares); got != 4 {
-		t.Fatalf("plain ExtraMiddlewares = %d, want 4 (security headers, timing, compression, etag)", got)
+		t.Fatalf(
+			"plain ExtraMiddlewares = %d, want 4 (security headers, timing, compression, etag)",
+			got,
+		)
 	}
 
 	authed, err := buildServiceConfig("127.0.0.1:0", writeTempHtpasswd(t), nil, nil)
@@ -594,7 +653,12 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 		}
 	}
 
-	if _, err := buildServiceConfig("127.0.0.1:0", t.TempDir()+"/absent-htpasswd", nil, nil); err == nil {
+	if _, err := buildServiceConfig(
+		"127.0.0.1:0",
+		t.TempDir()+"/absent-htpasswd",
+		nil,
+		nil,
+	); err == nil {
 		t.Error("buildServiceConfig with a missing htpasswd file must fail, want load error")
 	}
 }
@@ -691,7 +755,10 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	}
 
 	if vary := headers304.Get("Vary"); !strings.Contains(vary, "Accept-Encoding") {
-		t.Errorf("304 Vary = %q, want it to name Accept-Encoding (a shared cache must re-key on encoding)", vary)
+		t.Errorf(
+			"304 Vary = %q, want it to name Accept-Encoding (a shared cache must re-key on encoding)",
+			vary,
+		)
 	}
 
 	// Identity replay with the SAME tag: because the tag hashes the
@@ -699,7 +766,10 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	// too — the ordering doctrine's whole point.
 	status, _, body, _ := conditionalReplay(t, client, base, "/frag/dashboard", nil)
 	if status != http.StatusNotModified {
-		t.Errorf("identity conditional replay status = %d, want 304 (tags hash identity bodies)", status)
+		t.Errorf(
+			"identity conditional replay status = %d, want 304 (tags hash identity bodies)",
+			status,
+		)
 	}
 
 	if body != "" {
@@ -720,7 +790,10 @@ func TestCacheSemanticsHardening(t *testing.T) {
 		map[string]string{"If-None-Match": rootTag},
 	)
 	if status != http.StatusOK {
-		t.Errorf("filtered page replayed with /'s tag = %d, want 200 (distinct documents, no false 304)", status)
+		t.Errorf(
+			"filtered page replayed with /'s tag = %d, want 200 (distinct documents, no false 304)",
+			status,
+		)
 	}
 
 	// HEAD rides the same validators: a conditional HEAD answers 304 with
@@ -736,7 +809,11 @@ func TestCacheSemanticsHardening(t *testing.T) {
 	}
 
 	if cl := pageHeaders.Get("Content-Length"); cl == "" || cl != strconv.Itoa(len(pageBody)) {
-		t.Errorf("/ Content-Length = %q, want %d (buffered render, single write)", cl, len(pageBody))
+		t.Errorf(
+			"/ Content-Length = %q, want %d (buffered render, single write)",
+			cl,
+			len(pageBody),
+		)
 	}
 
 	// Trailing-slash policy is intentionally unpinned here: the owning
@@ -772,7 +849,11 @@ func assertConditionalHEAD(t *testing.T, client *http.Client, base, path, etag s
 			return
 		}
 
-		t.Errorf("conditional HEAD = %d with %d body bytes, want 304 with none", resp.StatusCode, len(headBody))
+		t.Errorf(
+			"conditional HEAD = %d with %d body bytes, want 304 with none",
+			resp.StatusCode,
+			len(headBody),
+		)
 	}
 }
 
