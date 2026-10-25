@@ -40,7 +40,7 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 - **Ingest per-row receipts**: parse ≈16-26 µs/row, fresh-stream dispatch
   ≈10-12 µs/row (docs/http-stack.md, concurrent-load caveat).
 
-
+### Added — 2026-10-25 (the analytics surface: spend, segments, quality — on true counts)
 
 - **One call is one row on the list and the dashboard.** A CDR and an agent
   transcript describe the same call under one uuid, so an AI call used to
