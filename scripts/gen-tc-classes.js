@@ -20,13 +20,26 @@
 
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
+
+// Resolve the module cache the way the go toolchain does — a hardcoded
+// home-relative path silently scanned nothing when GOMODCACHE moved to a
+// build cache (2026-10-24: the v1.23.0 sweep's corpus regenerated EMPTY for
+// this reason and the drop went unnoticed because Tailwind keeps building).
+const GOMODCACHE = execSync("go env GOMODCACHE", { encoding: "utf8" }).trim();
 
 const MODULES = [
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components@v1.24.0",
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/htmx@v1.24.0",
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/icons@v1.24.0",
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/utils@v1.24.0",
-];
+  "github.com/larsartmann/templ-components",
+  "github.com/larsartmann/templ-components/htmx",
+  "github.com/larsartmann/templ-components/icons",
+  "github.com/larsartmann/templ-components/utils",
+].map((mod) => {
+  const version = execSync(`go list -m -f {{.Version}} ${mod}`, {
+    encoding: "utf8",
+  }).trim();
+
+  return path.join(GOMODCACHE, `${mod}@${version}`);
+});
 
 const OUT = "internal/web/static/templ-components-classes.txt";
 
@@ -71,5 +84,12 @@ for (const root of MODULES) {
 }
 
 const sorted = [...classes].sort();
+if (files === 0 || sorted.length === 0) {
+  console.error(
+    `FATAL: scanned ${files} files, found ${sorted.length} classes — ` +
+      "the module cache paths did not resolve; refusing to write an empty corpus",
+  );
+  process.exit(1);
+}
 fs.writeFileSync(OUT, sorted.join("\n") + "\n");
 console.log(`scanned ${files} files, wrote ${sorted.length} classes to ${OUT}`);
