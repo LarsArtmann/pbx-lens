@@ -139,6 +139,16 @@ func Enrich(obs Observation, enr Enrichment, streamID id.StreamID) decider.Decid
 			)
 		}
 
+		// A retired call has left every read surface (the tombstone removed
+		// its view row); enriching it would re-create the row and defeat the
+		// purge. Re-attempts stay harmless: the rejection is terminal.
+		if state.Retired {
+			return nil, errorfamily.NewRejection(
+				"call.enrich.after_retired",
+				fmt.Sprintf("stream %s is retired; enrichment cannot resurrect it", streamID),
+			)
+		}
+
 		if state.EnrichHash == enr.Hash() {
 			return nil, nil
 		}
