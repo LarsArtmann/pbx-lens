@@ -82,11 +82,19 @@ templ rangeForm(stats DashboardStats) {
 // most one interval. The timestamp footer is the liveness pill — when it
 // freezes, polling has stalled. Without JS the server-rendered content is
 // the same fallback the page always had.
+//
+// The pill clock is minute-quantized (the library Now hook): a wall-clock
+// second-resolution stamp changed the body every second, so the ETag
+// rotated every second and every poll answered 200 — the liveness pill
+// was silently defeating the route's revalidation economy
+// (docs/http-stack.md). Truncated to the minute it still visibly ticks,
+// and the body stays byte-stable between minute boundaries.
 templ dashboardLive(nonce string, stats DashboardStats, now time.Time, fragURL string) {
 	@htmx.PolledRegion(htmx.PolledRegionProps{
 		URL:           fragURL,
 		Every:         "30s",
 		ShowTimestamp: true,
+		Now:           func() time.Time { return now.Truncate(time.Minute) },
 	}) {
 		@statCards(stats, now)
 		@layout.Split(layout.SplitProps{
