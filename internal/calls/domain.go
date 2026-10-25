@@ -118,9 +118,9 @@ const (
 // only), and At is always truncated to whole seconds before it reaches the
 // domain so the sub-second noise of live APIs never enters ContentHash.
 type TranscriptTurn struct {
-	Role TurnRole  `json:"role"`
-	Text string    `json:"text"`
-	At   time.Time `json:"at,omitzero"`
+	Role TurnRole  `json:"role"        doc:"Who spoke: user (the remote party) or assistant (our side)."`
+	Text string    `json:"text"        doc:"The turn verbatim from the source's own transcript — never re-transcribed."`
+	At   time.Time `json:"at,omitzero" doc:"When the turn was spoken; zero when the source reports no timestamps."`
 }
 
 // CountRole reports how many turns a role spoke. Zero is a finding, not an
@@ -153,31 +153,31 @@ func CountRole(turns []TranscriptTurn, role TurnRole) int {
 // ContentHash). Role keeps the source's raw vocabulary rather than TurnRole,
 // because a marker is not a speaker.
 type SourceEvent struct {
-	Role string    `json:"role"`
-	Text string    `json:"text"`
-	At   time.Time `json:"at,omitzero"`
+	Role string    `json:"role"        doc:"Lifecycle marker type (hold, transfer, idle marker) as the source names it."`
+	Text string    `json:"text"        doc:"The marker's own text, verbatim."`
+	At   time.Time `json:"at,omitzero" doc:"When the marker fired; zero when the source reports no timestamps."`
 }
 
 type Observation struct {
-	NativeID          NativeID         `json:"native_id"`
-	Kind              SourceKind       `json:"kind"`
-	Direction         Direction        `json:"direction"`
-	StartedAt         time.Time        `json:"started_at"`
-	DurationSecs      int              `json:"duration_secs"`
-	FromNumber        string           `json:"from_number"`
-	ToNumber          string           `json:"to_number"`
-	HangupCause       string           `json:"hangup_cause"`
-	IsAI              bool             `json:"is_ai"`
-	TranscriptExcerpt string           `json:"transcript_excerpt"`
-	Transcript        []TranscriptTurn `json:"transcript,omitempty"`
-	SourceEvents      []SourceEvent    `json:"source_events,omitempty"`
-	RecordingRef      string           `json:"recording_ref"`
+	NativeID          NativeID         `json:"native_id"               doc:"The source system's own identifier for this call (streaming key together with Kind)."`
+	Kind              SourceKind       `json:"kind"                    doc:"Which source produced the row: freeswitch-cdr, telnyx-conversation, webhook-log, or agent-transcript."`
+	Direction         Direction        `json:"direction"               doc:"inbound or outbound relative to our numbers; AI-DID contacts index as inbound regardless of the declared direction."`
+	StartedAt         time.Time        `json:"started_at"              doc:"When the call started, normalized to UTC (sources report local time)."`
+	DurationSecs      int              `json:"duration_secs"           doc:"Billable seconds as the source reports them."`
+	FromNumber        string           `json:"from_number"             doc:"Calling party number, raw as observed — normalization is derived, never rewritten here."`
+	ToNumber          string           `json:"to_number"               doc:"Called party number, raw as observed."`
+	HangupCause       string           `json:"hangup_cause"            doc:"Why the call ended (normal_clearing, no_answer, ...), in the source's vocabulary."`
+	IsAI              bool             `json:"is_ai"                   doc:"True when the call touched a configured AI destination (dialplan badge)."`
+	TranscriptExcerpt string           `json:"transcript_excerpt"      doc:"Short preview for list views: the first user turn, falling back to the first turn."`
+	Transcript        []TranscriptTurn `json:"transcript,omitempty"    doc:"The source's own turns, verbatim — the lens performs no speech-to-text."`
+	SourceEvents      []SourceEvent    `json:"source_events,omitempty" doc:"Non-speech lifecycle markers (hold, transfer, idle) the source reported."`
+	RecordingRef      string           `json:"recording_ref"           doc:"Recording id at the source; the lens streams it read-only and never copies media."`
 
 	// MOS is the call's Mean Opinion Score when the source reports one
 	// (FreeSWITCH CDR rtp_audio_in_mos). Zero means "not reported" and is
 	// omitted from both JSON and ContentHash, so sources without MOS keep
 	// their historical hashes.
-	MOS float64 `json:"mos,omitempty"`
+	MOS float64 `json:"mos,omitempty" doc:"Voice-quality Mean Opinion Score when the source reports one; zero means not reported."`
 }
 
 func (o Observation) Validate() error {
@@ -223,9 +223,9 @@ func (o Observation) Validate() error {
 // never fetch bookkeeping, so re-polling an unchanged enrichment stays
 // idempotent.
 type Enrichment struct {
-	CostMicros     int64  `json:"cost_micros,omitempty"`
-	CostCurrency   string `json:"cost_currency,omitempty"`
-	InsightSummary string `json:"insight_summary,omitempty"`
+	CostMicros     int64  `json:"cost_micros,omitempty"     doc:"Price in millionths of the currency unit (Telnyx convention); only a positive value means priced."`
+	CostCurrency   string `json:"cost_currency,omitempty"   doc:"ISO-4217 code for CostMicros; empty when unpriced."`
+	InsightSummary string `json:"insight_summary,omitempty" doc:"One-paragraph model-written summary of what the call was about."`
 }
 
 // MicrosPerUnit converts Telnyx cost micros to currency units. The domain

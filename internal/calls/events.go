@@ -142,5 +142,5 @@ type CallEnriched struct {
 // data, only why: the audit answer lives in the stream id, and a tombstone
 // must not re-introduce the PII it is retiring.
 type CallRetired struct {
-	Reason string `json:"reason"`
+	Reason string `json:"reason" doc:"The retention policy that retired the call (e.g. retention:age); no call data rides on this event."`
 }
