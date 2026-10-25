@@ -143,16 +143,16 @@ func TestQualityTrendMovesInPoints(t *testing.T) {
 
 	// 14 days: prior week 10 transcripts, 5 without a user turn (50%);
 	// this week 10 transcripts, 2 without (20%) → −30 points.
-	days := make([]DayVolume, 2*weekDays)
-	for i := range days {
-		days[i] = DayVolume{Day: "2026-10-" + strconv.Itoa(i+1)}
+	days := make([]DayVolume, 0, 2*weekDays)
+	for i := range 2 * weekDays {
+		day := DayVolume{Day: "2026-10-" + strconv.Itoa(i+1), Transcripts: 10}
 		if i < weekDays {
-			days[i].Transcripts = 10
-			days[i].NoUserTurn = 5
+			day.NoUserTurn = 5
 		} else {
-			days[i].Transcripts = 10
-			days[i].NoUserTurn = 2
+			day.NoUserTurn = 2
 		}
+
+		days = append(days, day)
 	}
 
 	trend := qualityTrend(days)

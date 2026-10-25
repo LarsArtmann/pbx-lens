@@ -307,7 +307,8 @@ func qualityTrend(days []DayVolume) QualityTrend {
 		return QualityTrend{}
 	}
 
-	sum := func(half []DayVolume) (transcripts, noUser int) {
+	sum := func(half []DayVolume) (int, int) {
+		var transcripts, noUser int
 		for _, day := range half {
 			transcripts += day.Transcripts
 			noUser += day.NoUserTurn

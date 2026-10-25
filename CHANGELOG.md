@@ -7,6 +7,49 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-25 (test integrity: the Tailwind corpus gate)
+
+- **The committed Tailwind class corpus is now freshness-tested**
+  (`internal/web/corpus_freshness_test.go`): the corpus's pin stamp must
+  match go.mod's templ-components requirement, a 3000-line floor refuses
+  the scan-of-nothing incident, and a four-class census refuses the
+  class-drop incident. All three seeded-red proofs landed: wrong stamp →
+  red naming both versions, gutted corpus → red on floor AND census, and
+  a broken `page_ops.golden` stays caught by the consolidated
+  `-run TestGoldenPages` entry point.
+
+### Fixed — 2026-10-25 (six lint findings that reddened CI)
+
+- The P4–P6 session pushed without the repo's golangci-lint pin; CI went
+  red on the last two pushes. All six findings fixed at root where
+  possible: `Segment.CostPerMinute` now divides by the domain constant
+  `calls.MicrosPerUnit` (the split-brain twin of dashboard.go's own
+  conversion), the quality-trend seed builds by append (makezero), the
+  trend sum returns unnamed values (nonamedreturns), and the two
+  `return nil, nil` sites in `counterpartHistory` carry reasoned
+  nilnil suppressions (nil history is the optional-result contract, not
+  a failure). `golangci-lint run ./...` → 0 issues.
+
+### Added — 2026-10-25 (analytics depth: per-segment rates, trend points, counterpart history)
+
+- **Per-segment cost per minute** in the "Who calls what" tables: every
+  segment row states its own rate over its PRICED calls' seconds
+  (`Segment.CostPerMinute` divides by `PricedSecs` — the same denominator
+  discipline as the window rate), so an unpriced segment renders an em
+  dash instead of borrowing a confident zero
+  (`TestSegmentCostPerMinuteUsesPricedSecondsOnly`).
+- **Week-over-week trend on the no-user-turn rate, in percentage POINTS**
+  (`QualityTrend`): 2%→4% reads "+2 points", never "+100%", and a week
+  without a prior-week transcript baseline renders no trend line at all —
+  no fabricated baseline on a zero prior share
+  (`TestQualityTrendMovesInPoints`).
+- **"Who called this number before?" on the call detail page**: a History
+  item counts the representative calls that involved the counterpart
+  number and names the newest, linking into the filtered list. It re-walks
+  the same representative scan the segment card aggregates
+  (`CounterpartHistory`), so the segment drill-through and the detail page
+  must agree (`TestDetailCounterpartHistoryCountsEveryCall`).
+
 ### Fixed — 2026-10-25 (gate truth: the first calm-window FULL-gate receipt)
 
 - **Four erraudit error-severity findings fixed** — the scenario-test

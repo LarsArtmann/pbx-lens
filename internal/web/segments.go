@@ -63,7 +63,7 @@ func (s Segment) CostPerMinute() float64 {
 		return 0
 	}
 
-	units := float64(s.CostMicros) / 1_000_000
+	units := float64(s.CostMicros) / calls.MicrosPerUnit
 
 	return units / (float64(s.PricedSecs) / secondsPerMinute)
 }

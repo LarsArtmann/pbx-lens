@@ -534,7 +534,7 @@ type CounterpartHistory struct {
 func counterpartHistory(ctx context.Context, sys *system.System, view calls.CallView) (*CounterpartHistory, error) {
 	_, theirs := callParties(view)
 	if theirs == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil history is the answer, not a failure: no outside party → no item
 	}
 
 	history := &CounterpartHistory{Number: theirs}
@@ -554,7 +554,7 @@ func counterpartHistory(ctx context.Context, sys *system.System, view calls.Call
 	if history.Calls == 0 {
 		// Unreachable in practice (this call itself matches the filter),
 		// but the type stays honest: no calls, no history.
-		return nil, nil
+		return nil, nil //nolint:nilnil // same optional-result contract as the no-party case above
 	}
 
 	return history, nil
