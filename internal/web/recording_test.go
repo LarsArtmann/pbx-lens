@@ -481,6 +481,45 @@ func TestRecordingUpstreamTimeoutBoundsWavHeaders(t *testing.T) {
 	}
 }
 
+// TestRecordingProxyTimingHopBudget pins the two-hop Server-Timing contract
+// docs/http-stack.md promises: through the real middleware wrapper, a
+// successful WAV proxy names both upstream hops (metadata, headers) in the
+// Server-Timing header — both recorded pre-first-write, per the doctrine —
+// and names NO body metric, because the unbounded stream itself is never
+// timed.
+func TestRecordingProxyTimingHopBudget(t *testing.T) {
+	api := fakeTelnyx(t, &fakeTelnyxState{})
+
+	mux := newTestServerWith(t, Options{
+		Recordings: RecordingOptions{Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2")},
+	}, telnyxRecordingObservation())
+
+	timed := ServerTimingMiddleware()(mux)
+
+	rec := httptest.NewRecorder()
+	timed.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/calls/telnyx-conversation/conv-rec/recording", nil))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("recording status = %d, want 200 (body: %s)", rec.Code, rec.Body.String())
+	}
+
+	if rec.Body.String() != string(auditWav) {
+		t.Fatalf("body = %q, want the proxied WAV bytes", rec.Body.String())
+	}
+
+	timing := rec.Header().Get("Server-Timing")
+
+	for _, hop := range []string{"metadata", "headers"} {
+		if !strings.Contains(timing, hop) {
+			t.Errorf("Server-Timing = %q, want the %q hop", timing, hop)
+		}
+	}
+
+	if strings.Contains(timing, "body") {
+		t.Errorf("Server-Timing = %q — the unbounded body must never be timed", timing)
+	}
+}
+
 func TestResolveUpstreamTimeout(t *testing.T) {
 	tests := []struct {
 		name       string

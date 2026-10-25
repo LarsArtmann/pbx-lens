@@ -261,27 +261,21 @@ func TestExportKeysetStallFailsLoudly(t *testing.T) {
 // when the filter matched nothing: the first page query still ran.
 func TestExportCarriesFirstPageTiming(t *testing.T) {
 	started := testCallStarted()
-	mux := newTestServer(t,
+	mux := ServerTimingMiddleware()(newTestServer(t,
 		webObservation("conv-a", started),
 		webObservation("conv-b", started.Add(time.Minute)),
-	)
+	))
 
-	fetch := func(path string) (*httptest.ResponseRecorder, string) {
+	fetch := func(path string) *httptest.ResponseRecorder {
 		rec := httptest.NewRecorder()
 		mux.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 
-		return rec, rec.Body.String()
+		return rec
 	}
 
-	for _, tc := range []struct {
-		name string
-		path string
-	}{
-		{"jsonl", "/api/export.jsonl"},
-		{"csv", "/api/export.csv"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			rec, body := fetch("/api/export." + tc.name)
+	for _, format := range []string{"jsonl", "csv"} {
+		t.Run(format, func(t *testing.T) {
+			rec := fetch("/api/export." + format)
 
 			if rec.Code != http.StatusOK {
 				t.Fatalf("status = %d, want 200", rec.Code)
@@ -291,13 +285,13 @@ func TestExportCarriesFirstPageTiming(t *testing.T) {
 				t.Fatalf("Server-Timing = %q, want a firstpage metric", timing)
 			}
 
-			if !strings.Contains(body, "conv-a") || !strings.Contains(body, "conv-b") {
+			if body := rec.Body.String(); !strings.Contains(body, "conv-a") || !strings.Contains(body, "conv-b") {
 				t.Fatalf("body lost rows: %q", body)
 			}
 		})
 	}
 
-	empty := newTestServer(t)
+	empty := ServerTimingMiddleware()(newTestServer(t))
 
 	rec := httptest.NewRecorder()
 	empty.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/export.jsonl?number=%2B19999999999", nil))
