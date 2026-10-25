@@ -7,6 +7,16 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-25 (ingest coverage analytics)
+
+- **/ops now answers "is the index drying up"** (plan P17): an Index
+  coverage card and an /api/ops `coverage` key report, per source kind,
+  the raw indexed-row count, the oldest/newest span, the newest-row age,
+  and a `stale` gap flag against a 48-hour SLO ceiling. Counts use the
+  raw walk (siblings included), zero-row kinds stay absent ("never seen"
+  is a different fact from "went quiet"), and a failed walk renders an
+  honest "unavailable" instead of a fake empty table.
+
 ### Added — 2026-10-25 (saved views)
 
 - **Filtered list views are now one click away** (plan P14): the calls
