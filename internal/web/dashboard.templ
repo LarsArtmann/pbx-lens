@@ -294,7 +294,8 @@ func segmentRows(segments []Segment) []display.TableRow {
 
 // heatmapCard is the "when do calls happen" density grid (plan T19):
 // weekday rows x hour columns in the dashboard zone. A quiet window renders
-// the honest empty message instead of a wall of near-invisible cells.
+// the honest empty message instead of a wall of near-invisible cells, and
+// the weekday baseline note (plan P12) sits quietly under the grid.
 templ heatmapCard(stats DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call density (weekday × hour)", TitleTag: display.HeadingTagH2}) {
 		if stats.Total == 0 {
@@ -309,7 +310,30 @@ templ heatmapCard(stats DashboardStats) {
 				AriaLabel:     "Call density by weekday and hour (" + strconv.Itoa(stats.WindowDays) + "-day window, dashboard zone)",
 				CellSize:      "w-3",
 			})
+			@volumeNoteLine(stats.VolumeNote)
 		}
+	}
+}
+
+// volumeNoteLine renders the anomaly-baseline verdict as one quiet line —
+// prose, not a chart: the number is already on the grid above.
+templ volumeNoteLine(note VolumeNote) {
+	if note.Kind == VolumeNoHistory {
+		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+			Not enough history yet for a usual-range note (needs two full weeks).
+		</p>
+	} else if note.Kind == VolumeUsual {
+		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+			Today so far: { strconv.Itoa(note.Today) } call(s), usual for a { note.Weekday } (typically { strconv.Itoa(note.Low) }-{ strconv.Itoa(note.High) }).
+		</p>
+	} else if note.Kind == VolumeQuiet {
+		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+			Today so far: { strconv.Itoa(note.Today) } call(s), unusually quiet for a { note.Weekday } (typically { strconv.Itoa(note.Low) }-{ strconv.Itoa(note.High) }).
+		</p>
+	} else if note.Kind == VolumeBusy {
+		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
+			Today so far: { strconv.Itoa(note.Today) } call(s), unusually busy for a { note.Weekday } (typically { strconv.Itoa(note.Low) }-{ strconv.Itoa(note.High) }).
+		</p>
 	}
 }
 

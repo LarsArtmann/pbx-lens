@@ -154,9 +154,12 @@ type DashboardStats struct {
 	// points — the health arrow for AI conversations. False HasBaseline
 	// renders nothing, never a fabricated move.
 	QualityTrend QualityTrend
-	ByDay        []DayVolume
-	Durations    []DurationBucket
-	Week         WeekDelta
+	// VolumeNote compares today's count against the window's weekday baseline
+	// (plan P12); VolumeNoHistory renders the honest not-enough-history line.
+	VolumeNote VolumeNote
+	ByDay      []DayVolume
+	Durations  []DurationBucket
+	Week       WeekDelta
 
 	// rangeFrom/rangeTo echo the picker's active range back into the form
 	// (zero when unset).
@@ -280,6 +283,7 @@ func DashboardStatsQuery(
 	stats.Week = weekDelta(stats.ByDay)
 	stats.CostWeek = costWeekDelta(stats.ByDay)
 	stats.QualityTrend = qualityTrend(stats.ByDay)
+	stats.VolumeNote = volumeNote(stats, now)
 	stats.CostCurrency = unanimousCurrency(acc.costCurrencies)
 	stats.TopNumbers = topSegments(acc.numberSegments, segmentLimit)
 	stats.TopPeers = topSegments(acc.peerSegments, segmentLimit)
