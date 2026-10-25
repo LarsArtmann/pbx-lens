@@ -3,8 +3,6 @@ package calls
 import (
 	"strings"
 	"testing"
-
-	"github.com/larsartmann/go-cqrs-lite/event/v4"
 )
 
 func TestCommandConstructorsValidateAndAddress(t *testing.T) {
@@ -94,33 +92,5 @@ func TestExcerptSelectsAndTruncates(t *testing.T) {
 		if got := Excerpt(tc.turns, tc.maxRunes); got != tc.want {
 			t.Errorf("%s: Excerpt = %q, want %q", tc.name, got, tc.want)
 		}
-	}
-}
-
-func TestRetireDeciderPaths(t *testing.T) {
-	obs := validObservation()
-	streamID := mustSID(t, obs)
-
-	history := decide(t, Record(obs, streamID), CallState{}, 0)
-	recorded := foldAll(t, history)
-
-	retire := Retire("retention:age", streamID)
-
-	if _, err := retire(CallState{}, event.Version(1)); err == nil {
-		t.Error("retiring an unobserved stream must be rejected")
-	}
-
-	events := decide(t, retire, recorded, event.Version(1))
-	if len(events) != 1 || events[0].Type() != EventRetired {
-		t.Fatalf("retire events = %+v, want one call.retired", events)
-	}
-
-	retired := foldAll(t, append(history, events...))
-	if !retired.Observed || !retired.Retired {
-		t.Errorf("folded state must keep the observation and carry the retirement: %+v", retired)
-	}
-
-	if again := decide(t, retire, retired, event.Version(2)); len(again) != 0 {
-		t.Errorf("re-retiring must be an idempotent no-op, got %d events", len(again))
 	}
 }

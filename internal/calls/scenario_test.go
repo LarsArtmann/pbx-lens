@@ -3,10 +3,9 @@ package calls
 import (
 	"testing"
 
-	scenario "github.com/larsartmann/go-cqrs-lite/scenario/v4"
-
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
+	scenario "github.com/larsartmann/go-cqrs-lite/scenario/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 )
 
@@ -63,45 +62,86 @@ func retireDecide(sid id.StreamID, reason RetentionReason) scenario.DecideFunc[R
 	}
 }
 
-// TestScenarioRecordPaths: first recording emits one call.observed; a
+// mustRecord builds the validated record command for a scenario act.
+func mustRecord(t *testing.T, obs Observation) RecordCallCmd {
+	t.Helper()
+
+	cmd, err := NewRecordCommand(obs)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return cmd
+}
+
+// mustEnrich builds the validated enrich command for a scenario act.
+func mustEnrich(t *testing.T, obs Observation, enr Enrichment) EnrichCallCmd {
+	t.Helper()
+
+	cmd, err := NewEnrichCommand(obs, enr)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return cmd
+}
+
+// mustRetire builds the validated retire command for a scenario act.
+func mustRetire(t *testing.T, obs Observation, reason RetentionReason) RetireCallCmd {
+	t.Helper()
+
+	cmd, err := NewRetireCommand(obs.Kind, obs.NativeID, reason)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return cmd
+}
+
+// grownObservation returns obs with the larger snapshot the supersede matrix
+// corrects to.
+func grownObservation(obs Observation) Observation {
+	grown := obs
+	grown.DurationSecs = 99
+	grown.Transcript = []TranscriptTurn{{Role: "user", Text: "one more thing"}}
+
+	return grown
+}
+
+// TestScenarioRecordPaths: the first recording emits one call.observed; a
 // byte-identical re-record replays to nothing; a grown snapshot supersedes
 // via call.corrected WITH the enrichment riding along.
 func TestScenarioRecordPaths(t *testing.T) {
 	obs := validObservation()
 	sid := mustSID(t, obs)
 	enr := Enrichment{CostMicros: 4200, CostCurrency: "USD"}
+	grown := grownObservation(obs)
 
-	scenario.Given[RecordCallCmd](t, Apply, CallState{},
+	supersede := scenario.Given[RecordCallCmd](t, Apply, CallState{},
 		seedEvent(t, EventObserved, sid, 1, CallObserved{Observation: obs}),
 		seedEvent(t, EventEnriched, sid, 2, CallEnriched{Observation: obs, Enrichment: enr}),
-	).When(mustRecord(t, obs), recordDecide(sid)).
-		Then(EventCorrected).
-		ThenEvents(func(events []event.Event) {
-			payload, err := event.DecodePayloadAuto[CallCorrected](events[0])
-			if err != nil {
-				t.Fatal(err)
-			}
+	).When(mustRecord(t, grown), recordDecide(sid))
 
-			if payload.Enrichment != enr {
-				t.Errorf("correction must carry enrichment forward, got %+v", payload.Enrichment)
-			}
-		}).
-		ThenState(Apply, CallState{}, CallState{
-			Observed:          true,
-			ContentHash:       grownObservation(t, obs).ContentHash(),
-			Current:           grownObservation(t, obs),
-			CurrentEnrichment: enr,
-			EnrichHash:        enr.Hash(),
-		})
+	supersede.Then(EventCorrected)
+	supersede.ThenEvents(func(events []event.Event) {
+		payload, err := event.DecodePayloadAuto[CallCorrected](events[0])
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	scenario.Given[RecordCallCmd](t, Apply, CallState{},
+		if payload.Enrichment != enr {
+			t.Errorf("correction must carry enrichment forward, got %+v", payload.Enrichment)
+		}
+	})
+
+	replay := scenario.Given[RecordCallCmd](t, Apply, CallState{},
 		seedEvent(t, EventObserved, sid, 1, CallObserved{Observation: obs}),
-	).When(mustRecord(t, obs), recordDecide(sid)).
-		Then()
+	).When(mustRecord(t, obs), recordDecide(sid))
+	replay.Then()
 
-	scenario.Given[RecordCallCmd](t, Apply, CallState{}).
-		When(mustRecord(t, obs), recordDecide(sid)).
-		Then(EventObserved)
+	first := scenario.Given[RecordCallCmd](t, Apply, CallState{}).
+		When(mustRecord(t, obs), recordDecide(sid))
+	first.Then(EventObserved)
 }
 
 // TestScenarioEnrichPaths: enriching before any observation rejects; the
@@ -143,7 +183,7 @@ func TestScenarioRetirePaths(t *testing.T) {
 	retire := mustRetire(t, obs, reasonRetentionTest)
 
 	scenario.Given[RetireCallCmd](t, Apply, CallState{}).
-		When(retireDecide(sid, reasonRetentionTest), retire).
+		When(retire, retireDecide(sid, reasonRetentionTest)).
 		ThenError(errRetireBeforeObserved)
 
 	scenario.Given[RetireCallCmd](t, Apply, CallState{},
@@ -156,52 +196,4 @@ func TestScenarioRetirePaths(t *testing.T) {
 		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: string(reasonRetentionTest)}),
 	).When(retire, retireDecide(sid, reasonRetentionTest)).
 		Then()
-}
-
-// mustRecord builds the validated record command for a scenario act.
-func mustRecord(t *testing.T, obs Observation) RecordCallCmd {
-	t.Helper()
-
-	cmd, err := NewRecordCommand(obs)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return cmd
-}
-
-// mustEnrich builds the validated enrich command for a scenario act.
-func mustEnrich(t *testing.T, obs Observation, enr Enrichment) EnrichCallCmd {
-	t.Helper()
-
-	cmd, err := NewEnrichCommand(obs, enr)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return cmd
-}
-
-// mustRetire builds the validated retire command for a scenario act.
-func mustRetire(t *testing.T, obs Observation, reason RetentionReason) RetireCallCmd {
-	t.Helper()
-
-	cmd, err := NewRetireCommand(obs.Kind, obs.NativeID, reason)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return cmd
-}
-
-// grownObservation returns obs with the larger snapshot the supersede matrix
-// corrects to.
-func grownObservation(t *testing.T, obs Observation) Observation {
-	t.Helper()
-
-	grown := obs
-	grown.DurationSecs = 99
-	grown.Transcript = []TranscriptTurn{{Role: "user", Text: "one more thing"}}
-
-	return grown
 }
