@@ -14,14 +14,27 @@ func catalogCmd(args []string) {
 	plain := fs.Bool("plain", false, "emit plain frontmatter-ID refs (governance lint exports; always skips bootstrap files)")
 	skipBootstrap := fs.Bool("skip-bootstrap", false,
 		"omit the generated bootstrap files (the merging hub owns its site title, core pin, and dependencies)")
+	architecture := fs.Bool("architecture", false,
+		"also write the self-contained architecture reference HTML to <output>/architecture.html")
 	_ = fs.Parse(args)
 
 	if err := cli.RenderCatalog(*output, *plain, *skipBootstrap); err != nil {
 		fatal(err)
 	}
 
+	if *architecture {
+		if err := cli.RenderArchitecture(*output); err != nil {
+			fatal(err)
+		}
+	}
+
 	dir := *output + "/eventcatalog"
 
 	//nolint:erraudit // CLI output stream — write failures are not actionable
 	fmt.Fprintf(os.Stdout, "catalog: wrote eventcatalog tree to %s\n", dir)
+
+	if *architecture {
+		//nolint:erraudit // CLI output stream — write failures are not actionable
+		fmt.Fprintf(os.Stdout, "catalog: wrote architecture reference to %s/architecture.html\n", *output)
+	}
 }
