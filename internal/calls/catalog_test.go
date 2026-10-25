@@ -83,6 +83,12 @@ func testService(t *testing.T, svc catalog.Service) {
 			ids:  []string{"call.observed", "call.corrected", "call.enriched", "call.retired"},
 			dir:  catalog.Sends,
 		},
+		{
+			name: "queries",
+			msgs: svc.Queries,
+			ids:  []string{"call.search", "call.dashboard", "call.detail"},
+			dir:  catalog.Receives,
+		},
 	}
 
 	for _, tc := range cases {

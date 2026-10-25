@@ -88,6 +88,33 @@ func BuildCatalog() *catalog.Catalog {
 				"Retention tombstone: the call left every read-model surface; the payload "+
 					"carries only the policy reason, never call data."),
 		),
+		// --- Queries (the read surface answers these; ids mirror the
+		// internal/web read functions so hub consumers see parity between
+		// declared queries and the actual HTTP surface) ---
+		catalog.Query[CallView](
+			"call.search",
+			catalog.Owners(catalogOwner),
+			catalog.WithName("Call Search"),
+			catalog.WithSummary(
+				"Full-text and filtered call search (direction, date bucket, AI flag, "+
+					"hangup cause) over the call_views index; keyset-paginated."),
+		),
+		catalog.Query[CallView](
+			"call.dashboard",
+			catalog.Owners(catalogOwner),
+			catalog.WithName("Call Dashboard"),
+			catalog.WithSummary(
+				"Day-bucketed aggregates (volume, duration, cost, MOS, segments) behind "+
+					"the dashboard; resolves days in Europe/Berlin."),
+		),
+		catalog.Query[CallView](
+			"call.detail",
+			catalog.Owners(catalogOwner),
+			catalog.WithName("Call Detail"),
+			catalog.WithSummary(
+				"One call looked up by its stream identity (source kind + native id) with "+
+					"transcript and enrichment attached."),
+		),
 	)
 
 	// Owner-of-record for the federation hub (catalog.home.lan): the service
