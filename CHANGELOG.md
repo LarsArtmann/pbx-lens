@@ -29,6 +29,10 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   `return nil, nil` sites in `counterpartHistory` carry reasoned
   nilnil suppressions (nil history is the optional-result contract, not
   a failure). `golangci-lint run ./...` → 0 issues.
+- **styles.css regenerated** by the pinned nix builder: the
+  analytics-depth .templ edits shipped without a stylesheet regen, so
+  production CSS lacked the utilities the Rate column, trend line and
+  History item use. CSS bridge + palette gates stay green.
 
 ### Added — 2026-10-25 (analytics depth: per-segment rates, trend points, counterpart history)
 
