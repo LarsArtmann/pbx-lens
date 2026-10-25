@@ -112,16 +112,23 @@ func opsPollerItems(p opsPoller) []display.DefinitionItem {
 		verdictType = display.BadgeNeutral
 	}
 
+	lastPass := display.DefinitionItem{Term: "Last pass"}
+	if p.LastPass.IsZero() {
+		// A poller that has never completed a pass has no "Jan 1, 0001"
+		// date to show (RelativeTime has no empty escape upstream —
+		// templ-components#52): "never" is the honest word.
+		lastPass.Detail = "never"
+	} else {
+		lastPass.DetailComponent = display.RelativeTime(display.RelativeTimeProps{Time: p.LastPass})
+	}
+
 	return []display.DefinitionItem{
 		{
 			Term:            "Verdict",
 			Detail:          p.verdictText(),
 			DetailComponent: display.Badge(display.BadgeProps{Text: p.verdictText(), Type: verdictType, Pill: true}),
 		},
-		{
-			Term:            "Last pass",
-			DetailComponent: display.RelativeTime(display.RelativeTimeProps{Time: p.LastPass}),
-		},
+		lastPass,
 		{Term: "Pass age", Detail: p.ageText()},
 	}
 }

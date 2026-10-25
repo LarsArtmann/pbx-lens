@@ -162,6 +162,36 @@ func TestOpsPageUnknownVerdictNeverLies(t *testing.T) {
 	}
 }
 
+func TestOpsPageNeverRanPassSaysNever(t *testing.T) {
+	// A poller that has never completed a pass carries no last_pass at all:
+	// the page must say "never", not render the zero time as "Jan 1, 0001"
+	// (templ-components#52 has no empty escape).
+	mux := newTestServerWith(t, Options{Ops: func() any {
+		return map[string]any{
+			"sources": map[string]any{
+				"webhook-log": map[string]any{
+					"offered": 1, "recorded": 1, "corrected": 0, "rejected": []string{},
+				},
+			},
+		}
+	}})
+
+	status, body := getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	if !strings.Contains(body, "never") {
+		t.Errorf("/ops never-ran page missing \"never\" (body: %s)", body)
+	}
+
+	for _, noise := range []string{"0001", "Jan 1"} {
+		if strings.Contains(body, noise) {
+			t.Errorf("/ops never-ran page renders zero-time noise %q (body: %s)", noise, body)
+		}
+	}
+}
+
 func TestOpsPageNothingWiredExplains(t *testing.T) {
 	// Without any counters the page stays a 200 with the honest empty
 	// state (the JSON twin 503s with the same guidance).
