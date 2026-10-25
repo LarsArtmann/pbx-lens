@@ -2,14 +2,10 @@ package app_test
 
 import (
 	"bytes"
-	"context"
 	"database/sql"
-	"fmt"
 	"log/slog"
-	"path/filepath"
 	"strings"
 	"testing"
-	"time"
 
 	_ "modernc.org/sqlite"
 
@@ -89,22 +85,22 @@ func mustBoot(t *testing.T, eng metaengine.Engine, args ...any) {
 		t.Fatalf("Plan: %v", err)
 	}
 	t.Cleanup(func() { _ = store.Close() })
-	_ = ctx()
 }
 
-func ctx() context.Context { return context.Background() }
-
 func TestScratchLayoutStampDriftWarns(t *testing.T) {
-	dsn := filepath.Join(t.TempDir(), fmt.Sprintf("drift_%d.db", time.Now().UnixNano()))
-
-	mustBoot(t, openFileEngine(t, dsn), declString())
-
 	buf := &bytes.Buffer{}
 	previous := slog.Default()
 	slog.SetDefault(slog.New(slog.NewTextHandler(buf, &slog.HandlerOptions{Level: slog.LevelWarn})))
 	defer slog.SetDefault(previous)
 
-	mustBoot(t, openFileEngine(t, dsn), declInt())
+	eng := openFileEngine(t, "file:scratch_drift_probe?mode=memory&cache=shared")
+
+	mustBoot(t, eng, declString())
+	if strings.Contains(buf.String(), "layout stamp drift") {
+		t.Fatalf("initial boot must not warn: %s", buf.String())
+	}
+
+	mustBoot(t, eng, declInt())
 
 	logs := buf.String()
 	t.Logf("captured logs:\n%s", logs)

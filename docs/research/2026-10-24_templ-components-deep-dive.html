@@ -1515,5 +1515,51 @@ grep -n "func clockDuration\|func compactDuration\|func stringOrDash\|func perce
         });
       })();
     </script>
+
+    <section class="card" style="margin: 2rem auto; max-width: 60rem;" id="delta-2026-10-25">
+      <h2 style="margin-top: 0;">Delta appendix — 2026-10-25 (actions executed)</h2>
+      <p>
+        The priority matrix's top actions landed the day after this audit.
+        Re-verified against the code (census re-run, same method):
+      </p>
+      <ul>
+        <li>
+          <strong>F1 resolved</strong> — the four local twins are deleted;
+          <code>utils/format</code> adopted wholesale at 20 call sites across
+          calls/detail/dashboard/ops (census: zero
+          <code>func clockDuration|compactDuration|stringOrDash|percent</code>
+          definitions remain; upstream dialect wins, "1m" not "1m00s").
+          <code>mosGaugePercent</code> stays (domain mapping, not formatting).
+        </li>
+        <li>
+          <strong>F2 resolved</strong> — pin bumped v1.23.0 → v1.24.0 through
+          the six-step watchlist (corpus regenerated — its script now resolves
+          GOMODCACHE + version through the go toolchain after the v1.21.0-era
+          hardcoded paths silently scanned nothing; map re-audit; filings
+          re-read; goldens reviewed: role="region" wrappers, CopyButton
+          status span, Split aside→div; vendor hash re-landed; art-dupl gate
+          still zero groups).
+        </li>
+        <li>
+          <strong>F3 resolved locally</strong> — ops renders "never" for a
+          zero LastPass (<code>opsPollerItems</code> guard, never-ran test
+          green); the EmptyText ask was commented upstream on #52
+          (issuecomment-6393164087).
+        </li>
+        <li>
+          <strong>F5 resolved</strong> — the adoption map's 12 orphaned rows
+          re-tabled, the format row split adopted/remaining, v1.24.0 notes
+          added (docs/templ-components-adoption.md).
+        </li>
+      </ul>
+      <p>
+        Score movement: the format row flips 0.5 → 1 (26/28 ≈ 93) and the
+        version-currency row returns to current at the v1.24.0 pin —
+        consistent with this report's ~94 prediction; #49/#51 keep their two
+        workaround rows at 0.5 until upstream lands them (still OPEN,
+        re-verified 2026-10-24). Re-audit trigger stays: next pin bump or
+        the #48/#49/#51 folds.
+      </p>
+    </section>
   </body>
 </html>

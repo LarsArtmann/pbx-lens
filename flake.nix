@@ -161,6 +161,8 @@
                     golangci-lint
                     gopls
                     govulncheck
+                    oxlint
+                    prettier
                     shellcheck
                     templ
                     tailwindcss_4
