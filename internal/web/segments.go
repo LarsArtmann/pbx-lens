@@ -68,10 +68,12 @@ func (s Segment) CostPerMinute() float64 {
 	return units / (float64(s.PricedSecs) / secondsPerMinute)
 }
 
-// Href is the drill-through into the filtered call list: every call that has
-// this number on either side, in the same order the list always uses.
+// Href is the drill-through into the number's own trend page
+// (/segments/{number}, plan P16): the dashboard aggregates narrowed to
+// every call that has this number on either side. The flat filtered call
+// list stays reachable from there.
 func (s Segment) Href() string {
-	return "/?number=" + url.QueryEscape(s.Number)
+	return "/segments/" + url.PathEscape(s.Number)
 }
 
 // callParties splits one call into the PBX-side number (the one this PBX is

@@ -108,6 +108,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 	mux.HandleFunc("GET /api/export.csv", web.exportCSV)
 	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
 	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
+	mux.HandleFunc("GET /segments/{number}", web.segmentPage)
 
 	for route, asset := range staticRoutes {
 		mux.HandleFunc(route, asset.serve)
