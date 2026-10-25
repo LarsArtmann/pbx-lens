@@ -30,6 +30,13 @@ func TestBuildCatalog(t *testing.T) {
 	testChannel(t, cat)
 	testFlow(t, cat)
 
+	// The library's own integrity check (duplicate IDs across commands and
+	// events, empty required fields, dangling references) replaces the
+	// hand-rolled duplicate sweep this suite used to carry.
+	if violations := cat.Validate(); len(violations) > 0 {
+		t.Fatalf("catalog.Validate(): %d violations", len(violations))
+	}
+
 	if len(cat.Users) != 1 || cat.Users[0].ID != "lars" {
 		t.Errorf("Users = %v, want one user lars", cat.Users)
 	}
@@ -78,8 +85,6 @@ func testService(t *testing.T, svc catalog.Service) {
 		},
 	}
 
-	ids := make([]string, 0, len(svc.Commands)+len(svc.Events))
-
 	for _, tc := range cases {
 		if len(tc.msgs) != len(tc.ids) {
 			t.Errorf("len(%s) = %d, want %d", tc.name, len(tc.msgs), len(tc.ids))
@@ -89,15 +94,6 @@ func testService(t *testing.T, svc catalog.Service) {
 
 		for i, id := range tc.ids {
 			testCatalogMessage(t, tc.name, i, tc.msgs[i], id, tc.dir)
-			ids = append(ids, string(tc.msgs[i].ID))
-		}
-	}
-
-	slices.Sort(ids)
-
-	for i := 1; i < len(ids); i++ {
-		if ids[i] == ids[i-1] {
-			t.Errorf("duplicate message ID in catalog: %s", ids[i])
 		}
 	}
 }
