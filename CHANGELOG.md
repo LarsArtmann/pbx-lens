@@ -7,6 +7,15 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-25 (saved views)
+
+- **Filtered list views are now one click away** (plan P14): the calls
+  page records every filtered view in localStorage (five most recent,
+  deduped) and renders them as chips; no-JS visitors lose nothing and the
+  page body stays byte-stable for the ETag contract. The dashboard and
+  segment pages each carry a server-built canonical `Copy link` — the
+  window preset and date range only, never volatile params.
+
 ### Added — 2026-10-25 (per-number segment pages)
 
 - **A segment row now opens its own trend page** (`/segments/{number}`,

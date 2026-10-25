@@ -174,6 +174,26 @@ const fail = probe.fail;
     if (![200, 304].includes(resp3.status())) fail(`turn deep link status ${resp3.status()}`);
     if (!page.url().includes("#turn-")) fail(`turn deep link lost its fragment, url=${page.url()}`);
 
+    // --- Contract C: recent views remember filtered lists --------------
+    // The script records every filtered list view in localStorage and
+    // renders chips; they must survive navigation to the unfiltered head.
+    await page.goto(`${BASE}/?direction=inbound`, { waitUntil: "networkidle0" });
+    const chip = await page
+      .$eval("#recent-views a", (el) => ({ href: el.getAttribute("href"), text: el.textContent.trim() }))
+      .catch(() => null);
+    if (!chip) fail("recent views recorded no chip for the filtered view");
+    console.log("recent view chip:", chip.text, "->", chip.href);
+    if (chip.href !== "/?direction=inbound") fail(`recent chip href = ${chip.href}`);
+    if (!chip.text.includes("inbound")) fail(`recent chip label = ${chip.text}`);
+
+    const respChip = await page.goto(`${BASE}${chip.href}`, { waitUntil: "networkidle0" });
+    if (![200, 304].includes(respChip.status())) fail(`recent chip navigation status ${respChip.status()}`);
+
+    await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
+    const persisted = await page.$("#recent-views a");
+    if (!persisted) fail("recent views did not persist across the unfiltered head page");
+    console.log("recent views persist across navigation: true");
+
     // --- Contract E: a11y basics on /ops (2026-10-17 hardening) --------
     // Heading order starts at exactly one h1 and never skips a level, and
     // keyboard focus carries a visible indicator on the first nav stop.

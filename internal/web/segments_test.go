@@ -266,3 +266,53 @@ func TestSegmentPageUnknownNumberIsEmptyState(t *testing.T) {
 		t.Error("unknown number must render the honest empty state")
 	}
 }
+
+func TestRecentViewsContainerCarriesFilters(t *testing.T) {
+	mux := newTestServerWith(t, Options{}, webObservation("conv-a", testCallStarted()))
+
+	_, unfiltered := getBody(t, mux, "/")
+	if !strings.Contains(unfiltered, `id="recent-views" data-filters="{}"`) {
+		t.Error("unfiltered list must render the container with an empty payload")
+	}
+
+	if strings.Contains(unfiltered, "recent-views.js") == false {
+		t.Error("the recent-views script tag is missing")
+	}
+
+	_, filtered := getBody(t, mux, "/?direction=inbound&number=%2B17287289311")
+	if !strings.Contains(filtered, `data-filters="{&#34;direction&#34;:&#34;inbound&#34;,&#34;number&#34;:&#34;+17287289311&#34;}"`) {
+		t.Error("filtered list must carry the filter JSON")
+	}
+}
+
+func TestCanonicalShareLinksOnCards(t *testing.T) {
+	mux := newTestServerWith(t, Options{}, webObservation("conv-a", testCallStarted()))
+
+	_, dashboard := getBody(t, mux, "/dashboard?window=7")
+	if !strings.Contains(dashboard, `data-tc-copy="/dashboard?window=7"`) {
+		t.Error("dashboard must carry the canonical view link as a copy affordance")
+	}
+
+	_, segment := getBody(t, mux, "/segments/+17287289311")
+	if !strings.Contains(segment, `data-tc-copy="/segments/+17287289311"`) {
+		t.Error("segment page must carry its canonical link as a copy affordance")
+	}
+}
+
+func TestCanonicalDashboardPathOmitsVolatileParams(t *testing.T) {
+	stats := DashboardStats{WindowDays: 30}
+
+	if got := canonicalDashboardPath(stats); got != "/dashboard?window=30" {
+		t.Errorf("canonicalDashboardPath() = %q, want the window preset only", got)
+	}
+
+	stats.rangeFrom = time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	stats.rangeTo = time.Date(2026, 10, 20, 0, 0, 0, 0, time.UTC)
+
+	got := canonicalDashboardPath(stats)
+	for _, want := range []string{"window=30", "from=2026-10-01", "to=2026-10-20"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("canonicalDashboardPath() = %q, missing %q", got, want)
+		}
+	}
+}
