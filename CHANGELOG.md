@@ -26,6 +26,37 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   four fork tags predate the committed templ codegen and do not build);
   the commit pin stays the doctrine (docs/art-dupl-baseline.md).
 
+### Added — 2026-10-25 (test depth: lifecycle oracle, retire golden, key-generation contract)
+
+- **The property oracle now drives full call lifecycles** (plan P8.2):
+  record → correction → enrichment → correction-after-enrichment →
+  optional re-enrichment → optional retire, every op forced to change
+  state (strictly growing durations, a distinct enrichment per op), every
+  act converged against its own projected row before the next draw, and
+  the whole journal faced with the pure fold plus strict version
+  ordering. Corrections prove the enrichment rides along; the retire
+  branch proves the row really leaves the read model.
+- **The retire path has its own payload golden** (plan P8.1): the journal
+  shape of record + retire is pinned payload-hash-stable, covering both
+  event types a fresh journal can carry.
+- **`LookupView`'s two-key-generation contract is pinned end to end**
+  (plan P8.3): a bare-key row via the real dispatch, a marker-key row
+  seeded the pre-v4.6.0 way, clean not-found for absent streams, and the
+  both-exist case where the bare key must win over a legacy decoy.
+  `-race` on the package: clean.
+
+### Added — 2026-10-25 (analytics depth: the anomaly baseline note)
+
+- **The dashboard's density heatmap now carries a weekday baseline note**
+  (plan P12): today's call count compares against the window's own
+  history — the mean for that weekday with a ±2σ band (Poisson-shaped,
+  counts are counts) — and renders one quiet line: usual, unusually
+  quiet, or unusually busy. The baseline counts complete days only (a
+  partial today never dilutes itself) and stays silent below two weeks
+  of same-weekday history instead of guessing from one observation.
+  Read-only over the buckets the heatmap already accumulates; no new
+  source, no new query. Golden pinned on the frozen dashboard clock.
+
 ### Fixed — 2026-10-25 (six lint findings that reddened CI)
 
 - The P4–P6 session pushed without the repo's golangci-lint pin; CI went

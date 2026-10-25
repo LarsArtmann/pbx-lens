@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/command/v4"
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
@@ -18,6 +19,7 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/app"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/retention"
 	"pgregory.net/rapid"
 )
 
@@ -228,6 +230,172 @@ func TestPropertyProjectedRowEqualsPureFold(t *testing.T) {
 	})
 }
 
+// TestPropertyLifecycleProjectedRowEqualsPureFold widens the oracle from
+// record-only trails to full lifecycles: record, correction (a grown source
+// snapshot), enrichment, correction-after-enrichment (the enrichment must
+// ride along), a second enrichment, and an optional retire. Every op is
+// forced to change state — strictly growing durations for snapshots, a
+// distinct enrichment per op — because a no-op op would silently shrink the
+// oracle's coverage; each act converges its own row before the next draw,
+// and the whole journal faces the pure fold and the version-ordering check.
+func TestPropertyLifecycleProjectedRowEqualsPureFold(t *testing.T) {
+	rapid.Check(t, func(rt *rapid.T) {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		sc := systemscenario.System(
+			t,
+			ctx,
+			app.DomainConfig(),
+			systemscenario.Memory(),
+			systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
+		)
+
+		driveRandomLifecycles(rt, sc)
+		assertFoldParity(rt, ctx, sc)
+		assertJournalVersionOrdering(rt, sc)
+	})
+}
+
+// driveRandomLifecycles runs a full lifecycle on each of three rapid-drawn
+// streams, converging every act's own row before the next op: ThenQuery
+// polls until the projection caught up, so the oracle never races the async
+// fold.
+func driveRandomLifecycles(rt *rapid.T, sc *systemscenario.Scenario) {
+	for streamIdx := range 3 {
+		obs := obsGenerator(rt)
+		// A lifecycle owns a stream exclusively: obsGenerator's shared
+		// three-ID pool could deal a retired stream into a later iteration,
+		// whose record would then (correctly) reject — disjoint IDs keep the
+		// oracle about lifecycle shape, not about stream collisions.
+		obs.NativeID = calls.NativeID(fmt.Sprintf("conv-life-%d", streamIdx))
+
+		recordCmd, err := calls.NewRecordCommand(obs)
+		if err != nil {
+			rt.Fatalf("NewRecordCommand: %v", err)
+		}
+
+		sc.When(recordCmd).
+			ThenSuccess().
+			ThenQueryFunc(viewReader(sc.System(), calls.RecordKey(recordCmd.StreamID())), func(got any) error {
+				return checkProjectedHash(got, obs)
+			})
+
+		driveLifecycleTail(rt, sc, streamIdx, obs)
+	}
+}
+
+// driveLifecycleTail runs the post-record lifecycle on one stream: a
+// correction (grown snapshot), an enrichment, a correction-after-enrichment
+// (the enrichment must ride along), an optional second enrichment, and an
+// optional retire — every act converging its own row before the next op.
+func driveLifecycleTail(rt *rapid.T, sc *systemscenario.Scenario, streamIdx int, obs calls.Observation) {
+	grow := func(op string) {
+		obs.DurationSecs += 1 + rapid.IntRange(0, 3600).Draw(rt, op+" duration")
+		obs.TranscriptExcerpt = "property oracle row after " + op
+	}
+
+	check := func(cmd command.Command, want calls.Observation) {
+		sc.When(cmd).
+			ThenSuccess().
+			ThenQueryFunc(viewReader(sc.System(), calls.RecordKey(cmd.StreamID())), func(got any) error {
+				return checkProjectedHash(got, want)
+			})
+	}
+
+	grow("first correction")
+
+	correctCmd, err := calls.NewRecordCommand(obs)
+	if err != nil {
+		rt.Fatalf("NewRecordCommand (correct): %v", err)
+	}
+
+	check(correctCmd, obs)
+
+	enr := calls.Enrichment{
+		CostMicros:     int64(1 + rapid.IntRange(0, 10_000_000).Draw(rt, "cost micros")),
+		CostCurrency:   rapid.SampledFrom([]string{"USD", "EUR"}).Draw(rt, "currency"),
+		InsightSummary: fmt.Sprintf("stream %d asked about eggs", streamIdx),
+	}
+
+	enrichCmd, err := calls.NewEnrichCommand(obs, enr)
+	if err != nil {
+		rt.Fatalf("NewEnrichCommand: %v", err)
+	}
+
+	sc.When(enrichCmd).
+		ThenSuccess().
+		ThenQueryFunc(viewReader(sc.System(), calls.RecordKey(enrichCmd.StreamID())), enrichmentChecker(enr))
+
+	grow("second correction")
+
+	correctAfterEnrichCmd, err := calls.NewRecordCommand(obs)
+	if err != nil {
+		rt.Fatalf("NewRecordCommand (correct after enrich): %v", err)
+	}
+
+	sc.When(correctAfterEnrichCmd).
+		ThenSuccess().
+		ThenQueryFunc(
+			viewReader(sc.System(), calls.RecordKey(correctAfterEnrichCmd.StreamID())),
+			func(got any) error {
+				if err := checkProjectedHash(got, obs); err != nil {
+					return err
+				}
+
+				return enrichmentChecker(enr)(got)
+			},
+		)
+
+	if rapid.Bool().Draw(rt, "re-enrich") {
+		enr.InsightSummary += " (revised)"
+
+		reEnrichCmd, err := calls.NewEnrichCommand(obs, enr)
+		if err != nil {
+			rt.Fatalf("NewEnrichCommand (revised): %v", err)
+		}
+
+		sc.When(reEnrichCmd).
+			ThenSuccess().
+			ThenQueryFunc(viewReader(sc.System(), calls.RecordKey(reEnrichCmd.StreamID())), enrichmentChecker(enr))
+	}
+
+	if rapid.Bool().Draw(rt, "retire") {
+		retireCmd, err := calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonRetention)
+		if err != nil {
+			rt.Fatalf("NewRetireCommand: %v", err)
+		}
+
+		sc.When(retireCmd).
+			ThenSuccess().
+			ThenQueryFails(viewReader(sc.System(), calls.RecordKey(retireCmd.StreamID())), errViewNotFound)
+	}
+}
+
+// enrichmentChecker accepts a converged row only when its enrichment fields
+// match the dispatched enrichment.
+func enrichmentChecker(want calls.Enrichment) func(got any) error {
+	return func(got any) error {
+		view, ok := got.(calls.CallView)
+		if !ok {
+			return fmt.Errorf("%w: %T", errViewNotACallView, got)
+		}
+
+		if view.InsightSummary != want.InsightSummary || view.CostMicros != want.CostMicros {
+			return fmt.Errorf(
+				"%w: projected insight %q/%d, want %q/%d",
+				errProjectedEnrichmentStale,
+				view.InsightSummary,
+				view.CostMicros,
+				want.InsightSummary,
+				want.CostMicros,
+			)
+		}
+
+		return nil
+	}
+}
+
 // driveRandomRecords records six rapid-generated snapshots, converging each
 // act's own stream before the next draw: ThenQuery polls until the projected
 // row carries the snapshot's hash, so the oracle never races the async fold.
@@ -256,6 +424,10 @@ var errViewNotACallView = errors.New("view query returned a non-CallView result"
 
 // errProjectedHashStale marks a projected row still lagging its snapshot.
 var errProjectedHashStale = errors.New("projected hash does not match the snapshot")
+
+// errProjectedEnrichmentStale marks a projected row whose enrichment fields
+// still lag the dispatched enrichment.
+var errProjectedEnrichmentStale = errors.New("projected enrichment does not match the enrichment")
 
 // checkProjectedHash accepts a converged row only when it carries the
 // recorded snapshot's content hash.

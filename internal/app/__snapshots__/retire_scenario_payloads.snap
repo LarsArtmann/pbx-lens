@@ -1,0 +1,6 @@
+
+[TestGoldenRetireScenarioPayloadTrail - 1]
+- call.observed v1 payload=e1d40f487c5da4fe5e616c2441ac3ccfa94fc76bdd49439aa5f4fbd27d08aa8f
+- call.retired v2 payload=7b589c1f8e5bce290b5a9eff7a127c640669e1fd60b992fa2e460fbca49e1368
+
+---
