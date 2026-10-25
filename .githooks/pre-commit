@@ -2,7 +2,8 @@
 # Pre-commit hook (T11, 2026-10-18): the AGENTS.md budget gate, the JS
 # no-undef gate (2026-10-23: the `bin is not defined` class that shipped
 # through a shared probe module), the docs-truth gates (corpus counts and
-# relative links), then any flake-installed hook
+# relative links), the art-dupl zero-group gate (2026-10-25: three red CI
+# pushes because the gate only lived in CI), then any flake-installed hook
 # (git-hooks.nix's treefmt) so routing commits through .githooks/ never
 # silently drops a check the devShell had installed.
 # Activate once per clone:  git config core.hooksPath .githooks
@@ -18,6 +19,7 @@ root="$(git rev-parse --show-toplevel)"
 "$root/scripts/check-docs-counts.sh"
 "$root/scripts/check-doc-links.sh"
 "$root/scripts/check-doc-test-claims.sh"
+"$root/scripts/check-dedup-gate.sh"
 
 if [ -x "$root/.git/hooks/pre-commit" ]; then
 	exec "$root/.git/hooks/pre-commit" "$@"

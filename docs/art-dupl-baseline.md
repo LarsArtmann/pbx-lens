@@ -45,6 +45,15 @@ art-dupl baseline  -t 4 --min-lines 2 . --baseline-path scripts/art-dupl-baselin
   40165045608 on 2026-10-25); after a pin bump, regenerate the baseline in
   the same change (suppression buckets shift between versions, so a bump can
   surface old groups as "new" — that red is the pin asking for a review).
+  **The binary must BE the pin, not merely exist** (2026-10-25): the devShell
+  resolved to a stale user-local `~/go/bin/art-dupl` (version "dev") that
+  missed a real 10-line clone AND flagged a 1-token comment-vs-struct
+  "clone" (type-1, "1 token, 2 lines" — a distinctive word shared between a
+  multi-line comment and a struct's field lines) that the pin does not see —
+  wrong in both directions, and it cost a wasted extraction round. Verify
+  with `art-dupl version | grep 93432fd`; `check-dedup-gate.sh` enforces
+  this (mismatch fails with the install fix) and CI's Guard Self-Tests job
+  installs the pin for the same reason.
 
 ## Zero-group state (2026-10-24, second pass)
 
@@ -113,3 +122,12 @@ change deserves eyes, then a reviewed refresh.
   deliberate-remainder list had accepted hours earlier — grep the dependency
   graph BEFORE accepting a signature pair as shape coincidence (lesson
   recorded; see the annotated bullet above).
+- 2026-10-25: the gate caught its own author — three pushes (session's four
+  features) went red in CI because the gate ran nowhere locally (the FULL
+  receipt predated the features; golangci-lint sees none of this). Fixed by
+  extraction (`normalizedQuery` in internal/search; `firstMatchedTurn` via
+  `slices.IndexFunc`), and the gate moved left: `check-dedup-gate.sh` now
+  runs in `.githooks/pre-commit` (pin-enforcing, self-tested in CI's Guard
+  Self-Tests), and the stale-dev-binary trap above was documented the hard
+  way. Pinned-binary verification: pristine tree reproduces CI's exact
+  group; fixed tree reports 0 groups; CI run 40221643859 green.

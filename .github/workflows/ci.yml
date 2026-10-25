@@ -221,7 +221,18 @@ jobs:
         # tool so the gate and its self-test actually run.
         run: npm install -g oxlint
 
-      - name: Four gates prove their own red paths (--self-test)
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Install art-dupl
+        # check-dedup-gate.sh refuses to run on a non-pin binary (pin parity
+        # is how the gate stays honest), so the self-test needs the exact
+        # commit the duplication lane installs.
+        run: go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@93432fd
+
+      - name: Five gates prove their own red paths (--self-test)
         # Each guard script seeds the failure it exists to catch and must
         # observe it red (the dormant-hook lesson of 2026-10-25: a gate that
         # has never been seen refusing is a hope, not a gate). poll-gate's
@@ -231,6 +242,7 @@ jobs:
           bash scripts/check-docs-counts.sh --self-test
           bash scripts/check-doc-links.sh --self-test
           bash scripts/check-doc-test-claims.sh --self-test
+          bash scripts/check-dedup-gate.sh --self-test
           bash scripts/poll-gate.sh --self-test
 
       - name: Docs truth gates (live tree)
