@@ -12,23 +12,16 @@ import (
 
 const primaryEngine = "primary"
 
-func New(ctx context.Context, dsn string) (*system.System, error) {
+// DomainConfig declares the lens domain: the four event types, the decider
+// and its three commands, and the call_views projection with its typed
+// decoder. It is the single declaration every composition shares — app.New
+// and the systemscenario test harness both boot from it, so tests exercise
+// exactly the production wiring (ADR-0123: system.New stays the only
+// composition root; this helper only shapes its input).
+func DomainConfig() system.DomainConfig {
 	projection, typeDecoder := calls.Projection()
 
-	engine := system.EngineConfig{Driver: "memory"}
-	if dsn != "" {
-		engine = system.EngineConfig{Driver: "sqlite", DSN: dsn}
-	}
-
-	deployment := system.DeploymentConfig{
-		Engines: map[string]system.EngineConfig{primaryEngine: engine},
-		Instances: []system.InstanceConfig{
-			{Role: system.RoleSourceOfTruth, Engine: primaryEngine},
-			{Role: system.RoleProjections, Engine: primaryEngine},
-		},
-	}
-
-	domain := system.DomainConfig{
+	return system.DomainConfig{
 		Events: []event.Type{calls.EventObserved, calls.EventCorrected, calls.EventEnriched, calls.EventRetired},
 		Commands: func(sys *system.System) {
 			mustRegister(system.RegisterDecider(sys, calls.StreamType, decider.Decider[calls.CallState]{
@@ -69,8 +62,29 @@ func New(ctx context.Context, dsn string) (*system.System, error) {
 		Projections:           projection,
 		ProjectionTypeDecoder: typeDecoder,
 	}
+}
 
-	return system.New(ctx, domain, deployment)
+// DeploymentConfig maps a DSN onto the engine deployment: empty DSN boots the
+// in-memory engine (tests, smoke), anything else is a sqlite DSN. Source of
+// truth and projections share the one engine — the lens is a single-process
+// index, not a distributed system.
+func DeploymentConfig(dsn string) system.DeploymentConfig {
+	engine := system.EngineConfig{Driver: "memory"}
+	if dsn != "" {
+		engine = system.EngineConfig{Driver: "sqlite", DSN: dsn}
+	}
+
+	return system.DeploymentConfig{
+		Engines: map[string]system.EngineConfig{primaryEngine: engine},
+		Instances: []system.InstanceConfig{
+			{Role: system.RoleSourceOfTruth, Engine: primaryEngine},
+			{Role: system.RoleProjections, Engine: primaryEngine},
+		},
+	}
+}
+
+func New(ctx context.Context, dsn string) (*system.System, error) {
+	return system.New(ctx, DomainConfig(), DeploymentConfig(dsn))
 }
 
 func mustRegister(err error) {
