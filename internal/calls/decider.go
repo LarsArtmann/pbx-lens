@@ -92,6 +92,19 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 				return nil, nil
 			}
 
+			// Same retention leak class as the enrich guard below: a retired
+			// call has left every read surface, and a correction would
+			// re-create the view row — a full re-ingest wave would resurrect
+			// every purged call whose source grew since the purge. An
+			// unchanged re-poll stays a no-op via the hash check above; only
+			// a changed snapshot rejects, and the rejection is terminal.
+			if state.Retired {
+				return nil, errorfamily.NewRejection(
+					"call.corrected.after_retired",
+					fmt.Sprintf("stream %s is retired; a correction cannot resurrect it", streamID),
+				)
+			}
+
 			// Sources are read-only but not immutable snapshots: a Telnyx
 			// conversation grows between polls. Supersede via a correction
 			// event instead of erroring, so the index converges to the final

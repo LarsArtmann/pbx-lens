@@ -16,14 +16,18 @@ import (
 // (validation, hashing, stream-ID shape) stay there.
 //
 // Domain decision recorded 2026-10-25: enriching a RETIRED call now rejects
-// (call.enrich.after_retired). Before the guard, a late enrichment re-created
-// the tombstoned view row and defeated the purge; the fold's "tombstone is
-// last" invariant only holds when nothing appends after a retirement.
+// (call.enrich.after_retired), and so does CORRECTING one with a changed
+// snapshot (call.corrected.after_retired). Before the guards, a late
+// enrichment or a full re-ingest wave re-created the tombstoned view row and
+// defeated the purge; the fold's "tombstone is last" invariant only holds
+// when nothing appends after a retirement. An unchanged re-poll of a retired
+// stream stays the pinned idempotent no-op.
 
 var (
-	errEnrichBeforeObserved = errorfamily.NewRejection("call.enrich.before_observed", "target")
-	errEnrichAfterRetired   = errorfamily.NewRejection("call.enrich.after_retired", "target")
-	errRetireBeforeObserved = errorfamily.NewRejection("call.retire.before_observed", "target")
+	errEnrichBeforeObserved   = errorfamily.NewRejection("call.enrich.before_observed", "target")
+	errEnrichAfterRetired    = errorfamily.NewRejection("call.enrich.after_retired", "target")
+	errRetireBeforeObserved  = errorfamily.NewRejection("call.retire.before_observed", "target")
+	errCorrectedAfterRetired = errorfamily.NewRejection("call.corrected.after_retired", "target")
 )
 
 // reasonRetentionTest mirrors retention.ReasonRetention without importing the
@@ -110,7 +114,9 @@ func grownObservation(obs Observation) Observation {
 
 // TestScenarioRecordPaths: the first recording emits one call.observed; a
 // byte-identical re-record replays to nothing; a grown snapshot supersedes
-// via call.corrected WITH the enrichment riding along.
+// via call.corrected WITH the enrichment riding along; a grown snapshot on a
+// RETIRED stream rejects (the tombstone must not resurrect), while an
+// unchanged re-record of a retired stream stays a no-op.
 func TestScenarioRecordPaths(t *testing.T) {
 	obs := validObservation()
 	sid := mustSID(t, obs)
@@ -142,6 +148,19 @@ func TestScenarioRecordPaths(t *testing.T) {
 	first := scenario.Given[RecordCallCmd](t, Apply, CallState{}).
 		When(mustRecord(t, obs), recordDecide(sid))
 	first.Then(EventObserved)
+
+	retired := []event.Event{
+		seedEvent(t, EventObserved, sid, 1, CallObserved{Observation: obs}),
+		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: string(reasonRetentionTest)}),
+	}
+
+	scenario.Given[RecordCallCmd](t, Apply, CallState{}, retired...).
+		When(mustRecord(t, grown), recordDecide(sid)).
+		ThenError(errCorrectedAfterRetired)
+
+	scenario.Given[RecordCallCmd](t, Apply, CallState{}, retired...).
+		When(mustRecord(t, obs), recordDecide(sid)).
+		Then()
 }
 
 // TestScenarioEnrichPaths: enriching before any observation rejects; the
