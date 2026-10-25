@@ -65,14 +65,18 @@ func startOfDay(t time.Time) time.Time {
 // DayVolume is one day's call count in the dashboard window. MOSKnown is
 // the subset of that day's calls whose source reported a quality score;
 // MOSSum feeds AvgMOS. CostKnown is the priced subset and CostMicros its
-// spend, in the same currency the window reports.
+// spend, in the same currency the window reports. Transcripts/NoUserTurn
+// carry the per-day quality denominators so the no-user-turn share can be
+// compared week over week.
 type DayVolume struct {
-	Day        string // YYYY-MM-DD, dashboard zone
-	Calls      int
-	MOSKnown   int
-	MOSSum     float64
-	CostKnown  int
-	CostMicros int64
+	Day         string // YYYY-MM-DD, dashboard zone
+	Calls       int
+	MOSKnown    int
+	MOSSum      float64
+	CostKnown   int
+	CostMicros  int64
+	Transcripts int
+	NoUserTurn  int
 }
 
 // AvgMOS is the day's mean MOS, or 0 when no call that day reported one;
@@ -145,10 +149,14 @@ type DashboardStats struct {
 	TopPeers   []Segment
 	// Quality (north-star slice 3): hangup causes plus the per-call truth
 	// signals, each over its own denominator.
-	Quality   QualityRollup
-	ByDay     []DayVolume
-	Durations []DurationBucket
-	Week      WeekDelta
+	Quality QualityRollup
+	// QualityTrend moves the no-user-turn share week over week in percentage
+	// points — the health arrow for AI conversations. False HasBaseline
+	// renders nothing, never a fabricated move.
+	QualityTrend QualityTrend
+	ByDay        []DayVolume
+	Durations    []DurationBucket
+	Week         WeekDelta
 
 	// rangeFrom/rangeTo echo the picker's active range back into the form
 	// (zero when unset).
@@ -271,12 +279,61 @@ func DashboardStatsQuery(
 
 	stats.Week = weekDelta(stats.ByDay)
 	stats.CostWeek = costWeekDelta(stats.ByDay)
+	stats.QualityTrend = qualityTrend(stats.ByDay)
 	stats.CostCurrency = unanimousCurrency(acc.costCurrencies)
 	stats.TopNumbers = topSegments(acc.numberSegments, segmentLimit)
 	stats.TopPeers = topSegments(acc.peerSegments, segmentLimit)
 	acc.quality.finish()
 
 	return stats, nil
+}
+
+// QualityTrend is the week-over-week movement of the no-user-turn share
+// (the AI-conversation health signal): last 7 days versus the prior 7, in
+// percentage POINTS. Points, not percent-of-percent, because a share that
+// moves 2%→4% is +2 points of conversations that never got a user word —
+// a "+100%" label would dramatize a small baseline into a crisis.
+// HasBaseline is false until the prior week has transcripts AND a nonzero
+// share to compare against; a share that was zero has no meaningful move.
+type QualityTrend struct {
+	Points      float64 // percentage-point change; negative = better
+	HasBaseline bool
+}
+
+// qualityTrend derives the no-user-turn share movement from the per-day
+// quality buckets, mirroring weekDelta's two-half-window shape.
+func qualityTrend(days []DayVolume) QualityTrend {
+	if len(days) < 2*weekDays {
+		return QualityTrend{}
+	}
+
+	sum := func(half []DayVolume) (transcripts, noUser int) {
+		for _, day := range half {
+			transcripts += day.Transcripts
+			noUser += day.NoUserTurn
+		}
+
+		return transcripts, noUser
+	}
+
+	thisTranscripts, thisNoUser := sum(days[len(days)-weekDays:])
+	lastTranscripts, lastNoUser := sum(days[len(days)-2*weekDays : len(days)-weekDays])
+
+	if thisTranscripts == 0 || lastTranscripts == 0 {
+		return QualityTrend{}
+	}
+
+	thisShare := float64(thisNoUser) / float64(thisTranscripts)
+	lastShare := float64(lastNoUser) / float64(lastTranscripts)
+
+	if lastShare == 0 {
+		return QualityTrend{HasBaseline: false}
+	}
+
+	return QualityTrend{
+		Points:      (thisShare - lastShare) * percentScale,
+		HasBaseline: true,
+	}
 }
 
 // costWeekDelta compares the newest 7 days' spend with the previous 7, in the
@@ -400,6 +457,8 @@ func (a statsAccumulator) view(view calls.CallView) {
 		stats.ByDay[idx].Calls++
 	}
 
+	a.viewQualityDay(view, day)
+
 	for i, bucket := range durationBuckets {
 		if view.DurationSecs <= bucket.maxSecs {
 			stats.Durations[i].Calls++
@@ -428,6 +487,24 @@ func (a statsAccumulator) viewMOS(view calls.CallView, day string) {
 	if idx, ok := a.dayIndex[day]; ok {
 		stats.ByDay[idx].MOSKnown++
 		stats.ByDay[idx].MOSSum += view.MOS
+	}
+}
+
+// viewQualityDay folds one call's transcript truth into its day bucket, so
+// the no-user-turn share can trend week over week. Calls without a
+// transcript contribute to neither side of the rate, exactly like the
+// window-wide QualityRollup.
+func (a statsAccumulator) viewQualityDay(view calls.CallView, day string) {
+	if len(view.Transcript) == 0 {
+		return
+	}
+
+	if idx, ok := a.dayIndex[day]; ok {
+		a.stats.ByDay[idx].Transcripts++
+
+		if !hasUserTurn(view.Transcript) {
+			a.stats.ByDay[idx].NoUserTurn++
+		}
 	}
 }
 

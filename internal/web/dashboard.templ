@@ -125,6 +125,9 @@ templ qualityCard(stats DashboardStats) {
 		if stats.Total == 0 {
 			@display.SimpleEmptyState("No calls in the window yet.")
 		} else {
+			if stats.QualityTrend.HasBaseline {
+				<p class="mb-3 text-xs text-gray-500 dark:text-gray-400">{ qualityTrendLabel(stats) }</p>
+			}
 			<div class="gap-6 grid md:grid-cols-2">
 				<div>
 					<h3 class="break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm">
@@ -513,6 +516,27 @@ func bucketValues(buckets []DurationBucket) []float64 {
 	}
 
 	return values
+}
+
+// qualityTrendLabel states the no-user-turn share and its week-over-week
+// move in points; the direction is spelled out because for this signal
+// DOWN is the good direction, and an arrow alone would not say so.
+func qualityTrendLabel(stats DashboardStats) string {
+	ratio, ok := Rate(stats.Quality.NoUserTurn, stats.Quality.Transcripts)
+	if !ok {
+		return ""
+	}
+
+	share := format.Percent(ratio)
+	points := stats.QualityTrend.Points
+	switch {
+	case points < 0:
+		return "No-user-turn share " + share + ", down " + strconv.FormatFloat(-points, 'f', 1, 64) + " points vs the prior week"
+	case points > 0:
+		return "No-user-turn share " + share + ", up " + strconv.FormatFloat(points, 'f', 1, 64) + " points vs the prior week"
+	default:
+		return "No-user-turn share " + share + ", unchanged vs the prior week"
+	}
 }
 
 // weekChangeLabel renders the week-over-week movement as a StatCard Change

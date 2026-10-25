@@ -1,6 +1,7 @@
 package web
 
 import (
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -134,5 +135,52 @@ func TestQualityEmptyWindowIsHonest(t *testing.T) {
 
 	if strings.Contains(body, `self-dial`) {
 		t.Error("empty window must not render signal rows")
+	}
+}
+
+func TestQualityTrendMovesInPoints(t *testing.T) {
+	t.Parallel()
+
+	// 14 days: prior week 10 transcripts, 5 without a user turn (50%);
+	// this week 10 transcripts, 2 without (20%) → −30 points.
+	days := make([]DayVolume, 2*weekDays)
+	for i := range days {
+		days[i] = DayVolume{Day: "2026-10-" + strconv.Itoa(i+1)}
+		if i < weekDays {
+			days[i].Transcripts = 10
+			days[i].NoUserTurn = 5
+		} else {
+			days[i].Transcripts = 10
+			days[i].NoUserTurn = 2
+		}
+	}
+
+	trend := qualityTrend(days)
+	if !trend.HasBaseline || trend.Points != -30 {
+		t.Errorf("qualityTrend = %+v, want HasBaseline with -30 points", trend)
+	}
+
+	// No transcripts in the prior week → no baseline, never a fabricated move.
+	for i := range days[:weekDays] {
+		days[i].Transcripts = 0
+		days[i].NoUserTurn = 0
+	}
+	if trend := qualityTrend(days); trend.HasBaseline {
+		t.Errorf("qualityTrend = %+v, want no baseline without prior transcripts", trend)
+	}
+
+	// A prior week with a zero share has no meaningful move either (a
+	// percentage from zero is drama, not signal).
+	for i := range days[:weekDays] {
+		days[i].Transcripts = 10
+		days[i].NoUserTurn = 0
+	}
+	if trend := qualityTrend(days); trend.HasBaseline {
+		t.Errorf("qualityTrend = %+v, want no baseline from a zero prior share", trend)
+	}
+
+	// Short windows cannot compare weeks at all.
+	if trend := qualityTrend(days[:weekDays]); trend.HasBaseline {
+		t.Errorf("qualityTrend = %+v, want no baseline from a short window", trend)
 	}
 }
