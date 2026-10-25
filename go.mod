@@ -21,10 +21,10 @@ require (
 	github.com/larsartmann/go-etag/server v0.6.1
 	github.com/larsartmann/httputil v1.5.0
 	github.com/larsartmann/httputil/server_timing v1.0.2
-	github.com/larsartmann/templ-components v1.23.0
-	github.com/larsartmann/templ-components/htmx v1.23.0
-	github.com/larsartmann/templ-components/icons v1.23.0
-	github.com/larsartmann/templ-components/utils v1.23.0
+	github.com/larsartmann/templ-components v1.24.0
+	github.com/larsartmann/templ-components/htmx v1.24.0
+	github.com/larsartmann/templ-components/icons v1.24.0
+	github.com/larsartmann/templ-components/utils v1.24.0
 	golang.org/x/crypto v0.58.0
 	golang.org/x/time v0.16.0
 	modernc.org/sqlite v1.60.1

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // gen-tc-classes — regenerate internal/web/static/templ-components-classes.txt
-// (the Tailwind scan corpus for templ-components v1.21.0, ADR-0045 recipe).
+// (the Tailwind scan corpus for templ-components, ADR-0045 recipe; the
+// MODULES paths below must track the go.mod pin on every bump).
 //
 // Why this exists: app.css scans OUR templates + the corpus file. The library's
 // own .templ/.go sources are not on disk at a stable path under nix, so their
@@ -21,10 +22,10 @@ const fs = require("fs");
 const path = require("path");
 
 const MODULES = [
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components@v1.21.0",
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/htmx@v1.21.0",
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/icons@v1.21.0",
-  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/utils@v1.21.0",
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components@v1.24.0",
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/htmx@v1.24.0",
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/icons@v1.24.0",
+  "/home/lars/go/pkg/mod/github.com/larsartmann/templ-components/utils@v1.24.0",
 ];
 
 const OUT = "internal/web/static/templ-components-classes.txt";
