@@ -36,6 +36,8 @@ func noAutoGzip() *http.Client {
 // is the gzip-transparent-off one (see noAutoGzip); base is the full-chain
 // URL (https through to the app handler).
 func serveTestStack(tb testing.TB) (string, *http.Client) {
+	tb.Helper()
+
 	sys, cleanup, err := cli.OpenSystem(tb.Context(), "")
 	if err != nil {
 		tb.Fatalf("open memory index: %v", err)

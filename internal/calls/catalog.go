@@ -118,7 +118,7 @@ func BuildCatalog() *catalog.Catalog {
 
 	builder.AddDataStore(catalog.DataStore{
 		ID:            "call-index",
-		Owners:        []string{"lars"},
+		Owners:        []string{catalogOwner},
 		Name:          "Call Index SQLite",
 		Version:       CatalogVersion,
 		ContainerType: "database",
@@ -134,7 +134,7 @@ func BuildCatalog() *catalog.Catalog {
 	// pbx-artmann's receiver.
 	builder.AddDataStore(catalog.DataStore{
 		ID:            "freeswitch",
-		Owners:        []string{"lars"},
+		Owners:        []string{catalogOwner},
 		Name:          "FreeSWITCH",
 		Version:       CatalogVersion,
 		ContainerType: "external-system",
@@ -147,7 +147,7 @@ func BuildCatalog() *catalog.Catalog {
 	})
 	builder.AddDataStore(catalog.DataStore{
 		ID:            "telnyx",
-		Owners:        []string{"lars"},
+		Owners:        []string{catalogOwner},
 		Name:          "Telnyx",
 		Version:       CatalogVersion,
 		ContainerType: "external-system",
@@ -169,7 +169,7 @@ func BuildCatalog() *catalog.Catalog {
 		Summary: "Inbound call and message notifications from the pbx.artmann.tech " +
 			"webhook receiver, landed as JSONL and ingested read-only by the lens.",
 		Protocols: []catalog.Protocol{"http"},
-		Owners:    []string{"lars"},
+		Owners:    []string{catalogOwner},
 	})
 
 	// The call lifecycle as a first-class flow — the aggregate's visible
@@ -181,7 +181,7 @@ func BuildCatalog() *catalog.Catalog {
 		Name:    "Call Lifecycle",
 		Version: CatalogVersion,
 		Summary: "One call from source snapshot to enriched index entry — and out again at retention time",
-		Owners:  []string{"lars"},
+		Owners:  []string{catalogOwner},
 		Steps:   callLifecycleFlowSteps(),
 	})
 
