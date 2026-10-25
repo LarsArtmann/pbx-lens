@@ -348,3 +348,40 @@ number to chase. Re-read this section rather than re-diagnosing them.
 The `cqrs-lint` half of the same triage pass lives in
 docs/cqrs-lint-policy.md — every finding there is a DECISION, and the
 2026-10-25 pass added F021/F026/F031 plus the time-typed-field entries.
+
+## The gate entry point is the wrapper (2026-10-25)
+
+Run the gate through `scripts/poll-gate.sh`, never bare:
+
+```console
+nix develop -c bash scripts/poll-gate.sh -- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode full
+```
+
+The wrapper polls the 15-minute load average below the policy ceiling,
+then `exec`s the gate IN THE SAME PROCESS — so the START LOAD a receipt
+records is the load the loop itself verified. A `while`-loop-plus-`&&`
+leaves a poll→launch gap (the load can cross the ceiling between the
+check and the exec — two sessions paid for exactly that before the
+wrapper existed). `--once` exits 75 when not ready; everything after
+`--` reaches the gate verbatim; `--self-test` proves the over-policy,
+ready, and unreadable-load paths. AGENTS.md's Commands block points
+here.
+
+## The first calm-window FULL receipt (2026-10-25 11:34, run 3)
+
+START LOAD **15m=6.06** (policy < 40), `BUILDFLOW_NO_RESULT_CACHE=1
+buildflow --build-mode full` → **60 success / 0 failed / 0 skipped**,
+exit 0, wall 2m19s, frozen tree (`095e62c`). The morning's three starved
+attempts at 15-min ≈ 100 are superseded. Two same-day runs preceded the
+receipt and teach the receipt rules:
+
+- Run #1 (11:26) exited 69 on four REAL erraudit findings — the
+  scenario-test rejection sentinels were declared `*errorfamily.Error`
+  instead of `error`. That is the gate working, not failing.
+- Run #2 (11:31) closed 60/0/0 but on a tree the session's own P2 edits
+  moved mid-run — void as a receipt under docs/concurrency.md's
+  no-receipt-from-a-moving-tree rule.
+- Run #3 ran on the frozen post-fix tree and stands.
+
+A green run on a moving tree is not a receipt; a red run with real
+findings is the gate doing its job.

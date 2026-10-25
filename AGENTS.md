@@ -184,8 +184,8 @@ webphone later gets a read-only deep link, never a data dependency.
 ```console
 GOEXPERIMENT=jsonv2 go build ./...
 GOEXPERIMENT=jsonv2 go test ./...
-buildflow --build-mode dev            # the quality gate; FULL only when loadavg
-                                      # 15-min < 40 (docs/buildflow-dev-gate.md)
+nix develop -c bash scripts/poll-gate.sh -- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev
+                                      # THE gate entry: polls 15-min load<40 then execs in-process (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens refresh -db /tmp/lens.db [-apply]  # additive-field backfill: classify, then -apply; see docs/DOMAIN_LANGUAGE.md
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
