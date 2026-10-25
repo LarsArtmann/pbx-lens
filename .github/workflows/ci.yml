@@ -154,7 +154,11 @@ jobs:
           cache: true
 
       - name: Install art-dupl
-        run: go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@v0.9.0
+        # Pinned to the fork commit that generated scripts/art-dupl-baseline.json
+        # (the doc's law: the pin must match the baseline generator). The v0.9.0
+        # tag predates the .templ code-fence detection fixes and false-positives
+        # on 2-3 line markup fragments (2026-10-25 CI run 40165045608).
+        run: go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@93432fd
 
       - name: Gate new code duplication
         # Gate, not prose: scripts/art-dupl-baseline.json pins every accepted
