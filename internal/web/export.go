@@ -59,10 +59,10 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	markFirstPage := firstPageMetric(r.Context())
+	markFirstPage := newFirstPageMetric(r.Context())
 
 	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
-		markFirstPage()
+		markFirstPage.mark()
 		applyPII(pii, &view)
 
 		line, err := json.Marshal(view)
@@ -74,7 +74,11 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 		return err
 	})
-	markFirstPage()
+	markFirstPage.mark()
+	if !markFirstPage.fired() {
+		w.WriteHeader(http.StatusOK) // zero-row stream: nothing else commits the header
+	}
+
 	if err != nil {
 		// The body may already be streaming, so the only honest moves are a
 		// terminal marker line in the file (machine-readable) and the log.
@@ -100,7 +104,7 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	markFirstPage := firstPageMetric(r.Context())
+	markFirstPage := newFirstPageMetric(r.Context())
 
 	writer := csv.NewWriter(w)
 
@@ -109,12 +113,16 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
-		markFirstPage()
+		markFirstPage.mark()
 		applyPII(pii, &view)
 
 		return writer.Write(exportRecord(view))
 	})
-	markFirstPage()
+	markFirstPage.mark()
+	if !markFirstPage.fired() {
+		w.WriteHeader(http.StatusOK) // zero-row stream: nothing else commits the header
+	}
+
 	if err != nil {
 		// The body may already be streaming, so the only honest moves are a
 		// terminal marker row in the file (visible in any spreadsheet) and
