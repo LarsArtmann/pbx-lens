@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -121,6 +122,14 @@ func TestDashboardSegmentsCarryDrillThroughAndSpend(t *testing.T) {
 		t.Errorf("segment spend = %+v, want one priced call at 250000 micros", segment)
 	}
 
+	if !segment.HasRate() || segment.PricedSecs != 42 {
+		t.Errorf("segment rate inputs = %+v, want the priced call's own 42 seconds", segment)
+	}
+
+	if want := 250_000.0 / 1_000_000 / (42.0 / 60); segment.CostPerMinute() != want {
+		t.Errorf("segment CostPerMinute = %v, want %v", segment.CostPerMinute(), want)
+	}
+
 	if want := "/?number=%2B4930999"; segment.Href() != want {
 		t.Errorf("drill-through href = %q, want %q", segment.Href(), want)
 	}
@@ -128,6 +137,38 @@ func TestDashboardSegmentsCarryDrillThroughAndSpend(t *testing.T) {
 	_, body := getBody(t, muxForSystem(sys), "/dashboard")
 	if !strings.Contains(body, "Who calls what") || !strings.Contains(body, "+4930999") {
 		t.Error("dashboard missing the segment table")
+	}
+
+	if !strings.Contains(body, "/min") {
+		t.Error("segment table missing the per-minute rate column")
+	}
+}
+
+func TestSegmentCostPerMinuteUsesPricedSecondsOnly(t *testing.T) {
+	t.Parallel()
+
+	// Two unpriced minutes must not dilute one minute priced at 0.25: the
+	// rate names its denominator, exactly like the window-level rate.
+	segment := Segment{
+		Number:       "+49",
+		Calls:        2,
+		DurationSecs: 180,
+		CostMicros:   250_000,
+		CostKnown:    1,
+		PricedSecs:   60,
+	}
+
+	if !segment.HasRate() {
+		t.Fatal("HasRate = false for a segment with priced seconds")
+	}
+
+	if got, want := segment.CostPerMinute(), 0.25; math.Abs(got-want) > 1e-9 {
+		t.Errorf("CostPerMinute = %v, want %v", got, want)
+	}
+
+	unpriced := Segment{Number: "+49", Calls: 1, DurationSecs: 60}
+	if unpriced.HasRate() || unpriced.CostPerMinute() != 0 {
+		t.Errorf("unpriced segment = %+v, want no rate, never a confident zero", unpriced)
 	}
 }
 

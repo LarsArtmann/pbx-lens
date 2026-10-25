@@ -244,7 +244,7 @@ templ segmentTable(nonce string, segments []Segment) {
 		<p class="dark:text-gray-400 text-gray-500 text-sm">No calls in this window.</p>
 	} else {
 		@display.Table(display.TableProps{
-			Headers:     []string{"Number", "Calls", "AI", "Avg", "Spend"},
+			Headers:     []string{"Number", "Calls", "AI", "Avg", "Spend", "Rate"},
 			Striped:     true,
 			Hover:       true,
 			CellPadding: display.TableCellPaddingCompact,
@@ -255,8 +255,10 @@ templ segmentTable(nonce string, segments []Segment) {
 	}
 }
 
-// segmentRows maps the typed segments onto display rows. Spend renders only
-// when the segment actually carried prices (never a confident zero).
+// segmentRows maps the typed segments onto display rows. Spend and Rate
+// render only when the segment actually carried prices (never a confident
+// zero); the rate divides by the priced calls' own seconds, matching the
+// window rate's denominator discipline.
 func segmentRows(segments []Segment) []display.TableRow {
 	rows := make([]display.TableRow, 0, len(segments))
 
@@ -264,6 +266,11 @@ func segmentRows(segments []Segment) []display.TableRow {
 		spend := "—"
 		if segment.HasCost() {
 			spend = costText(segment.CostMicros, "")
+		}
+
+		rate := "—"
+		if segment.HasRate() {
+			rate = strconv.FormatFloat(segment.CostPerMinute(), 'f', 3, 64) + "/min"
 		}
 
 		rows = append(rows, display.TableRow{
@@ -274,6 +281,7 @@ func segmentRows(segments []Segment) []display.TableRow {
 				{Text: format.Percent(segment.AIRatio())},
 				{Text: format.ClockDuration(segment.AvgDuration())},
 				{Text: spend},
+				{Text: rate},
 			},
 		})
 	}

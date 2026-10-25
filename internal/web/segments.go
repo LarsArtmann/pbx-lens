@@ -23,6 +23,9 @@ type Segment struct {
 	DurationSecs int
 	CostMicros   int64
 	CostKnown    int
+	// PricedSecs is the billed time of the priced calls only — the honest
+	// denominator for the per-minute rate, so unpriced time never dilutes it.
+	PricedSecs int
 }
 
 // AIRatio is the segment's AI share in [0,1]; zero calls → zero value.
@@ -45,6 +48,24 @@ func (s Segment) AvgDuration() time.Duration {
 
 // HasCost reports whether any call in the segment carried a price.
 func (s Segment) HasCost() bool { return s.CostKnown > 0 }
+
+// HasRate reports whether the segment can state a per-minute rate at all:
+// priced calls with at least one billed second. Without them the renderer
+// shows an em dash, never a confident zero.
+func (s Segment) HasRate() bool { return s.PricedSecs > 0 }
+
+// CostPerMinute is the segment's mean spend per billed minute across its
+// priced calls only — the same denominator discipline as the window rate
+// (DashboardStats.CostPerMinute), so a partially priced segment states the
+// rate its priced calls actually earned.
+func (s Segment) CostPerMinute() float64 {
+	if s.PricedSecs <= 0 {
+		return 0
+	}
+
+	units := float64(s.CostMicros) / 1_000_000
+	return units / (float64(s.PricedSecs) / secondsPerMinute)
+}
 
 // Href is the drill-through into the filtered call list: every call that has
 // this number on either side, in the same order the list always uses.
@@ -83,6 +104,7 @@ func accumulateSegment(segments map[string]*Segment, number string, view calls.C
 	if view.CostMicros > 0 {
 		segment.CostMicros += view.CostMicros
 		segment.CostKnown++
+		segment.PricedSecs += view.DurationSecs
 	}
 }
 
