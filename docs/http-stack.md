@@ -157,6 +157,15 @@ dashboard poll a viewer costs ~0.033 req/s; the cache contract, not CPU, is
 the scaling story. (The raw FNV-64a tag hash alone is µs-scale, sized by
 body: ≈22 µs @ 25 KB, ≈104 µs @ 122 KB — measured 2026-10-15.)
 
+Ingest per-row cost (2026-10-25, `BenchmarkIngestCDR{Parse,Dispatch}`,
+dev box under concurrent build load — treat as ceilings, re-measure on a
+quiet box): CDR parse ≈ 16–26 µs/row (single-row batches; the encoding/csv
+reader setup dominates, so real poller batches amortize it), ≈ 72.5 KB and
+29 allocs/row. Dispatch of a fresh stream through the memory engine
+(command build + OCC save + bus + fold) ≈ 10–12 µs/row, ≈ 7.9 KB and
+85 allocs/row — per-new-row, not per-poll; identical replays cost the
+decide's hash compare plus a no-op round trip.
+
 ## Version and metrics
 
 `ServiceConfig.Version` → `GET /version` + `appkit_build_info`; `Metrics`
