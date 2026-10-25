@@ -59,3 +59,4 @@ at peak). That is the operating condition, not an incident.
   `core.hooksPath` points at `.githooks` (rule 5: per clone).
 - Status reports record concurrent-session interference under their
   own-failures sections; that is the audit trail for rules 2–4.
+Proof seed: [broken](./this-file-does-not-exist.md) link.
