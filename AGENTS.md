@@ -116,9 +116,9 @@ webphone later gets a read-only deep link, never a data dependency.
   - integrity verify), `internal/retention` (Policy/OldViews/Retire behind
     `purge`; `Policy.Admits` also gates serve-poller `-max-age`, 0 = keep
     everything). Projection record keys are BARE (`calls.RecordKey` =
-    `StreamID.Get()`; go-cqrs-lite v4.6.0's adapter ID) — never hand-build
+    `StreamID.Get()`; the projection adapter's bare ID) — never hand-build
     one, and read through `calls.LookupView` (its marker-prefixed fallback
-    keeps pre-v4.6.0 rows reachable; docs/gotchas.md has the incident).
+    keeps pre-flip rows reachable; docs/gotchas.md has the incident).
     `calls.DefaultExcerptMax` (200 runes) is the domain-owned excerpt
     ceiling; every source mapper selects via `calls.Excerpt` (first user
     turn, fallback first turn). The serve htpasswd timing pad hashes at the

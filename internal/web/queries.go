@@ -108,7 +108,13 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 		// The probe row (one past the batch) proves whether an older row
 		// exists at all — a batch that exactly fills itself must not be
 		// mistaken for a walk with more to read.
-		batch, err := reader.Scan(ctx, listOptionsAt(query, cursor, listScanBatch+1)...)
+		// The limit rides the Scan call, not a helper: a silent truncation at
+		// the library default (100 rows) would be invisible here, so the
+		// boundary is spelled out where it applies (cqrs-lint F031).
+		batch, err := reader.Scan(ctx, append(
+			listOptionsAt(query, cursor),
+			metaengine.WithLimit(listScanBatch+1),
+		)...)
 		if err != nil {
 			return CallListPage{}, err
 		}
@@ -403,11 +409,11 @@ func ExportCalls(ctx context.Context, sys *system.System, query ListCallsQuery) 
 // listOptionsAt builds one list-walk batch: newest first, with the same
 // typed filters, bounded below by the live keyset cursor (inclusive, so the
 // tie set can skip what this walk already emitted) or the caller's own
-// exclusive Before on the first batch.
-func listOptionsAt(query ListCallsQuery, cursor time.Time, limit int) []metaengine.ScanOption {
+// exclusive Before on the first batch. The batch LIMIT stays at the call
+// site: a Scan without one silently truncates at the library default.
+func listOptionsAt(query ListCallsQuery, cursor time.Time) []metaengine.ScanOption {
 	opts := append([]metaengine.ScanOption{
 		metaengine.WithSort("started_at", true),
-		metaengine.WithLimit(limit),
 	}, scanFilters(query)...)
 
 	// Time bounds bind as RFC3339Nano strings — the exact wire format the
