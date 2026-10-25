@@ -3,6 +3,7 @@ package web
 import (
 	"fmt"
 	"math"
+	"net/http"
 	"strings"
 	"testing"
 	"time"
@@ -130,7 +131,7 @@ func TestDashboardSegmentsCarryDrillThroughAndSpend(t *testing.T) {
 		t.Errorf("segment CostPerMinute = %v, want %v", segment.CostPerMinute(), want)
 	}
 
-	if want := "/?number=%2B4930999"; segment.Href() != want {
+	if want := "/segments/+4930999"; segment.Href() != want {
 		t.Errorf("drill-through href = %q, want %q", segment.Href(), want)
 	}
 
@@ -219,5 +220,49 @@ func TestListRejectsOverlongNumberFilter(t *testing.T) {
 
 	if !strings.Contains(body, "number is longer than") {
 		t.Errorf("rejection should explain the limit, got: %s", body)
+	}
+}
+
+func TestSegmentHrefPointsAtTrendPage(t *testing.T) {
+	segment := Segment{Number: "+17287289311"}
+
+	// PathEscape leaves a literal "+" alone: in a PATH segment it is a plus
+	// (only query strings read it as a space), and the mux hands the
+	// handler the same string back.
+	if got, want := segment.Href(), "/segments/+17287289311"; got != want {
+		t.Errorf("Segment.Href() = %q, want %q", got, want)
+	}
+}
+
+func TestSegmentPageRendersNumberTrend(t *testing.T) {
+	mux := newTestServerWith(t, Options{}, webObservation("conv-a", testCallStarted()))
+
+	status, body := getBody(t, mux, "/segments/+17287289311")
+	if status != http.StatusOK {
+		t.Fatalf("GET /segments status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{
+		"+17287289311",
+		"Calls indexed",
+		`href="/?number=%2B17287289311"`,
+		"How calls end",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("segment page missing %q", want)
+		}
+	}
+}
+
+func TestSegmentPageUnknownNumberIsEmptyState(t *testing.T) {
+	mux := newTestServerWith(t, Options{}, webObservation("conv-a", testCallStarted()))
+
+	status, body := getBody(t, mux, "/segments/+19999999999")
+	if status != http.StatusOK {
+		t.Fatalf("GET /segments status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "No calls for this number") {
+		t.Error("unknown number must render the honest empty state")
 	}
 }
