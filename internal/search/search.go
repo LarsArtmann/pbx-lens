@@ -280,32 +280,42 @@ func searchBody(view calls.CallView) string {
 	return strings.Join(parts, "\n")
 }
 
-// Query runs a MATCH search, best rank first, and merges in substring
-// number hits (R6): a 4+ digit run matches any indexed party number that
-// contains it, so partial numbers finally find their calls.
-func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, error) {
+// normalizedQuery compiles the query text and clamps the page size — the
+// shared prologue of every search mode: invalid expressions reject, non-
+// positive limits fall back to DefaultLimit, everything caps at MaxLimit.
+func normalizedQuery(query string, limit int) (string, int, error) {
 	match, err := MatchExpression(query)
 	if err != nil {
-		return nil, err
+		return "", 0, err
 	}
 
 	if limit <= 0 {
 		limit = DefaultLimit
 	}
 
-	limit = min(limit, MaxLimit)
+	return match, min(limit, MaxLimit), nil
+}
+
+// Query runs a MATCH search, best rank first, and merges in substring
+// number hits (R6): a 4+ digit run matches any indexed party number that
+// contains it, so partial numbers finally find their calls.
+func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, error) {
+	match, size, err := normalizedQuery(query, limit)
+	if err != nil {
+		return nil, err
+	}
 
 	rows, err := i.db.QueryContext(ctx,
 		"SELECT kind, native_id, started_at, snippet("+tableName+", 0, ?, ?, '…', 12) "+
 			"FROM "+tableName+" WHERE "+tableName+" MATCH ? ORDER BY rank LIMIT ?",
-		highlightStart, highlightStop, match, limit)
+		highlightStart, highlightStop, match, size)
 	if err != nil {
 		return nil, errorfamily.NewRejection("lens.search.query", err.Error())
 	}
 
 	defer func() { _ = rows.Close() }()
 
-	hits := make([]Hit, 0, limit)
+	hits := make([]Hit, 0, size)
 
 	for rows.Next() {
 		var (
@@ -338,7 +348,7 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 			return nil, err
 		}
 
-		hits = mergeHits(hits, extra, limit)
+		hits = mergeHits(hits, extra, size)
 	}
 
 	return hits, nil
@@ -349,29 +359,23 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 // here by design: the digits table maps calls to party numbers, and a
 // number is not something a turn said.
 func (i *Index) QueryTurns(ctx context.Context, query string, limit int) ([]TurnHit, error) {
-	match, err := MatchExpression(query)
+	match, size, err := normalizedQuery(query, limit)
 	if err != nil {
 		return nil, err
 	}
-
-	if limit <= 0 {
-		limit = DefaultLimit
-	}
-
-	limit = min(limit, MaxLimit)
 
 	rows, err := i.db.QueryContext(ctx,
 		"SELECT kind, native_id, started_at, turn_index, role,"+
 			" snippet("+turnsTableName+", 0, ?, ?, '…', 12) "+
 			"FROM "+turnsTableName+" WHERE "+turnsTableName+" MATCH ? ORDER BY rank LIMIT ?",
-		highlightStart, highlightStop, match, limit)
+		highlightStart, highlightStop, match, size)
 	if err != nil {
 		return nil, errorfamily.NewRejection("lens.search.query_turns", err.Error())
 	}
 
 	defer func() { _ = rows.Close() }()
 
-	hits := make([]TurnHit, 0, limit)
+	hits := make([]TurnHit, 0, size)
 
 	for rows.Next() {
 		var (

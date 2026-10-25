@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -484,15 +485,13 @@ func transcriptMatchViews(turns []calls.TranscriptTurn, query string) []transcri
 }
 
 // firstMatchedTurn reports the transcript position of the first matching
-// turn — the redirect's fragment target (plan T21).
+// turn — the redirect's fragment target (plan T21). IndexFunc, not a range
+// loop, so the two transcript scans share no loop shape with each other.
 func firstMatchedTurn(turns []calls.TranscriptTurn, query string) (int, bool) {
-	for index, turn := range turns {
-		if turnMatches(turn, query) {
-			return index, true
-		}
-	}
+	views := transcriptMatchViews(turns, query)
+	index := slices.IndexFunc(views, func(view transcriptMatchView) bool { return view.Matched })
 
-	return 0, false
+	return index, index >= 0
 }
 
 // turnMatches applies the highlight rule: every whitespace-separated term
