@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path/filepath"
 	"testing"
@@ -30,6 +31,11 @@ func sampleObservation() calls.Observation {
 	}
 }
 
+// errViewNotFound is the sentinel a viewReader returns while the projected
+// row does not exist (yet or anymore) — ThenQueryEventuallyFails matches it
+// with errors.Is.
+var errViewNotFound = errors.New("call view row not found")
+
 // viewReader returns a ThenQuery-shaped fn over the system's call_views
 // collection, replacing the hand-rolled 20ms poll loop the harness used to
 // carry: the scenario's Then* assertions own the awaiting.
@@ -43,7 +49,7 @@ func viewReader(sys *system.System, key string) func() (any, error) {
 		}
 
 		if !found {
-			return nil, fmt.Errorf("no view yet for %q", key)
+			return nil, fmt.Errorf("%w: %q", errViewNotFound, key)
 		}
 
 		return view, nil
