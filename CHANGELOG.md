@@ -7,6 +7,31 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-25 (gate truth: the first calm-window FULL-gate receipt)
+
+- **Four erraudit error-severity findings fixed** — the scenario-test
+  rejection sentinels had concrete type `*errorfamily.Error`; declared as
+  the `error` interface (erraudit's prescribed fix). This was the only
+  thing between the repo and its first green FULL-gate receipt.
+- **First calm-window FULL-gate receipt captured**: `poll-gate.sh` verified
+  START LOAD 15m=6.06 (policy < 40), `BUILDFLOW_NO_RESULT_CACHE=1
+  buildflow --build-mode full` → 60 success / 0 failed, exit 0, frozen
+  tree. The three starved attempts of the busy morning are superseded.
+- **Quiet-box bench re-measure** (docs/http-stack.md carries both
+  generations): ingest parse 16–26 → **8.7 µs/row**, fresh-stream dispatch
+  10–12 → **6.1 µs/row**; poll 304 ≈ 88 µs / full-200 ≈ 94 µs (unchanged
+  within noise). The load-affected numbers were ceilings, as suspected.
+- **TODO_LIST repaired**: the blank line splitting the Blocked table is
+  gone, two mis-filed 🔴 rows moved to Unblocked (versions.json,
+  Server-Timing), two done rows deleted (bench re-measure, gate receipt),
+  and three stale rows deleted with evidence — probe-residue bundle
+  (`assertFirstTryRevalidation` + `--baseline` parse order + seed-clone
+  note all landed 2026-10-25), prettier-devShell (the devShell ships
+  prettier; the bare-`buildflow` PATH residue belongs to crush-config, not
+  this repo), and the go-appkit#26 half of the fold-in row (testkit
+  adopted at all three stack-test sites 2026-10-25; go-etag#2 + quarterly
+  re-verify remain).
+
 ### Added — 2026-10-25 (go-cqrs-lite wave: systemscenario testing depth, catalog read surface)
 
 - **The eight go-cqrs-lite modules rode the 2026-10-24 disk-truth tail

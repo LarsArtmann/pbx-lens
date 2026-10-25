@@ -150,21 +150,23 @@ script, not an error. Do not "simplify" the helper to `templ.GetNonce` unless
 the middleware is replaced too (2026-10-25 go-appkit/templ deep dive, finding
 F4).
 
-Concurrent-poll ceiling (2026-10-15, M11/F31, `BenchmarkConcurrentPoll`
-through the real middleware chain, parallel, dev box): 304 revalidation
-≈ 82 µs/op, full 200 ≈ 101 µs/op → ~12k polls/s per box. At the 30 s
+Concurrent-poll ceiling (re-measured 2026-10-25 on a quiet box, 15-min load
+≈ 5.9, poll-gate-verified window; original 2026-10-15 numbers in
+parentheses): 304 revalidation ≈ 88 µs/op (82), full 200 ≈ 94 µs/op (101)
+→ ~11k polls/s per box. At the 30 s
 dashboard poll a viewer costs ~0.033 req/s; the cache contract, not CPU, is
 the scaling story. (The raw FNV-64a tag hash alone is µs-scale, sized by
 body: ≈22 µs @ 25 KB, ≈104 µs @ 122 KB — measured 2026-10-15.)
 
-Ingest per-row cost (2026-10-25, `BenchmarkIngestCDR{Parse,Dispatch}`,
-dev box under concurrent build load — treat as ceilings, re-measure on a
-quiet box): CDR parse ≈ 16–26 µs/row (single-row batches; the encoding/csv
-reader setup dominates, so real poller batches amortize it), ≈ 72.5 KB and
-29 allocs/row. Dispatch of a fresh stream through the memory engine
-(command build + OCC save + bus + fold) ≈ 10–12 µs/row, ≈ 7.9 KB and
-85 allocs/row — per-new-row, not per-poll; identical replays cost the
-decide's hash compare plus a no-op round trip.
+Ingest per-row cost (re-measured 2026-10-25 on the same quiet box,
+`BenchmarkIngestCDR{Parse,Dispatch}`; the 2026-10-25 numbers taken under
+concurrent build load — loadavg ≈ 30 — were ceilings, as suspected):
+CDR parse ≈ 8.7 µs/row single-row batches (was 16–26 under load; the
+encoding/csv reader setup dominates, so real poller batches amortize it),
+≈ 72.5 KB and 29 allocs/row. Dispatch of a fresh stream through the memory
+engine (command build + OCC save + bus + fold) ≈ 6.1 µs/row (was 10–12
+under load), ≈ 7.9 KB and 85 allocs/row — per-new-row, not per-poll;
+identical replays cost the decide's hash compare plus a no-op round trip.
 
 ## Version and metrics
 
