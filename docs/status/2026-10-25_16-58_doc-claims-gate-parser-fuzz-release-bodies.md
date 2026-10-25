@@ -16,13 +16,13 @@ two blocked by load, and the batch landed as ONE clean push (`22c9fc9`).
    15-39 §f4): `scripts/check-doc-test-claims.sh` extracts every backticked
    `Test…` name from the living docs and asserts it is a real Go test in
    the tree. First live run: **8 phantoms** — FEATURES rows citing
-   `TestRecordIdempotentReplay`/`TestRecordChangedObservationCorrects`
+   TestRecordIdempotentReplay/TestRecordChangedObservationCorrects
    (real coverage: `TestScenarioRecordPaths`, now cited), the 18-30 audit's
    pre-adoption name for the fold-parity oracle (annotated with the landed
    `TestPropertyProjectedRowEqualsPureFold`), three reports' historical
-   `TestGoldenOpsPage` mentions (annotated/unbackticked with the
+   TestGoldenOpsPage mentions (annotated/unbackticked with the
    `TestGoldenPages` successor), and the 10-46 plan's aspirational
-   `TestGolden` entry point. All fixed same-session under
+   TestGolden entry point. All fixed same-session under
    annotate-don't-rewrite: history keeps its story and names its real
    successor. Self-test (tree-green precondition, seeded phantom
    extraction, Go-only matching, fence skipping) plus a LIVE seeded-red
@@ -102,7 +102,14 @@ two blocked by load, and the batch landed as ONE clean push (`22c9fc9`).
    would carry a non-compiling test. The leave-green rule needs to be
    absolute: no report, no pause, no handoff until `go build ./...` is
    clean — one-line fixes finish FIRST.
-5. **The daemon's piecemeal commit cost CI a red run** (`83647bd`: the P13
+5. **My own 16-58 report tripped the gate it announces**: section d1 named the
+   caught phantoms in backticks, the gate (correctly) counted four claims, and
+   the commit STILL landed because my shell pipeline swallowed the gate's exit
+   code AND the pre-commit hook did not run the new gate. Both fixed same-hour:
+   the phantom names are unbackticked here, and check-doc-test-claims.sh is
+   wired into .githooks/pre-commit after the doc-links gate. The gate caught
+   its own author within the hour — which is the argument for it.
+6. **The daemon's piecemeal commit cost CI a red run** (`83647bd`: the P13
    test files without the P13 implementation). Not my commit, but my
    session produced the half-state it swallowed. The squash-on-sight
    habit is right; the daemon will keep finding gaps until the norm
