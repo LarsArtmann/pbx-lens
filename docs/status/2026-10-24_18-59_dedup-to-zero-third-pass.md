@@ -14,36 +14,36 @@ mean zero report lines at the t-10 lens.
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Skill loaded before acting (`deduplicate-code`); user's exact threshold (`-t 10`) honored | session start |
-| 2 | Suppressed bucket audited — found the hidden 4th group: a **27-line verbatim harness block** copied across both poll-pass tests in `internal/cli/poller_test.go` (invisible to the default report AND to the CI gate, because test files are auto-excluded from `check`) | `art-dupl --show-suppressed` output |
-| 3 | All 4 groups read body-by-body and judged: 3 production groups = 1-line signature-shape matches with different documented business rules → **accept**; test group = real clone → **extract** | calls.templ:392/410, detail.templ:443/458, dashboard.templ:624/671, poller_test.go:30-57/77-104 |
-| 4 | Extraction: `openPollHarness` (+ `webhookHangupLine`) in `internal/cli/poller_test.go` — memory system + search index + poll-1 webhook fixture in one helper; both pass tests now one-line harness calls; fixture bytes **identical** to the old inline literal (verified by construction + green tests) | poller_test.go:226-266 |
-| 5 | Third inline fixture literal (counters test, `ops-1`) consolidated onto the existing `webhookPollLine` helper — byte-identical output, no drift risk | poller_test.go:238-241 |
-| 6 | **Lying comment fixed**: `webhookPollLine` claimed to render "one initiated+hangup webhook pair" but rendered only the initiated line; now documents reality and the pairing | poller_test.go:222-225 |
-| 7 | Verification: `go test ./...` green (15 packages); `golangci-lint run ./internal/cli/...` clean (after fixing its 2 findings); `art-dupl -t 10` now reports only the 3 accepted groups; **CI gate `check -t 4 --min-lines 2` still 0 groups, exit 0** | session run output |
-| 8 | Docs updated: `docs/art-dupl-baseline.md` — test-scaffolding bullet now names both extracted full-stack repetitions (`serveTestStack`, `openPollHarness`) and explains WHY the poller clone was gate-invisible; third-pass history entry added | docs/art-dupl-baseline.md |
-| 9 | Formatting verified: `dprint check` clean on both touched files (via `nix develop`; dprint is not on host PATH) | session run |
-| 10 | Change-set committed by the auto-daemon (e.g. `dbdfaf8`, 2 files) — harness contract honored, no manual commit | git log |
+| #  | Item                                                                                                                                                                                                                                                                                                     | Evidence                                                                                        |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1  | Skill loaded before acting (`deduplicate-code`); user's exact threshold (`-t 10`) honored                                                                                                                                                                                                                | session start                                                                                   |
+| 2  | Suppressed bucket audited — found the hidden 4th group: a **27-line verbatim harness block** copied across both poll-pass tests in `internal/cli/poller_test.go` (invisible to the default report AND to the CI gate, because test files are auto-excluded from `check`)                                 | `art-dupl --show-suppressed` output                                                             |
+| 3  | All 4 groups read body-by-body and judged: 3 production groups = 1-line signature-shape matches with different documented business rules → **accept**; test group = real clone → **extract**                                                                                                             | calls.templ:392/410, detail.templ:443/458, dashboard.templ:624/671, poller_test.go:30-57/77-104 |
+| 4  | Extraction: `openPollHarness` (+ `webhookHangupLine`) in `internal/cli/poller_test.go` — memory system + search index + poll-1 webhook fixture in one helper; both pass tests now one-line harness calls; fixture bytes **identical** to the old inline literal (verified by construction + green tests) | poller_test.go:226-266                                                                          |
+| 5  | Third inline fixture literal (counters test, `ops-1`) consolidated onto the existing `webhookPollLine` helper — byte-identical output, no drift risk                                                                                                                                                     | poller_test.go:238-241                                                                          |
+| 6  | **Lying comment fixed**: `webhookPollLine` claimed to render "one initiated+hangup webhook pair" but rendered only the initiated line; now documents reality and the pairing                                                                                                                             | poller_test.go:222-225                                                                          |
+| 7  | Verification: `go test ./...` green (15 packages); `golangci-lint run ./internal/cli/...` clean (after fixing its 2 findings); `art-dupl -t 10` now reports only the 3 accepted groups; **CI gate `check -t 4 --min-lines 2` still 0 groups, exit 0**                                                    | session run output                                                                              |
+| 8  | Docs updated: `docs/art-dupl-baseline.md` — test-scaffolding bullet now names both extracted full-stack repetitions (`serveTestStack`, `openPollHarness`) and explains WHY the poller clone was gate-invisible; third-pass history entry added                                                           | docs/art-dupl-baseline.md                                                                       |
+| 9  | Formatting verified: `dprint check` clean on both touched files (via `nix develop`; dprint is not on host PATH)                                                                                                                                                                                          | session run                                                                                     |
+| 10 | Change-set committed by the auto-daemon (e.g. `dbdfaf8`, 2 files) — harness contract honored, no manual commit                                                                                                                                                                                           | git log                                                                                         |
 
 ## b) PARTIALLY DONE
 
-| # | Item | State |
-|---|------|-------|
-| 1 | "Deduplicate to zero" | Zero **harmful** achieved. The t-10 report still shows 3 accepted signature groups by design. Zero *visible* would require renaming parameters or merging genuinely different duration formatters — judged worse code, not done. This interpretation is not user-confirmed (question g1). |
-| 2 | Quality-gate coverage of the session change-set | Scoped: golangci on `./internal/cli/...` + full test suite. NOT run: `buildflow --build-mode dev` (the full local gate incl. all formatters) and full-repo `golangci-lint run ./...` (repo rule: before pushing — no push happened). |
-| 3 | Duplication sweep depth | Audited only at the user's t-10 lens. The skill's deeper variant (`art-dupl --type-aware -t 4 --show-suppressed`) was not run; whether it surfaces more suppressed items is **unknown**. The gate's multi-line contract is green, so any extra finds would be scaffolding-class. |
+| # | Item                                            | State                                                                                                                                                                                                                                                                                     |
+| - | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | "Deduplicate to zero"                           | Zero **harmful** achieved. The t-10 report still shows 3 accepted signature groups by design. Zero _visible_ would require renaming parameters or merging genuinely different duration formatters — judged worse code, not done. This interpretation is not user-confirmed (question g1). |
+| 2 | Quality-gate coverage of the session change-set | Scoped: golangci on `./internal/cli/...` + full test suite. NOT run: `buildflow --build-mode dev` (the full local gate incl. all formatters) and full-repo `golangci-lint run ./...` (repo rule: before pushing — no push happened).                                                      |
+| 3 | Duplication sweep depth                         | Audited only at the user's t-10 lens. The skill's deeper variant (`art-dupl --type-aware -t 4 --show-suppressed`) was not run; whether it surfaces more suppressed items is **unknown**. The gate's multi-line contract is green, so any extra finds would be scaffolding-class.          |
 
 ## c) NOT STARTED (deliberate waits, not omissions)
 
-| # | Item | Why waiting |
-|---|------|-------------|
-| 1 | `docs-health` **HARVEST** of section (f) into `TODO_LIST.md` | User instruction: report, then wait. Skill says harvest when the session continues. |
-| 2 | Manual receipt-grade commit | Harness rule: never commit unasked; auto-daemon already picked the files up. |
-| 3 | CHANGELOG entry decision | Change is test-only + doc; likely no entry, but not decided (item f4). |
-| 4 | Fixture-consolidation sweep beyond `poller_test.go` (other test packages may carry verbatim fixture blocks) | Out of this session's report scope; candidate item f7. |
-| 5 | Deeper `--type-aware -t 4` suppressed audit | Event-driven per baseline doc (pin bumps / suspicious greens); none triggered. Question g2. |
+| # | Item                                                                                                        | Why waiting                                                                                 |
+| - | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| 1 | `docs-health` **HARVEST** of section (f) into `TODO_LIST.md`                                                | User instruction: report, then wait. Skill says harvest when the session continues.         |
+| 2 | Manual receipt-grade commit                                                                                 | Harness rule: never commit unasked; auto-daemon already picked the files up.                |
+| 3 | CHANGELOG entry decision                                                                                    | Change is test-only + doc; likely no entry, but not decided (item f4).                      |
+| 4 | Fixture-consolidation sweep beyond `poller_test.go` (other test packages may carry verbatim fixture blocks) | Out of this session's report scope; candidate item f7.                                      |
+| 5 | Deeper `--type-aware -t 4` suppressed audit                                                                 | Event-driven per baseline doc (pin bumps / suspicious greens); none triggered. Question g2. |
 
 ## d) TOTALLY FUCKED UP
 
@@ -66,9 +66,9 @@ mean zero report lines at the t-10 lens.
 Brainstorm, not commitment list. Provenance marked: **[S]** session-derived, **[B]** standing backlog known from repo docs, **[R]** roadmap fuel. Extra items beyond the default 25 need `docs-health` HARVEST routing rigor (most are ROADMAP fuel).
 
 **Immediate follow-ups (this change-set):**
-1. [S] Harvest this report's (f) into `TODO_LIST.md` (docs-health HARVEST).
+~~1. [S] Harvest this report's (f) into `TODO_LIST.md` (docs-health HARVEST).~~ h ec89cce
 2. [S] Run `buildflow --build-mode dev` on the session change-set before next push.
-3. [S] Full `golangci-lint run ./...` before next push (repo rule).
+~~3. [S] Full `golangci-lint run ./...` before next push (repo rule).~~ h ec89cce
 4. [S] Decide CHANGELOG: entry for the harness extraction, or explicitly skip (test-only).
 5. [S] Answer g1 (zero-harmful vs zero-visible) and record the verdict in the baseline doc.
 6. [S] Answer g2 (deep suppressed audit now vs event-driven) and record.
@@ -129,7 +129,7 @@ Brainstorm, not commitment list. Provenance marked: **[S]** session-derived, **[
 
 ## g) Questions I cannot figure out myself
 
-1. **What does "zero" mean to you?** Zero *harmful* clones (current state: 3 accepted 1-line signature groups still visible at t-10, documented as shape coincidence) — or zero *visible* groups at t-10, which would force parameter renames or merging genuinely different formatters (`clockDuration`/`compactDuration`, `mosBars`/`volumeBars`) that I judge would make the code worse?
+1. **What does "zero" mean to you?** Zero _harmful_ clones (current state: 3 accepted 1-line signature groups still visible at t-10, documented as shape coincidence) — or zero _visible_ groups at t-10, which would force parameter renames or merging genuinely different formatters (`clockDuration`/`compactDuration`, `mosBars`/`volumeBars`) that I judge would make the code worse?
 2. **Deep audit appetite:** run `art-dupl --type-aware -t 4 --show-suppressed .` now (the deeper lens the skill recommends; the gate cannot see test files, so more scaffolding-class finds may surface), or keep suppressed audits event-driven (pin bumps / suspicious greens) as the baseline doc prescribes?
 3. **Commit handling:** keep the auto-daemon's heuristic commits for this change-set, or do you want a manual receipt-grade commit (single `git add … && git commit`, amend only unpushed)?
 
@@ -151,4 +151,4 @@ Lesson: grep the dependency graph before accepting a signature pair.
 
 ---
 
-*Point-in-time snapshot; goes stale by design. Harvest section (f) into `TODO_LIST.md` via docs-health when the session continues; annotate this file non-destructively as items land.*
+_Point-in-time snapshot; goes stale by design. Harvest section (f) into `TODO_LIST.md` via docs-health when the session continues; annotate this file non-destructively as items land._

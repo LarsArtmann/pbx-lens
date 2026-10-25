@@ -20,42 +20,42 @@ behind, and v1.24.0 fixes ARIA nesting in Heatmap + CopyButton, both rendered to
 
 ## a) FULLY DONE
 
-| # | Item | Evidence |
-|---|------|----------|
-| 1 | Both matching skills loaded before any tool action | session start |
-| 2 | Phase 0: prior reports located (2, no index README); adoption map read — its broken table spotted immediately | docs/research/, docs/templ-components-adoption.md:69-80 |
-| 3 | Version currency: pin v1.23.0 (go.mod:24-27), published v1.24.0 (2026-10-23), upstream HEAD = 3 docs commits past release; v1.24.0 body read from CHANGELOG | go list -m -versions, CHANGELOG.md:34+ |
-| 4 | Full component census: 33 distinct @-calls across 6 .templ surfaces + Go-side calls (SimpleNav/ThemeToggle/RelativeTime/DefaultPageProps) | grep census (session log) |
-| 5 | Capability ground truth read at the exact pin, not from drifting docs: utils@v1.23.0/format/format.go:75-155 read line-by-line and diffed against the 4 local twins | module cache |
-| 6 | Live upstream filing states: #48 #49 #50 #51 #52 #59 #60 #61 #63 — all OPEN; workarounds located in-code (dashboard.templ:441, app.css:124) | gh issue list + in-repo greps |
-| 7 | The split-brain discovery + output diff: local compactDuration renders "1m00s"/"12h05m" vs library "1m"/"12h5m"; clockDuration/stringOrDash byte-identical sub-day; percent identical today (all ratio sources zero-guarded) but missing NaN→"—" hardening | format.go vs calls.templ:392-422, dashboard.templ:712-714 |
-| 8 | 38-row capability inventory, 10 N/A rows each with a stated reason, score derived and published (23×1 + 5×0.5 of 28 = 91) | report appendix |
-| 9 | 7 findings cards + version-currency table + 10-row priority matrix (sorted desc) + how-to-verify appendix | report |
-| 10 | HTML composed by copying the editorial template and editing in place (no line-splicing); one failed edit (HTML entity mismatch) caught and fixed in the next step | multiedit log |
-| 11 | Self-consistency gate: denominators agree everywhere (91 / 23/28 / N=38 / A=28), priority table descending, 4 spot-checked citations in range, zero demo leftovers | gate greps (session log) |
-| 12 | dprint check attempted per repo discipline (no HTML plugin configured — nothing to format); git state verified (daemon owns commits) | nix develop -c dprint check |
+| #  | Item                                                                                                                                                                                                                                                       | Evidence                                                  |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 1  | Both matching skills loaded before any tool action                                                                                                                                                                                                         | session start                                             |
+| 2  | Phase 0: prior reports located (2, no index README); adoption map read — its broken table spotted immediately                                                                                                                                              | docs/research/, docs/templ-components-adoption.md:69-80   |
+| 3  | Version currency: pin v1.23.0 (go.mod:24-27), published v1.24.0 (2026-10-23), upstream HEAD = 3 docs commits past release; v1.24.0 body read from CHANGELOG                                                                                                | go list -m -versions, CHANGELOG.md:34+                    |
+| 4  | Full component census: 33 distinct @-calls across 6 .templ surfaces + Go-side calls (SimpleNav/ThemeToggle/RelativeTime/DefaultPageProps)                                                                                                                  | grep census (session log)                                 |
+| 5  | Capability ground truth read at the exact pin, not from drifting docs: utils@v1.23.0/format/format.go:75-155 read line-by-line and diffed against the 4 local twins                                                                                        | module cache                                              |
+| 6  | Live upstream filing states: #48 #49 #50 #51 #52 #59 #60 #61 #63 — all OPEN; workarounds located in-code (dashboard.templ:441, app.css:124)                                                                                                                | gh issue list + in-repo greps                             |
+| 7  | The split-brain discovery + output diff: local compactDuration renders "1m00s"/"12h05m" vs library "1m"/"12h5m"; clockDuration/stringOrDash byte-identical sub-day; percent identical today (all ratio sources zero-guarded) but missing NaN→"—" hardening | format.go vs calls.templ:392-422, dashboard.templ:712-714 |
+| 8  | 38-row capability inventory, 10 N/A rows each with a stated reason, score derived and published (23×1 + 5×0.5 of 28 = 91)                                                                                                                                  | report appendix                                           |
+| 9  | 7 findings cards + version-currency table + 10-row priority matrix (sorted desc) + how-to-verify appendix                                                                                                                                                  | report                                                    |
+| 10 | HTML composed by copying the editorial template and editing in place (no line-splicing); one failed edit (HTML entity mismatch) caught and fixed in the next step                                                                                          | multiedit log                                             |
+| 11 | Self-consistency gate: denominators agree everywhere (91 / 23/28 / N=38 / A=28), priority table descending, 4 spot-checked citations in range, zero demo leftovers                                                                                         | gate greps (session log)                                  |
+| 12 | dprint check attempted per repo discipline (no HTML plugin configured — nothing to format); git state verified (daemon owns commits)                                                                                                                       | nix develop -c dprint check                               |
 
 ## b) PARTIALLY DONE
 
-| # | Item | State |
-|---|------|-------|
-| 1 | The audit's own action plan (items 1–4) | Reported and prioritized, **not executed** — the ask was "are we", not "make it so". All four are ready-to-run with known cost (goldens + browser lane for #1–#3). |
-| 2 | Component-count precision | "33 components" = the @-prefixed census; ~37 counting Go-expression calls (SimpleNav, ThemeToggle, RelativeTime, DefaultPageProps). Conservative direction, still imprecise. |
-| 3 | Two immunity claims inferred, not read: #54 (Badge "Dot unused") and #61 (Grid "typed enums only") rest on the adoption map's word — the map whose stale format row is itself finding F5. | report F7 |
-| 4 | Cross-document consistency | This morning's dedup verdict (accepted clockDuration/compactDuration pair, recorded in docs/status/2026-10-24_18-59 and the baseline doc's rationale) is superseded by finding F1 — but only the new HTML report says so. The two older artifacts still assert the old verdict. |
-| 5 | Deep-dive coverage of the UI trio | templ-components audited; go-appkit (the third member) has never been deep-dived. |
+| # | Item                                                                                                                                                                                      | State                                                                                                                                                                                                                                                                           |
+| - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | The audit's own action plan (items 1–4)                                                                                                                                                   | Reported and prioritized, **not executed** — the ask was "are we", not "make it so". All four are ready-to-run with known cost (goldens + browser lane for #1–#3).                                                                                                              |
+| 2 | Component-count precision                                                                                                                                                                 | "33 components" = the @-prefixed census; ~37 counting Go-expression calls (SimpleNav, ThemeToggle, RelativeTime, DefaultPageProps). Conservative direction, still imprecise.                                                                                                    |
+| 3 | Two immunity claims inferred, not read: #54 (Badge "Dot unused") and #61 (Grid "typed enums only") rest on the adoption map's word — the map whose stale format row is itself finding F5. | report F7                                                                                                                                                                                                                                                                       |
+| 4 | Cross-document consistency                                                                                                                                                                | This morning's dedup verdict (accepted clockDuration/compactDuration pair, recorded in docs/status/2026-10-24_18-59 and the baseline doc's rationale) is superseded by finding F1 — but only the new HTML report says so. The two older artifacts still assert the old verdict. |
+| 5 | Deep-dive coverage of the UI trio                                                                                                                                                         | templ-components audited; go-appkit (the third member) has never been deep-dived.                                                                                                                                                                                               |
 
 ## c) NOT STARTED (deliberate waits / out of scope)
 
-| # | Item | Why |
-|---|------|-----|
-| 1 | Action ① — adopt utils/format, delete 4 twins (~40 lines), golden refresh, browser lane | Awaiting user go-ahead (see g1/g2) |
-| 2 | Action ② — v1.24.0 bump via the 6-step watchlist | Same |
-| 3 | Action ③ — ops "Last pass" zero-time guard ("never" copy) | Same |
-| 4 | Action ④ — repair the adoption map's broken table + stale format row | 2-line fix, bundled with ① |
-| 5 | HARVEST of today's two status reports into TODO_LIST.md | User instruction: report, then wait |
-| 6 | docs/research/README.md index (3 reports, none indexed) | Candidate, not ordered |
-| 7 | CHANGELOG entry | Docs-only session — likely none; undecided |
+| # | Item                                                                                    | Why                                        |
+| - | --------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 1 | Action ① — adopt utils/format, delete 4 twins (~40 lines), golden refresh, browser lane | Awaiting user go-ahead (see g1/g2)         |
+| 2 | Action ② — v1.24.0 bump via the 6-step watchlist                                        | Same                                       |
+| 3 | Action ③ — ops "Last pass" zero-time guard ("never" copy)                               | Same                                       |
+| 4 | Action ④ — repair the adoption map's broken table + stale format row                    | 2-line fix, bundled with ①                 |
+| 5 | HARVEST of today's two status reports into TODO_LIST.md                                 | User instruction: report, then wait        |
+| 6 | docs/research/README.md index (3 reports, none indexed)                                 | Candidate, not ordered                     |
+| 7 | CHANGELOG entry                                                                         | Docs-only session — likely none; undecided |
 
 ## d) TOTALLY FUCKED UP
 
@@ -79,19 +79,19 @@ behind, and v1.24.0 fixes ARIA nesting in Heatmap + CopyButton, both rendered to
 Brainstorm, not commitment. Provenance: **[S]** this session, **[C]** carried open from this morning's report, **[B]** standing backlog, **[R]** roadmap fuel. Extra items need docs-health HARVEST routing rigor.
 
 **Execute the audit (ready-to-run):**
-1. [S] Action ①: adopt utils/format; delete clockDuration/compactDuration/stringOrDash/percent; keep mosGaugePercent; goldens `-update` + review copy change ("1m00s"→"1m"); browser lane.
-2. [S] Action ②: bump templ-components v1.23.0→v1.24.0 via the 6-step watchlist (corpus regen → map re-audit → hand-rolled re-check → filings re-read → goldens → art-dupl baseline).
-3. [S] Action ③: ops "Last pass" guard — `p.LastPass.IsZero()` renders "never" instead of zero-time RelativeTime.
-4. [S] Action ④: restore the adoption map's 12 orphaned rows under the main table; split the format row into adopted vs remaining.
-5. [S] Annotate this morning's dedup report + baseline doc: the clockDuration/compactDuration acceptance is superseded by F1 (until ① lands, then the note becomes "resolved by adoption").
+~~1. [S] Action ①: adopt utils/format; delete clockDuration/compactDuration/stringOrDash/percent; keep mosGaugePercent; goldens `-update` + review copy change ("1m00s"→"1m"); browser lane.~~ h ec89cce,05e1f30,c1c2ed0,de87205
+~~2. [S] Action ②: bump templ-components v1.23.0→v1.24.0 via the 6-step watchlist (corpus regen → map re-audit → hand-rolled re-check → filings re-read → goldens → art-dupl baseline).~~ h de87205,ec89cce,60dc010
+~~3. [S] Action ③: ops "Last pass" guard — `p.LastPass.IsZero()` renders "never" instead of zero-time RelativeTime.~~ h c1c2ed0,ec89cce
+~~4. [S] Action ④: restore the adoption map's 12 orphaned rows under the main table; split the format row into adopted vs remaining.~~ h ec89cce,c1c2ed0
+~~5. [S] Annotate this morning's dedup report + baseline doc: the clockDuration/compactDuration acceptance is superseded by F1 (until ① lands, then the note becomes "resolved by adoption").~~ h ec89cce,c1c2ed0
 6. [S] `buildflow --build-mode dev` before next push (still not run today, two sessions of changes).
-7. [S] Full `golangci-lint run ./...` before next push.
+~~7. [S] Full `golangci-lint run ./...` before next push.~~ h ec89cce
 8. [S] Comment on upstream #52 with the ops-poller "never ran" use case (EmptyText escape belongs upstream).
 9. [S] Verify the two inferred immunity claims at call sites: Badge Dot truly unused (#54); Grid typed enums only (#61).
 10. [S] Rule for CopyButton: never render inside an htmx-swapped fragment until #63 ships a page-level script mount.
 
 **Dedup program (carried):**
-11. [C] HARVEST both status reports into TODO_LIST.md (docs-health HARVEST).
+~~11. [C] HARVEST both status reports into TODO_LIST.md (docs-health HARVEST).~~ h ec89cce
 12. [C] Adopt the "grep the dependency graph before accepting" rule into the dedup flow (this session's lesson).
 13. [C] Zero-group gate contract stands: new multi-line clone → extract, never baseline-accept without review.
 14. [C] After any art-dupl pin bump: regenerate baseline + suppressed audit in the same change.
@@ -150,4 +150,4 @@ Brainstorm, not commitment. Provenance: **[S]** this session, **[C]** carried op
 
 ---
 
-*Point-in-time snapshot; goes stale by design. Harvest section (f) into TODO_LIST.md via docs-health when the session continues; annotate this file non-destructively as items land.*
+_Point-in-time snapshot; goes stale by design. Harvest section (f) into TODO_LIST.md via docs-health when the session continues; annotate this file non-destructively as items land._

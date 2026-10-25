@@ -135,9 +135,9 @@ Sorted by impact. Items 1-7 are the deep-dive's Pareto set; the rest are session
 2. Hub completeness → **YES, declare the read surface** (catalog.Query for search/dashboard/detail). Unblocks #18/#39.
 3. Pin cadence → **BUMP NOW** (the one-wave lag was not deliberate policy). Unblocks #1-7, #21, #29.
 
-1. **Dependency policy:** may pbx-lens add `systemscenario/v4` (and later `scenario/v4`) as test-only imports, given they are NOT yet in the module graph (so the "rides free" promotion precedent doesn't apply) and systemscenario is marked Experimental? I read the AGENTS.md dependency policy, the promotion precedents, and the module's status section — this is an owner call between policy strictness and the top-scoring test improvement.
-2. **Hub completeness intent:** should pbx-lens's federation catalog declare its read/query surface (`catalog.Query` for search/dashboard/detail), or is the hub intentionally write-side/events-only? I verified the builder supports it and the hub's lint validates queries — whether pbx-lens's private read API _belongs_ in the federation story is product intent.
-3. **Pin policy:** is pbx-lens's one-wave lag behind go-cqrs-lite deliberate (letting waves settle before riding) or accidental (bump as waves land)? This decides whether task #1 runs today or waits for the next settle window — and whether to add a standing "bump after each wave" ritual.
+4. **Dependency policy:** may pbx-lens add `systemscenario/v4` (and later `scenario/v4`) as test-only imports, given they are NOT yet in the module graph (so the "rides free" promotion precedent doesn't apply) and systemscenario is marked Experimental? I read the AGENTS.md dependency policy, the promotion precedents, and the module's status section — this is an owner call between policy strictness and the top-scoring test improvement.
+5. **Hub completeness intent:** should pbx-lens's federation catalog declare its read/query surface (`catalog.Query` for search/dashboard/detail), or is the hub intentionally write-side/events-only? I verified the builder supports it and the hub's lint validates queries — whether pbx-lens's private read API _belongs_ in the federation story is product intent.
+6. **Pin policy:** is pbx-lens's one-wave lag behind go-cqrs-lite deliberate (letting waves settle before riding) or accidental (bump as waves land)? This decides whether task #1 runs today or waits for the next settle window — and whether to add a standing "bump after each wave" ritual.
 
 ---
 
