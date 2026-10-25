@@ -46,6 +46,7 @@ func TestOptimisticConcurrencyRejectsStaleWriter(t *testing.T) {
 	)
 
 	obs := sampleObservation()
+
 	cmd, err := calls.NewRecordCommand(obs)
 	if err != nil {
 		t.Fatal(err)
@@ -89,7 +90,7 @@ func TestOptimisticConcurrencyRejectsStaleWriter(t *testing.T) {
 		ThenSuccess().
 		ThenNoEvents()
 
-	events := scenarioJournal(t, sc)
+	events := journalOf(t, sc)
 	if len(events) != 2 {
 		t.Fatalf("journal holds %d events, want 2 (seed + winner)", len(events))
 	}
@@ -131,8 +132,10 @@ func TestDelayedSQLiteKeepsIdenticalSavesSerialized(t *testing.T) {
 
 	const racers = 10
 
-	var errs [racers]error
-	var wg sync.WaitGroup
+	var (
+		errs [racers]error
+		wg   sync.WaitGroup
+	)
 
 	for i := range racers {
 		wg.Go(func() {
@@ -167,7 +170,6 @@ func TestDelayedSQLiteKeepsIdenticalSavesSerialized(t *testing.T) {
 	}
 
 	cmd, err := calls.NewRecordCommand(obs)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -178,9 +180,9 @@ func TestDelayedSQLiteKeepsIdenticalSavesSerialized(t *testing.T) {
 		ThenQueryFunc(viewReader(sc.System(), calls.RecordKey(cmd.StreamID())), func(got any) error {
 			return checkProjectedHash(got, obs)
 		})
-	}
+}
 
-	// obsGenerator produces the random observations for the property oracle:
+// obsGenerator produces the random observations for the property oracle:
 // three streams' worth of native IDs, both directions, and varying
 // durations/causes — enough shape for decide/fold divergence to show.
 func obsGenerator(rt *rapid.T) calls.Observation {
@@ -342,9 +344,14 @@ func assertFoldParity(rt *rapid.T, ctx context.Context, sc *systemscenario.Scena
 // assertJournalVersionOrdering pins each stream's journal at strictly
 // increasing versions starting at 1 — no gaps, no duplicates.
 func assertJournalVersionOrdering(rt *rapid.T, sc *systemscenario.Scenario) {
+	journal, err := journalEvents(sc)
+	if err != nil {
+		rt.Fatalf("read journal: %v", err)
+	}
+
 	seen := map[string]event.Version{}
 
-	for _, evt := range scenarioJournal(rt, sc) {
+	for _, evt := range journal {
 		refString := evt.StreamID().String()
 
 		if evt.Version() != seen[refString]+1 {
@@ -360,20 +367,29 @@ func assertJournalVersionOrdering(rt *rapid.T, sc *systemscenario.Scenario) {
 	}
 }
 
-// scenarioJournal reads the scenario system's full journal — the same read
+// errJournalNotAJournal is returned when the event store lacks the
+// Journal (ReadAll) capability the depth specs replay through.
+var errJournalNotAJournal = errors.New("event store does not implement event.Journal (ReadAll)")
+
+// journalEvents reads the scenario system's full journal — the same read
 // the harness's own capture uses, reached through the documented escape
 // hatch (Scenario.System) because the capture internals are unexported.
-func scenarioJournal(t testing.TB, sc *systemscenario.Scenario) []event.Event {
-	t.Helper()
-
+func journalEvents(sc *systemscenario.Scenario) ([]event.Event, error) {
 	journal, ok := sc.System().EventStore().(event.Journal)
 	if !ok {
-		t.Fatal("event store does not implement event.Journal (ReadAll)")
+		return nil, fmt.Errorf("%w", errJournalNotAJournal)
 	}
 
-	events, err := journal.ReadAll(context.Background())
+	return journal.ReadAll(context.Background())
+}
+
+// journalOf is the fatal-ing wrapper the plain (non-property) tests use.
+func journalOf(t *testing.T, sc *systemscenario.Scenario) []event.Event {
+	t.Helper()
+
+	events, err := journalEvents(sc)
 	if err != nil {
-		t.Fatalf("read journal: %v", err)
+		t.Fatal(err)
 	}
 
 	return events
