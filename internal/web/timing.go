@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/larsartmann/httputil"
@@ -20,5 +21,27 @@ func ServerTimingMiddleware() httputil.Middleware {
 			timed, tracked := servertiming.WrapServerTiming(w, r)
 			next.ServeHTTP(timed, tracked)
 		})
+	}
+}
+
+// firstPageMetric times a streaming route's only pre-first-write hop: the
+// request parse plus the FIRST keyset page fetch, i.e. the time-to-first-row
+// a downstream consumer actually feels. The stop fires on the first row (or
+// at stream end when a filter matched nothing) — never around the body
+// loop, whose cost is the download itself, not the server's. Single-shot by
+// construction: the mark is a guarded bool, because Measure's stop records
+// again on every call.
+func firstPageMetric(ctx context.Context) func() {
+	stop := servertiming.MeasureServerTiming(ctx, "firstpage")
+
+	var done bool
+
+	return func() {
+		if done {
+			return
+		}
+
+		done = true
+		stop()
 	}
 }

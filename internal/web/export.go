@@ -59,7 +59,10 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	markFirstPage := firstPageMetric(r.Context())
+
 	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+		markFirstPage()
 		applyPII(pii, &view)
 
 		line, err := json.Marshal(view)
@@ -71,6 +74,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 		return err
 	})
+	markFirstPage()
 	if err != nil {
 		// The body may already be streaming, so the only honest moves are a
 		// terminal marker line in the file (machine-readable) and the log.
@@ -96,6 +100,8 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	markFirstPage := firstPageMetric(r.Context())
+
 	writer := csv.NewWriter(w)
 
 	if err := writer.Write(exportHeader()); err != nil {
@@ -103,10 +109,12 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+		markFirstPage()
 		applyPII(pii, &view)
 
 		return writer.Write(exportRecord(view))
 	})
+	markFirstPage()
 	if err != nil {
 		// The body may already be streaming, so the only honest moves are a
 		// terminal marker row in the file (visible in any spreadsheet) and
