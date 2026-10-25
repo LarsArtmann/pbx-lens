@@ -280,7 +280,10 @@ func TestRecentViewsContainerCarriesFilters(t *testing.T) {
 	}
 
 	_, filtered := getBody(t, mux, "/?direction=inbound&number=%2B17287289311")
-	if !strings.Contains(filtered, `data-filters="{&#34;direction&#34;:&#34;inbound&#34;,&#34;number&#34;:&#34;+17287289311&#34;}"`) {
+	if !strings.Contains(
+		filtered,
+		`data-filters="{&#34;direction&#34;:&#34;inbound&#34;,&#34;number&#34;:&#34;+17287289311&#34;}"`,
+	) {
 		t.Error("filtered list must carry the filter JSON")
 	}
 }
