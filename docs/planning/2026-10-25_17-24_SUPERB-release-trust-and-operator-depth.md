@@ -1,9 +1,19 @@
 <!-- Pareto plan 2026-10-25 17:24 — input: the 15-39 + 16-58 + 17-12 reports'
      §f lists, the 10-46 plan's open 20% tier, TODO_LIST (31 open rows), and
-     ROADMAP theme 0. Status: READY — execution not started.
+     ROADMAP theme 0. Status: IN EXECUTION — 7/19 coarse tasks done
+     2026-10-25 (P1, P2, P5, P6, P7, P8, P10; P15/P16 partially — see the
+     erratum below). P3/P4/P9 remain owner-gated (§g1–§g3).
      Guard: NO VERSCHLIMMBESSERUNG — the browser-lane ritual, the art-dupl
      zero-group gate, no-local-replace, AGENTS budget 219/219, and the
-     receipt-grade-commit contract all hold inside this plan. -->
+     receipt-grade-commit contract all hold inside this plan.
+     Erratum (2026-10-25 evening): the P5–P10 pushes went red on CI's
+     art-dupl gate — it had run nowhere locally (the P2 FULL receipt
+     predated the features, and golangci-lint sees none of it). Fixed same
+     evening: the two clone pairs extracted (search normalizedQuery;
+     firstMatchedTurn via slices.IndexFunc, CI run 40221643859 green), and
+     the gate moved left into .githooks/pre-commit via pin-enforcing
+     check-dedup-gate.sh (315587e, self-tested in Guard Self-Tests).
+     Fresh FULL receipt owed on the post-feature tree before P3. -->
 
 # SUPERB plan — release, trust, and operator depth (2026-10-25 17:24)
 
