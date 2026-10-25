@@ -408,35 +408,54 @@ func (a statsAccumulator) view(view calls.CallView) {
 		}
 	}
 
-	if view.MOS > 0 {
-		stats.MOSKnown++
-		stats.MOSSum += view.MOS
-
-		if idx, ok := a.dayIndex[day]; ok {
-			stats.ByDay[idx].MOSKnown++
-			stats.ByDay[idx].MOSSum += view.MOS
-		}
-	}
-
-	// Spend: only a reported price counts. CostMicros == 0 with a currency is
-	// "priced at nothing" as often as it is "not priced"; the enrichment
-	// contract writes a positive micros value for a priced call, so > 0 is
-	// the only honest "known" test.
-	if view.CostMicros > 0 {
-		stats.CostKnown++
-		stats.CostMicros += view.CostMicros
-		stats.CostSeconds += view.DurationSecs
-		a.costCurrencies[view.CostCurrency]++
-
-		if idx, ok := a.dayIndex[day]; ok {
-			stats.ByDay[idx].CostKnown++
-			stats.ByDay[idx].CostMicros += view.CostMicros
-		}
-	}
-
+	a.viewMOS(view, day)
+	a.viewCost(view, day)
 	a.quality.view(view)
+	a.viewSegments(view)
+}
 
-	// Segments: which of our numbers carries the traffic, and who calls it.
+// viewMOS folds one call's quality score into the totals and its day bucket.
+// Unscored calls (MOS == 0) contribute nothing anywhere.
+func (a statsAccumulator) viewMOS(view calls.CallView, day string) {
+	if view.MOS <= 0 {
+		return
+	}
+
+	stats := a.stats
+	stats.MOSKnown++
+	stats.MOSSum += view.MOS
+
+	if idx, ok := a.dayIndex[day]; ok {
+		stats.ByDay[idx].MOSKnown++
+		stats.ByDay[idx].MOSSum += view.MOS
+	}
+}
+
+// viewCost folds one call's price into the totals and its day bucket. Only a
+// reported price counts: CostMicros == 0 with a currency is "priced at
+// nothing" as often as it is "not priced"; the enrichment contract writes a
+// positive micros value for a priced call, so > 0 is the only honest "known"
+// test.
+func (a statsAccumulator) viewCost(view calls.CallView, day string) {
+	if view.CostMicros <= 0 {
+		return
+	}
+
+	stats := a.stats
+	stats.CostKnown++
+	stats.CostMicros += view.CostMicros
+	stats.CostSeconds += view.DurationSecs
+	a.costCurrencies[view.CostCurrency]++
+
+	if idx, ok := a.dayIndex[day]; ok {
+		stats.ByDay[idx].CostKnown++
+		stats.ByDay[idx].CostMicros += view.CostMicros
+	}
+}
+
+// viewSegments folds one call into the number/peer segment tables; a source
+// row with no parties contributes to neither.
+func (a statsAccumulator) viewSegments(view calls.CallView) {
 	if ours, peer := callParties(view); ours != "" || peer != "" {
 		if ours != "" {
 			accumulateSegment(a.numberSegments, ours, view)

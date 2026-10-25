@@ -88,25 +88,8 @@ func testService(t *testing.T, svc catalog.Service) {
 		}
 
 		for i, id := range tc.ids {
-			msg := tc.msgs[i]
-
-			if string(msg.ID) != id {
-				t.Errorf("%s[%d].ID = %q, want %q", tc.name, i, msg.ID, id)
-			}
-
-			if msg.Direction != tc.dir {
-				t.Errorf("%s[%d].Direction = %q, want %q", tc.name, i, msg.Direction, tc.dir)
-			}
-
-			if msg.Summary == "" {
-				t.Errorf("%s[%d] (%s) has an empty summary", tc.name, i, msg.ID)
-			}
-
-			if tc.dir == catalog.Sends && msg.Schema == nil {
-				t.Errorf("%s[%d] (%s) has no derived schema", tc.name, i, msg.ID)
-			}
-
-			ids = append(ids, string(msg.ID))
+			testCatalogMessage(t, tc.name, i, tc.msgs[i], id, tc.dir)
+			ids = append(ids, string(tc.msgs[i].ID))
 		}
 	}
 
@@ -116,6 +99,26 @@ func testService(t *testing.T, svc catalog.Service) {
 		if ids[i] == ids[i-1] {
 			t.Errorf("duplicate message ID in catalog: %s", ids[i])
 		}
+	}
+}
+
+func testCatalogMessage(t *testing.T, name string, i int, msg catalog.Message, id string, dir catalog.Direction) {
+	t.Helper()
+
+	if string(msg.ID) != id {
+		t.Errorf("%s[%d].ID = %q, want %q", name, i, msg.ID, id)
+	}
+
+	if msg.Direction != dir {
+		t.Errorf("%s[%d].Direction = %q, want %q", name, i, msg.Direction, dir)
+	}
+
+	if msg.Summary == "" {
+		t.Errorf("%s[%d] (%s) has an empty summary", name, i, msg.ID)
+	}
+
+	if dir == catalog.Sends && msg.Schema == nil {
+		t.Errorf("%s[%d] (%s) has no derived schema", name, i, msg.ID)
 	}
 }
 
