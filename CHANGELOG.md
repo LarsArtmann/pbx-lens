@@ -26,6 +26,27 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   four fork tags predate the committed templ codegen and do not build);
   the commit pin stays the doctrine (docs/art-dupl-baseline.md).
 
+### Added — 2026-10-25 (the doc-claims gate, parser property, release prep)
+
+- **Every Go test a living doc claims must now exist** (new
+  `check-doc-test-claims.sh`): backticked `Test…` names are extracted from
+  the living docs and matched against the tree — the gate's first run
+  caught EIGHT phantoms across FEATURES and three living reports, all
+  annotated same-session (historical names keep their story and name
+  their real successor; FEATURES rows now cite `TestScenarioRecordPaths`).
+  Wired into CI's Guard Self-Tests, `verify-all.sh` (three docs-truth
+  gates now), and scripts/README.md; self-test plus a live seeded-red
+  proof on the real tree.
+- **The parsers are fuzz-proven** (plan P19.3): arbitrary bytes through
+  the CDR, webhook, and agent parsers never panic, never error, and every
+  emitted observation passes the domain's own Validate — an unrecordable
+  emission now breaks the build at the parse boundary.
+- **Both release bodies are drafted** (plan P25):
+  docs/drafts/2026-10-25_release-bodies-v0.2.1-vs-v0.3.0.md carries the
+  patch shape (fixes + integrity only), the minor shape (everything since
+  v0.2.0), and the CHANGELOG split mechanics for each, so the owner's
+  call is a five-minute choice.
+
 ### Added — 2026-10-25 (streaming observability: the export firstpage metric)
 
 - **The export endpoints now carry a `firstpage` Server-Timing metric**

@@ -230,12 +230,16 @@ jobs:
           bash scripts/check-js-lint.sh --self-test
           bash scripts/check-docs-counts.sh --self-test
           bash scripts/check-doc-links.sh --self-test
+          bash scripts/check-doc-test-claims.sh --self-test
           bash scripts/poll-gate.sh --self-test
 
       - name: Docs truth gates (live tree)
+        # check-doc-test-claims owns the 2026-10-25 phantom incident: a doc
+        # claimed two recording timing tests for seven days; neither existed.
         run: |
           bash scripts/check-docs-counts.sh
           bash scripts/check-doc-links.sh
+          bash scripts/check-doc-test-claims.sh
 
   nix-lint:
     name: Nix Lint (statix + deadnix + treefmt)

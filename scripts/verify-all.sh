@@ -76,14 +76,18 @@ statix_tripwire() {
 statix_tripwire
 
 # Docs-truth gates (plan T12, 2026-10-23): the corpus counts the living docs
-# state and every relative link between them. Both are subsecond and both
-# catch a class the browser probes cannot see — a doc that lies about its own
-# archive, or a citation that no longer resolves.
+# state, every relative link between them, and every backticked test name a
+# doc claims. All three are subsecond and all catch a class the browser
+# probes cannot see — a doc that lies about its own archive, a citation that
+# no longer resolves, or a promised test that was never written.
 echo "=== check-docs-counts ==="
 bash scripts/check-docs-counts.sh
 
 echo "=== check-doc-links ==="
 bash scripts/check-doc-links.sh
+
+echo "=== check-doc-test-claims ==="
+bash scripts/check-doc-test-claims.sh
 
 echo "=== verify-ui-contract ==="
 node scripts/verify-ui-contract.js

@@ -79,7 +79,7 @@ analytics-depth-and-backlog-closeout.md (25 tasks, 118 steps).
 11. **P7 partial — corpus stamp + one golden entry point** (`ff1f959`):
     gen-tc-classes.js writes a `# templ-components@vX` stamp (corpus
     regenerated: v1.24.0, 7637 classes + stamp — styles.css untouched, the
-    stamp adds no utilities); `TestGoldenOpsPage` folded into
+    stamp adds no utilities); TestGoldenOpsPage folded into
     `TestGoldenPages` (own mux, same entry point) so `-run TestGoldenPages`
     can no longer skip the ops golden (the 05-49 §f6 trap).
 

@@ -161,7 +161,7 @@ rewrite collided with an externally-pushed branch.
    "never reset pushed work" rule needs the operational trigger: FETCH
    FIRST, every time.
 2. **Gate-check doc-claimed test names.** A tiny script: extract
-   backticked `TestXxx` names from docs/*.md, assert each exists in the
+   backticked Test-prefixed names from docs/*.md, assert each exists in the
    tree. Would have caught the phantom pair 7 days ago. Seed-red proof
    first, then a CI lane.
 3. **Daemon claim protocol.** Seven races in one session is the argument.
@@ -186,7 +186,7 @@ rewrite collided with an externally-pushed branch.
    --build-mode dev` — none recorded today. (NEW)
 3. Browser lane `bash scripts/verify-all.sh` — the anomaly note and the
    firstpage metric have no browser-level proof. (NEW)
-4. Doc-claims gate: extract backticked `TestXxx` from docs/*.md, assert
+4. Doc-claims gate: extract backticked Test-prefixed names from docs/*.md, assert
    existence; seeded red first. (NEW, from §e2)
 5. The 10-46 plan's executed-status header + this report's index row.
    (NEW)
