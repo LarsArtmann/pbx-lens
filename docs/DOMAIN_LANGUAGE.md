@@ -87,6 +87,21 @@ Two rules of interpretation, worth more than the table:
   disagree whenever the recognizer lost the audio, which is exactly the case
   the badge exists to expose.
 
+## Analytics denominators (2026-10-25)
+
+Every dashboard rate names what it divides; these are the canonical
+denominators, and a new card must pick one of them (or define its own here
+first).
+
+| Figure                                     | Denominator                                          | Never includes                                                                                                 |
+| ------------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| AI share (`AIRatio`)                       | all calls in the window (`Total`)                    | nothing excluded — human calls are the complement, not a third bucket                                          |
+| Spend mean (`CostPerMinute`)               | priced calls' own billed seconds (`CostSeconds`)     | unpriced calls; a zero-second priced call; a second currency (mixed currency refuses to sum entirely)          |
+| Segment rate (`CostPerMinute` per segment) | that segment's own priced seconds                    | the window's other segments — a segment's rate never borrows another's seconds                                 |
+| No-user-turn share                         | calls whose transcript has any turns (`Transcripts`) | calls with no transcript at all — "no speech rows" is not "no user turn"                                       |
+| Quality trend (`QualityTrend`)             | the prior week's transcribed calls                   | a week whose share was zero (no meaningful move exists); rendered in percentage POINTS, never % of %           |
+| Weekday baseline (`VolumeNote`)            | that weekday's complete days in the window           | today's partial day (it must not dilute its own baseline); fewer than two prior same-weekdays → no note at all |
+
 ## Additive fields and the schema version (2026-10-23)
 
 `ContentHash` is the observation's identity, and the decider answers an equal

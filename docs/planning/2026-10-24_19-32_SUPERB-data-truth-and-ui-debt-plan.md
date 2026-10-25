@@ -1,3 +1,8 @@
+<!-- Pareto execution plan 2026-10-24 19:32 — Status: EXECUTED through the 4% tier
+     (2026-10-25; the 20% tier landed piecemeal across the 05-49/06-51/08-08/08-53
+     sessions — execution reports under docs/status/, archived set in
+     docs/status/archived/README.md). -->
+
 # SUPERB plan — data truth, UI debt, and the full backlog (2026-10-24 19:32)
 
 **Driver:** the templ-components deep-dive (docs/research/2026-10-24_*, 91/100) plus

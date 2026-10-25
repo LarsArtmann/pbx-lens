@@ -26,6 +26,23 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   four fork tags predate the committed templ codegen and do not build);
   the commit pin stays the doctrine (docs/art-dupl-baseline.md).
 
+### Added — 2026-10-25 (streaming observability: the export firstpage metric)
+
+- **The export endpoints now carry a `firstpage` Server-Timing metric**
+  (plan P13): request parse plus the FIRST keyset page fetch — the
+  time-to-first-row a consumer feels — stopped at the first row or at
+  stream end when a filter matched nothing, never around the body loop
+  (the streaming doctrine in docs/http-stack.md). A zero-row stream
+  commits its header explicitly, because the wrapper's lazy injection
+  would otherwise drop `firstpage` and `total` exactly when nothing
+  matched. Pinned for both formats plus the zero-row case.
+- **The two Server-Timing pins docs/http-stack.md promised now exist**:
+  `TestRecordingProxyTimingHopBudget` (both recording hops named, no
+  body metric) landed for real, and the doc's phantom
+  `TestRecordingProxySlowUpstreamStaysBounded` was corrected to the
+  fast-fail tests that actually hold the claim — the doc had claimed
+  pins that were never written.
+
 ### Added — 2026-10-25 (test depth: lifecycle oracle, retire golden, key-generation contract)
 
 - **The property oracle now drives full call lifecycles** (plan P8.2):
@@ -44,6 +61,28 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   seeded the pre-v4.6.0 way, clean not-found for absent streams, and the
   both-exist case where the bare key must win over a legacy decoy.
   `-race` on the package: clean.
+
+### Added — 2026-10-25 (deployment-swap proof, sibling receipts, analytics docs)
+
+- **Memory↔sqlite equivalence is now proven in-process** (plan P19.1):
+  `TestMemoryAndSqliteDeploymentsStayEquivalent` boots both deployments
+  over the same DomainConfig, feeds them the identical four-op lifecycle
+  (record, correct, enrich, retire), and asserts
+  `AssertJournalEquivalence` plus read-model parity — the dsn knob is the
+  only deployment difference, and the test fails if anything else leaks
+  into the record.
+- **Analytics documentation pass** (plan P24): README's serve section
+  gains a denominator-honest walkthrough of the analytics cards (spend,
+  segments with `?number=` deep links, quality trend, the weekday
+  baseline note, counterpart history), and DOMAIN_LANGUAGE.md carries
+  the canonical "Analytics denominators" table — every dashboard rate's
+  denominator and what it must never include.
+- **Sibling receipts** (plan P21): the go-cqrs-lite versions.json
+  regeneration ran idempotent (manifest already carried the shipped
+  tags; gate answers "fresh (112 trains)"), the upstream-filings row and
+  TODO rows record it, the Server-Timing TODO row closed with the P13
+  receipt, and the 19-32 plan got its executed-status header (P20.3;
+  the multi-act + AppendBatch gotchas were already written).
 
 ### Added — 2026-10-25 (analytics depth: the anomaly baseline note)
 

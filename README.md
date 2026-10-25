@@ -136,6 +136,20 @@ signal theme — the heatmap included — pinned by browser-level style-contract
 probes, so accent colors never drift between pages. Dashboard cards poll for updates
 every 30 s and the staleness banner re-checks itself every minute (htmx,
 self-hosted, so a JS-less browser gets the same page rendered server-side).
+
+The dashboard's analytics cards are denominator-honest — every rate names
+what it divides: Spend averages priced calls only (calls Telnyx never priced
+contribute nothing, and a mixed-currency window refuses to sum); the segment
+tables (top PBX-side numbers and outside parties) show each segment's AI
+share, average duration, and cost rate, and every row deep-links into the
+filtered call list via `?number=`; the quality trend moves the no-user-turn
+share week over week in percentage points, silently absent until the prior
+week has a real baseline; and the density heatmap carries a weekday baseline
+note — today's call count against that weekday's usual ±2σ band, quiet prose
+rather than a new chart, and honest about "not enough history" until two
+full weeks exist. Counterpart history on the detail page (the last meetings
+with that outside party) rounds out the who-calls-whom picture.
+
 Ingest keeps working
 from the same CLI; `serve` also embeds an optional poll loop
 (`-poll-every 15m -cdr-file … -webhook-log … -transcripts-dir …`) so the
