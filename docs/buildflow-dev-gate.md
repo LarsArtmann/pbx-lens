@@ -385,3 +385,17 @@ receipt and teach the receipt rules:
 
 A green run on a moving tree is not a receipt; a red run with real
 findings is the gate doing its job.
+
+## The second calm-window FULL receipt (2026-10-25 17:56)
+
+START LOAD **1m=16.10 5m=15.43 15m=18.09** (policy < 40) via
+`scripts/poll-gate.sh` (default gate), tree frozen at `c597c77` for the
+whole run → **60 success / 0 failed / 0 skipped (+5 via config)**, exit
+0, wall 1m1.2s, run `20261025-165637-dbd9b0d2`. golangci-lint 0 issues,
+test-race ✔, test-coverage ✔, nix-build ✔ (built `c597c77`), art-dupl
+zero-group gate ✔. One real finding, fixed in the same commit as this
+receipt: dprint-format on FEATURES.md (table padding drift from the
+day's edits). The timing-regression verdicts at run end are load
+variance against the morning's quiet-box baseline (15-min 6.06 then,
+18.09 now), not step failures — the budget-exceeded warning (1m1.2s vs
+1m0s) is the same story.
