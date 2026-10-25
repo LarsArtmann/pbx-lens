@@ -203,6 +203,7 @@ nix run .#update-vendor-hash          # after go.mod/go.sum; CLEAN tree only —
 
 Receipt-grade commits: `git add … && git commit …` in ONE call; amend only
 UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit code.
+Concurrent sessions + daemon: the norm is docs/concurrency.md.
 
 ## Deep context (docs/) — read the full doc BEFORE touching its area
 

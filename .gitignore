@@ -36,6 +36,10 @@ internal/web/.codegen-inputs.sha256
 # "binary tracked in git" error). Generated, always rebuildable.
 /work/
 
+# Concurrent-session claim markers (docs/concurrency.md rule 1): scratch
+# coordination state, never tracked.
+.claims/
+
 # >>> buildflow-managed (.gitignore) >>>
 # Auto-managed by buildflow. Edit outside these markers; this block is regenerated on `buildflow --fix`.
 
