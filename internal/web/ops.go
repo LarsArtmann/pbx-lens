@@ -27,7 +27,11 @@ type opsSnapshot struct {
 	// Retention is the age-posture card: always present — "off" is a fact
 	// the operator should see, not an absence to guess at.
 	Retention retentionSnapshot
-	Wired     bool
+	// Coverage is the per-source index coverage (plan P17): what each source
+	// actually delivered and how fresh its newest row is. Nil when the walk
+	// failed — the card then says so instead of showing a fake empty table.
+	Coverage []CoverageRow
+	Wired    bool
 }
 
 // retentionSnapshot is the /ops retention card's view: the configured
@@ -96,6 +100,13 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 	if s.cache != nil {
 		cache := s.cache.Snapshot()
 		snap.Cache = &cache
+	}
+
+	coverage, err := IngestCoverageQuery(ctx, s.sys, s.now())
+	if err != nil {
+		s.logf("ingest coverage walk failed: %v", err)
+	} else {
+		snap.Coverage = coverage
 	}
 
 	return snap
