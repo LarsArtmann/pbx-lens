@@ -7,7 +7,40 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
-### Added — 2026-10-25 (the analytics surface: spend, segments, quality — on true counts)
+### Added — 2026-10-25 (go-cqrs-lite wave: systemscenario testing depth, catalog read surface)
+
+- **The eight go-cqrs-lite modules rode the 2026-10-24 disk-truth tail
+  wave** (catalog v4.10.0, system v4.15.4, metaengine v4.20.0,
+  sqliteengine v4.6.0, event v4.15.2, id v4.7.3, schema v4.7.1,
+  projectionadapter v4.6.2) — unlocking the catalog architecture exporter
+  and the sticky-stream-key + typed-decoder fixes. Audit correction: the
+  layout-stamp drift WARN never covered call_views (the collection
+  registers no layout plan, so there is nothing to stamp —
+  docs/gotchas.md); the `WithLayoutStampsDisabled` opt-out is not needed.
+- **The systemscenario harness replaced the hand-rolled test rig.**
+  `app.DomainConfig()`/`app.DeploymentConfig(dsn)` are exported and feed
+  both production and tests, so scenario boots exercise the exact
+  production wiring; the 20 ms-poll lifecycle code is deleted. New depth:
+  idempotent re-ingest and retire-tombstone system specs, an OCC
+  stale-writer spec, a 2 ms-latency chaos race over sqlite, a rapid
+  property oracle (projected row == pure fold, journals strictly
+  ordered), and a payload-hash golden for the record scenario.
+- **Retiring a call is now terminal for enrichment**: enriching a retired
+  call rejected nothing before — a late enrichment re-created the
+  tombstoned view row and defeated the purge. The decide rejects with
+  `call.enrich.after_retired` (scenario/v4 decide matrix pins all twelve
+  record/enrich/retire paths).
+- **The federation catalog declares the read surface**: `call.search`,
+  `call.dashboard`, `call.detail` query messages with ids mirroring the
+  web read functions; every domain field carries `doc:` descriptions into
+  the exported schemas; the service card links the repo; and
+  `catalog -architecture` writes the self-contained architecture
+  reference HTML. `-skip-bootstrap` and always-on bootstrap skipping for
+  `-plain` lint exports round out the CLI.
+- **Ingest per-row receipts**: parse ≈16-26 µs/row, fresh-stream dispatch
+  ≈10-12 µs/row (docs/http-stack.md, concurrent-load caveat).
+
+
 
 - **One call is one row on the list and the dashboard.** A CDR and an agent
   transcript describe the same call under one uuid, so an AI call used to
