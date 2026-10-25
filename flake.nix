@@ -91,7 +91,7 @@
               owner = "LarsArtmann";
               repo = "go-cqrs-lite";
               rev = "5a08b0ead55cd923b3b08cd45aba07d425aa193e";
-              hash = "sha256-BH3IGPqOie1RLaxATrWtnsbCpXVv3iEgKLHRR5Tlv+Y=";
+              hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
             };
             sourceRoot = "source/cmd/cqrs-lint";
             # cqrs-lint's own tests run fixture projects through `go`, which
@@ -105,7 +105,7 @@
             # changed the vendored tree (the old hash had been cached, so the
             # devShell only broke once the FOD had to rebuild).
             env.GOWORK = "off";
-            vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
+            vendorHash = "sha256-3I97vRD8F5FRiUYkQNn38aixOHHaJIEyetjlxrGLLHo=";
           };
         in
         {
