@@ -29,19 +29,25 @@ func ServerTimingMiddleware() httputil.Middleware {
 // a downstream consumer actually feels. The stop fires on the first row (or
 // at stream end when a filter matched nothing) — never around the body
 // loop, whose cost is the download itself, not the server's. Single-shot by
-// construction: the mark is a guarded bool, because Measure's stop records
-// again on every call.
-func firstPageMetric(ctx context.Context) func() {
-	stop := servertiming.MeasureServerTiming(ctx, "firstpage")
-
-	var done bool
-
-	return func() {
-		if done {
-			return
-		}
-
-		done = true
-		stop()
-	}
+// construction: mark records once even though Measure's stop would record
+// again on every call, and fired lets the handler detect the zero-row
+// stream, whose header commit is otherwise nobody's job.
+type firstPageMetric struct {
+	stop func()
+	done bool
 }
+
+func newFirstPageMetric(ctx context.Context) *firstPageMetric {
+	return &firstPageMetric{stop: servertiming.MeasureServerTiming(ctx, "firstpage")}
+}
+
+func (f *firstPageMetric) mark() {
+	if f.done {
+		return
+	}
+
+	f.done = true
+	f.stop()
+}
+
+func (f *firstPageMetric) fired() bool { return f.done }
