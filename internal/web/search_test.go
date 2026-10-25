@@ -119,3 +119,70 @@ func TestSearchPartialNumberEndToEnd(t *testing.T) {
 		t.Error("the matching number should appear highlighted in the snippet")
 	}
 }
+
+func TestSearchTranscriptModeAnchorsTurnHits(t *testing.T) {
+	started := testCallStarted()
+	observation := webObservation("conv-a", started)
+
+	mux := newTestServerWithSearch(t, observation)
+
+	status, body := getBody(t, mux, "/search?q=hello&mode=transcript")
+	if status != http.StatusOK {
+		t.Fatalf("GET /search?mode=transcript status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{
+		`href="/calls/telnyx-conversation/conv-a?q=hello&amp;at=0#turn-0"`,
+		"turn 0 · user",
+		`name="mode" value="transcript"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("transcript-mode page missing %q", want)
+		}
+	}
+
+	if strings.Contains(body, "#turn-1") {
+		t.Error("turn 1 never mentions the term and must not match")
+	}
+}
+
+func TestSearchDefaultModeKeepsCallResults(t *testing.T) {
+	started := testCallStarted()
+	observation := webObservation("conv-a", started)
+
+	mux := newTestServerWithSearch(t, observation)
+
+	status, body := getBody(t, mux, "/search?q=hello")
+	if status != http.StatusOK {
+		t.Fatalf("GET /search status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, `/calls/telnyx-conversation/conv-a?q=hello"`) {
+		t.Error("default mode lost the call deep link")
+	}
+
+	if strings.Contains(body, "#turn-") {
+		t.Error("default mode must not render turn anchors")
+	}
+
+	if strings.Contains(body, `name="mode"`) {
+		t.Error("default mode must not carry the transcript hidden input")
+	}
+
+	if !strings.Contains(body, "&amp;mode=transcript") {
+		t.Error("the mode switch to turns is missing")
+	}
+}
+
+func TestSearchGarbageModeDegradesToCalls(t *testing.T) {
+	mux := newTestServerWithSearch(t, webObservation("conv-a", testCallStarted()))
+
+	status, body := getBody(t, mux, "/search?q=hello&mode=nonsense")
+	if status != http.StatusOK {
+		t.Fatalf("status = %d, want 200", status)
+	}
+
+	if strings.Contains(body, `name="mode"`) || strings.Contains(body, "#turn-") {
+		t.Error("a garbage mode must render the default call view")
+	}
+}

@@ -63,9 +63,11 @@ type Options struct {
 	Now func() time.Time
 }
 
-// Searcher is the content-query surface the web UI needs.
+// Searcher is the content-query surface the web UI needs: the call view
+// and the per-turn transcript view.
 type Searcher interface {
 	Query(ctx context.Context, query string, limit int) ([]search.Hit, error)
+	QueryTurns(ctx context.Context, query string, limit int) ([]search.TurnHit, error)
 }
 
 // Register mounts every pbx-lens route on mux. The handler surface is

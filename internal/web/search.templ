@@ -1,6 +1,8 @@
 package web
 
 import (
+	"net/url"
+
 	"github.com/larsartmann/pbx-lens/internal/search"
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/feedback"
@@ -9,8 +11,11 @@ import (
 )
 
 // searchRoute is the content-search page: one input, ranked hits with the
-// matched terms highlighted, every hit deep-linked to its call page.
-templ searchRoute(nonce string, query string, hits []search.Hit, errMessage string) {
+// matched terms highlighted, every hit deep-linked to its call page. The
+// mode selects the result shape: call hits (default) or per-turn hits
+// (?mode=transcript — "what was SAID"). Exactly one of hits/turnHits is
+// non-nil; the empty-query page passes both nil.
+templ searchRoute(nonce string, query string, hits []search.Hit, turnHits []search.TurnHit, errMessage string, mode string) {
 	@shell(nonce, "Search — pbx-lens", "/search") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Search",
@@ -31,6 +36,9 @@ templ searchRoute(nonce string, query string, hits []search.Hit, errMessage stri
 				EnterKeyHint: "search",
 			})
 			@display.Button(display.ButtonProps{Text: "Search", Type: display.ButtonHTMLSubmit})
+			if mode == searchModeTranscript {
+				<input type="hidden" name="mode" value={ searchModeTranscript }/>
+			}
 		}
 		<p class="mb-6 max-w-xl text-xs text-gray-500 dark:text-gray-400">
 			Matches transcript words and phone numbers. Multiple words must all
@@ -38,6 +46,7 @@ templ searchRoute(nonce string, query string, hits []search.Hit, errMessage stri
 			too: any run of 4+ digits finds the call (+49…, 0728…, or a
 			mid-number snippet all work).
 		</p>
+		@searchModeTabs(query, mode)
 		if errMessage != "" {
 			@feedback.Alert(feedback.AlertProps{
 				Type:    feedback.FeedbackWarning,
@@ -46,41 +55,113 @@ templ searchRoute(nonce string, query string, hits []search.Hit, errMessage stri
 			})
 		}
 		if query != "" {
-			if len(hits) == 0 {
-				@display.EmptyState(display.EmptyStateProps{
-					Title:       "No matches",
-					Description: "Nothing in the index matches these terms. Check spelling, or run an ingest command — only indexed calls are searchable.",
-					Icon:        icons.Search,
-				})
+			if mode == searchModeTranscript {
+				@searchTurnResults(query, turnHits)
 			} else {
-				@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(hits)})
-				<div class="space-y-3">
-					for _, hit := range hits {
-						<a
-							href={ hitHref(hit, query) }
-							class="block rounded-lg border border-gray-200 p-4 transition-colors motion-reduce:transition-none hover:bg-gray-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tc-primary dark:border-gray-800 dark:hover:bg-gray-800 dark:focus-visible:outline-tc-info"
-						>
-							<div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-								<time datetime={ hit.Started.Format("2006-01-02T15:04:05") }>{ hit.Started.Local().Format("Jan 2, 2006 15:04") }</time>
-								@display.Badge(display.BadgeProps{Text: string(hit.Kind), Type: display.BadgeNeutral, Pill: true})
-								<span class="font-mono">{ string(hit.NativeID) }</span>
-								<span class="ms-auto text-gray-400 dark:text-gray-600">
-									@icons.Icon("chevron-right", "size-4")
-								</span>
-							</div>
-							<p class="mt-2 text-sm leading-relaxed">
-								for _, part := range hit.Parts {
-									if part.Highlight {
-										<mark class="rounded bg-amber-200 px-0.5 text-gray-900 dark:bg-amber-900/40 dark:text-amber-200">{ part.Text }</mark>
-									} else {
-										{ part.Text }
-									}
-								}
-							</p>
-						</a>
-					}
-				</div>
+				@searchCallResults(query, hits)
 			}
+		}
+	}
+}
+
+// searchModeTabs switches the result view for the current query. Plain
+// links — the mode survives via the URL, no JS, CSP-safe by construction.
+templ searchModeTabs(query string, mode string) {
+	if query != "" {
+		<div class="mb-4 flex max-w-xl gap-2 text-sm">
+			<a
+				href={ templ.SafeURL("/search?q=" + url.QueryEscape(query)) }
+				class={ searchTabClass(templ.KV("border-tc-primary bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white", mode != searchModeTranscript), templ.KV("border-gray-200 text-gray-500 hover:text-gray-700 dark:border-gray-800 dark:text-gray-400", mode == searchModeTranscript)) }
+			>
+				Calls
+			</a>
+			<a
+				href={ templ.SafeURL("/search?q=" + url.QueryEscape(query) + "&mode=" + searchModeTranscript) }
+				class={ searchTabClass(templ.KV("border-tc-primary bg-gray-100 font-medium text-gray-900 dark:bg-gray-800 dark:text-white", mode == searchModeTranscript), templ.KV("border-gray-200 text-gray-500 hover:text-gray-700 dark:border-gray-800 dark:text-gray-400", mode != searchModeTranscript)) }
+			>
+				Turns
+			</a>
+		</div>
+	}
+}
+
+// searchCallResults is the default result list: one card per matching call.
+templ searchCallResults(query string, hits []search.Hit) {
+	if len(hits) == 0 {
+		@display.EmptyState(display.EmptyStateProps{
+			Title:       "No matches",
+			Description: "Nothing in the index matches these terms. Check spelling, or run an ingest command — only indexed calls are searchable.",
+			Icon:        icons.Search,
+		})
+	} else {
+		@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(hits)})
+		<div class="space-y-3">
+			for _, hit := range hits {
+				<a
+					href={ hitHref(hit, query) }
+					class={ hitCardClass() }
+				>
+					<div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+						<time datetime={ hit.Started.Format("2006-01-02T15:04:05") }>{ hit.Started.Local().Format("Jan 2, 2006 15:04") }</time>
+						@display.Badge(display.BadgeProps{Text: string(hit.Kind), Type: display.BadgeNeutral, Pill: true})
+						<span class="font-mono">{ string(hit.NativeID) }</span>
+						<span class="ms-auto text-gray-400 dark:text-gray-600">
+							@icons.Icon("chevron-right", "size-4")
+						</span>
+					</div>
+					<p class="mt-2 text-sm leading-relaxed">
+						@renderParts(hit.Parts)
+					</p>
+				</a>
+			}
+		</div>
+	}
+}
+
+// searchTurnResults is the transcript-mode list: one card per matching
+// turn, deep-linked to the exact utterance.
+templ searchTurnResults(query string, turnHits []search.TurnHit) {
+	if len(turnHits) == 0 {
+		@display.EmptyState(display.EmptyStateProps{
+			Title:       "No turn matches",
+			Description: "No transcript turn matches these terms. Words are matched per turn here — the Calls view matches across the whole call instead.",
+			Icon:        icons.Search,
+		})
+	} else {
+		@display.ListNote(display.ListNoteProps{Variant: display.ListNoteCount, Shown: len(turnHits)})
+		<div class="space-y-3">
+			for _, hit := range turnHits {
+				<a
+					href={ turnHitHref(hit, query) }
+					class={ hitCardClass() }
+				>
+					<div class="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+						<time datetime={ hit.Started.Format("2006-01-02T15:04:05") }>{ hit.Started.Local().Format("Jan 2, 2006 15:04") }</time>
+						<span class="font-mono">{ string(hit.NativeID) }</span>
+						<span class="rounded bg-gray-100 px-1.5 py-0.5 font-mono text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+							turn { hit.TurnIndex } · { string(hit.Role) }
+						</span>
+						<span class="ms-auto text-gray-400 dark:text-gray-600">
+							@icons.Icon("chevron-right", "size-4")
+						</span>
+					</div>
+					<p class="mt-2 text-sm leading-relaxed">
+						@renderParts(hit.Parts)
+					</p>
+				</a>
+			}
+		</div>
+	}
+}
+
+// renderParts emits a snippet with matched terms highlighted; shared by
+// both result shapes because the snippet contract is identical.
+templ renderParts(parts []search.Part) {
+	for _, part := range parts {
+		if part.Highlight {
+			<mark class="rounded bg-amber-200 px-0.5 text-gray-900 dark:bg-amber-900/40 dark:text-amber-200">{ part.Text }</mark>
+		} else {
+			{ part.Text }
 		}
 	}
 }

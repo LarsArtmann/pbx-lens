@@ -128,6 +128,7 @@ func TestGoldenPages(t *testing.T) {
 	goldenPage(t, mux, "page_calls", "/")
 	goldenPage(t, mux, "page_calls_filtered_empty", "/?direction=inbound")
 	goldenPage(t, mux, "page_search", "/search?q=hello")
+	goldenPage(t, mux, "page_search_transcript", "/search?q=hello&mode=transcript")
 	goldenPage(t, mux, "page_dashboard", "/dashboard")
 	goldenPage(t, mux, "page_detail", "/calls/telnyx-conversation/conv-in")
 	goldenPage(t, mux, "page_detail_q", "/calls/telnyx-conversation/conv-in?q=how&at=1")

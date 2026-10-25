@@ -52,6 +52,13 @@ const (
 	// rebuilds wholesale (disposable-DB doctrine), so a scan-priced lookup
 	// at personal-PBX volume is free.
 	digitsTableName = "lens_digits"
+
+	// turnsTableName indexes ONE ROW PER TRANSCRIPT TURN (transcript search
+	// mode): the call-level body hides which turn matched, so "what was
+	// SAID" questions get their own table whose snippet, rank, and
+	// turn_index anchor the answer to the exact utterance. Same
+	// wholesale-rebuild doctrine as the other shadow tables.
+	turnsTableName = "lens_turns"
 )
 
 // Hit is one matching call with a highlight-flagged snippet. The identity
@@ -68,6 +75,19 @@ type Hit struct {
 type Part struct {
 	Text      string
 	Highlight bool
+}
+
+// TurnHit is one matching transcript turn with a highlight-flagged
+// snippet — the transcript-mode answer to "what was SAID". TurnIndex is
+// the zero-based position in the call's transcript, the same anchor the
+// call-mode deep link targets.
+type TurnHit struct {
+	Kind      calls.SourceKind
+	NativeID  calls.NativeID
+	Started   time.Time
+	TurnIndex int
+	Role      calls.TurnRole
+	Parts     []Part
 }
 
 // Index is the FTS5 shadow index over the call_views read model.
@@ -151,25 +171,18 @@ func (i *Index) Rebuild(ctx context.Context, views []calls.CallView) error {
 
 	defer func() { _ = insertDigit.Close() }()
 
+	insertTurn, err := tx.PrepareContext(ctx,
+		"INSERT INTO "+turnsTableName+
+			"(body, kind, native_id, turn_index, role, started_at) VALUES (?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		return errorfamily.NewTransient("lens.search.prepare_turns", err.Error())
+	}
+
+	defer func() { _ = insertTurn.Close() }()
+
 	for _, view := range views {
-		started := view.StartedAt.UTC().Format(time.RFC3339Nano)
-
-		if _, err := insert.ExecContext(ctx, searchBody(view),
-			string(view.Kind), string(view.NativeID), started); err != nil {
-			return errorfamily.NewTransient("lens.search.insert",
-				fmt.Sprintf("indexing %s/%s: %v", view.Kind, view.NativeID, err))
-		}
-
-		for _, number := range []string{view.FromNumber, view.ToNumber} {
-			if number == "" {
-				continue
-			}
-
-			if _, err := insertDigit.ExecContext(ctx,
-				string(view.Kind), string(view.NativeID), started, number, digitsOnly(number)); err != nil {
-				return errorfamily.NewTransient("lens.search.insert_digits",
-					fmt.Sprintf("indexing %s/%s: %v", view.Kind, view.NativeID, err))
-			}
+		if err := indexView(ctx, insert, insertDigit, insertTurn, view); err != nil {
+			return err
 		}
 	}
 
@@ -180,8 +193,46 @@ func (i *Index) Rebuild(ctx context.Context, views []calls.CallView) error {
 	return nil
 }
 
-// resetSearchTables drops and recreates the FTS and digits tables inside
-// tx.
+// indexView writes one view's call row, its party-number rows, and one
+// row per transcript turn. Errors carry the view identity for triage.
+func indexView(
+	ctx context.Context,
+	insert, insertDigit, insertTurn *sql.Stmt,
+	view calls.CallView,
+) error {
+	started := view.StartedAt.UTC().Format(time.RFC3339Nano)
+
+	if _, err := insert.ExecContext(ctx, searchBody(view),
+		string(view.Kind), string(view.NativeID), started); err != nil {
+		return errorfamily.NewTransient("lens.search.insert",
+			fmt.Sprintf("indexing %s/%s: %v", view.Kind, view.NativeID, err))
+	}
+
+	for _, number := range []string{view.FromNumber, view.ToNumber} {
+		if number == "" {
+			continue
+		}
+
+		if _, err := insertDigit.ExecContext(ctx,
+			string(view.Kind), string(view.NativeID), started, number, digitsOnly(number)); err != nil {
+			return errorfamily.NewTransient("lens.search.insert_digits",
+				fmt.Sprintf("indexing %s/%s: %v", view.Kind, view.NativeID, err))
+		}
+	}
+
+	for idx, turn := range view.Transcript {
+		if _, err := insertTurn.ExecContext(ctx, turn.Text,
+			string(view.Kind), string(view.NativeID), idx, string(turn.Role), started); err != nil {
+			return errorfamily.NewTransient("lens.search.insert_turns",
+				fmt.Sprintf("indexing %s/%s turn %d: %v", view.Kind, view.NativeID, idx, err))
+		}
+	}
+
+	return nil
+}
+
+// resetSearchTables drops and recreates the FTS, digits, and turns tables
+// inside tx.
 func resetSearchTables(ctx context.Context, tx *sql.Tx) error {
 	if _, err := tx.ExecContext(ctx, "DROP TABLE IF EXISTS "+tableName); err != nil {
 		return errorfamily.NewTransient("lens.search.drop", err.Error())
@@ -189,6 +240,10 @@ func resetSearchTables(ctx context.Context, tx *sql.Tx) error {
 
 	if _, err := tx.ExecContext(ctx, "DROP TABLE IF EXISTS "+digitsTableName); err != nil {
 		return errorfamily.NewTransient("lens.search.drop_digits", err.Error())
+	}
+
+	if _, err := tx.ExecContext(ctx, "DROP TABLE IF EXISTS "+turnsTableName); err != nil {
+		return errorfamily.NewTransient("lens.search.drop_turns", err.Error())
 	}
 
 	create := "CREATE VIRTUAL TABLE " + tableName +
@@ -201,6 +256,12 @@ func resetSearchTables(ctx context.Context, tx *sql.Tx) error {
 		" (kind TEXT NOT NULL, native_id TEXT NOT NULL, started_at TEXT NOT NULL, number TEXT NOT NULL, digits TEXT NOT NULL)"
 	if _, err := tx.ExecContext(ctx, createDigits); err != nil {
 		return errorfamily.NewTransient("lens.search.create_digits", err.Error())
+	}
+
+	createTurns := "CREATE VIRTUAL TABLE " + turnsTableName +
+		" USING fts5(body, kind UNINDEXED, native_id UNINDEXED, turn_index UNINDEXED, role UNINDEXED, started_at UNINDEXED)"
+	if _, err := tx.ExecContext(ctx, createTurns); err != nil {
+		return errorfamily.NewTransient("lens.search.create_turns", err.Error())
 	}
 
 	return nil
@@ -278,6 +339,67 @@ func (i *Index) Query(ctx context.Context, query string, limit int) ([]Hit, erro
 		}
 
 		hits = mergeHits(hits, extra, limit)
+	}
+
+	return hits, nil
+}
+
+// QueryTurns is transcript search mode: one ranked hit per matching TURN,
+// anchored by turn index — the "what was SAID" answer. No digit side-path
+// here by design: the digits table maps calls to party numbers, and a
+// number is not something a turn said.
+func (i *Index) QueryTurns(ctx context.Context, query string, limit int) ([]TurnHit, error) {
+	match, err := MatchExpression(query)
+	if err != nil {
+		return nil, err
+	}
+
+	if limit <= 0 {
+		limit = DefaultLimit
+	}
+
+	limit = min(limit, MaxLimit)
+
+	rows, err := i.db.QueryContext(ctx,
+		"SELECT kind, native_id, started_at, turn_index, role,"+
+			" snippet("+turnsTableName+", 0, ?, ?, '…', 12) "+
+			"FROM "+turnsTableName+" WHERE "+turnsTableName+" MATCH ? ORDER BY rank LIMIT ?",
+		highlightStart, highlightStop, match, limit)
+	if err != nil {
+		return nil, errorfamily.NewRejection("lens.search.query_turns", err.Error())
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	hits := make([]TurnHit, 0, limit)
+
+	for rows.Next() {
+		var (
+			hit           TurnHit
+			started, role string
+			turnIndex     int
+			snippet       string
+		)
+
+		if err := rows.Scan(&hit.Kind, &hit.NativeID, &started, &turnIndex, &role, &snippet); err != nil {
+			return nil, errorfamily.NewCorruption("lens.search.scan_turns", err.Error())
+		}
+
+		startedAt, err := time.Parse(time.RFC3339Nano, started)
+		if err != nil {
+			return nil, errorfamily.NewCorruption("lens.search.parse_time",
+				fmt.Sprintf("turn hit %s/%s: %v", hit.Kind, hit.NativeID, err))
+		}
+
+		hit.Started = startedAt
+		hit.TurnIndex = turnIndex
+		hit.Role = calls.TurnRole(role)
+		hit.Parts = parseSnippet(snippet)
+		hits = append(hits, hit)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errorfamily.NewTransient("lens.search.rows_turns", err.Error())
 	}
 
 	return hits, nil

@@ -7,6 +7,17 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-25 (transcript-mode search)
+
+- **Search answers "what was SAID" now** (`?mode=transcript`, plan P15):
+  a third FTS shadow table indexes one row per transcript turn, so
+  results rank per utterance and every hit deep-links to the exact turn
+  (`?q=…&at=N#turn-N`, the same no-JS anchor contract as the call jump).
+  A Calls/Turns switch (plain links) toggles the views; numbers stay
+  call-mode-only by design — a number is not something a turn said.
+  Golden `page_search_transcript`, browser probe Contract B2, and three
+  focused tests pin the surface.
+
 ### Added — 2026-10-25 (replay cost + race receipt)
 
 - **The idempotent replay hop now has its number**

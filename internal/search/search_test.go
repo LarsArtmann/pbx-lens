@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -336,4 +337,84 @@ func TestRebuildRefreshesDigitTable(t *testing.T) {
 	if len(hits) != 0 {
 		t.Errorf("digits matched after an empty rebuild: %d hits", len(hits))
 	}
+}
+
+func TestQueryTurnsAnchorsPerTurnHits(t *testing.T) {
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	hits, err := index.QueryTurns(context.Background(), "woolly", 0)
+	if err != nil {
+		t.Fatalf("QueryTurns: %v", err)
+	}
+
+	if len(hits) != 2 {
+		t.Fatalf("turn hits = %d, want 2 (one per mentioning turn)", len(hits))
+	}
+
+	byKey := make(map[string]TurnHit, len(hits))
+	for _, hit := range hits {
+		byKey[string(hit.NativeID)+"/"+strconv.Itoa(hit.TurnIndex)] = hit
+	}
+
+	a0, ok := byKey["conv-a/0"]
+	if !ok {
+		t.Fatalf("conv-a turn 0 missing from hits: %v", byKey)
+	}
+
+	if a0.Role != "user" {
+		t.Errorf("conv-a turn 0 role = %q, want user", a0.Role)
+	}
+
+	if a0.Kind != calls.SourceTelnyxConversation {
+		t.Errorf("conv-a turn 0 kind = %q, want telnyx-conversation", a0.Kind)
+	}
+
+	if len(a0.Parts) == 0 || !containsHighlight(a0.Parts, "woolly") {
+		t.Errorf("conv-a turn 0 snippet missing highlighted %q: %v", "woolly", a0.Parts)
+	}
+
+	if _, ok := byKey["conv-b/0"]; !ok {
+		t.Errorf("conv-b turn 0 missing from hits: %v", byKey)
+	}
+
+	if _, ok := byKey["conv-a/1"]; ok {
+		t.Error("conv-a turn 1 matched but never mentions the term")
+	}
+}
+
+func TestQueryTurnsHasNoNumberSidePath(t *testing.T) {
+	// The digits table maps CALLS to party numbers, and a number is not
+	// something a turn said: transcript mode deliberately returns nothing
+	// for party-number queries, even the full E.164 (the call view keeps
+	// the substring side-path).
+	index := openTestIndex(t)
+
+	if err := index.Rebuild(context.Background(), searchViews()); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	for _, query := range []string{"87289311", "+17287289311"} {
+		hits, err := index.QueryTurns(context.Background(), query, 0)
+		if err != nil {
+			t.Fatalf("QueryTurns(%q): %v", query, err)
+		}
+
+		if len(hits) != 0 {
+			t.Errorf("QueryTurns(%q) = %d hits, want 0 (numbers are not turn content)", query, len(hits))
+		}
+	}
+}
+
+func containsHighlight(parts []Part, text string) bool {
+	for _, part := range parts {
+		if part.Highlight && part.Text == text {
+			return true
+		}
+	}
+
+	return false
 }

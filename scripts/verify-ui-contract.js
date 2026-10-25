@@ -146,6 +146,34 @@ const fail = probe.fail;
     console.log("turn in viewport:", visible);
     if (!visible) fail("fragment did not scroll to the match");
 
+    // --- Contract B2: transcript mode lands at the exact turn ---------
+    // ?mode=transcript renders per-turn hits; each deep-links with the
+    // at param (suppressing the jump redirect) plus its own fragment, so
+    // a turn-2 hit lands at turn 2, not the call's first match.
+    await page.goto(`${BASE}/search?q=thermostat&mode=transcript`, { waitUntil: "networkidle0" });
+    const turnHitHref = await page
+      .$eval('a[href*="#turn-"]', (el) => el.getAttribute("href"))
+      .catch(() => null);
+    if (!turnHitHref) fail("transcript mode rendered no per-turn deep link");
+    console.log("turn hit href:", turnHitHref);
+    if (!turnHitHref.includes("&at=")) fail("turn hit missing the at anchor param");
+
+    const modeTabs = await page.$$eval("a[href^='/search?q=']", (els) =>
+      els.map((el) => ({
+        text: el.textContent.trim(),
+        active: el.className.includes("border-tc-primary"),
+      })),
+    );
+    console.log("mode tabs:", JSON.stringify(modeTabs));
+    const turnsTab = modeTabs.find((t) => t.text === "Turns");
+    if (!turnsTab || !turnsTab.active) fail("Turns tab not active in transcript mode");
+
+    const resp3 = await page.goto(`${BASE}${turnHitHref}`, { waitUntil: "networkidle0" });
+    // 304 is correct here: Contract B already loaded this exact detail URL,
+    // and the ETag revalidation contract (no-cache) answers Not Modified.
+    if (![200, 304].includes(resp3.status())) fail(`turn deep link status ${resp3.status()}`);
+    if (!page.url().includes("#turn-")) fail(`turn deep link lost its fragment, url=${page.url()}`);
+
     // --- Contract E: a11y basics on /ops (2026-10-17 hardening) --------
     // Heading order starts at exactly one h1 and never skips a level, and
     // keyboard focus carries a visible indicator on the first nav stop.
