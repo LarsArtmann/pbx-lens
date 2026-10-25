@@ -165,6 +165,7 @@ func TestQualityTrendMovesInPoints(t *testing.T) {
 		days[i].Transcripts = 0
 		days[i].NoUserTurn = 0
 	}
+
 	if trend := qualityTrend(days); trend.HasBaseline {
 		t.Errorf("qualityTrend = %+v, want no baseline without prior transcripts", trend)
 	}
@@ -175,6 +176,7 @@ func TestQualityTrendMovesInPoints(t *testing.T) {
 		days[i].Transcripts = 10
 		days[i].NoUserTurn = 0
 	}
+
 	if trend := qualityTrend(days); trend.HasBaseline {
 		t.Errorf("qualityTrend = %+v, want no baseline from a zero prior share", trend)
 	}
