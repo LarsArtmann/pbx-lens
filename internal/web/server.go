@@ -582,6 +582,11 @@ var staticRoutes = map[string]staticAsset{ //nolint:gochecknoglobals // declarat
 		contentType: "text/javascript; charset=utf-8",
 		missingMsg:  "htmx runtime missing from the build",
 	},
+	"GET /static/recent-views.js": {
+		path:        "static/recent-views.js",
+		contentType: "text/javascript; charset=utf-8",
+		missingMsg:  "recent-views script missing from the build",
+	},
 	"GET /favicon.svg": {
 		path:        "static/favicon.svg",
 		contentType: "image/svg+xml",

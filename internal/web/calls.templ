@@ -72,6 +72,7 @@ templ listPage(nonce string, page CallListPage, filters ListCallsQuery) {
 		Action:   exportAction(),
 	})
 	@filterForm(filters, "/")
+	@recentViewsCard(filters)
 	if len(page.Rows) == 0 {
 		@display.EmptyState(display.EmptyStateProps{
 			Title:       "No calls match",
@@ -94,8 +95,7 @@ templ listPage(nonce string, page CallListPage, filters ListCallsQuery) {
 // the header button's tooltip names it, but tooltips hide — an operator
 // scanning the page sees the stall semantics spelled out under the table.
 // The marker code is the machine-readable string consumers grep for; the
-// rejection id names the stall class for the ops log.
-templ exportHonestyNote() {
+// rejection id names the stall class for the ops log.templ exportHonestyNote() {
 	<div class="mt-4 border-gray-200 border-t px-4 py-2.5 text-gray-500 text-xs dark:border-gray-700 dark:text-gray-400" role="note">
 		Exports stream every matching call with no row cap. If a single
 		timestamp groups more calls than one page can carry, the file ends
