@@ -209,6 +209,34 @@ jobs:
             exit 1
           }
 
+  guard-selftest:
+    name: Guard Self-Tests (gates prove themselves red)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install oxlint
+        # check-js-lint.sh deliberately WARN-SKIPS when oxlint is off PATH
+        # (right default on a dev box, silent no-op in CI). CI installs the
+        # tool so the gate and its self-test actually run.
+        run: npm install -g oxlint
+
+      - name: Four gates prove their own red paths (--self-test)
+        # Each guard script seeds the failure it exists to catch and must
+        # observe it red (the dormant-hook lesson of 2026-10-25: a gate that
+        # has never been seen refusing is a hope, not a gate). poll-gate's
+        # self-test stubs its load source and exec — no buildflow, no nix.
+        run: |
+          bash scripts/check-js-lint.sh --self-test
+          bash scripts/check-docs-counts.sh --self-test
+          bash scripts/check-doc-links.sh --self-test
+          bash scripts/poll-gate.sh --self-test
+
+      - name: Docs truth gates (live tree)
+        run: |
+          bash scripts/check-docs-counts.sh
+          bash scripts/check-doc-links.sh
+
   nix-lint:
     name: Nix Lint (statix + deadnix + treefmt)
     runs-on: ubuntu-latest

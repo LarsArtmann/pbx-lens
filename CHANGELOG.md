@@ -17,6 +17,14 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   red naming both versions, gutted corpus → red on floor AND census, and
   a broken `page_ops.golden` stays caught by the consolidated
   `-run TestGoldenPages` entry point.
+- **CI now runs the guard scripts' own red paths** (new `Guard
+  Self-Tests` job): the four `--self-test` gates (js-lint, docs-counts,
+  doc-links, poll-gate) plus the two docs truth gates on the live tree.
+  oxlint is installed in the job because check-js-lint deliberately
+  warn-skips without it — right default on a dev box, silent no-op in
+  CI. P9.1 verification recorded: NO usable art-dupl tag exists (all
+  four fork tags predate the committed templ codegen and do not build);
+  the commit pin stays the doctrine (docs/art-dupl-baseline.md).
 
 ### Fixed — 2026-10-25 (six lint findings that reddened CI)
 
