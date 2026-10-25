@@ -25,11 +25,14 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   stale-writer spec, a 2 ms-latency chaos race over sqlite, a rapid
   property oracle (projected row == pure fold, journals strictly
   ordered), and a payload-hash golden for the record scenario.
-- **Retiring a call is now terminal for enrichment**: enriching a retired
-  call rejected nothing before — a late enrichment re-created the
+- **Retiring a call is now terminal for enrichment and correction**: enriching
+  a retired call rejected nothing before — a late enrichment re-created the
   tombstoned view row and defeated the purge. The decide rejects with
-  `call.enrich.after_retired` (scenario/v4 decide matrix pins all twelve
-  record/enrich/retire paths).
+  `call.enrich.after_retired`, and a grown snapshot on a retired stream now
+  rejects symmetrically with `call.corrected.after_retired` (an unchanged
+  re-poll stays the idempotent no-op), so a full re-ingest wave cannot
+  resurrect purged calls whose sources grew after the purge. The scenario/v4
+  decide matrix pins all fourteen record/enrich/retire paths.
 - **The federation catalog declares the read surface**: `call.search`,
   `call.dashboard`, `call.detail` query messages with ids mirroring the
   web read functions; every domain field carries `doc:` descriptions into
