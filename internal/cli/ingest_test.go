@@ -118,14 +118,8 @@ func TestIngestRecordsCorrectsAndRejects(t *testing.T) {
 }
 
 func TestGateIngestRefusesOverAgeAndReportsAgainstBatch(t *testing.T) {
+	sys := openTestSystem(t)
 	ctx := context.Background()
-
-	sys, cleanup, err := OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
 
 	fresh := observation("gate-fresh", 30)
 	fresh.StartedAt = time.Now().UTC().Add(-1 * time.Hour)

@@ -64,14 +64,8 @@ func TestPollOnceIsIdempotentAcrossPasses(t *testing.T) {
 }
 
 func TestPollOnceSkipsMissingSourcesWithoutFailing(t *testing.T) {
+	sys := openTestSystem(t)
 	ctx := context.Background()
-
-	sys, cleanup, err := OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
 
 	logs := &pollTestLog{}
 	PollOnce(ctx, sys, nil, PollConfig{CDRFile: filepath.Join(t.TempDir(), "missing.csv")}, logs.printf)
@@ -108,14 +102,8 @@ func TestPollLoopStopsWithCanceledContext(t *testing.T) {
 }
 
 func TestPollOnceAgeCutoffRejectsOverAgeObservations(t *testing.T) {
+	sys := openTestSystem(t)
 	ctx := context.Background()
-
-	sys, cleanup, err := OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
 
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 
@@ -193,14 +181,8 @@ func webhookHangupLine(callID string, at time.Time) string {
 func openPollHarness(t *testing.T) (context.Context, *system.System, *search.Index, string) {
 	t.Helper()
 
+	sys := openTestSystem(t)
 	ctx := context.Background()
-
-	sys, cleanup, err := OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
 
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 
@@ -225,14 +207,8 @@ func openPollHarness(t *testing.T) (context.Context, *system.System, *search.Ind
 func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
 	// R15: a pass folds each source's stats into the counter set the ops
 	// endpoint serves — latest pass wins, sources without data stay zeroed.
+	sys := openTestSystem(t)
 	ctx := context.Background()
-
-	sys, cleanup, err := OpenSystem(ctx, "")
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
 
 	webhookLog := filepath.Join(t.TempDir(), "webhook.jsonl")
 
