@@ -307,19 +307,17 @@ func TestOpsPageRetentionCountsOverAge(t *testing.T) {
 }
 
 func TestIngestCoverageQueryFoldsPerKind(t *testing.T) {
+	const staleBoundary = 48 * time.Hour
+
 	now := time.Date(2026, 10, 25, 12, 0, 0, 0, time.UTC)
+
 	seed := []calls.Observation{
-		func() calls.Observation {
-			obs := webObservation("conv-a", now.Add(-2*time.Hour))
-			return obs
-		}(),
-		func() calls.Observation {
-			obs := webObservation("conv-b", now.Add(-48*time.Hour))
-			return obs
-		}(),
+		webObservation("conv-a", now.Add(-2*time.Hour)),
+		webObservation("conv-b", now.Add(-staleBoundary)),
 		func() calls.Observation {
 			obs := webObservation("cdr-1", now.Add(-30*24*time.Hour))
 			obs.Kind = calls.SourceFreeSwitchCDR
+
 			return obs
 		}(),
 	}
@@ -357,8 +355,11 @@ func TestIngestCoverageQueryFoldsPerKind(t *testing.T) {
 	}
 
 	telnyx := byKind[calls.SourceTelnyxConversation]
-	if telnyx.Views != 2 || !telnyx.Newest.Equal(now.Add(-2*time.Hour)) || !telnyx.Oldest.Equal(now.Add(-48*time.Hour)) {
-		t.Errorf("telnyx coverage = %+v, want 2 views over the right span", telnyx)
+	oldest := now.Add(-staleBoundary)
+	newest := now.Add(-2 * time.Hour)
+
+	if telnyx.Views != 2 || !telnyx.Newest.Equal(newest) || !telnyx.Oldest.Equal(oldest) {
+		t.Errorf("telnyx coverage = %+v, want 2 views over [%v, %v]", telnyx, oldest, newest)
 	}
 
 	if telnyx.Stale(now) {

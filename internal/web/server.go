@@ -680,6 +680,10 @@ func (s *server) coverageWire(ctx context.Context) []coverageWire {
 // consumers parse unchanged. Coverage (plan P17) rides as its own key for
 // the same reason. A non-map poller payload (custom embeds) gets wrapped
 // under "poller" rather than merged.
+// opsPayloadSections sizes the merged payload map: poller wrap + cache +
+// coverage at most beyond an existing map.
+const opsPayloadSections = 3
+
 func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire) any {
 	if cache == nil && len(coverage) == 0 {
 		return poller
@@ -687,13 +691,13 @@ func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire) a
 
 	pollerMap, merged := poller.(map[string]any)
 	if !merged {
-		pollerMap = make(map[string]any, 3)
+		pollerMap = make(map[string]any, opsPayloadSections)
 
 		if poller != nil {
 			pollerMap["poller"] = poller
 		}
 	} else {
-		copied := make(map[string]any, len(pollerMap)+2)
+		copied := make(map[string]any, len(pollerMap)+opsPayloadSections)
 		maps.Copy(copied, pollerMap)
 		pollerMap = copied
 	}
