@@ -30,8 +30,7 @@ func ServerTimingMiddleware() httputil.Middleware {
 // at stream end when a filter matched nothing) — never around the body
 // loop, whose cost is the download itself, not the server's. Single-shot by
 // construction: mark records once even though Measure's stop would record
-// again on every call, and fired lets the handler detect the zero-row
-// stream, whose header commit is otherwise nobody's job.
+// again on every call.
 type firstPageMetric struct {
 	stop func()
 	done bool
@@ -49,5 +48,3 @@ func (f *firstPageMetric) mark() {
 	f.done = true
 	f.stop()
 }
-
-func (f *firstPageMetric) fired() bool { return f.done }

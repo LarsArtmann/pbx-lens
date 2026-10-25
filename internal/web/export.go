@@ -61,7 +61,10 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 	markFirstPage := newFirstPageMetric(r.Context())
 
+	var rowsWritten bool
+
 	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+		rowsWritten = true
 		markFirstPage.mark()
 		applyPII(pii, &view)
 
@@ -75,8 +78,8 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 		return err
 	})
 	markFirstPage.mark()
-	if !markFirstPage.fired() {
-		w.WriteHeader(http.StatusOK) // zero-row stream: nothing else commits the header
+	if !rowsWritten {
+		w.WriteHeader(http.StatusOK) // zero-row stream: nothing else commits the timing header
 	}
 
 	if err != nil {
@@ -112,15 +115,18 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var rowsWritten bool
+
 	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+		rowsWritten = true
 		markFirstPage.mark()
 		applyPII(pii, &view)
 
 		return writer.Write(exportRecord(view))
 	})
 	markFirstPage.mark()
-	if !markFirstPage.fired() {
-		w.WriteHeader(http.StatusOK) // zero-row stream: nothing else commits the header
+	if !rowsWritten {
+		w.WriteHeader(http.StatusOK) // zero-row stream: nothing else commits the timing header
 	}
 
 	if err != nil {

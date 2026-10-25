@@ -69,10 +69,27 @@ trips the hop budget, and the Server-Timing metrics name each hop
 lifetime is therefore bounded by hops + body size, never by a global
 deadline that would truncate large recordings (the former 30 s WriteTimeout
 did exactly that). Pinned end-to-end by
-`TestRecordingProxyTimingHopBudget` (both hops appear in Server-Timing
-within the budget, no body metric) and
-`TestRecordingProxySlowUpstreamStaysBounded` (a stalling upstream fails fast
-at 502 without stretching the header budget).
+`TestRecordingProxyTimingHopBudget` (both hops appear in Server-Timing,
+no body metric) and by the fast-fail pair
+`TestRecordingUpstreamTimeoutBoundsMetadata` (504) /
+`TestRecordingUpstreamTimeoutBoundsWavHeaders` (502) — the stalled
+upstream fails fast without stretching the header budget. (2026-10-25:
+the doc previously named a `TestRecordingProxySlowUpstreamStaysBounded`
+that never existed; the claims are now pinned under their real names.)
+
+## Export streams: the firstpage metric (plan P13, 2026-10-25)
+
+The export endpoints (`/api/export.jsonl`, `/api/export.csv`) carry ONE
+named metric, `firstpage`: request parse plus the FIRST keyset page
+fetch — the time-to-first-row a consumer feels. It is stopped at the
+first emitted row, or at stream end when a filter matched nothing; the
+body loop is never timed (the doctrine above). A zero-row stream writes
+no body, so the handler commits the header explicitly
+(`WriteHeader(200)` after the fallback stop) — without that, the
+wrapper's lazy header injection would silently drop `firstpage` AND
+`total` exactly when nothing matched. Pinned by
+`TestExportCarriesFirstPageTiming` (both formats, plus the zero-row
+case).
 
 ## Render buffering (the flush trap)
 
