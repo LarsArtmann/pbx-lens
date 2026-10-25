@@ -43,6 +43,14 @@ const MODULES = [
 
 const OUT = "internal/web/static/templ-components-classes.txt";
 
+// The pin lands in the corpus as a stamp line so the freshness test
+// (internal/web/corpus_freshness_test.go) can refuse a corpus that predates
+// a version bump — the 2026-10-24 class-drop shipped exactly that way.
+const PIN = execSync(
+  "go list -m -f {{.Version}} github.com/larsartmann/templ-components",
+  { encoding: "utf8" },
+).trim();
+
 // Tailwind-ish token: letters/digits plus the punctuation utilities and
 // variants use; must contain a letter; not a URL or go identifier with caps.
 function looksLikeClass(tok) {
@@ -91,5 +99,7 @@ if (files === 0 || sorted.length === 0) {
   );
   process.exit(1);
 }
-fs.writeFileSync(OUT, sorted.join("\n") + "\n");
-console.log(`scanned ${files} files, wrote ${sorted.length} classes to ${OUT}`);
+fs.writeFileSync(OUT, `# templ-components@${PIN}\n` + sorted.join("\n") + "\n");
+console.log(
+  `scanned ${files} files, wrote ${sorted.length} classes (pin ${PIN}) to ${OUT}`,
+);

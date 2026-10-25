@@ -131,12 +131,21 @@ func TestGoldenPages(t *testing.T) {
 	goldenPage(t, mux, "page_dashboard", "/dashboard")
 	goldenPage(t, mux, "page_detail", "/calls/telnyx-conversation/conv-in")
 	goldenPage(t, mux, "page_detail_q", "/calls/telnyx-conversation/conv-in?q=how&at=1")
+
+	// The ops surface rides its own mux under THIS entry point — a partial
+	// -run of the golden suite must not be able to skip it (05-49 §f6).
+	goldenOpsPage(t)
 }
 
 // page_ops pins the human ops surface (05-40 M9): poller verdict, sorted
 // sources, cache section. The RelativeTime "last pass" is scrubbed like
-// every other wall-clock string.
-func TestGoldenOpsPage(t *testing.T) {
+// every other wall-clock string. It lives INSIDE TestGoldenPages (its own
+// mux, same entry point) so `-run TestGoldenPages` can never skip the ops
+// golden — the exact trap 05-49 §f6 recorded when this was a separate
+// top-level test.
+func goldenOpsPage(t *testing.T) {
+	t.Helper()
+
 	mux := newTestServerWith(t, Options{Ops: opsPollerPayload(), Cache: opsCounters(t)})
 	goldenPage(t, mux, "page_ops", "/ops")
 }
