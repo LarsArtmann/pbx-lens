@@ -24,10 +24,10 @@ import (
 // stream stays the pinned idempotent no-op.
 
 var (
-	errEnrichBeforeObserved  = errorfamily.NewRejection("call.enrich.before_observed", "target")
-	errEnrichAfterRetired    = errorfamily.NewRejection("call.enrich.after_retired", "target")
-	errRetireBeforeObserved  = errorfamily.NewRejection("call.retire.before_observed", "target")
-	errCorrectedAfterRetired = errorfamily.NewRejection("call.corrected.after_retired", "target")
+	errEnrichBeforeObserved  error = errorfamily.NewRejection("call.enrich.before_observed", "target")
+	errEnrichAfterRetired    error = errorfamily.NewRejection("call.enrich.after_retired", "target")
+	errRetireBeforeObserved  error = errorfamily.NewRejection("call.retire.before_observed", "target")
+	errCorrectedAfterRetired error = errorfamily.NewRejection("call.corrected.after_retired", "target")
 )
 
 // reasonRetentionTest mirrors retention.ReasonRetention without importing the

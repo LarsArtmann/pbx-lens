@@ -384,3 +384,18 @@ hatch). And a race fixture that appends out-of-band INSIDE a decide
 (`AppendBatch` mid-handler) rolls the whole dispatch transaction back
 silently — the OCC loser is better proven at the store's `Save` gate or
 with true concurrent dispatches.
+
+## A local core.hooksPath override silently disarmed the repo's own gates (paid for, 2026-10-25)
+
+The primary clone carried a LOCAL `core.hooksPath=.git/hooks`, overriding
+the machine global `.githooks` — so `.githooks/pre-commit` (budget, JS
+no-undef, docs counts, doc links) never fired while the auto-commit daemon
+kept committing, and scripts/README.md still claimed "SET since
+2026-10-18". Paid for by the 2026-10-25 plan's errata 5: three seeded
+refusal proofs in a scratch clone (a 220-line AGENTS, an undefined JS
+symbol, a 999-report count claim) each refused with the gate's own
+message. Two lessons: a hook chain is real only in clones where
+`git config --get core.hooksPath` resolves to `.githooks` — verify per
+clone — and a guard proof must assert the refusal MESSAGE, not just a
+non-zero exit (a `git commit … | tail` pipeline hides the exit code and
+fakes a pass; the first proof run here did exactly that).
