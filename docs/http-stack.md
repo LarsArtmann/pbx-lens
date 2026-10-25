@@ -182,8 +182,12 @@ CDR parse ≈ 8.7 µs/row single-row batches (was 16–26 under load; the
 encoding/csv reader setup dominates, so real poller batches amortize it),
 ≈ 72.5 KB and 29 allocs/row. Dispatch of a fresh stream through the memory
 engine (command build + OCC save + bus + fold) ≈ 6.1 µs/row (was 10–12
-under load), ≈ 7.9 KB and 85 allocs/row — per-new-row, not per-poll;
-identical replays cost the decide's hash compare plus a no-op round trip.
+under load), ≈ 7.9 KB and 85 allocs/row — per-new-row, not per-poll.
+Identical replays cost the decide's hash compare plus a no-op round trip,
+now measured (`BenchmarkIngestCDRReplayNoOp`, 2026-10-25, 15-min load ≈ 20
+— expect the quiet-box number slightly lower): ≈ 5.1 µs/row, ≈ 3.3 KB and
+76 allocs — ~20% under a fresh dispatch and ~2.4× less memory, so a source
+re-offering already-indexed rows is priced just above the parse floor.
 
 ## Version and metrics
 

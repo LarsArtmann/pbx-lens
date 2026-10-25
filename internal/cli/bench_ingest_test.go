@@ -87,3 +87,40 @@ func BenchmarkIngestCDRDispatch(b *testing.B) {
 		}
 	}
 }
+
+// BenchmarkIngestCDRReplayNoOp measures the idempotent re-dispatch hop:
+// the SAME observation re-dispatched on a settled stream — the same
+// ContentHash replays to zero events — which is the poller's
+// per-unchanged-row cost whenever a source re-offers rows the index
+// already holds (parse excluded; the fresh-stream comparison is
+// BenchmarkIngestCDRDispatch).
+func BenchmarkIngestCDRReplayNoOp(b *testing.B) {
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	sys, err := app.New(ctx, "")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.Cleanup(func() { _ = sys.Close() })
+
+	obs := benchObservations(b, 1)[0]
+
+	cmd, err := calls.NewRecordCommand(obs)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	if err := sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
+		b.Fatal(err)
+	}
+
+	b.ResetTimer()
+
+	for range b.N {
+		if err := sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
+			b.Fatal(err)
+		}
+	}
+}

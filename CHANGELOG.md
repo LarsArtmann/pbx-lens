@@ -7,6 +7,19 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-25 (replay cost + race receipt)
+
+- **The idempotent replay hop now has its number**
+  (`BenchmarkIngestCDRReplayNoOp`, plan P19.2): re-dispatching an
+  unchanged observation costs ≈ 5.1 µs/row vs ≈ 6.4 for a fresh stream —
+  ~2.4× less memory — so a source re-offering indexed rows is priced just
+  above the parse floor. Receipt recorded in docs/http-stack.md beside
+  the dispatch numbers.
+- **The ingest parsers are race-clean under `-race`** (plan P19.4):
+  `go test -race ./internal/ingest/` green on the scanner/parser trio —
+  the bounded-scan plumbing (`NewScanner`/`EachLine`) shared by every
+  source parser has no data races.
+
 ### Added — 2026-10-25 (test integrity: the Tailwind corpus gate)
 
 - **The committed Tailwind class corpus is now freshness-tested**
