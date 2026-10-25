@@ -1638,6 +1638,31 @@ git -C ../go-cqrs-lite tag --contains ec4547144 --list <span class="tok-string">
 sed -n <span class="tok-string">'1,9p;870,890p'</span> ../eventcatalog-hub/merge.py</code></pre>
         </section>
 
+        <!-- Execution errata (2026-10-25, the plan this report fed) -->
+        <footer class="footer">
+          <p>
+            <strong>Execution errata, 2026-10-25.</strong> The wave + testing
+            + catalog plan ran: eight pins bumped to the 2026-10-24 tail wave;
+            F1 closed — <code>internal/app</code> tests now boot through
+            systemscenario over <code>app.DomainConfig()</code> /
+            <code>app.DeploymentConfig(dsn)</code> (hand-rolled harness
+            deleted), plus OCC/chaos/property-oracle depth, the scenario/v4
+            decide matrix, and a payload-hash golden. Two corrections to this
+            report: (1) F2's "layout-stamp drift WARN covers call_views" was
+            wrong — the stamp only covers collections registered with a
+            layout plan (filter/sort fields or columnarLayout opt-in), and
+            <code>call_views</code> has none, so there was never a stamped
+            plan to drift; the WARN mechanism itself was proven live on a
+            scratch collection. (2) F2's metaengine "silent drift exposure"
+            therefore overstated; the wave's real payoffs are the
+            architecture exporter, currency, and the sticky-stream-key +
+            typed-decoder fixes. Suite-cost receipt: the systemscenario suite
+            (13 tests incl. property oracle x N seeds) runs in
+            <strong>~2.0 s wall</strong> on the dev machine (two consecutive
+            runs 1981/1973 ms), vs the deleted harness's 20 ms-poll design.
+          </p>
+        </footer>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
