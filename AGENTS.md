@@ -21,9 +21,7 @@ webphone later gets a read-only deep link, never a data dependency.
     consumer, or measurable CI cost.
   - sqliteengine (blank import registers the "sqlite" driver), pinned to the
     vetted set from go-cqrs-lite `example/getting-started/go.mod` (exact
-    versions live in go.mod — never re-enumerate them here; all eight
-    go-cqrs-lite pins rode the 2026-10-24 disk-truth tail wave on
-    2026-10-25). ADR-0123: system.New is
+    versions live in go.mod — never re-enumerate). ADR-0123: system.New is
     the only composition root; never hand-wire event/command/decider/storage.
 - **Engines:** sqlite (`EngineConfig{Driver: "sqlite", DSN}`) via pure-Go
   modernc.org/sqlite, memory for tests; `app.New(ctx, dsn)` with dsn == ""
@@ -39,19 +37,14 @@ webphone later gets a read-only deep link, never a data dependency.
   graph rides free — promoting it to direct adds no new module.
   server_timing has NO middleware constructor in any release (wrap
   manually); `entitytag` stays indirect (`go-etag/server` re-exports
-  everything). Considered and NOT adopted (appkit
-  errorpages/security/realtime, templ-components errorpage, export
-  rate-limiting, SSE-hub, Telnyx etag client, data-fingerprint fast-304,
-  go-atomic-write for backup staging): docs/planning/archived/2026-10-12_12-47_*
-  and docs/drafts/.
+  everything). Considered and NOT adopted: the decision records live in
+  docs/planning/archived/2026-10-12_12-47_* and docs/drafts/.
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
-  scenario/v4 + rapid (+ go-snaps goldens, rides systemscenario). Tests boot
-  through `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — the exact
-  production wiring; never hand-roll projection lifecycle, poll loops, or
-  decide bookkeeping again.
-- **Upstream watchlist:** go-cqrs-lite v5 rename sweep budgeted;
-  versions.json LIES (verify with `git tag --contains`); dropped symbols →
-  check the wave changelog first (docs/gotchas.md owns the details).
+  scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
+  `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — never hand-roll harness
+  bookkeeping (semantics: docs/gotchas.md 2026-10-25 entries).
+- **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
+  sweep budgeted; versions.json lies — verify with `git tag --contains`).
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**
   `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
   owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.23.0
@@ -74,16 +67,12 @@ webphone later gets a read-only deep link, never a data dependency.
 - **templ-components adoption map:** per-component truth for THIS
   repo lives in docs/templ-components-adoption.md (skill docs drift ahead
   of the pinned tag; check the map before importing anything new; it also
-  carries the version-bump watchlist: gen-tc-classes → map re-audit →
-  hand-rolled re-check → filings re-read → golden `-update`, in order on
-  every bump — the v1.23.0 sweep skipped it once and paid for it; the
-  corpus script resolves GOMODCACHE + version via `go env`/`go list -m`
-  and exits non-zero on an empty scan). Pin: v1.24.0. **utils/format is ADOPTED (2026-10-24)** — never hand-roll
-  duration/percent/dash formatting; `format.ClockDuration/CompactDuration/
-  StringOrDash/Percent` are the one dialect ("1m", not "1m00s"); keep
-  `mosGaugePercent` (domain math). Goldens gotcha: the refresh pattern
-  must be `-run 'TestGolden'` — plain `TestGoldenPages` silently skips
-  `TestGoldenOpsPage`.
+  carries the version-bump watchlist + corpus-script mechanics to run on
+  every bump — the v1.23.0 sweep skipped it once and paid for it).
+  Pin: v1.24.0. **utils/format is ADOPTED (2026-10-24)** — never hand-roll
+  duration/percent/dash formatting (dialect + the `-run 'TestGolden'`
+  goldens gotcha: docs/templ-components-adoption.md); keep
+  `mosGaugePercent` (domain math).
 - **Flake:** go-standard flakeModule from go-nix-helpers (go-output's
   pattern): `subPackages = ["./cmd/pbx-lens"]` wires the package to the
   real binary (the default `["."]` built the package-less root and shipped
@@ -137,9 +126,8 @@ webphone later gets a read-only deep link, never a data dependency.
     `StreamID.Get()`; the projection adapter's bare ID) — never hand-build
     one, and read through `calls.LookupView` (its marker-prefixed fallback
     keeps pre-flip rows reachable; docs/gotchas.md has the incident).
-    `calls.DefaultExcerptMax` (200 runes) is the domain-owned excerpt
-    ceiling; every source mapper selects via `calls.Excerpt` (first user
-    turn, fallback first turn). The serve htpasswd timing pad hashes at the
+    `calls.DefaultExcerptMax` (200 runes) caps every excerpt; source mappers
+    select via `calls.Excerpt` (first user turn, fallback first turn). The serve htpasswd timing pad hashes at the
     LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
     when touching auth.go; SIGHUP reloads the file (a broken reload keeps the
     running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
@@ -164,8 +152,7 @@ webphone later gets a read-only deep link, never a data dependency.
   chart. htmx polling (R9): `/frag/dashboard` 30 s, `/frag/staleness`
   60 s, runtime self-hosted at `/static/htmx.min.js` — no CDN.
   `/favicon.svg` (embedded lens mark) satisfies layout.Base's default favicon
-  link; `/api/ops` (R15)
-  serves the poller's per-source counters behind the same auth. The NixOS
+  link; `/api/ops` (R15) serves the poller's per-source counters behind the same auth. The NixOS
   module LANDED in nix-international-telephony (`modules/telephony/lens.nix`,
   backup + purge timers).
   Detail page = READ-TIME join (`CallDetailPage`; rules in
@@ -184,11 +171,9 @@ webphone later gets a read-only deep link, never a data dependency.
   stay raw; `E164`/`ParticipantHash` exist for the planned PII policy and are
   NOT enforced yet.
 - Stream id = `<kind>:<native-id>` — deterministic: re-ingest is the same
-  stream, `call.record` is idempotent (same ContentHash replays to zero
-  events; a changed hash on a live stream = parsing bug, CDR rows are
-  immutable).
-- Read model: `call_views` collection, one `CallView` per stream, folded from
-  `call.observed` via `metaengine.OnRecordTyped`.
+  stream; `call.record` is idempotent (same ContentHash replays to zero
+  events; a changed hash on a live stream = parsing bug — CDR rows are immutable).
+- Read model: `call_views`, one `CallView` per stream (`metaengine.OnRecordTyped` folds).
 - **Transcript truth:** the lens performs NO speech-to-text — `Transcript` is
   the source's own turns, verbatim; non-speech rows are `SourceEvents` (outside
   ContentHash). The full rules (idle markers, turn times, call-fact signals,
