@@ -1,6 +1,6 @@
 module github.com/larsartmann/pbx-lens
 
-go 1.27.2
+go 1.27
 
 require (
 	github.com/a-h/templ v0.3.1070
@@ -16,6 +16,7 @@ require (
 	github.com/larsartmann/go-cqrs-lite/metaengine/v4 v4.20.0
 	github.com/larsartmann/go-cqrs-lite/projectionhost/v4 v4.7.1
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.6.2
+	github.com/larsartmann/go-cqrs-lite/scenario/v4 v4.4.3
 	github.com/larsartmann/go-cqrs-lite/system/v4 v4.15.4
 	github.com/larsartmann/go-cqrs-lite/systemscenario/v4 v4.2.1
 	github.com/larsartmann/go-error-family v0.12.0
@@ -29,6 +30,7 @@ require (
 	golang.org/x/crypto v0.58.0
 	golang.org/x/time v0.16.0
 	modernc.org/sqlite v1.60.1
+	pgregory.net/rapid v1.3.0
 )
 
 require (
@@ -84,7 +86,6 @@ require (
 	github.com/larsartmann/go-cqrs-lite/otel/v4 v4.5.2 // indirect
 	github.com/larsartmann/go-cqrs-lite/projection/v4 v4.4.2 // indirect
 	github.com/larsartmann/go-cqrs-lite/query/v4 v4.10.1 // indirect
-	github.com/larsartmann/go-cqrs-lite/scenario/v4 v4.4.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/schema/v4 v4.7.1 // indirect
 	github.com/larsartmann/go-cqrs-lite/snapshot/v4 v4.7.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/watermill/v4 v4.7.0 // indirect
@@ -138,7 +139,6 @@ require (
 	modernc.org/libc v1.79.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	pgregory.net/rapid v1.3.0 // indirect
 )
 
 tool github.com/a-h/templ/cmd/templ

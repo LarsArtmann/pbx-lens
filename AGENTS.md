@@ -21,7 +21,9 @@ webphone later gets a read-only deep link, never a data dependency.
     consumer, or measurable CI cost.
   - sqliteengine (blank import registers the "sqlite" driver), pinned to the
     vetted set from go-cqrs-lite `example/getting-started/go.mod` (exact
-    versions live in go.mod — never re-enumerate them here). ADR-0123: system.New is
+    versions live in go.mod — never re-enumerate them here; all eight
+    go-cqrs-lite pins rode the 2026-10-24 disk-truth tail wave on
+    2026-10-25). ADR-0123: system.New is
     the only composition root; never hand-wire event/command/decider/storage.
 - **Engines:** sqlite (`EngineConfig{Driver: "sqlite", DSN}`) via pure-Go
   modernc.org/sqlite, memory for tests; `app.New(ctx, dsn)` with dsn == ""
@@ -42,6 +44,14 @@ webphone later gets a read-only deep link, never a data dependency.
   rate-limiting, SSE-hub, Telnyx etag client, data-fingerprint fast-304,
   go-atomic-write for backup staging): docs/planning/archived/2026-10-12_12-47_*
   and docs/drafts/.
+- **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
+  scenario/v4 + rapid (+ go-snaps goldens, rides systemscenario). Tests boot
+  through `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — the exact
+  production wiring; never hand-roll projection lifecycle, poll loops, or
+  decide bookkeeping again.
+- **Upstream watchlist:** go-cqrs-lite v5 rename sweep budgeted;
+  versions.json LIES (verify with `git tag --contains`); dropped symbols →
+  check the wave changelog first (docs/gotchas.md owns the details).
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**
   `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
   owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.23.0
@@ -105,8 +115,11 @@ webphone later gets a read-only deep link, never a data dependency.
   lint may not) — run `golangci-lint run ./...` before pushing.
 - **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version
   subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog`
-  is the DB-free exception: `cli.RenderCatalog` renders the eventcatalog
-  tree the federation hub exports; see `.eventcatalog-hub.json`). Flag
+  is the DB-free exception: `cli.RenderCatalog`/`cli.RenderArchitecture`
+  render the eventcatalog tree (+ `-architecture` HTML) for the hub; see
+  `.eventcatalog-hub.json`. Hub bootstrap norm: `-plain` always skips the
+  generated bootstrap files, `-skip-bootstrap` opts out of normal exports —
+  the merging hub owns site title, core pin, and dependencies). Flag
   validation for the index-opening subcommands is shared: `requireDB` and
   `requireOneArg` in package main (messages derive from `fs.Name()`, so a new
   subcommand gets consistent rejections for free). The `internal/ingest` ROOT
@@ -197,6 +210,7 @@ nix develop                           # go, golangci-lint, gopls, govulncheck, d
                                       # tailwindcss_4, cqrs-lint, vulnix, oxlint, prettier, shellcheck
 bash scripts/verify-all.sh            # THE browser lane: four probe suites, sequential, first-red-wins
 GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/  # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
+GOEXPERIMENT=jsonv2 go test -bench BenchmarkIngestCDR -benchmem ./internal/cli/  # ingest per-row: parse ≈16-26 µs, fresh-stream dispatch ≈10-12 µs (docs/http-stack.md; both under concurrent-load caveat 2026-10-25)
 node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd   # alert-only pixel diff (scripts/README.md)
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # after go.mod/go.sum; CLEAN tree only — never nix-hash-fix (BuildFlow#55)
