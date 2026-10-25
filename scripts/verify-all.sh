@@ -11,7 +11,8 @@
 # tagging or after any visual change.
 #
 # --baseline <dir> (2026-10-18): alert-only pixel diff against that baseline
-# directory (same hook as LENS_DIFF_BASELINE, as a lane flag).
+# directory (same hook as LENS_DIFF_BASELINE, as a lane flag). Both lane flags
+# are parsed before the first probe, so a bad argument fails in a second.
 #
 # Before any probe, the lane runs the non-browser gates: the statix no-op
 # tripwire, the docs-count gate and the doc-link gate (both self-tested).
@@ -21,6 +22,33 @@
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
+
+# Lane flags are parsed BEFORE any probe runs (2026-10-23, probe residue):
+# a typo'd --baseline used to be discovered after four browser suites had
+# already paid their setup. Everything else passes through to
+# screenshot-probe untouched.
+FAST=0
+BASELINE_FLAG=""
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	--fast)
+		FAST=1
+		shift
+		;;
+	--baseline)
+		if [ -z "${2:-}" ]; then
+			echo "verify-all: --baseline needs a directory argument" >&2
+			exit 2
+		fi
+
+		BASELINE_FLAG="$2"
+		shift 2
+		;;
+	*)
+		break
+		;;
+	esac
+done
 
 # statix no-op tripwire (gate-hardening, 2026-10-18): statix exits 0 on a
 # config parse error and lints NOTHING — the repo's statix lane once read
@@ -57,13 +85,6 @@ bash scripts/check-docs-counts.sh
 echo "=== check-doc-links ==="
 bash scripts/check-doc-links.sh
 
-if [ "${1:-}" = "--fast" ]; then
-	shift
-	FAST=1
-else
-	FAST=0
-fi
-
 echo "=== verify-ui-contract ==="
 node scripts/verify-ui-contract.js
 
@@ -88,17 +109,6 @@ echo "=== screenshot-probe ==="
 # --baseline <dir> is the same hook as a lane flag (T16): it wins over the
 # env var when both are set, and everything after it still passes through
 # to screenshot-probe.
-BASELINE_FLAG=""
-if [ "${1:-}" = "--baseline" ]; then
-	if [ -z "${2:-}" ]; then
-		echo "verify-all: --baseline needs a directory argument" >&2
-		exit 2
-	fi
-
-	BASELINE_FLAG="$2"
-	shift 2
-fi
-
 if [ -n "$BASELINE_FLAG" ]; then
 	DIFF_BASELINE="$BASELINE_FLAG"
 elif [ -n "${LENS_DIFF_BASELINE:-}" ]; then

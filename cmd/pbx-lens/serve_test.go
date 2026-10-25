@@ -320,7 +320,8 @@ func TestServeStackEndToEnd(t *testing.T) {
 	// both the embedded asset and the hot 30s poll fragment. Fragment routes
 	// additionally carry Cache-Control: no-cache on the 200 AND the 304, so
 	// browsers and htmx polls revalidate instead of serving stale HTML.
-	assertConditionalGET(t, client, base, "/static/htmx.min.js", false)
+	assertFirstTryRevalidation(t, client, base, "/static/htmx.min.js")
+	assertFirstTryRevalidation(t, client, base, "/app.css")
 	assertGzip(t, client, base, "/static/htmx.min.js")
 	assertConditionalGET(t, client, base, "/frag/dashboard", true)
 	assertGzip(t, client, base, "/frag/dashboard")
@@ -435,6 +436,41 @@ func conditionalReplay(
 	}
 
 	return replayStatus, replayHeaders, replayBody, etag
+}
+
+// assertFirstTryRevalidation is the STATIC-ASSET half of the contract: the
+// validator must hold on the very FIRST replay, with no retry. conditionalReplay
+// tolerates a re-tag because a rendered page embeds a timestamp; a static asset
+// is byte-identical between two requests, so a 200 on the first replay means
+// the ETag chain is broken for assets and every page load re-downloads the
+// stylesheet and the htmx runtime. Unlike conditionalReplay there is no retry
+// loop here: the strictness IS the contract.
+func assertFirstTryRevalidation(t *testing.T, client *http.Client, base, path string) {
+	t.Helper()
+
+	_, headers, body := get(t, client, base, path, nil)
+
+	etag := headers.Get("ETag")
+	if etag == "" {
+		t.Fatalf("%s served without an ETag; conditional revalidation cannot work", path)
+	}
+
+	status, replayHeaders, replayBody := get(t, client, base, path, map[string]string{"If-None-Match": etag})
+	if status != http.StatusNotModified {
+		t.Fatalf("%s conditional GET status = %d on the first replay, want 304 (no retry path for assets)", path, status)
+	}
+
+	if replayBody != "" {
+		t.Errorf("%s 304 carried a body of %d bytes, want empty", path, len(replayBody))
+	}
+
+	if replayHeaders.Get("ETag") != etag {
+		t.Errorf("%s 304 ETag = %q, want the replayed %q", path, replayHeaders.Get("ETag"), etag)
+	}
+
+	if body == "" {
+		t.Errorf("%s served an empty 200 body; the asset is not actually embedded", path)
+	}
 }
 
 // assertConditionalGET cycles a path through the full revalidation
