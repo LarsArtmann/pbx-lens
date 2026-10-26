@@ -57,6 +57,12 @@ type retentionSnapshot struct {
 	Oldest      time.Time
 	OldestAge   time.Duration
 	OldestKnown bool
+	// OldestEmpty records that the oldest-view scan SUCCEEDED and found
+	// zero rows — the empty-index case, which the card words as "nothing
+	// is due". It is distinct from a FAILED scan, which honestly stays
+	// "unknown": without this bit an empty index borrows the
+	// scan-failure word.
+	OldestEmpty bool
 	PurgeLag    time.Duration
 }
 
@@ -148,6 +154,8 @@ func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
 		snap.Oldest = oldest.StartedAt
 		snap.OldestAge = now.Sub(oldest.StartedAt)
 		snap.OldestKnown = true
+	} else {
+		snap.OldestEmpty = true
 	}
 
 	if !snap.Active {

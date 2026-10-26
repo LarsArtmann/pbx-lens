@@ -126,26 +126,33 @@ templ opsRetentionCard(r retentionSnapshot) {
 }
 
 // opsOldestText renders the oldest-unretired-view fact honestly: an empty
-// index and a failed scan say so instead of rounding to a duration.
+// index and a failed scan say so (each with its own words) instead of
+// rounding to a duration.
 func opsOldestText(r retentionSnapshot) string {
 	switch {
-	case !r.OldestKnown:
+	case r.OldestKnown:
+		return format.CompactDuration(r.OldestAge) + " old"
+	case r.OldestEmpty:
 		return "no rows indexed yet"
 	default:
-		return format.CompactDuration(r.OldestAge) + " old"
+		return "oldest-view scan failed"
 	}
 }
 
 // opsPurgeLagText renders the lag figure: zero means the purge is keeping
-// up (nothing indexed sits past the window); unknown scan says so.
+// up (nothing indexed sits past the window). An empty index is not an
+// unknown — nothing is indexed, so nothing can be due; only a failed scan
+// earns "unknown".
 func opsPurgeLagText(r retentionSnapshot) string {
 	switch {
-	case !r.OldestKnown:
-		return "unknown"
-	case r.PurgeLag == 0:
+	case r.OldestKnown && r.PurgeLag == 0:
 		return "none — purge is current"
-	default:
+	case r.OldestKnown:
 		return format.CompactDuration(r.PurgeLag) + " past the window"
+	case r.OldestEmpty:
+		return "nothing is due — the index is empty"
+	default:
+		return "unknown — the oldest-view scan failed"
 	}
 }
 
