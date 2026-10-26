@@ -826,207 +826,301 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>FULL CODE REVIEW</span>
+      <span>2026-10-26</span>
+      <span>pbx-lens &middot; every Go source, one pass</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
+          <a href="#fixed">Fixed On Sight</a>
+          <a href="#series">Series Cross-Reference</a>
           <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#strengths">Strengths</a>
+          <a href="#debt">Accepted Debt</a>
+          <a href="#verdicts">Verdicts</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Senior Architect Audit</div>
+          <h1>Full Code Review 2026-10-26</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Every Go source file visited (domain, ingest, search, web, cli, cmd,
+            app), the templ surface verified through its gate lanes, and the
+            nix/CI support surface audited &mdash; three days after the 2026-10-23
+            analytic wave and one dependency sweep later.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
-        <nav class="toc">
-          <h3>Contents</h3>
-          <ul>
-            <li><a href="#summary">Summary</a></li>
-            <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
-          </ul>
-        </nav>
-
-        <!-- Stats Dashboard -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
+            <div class="stat-value">59</div>
+            <div class="stat-label">Go source files visited end-to-end</div>
           </div>
           <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">3</div>
+            <div class="stat-label">Real defects found &amp; fixed</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">3/3</div>
+            <div class="stat-label">2026-10-11 ticketed items verified landed</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">0</div>
+            <div class="stat-label">New TODO rows needed (rest is owner-gated)</div>
           </div>
         </div>
+        <p>
+          Series context: this pass cross-references the
+          <strong>2026-10-11 full code review</strong> (61 files, 7 fixed, 3
+          ticketed) and the mid-execution <strong>17-24 SUPERB plan</strong>
+          (P11&ndash;P19 open; P3/P4/P9 owner-gated). The pass opened with a gate
+          repair: the 2026-10-25 dependency sweep had broken the nix devshell
+          (below), so the tree was made verifiably green BEFORE the review
+          began &mdash; nix build, nix flake check, full go test, golangci-lint,
+          and the art-dupl zero-group gate.
+        </p>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
-        </div>
-
-        <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
-        </div>
-
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
-          <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
-        </div>
-
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
-          </p>
-        </div>
-
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
-        </div>
-
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="fixed"><span class="num">01</span>Fixed On Sight</h2>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>#</th><th>Severity</th><th>Where</th><th>Defect</th><th>Fix</th></tr>
           </thead>
           <tbody>
             <tr>
               <td>1</td>
               <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>internal/ingest/cdr/cdr.go:107</td>
+              <td>A line containing only the mod_cdr_csv trailing <code>;</code> passed the
+                  blank-line check, then lost its semicolon and became empty &mdash; the CSV
+                  reader answers <code>io.EOF</code> on empty input, and the parser escalated
+                  one formatting-noise line to a whole-file corruption error.</td>
+              <td>Blank check moved after the strip; found by the <code>rapid</code> property
+                  test's fresh random seed; the failfile is committed as the replay seed
+                  (3cdc5b2).</td>
             </tr>
             <tr>
               <td>2</td>
               <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
+              <td>internal/ingest/telnyx/telnyx.go:35</td>
+              <td>The ingest client rode <code>http.DefaultClient</code> with no header
+                  timeout: a connection that accepts but never answers pins the poller's
+                  pass forever &mdash; the stall class the 10-11 review ticketed for the
+                  recording proxy, whose fix landed but left the client's half open.</td>
+              <td>Transport cloned with a 30 s <code>ResponseHeaderTimeout</code>; every
+                  client call reads a bounded JSON body, so a header budget is the whole
+                  liveness story (8ea7937).</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="badge badge-critical">Critical</span></td>
+              <td>flake.nix (cqrs-lint pins)</td>
+              <td>The 2026-10-25 sweep overwrote TWO of cqrs-lint's fixed-output pins
+                  (source hash &rarr; placeholder, vendorHash &larr; this repo's hash) while
+                  re-deriving only vendorHash.nix &mdash; every devshell consumer died at the
+                  FOD while <code>nix flake check</code> stayed green (it never builds
+                  devShells).</td>
+              <td>Both pins restored from git history + the FOD mismatch output; the
+                  false "re-derived" comment corrected; the verification gap recorded as
+                  a gotcha (7ff3173, c218055).</td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
+        <h2 id="series"><span class="num">02</span>Series Cross-Reference</h2>
+        <table>
+          <thead>
+            <tr><th>2026-10-11 ticket</th><th>Verdict</th><th>Evidence</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Recording proxy has no upstream timeout</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td><code>DefaultUpstreamTimeout</code> + resolveUpstreamTimeout + a
+                  response-header-bounded transport; the body streams unbounded by
+                  documented doctrine (recording.go:37).</td>
+            </tr>
+            <tr>
+              <td>web imports the Telnyx client concretely; a RecordingFetcher
+                  interface would match the Searcher pattern</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td><code>RecordingFetcher</code> declared consumer-side; telnyx.Client
+                  satisfies it as-is (recording.go:26).</td>
+            </tr>
+            <tr>
+              <td>Export streams swallow mid-stream write errors</td>
+              <td><span class="badge badge-fixed">Landed</span></td>
+              <td>Terminal <code>EXPORT_INCOMPLETE</code> marker row/object plus the
+                  structured log (export.go:153, plan T10).</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h2 id="findings"><span class="num">03</span>Findings</h2>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Accepted, documented</span>
+          <h3>Per-file encoding/json v1/v2 mix is deliberate adoption order</h3>
+          <div class="where">internal/ingest/*, cmd/pbx-lens/ops.go</div>
+          <p>
+            BuildFlow's go-auto-upgrade flags 39 files "left on v1". Verified as
+            policy, not drift: server/export/freshness/ops already ride v2; the
+            ingest DTOs stay on v1 because <code>wire.FlexTime</code>'s custom
+            unmarshaler and omitempty contracts are exactly the v2-swap risk
+            class the warning names. Each file's swap deserves its own moment;
+            GOEXPERIMENT=jsonv2 keeps the env load-bearing until then.
+          </p>
         </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Verified</span>
+          <h3>Keyset pagination is the subtlest code in the repo &mdash; and it holds</h3>
+          <div class="where">internal/web/queries.go</div>
+          <p>
+            The inclusive-cursor + tie-set walk (advanceCursor's clear-on-strict-
+            advance rule, the probe row that distinguishes "page full" from "walk
+            over", the stall rejection past one batch per nanosecond) is correct
+            and seam-tested with shrinkable batch vars. The RFC3339Nano string
+            binding dodge for sqlite time comparison is documented with its
+            upstream filing.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">Verified</span>
+          <h3>Property tests with teeth</h3>
+          <div class="where">internal/ingest/parser_property_test.go</div>
+          <p>
+            The parsers-survive-arbitrary-input property caught finding #1 on a
+            random seed months of example tests had missed, replaying from a
+            committed failfile. This is the test doctrine working: the property
+            found a real defect DURING this review's routine re-run.
+          </p>
+        </div>
+
+        <h2 id="strengths"><span class="num">04</span>Strengths &mdash; preserve these</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Honest denominators everywhere</strong>
+              <span>QualityRollup, Segment, DashboardStats, and VolumeNote each carry
+              their own known-count (MOSKnown, CostKnown, PricedSecs, Transcripts);
+              a zero denominator renders an em dash, never a fabricated 0%. The
+              unanimousCurrency rule refuses to sum across currencies.</span>
+            </div>
           </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Bounded everything</strong>
+              <span>Scanner ceilings (64 KiB&rarr;1 MiB), body caps (8 MiB), batch/page
+              caps, bucket maps with FIFO eviction (auth 1024, recordings 256),
+              recording start throttle with loopback exemption, maxPages on every
+              list loop. No unbounded read ships anywhere.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Read-time join with primary-is-authority</strong>
+              <span>The CDR row represents a call everywhere operator-facing;
+              mergeCall fills gaps only and never overwrites a primary fact;
+              export stays per-source on purpose (forensic dump doctrine).</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Docs that claim, code that proves</strong>
+              <span>The doc-claims gate checked 78 test names this session with zero
+              phantoms; every doc doctrine spot-checked this pass (ETag skip list,
+              two-hop recording budget, no-cache contract, htpasswd pad cost)
+              matched the code exactly.</span>
+            </div>
           </div>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
-        </div>
+        <h2 id="debt"><span class="num">05</span>Accepted Debt (documented, not fixed)</h2>
+        <table>
+          <thead>
+            <tr><th>Item</th><th>Why accepted</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>7 Go files exceed the 350-line guideline (server.go 714, queries.go 705,
+                  search.go 569, dashboard.go 550, poller.go 425, recording.go 388, cdr.go 371)</td>
+              <td>Each is a cohesive single-concern unit (route table + handlers; query
+                  layer; one FTS index; one dashboard fold) whose split would trade
+                  cohesion for indirection. The size check is an advisory BuildFlow
+                  signal, not a repo gate.</td>
+            </tr>
+            <tr>
+              <td>cqrs-lint's 19 info findings (struct-field counts, StrictApply suggestion)</td>
+              <td>Every finding carries a decision in docs/cqrs-lint-policy.md; none is
+                  new this pass.</td>
+            </tr>
+            <tr>
+              <td>17 suppressed art-dupl clone groups, largest 18 lines in templ layouts</td>
+              <td>Intentional similarity (card-grid shape), the exact class the
+                  zero-group gate's --min-lines doctrine excludes; stats verdict:
+                  "excellent code health".</td>
+            </tr>
+            <tr>
+              <td>watchSIGHUP logs via the stdlib log, not Options.Log</td>
+              <td>HtpasswdMiddleware is standalone (no options struct); stderr reaches
+                  the systemd journal regardless. Cosmetic; note for the next touch.</td>
+            </tr>
+          </tbody>
+        </table>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
+        <h2 id="verdicts"><span class="num">06</span>Verdicts</h2>
+        <div class="card card-solution">
+          <h4>Modularize: HOLD &mdash; unchanged from 2026-10-11</h4>
+          <p>
+            The single-module decision's three revisit triggers (second aggregate,
+            an external Go consumer, measurable CI cost) have not fired; the
+            package DAG still enforces the layering the go.mod line would encode.
+          </p>
         </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
+        <div class="card">
+          <h4>Type safety: exemplary</h4>
+          <p>
+            SourceKind/Direction/TurnRole validated at the boundary and rejected
+            with coded rejections; RecordKey/LookupView keep the row-key format in
+            exactly one place; booleans are genuinely binary (the one tri-state,
+            the AI filter, is a *bool); RetentionReason is a named-constant type;
+            pointers distinguish absent from false in the ops wire contract.
+          </p>
+        </div>
+        <div class="card">
+          <h4>Gate receipt (post-fix tree)</h4>
+          <p>
+            nix build + nix flake check + devshell green; full
+            <code>go test ./...</code> green (rapid property included, failfile
+            replaying); <code>golangci-lint run ./...</code> 0 issues;
+            art-dupl zero-group gate green; agents-budget 219/219; doc links 0
+            broken; doc test claims 0 phantom. The browser lane was not implicated:
+            no templ/CSS surface changed this pass.
+          </p>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-10-26 11:25 &middot; All fixes committed receipt-grade
+          (7ff3173, 8ea7937, 3cdc5b2, 295eb3e, c218055) &middot; Series: 2026-10-11
+          full-code-review
         </footer>
       </main>
     </div>
