@@ -241,6 +241,22 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   resume-checkpoint warnings were state-DB contention noise; no step was
   affected. The timing-regression verdicts at run end are load variance
   against the baseline, not step failures.
+- **Dev-mode receipt over the post-v0.3.0 tree (2026-10-26 23:36, commit
+  49de047, armed by `scripts/poll-gate.sh` after the `--`-replace
+  contract fix)**: START LOAD **29.70/27.16/23.12 (policy: 15m < 40)**,
+  `env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` = **51
+  success, 0 failed, 0 skipped (+5 via config)**, exit 0, wall 59.7s,
+  run `20261026-223553-b4759eaa` — "passed with warnings 48/66, 339
+  findings" where every finding is the documented detect-only set
+  (art-dupl's suppressed bucket, branching-flow view-model width,
+  cqrs-lint's 19, file-size, the go-auto-upgrade jsonv2 inventory, the
+  nix-checker hash advisories). Two runs failed BEFORE this one banked:
+  the first (23:14, 47/66, exit 75) lost test-coverage to spawn
+  starvation while a parallel session probe held the CPU — the
+  starvation message's own advice (rerun quiet) was the fix, not a code
+  change; the second attempt was never armed because the machine
+  rebooted under the poller. Receipt discipline note: run the gate SOLO —
+  parallel probes are lane work, and the gate starves on them.
 - **Gate tools trail module toolchain floors (paid for, 2026-10-15; CLOSED
   2026-10-18)**: the go-appkit v0.9.0 bump moved go.mod's floor to 1.27.2,
   and the full gate then failed TWO steps — `go` and `govalid` — with

@@ -7,6 +7,38 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-26 (the poll-gate `--` args append instead of replace)
+
+- **`poll-gate.sh -- <command>` now replaces the gate command** (it used to
+  APPEND to the default, so the documented
+  `-- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` built
+  `buildflow --build-mode full env … buildflow …` and died on "Unknown
+  command env" — cut-release.sh and the AGENTS gate entry both carried the
+  latent break since the 2026-10-26 reuse landed; the mechanics had only
+  been proven via the `POLL_GATE_EXEC` stub). The replace contract is
+  seeded into the self-test (5/5), shellcheck is clean, and the first
+  receipt over the fixed wrapper banked (run `20261026-223553-b4759eaa`,
+  51/0/0, exit 0).
+
+### Added — 2026-10-26 (advisory truth: the tokenizer traps, the 304 harness, the triage)
+
+- **FTS tokenizer trap table test** (`internal/search`): the unicode61
+  rules the search hints lean on are pinned as behavior — case folding,
+  diacritic folding, apostrophe/hyphen adjacent-phrase matches, and the
+  raw-FTS proof that a mid-number run matches nothing (the digits shadow
+  table owns those).
+- **`scripts/poll-304-probe.js`**, the stamp-churn owner-decision harness:
+  measures the 304-hit rate of an ETagged route against a live serve.
+  BEFORE numbers 2026-10-26: 91.7% within-minute, 75.0% across a 72 s
+  span (the minute-quantized pill's rollover cost).
+- **The advisory triage** (docs/drafts/2026-10-26_advisory-triage-
+  jsonv2-inventory.md): branching hotspots and file-size residue ACCEPTED
+  with reasons (search.go's 570-line row already resolved), the jsonv2
+  flip surface ordered P0-P3 (ContentHash last, behind a stored-hash
+  compatibility proof), the nolint census classified, and the
+  golangci-lint version skew (devShell v2.15.0 vs CI v2.14) probed —
+  v2.14 verdicts 0 issues on this tree, alignment parked as its own row.
+
 ### Added — 2026-10-26 (P11: the answer rate joins the quality card)
 
 - **Answer rate and short-call share on "How calls end"**: the answer rate
