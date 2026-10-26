@@ -399,3 +399,21 @@ message. Two lessons: a hook chain is real only in clones where
 clone — and a guard proof must assert the refusal MESSAGE, not just a
 non-zero exit (a `git commit … | tail` pipeline hides the exit code and
 fakes a pass; the first proof run here did exactly that).
+
+## `nix flake check` never builds the devShell — verify devshell consumers after touching flake pins (paid for, 2026-10-26)
+
+The 2026-10-25 dependency sweep overwrote TWO of cqrs-lint's fixed-output
+pins in flake.nix (source hash → placeholder, vendorHash ← this repo's
+pbx-lens hash) but re-derived only `vendorHash.nix`. Every consumer nix
+build died at cqrs-lint's go-modules FOD, yet this repo's `nix flake
+check` stayed GREEN — flake check evaluates and builds packages/checks
+but never builds `devShells.*`, so the broken devshell input surfaced
+only when a devshell consumer ran (`nix develop -c …`). Three hashes
+now exist and must never be cross-pasted: `vendorHash.nix` (pbx-lens's
+module set), flake.nix's cqrs-lint `vendorHash` (cqrs-lint's OWN module
+set at its pinned rev — it does not track this repo's go.mod), and
+cqrs-lint's source `hash` (immutable rev → deterministic). The recipe
+that would have caught it in one command: after any flake pin touch,
+run `nix develop -c echo ok` BESIDE `nix flake check` (the failed FOD's
+mismatch output names the correct hash — pin it and the same build
+verifies it).
