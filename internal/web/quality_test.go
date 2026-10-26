@@ -107,6 +107,86 @@ func TestDashboardQualityRollupFoldsTheLongTail(t *testing.T) {
 	}
 }
 
+func TestDashboardAnswerRateUsesReportedDenominators(t *testing.T) {
+	t.Parallel()
+
+	started := testCallStarted()
+
+	// Unanswered: a duration-reporting row with zero billed seconds.
+	unanswered := webObservation("conv-no-answer", started)
+	unanswered.DurationSecs = 0
+	unanswered.HangupCause = "NO_ANSWER"
+
+	// Answered but short: under 10 billed seconds.
+	short := webObservation("conv-short", started.Add(time.Hour))
+	short.DurationSecs = 5
+	short.HangupCause = "NORMAL_CLEARING"
+
+	// Answered and long enough to stay out of the short-call count.
+	normal := webObservation("conv-normal", started.Add(2*time.Hour))
+	normal.DurationSecs = 30
+	normal.HangupCause = "NORMAL_CLEARING"
+
+	// Agent-native rows report no billsec of their own: a zero duration
+	// here is "not reported" and must stay OUTSIDE the answer-rate
+	// denominator (silence is not failure).
+	agent := webObservation("conv-agent", started.Add(3*time.Hour))
+	agent.Kind = calls.SourceAgentTranscript
+	agent.DurationSecs = 0
+	agent.Transcript = nil
+	agent.HangupCause = "NORMAL_CLEARING"
+
+	stats, err := DashboardStatsQuery(
+		t.Context(),
+		newTestSystem(t, unanswered, short, normal, agent),
+		started.Add(4*time.Hour),
+		ListCallsQuery{},
+		dashboardWindowDays,
+	)
+	if err != nil {
+		t.Fatalf("DashboardStatsQuery: %v", err)
+	}
+
+	rollup := stats.Quality
+	if rollup.Calls != 4 {
+		t.Errorf("calls = %d, want 4", rollup.Calls)
+	}
+
+	if rollup.DurationReported != 3 || rollup.Answered != 2 {
+		t.Errorf("answer rate = %d/%d, want 2 answered over 3 duration-reporting calls", rollup.Answered, rollup.DurationReported)
+	}
+
+	if rollup.ShortCalls != 1 {
+		t.Errorf("short calls = %d, want 1 (the 5 s answer)", rollup.ShortCalls)
+	}
+
+	if rollup.UnansweredTop.Cause != "NO_ANSWER" || rollup.UnansweredTop.Calls != 1 {
+		t.Errorf("unanswered top = %+v, want NO_ANSWER x1", rollup.UnansweredTop)
+	}
+}
+
+func TestDashboardRendersAnswerRate(t *testing.T) {
+	t.Parallel()
+
+	started := testCallStarted()
+	unanswered := webObservation("conv-no-answer", started)
+	unanswered.DurationSecs = 0
+	unanswered.HangupCause = "NO_ANSWER"
+
+	_, body := getBody(t, newTestServer(t, unanswered), "/dashboard")
+
+	for _, want := range []string{
+		"Answered",
+		"1 call with a reported billsec",
+		"unanswered (0 billed seconds); most ended",
+		"NO_ANSWER",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("dashboard missing answer-rate fragment %q", want)
+		}
+	}
+}
+
 func TestDashboardRendersQualitySignals(t *testing.T) {
 	t.Parallel()
 

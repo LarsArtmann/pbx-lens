@@ -7,6 +7,17 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-26 (P11: the answer rate joins the quality card)
+
+- **Answer rate and short-call share on "How calls end"**: the answer rate
+  divides answered calls by calls whose SOURCE reports a billsec (CDR
+  billsec, Telnyx/webhook derived spans; agent-native rows stay outside —
+  their zero duration means "not reported", never "unanswered"). The
+  short-call share counts answered calls under 10 billed seconds over
+  ANSWERED calls (the connect-then-drop tell). When calls went unanswered,
+  the causes chart names the top zero-billsec cause. Denominators
+  registered in docs/DOMAIN_LANGUAGE.md ("Analytics denominators").
+
 ### Added — 2026-10-26 (ops browser-truth: the corpus and the probe catch up with the SLO feature)
 
 - **The `/ops` page joined the screenshot corpus**: the main sweep captures
