@@ -180,6 +180,14 @@ templ qualityCard(stats DashboardStats) {
 							EmptyMessage: "No hangup causes recorded",
 						})
 					</div>
+					if stats.Quality.UnansweredTop.Calls > 0 {
+						<p class="dark:text-gray-400 mt-2 text-gray-500 text-xs">
+							{ strconv.Itoa(stats.Quality.DurationReported - stats.Quality.Answered) }
+							 unanswered (0 billed seconds); most ended
+							 "{ stats.Quality.UnansweredTop.Cause }"
+							 ({ strconv.Itoa(stats.Quality.UnansweredTop.Calls) }).
+						</p>
+					}
 				</div>
 				<div>
 					<h3 class="break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm">
@@ -220,10 +228,14 @@ func hangupBars(causes []HangupCauseCount, total int) []display.BarChartBar {
 	return bars
 }
 
-// signalRows renders the three standing rates with their populations spelled
+// signalRows renders the standing rates with their populations spelled
 // out: "Calls" over "Of". A zero denominator renders an em dash, never 0%.
+// The answer-rate pair (P11) divides billed-seconds truth: the rate over
+// duration-reporting calls only, the short-call share over ANSWERED calls.
 func signalRows(rollup QualityRollup) []display.TableRow {
 	return []display.TableRow{
+		signalRow("Answered", rollup.Answered, rollup.DurationReported, "call with a reported billsec", "calls with a reported billsec"),
+		signalRow("Short (< 10 s billed)", rollup.ShortCalls, rollup.Answered, "answered call", "answered calls"),
 		signalRow("No user turn", rollup.NoUserTurn, rollup.Transcripts, "transcript", "transcripts"),
 		signalRow("Self-dial", rollup.SelfDial, rollup.PartiesKnown, "call with both parties", "calls with both parties"),
 		signalRow("Recording tail ≥ 20 s", rollup.RecordingTail, rollup.TailEligible, "timed transcript", "timed transcripts"),

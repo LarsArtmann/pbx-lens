@@ -11,6 +11,12 @@ import (
 // grows a scrollbar on a pathological source.
 const hangupCauseLimit = 6
 
+// shortCallMaxSecs bounds the short-call signal (P11): an ANSWERED call with
+// fewer billed seconds than this hung up right after connect — the "did
+// anything actually happen" tell. Ten seconds covers the connect-then-drop
+// class while leaving normal brief calls ("yes, see you then") alone.
+const shortCallMaxSecs = 10
+
 // HangupCauseCount is one hangup cause and how often the window ended with it.
 type HangupCauseCount struct {
 	Cause string
@@ -33,6 +39,21 @@ type QualityRollup struct {
 	PartiesKnown  int
 	RecordingTail int
 	TailEligible  int
+
+	// Answer rate (P11): Answered over DurationReported. DurationReported
+	// counts calls whose KIND reports a billsec (calls.ReportsDuration) —
+	// agent-native rows are outside the denominator because their zero
+	// duration means "not reported", not "unanswered". Answered counts
+	// those whose billed seconds ran (DurationSecs > 0); ShortCalls counts
+	// the answered whose billed seconds stayed under shortCallMaxSecs, so
+	// its denominator is Answered, never DurationReported.
+	DurationReported int
+	Answered         int
+	ShortCalls       int
+	// UnansweredTop is the most common hangup cause among the unanswered
+	// (zero-billsec, duration-reporting) calls — the "why did they fail"
+	// cross the bare rate lacks. Zero-valued when nothing went unanswered.
+	UnansweredTop HangupCauseCount
 }
 
 // Rate renders one count against its denominator as a [0,1] ratio; a zero
@@ -48,12 +69,17 @@ func Rate(count, denominator int) (float64, bool) {
 
 // qualityAccumulator folds one representative call into the rollup.
 type qualityAccumulator struct {
-	rollup *QualityRollup
-	causes map[string]int
+	rollup           *QualityRollup
+	causes           map[string]int
+	unansweredCauses map[string]int
 }
 
 func newQualityAccumulator(rollup *QualityRollup) qualityAccumulator {
-	return qualityAccumulator{rollup: rollup, causes: make(map[string]int)}
+	return qualityAccumulator{
+		rollup:           rollup,
+		causes:           make(map[string]int),
+		unansweredCauses: make(map[string]int),
+	}
 }
 
 func (a qualityAccumulator) view(view calls.CallView) {
@@ -65,6 +91,20 @@ func (a qualityAccumulator) view(view calls.CallView) {
 	}
 
 	a.causes[cause]++
+
+	if view.Kind.ReportsDuration() {
+		a.rollup.DurationReported++
+
+		if view.DurationSecs > 0 {
+			a.rollup.Answered++
+
+			if view.DurationSecs < shortCallMaxSecs {
+				a.rollup.ShortCalls++
+			}
+		} else {
+			a.unansweredCauses[cause]++
+		}
+	}
 
 	if len(view.Transcript) > 0 {
 		a.rollup.Transcripts++
@@ -91,9 +131,12 @@ func (a qualityAccumulator) view(view calls.CallView) {
 	}
 }
 
-// finish resolves the accumulated causes into the ordered table.
+// finish resolves the accumulated causes into the ordered tables.
 func (a qualityAccumulator) finish() {
 	a.rollup.HangupCauses = topHangupCauses(a.causes, hangupCauseLimit)
+	if top := topHangupCauses(a.unansweredCauses, 1); len(top) > 0 {
+		a.rollup.UnansweredTop = top[0]
+	}
 }
 
 func hasUserTurn(turns []calls.TranscriptTurn) bool {

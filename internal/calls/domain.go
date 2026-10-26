@@ -65,6 +65,18 @@ func (k SourceKind) Valid() bool {
 	return false
 }
 
+// ReportsDuration answers whether rows of this kind carry a source-reported
+// call duration: CDR prints billsec, Telnyx derives it from the
+// conversation/recording span, the webhook derives it from its state
+// machine. Agent-native rows report NO billsec of their own (a CDR join
+// copies one in, but the row's own truth is the transcript), so a zero
+// duration on an agent row means "not reported", never "unanswered" — the
+// answer-rate denominator must exclude them or it counts silence as
+// failure.
+func (k SourceKind) ReportsDuration() bool {
+	return k != SourceAgentTranscript
+}
+
 type Direction string
 
 const (
