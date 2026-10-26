@@ -70,7 +70,11 @@ type Report struct {
 	Rejections []string // per-stream dispatch failures (stream id: reason)
 }
 
-// OldViews returns the indexed calls the policy would retire, oldest first.
+// OldViews returns the indexed calls the policy would retire. The scan
+// sorts DESC (metaengine's WithSort true = descending — newest first);
+// order is irrelevant here because every row is filtered against the
+// cutoff, but do not copy this sort expecting oldest-first — OldestView
+// below is the oldest-first reader.
 func OldViews(ctx context.Context, sys *system.System, policy Policy, now time.Time) ([]calls.CallView, error) {
 	cutoff := policy.Cutoff(now)
 	if cutoff.IsZero() {
