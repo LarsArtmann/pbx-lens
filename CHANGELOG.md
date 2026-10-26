@@ -7,6 +7,15 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-10-26 (CI lint pin aligned with the devShell build)
+
+- **CI's golangci-lint pin moves v2.14 → v2.15**: the devShell's
+  locked-nixpkgs `pkgs.golangci-lint` already resolves v2.15.0, and the
+  parity probe (triage doc §4) proved v2.14 verdicts 0 issues on this
+  tree, so CI-up closes the skew with one line instead of pinning the
+  flake against nixpkgs drift. Both gates now run the same binary
+  version; the next deliberate flake.lock bump re-checks parity.
+
 ### Fixed — 2026-10-26 (the poll-gate `--` args append instead of replace)
 
 - **`poll-gate.sh -- <command>` now replaces the gate command** (it used to

@@ -66,7 +66,10 @@ order of operations.
   pin are step zero. v2.14 verdicts on this tree: **probe run 2026-10-26 —
   0 issues (exit 0)** via `go run …golangci-lint/v2/cmd/golangci-lint@v2.14.0`,
   so both pins agree on this tree and the alignment stays a hygiene call
-  (the TODO row), not a correctness one.
+  (the TODO row), not a correctness one. RESOLVED 2026-10-26: CI bumped
+  to v2.15 — CI and the locked-nixpkgs devShell build now both run
+  v2.15.0; the next deliberate flake.lock bump re-checks parity (the
+  gate-binaries-at-the-CI-pin rule).
 
 ## 5. Vulnerability windows (T15, scanned 2026-10-26)
 
