@@ -107,6 +107,7 @@ func ParseWithOptions(r io.Reader, opts ParseOptions) (ingest.Result, error) {
 	for sc.Scan() {
 		line := strings.TrimRight(sc.Text(), " \t\r\n")
 		line = strings.TrimSuffix(line, ";")
+
 		if line == "" {
 			continue
 		}
