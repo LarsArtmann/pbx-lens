@@ -51,5 +51,5 @@ case) compress ~5×.
 ## If you answer
 
 - PII answer → closes the TODO_LIST Blocked row (enforcement + policy flag
-  + docs become a normal session task).
+  - docs become a normal session task).
 - Compression answer → B becomes a small plan row; A or C closes it.

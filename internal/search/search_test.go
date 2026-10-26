@@ -32,8 +32,13 @@ func searchViews() []calls.CallView {
 			},
 		},
 		{
-			NativeID: "cdr-c", Kind: calls.SourceFreeSwitchCDR,
-			StartedAt: base.Add(2 * time.Hour), FromNumber: "+17287289311", ToNumber: "+15555550777",
+			NativeID: "cdr-c",
+			Kind:     calls.SourceFreeSwitchCDR,
+			StartedAt: base.Add(
+				2 * time.Hour,
+			),
+			FromNumber: "+17287289311",
+			ToNumber:   "+15555550777",
 		},
 	}
 }
@@ -143,8 +148,16 @@ func TestMatchExpression(t *testing.T) {
 		wantErr error
 	}{
 		{name: "plain terms", query: `woolly invoice`, want: `"woolly" "invoice"`},
-		{name: "quotes are neutralized", query: `say "woolly" OR 1=1`, want: `"say" """woolly""" "OR" "1=1"`},
-		{name: "empty", query: "   ", wantErr: errorfamily.NewRejection("lens.search.empty_query", "")},
+		{
+			name:  "quotes are neutralized",
+			query: `say "woolly" OR 1=1`,
+			want:  `"say" """woolly""" "OR" "1=1"`,
+		},
+		{
+			name:    "empty",
+			query:   "   ",
+			wantErr: errorfamily.NewRejection("lens.search.empty_query", ""),
+		},
 		{
 			name:    "control chars",
 			query:   "bad\x01marker",
@@ -404,7 +417,11 @@ func TestQueryTurnsHasNoNumberSidePath(t *testing.T) {
 		}
 
 		if len(hits) != 0 {
-			t.Errorf("QueryTurns(%q) = %d hits, want 0 (numbers are not turn content)", query, len(hits))
+			t.Errorf(
+				"QueryTurns(%q) = %d hits, want 0 (numbers are not turn content)",
+				query,
+				len(hits),
+			)
 		}
 	}
 }
@@ -468,7 +485,13 @@ func TestFTSTokenizerTraps(t *testing.T) {
 		}
 
 		if len(hits) != trap.want {
-			t.Errorf("%s: Query(%q) hit %d calls, want %d", trap.name, trap.query, len(hits), trap.want)
+			t.Errorf(
+				"%s: Query(%q) hit %d calls, want %d",
+				trap.name,
+				trap.query,
+				len(hits),
+				trap.want,
+			)
 		}
 	}
 
@@ -484,6 +507,9 @@ func TestFTSTokenizerTraps(t *testing.T) {
 	}
 
 	if raw != 0 {
-		t.Errorf("raw FTS MATCH \"89311\" hit %d rows; unicode61 must tokenize the +number as ONE token", raw)
+		t.Errorf(
+			"raw FTS MATCH \"89311\" hit %d rows; unicode61 must tokenize the +number as ONE token",
+			raw,
+		)
 	}
 }

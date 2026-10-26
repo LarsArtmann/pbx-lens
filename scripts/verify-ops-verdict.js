@@ -72,9 +72,16 @@ const fail = probe.fail;
       if (typeof retention.active !== "boolean") {
         fail(`retention.active missing or not a boolean (got ${JSON.stringify(retention.active)})`);
       } else if (retention.active !== false) {
-        fail(`retention.active = ${retention.active} on the probe serve (no -max-age: expected false)`);
+        fail(
+          `retention.active = ${retention.active} on the probe serve (no -max-age: expected false)`,
+        );
       }
-      for (const key of ["max_age_seconds", "oldest_age_seconds", "over_age", "purge_lag_seconds"]) {
+      for (const key of [
+        "max_age_seconds",
+        "oldest_age_seconds",
+        "over_age",
+        "purge_lag_seconds",
+      ]) {
         if (!(key in retention)) fail(`retention.${key} missing from /api/ops`);
       }
       for (const key of ["oldest_age_seconds", "purge_lag_seconds", "over_age"]) {

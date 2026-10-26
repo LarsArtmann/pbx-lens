@@ -346,7 +346,11 @@ const NEEDS_DISCOVERY =
     if (wanted("ops-wired")) {
       await probe.stopProbe(serve);
       const wiredPort = await probe.findFreePort();
-      const wiredServe = await probe.serveProbe(bin, DB, wiredPort, ["-wired-ops", "-max-age", "24h"]);
+      const wiredServe = await probe.serveProbe(bin, DB, wiredPort, [
+        "-wired-ops",
+        "-max-age",
+        "24h",
+      ]);
       const wiredBase = `http://127.0.0.1:${wiredPort}`;
       try {
         for (const theme of themes) {
