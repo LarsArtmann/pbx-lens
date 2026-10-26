@@ -288,6 +288,39 @@ func TestOpsPageRetentionOffSaysSo(t *testing.T) {
 	}
 }
 
+func TestOpsPageEmptyActiveRetentionSaysNothingDue(t *testing.T) {
+	// An empty index under an ACTIVE window is not an unknown: nothing is
+	// indexed, so nothing can be due. The purge-lag row must say so instead
+	// of borrowing the failed-scan word "unknown" (the 2026-10-26 wording
+	// fix — "Purge lag: unknown" on a healthy empty index read like a
+	// broken scan).
+	mux := newTestServerWith(t, Options{
+		Ops:             opsPollerPayload(),
+		RetentionMaxAge: 24 * time.Hour,
+	})
+
+	status, body := getBody(t, mux, "/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /ops status = %d, want 200", status)
+	}
+
+	if !strings.Contains(body, "nothing is due") {
+		t.Error("empty index + active window must render the nothing-is-due posture")
+	}
+
+	if strings.Contains(body, "unknown — the oldest-view scan failed") {
+		t.Error("empty index + active window must not borrow the scan-failure wording (the scan is known-good)")
+	}
+
+	if !strings.Contains(body, "no rows indexed yet") {
+		t.Error("the oldest-view row must keep the honest empty-index sentence")
+	}
+
+	if !strings.Contains(body, "Purge lag") {
+		t.Error("the active card must still render the purge-lag row")
+	}
+}
+
 func TestOpsPageRetentionCountsOverAge(t *testing.T) {
 	// With a window the card shows the live would-retire count over the
 	// seeded index: the seed's oldest call sits at 2026-10-12 09:00, so a

@@ -61,6 +61,38 @@ const fail = probe.fail;
       fail("/api/ops missing the canned freeswitch-cdr source row");
     }
 
+    // Contract O.3 (2026-10-26): the retention SLO section rides the same
+    // JSON. The probe serve runs without -max-age, so active must be false;
+    // the nullable facts are presence-checked (null = unknown/empty is a
+    // legal answer, a MISSING key is not).
+    const retention = api.body?.retention;
+    if (!retention || typeof retention !== "object") {
+      fail("/api/ops missing the retention section entirely");
+    } else {
+      if (typeof retention.active !== "boolean") {
+        fail(`retention.active missing or not a boolean (got ${JSON.stringify(retention.active)})`);
+      } else if (retention.active !== false) {
+        fail(`retention.active = ${retention.active} on the probe serve (no -max-age: expected false)`);
+      }
+      for (const key of ["max_age_seconds", "oldest_age_seconds", "over_age", "purge_lag_seconds"]) {
+        if (!(key in retention)) fail(`retention.${key} missing from /api/ops`);
+      }
+      for (const key of ["oldest_age_seconds", "purge_lag_seconds", "over_age"]) {
+        const v = retention[key];
+        if (v !== null && typeof v !== "number") {
+          fail(`retention.${key} must be a number or null (got ${JSON.stringify(v)})`);
+        }
+      }
+      console.log(
+        "retention section:",
+        `active=${retention.active}`,
+        `max_age=${retention.max_age_seconds}`,
+        `oldest=${retention.oldest_age_seconds}`,
+        `over_age=${retention.over_age}`,
+        `purge_lag=${retention.purge_lag_seconds}`,
+      );
+    }
+
     console.log(process.exitCode ? "RESULT: FAILED" : "RESULT: ALL PASS");
   } finally {
     await browser.close();
