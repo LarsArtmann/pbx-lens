@@ -418,3 +418,72 @@ func containsHighlight(parts []Part, text string) bool {
 
 	return false
 }
+
+func TestFTSTokenizerTraps(t *testing.T) {
+	// The unicode61 tokenizer rules the search hints lean on, pinned as
+	// behavior (docs/gotchas.md "FTS5 tokenizes…" section; the plan T9
+	// coverage table). The digit trap is deliberately NOT re-pinned here —
+	// mid-number substrings route through the digits shadow table (the
+	// TestPartialNumberSubstringMatches family), never through FTS.
+	index := openTestIndex(t)
+
+	base := time.Date(2026, 10, 11, 8, 0, 0, 0, time.UTC)
+	view := calls.CallView{
+		NativeID: "conv-tok", Kind: calls.SourceTelnyxConversation,
+		StartedAt: base, FromNumber: "+17287289311", ToNumber: "+15555550123",
+		Transcript: []calls.TranscriptTurn{
+			{Role: "user", Text: "Thermostat shows CAFÉ on O'Brien's state-of-the-art unit"},
+		},
+	}
+
+	if err := index.Rebuild(context.Background(), []calls.CallView{view}); err != nil {
+		t.Fatalf("Rebuild: %v", err)
+	}
+
+	traps := []struct {
+		name  string
+		query string
+		want  int
+	}{
+		// unicode61 folds case: the user's caps find the stored word.
+		{name: "case folding", query: "THERMOSTAT", want: 1},
+		// unicode61 strips diacritics: the ASCII spelling finds CAFÉ.
+		{name: "diacritics fold", query: "cafe", want: 1},
+		// Punctuation splits tokens; a QUOTED phrase tokenizes the query
+		// the same way, so the split pair still matches adjacently.
+		{name: "apostrophe pair matches as an adjacent phrase", query: "o'brien", want: 1},
+		{name: "hyphen chain matches as adjacent tokens", query: "state-of-the-art", want: 1},
+		// A bare mid-number run is NOT an FTS hit — the token is the whole
+		// +number. (The digits table covers this query; the FTS-side pin is
+		// that the TEXT search alone would find nothing.)
+		{name: "possessive tail is its own token", query: "s unit", want: 1},
+	}
+
+	for _, trap := range traps {
+		hits, err := index.Query(context.Background(), trap.query, 0)
+		if err != nil {
+			t.Errorf("%s: Query(%q): %v", trap.name, trap.query, err)
+
+			continue
+		}
+
+		if len(hits) != trap.want {
+			t.Errorf("%s: Query(%q) hit %d calls, want %d", trap.name, trap.query, len(hits), trap.want)
+		}
+	}
+
+	// The digit trap itself, at the RAW FTS layer (Query routes digit runs
+	// to the digits shadow table, so only a direct MATCH can observe the
+	// tokenizer here): the token is the WHOLE +number, so a mid-number run
+	// matches nothing — the fact the search-page hint exists for.
+	var raw int
+	if err := index.db.QueryRowContext(context.Background(),
+		"SELECT COUNT(*) FROM "+tableName+" WHERE "+tableName+" MATCH ?",
+		`"89311"`).Scan(&raw); err != nil {
+		t.Fatalf("raw MATCH: %v", err)
+	}
+
+	if raw != 0 {
+		t.Errorf("raw FTS MATCH \"89311\" hit %d rows; unicode61 must tokenize the +number as ONE token", raw)
+	}
+}
