@@ -91,16 +91,19 @@ func opsCoverageTable(coverage []CoverageRow, now time.Time) display.TableProps 
 }
 
 // opsRetentionCard is the age-posture card (05-40 M10): the configured
-// window, the live would-retire count, and where the audit trail lives.
-// The purge itself runs out-of-band (a timer or manual `pbx-lens purge`),
-// and the call.retired tombstones in the event log are what was retired —
-// the card says so instead of inventing an execution record it does not
-// have.
+// window, the oldest view still indexed, the live would-retire count, the
+// purge lag (how far that oldest view sits past the window — the
+// time-dimension tell for a purge timer that silently stopped), and where
+// the audit trail lives. The purge itself runs out-of-band (a timer or
+// manual `pbx-lens purge`), and the call.retired tombstones in the event
+// log are what was retired — the card says so instead of inventing an
+// execution record it does not have.
 templ opsRetentionCard(r retentionSnapshot) {
 	@display.Card(display.CardProps{Title: "Retention", TitleTag: display.HeadingTagH2, Class: "lens-ops-card"}) {
 		if !r.Active {
 			@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
 				{Term: "Window", Detail: "off — keeping everything"},
+				{Term: "Oldest view", Detail: opsOldestText(r)},
 				{Term: "Past the window", Detail: "nothing; set -max-age to bound the index"},
 			}})
 		} else {
@@ -113,10 +116,36 @@ templ opsRetentionCard(r retentionSnapshot) {
 			}
 			@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
 				{Term: "Window", Detail: format.CompactDuration(r.MaxAge)},
+				{Term: "Oldest view", Detail: opsOldestText(r)},
+				{Term: "Purge lag", Detail: opsPurgeLagText(r)},
 				{Term: "Past the window now", Detail: opsOverAgeText(r)},
 				{Term: "Audit trail", Detail: "the event log's call.retired tombstones"},
 			}})
 		}
+	}
+}
+
+// opsOldestText renders the oldest-unretired-view fact honestly: an empty
+// index and a failed scan say so instead of rounding to a duration.
+func opsOldestText(r retentionSnapshot) string {
+	switch {
+	case !r.OldestKnown:
+		return "no rows indexed yet"
+	default:
+		return format.CompactDuration(r.OldestAge) + " old"
+	}
+}
+
+// opsPurgeLagText renders the lag figure: zero means the purge is keeping
+// up (nothing indexed sits past the window); unknown scan says so.
+func opsPurgeLagText(r retentionSnapshot) string {
+	switch {
+	case !r.OldestKnown:
+		return "unknown"
+	case r.PurgeLag == 0:
+		return "none — purge is current"
+	default:
+		return format.CompactDuration(r.PurgeLag) + " past the window"
 	}
 }
 

@@ -98,6 +98,25 @@ func OldViews(ctx context.Context, sys *system.System, policy Policy, now time.T
 	return overAge, nil
 }
 
+// OldestView returns the oldest view still indexed (the age-posture SLO's
+// "oldest unretired view"): ok is false for an empty index, not for an
+// error. The one-row scan is what the ops surfaces read their purge-lag
+// figure from — how far that oldest view sits past the policy window is
+// the time-dimension answer the over-age COUNT cannot give.
+func OldestView(ctx context.Context, sys *system.System) (calls.CallView, bool, error) {
+	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
+
+	views, err := reader.Scan(ctx,
+		metaengine.WithSort("started_at", false),
+		metaengine.WithLimit(1),
+	)
+	if err != nil || len(views) == 0 {
+		return calls.CallView{}, false, err
+	}
+
+	return views[0], true, nil
+}
+
 // Retire tombstones every view OldViews would return. It dispatches the
 // domain commands only; the caller drains projections and rebuilds the
 // search index afterwards (one CLI orchestration, one place per concern).

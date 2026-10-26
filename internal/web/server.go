@@ -596,8 +596,10 @@ var staticRoutes = map[string]staticAsset{ //nolint:gochecknoglobals // declarat
 
 // ops serves the operator counters (R15 poller per-source ingest health,
 // R26 etag cache outcomes): offered, recorded, corrected, and rejected per
-// source from the latest pass, plus the cache hit ratio and overflow count,
-// so ingest and cache health are visible without shelling into the host.
+// source from the latest pass, plus the cache hit ratio and overflow count
+// and the retention age-posture section (P16: oldest unretired view,
+// purge lag), so ingest, cache, and age health are visible without
+// shelling into the host.
 // The route sits behind the same auth middleware as every other route.
 func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 	var poller any
@@ -623,7 +625,9 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context())))
+	retention := s.retentionWireView(r.Context())
+
+	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context()), retention))
 	if err != nil {
 		http.Error(w, "encoding ops counters failed: "+err.Error(), http.StatusInternalServerError)
 
@@ -677,15 +681,16 @@ func (s *server) coverageWire(ctx context.Context) []coverageWire {
 // composeOpsPayload merges the independent counter sources into one
 // top-level payload: the poller section keeps the keys it always had
 // (sources, last_pass) and the cache section joins as a sibling, so R15
-// consumers parse unchanged. Coverage (plan P17) rides as its own key for
-// the same reason. A non-map poller payload (custom embeds) gets wrapped
-// under "poller" rather than merged.
+// consumers parse unchanged. Coverage (plan P17) and the retention
+// age-posture section (plan P16) ride as their own keys for the same
+// reason. A non-map poller payload (custom embeds) gets wrapped under
+// "poller" rather than merged.
 // opsPayloadSections sizes the merged payload map: poller wrap + cache +
-// coverage at most beyond an existing map.
-const opsPayloadSections = 3
+// coverage + retention at most beyond an existing map.
+const opsPayloadSections = 4
 
-func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire) any {
-	if cache == nil && len(coverage) == 0 {
+func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire, retention *retentionWire) any {
+	if cache == nil && len(coverage) == 0 && retention == nil {
 		return poller
 	}
 
@@ -708,6 +713,10 @@ func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire) a
 
 	if len(coverage) > 0 {
 		pollerMap["coverage"] = coverage
+	}
+
+	if retention != nil {
+		pollerMap["retention"] = retention
 	}
 
 	return pollerMap

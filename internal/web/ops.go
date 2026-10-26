@@ -47,6 +47,17 @@ type retentionSnapshot struct {
 	// scan failed (the card then says so instead of showing a fake zero).
 	OverAge    int
 	CountKnown bool
+	// Oldest is the oldest view still indexed (the P16 "oldest unretired
+	// view") and OldestAge its age against now; OldestKnown is false for
+	// an empty index or a failed scan. PurgeLag is how far that oldest
+	// view sits PAST the window — the time-dimension answer the count
+	// lacks (a purge timer that silently stopped shows up here as a
+	// growing lag, not as a slowly climbing count). Nonzero only when
+	// Active && OldestKnown; retention off means nothing is ever due.
+	Oldest      time.Time
+	OldestAge   time.Duration
+	OldestKnown bool
+	PurgeLag    time.Duration
 }
 
 // opsPoller is the decoded poller section: per-source counters plus the
@@ -116,22 +127,36 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 	return snap
 }
 
-// collectRetention counts the indexed calls past the age window (the
-// would-retire set a purge would act on). The scan is the same bounded
-// read the purge's own -dry-run uses — read-only over the disposable
-// index, never over a source.
+// collectRetention gathers the age-posture facts: the oldest view still
+// indexed (always — the reach of the index is a fact even when keeping
+// everything) and, under an active window, the would-retire count and the
+// purge lag it implies. The scans are the same bounded reads the purge's
+// own -dry-run uses — read-only over the disposable index, never over a
+// source.
 func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
 	snap := retentionSnapshot{MaxAge: s.retention, Active: s.retention > 0}
-	if !snap.Active {
-		return snap
-	}
+
+	now := s.now()
 
 	stop := servertiming.MeasureServerTiming(ctx, "retention")
 	defer stop()
 
+	oldest, ok, err := retention.OldestView(ctx, s.sys)
+	if err != nil {
+		s.logf("retention oldest-view scan failed: %v", err)
+	} else if ok {
+		snap.Oldest = oldest.StartedAt
+		snap.OldestAge = now.Sub(oldest.StartedAt)
+		snap.OldestKnown = true
+	}
+
+	if !snap.Active {
+		return snap
+	}
+
 	policy := retention.Policy{MaxAge: s.retention}
 
-	views, err := retention.OldViews(ctx, s.sys, policy, s.now())
+	views, err := retention.OldViews(ctx, s.sys, policy, now)
 	if err != nil {
 		s.logf("retention over-age count failed: %v", err)
 
@@ -141,7 +166,55 @@ func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
 	snap.OverAge = len(views)
 	snap.CountKnown = true
 
+	if lag := snap.OldestAge - snap.MaxAge; snap.OldestKnown && lag > 0 {
+		snap.PurgeLag = lag
+	}
+
 	return snap
+}
+
+// retentionWire mirrors the /api/ops "retention" section (plan P16
+// remainder): the age-posture SLO facts as durations in seconds. A null
+// means unknown or not applicable — never a fake zero: over_age is null
+// when the scan failed, oldest_age_seconds when the index has no rows,
+// purge_lag_seconds when retention is off (nothing is ever due) or the
+// oldest view is unknown. max_age_seconds 0 with active false is the
+// keep-everything posture, served as a fact the operator should see.
+type retentionWire struct {
+	MaxAgeSeconds    float64  `json:"max_age_seconds"`
+	Active           bool     `json:"active"`
+	OverAge          *int     `json:"over_age"`
+	OldestAgeSeconds *float64 `json:"oldest_age_seconds"`
+	PurgeLagSeconds  *float64 `json:"purge_lag_seconds"`
+}
+
+// retentionWireView maps the page-path snapshot onto the wire section; the
+// two surfaces read the SAME scans, so the human card and the machine
+// section cannot disagree.
+func (s *server) retentionWireView(ctx context.Context) *retentionWire {
+	snap := s.collectRetention(ctx)
+
+	wire := retentionWire{
+		MaxAgeSeconds: snap.MaxAge.Seconds(),
+		Active:        snap.Active,
+	}
+
+	if snap.CountKnown {
+		over := snap.OverAge
+		wire.OverAge = &over
+	}
+
+	if snap.OldestKnown {
+		age := snap.OldestAge.Seconds()
+		wire.OldestAgeSeconds = &age
+
+		if snap.Active {
+			lag := snap.PurgeLag.Seconds()
+			wire.PurgeLagSeconds = &lag
+		}
+	}
+
+	return &wire
 }
 
 // decodeOpsPoller round-trips the poller payload through its wire shape.

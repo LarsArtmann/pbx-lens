@@ -275,6 +275,14 @@ func TestOpsPageRetentionOffSaysSo(t *testing.T) {
 		t.Error("/ops must state the retention-off posture explicitly")
 	}
 
+	if !strings.Contains(body, "no rows indexed yet") {
+		t.Error("retention-off must still answer the oldest-view fact (here: an empty index)")
+	}
+
+	if strings.Contains(body, "Purge lag") {
+		t.Error("retention-off must not render a purge-lag row (nothing is ever due)")
+	}
+
 	if strings.Contains(body, "Past the window now") {
 		t.Error("retention-off must not render the live over-age row")
 	}
@@ -299,9 +307,52 @@ func TestOpsPageRetentionCountsOverAge(t *testing.T) {
 		t.Fatalf("GET /ops status = %d, want 200 (body: %s)", status, body)
 	}
 
-	for _, want := range []string{"Past the window now", "2 call(s) past the retention window", "call.retired"} {
+	for _, want := range []string{
+		"Past the window now", "2 call(s) past the retention window", "call.retired",
+		// P16 remainder: the oldest unretired view (the seed's oldest call
+		// is exactly 48h old against the frozen clock) and the purge lag it
+		// implies over the 24h window.
+		"Oldest view", "48h old", "Purge lag", "24h past the window",
+	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("/ops retention card missing %q (body: %s)", want, body)
+		}
+	}
+}
+
+func TestOpsPageAndAPICarryRetention(t *testing.T) {
+	// P16: the age-posture SLO facts ride BOTH surfaces from the same
+	// scans — the page card and the /api/ops "retention" section cannot
+	// disagree. The frozen clock sits the seeds (oldest 2026-10-12 09:00)
+	// exactly 48h back, so the 24h window puts both past it: over_age 2,
+	// oldest age 172800s, purge lag 86400s.
+	seeds := goldenSeed()
+	freeze := time.Date(2026, 10, 14, 9, 0, 0, 0, time.UTC)
+
+	mux := newTestServerWith(t, Options{
+		Ops:             opsPollerPayload(),
+		Now:             func() time.Time { return freeze },
+		RetentionMaxAge: 24 * time.Hour,
+	}, seeds...)
+
+	_, page := getBody(t, mux, "/ops")
+	for _, want := range []string{"Oldest view", "48h old", "Purge lag", "24h past the window"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("/ops retention card missing %q", want)
+		}
+	}
+
+	status, body := getBody(t, mux, "/api/ops")
+	if status != http.StatusOK {
+		t.Fatalf("GET /api/ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{
+		`"max_age_seconds":86400`, `"active":true`, `"over_age":2`,
+		`"oldest_age_seconds":172800`, `"purge_lag_seconds":86400`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/api/ops retention section missing %q (body: %s)", want, body)
 		}
 	}
 }

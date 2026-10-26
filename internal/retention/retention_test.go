@@ -157,6 +157,47 @@ func TestUnboundedPolicyRetiresNothing(t *testing.T) {
 	}
 }
 
+func TestOldestViewIsTheOldestIndexedRow(t *testing.T) {
+	// The age-posture SLO reads its "oldest unretired view" from this
+	// scan: seeded out of order, it must still answer the MINIMUM
+	// StartedAt, and an empty index must say so instead of lying.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "oldest-view.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	t.Cleanup(cleanup)
+
+	if _, ok, err := retention.OldestView(ctx, sys); err != nil || ok {
+		t.Fatalf("OldestView on an empty index = ok:%v err:%v, want ok:false err:nil", ok, err)
+	}
+
+	now := time.Date(2026, 10, 11, 12, 0, 0, 0, time.UTC)
+	oldest := observation("oldest", now.Add(-72*time.Hour))
+	middle := observation("middle", now.Add(-48*time.Hour))
+	newest := observation("newest", now.Add(-time.Hour))
+
+	if stats := cli.Ingest(ctx, sys, []calls.Observation{newest, oldest, middle}); len(stats.Rejected) > 0 {
+		t.Fatalf("ingest rejected: %v", stats.Rejected)
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		t.Fatalf("drain: %v", err)
+	}
+
+	view, ok, err := retention.OldestView(ctx, sys)
+	if err != nil || !ok {
+		t.Fatalf("OldestView = ok:%v err:%v, want the seeded oldest row", ok, err)
+	}
+
+	if view.NativeID != "oldest" || !view.StartedAt.Equal(now.Add(-72*time.Hour)) {
+		t.Errorf("oldest view = %s@%v, want oldest@%v", view.NativeID, view.StartedAt, now.Add(-72*time.Hour))
+	}
+}
+
 func observation(nativeID string, started time.Time) calls.Observation {
 	return calls.Observation{
 		NativeID:     calls.NativeID(nativeID),

@@ -15,7 +15,9 @@
 # are parsed before the first probe, so a bad argument fails in a second.
 #
 # Before any probe, the lane runs the non-browser gates: the statix no-op
-# tripwire, the docs-count gate and the doc-link gate (both self-tested).
+# tripwire, the art-dupl zero-group duplication gate (the exact command CI
+# runs; warn-skips when the pin binary is absent), and the docs gates
+# (counts, links, test claims — all self-tested).
 #
 # Usage: bash scripts/verify-all.sh [--fast | [--baseline <dir>] screenshot-probe args...]
 #   e.g. bash scripts/verify-all.sh --only dashboard --themes light
@@ -74,6 +76,15 @@ statix_tripwire() {
 	echo "statix-tripwire: config parses (no-op tripwire green)"
 }
 statix_tripwire
+
+# Duplication gate at the head (2026-10-26): three consecutive pushes went
+# red on CI's Code Duplication Gate because nothing local ran it before
+# push (docs/art-dupl-baseline.md); pre-commit + CI now carry it, and this
+# lane — the pre-tag ritual cut-release.sh runs — is the remaining wiring
+# place. The script warn-skips without the pinned binary and FAILS on a
+# non-pin binary, so a green line here is a verdict from CI's exact tool.
+echo "=== check-dedup-gate ==="
+bash scripts/check-dedup-gate.sh
 
 # Docs-truth gates (plan T12, 2026-10-23): the corpus counts the living docs
 # state, every relative link between them, and every backticked test name a

@@ -3,6 +3,10 @@ name: CI
 on:
   push:
     branches: [main, master]
+    # Release tags run the same lanes: v0.3.0's tag itself never ran CI
+    # (only main did), so the shipped artifact was verified one push
+    # removed from the tag. branches and tags are OR'd within push.
+    tags: ["v*"]
   pull_request:
     branches: [main, master]
 

@@ -8,6 +8,14 @@
 > Long-term vision and unrefined ideas live in ROADMAP.md; shipped features in
 > FEATURES.md. Items are ranked by impact. Status is verified, not assumed.
 >
+> Refreshed 2026-10-26 (evening pass): the five Unblocked rows LANDED and
+> moved to CHANGELOG Unreleased — tag-triggered CI (v* tags run the same
+> lanes), check-dedup-gate.sh at verify-all's head, cut-release.sh's load
+> wait now armed by poll-gate.sh (the inline check retired), the rapid
+> `.fail` regression-pin policy (docs/gotchas.md), and the retention SLO
+> fields on /api/ops + /ops (the P16 remainder). The Unblocked table is
+> empty; the Blocked and Low-impact sections are untouched.
+>
 > Refreshed 2026-10-26 (docs-health AUDIT against the shipped v0.3.0 state):
 > the whole 2026-10-23/24 status corpus (ten reports) was annotated inline and
 > archived (manifest in docs/status/archived/README.md; 69 closed reports),
@@ -82,13 +90,10 @@
 
 ## Unblocked (no owner gate, no window)
 
-| Task                                                                                                                                                                                            | Status    | Impact | Effort | Evidence                                                                                                       |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- | ------ | ------ | -------------------------------------------------------------------------------------------------------------- |
-| Add a `v*` tag trigger to ci.yml (the release tag itself never ran CI — main did; the tag's CI run is currently watched by hand)                                                                | 🔴 `TODO` | Medium | S      | `.github/workflows/ci.yml` (push/pull_request triggers only); 17-29 report f22                                 |
-| Wire `scripts/check-dedup-gate.sh` into `verify-all.sh`'s head (the one wiring place deliberately skipped — decide and do; the gate runs in pre-commit + CI already)                            | 🔴 `TODO` | Low    | S      | `scripts/check-dedup-gate.sh` (315587e); `scripts/verify-all.sh`; 17-29 report f9                              |
-| cut-release.sh: reuse `scripts/poll-gate.sh` for the load wait (its inline awk reads fields separately and is safe today, but the hand-rolled retry loop is the smell the 16-00 report flagged) | 🔴 `TODO` | Low    | S      | `scripts/cut-release.sh` load step; 16-00 report e6/f36                                                        |
-| Decide the rapid `.fail` seed policy (keep-in-git as regression pins vs gitignore; the daemon will sweep future seeds either way) and document it                                               | 🔴 `TODO` | Low    | S      | the committed CDR failfile replay; 16-00 report f4; docs/gotchas.md property-test entries                      |
-| Retention SLO fields on `/api/ops` (the P16 remainder: oldest unretired view, purge lag — the ETag half landed in `internal/web/caching.go:78`)                                                 | 🔴 `TODO` | Low    | S      | `internal/web/caching.go` `OnETagGenerated`/`On304`; `internal/web/ops.go` would-retire scan; 16-00 report f11 |
+> Empty — the 2026-10-26 evening pass landed all five rows (tag-triggered
+> CI, the dedup-gate verify wiring, the cut-release poll-gate reuse, the
+> rapid `.fail` seed policy, the retention SLO fields); receipts in
+> CHANGELOG Unreleased. The next unblocked finding starts as a row here.
 
 ## Blocked (owner / external gates)
 

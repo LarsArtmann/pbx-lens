@@ -42,7 +42,7 @@ read-only deep link, never a data dependency.
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
   `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — never hand-roll harness
-  bookkeeping (semantics: docs/gotchas.md 2026-10-25 entries).
+  bookkeeping; committed rapid `.fail` seeds are regression pins (docs/gotchas.md).
 - **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
   sweep budgeted; versions.json lies — verify with `git tag --contains`).
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**

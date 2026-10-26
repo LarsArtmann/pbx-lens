@@ -7,6 +7,40 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-26 (operator depth: the retention SLO facts)
+
+- **Retention SLO fields on `/api/ops` and the `/ops` card** (the P16
+  remainder): `retention.max_age_seconds`, `active`, `over_age`,
+  `oldest_age_seconds`, `purge_lag_seconds` — the oldest view still indexed
+  and how far it sits past the window. The lag is the time-dimension answer
+  a climbing would-retire COUNT cannot give: a purge timer that silently
+  stopped shows up as a growing lag, not as a slowly rising number. Nulls
+  mean unknown (failed scan, empty index, retention off), never a fake
+  zero; the page card and the JSON section read the same scans, so the
+  human and machine views cannot disagree.
+
+### Changed — 2026-10-26 (release trust: tags run CI, gates move left)
+
+- **Release tags now run CI**: `v*` tag pushes trigger the same lanes. The
+  v0.3.0 tag itself never ran CI (only main did), so the shipped artifact
+  was verified one push removed from the tag.
+- **The duplication gate joined `verify-all.sh`'s head**: the pre-tag
+  ritual (which cut-release.sh runs as its probe lane) now executes CI's
+  exact zero-group art-dupl command before any browser boots. It
+  warn-skips without the pinned binary and fails on a non-pin one, so the
+  three-consecutive-red-CI class of 2026-10-25 cannot return unnoticed.
+- **cut-release.sh delegates its load wait to poll-gate.sh**: the gate step
+  is armed by the wrapper — it waits for the 15-minute load policy, then
+  execs the gate in the same process (no poll→launch gap, receipt-grade
+  START LOAD in the release log). The hand-rolled inline load check and
+  the operator's hand-rolled retry loop are gone; bind the wait with
+  `POLL_GATE_MAX_WAIT`.
+- **The rapid `.fail` seed policy is decided and documented**: committed
+  `testdata/rapid/**/*.fail` files are regression pins (rapid replays them
+  on every run of the owning test) — never gitignored, never hand-edited,
+  committed only once their replay is green. Curation is deliberate
+  single-file deletion, never a bulk sweep (docs/gotchas.md).
+
 ### Fixed — 2026-10-26 (release-truth repair after v0.3.0)
 
 - **The version const now reports the release it ships**: tag v0.3.0 was cut

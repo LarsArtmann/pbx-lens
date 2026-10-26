@@ -417,7 +417,13 @@ func TestOpsEndpointServesCounters(t *testing.T) {
 		t.Fatalf("GET /api/ops status = %d, want 200 (body: %s)", status, body)
 	}
 
-	for _, want := range []string{`"webhook-log"`, `"offered":2`, `"last_pass":"2026-10-12T04:00:00Z"`} {
+	for _, want := range []string{
+		`"webhook-log"`, `"offered":2`, `"last_pass":"2026-10-12T04:00:00Z"`,
+		// P16: the retention section answers even on a poller-only server —
+		// off posture, empty index: facts, not nulls where a zero would lie.
+		`"retention"`, `"max_age_seconds":0`, `"active":false`,
+		`"over_age":null`, `"oldest_age_seconds":null`, `"purge_lag_seconds":null`,
+	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("/api/ops missing %q (body: %s)", want, body)
 		}

@@ -9,8 +9,10 @@
 #      This script refuses to tag unless the local full gate is green AND
 #      the remote CI run on HEAD is green.
 #
-# Sequence: quiesce check → CHANGELOG sweep → nix build → full dev gate →
-# browser probes → tag → push → module-proxy check (`go list -m`).
+# Sequence: quiesce check → CHANGELOG sweep → nix build → full dev gate
+# (armed by scripts/poll-gate.sh: the load policy is wait-verified there,
+# in-process, receipt-grade) → browser probes → tag → push → module-proxy
+# check (`go list -m`).
 #
 # Usage: scripts/cut-release.sh vX.Y.Z
 set -euo pipefail
@@ -30,15 +32,12 @@ step() { echo "== $*"; }
 echo "$VERSION" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$' ||
 	fail "$VERSION is not vX.Y.Z"
 
-step "quiesce: clean tree, no concurrent gate, load policy"
+step "quiesce: clean tree, up to date with origin"
 [ -z "$(git status --porcelain)" ] ||
 	fail "working tree is dirty — commit or stash first (BuildFlow#55: never repair or tag from a dirty tree)"
 git fetch origin main --quiet
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] ||
 	fail "HEAD != origin/main — push/rebase the branch first; releases cut from unpushed work tag red"
-read -r L1 _ L15 _ </proc/loadavg
-awk -v a="$L1" -v b="$L15" 'BEGIN { exit !(a < 15 && b < 40) }' ||
-	fail "load ${L1}/${L15} is over the gate policy (1-min < 15 AND 15-min < 40) — wait for a quieter machine"
 
 step "CHANGELOG sweep: $VERSION must have a section (or Unreleased must be renamed first)"
 grep -qE "^## \[$VERSION\]|^## \[Unreleased\]" CHANGELOG.md ||
@@ -52,8 +51,11 @@ CONST="$(sed -nE 's/^[[:space:]]*version = "([^"]+)"/\1/p' cmd/pbx-lens/main.go)
 step "nix build (ships result/bin/pbx-lens; proves the flake + vendorHash)"
 TMPDIR="${TMPDIR:-/tmp}" nix build
 
-step "full dev gate (the quality gate; TMPDIR redirect if /tmp is tight)"
-TMPDIR="${TMPDIR:-/tmp}" nix develop -c env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev
+step "full dev gate (poll-gate arms it: waits for the load policy, then execs
+the gate in the same process — no poll→launch gap, receipt-grade START LOAD;
+poll-gate.sh owns the policy, the hand-rolled inline check retired 2026-10-26;
+bound the wait with POLL_GATE_MAX_WAIT, default waits with printed progress)"
+TMPDIR="${TMPDIR:-/tmp}" nix develop -c bash scripts/poll-gate.sh -- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev
 
 step "browser probe lane (all four suites)"
 bash scripts/verify-all.sh
