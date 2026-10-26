@@ -63,6 +63,30 @@ order of operations.
 - **Version skew (the real find)**: the devShell takes `pkgs.golangci-lint`
   UNPINNED and today resolves v2.15.0, while CI pins v2.14 (ci.yml
   GOLANGCI_LINT_VERSION). The 16-00 §e2 rule says gate binaries at the CI
-  pin are step zero. v2.14 verdicts on this tree: probe pending — the
-  alignment decision (flake pin down to v2.14, or CI up to v2.15) is
-  recorded as its own TODO row rather than chosen unilaterally.
+  pin are step zero. v2.14 verdicts on this tree: **probe run 2026-10-26 —
+  0 issues (exit 0)** via `go run …golangci-lint/v2/cmd/golangci-lint@v2.14.0`,
+  so both pins agree on this tree and the alignment stays a hygiene call
+  (the TODO row), not a correctness one.
+
+## 5. Vulnerability windows (T15, scanned 2026-10-26)
+
+- **govulncheck (module)**: **1 symbol-level stdlib finding** — GO-2026-6809
+  (crypto/x509, distrust compromised intermediates), found in go1.27.2,
+  **fixed in go1.27.3** → window: the next toolchain bump (the go1.27.3
+  floor rises to the fleet's next go pin; zero repo code changes). The
+  symbol trace runs through `calls.writeHashedField → fmt.Fprintf →
+  x509.Verify` — no certificate verification happens on this read-only
+  indexer, so exposure is nominal. Down from the 17-29-era "13 stdlib
+  findings" (DB + toolchain aging). Plus 1 module-level finding the code
+  does not reach.
+- **vulnix**: the system-closure scan (`vulnix -S`) reports 284
+  derivations with advisories — host territory, NOT this repo's window.
+  The repo-relevant scope is the lens package closure; the 17-29-era "22
+  advisories (vips/bash/binutils)" were host packages whose window is the
+  nixpkgs channel bump (a host-deploy concern, parked with the host
+  deploys in the owner wall). No repo action exists between channel
+  bumps.
+- **BuildFlow go-version advisory** (from the 2026-10-26 receipt): go.mod
+  declares `go 1.27.2` with a PATCH component — the tool wants
+  major.minor-only floors. That is a deliberate pin (AGENTS records
+  1.27.2 as the go-appkit floor); dispositioned here rather than churned.

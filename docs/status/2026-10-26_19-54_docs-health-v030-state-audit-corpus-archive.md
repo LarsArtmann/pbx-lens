@@ -220,28 +220,28 @@ files) · `check-rows` 13/13 COMPLETE post-format.
    in the header of docs/drafts/2026-10-26_v0.3.0-release-notes-shipped.md).
 2. Watch CI on `f5631f2` (the version-const + guard commit; gh is dead, so
    this needs the token too).
-3. Add a `v*` tag trigger to ci.yml (the release tag itself never ran CI) —
-   new TODO row.
-4. Wire `scripts/check-dedup-gate.sh` into `verify-all.sh`'s head — new TODO
-   row (the deliberate skip, now decided-and-doable).
-5. cut-release.sh: reuse `scripts/poll-gate.sh` for the load wait — new TODO
-   row.
-6. Decide + document the rapid `.fail` seed policy — new TODO row.
-7. Retention SLO fields on `/api/ops` (P16 remainder; the ETag half landed) —
-   new TODO row.
+3. ~~Add a `v*` tag trigger to ci.yml (the release tag itself never ran CI) —~~ done at `cf6e393`
+   ~~new TODO row.~~
+4. ~~Wire `scripts/check-dedup-gate.sh` into `verify-all.sh`'s head — new TODO~~ done at `cf6e393`
+   ~~row (the deliberate skip, now decided-and-doable).~~
+5. ~~cut-release.sh: reuse `scripts/poll-gate.sh` for the load wait — new TODO~~ done at `cf6e393`
+   ~~row.~~
+6. ~~Decide + document the rapid `.fail` seed policy — new TODO row.~~ done at `cf6e393`
+7. ~~Retention SLO fields on `/api/ops` (P16 remainder; the ETag half landed) —~~ done at `cf6e393`
+   ~~new TODO row.~~
 8. Archive the three EXECUTED plans (17-01, 19-32, 04-11) with per-row
    verdicts + a planning-archive manifest (b1).
-9. Annotate the ten live 10-25 reports inline (owed/partial items only, the
-   19-09 pattern) — closes 19-09 §b4's P12 remainder.
-10. Harvest the retired §f tails (17-29 f13–37, 16-00 f9–32, 15-09 remainder)
-    into TODO_LIST/ROADMAP after §g3's lane answer.
+9. ~~Annotate the ten live 10-25 reports inline (owed/partial items only, the~~ done at `ff603f3`
+   ~~19-09 pattern) — closes 19-09 §b4's P12 remainder.~~
+10. ~~Harvest the retired §f tails (17-29 f13–37, 16-00 f9–32, 15-09 remainder)~~ done — superseded by the 2026-10-26 Pareto plan (b889b6b), which merged the retired tails after Step-0 dedup
+    ~~into TODO_LIST/ROADMAP after §g3's lane answer.~~
 11. Owner: the nix-hash-fix exclusion call (17-29 §g2).
 12. Owner: the lane-split call (17-29 §g3).
 13. Owner: the answer sheet D1–D5 + the other pending owner rows.
 14. Owner: file the upstream queue (CopyButton nonce, Card TitleTag, statix
     exit-0, buildflow advisory-vs-fatal).
-15. Detect-only advisory triage (branching-flow hotspots, go-licenses'
-    larsartmann-module errors, cqrs-lint CBOR warning) — new TODO row.
+15. ~~Detect-only advisory triage (branching-flow hotspots, go-licenses'~~ done — docs/drafts/2026-10-26_advisory-triage-jsonv2-inventory.md; the TODO row carries the dispositions
+    ~~larsartmann-module errors, cqrs-lint CBOR warning) — new TODO row.~~
 16. File/fix the rg-hook `-c`→`--replace` misfire in crush-config (third
     strike, this session included; §d2).
 17. Add the bullet mode to the docs-health annotate toolkit (16-47 §e1, plus
@@ -256,30 +256,30 @@ files) · `check-rows` 13/13 COMPLETE post-format.
     dprint-policy question.
 23. Next release: verify the new version-const guard end-to-end (it has one
     parity probe, no release run yet).
-24. go-licenses: LICENSEs or suppression for the larsartmann modules (17
-    error lines per FULL run).
-25. File-size splits: server.go (715), dashboard.go (551), search.go (570),
-    telnyx_test.go (836).
-26. jsonv2 watchlist: order the 39 jsonv1-boundary findings by risk.
-27. cqrs-lint policy pass (19 findings; the CBOR time.Time warning is real).
-28. govulncheck 13 stdlib findings → toolchain-bump window map.
-29. vulnix 22 advisories → nixpkgs bump window.
+24. ~~go-licenses: LICENSEs or suppression for the larsartmann modules (17~~ done — dispositioned 2026-10-26 — census re-confirmed live (17 larsartmann errors); the step stays; upstream LICENSEs are the TODO row
+    ~~error lines per FULL run).~~
+25. ~~File-size splits: server.go (715), dashboard.go (551), search.go (570),~~ done — ACCEPTED with reasons — triage doc §2 (search.go row already resolved by the earlier split)
+    ~~telnyx_test.go (836).~~
+26. ~~jsonv2 watchlist: order the 39 jsonv1-boundary findings by risk.~~ done — ordered P0-P3 — triage doc §3 (the tool counts FILES: 39)
+27. ~~cqrs-lint policy pass (19 findings; the CBOR time.Time warning is real).~~ done — the B010 row added to docs/cqrs-lint-policy.md; census 19, unchanged
+28. ~~govulncheck 13 stdlib findings → toolchain-bump window map.~~ done — triage doc §5 — GO-2026-6809, fixed in go1.27.3 (down from 13 findings)
+29. ~~vulnix 22 advisories → nixpkgs bump window.~~ done — triage doc §5 — host territory; the repo-side window is the nixpkgs channel bump
 30. Bench receipts re-run on a quiet box (docs/http-stack.md).
-31. BuildFlow binary freshness (the BuildFlow#56 bookkeeping row).
-32. `VACUUM` the buildflow cache.db (0.18 GB, 87% free pages).
+31. BuildFlow binary freshness (the BuildFlow#56 bookkeeping row). **→ the rebuild is parked (the BuildFlow checkout carries a concurrent session dirty go.mod; BuildFlow#55)**
+32. ~~`VACUUM` the buildflow cache.db (0.18 GB, 87% free pages).~~ done — 2026-10-26 — cache.db 194 MB → 33 MB
 33. AGENTS-budget CI job (hooks residue, lint-policy gated).
 34. `golangci-lint config verify` gate (lint-policy gated).
-35. P11: answer-rate analytics (billsec-0 × hangup-cause).
-36. P13: sibling folds (CDR call_direction template, lens.nix backup wording,
-    webphone deep link).
-37. P14: lint residue (gofumpt/v2.14 parity, unknown-`//nolint` grep).
-38. P17: two decision notes (PII enforcement, export compression).
-39. P18: FTS tokenizer coverage table test.
-40. P18: VACUUM INTO restore drill on the current schema.
-41. P19: upstream watchlists refresh (go-cqrs-lite v5 budget; versions.json
-    via `git tag --contains`).
-42. Measure the /frag/dashboard 304-hit rate (prep for the stamp-churn owner
-    call).
+35. ~~P11: answer-rate analytics (billsec-0 × hangup-cause).~~ done — landed — answer rate + short-call share, denominators in DOMAIN_LANGUAGE, goldens re-pinned
+36. ~~P13: sibling folds (CDR call_direction template, lens.nix backup wording,~~ done — sibling 04c9d61 (lens.nix wording + the deep-link row; the CDR template fold a recorded no-op)
+    ~~webphone deep link).~~
+37. ~~P14: lint residue (gofumpt/v2.14 parity, unknown-`//nolint` grep).~~ done — triage doc §4 — nolint census classified; the v2.14 probe ran 0 issues on this tree
+38. ~~P17: two decision notes (PII enforcement, export compression).~~ done — docs/decisions/2026-10-26_pii-and-export-compression-owner-message.md
+39. ~~P18: FTS tokenizer coverage table test.~~ done — the FTS tokenizer trap table test (internal/search)
+40. ~~P18: VACUUM INTO restore drill on the current schema.~~ done — drill re-run green on the current schema (2026-10-26)
+41. ~~P19: upstream watchlists refresh (go-cqrs-lite v5 budget; versions.json~~ done — verified at-latest against the local checkout (system v4.15.4, metaengine v4.20.0, scenario v4.4.3, systemscenario v4.2.1); no v5 tags exist upstream yet; versions.json 109/112 truthful (2026-10-26)
+    ~~via `git tag --contains`).~~
+42. ~~Measure the /frag/dashboard 304-hit rate (prep for the stamp-churn owner~~ done — measured — scripts/poll-304-probe.js BEFORE numbers (91.7% within-minute, 75.0% across-minutes), recorded on the TODO row
+    ~~call).~~
 43. Host deploys with current module options (`aiDids`). (owner)
 44. Production ContentHash-v2 re-ingest (`refresh -since 0` classify, then
     `-apply`). (owner)
