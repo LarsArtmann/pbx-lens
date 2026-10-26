@@ -399,3 +399,44 @@ day's edits). The timing-regression verdicts at run end are load
 variance against the morning's quiet-box baseline (15-min 6.06 then,
 18.09 now), not step failures — the budget-exceeded warning (1m1.2s vs
 1m0s) is the same story.
+
+## The third FULL receipt — the post-feature tree, paid for twice (2026-10-26 11:20)
+
+START LOAD **1m=48.05 5m=40.35 15m=29.02** (policy < 40, verified by the
+fixed `poll-gate.sh`) via bare `scripts/poll-gate.sh`, tree frozen at
+`3cdc5b2` for the whole run (START-HEAD == END-HEAD) → **60 success /
+0 failed**, exit 0, wall 2m15s, run `20261026-101959-8b3301e0`.
+test-race ✔, test-coverage ✔, golangci-lint 0 issues (repo config),
+nix-build ✔, art-dupl zero-group ✔, dprint ✔ after same-commit
+re-padding of FEATURES.md/scripts/README.md. The 17-24 plan's four
+features (P5–P10) are inside this receipt — the P3 release
+prerequisite is met.
+
+Two runs died before this one landed, both their own receipts:
+
+1. **The gate armed over-policy** (2026-10-25 19:57, START LOAD printed
+   15m=65.13 under a 15m<40 policy): `ready()` compared the whole
+   "1m 5m 15m" triple as one STRING (lexicographic "39.25 …" < "40"),
+   so a quiet 1m laundered a hot 15m. Killed void; fixed in `5db1853`
+   with the production fixture as the seeded red. The self-test's old
+   fixtures (1.00/2.00/3.00 and 41/40.5/40.2) could not discriminate —
+   a self-test whose fixtures pass under the bug is not a test of the
+   bug.
+2. **Two hash corruptions, one failed run** (2026-10-25 20:54, exit
+   69): go.mod had moved past `vendorHash` since the sqlite bump, and
+   the run's forbidden `nix-hash-fix` repair did exactly what
+   BuildFlow#55 documents — it blanked the pinned cqrs-lint source
+   hash to the all-A placeholder, and the daemon committed it. A
+   concurrent session re-pinned the vendor hash but the sweep had
+   ALSO overwritten cqrs-lint's OWN vendorHash with this repo's; both
+   restored (source hash `0df9fe6`, cqrs-lint vendor `7ff3173`), and
+   both fixes verified by building the root package AND the devShell
+   (the root build alone never touches the cqrs-lint FOD — that blind
+   spot cost one full gate cycle). A rapid property failure
+   (`cdr.Parse` on a bare `;`) was fixed mid-window by the concurrent
+   session (`3cdc5b2`); its committed failfile replays green.
+
+Lesson, twice over: a receipt is only as honest as the arm (rule 2 of
+docs/concurrency.md now names the void-over-policy case), and an FOD
+mismatch names the hash to restore — read the "got" line, never let an
+automatic repair write hashes.
