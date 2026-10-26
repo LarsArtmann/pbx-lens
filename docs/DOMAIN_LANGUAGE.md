@@ -93,16 +93,16 @@ Every dashboard rate names what it divides; these are the canonical
 denominators, and a new card must pick one of them (or define its own here
 first).
 
-| Figure                                     | Denominator                                          | Never includes                                                                                                 |
-| ------------------------------------------ | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| AI share (`AIRatio`)                       | all calls in the window (`Total`)                    | nothing excluded — human calls are the complement, not a third bucket                                          |
-| Spend mean (`CostPerMinute`)               | priced calls' own billed seconds (`CostSeconds`)     | unpriced calls; a zero-second priced call; a second currency (mixed currency refuses to sum entirely)          |
-| Segment rate (`CostPerMinute` per segment) | that segment's own priced seconds                    | the window's other segments — a segment's rate never borrows another's seconds                                 |
+| Figure                                     | Denominator                                                                                           | Never includes                                                                                                 |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| AI share (`AIRatio`)                       | all calls in the window (`Total`)                                                                     | nothing excluded — human calls are the complement, not a third bucket                                          |
+| Spend mean (`CostPerMinute`)               | priced calls' own billed seconds (`CostSeconds`)                                                      | unpriced calls; a zero-second priced call; a second currency (mixed currency refuses to sum entirely)          |
+| Segment rate (`CostPerMinute` per segment) | that segment's own priced seconds                                                                     | the window's other segments — a segment's rate never borrows another's seconds                                 |
 | Answer rate (`Quality.Answered`)           | calls whose source reports a billsec (`DurationReported`, kind-gated by `SourceKind.ReportsDuration`) | agent-native rows (their zero duration means "not reported", never "unanswered" — silence is not failure)      |
-| Short-call share (`Quality.ShortCalls`)    | ANSWERED calls (`Answered`)                          | unanswered calls (they are the answer rate's own story, told in `UnansweredTop`)                               |
-| No-user-turn share                         | calls whose transcript has any turns (`Transcripts`) | calls with no transcript at all — "no speech rows" is not "no user turn"                                       |
-| Quality trend (`QualityTrend`)             | the prior week's transcribed calls                   | a week whose share was zero (no meaningful move exists); rendered in percentage POINTS, never % of %           |
-| Weekday baseline (`VolumeNote`)            | that weekday's complete days in the window           | today's partial day (it must not dilute its own baseline); fewer than two prior same-weekdays → no note at all |
+| Short-call share (`Quality.ShortCalls`)    | ANSWERED calls (`Answered`)                                                                           | unanswered calls (they are the answer rate's own story, told in `UnansweredTop`)                               |
+| No-user-turn share                         | calls whose transcript has any turns (`Transcripts`)                                                  | calls with no transcript at all — "no speech rows" is not "no user turn"                                       |
+| Quality trend (`QualityTrend`)             | the prior week's transcribed calls                                                                    | a week whose share was zero (no meaningful move exists); rendered in percentage POINTS, never % of %           |
+| Weekday baseline (`VolumeNote`)            | that weekday's complete days in the window                                                            | today's partial day (it must not dilute its own baseline); fewer than two prior same-weekdays → no note at all |
 
 ## Additive fields and the schema version (2026-10-23)
 

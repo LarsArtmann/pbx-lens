@@ -56,7 +56,11 @@ func TestDashboardQualityRollupUsesItsOwnDenominators(t *testing.T) {
 
 	// Only the two calls that had a transcript can fail "no user turn".
 	if rollup.Transcripts != 2 || rollup.NoUserTurn != 1 {
-		t.Errorf("no-user-turn = %d/%d, want 1/2 transcripts", rollup.NoUserTurn, rollup.Transcripts)
+		t.Errorf(
+			"no-user-turn = %d/%d, want 1/2 transcripts",
+			rollup.NoUserTurn,
+			rollup.Transcripts,
+		)
 	}
 
 	if rollup.PartiesKnown != 3 || rollup.SelfDial != 1 {
@@ -65,7 +69,11 @@ func TestDashboardQualityRollupUsesItsOwnDenominators(t *testing.T) {
 
 	// Both transcripts carry a start-of-call turn; only B runs far past it.
 	if rollup.TailEligible != 2 || rollup.RecordingTail != 1 {
-		t.Errorf("recording tail = %d/%d, want 1/2 timed transcripts", rollup.RecordingTail, rollup.TailEligible)
+		t.Errorf(
+			"recording tail = %d/%d, want 1/2 timed transcripts",
+			rollup.RecordingTail,
+			rollup.TailEligible,
+		)
 	}
 
 	if len(rollup.HangupCauses) != 2 || rollup.HangupCauses[0].Cause != "NORMAL_CLEARING" ||
@@ -81,7 +89,10 @@ func TestDashboardQualityRollupFoldsTheLongTail(t *testing.T) {
 	seeded := make([]calls.Observation, 0, hangupCauseLimit+3)
 
 	for i := range hangupCauseLimit + 3 {
-		obs := webObservation("conv-cause-"+string(rune('a'+i)), started.Add(time.Duration(i)*time.Minute))
+		obs := webObservation(
+			"conv-cause-"+string(rune('a'+i)),
+			started.Add(time.Duration(i)*time.Minute),
+		)
 		obs.HangupCause = "CAUSE_" + string(rune('A'+i))
 		seeded = append(seeded, obs)
 	}
@@ -98,7 +109,11 @@ func TestDashboardQualityRollupFoldsTheLongTail(t *testing.T) {
 	}
 
 	if len(stats.Quality.HangupCauses) != hangupCauseLimit+1 {
-		t.Fatalf("causes = %d rows, want %d + one folded entry", len(stats.Quality.HangupCauses), hangupCauseLimit)
+		t.Fatalf(
+			"causes = %d rows, want %d + one folded entry",
+			len(stats.Quality.HangupCauses),
+			hangupCauseLimit,
+		)
 	}
 
 	last := stats.Quality.HangupCauses[len(stats.Quality.HangupCauses)-1]
@@ -153,7 +168,11 @@ func TestDashboardAnswerRateUsesReportedDenominators(t *testing.T) {
 	}
 
 	if rollup.DurationReported != 3 || rollup.Answered != 2 {
-		t.Errorf("answer rate = %d/%d, want 2 answered over 3 duration-reporting calls", rollup.Answered, rollup.DurationReported)
+		t.Errorf(
+			"answer rate = %d/%d, want 2 answered over 3 duration-reporting calls",
+			rollup.Answered,
+			rollup.DurationReported,
+		)
 	}
 
 	if rollup.ShortCalls != 1 {
