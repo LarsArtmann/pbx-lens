@@ -83,41 +83,41 @@ the three owner questions are §g.
 
 ## e) WHAT WE SHOULD IMPROVE (self-review answers)
 
-- **Q forgot?** The formatter receipt (fixed now), and I initially trusted
-  the inherited CI invocation over the tool's own docs. Also: minor
-  overstatement in the final summary — "all 20 groups read and judged" is
-  exactly true for the function-pair groups; the pure type-expression
-  groups (`templ.Component`, `[]display.TableRow`, …) were judged from the
-  report snippets themselves, which is adequate but not the same act.
-- **Q stupid-that-we-do?** A duplication lane that ran warning-only for six
-  days over a universe that excluded the files where all the real clone
-  groups live (.templ). The gate fixes both at once.
-- **Q better?** Read the full `--help` before proving tool behavior; derive
-  negative-control fixtures from known-detected clones; run `dprint check`
-  as part of every change's receipt, not as an afterthought.
-- **Q still improve?** Close the version-parity seam (§b), local gate hook,
-  devShell pin — all in §f.
-- **Q lie?** No falsehoods; one wording overshoot (§e Q1) and one unverified
-  assumption explicitly labeled as such (§b version parity) rather than
-  hidden.
-- **Q ghost systems?** None created: the baseline JSON is consumed by CI;
-  the doc is consumed by humans; nothing unwired was added. The retired txt
-  is deleted, not left as a zombie.
-- **Q scope creep?** One judgment call to flag: converting the CI lane from
-  warning-only to fail-the-build is a POLICY change the user never
-  explicitly requested — justified by the deduplicate-code skill ("acceptance
-  as a gate, not prose"), by go-etag precedent, and by today's audit item
-  16, and disclosed in the summary. Reverting to warning-only is a one-line
-  change if the owner disagrees (§g Q1).
-- **Q removed something useful?** No — the txt baseline's information
-  content is fully superseded by the JSON + doc; its history is recorded.
-- **Q split brains?** One soft one, accepted: the refresh command now lives
-  in ci.yml (comment) and docs/art-dupl-baseline.md (canonical); AGENTS.md
-  and the adoption map point at the doc. Watch that the two command sites
-  never diverge — the doc is canonical by declaration.
-- **Q tests?** The gate itself has red/green proofs, but nothing automated
-  re-proves it locally (CI-only). A tiny script in verify-all closes that
-  (§f).
+- ~~**Q forgot?** The formatter receipt (fixed now), and I initially trusted~~ **NOT-DO — process note.**
+  ~~the inherited CI invocation over the tool's own docs. Also: minor~~
+  ~~overstatement in the final summary — "all 20 groups read and judged" is~~
+  ~~exactly true for the function-pair groups; the pure type-expression~~
+  ~~groups (`templ.Component`, `[]display.TableRow`, …) were judged from the~~
+  ~~report snippets themselves, which is adequate but not the same act.~~
+- ~~**Q stupid-that-we-do?** A duplication lane that ran warning-only for six~~ **NOT-DO — process note; the gate fixed both at once.**
+  ~~days over a universe that excluded the files where all the real clone~~
+  ~~groups live (.templ). The gate fixes both at once.~~
+- ~~**Q better?** Read the full `--help` before proving tool behavior; derive~~ **NOT-DO — process note.**
+  ~~negative-control fixtures from known-detected clones; run `dprint check`~~
+  ~~as part of every change's receipt, not as an afterthought.~~
+- ~~**Q still improve?** Close the version-parity seam (§b), local gate hook,~~ done — parity receipt banked, check-dedup-gate.sh landed (315587e), the pin doctrine holds
+  ~~devShell pin — all in §f.~~
+- ~~**Q lie?** No falsehoods; one wording overshoot (§e Q1) and one unverified~~ **NOT-DO — process note.**
+  ~~assumption explicitly labeled as such (§b version parity) rather than~~
+  ~~hidden.~~
+- ~~**Q ghost systems?** None created: the baseline JSON is consumed by CI;~~ **NOT-DO — process note; none created.**
+  ~~the doc is consumed by humans; nothing unwired was added. The retired txt~~
+  ~~is deleted, not left as a zombie.~~
+- ~~**Q scope creep?** One judgment call to flag: converting the CI lane from~~ done — the owner never disagreed; the gate caught real clones twice since (19-09 d1; afae51e)
+  ~~warning-only to fail-the-build is a POLICY change the user never~~
+  ~~explicitly requested — justified by the deduplicate-code skill ("acceptance~~
+  ~~as a gate, not prose"), by go-etag precedent, and by today's audit item~~
+  ~~16, and disclosed in the summary. Reverting to warning-only is a one-line~~
+  ~~change if the owner disagrees (§g Q1).~~
+- ~~**Q removed something useful?** No — the txt baseline's information~~ **NOT-DO — process note.**
+  ~~content is fully superseded by the JSON + doc; its history is recorded.~~
+- ~~**Q split brains?** One soft one, accepted: the refresh command now lives~~ done — held; the doc stayed canonical with no divergence through 2026-10-26
+  ~~in ci.yml (comment) and docs/art-dupl-baseline.md (canonical); AGENTS.md~~
+  ~~and the adoption map point at the doc. Watch that the two command sites~~
+  ~~never diverge — the doc is canonical by declaration.~~
+- ~~**Q tests?** The gate itself has red/green proofs, but nothing automated~~ done — closed: check-dedup-gate.sh carries the local red/green self-test (315587e)
+  ~~re-proves it locally (CI-only). A tiny script in verify-all closes that~~
+  ~~(§f).~~
 
 ## f) Next (impact-sorted; 1–3 are this work's open receipts)
 
