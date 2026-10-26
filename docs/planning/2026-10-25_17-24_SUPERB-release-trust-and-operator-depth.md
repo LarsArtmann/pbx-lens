@@ -1,8 +1,13 @@
 <!-- Pareto plan 2026-10-25 17:24 — input: the 15-39 + 16-58 + 17-12 reports'
      §f lists, the 10-46 plan's open 20% tier, TODO_LIST (31 open rows), and
-     ROADMAP theme 0. Status: IN EXECUTION — 7/19 coarse tasks done
-     2026-10-25 (P1, P2, P5, P6, P7, P8, P10; P15/P16 partially — see the
-     erratum below). P3/P4/P9 remain owner-gated (§g1–§g3).
+     ROADMAP theme 0. Status: IN EXECUTION — 8/19 coarse tasks done
+     (P1, P2, P5, P6, P7, P8, P10, plus P3+P9 executed 2026-10-26 after
+     the owner answered §g2 = v0.3.0 and §g3 = squash-while-unpushed;
+     §g1 resolved de facto: PR #3 closed, sqlite v1.61.0 landed by hand).
+     P3 receipt: tag v0.3.0 cut via cut-release.sh (dev gate, four
+     browser suites, remote CI green, module proxy serves the tag); gh
+     release notes pending an owner token refresh — body in
+     docs/drafts/2026-10-26_v0.3.0-release-notes-shipped.md.
      Guard: NO VERSCHLIMMBESSERUNG — the browser-lane ritual, the art-dupl
      zero-group gate, no-local-replace, AGENTS budget 219/219, and the
      receipt-grade-commit contract all hold inside this plan.
@@ -13,7 +18,11 @@
      firstMatchedTurn via slices.IndexFunc, CI run 40221643859 green), and
      the gate moved left into .githooks/pre-commit via pin-enforcing
      check-dedup-gate.sh (315587e, self-tested in Guard Self-Tests).
-     Fresh FULL receipt owed on the post-feature tree before P3. -->
+     The fresh FULL receipt landed 2026-10-26 11:20 on the post-feature
+     tree (3cdc5b2, run 20261026-101959-8b3301e0) — see
+     docs/buildflow-dev-gate.md's third receipt for the two void runs
+     (poll-gate string-compare arm; the doubled hash corruption) it
+     paid for first. -->
 
 # SUPERB plan — release, trust, and operator depth (2026-10-25 17:24)
 
