@@ -7,6 +7,23 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-26 (cqrs-lint vendorHash restored after the sweep clobbered it)
+
+- **`nix develop` works again**: the 2026-10-25 sweep commit had also
+  overwritten cqrs-lint's OWN `vendorHash` in flake.nix with this repo's
+  pbx-lens vendorHash (and its source `hash` with the placeholder), so
+  the devshell died at cqrs-lint's go-modules fixed-output derivation —
+  the re-pin commit (18382a2) repaired only `vendorHash.nix`. Restored
+  the correct cqrs-lint pins (values confirmed by git history and by the
+  FOD mismatch output itself); the "re-derived 2026-10-25" comment above
+  the pin was false and now states the real history. Verified: `nix
+  build`, `nix flake check`, `nix develop -c echo`, go build, the full
+  `go test ./...` suite, `golangci-lint run ./...` (0 issues), and the
+  art-dupl zero-group gate all green. Lesson: the sweep touched two
+  fixed-output pins but only re-derived one — flake check does NOT
+  build the devShell, so its green masked the break; verify devshell
+  consumers (`nix develop -c …`) after touching flake pins.
+
 ### Fixed — 2026-10-26 (vendorHash re-pin after the go.mod sweep)
 
 - **The nix package builds again**: the 2026-10-25 Go toolchain/go.mod
