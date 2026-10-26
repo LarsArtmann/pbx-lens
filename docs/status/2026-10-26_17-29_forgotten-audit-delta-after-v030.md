@@ -108,16 +108,16 @@ Everything in the 16-00 report's §e stands. Added:
 2. Answer the three §g questions below.
 3. Index the three new gotchas into docs/gotchas.md (pointers to the
    owning docs).
-4. AGENTS.md prune-first commit, then add: art-dupl pin parity, FOD
+4. AGENTS.md prune-first commit, then add: art-dupl pin parity, FOD **→ routed — pin parity + FOD minimum landed f5631f2; receipt-triple reading still open**
    verification minimum, receipt-triple reading.
-5. Add the templ KV/CSSClasses note to docs/templ-components-adoption.md
-   (the 19-09 §e6 carryover).
+5. ~~Add the templ KV/CSSClasses note to docs/templ-components-adoption.md~~ done at `c1c2ed0`, `f5631f2`
+   ~~(the 19-09 §e6 carryover).~~
 6. Decide the rapid `.fail` seed policy (keep-in-git vs gitignore) and
    document it.
-7. Confirm/append CHANGELOG rows for the 10-26 gate fixes.
+7. ~~Confirm/append CHANGELOG rows for the 10-26 gate fixes.~~ done at `f5631f2`
 8. Annotate 19-09 §f1–5 done with receipts.
-9. Wire check-dedup-gate.sh into verify-all.sh's head (the deliberately
-   skipped wiring place — decide).
+9. ~~Wire check-dedup-gate.sh into verify-all.sh's head (the deliberately~~ done at `cf6e393`
+   ~~skipped wiring place — decide).~~
 10. P12: harvest the three reports' §f into TODO_LIST/ROADMAP (coordinate
     with the 15-09 lane first).
 11. Owner decision: exclude `nix-hash-fix` from buildflow (145/180
@@ -125,7 +125,7 @@ Everything in the 16-00 report's §e stands. Added:
 12. P4 remainder: dependabot github-actions-only grouping.
 13. P11: answer-rate (billsec-0 × hangup-cause, QualityRollup, dashboard).
 14. P16: ETag OnETagGenerated/On304 counters into /api/ops.
-15. P16: retention SLO fields on /api/ops.
+15. ~~P16: retention SLO fields on /api/ops.~~ done at `cf6e393`
 16. P13: sibling folds (check the sibling window first).
 17. P14: gofumpt/v2.14 parity + unknown-`//nolint` grep.
 18. P17: two decision notes.
@@ -133,7 +133,7 @@ Everything in the 16-00 report's §e stands. Added:
 20. P18: VACUUM INTO restore drill.
 21. P19: upstream watchlists (go-cqrs-lite v5 budget; versions.json via
     `git tag --contains`).
-22. Add `v*` tag trigger to ci.yml (the release tag never ran CI).
+22. ~~Add `v*` tag trigger to ci.yml (the release tag never ran CI).~~ done at `cf6e393`
 23. Rebuild the local BuildFlow binary (58115f7 vs repo 24dff81).
 24. VACUUM the buildflow cache.db (0.18 GB, 87% free pages); eyeball the
     0.63 GB state DB.
@@ -154,7 +154,7 @@ Everything in the 16-00 report's §e stands. Added:
 34. Bench receipts re-run on a quiet box (docs/http-stack.md).
 35. Harvest the 15-09 session's §f 50-ranked after it closes; merge with
     this list into the next Pareto plan.
-36. cut-release.sh: reuse poll-gate.sh for the load wait.
+36. ~~cut-release.sh: reuse poll-gate.sh for the load wait.~~ done at `cf6e393`
 37. Pre-push ritual, written down: the FULL receipt command sequence as
     the documented pre-tag step (it is currently tribal memory).
 

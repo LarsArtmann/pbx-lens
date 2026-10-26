@@ -145,9 +145,9 @@ red, the daemon norm owner-ratified, the FULL receipt landed honest, and
    cannot fail under the bug is not a test of the bug.
 5. **Durable artifacts live in the repo from birth** (docs/drafts/), never
    /tmp, for anything that must outlive the hour.
-6. **cut-release.sh should reuse poll-gate.sh** for its load wait (its
-   inline awk reads fields separately and is safe today, but the hand-
-   rolled retry loop I used is the smell).
+6. ~~**cut-release.sh should reuse poll-gate.sh** for its load wait (its~~ done at `cf6e393`
+   ~~inline awk reads fields separately and is safe today, but the hand-~~
+   ~~rolled retry loop I used is the smell).~~
 7. **AGENTS.md at 219/219 is full**: the art-dupl PATH-pin gotcha deserves
    an AGENTS line and currently lives only in the owning docs — needs a
    prune-first commit.
@@ -164,21 +164,21 @@ red, the daemon norm owner-ratified, the FULL receipt landed honest, and
 2. P12: harvest the three reports' §f lists into TODO_LIST/ROADMAP.
 3. Annotate 19-09 §f1–5 done with receipts (afae51e, 315587e, lane green,
    third receipt, 5cad5fc).
-4. Decide + document the rapid `.fail` seed policy (keep-in-git as
-   regression pins vs gitignore; the daemon will sweep future seeds
-   either way).
+4. ~~Decide + document the rapid `.fail` seed policy (keep-in-git as~~ done at `cf6e393`
+   ~~regression pins vs gitignore; the daemon will sweep future seeds~~
+   ~~either way).~~
 5. Confirm/append CHANGELOG rows for the 10-26 gate fixes (poll-gate,
    dedup gate) inside the v0.3.0 section.
 6. Owner decision: exclude `nix-hash-fix` from buildflow runs (145/180
    failures, BuildFlow#55 corrupted production hashes twice this week).
-7. Wire check-dedup-gate.sh into verify-all.sh's head (the one wiring
-   place deliberately skipped — decide and do).
+7. ~~Wire check-dedup-gate.sh into verify-all.sh's head (the one wiring~~ done at `cf6e393`
+   ~~place deliberately skipped — decide and do).~~
 8. P4 remainder: dependabot github-actions-only grouping.
 9. P11: answer-rate (billsec-0 × hangup-cause definition, honest
    denominators row, QualityRollup extension, dashboard section).
-10. P16: ETag hook counters (pinned v0.6.1 hooks) into /api/ops.
-11. P16: retention SLO fields (oldest unretired view, purge lag) on
-    /api/ops.
+10. ~~P16: ETag hook counters (pinned v0.6.1 hooks) into /api/ops.~~ done — ETag counters live (internal/web/caching.go:78-79, /api/ops etag keys; 19-09 annotation)
+11. ~~P16: retention SLO fields (oldest unretired view, purge lag) on~~ done at `cf6e393`
+    ~~/api/ops.~~
 12. P13: sibling folds (check the sibling window first).
 13. P14: gofumpt/v2.14 parity + unknown-`//nolint` grep.
 14. P17: two decision notes.
