@@ -286,6 +286,17 @@ empty-dashboard finding (chart cards rendering as silent collapsed-0px-bar
 boxes instead of honest empty messages) was found the same way — no test
 asked for it because no test knew the page could look that broken.
 
+## `go test -update ./pkg/` loses the package — put the flag LAST (paid for, 2026-10-26)
+
+`go test -update ./internal/web/` fails with "no Go files in /…/pbx-lens"
+(reproduced verbatim 2026-10-26): the golden `-update` flag is defined by
+the TEST binary, not by `go test`, and placed before the package pattern
+the go tool never registers that pattern — it falls back to the current
+directory, and the repo root has no .go files (subPackages layout). The
+working form is flag-last: `go test ./internal/web/ -update` (or
+`go test ./internal/web/ -run TestGolden -update`). Diagnosed after the
+19-53 session shrugged at it twice (§d3 there).
+
 ## statix exits 0 on a config parse error — the check silently no-ops (paid for, 2026-10-17)
 
 `statix check .` printed "config error: unable to parse config file …" and

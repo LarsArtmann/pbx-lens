@@ -10,6 +10,13 @@ on:
   pull_request:
     branches: [main, master]
 
+# Cancel superseded runs: grouped by COMMIT SHA, so a release tag sharing
+# main's HEAD reuses one run slot instead of racing a twin (the 2026-10-26
+# double-run note) — the later trigger cancels the earlier on the same tree.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: true
+
 env:
   GO_VERSION: "1.27"
   GOLANGCI_LINT_VERSION: v2.14

@@ -34,10 +34,10 @@
 
 ## Known interactions
 
-- **Double runs:** a tag on a commit that is also main's HEAD runs the
-  workflow TWICE today (push + tags triggers share no concurrency group).
-  T16's concurrency group (cancel-in-progress) deduplicates the supereded
-  one — until then, expect and ignore the twin.
+- **Double runs:** a tag on a commit that is also main's HEAD used to run
+  the workflow twice (push + tags triggers, no shared group). The SHA-keyed
+  concurrency group (2026-10-26, ci.yml) cancels the superseded twin — on
+  the first tag push, expect ONE surviving run per commit.
 - **cut-release.sh does the watching by hand for now:** its tail step says
   "watch the tag's CI run" — the 19-53 §f28 upgrade (a real `gh run watch`
   step in the script) lands after this checklist proves the trigger once.
