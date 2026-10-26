@@ -1,0 +1,8 @@
+# 2026/10/26 11:07:22.272195 [TestParsersSurviveArbitraryInput] [rapid] draw input: []byte{0x3b}
+# 2026/10/26 11:07:22.272221 [TestParsersSurviveArbitraryInput] cdr.Parse errored on arbitrary input: [corruption:cdr.parse.read] reading Master.csv: EOF
+# 
+v0.4.8#278538463713479612
+0x5555555555555
+0xe3e05a098777c
+0x3b
+0x0
