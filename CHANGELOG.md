@@ -7,6 +7,27 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-26 (full-code-review lane: two fixes)
+
+- **A lone-semicolon CDR line no longer kills the whole parse**: the
+  trailing-`;` strip ran after the blank-line check, so a line of just `;`
+  became an empty string AFTER the check and the CSV reader answered
+  `io.EOF` — the parser then failed the entire file as corruption instead
+  of skipping the row. Found by the `rapid` property test's random seed
+  (the failfile is committed as the regression replay); the empty check
+  now runs after the strip. Arbitrary bytes through every parser still
+  error-free per the property.
+- **The Telnyx ingest client no longer hangs forever on a stalled
+  upstream**: `NewClient` rode `http.DefaultClient` (no header timeout),
+  so a connection that accepts but never answers pinned the poller's pass
+  indefinitely — the exact stall class the 2026-10-10-11 review ticketed
+  for the recording proxy, whose fix landed but the client's half didn't.
+  The client now clones the default transport with a 30 s
+  ResponseHeaderTimeout (all client calls read bounded JSON bodies, so a
+  header budget is the whole liveness story; the recording proxy's
+  unbounded-body doctrine is untouched — its audio stream rides a
+  separate client).
+
 ### Fixed — 2026-10-26 (cqrs-lint vendorHash restored after the sweep clobbered it)
 
 - **`nix develop` works again**: the 2026-10-25 sweep commit had also
