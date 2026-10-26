@@ -42,7 +42,8 @@ the full gate in the same process (no poll→launch gap).
 
 Environment: POLL_GATE_THRESHOLD, POLL_GATE_INTERVAL, POLL_GATE_MAX_WAIT,
 POLL_GATE_LOAD_FILE, POLL_GATE_EXEC (default "buildflow --build-mode full").
-Arguments after -- are passed to the gate command unchanged.
+Arguments after -- REPLACE the gate command for this run (the wired callers
+pass a complete `env BUILDFLOW_NO_RESULT_CACHE=1 buildflow …` line).
 USAGE
 }
 
@@ -55,19 +56,19 @@ die_usage() {
 # read_load prints "1m 5m 15m" from the load file; a broken source is fatal
 # because a gate armed on an unread load would defeat the whole point.
 read_load() {
-	local line
+	local line l1 l5 l15
 	if ! line=$(head -n 1 "$load_file" 2>/dev/null); then
 		echo "poll-gate: cannot read $load_file; refusing to arm the gate blind" >&2
 		exit "$exit_load_unreadable"
 	fi
 
-	set -- $line
-	if [ "$#" -lt 3 ]; then
+	read -r l1 l5 l15 _ <<<"$line"
+	if [ -z "$l15" ]; then
 		echo "poll-gate: $load_file does not hold three load figures" >&2
 		exit "$exit_load_unreadable"
 	fi
 
-	printf '%s %s %s\n' "$1" "$2" "$3"
+	printf '%s %s %s\n' "$l1" "$l5" "$l15"
 }
 
 # ready reports whether the 15-minute figure is below the threshold.
@@ -126,6 +127,33 @@ self_test() {
 		*"START LOAD: 1m=1.00 5m=2.00 15m=3.00"*) echo "PASS: ready machine prints the verified load" ;;
 		*)
 			echo "FAIL: ready machine output: $out" >&2
+			failures=$((failures + 1))
+			;;
+		esac
+	fi
+
+	# Ready + `--` args: the args REPLACE the default gate — the exact
+	# cut-release.sh/AGENTS.md shape (`-- env X=1 buildflow dev`) must never
+	# degrade into `buildflow --build-mode full env …` (the 2026-10-26
+	# "Unknown command env" break).
+	local out2
+	if ! out2=$(POLL_GATE_LOAD_FILE="$dir/quiet" POLL_GATE_EXEC="echo DEFAULT-GATE-RAN" \
+		"$0" -- echo OVERRIDE-GATE-RAN); then
+		echo "FAIL: -- args did not arm the gate" >&2
+		failures=$((failures + 1))
+	else
+		case "$out2" in
+		*OVERRIDE-GATE-RAN*)
+			case "$out2" in
+			*DEFAULT-GATE-RAN*)
+				echo "FAIL: -- args appended to the default gate instead of replacing it" >&2
+				failures=$((failures + 1))
+				;;
+			*) echo "PASS: -- args replace the default gate" ;;
+			esac
+			;;
+		*)
+			echo "FAIL: -- args never reached the gate: $out2" >&2
 			failures=$((failures + 1))
 			;;
 		esac
@@ -210,9 +238,21 @@ while :; do
 			exit 0
 		fi
 
-		echo "poll-gate: exec $gate_exec ${gate_args[*]-}"
+		# `--` args REPLACE the default gate (both wired callers —
+		# cut-release.sh and AGENTS.md — pass a complete
+		# `env BUILDFLOW_…=… buildflow …` command); POLL_GATE_EXEC stays
+		# the variable override for the no-`--` form. Appending the args
+		# AFTER the default built
+		# `buildflow --build-mode full env … buildflow --build-mode dev`
+		# and died on "Unknown command env" (paid for 2026-10-26).
+		if [ "${#gate_args[@]}" -gt 0 ]; then
+			echo "poll-gate: exec ${gate_args[*]}"
+			exec "${gate_args[@]}"
+		fi
+
+		echo "poll-gate: exec $gate_exec"
 		read -r -a gate <<<"$gate_exec"
-		exec "${gate[@]}" "${gate_args[@]}"
+		exec "${gate[@]}"
 	fi
 
 	read -r _ _ l15 <<<"$load"
