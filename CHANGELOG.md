@@ -7,6 +7,17 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-26 (vendorHash re-pin after the go.mod sweep)
+
+- **The nix package builds again**: the 2026-10-25 Go toolchain/go.mod
+  sweep changed the module set but `vendorHash.nix` kept the pre-sweep
+  pin, so every consumer build (the PBX toplevel, the telephony flake
+  check) died at the go-modules fixed-output derivation while this
+  repo's own CI stayed green (it never builds the nix package).
+  Re-pinned via `nix run .#update-vendor-hash` (fake-probe -> learn ->
+  verify-green); the learned hash matches the hash the PBX build
+  reported. Same class as the cqrs-lint re-pin the evening before.
+
 ### Added — 2026-10-25 (ingest coverage analytics)
 
 - **/ops now answers "is the index drying up"** (plan P17): an Index
