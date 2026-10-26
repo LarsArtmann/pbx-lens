@@ -41,8 +41,8 @@ go build -o pbx-lens ./cmd/pbx-lens                              # from a checko
 nix build                                                         # from a checkout (flake)
 ```
 
-v0.2.0 is the latest tag; `go install github.com/larsartmann/pbx-lens/cmd/pbx-lens@v0.2.0`
-works from a module proxy (v0.1.0 remains available).
+v0.3.0 is the latest tag; `go install github.com/larsartmann/pbx-lens/cmd/pbx-lens@v0.3.0`
+works from a module proxy (v0.1.0/v0.2.0 remain available).
 
 ## Quick start
 

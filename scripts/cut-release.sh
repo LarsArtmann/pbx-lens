@@ -44,6 +44,11 @@ step "CHANGELOG sweep: $VERSION must have a section (or Unreleased must be renam
 grep -qE "^## \[$VERSION\]|^## \[Unreleased\]" CHANGELOG.md ||
 	fail "CHANGELOG.md has neither [$VERSION] nor [Unreleased] — write the release section first"
 
+step "version-const parity: cmd/pbx-lens/main.go must declare $VERSION"
+CONST="$(sed -nE 's/^[[:space:]]*version = "([^"]+)"/\1/p' cmd/pbx-lens/main.go)"
+[ "$CONST" = "${VERSION#v}" ] ||
+	fail "cmd/pbx-lens/main.go declares version \"$CONST\", not \"${VERSION#v}\" — bump the const first (the v0.3.0 tag shipped with a binary that still printed 0.2.0)"
+
 step "nix build (ships result/bin/pbx-lens; proves the flake + vendorHash)"
 TMPDIR="${TMPDIR:-/tmp}" nix build
 

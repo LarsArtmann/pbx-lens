@@ -5,7 +5,33 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased.
 
+## [Unreleased]
+
+### Fixed — 2026-10-26 (release-truth repair after v0.3.0)
+
+- **The version const now reports the release it ships**: tag v0.3.0 was cut
+  with `cmd/pbx-lens/main.go` still declaring `0.2.0`, so the tagged binary
+  (and its `/version` endpoint) printed the wrong release even though the
+  module proxy serves v0.3.0 correctly. The const is bumped on main and
+  `scripts/cut-release.sh` gained a version-const parity guard that refuses
+  any future tag whose const lags the requested version.
+
 ## [v0.3.0] — 2026-10-26
+
+### Fixed — 2026-10-26 (gate truth: the poll-gate arm and the dedup gate)
+
+- **poll-gate.sh armed over-policy once; fixed with its own production
+  fixture as the seeded red** (`5db1853`): `ready()` compared the whole
+  "1m 5m 15m" triple as one STRING, so a quiet 1-minute load laundered a hot
+  15-minute one (production proof: armed at 15m=65.13 under a 15m<40
+  policy). Only the 15-minute field arms now; the self-test carries the
+  exact case.
+- **The art-dupl duplication gate moved left and enforces its pin**
+  (`afae51e`, `315587e`): the CI red (two new clone groups in `Query`/
+  `QueryTurns` and the detail turn-match loop) is fixed at root via a shared
+  `normalizedQuery` prologue, and `scripts/check-dedup-gate.sh` runs CI's
+  exact command locally — refusing non-pin binaries — wired into the
+  pre-commit hook and CI's Guard Self-Tests job.
 
 ### Fixed — 2026-10-26 (full-code-review lane: two fixes)
 

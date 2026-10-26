@@ -98,17 +98,17 @@ in testdata; test claims in living docs 62 → 71 (all real, gate-checked).
 ## b) Partially done
 
 1. **The 17-24 plan execution — 7 of 19 coarse tasks** (P1, P2, P5, P6,
-   P7, P8, P10 done). The plan doc header STILL says "Status: READY —
-   execution not started" — annotation owed.
+   P7, P8, P10 done). ~~The plan doc header STILL says "Status: READY —
+   execution not started" — annotation owed.~~ done at `891d3f6` (the header carries the receipts; the 16-00 report §a9 verified it)
 2. **P15 pixel truth**: the machine-local baseline IS refreshed (v5) and
    every alert classified; the plan's "refresh COMMITTED baselines" step
    collided with the README doctrine (baselines are machine-local by
    decision; the in-repo strategy stays a ROADMAP owner question) — so
    this is re-classified, not dropped. The print audit ran inside the lane
    (chrome hidden ✔, break-inside avoid ×3).
-3. **P16 ops observability**: the coverage half landed via P10; the ETag
+3. **P16 ops observability**: the coverage half landed via P10; ~~the ETag
    hook counters (`OnETagGenerated`/`On304`) and retention SLO fields
-   (oldest unretired view, purge lag) are NOT started.
+   (oldest unretired view, purge lag) are NOT started.~~ the ETag half is now done — `OnETagGenerated`/`On304` landed in `internal/web/caching.go:78-79` (the `/api/ops` etag_generated/not_modified keys); the retention SLO fields stay open (routed: the 16-00 report f11)
 4. **Report annotations**: the 15-39/16-58/17-12 §f items this session
    resolved (lane, FULL receipt, doc-claims gate, 10-46 header, P25
    bodies, P19.2/P19.3/P19.4, P14/P15/P16/P17/P20.4-partial) are NOT yet
@@ -116,11 +116,11 @@ in testdata; test claims in living docs 62 → 71 (all real, gate-checked).
 
 ## c) Not started (all four owner-gated + the 20% tail)
 
-- **P3 release execution** — owner gate §g2 (v0.2.1 vs v0.3.0); bodies +
-  CHANGELOG mechanics drafted in docs/drafts/, `cut-release.sh --dry-run`
-  rehearsal still owed.
-- **P4 dependency lane** — owner gate §g1 (PR #3 rebase vs close+hand-roll).
-- **P9 daemon norm** — owner gate §g3; see §d2 for why it is now urgent.
+- ~~**P3 release execution** — owner gate §g2 (v0.2.1 vs v0.3.0); bodies +~~ done — v0.3.0 shipped 2026-10-26 (3e97485; cut-release retry 3; proxy-served)
+  ~~CHANGELOG mechanics drafted in docs/drafts/, `cut-release.sh --dry-run`~~
+  ~~rehearsal still owed.~~
+- ~~**P4 dependency lane** — owner gate §g1 (PR #3 rebase vs close+hand-roll).~~ done — PR #3 closed; sqlite v1.61.0 landed in go.mod
+- ~~**P9 daemon norm** — owner gate §g3; see §d2 for why it is now urgent.~~ done — owner-ratified at f57cebe (squash-while-unpushed; docs/concurrency.md)
 - **P11** answer-rate / short-call analysis; **P12** backlog harvest;
   **P13** sibling folds; **P14** lint residue (gofumpt parity,
   unknown-`//nolint` grep, AGENTS-budget CI job); **P17** two decision
@@ -175,49 +175,49 @@ in testdata; test claims in living docs 62 → 71 (all real, gate-checked).
 
 ## e) What we should improve
 
-1. **Run the dedup gate before EVERY push**: `nix develop -c art-dupl
-   check -t 4 --min-lines 2 . --baseline-path scripts/art-dupl-baseline.json`
-   is not in `.githooks/pre-commit` and not in my personal pre-push
-   ritual — three red CI runs (~7 min of CI + three fix rounds) are the
-   bill. Wire it into the hook AND the ritual.
-2. **Design shared prologues before writing parallel shapes**: Query and
-   QueryTurns were born duplicated. The plan-first instinct ("two result
-   shapes → one normalized prologue") costs minutes and saves a gate
-   cycle.
-3. **The FULL receipt's shelf life**: the 17:56 receipt verified a tree
-   that none of the four features touched — a fresh FULL receipt on the
-   post-feature tree is OWED before any release (P3 depends on it).
-4. **Push immediately after each receipt-grade commit** (shrinks the
-   daemon window) — worked when remembered, forgotten twice; §g3's
-   ratification decides whether squash-repair stays legal at all.
-5. **The gate-wiring checklist is now SIX places** (script+chmod, CI
-   Guard Self-Tests, verify-all.sh, scripts/README.md, pre-commit hook,
-   and for code gates: the LOCAL pre-push ritual) — update
-   scripts/README.md when the dedup gate lands in the hook.
-6. ** templ helper types**: prefer returning plain data + `templ.KV` usage
-   inline, or `[]any`-backed CSSClasses; the KV-generic dance cost three
-   rounds. A one-line note in the adoption map would spare the next
-   session.
+1. ~~**Run the dedup gate before EVERY push**: `nix develop -c art-dupl~~ done — at 315587e — the gate is wired into the pre-commit hook AND CI Guard Self-Tests
+   ~~check -t 4 --min-lines 2 . --baseline-path scripts/art-dupl-baseline.json`~~
+   ~~is not in `.githooks/pre-commit` and not in my personal pre-push~~
+   ~~ritual — three red CI runs (~7 min of CI + three fix rounds) are the~~
+   ~~bill. Wire it into the hook AND the ritual.~~
+2. ~~**Design shared prologues before writing parallel shapes**: Query and~~ done — adopted — the normalizedQuery extraction is the pattern
+   ~~QueryTurns were born duplicated. The plan-first instinct ("two result~~
+   ~~shapes → one normalized prologue") costs minutes and saves a gate~~
+   ~~cycle.~~
+3. ~~**The FULL receipt's shelf life**: the 17:56 receipt verified a tree~~ done — at 1b5208a — the third FULL receipt on the post-feature tree
+   ~~that none of the four features touched — a fresh FULL receipt on the~~
+   ~~post-feature tree is OWED before any release (P3 depends on it).~~
+4. ~~**Push immediately after each receipt-grade commit** (shrinks the~~ done — superseded by the ratified norm (f57cebe: push immediately + squash-while-unpushed)
+   ~~daemon window) — worked when remembered, forgotten twice; §g3's~~
+   ~~ratification decides whether squash-repair stays legal at all.~~
+5. ~~**The gate-wiring checklist is now SIX places** (script+chmod, CI~~ done — at 315587e (scripts/README row + hook)
+   ~~Guard Self-Tests, verify-all.sh, scripts/README.md, pre-commit hook,~~
+   ~~and for code gates: the LOCAL pre-push ritual) — update~~
+   ~~scripts/README.md when the dedup gate lands in the hook.~~
+6. ~~** templ helper types**: prefer returning plain data + `templ.KV` usage~~ done — the KV/CSSClasses convention row is in docs/templ-components-adoption.md (this pass)
+   ~~inline, or `[]any`-backed CSSClasses; the KV-generic dance cost three~~
+   ~~rounds. A one-line note in the adoption map would spare the next~~
+   ~~session.~~
 
 ## f) Next (ranked; provenance: the 17-24 plan + this session's findings)
 
-1. **Land the dedup extraction** (§d1): `normalizedQuery` prologue +
-   `firstMatchedTurn` via `transcriptMatchViews`; re-run art-dupl locally
-   → 0 groups; full tests; push; WATCH CI GREEN before anything else.
-2. Wire the art-dupl gate into `.githooks/pre-commit` + scripts/README.md
-   (the gate-wiring checklist, sixth place).
-3. Re-run `bash scripts/verify-all.sh` after the dedup commit (page bodies
-   should be byte-identical; the lane proves it).
-4. Fresh FULL-gate receipt on the post-feature tree (poll-gate →
-   buildflow full; the e3 shelf-life item) — REQUIRED before P3.
-5. Annotate the 17-24 plan header (7/19 executed; the CI-red erratum).
-6. **§g2 answer** → execute the release (CHANGELOG split mechanics →
-   `cut-release.sh vX.Y.Z` → body → `go list -m` proxy check). P25
-   rehearsal (`--dry-run`) first.
-7. **§g1 answer** → PR #3 rebase or close + hand-rolled sqlite bump (tidy,
-   vendorHash re-derive on a CLEAN tree, gates).
-8. **§g3 answer** → codify docs/concurrency.md + implement the chosen
-   norm (daemon claim-file or never-reset), with a seeded proof.
+1. ~~**Land the dedup extraction** (§d1): `normalizedQuery` prologue +~~ done at `afae51e`
+   ~~`firstMatchedTurn` via `transcriptMatchViews`; re-run art-dupl locally~~
+   ~~→ 0 groups; full tests; push; WATCH CI GREEN before anything else.~~
+2. ~~Wire the art-dupl gate into `.githooks/pre-commit` + scripts/README.md~~ done at `315587e`
+   ~~(the gate-wiring checklist, sixth place).~~
+3. ~~Re-run `bash scripts/verify-all.sh` after the dedup commit (page bodies~~ done — green twice on 2026-10-26 (42 PNGs; the last inside the release runbook)
+   ~~should be byte-identical; the lane proves it).~~
+4. ~~Fresh FULL-gate receipt on the post-feature tree (poll-gate →~~ done — at 1b5208a — the third FULL receipt (15m=29.02, tree frozen 3cdc5b2, 60/0/0)
+   ~~buildflow full; the e3 shelf-life item) — REQUIRED before P3.~~
+5. ~~Annotate the 17-24 plan header (7/19 executed; the CI-red erratum).~~ done at `891d3f6`
+6. ~~**§g2 answer** → execute the release (CHANGELOG split mechanics →~~ done — executed — v0.3.0 shipped 2026-10-26 (3e97485; cut-release retry 3; proxy-served)
+   ~~`cut-release.sh vX.Y.Z` → body → `go list -m` proxy check). P25~~
+   ~~rehearsal (`--dry-run`) first.~~
+7. ~~**§g1 answer** → PR #3 rebase or close + hand-rolled sqlite bump (tidy,~~ done — PR #3 closed; sqlite v1.61.0 landed in go.mod; gates green
+   ~~vendorHash re-derive on a CLEAN tree, gates).~~
+8. ~~**§g3 answer** → codify docs/concurrency.md + implement the chosen~~ done at `f57cebe`
+   ~~norm (daemon claim-file or never-reset), with a seeded proof.~~
 9. P12: harvest this session's §f into TODO_LIST/ROADMAP; annotate the
    15-39/16-58/17-12 reports inline where items resolved.
 10. P11 answer-rate: billsec-0 × hangup-cause definition, honest

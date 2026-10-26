@@ -36,34 +36,40 @@ Raw ideas, grouped by the question they unlock (none is a commitment; each
 graduates to TODO_LIST when triggered):
 
 **Cost intelligence** — "what does the phone system cost, and where?"
+(shipped 2026-10-25: the spend card — window total, cost/minute, week-over-week
+delta, daily sparkline — and per-DID/per-counterpart rates in the segment
+table; graduated to FEATURES § Insights & analytics)
 
-- Spend trend per week/month with the same window semantics as volume
-- Cost per minute, cost per call, and cost per DID/agent
 - AI-vs-human cost split (the AI share today is only a call-count slice)
+- Spend trend at weekly/monthly bucket granularity beyond the window presets
 
 **Segmentation** — "who is calling whom, and what do they want?"
+(shipped 2026-10-25: the "who calls what" table with per-segment
+rates, `?number=` drill-through, and per-number `/segments/{number}` trend
+pages; graduated to FEATURES)
 
-- Top DIDs and top counterpart numbers, with drill-through into the filtered list
 - Source mix per period (FreeSWITCH vs Telnyx vs webhook vs agent transcript)
-- Direction and AI-ness broken down by segment rather than globally
+- Direction broken down by segment rather than globally
 
 **Quality** — "are calls getting worse?"
+(shipped 2026-10-25: the "how calls end" rollup — hangup causes, no-user-turn,
+self-dial, recording-tail rates over their own denominators — plus the
+week-over-week trend in percentage points; graduated to FEATURES)
 
 - MOS trend per DID/agent once the MOS poller lands (2027-01 window)
-- Failure and hangup-cause breakdown; no-user-turn and recording-tail rates
-  as standing quality signals (they exist per call today — see
-  docs/DOMAIN_LANGUAGE.md § Transcript truth)
 - Answer-rate and short-call (abandoned) analysis where the source supports it
 
 **Anomaly and baseline** — "is today unusual?"
+(shipped 2026-10-25: the weekday ±2σ baseline note under the heatmap, and the
+/ops ingest-coverage card with the 48 h gap SLO; graduated to FEATURES)
 
-- Expected-volume bands from the weekday×hour history, with a quiet alert
 - MOS or failure-rate regression detection against a rolling baseline
-- Ingest-coverage analytics: per-source rows/day, gaps, staleness SLOs
+- Alerting on the coverage SLO (today it flags; nothing pages)
 
 **Delivery** — "make it part of my routine"
+(shipped 2026-10-25: saved views — recent-view chips + canonical share links;
+graduated to FEATURES)
 
-- Saved views (filter state in the URL/client; no server write path needed)
 - Scheduled report exports (a cron'd `export.jsonl` + a digest rendered from it)
 - A warehouse-grade export (Parquet/duckdb) once the CSV/JSONL path shows a
   real consumer
@@ -93,8 +99,8 @@ structured slog records, the restore-drill test. Remaining raw ideas:
 - Backup rotation/shipping policy (host backup tool owns it today; the
   app's opinion is recorded in docs/backup-rotation-opinion.md; folding it
   into the sibling module is a blocked TODO_LIST row)
-- Next release + the production deploy are owner-blocked rows in TODO_LIST
-  (not repeated here); v0.1.0/v0.2.0 are tagged
+- The production deploy is an owner-blocked row in TODO_LIST; v0.1.0/v0.2.0/
+  v0.3.0 are tagged (v0.3.0 on 2026-10-26 — the analytics-surface release)
 
 HTTP-stack follow-ons (2026-10-12 adoption wrap; each parked on its own
 revisit trigger — not commitments):
@@ -133,7 +139,6 @@ rides its own trigger — the actionable bounded versions live in TODO_LIST):
 - Long-excerpt PNG eyeball as a quarterly truncation-regression cadence
 - Purge-timer state surfaced on `/ops` — revisit only if ops asks (the
   in-process card deliberately cannot see host-side timer facts)
-- Split the CHANGELOG Unreleased pile at v0.3.0 (three sections deep)
 - Cadence: schedule the next Pareto pass BEFORE new work accretes (the
   plan-after-plan pattern that closed both prior queues)
 - Flake records must quote the failing assertion line (2026-10-23 harvest

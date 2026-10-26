@@ -307,6 +307,9 @@ invocation the `ignore` glob matches.
 
 ## go mod tidy owns the go directive — the "major.minor only" warning is accepted noise (paid for, 2026-10-23)
 
+(Cousin pattern of cqrs-lint E003's flat-HOLD: both are "library contract,
+not ours" — see docs/cqrs-lint-policy.md E003.)
+
 go-appkit v0.9.0 declares `go 1.27.2`, and `go mod tidy` (go ≥1.23) promotes
 the main module's go directive to the highest dependency floor — hand-editing
 `go 1.27` back in is silently reverted on the next tidy (observed live: edit

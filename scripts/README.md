@@ -8,6 +8,11 @@ graph, the flake, or package.json). Shared bootstrap lives in
 scratch install, probe-binary build, corpus seeding, serve lifecycle, page);
 screenshot-probe keeps its bespoke multi-phase flow.
 
+**DoD: an edit to the shared bootstrap ⇒ the FULL sweep (`verify-all.sh`,
+all 42 PNGs) before any receipt** — the bootstrap is every probe's
+foundation, and a per-probe pass can pass while a sibling lane is broken
+(the 2026-10-23 `bin is not defined` class).
+
 Multiple agent sessions share this tree with an auto-commit daemon —
 claims, receipts-from-a-quiet-tree, and daemon-sweep rules live in
 docs/concurrency.md.

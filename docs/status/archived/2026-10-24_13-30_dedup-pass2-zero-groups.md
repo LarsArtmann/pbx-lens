@@ -26,12 +26,12 @@ family).
 
 ## §b Extractions (behavior-identical; error strings, timing labels, header order preserved)
 
-| Was                                    | Now                                                                                                                                  |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| ~~static handler trio~~ done (docs-health pass 2026-10-26) | ~~`staticAsset` struct + one `serve` method + `staticRoutes` map (declarative table, one `//nolint:gochecknoglobals`, house precedent)~~ |
-| ~~`list`/`stalenessFragment` bodies~~ done (docs-health pass 2026-10-26) | ~~`queryListStaleness` returning typed `listStaleness` (struct — the two trailing bools cannot transpose at call sites)~~ |
-| ~~`dashboard`/`dashboardFragment` bodies~~ done (docs-health pass 2026-10-26) | ~~`queryDashboardStats` (stats/fragURL/ok); handlers only render~~ |
-| ~~export format preamble~~ done (docs-health pass 2026-10-26) | ~~`beginExportResponse(w, r, contentType, disposition)` absorbs both headers after the PII gate~~ |
+| Was                                                                           | Now                                                                                                                                      |
+| ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~static handler trio~~ done (docs-health pass 2026-10-26)                    | ~~`staticAsset` struct + one `serve` method + `staticRoutes` map (declarative table, one `//nolint:gochecknoglobals`, house precedent)~~ |
+| ~~`list`/`stalenessFragment` bodies~~ done (docs-health pass 2026-10-26)      | ~~`queryListStaleness` returning typed `listStaleness` (struct — the two trailing bools cannot transpose at call sites)~~                |
+| ~~`dashboard`/`dashboardFragment` bodies~~ done (docs-health pass 2026-10-26) | ~~`queryDashboardStats` (stats/fragURL/ok); handlers only render~~                                                                       |
+| ~~export format preamble~~ done (docs-health pass 2026-10-26)                 | ~~`beginExportResponse(w, r, contentType, disposition)` absorbs both headers after the PII gate~~                                        |
 
 Full suite green after each step; `internal/web` re-tested per extraction.
 

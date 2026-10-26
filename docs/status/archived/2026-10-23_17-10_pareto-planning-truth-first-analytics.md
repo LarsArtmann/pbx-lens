@@ -26,17 +26,17 @@ plan with a mermaid execution graph in `docs/planning/`, then commit and push.
 1. ~~**Step-0 verification found four backlog errors before ranking anything.**~~ done (docs-health pass 2026-10-26)
    ~~Not re-dispatched work — corrected facts:~~
    ~~- `ObservationSchemaVersion = 2` **shipped today** (`internal/calls/events.go`):~~
-     ~~named, length-prefixed pre-image + version token. The "At schema v2:~~
-     ~~length-prefixed ContentHash" TODO row is DONE and was deleted.~~
+   ~~named, length-prefixed pre-image + version token. The "At schema v2:~~
+   ~~length-prefixed ContentHash" TODO row is DONE and was deleted.~~
    ~~- **`refresh` shipped today** (`cmd/pbx-lens/refresh.go`,~~
-     ~~`internal/cli/refresh.go`): classify every stream, write nothing, `-apply`~~
-     ~~re-ingests and rebuilds search; unbounded look-back by default. It is the~~
-     ~~backfill mechanism the ContentHash-v2 row was waiting for, so that row was~~
-     ~~reframed to name the command.~~
+   ~~`internal/cli/refresh.go`): classify every stream, write nothing, `-apply`~~
+   ~~re-ingests and rebuilds search; unbounded look-back by default. It is the~~
+   ~~backfill mechanism the ContentHash-v2 row was waiting for, so that row was~~
+   ~~reframed to name the command.~~
    ~~- The **`siblingKinds` behavior table test already exists**~~
-     ~~(`internal/web/detail_join_test.go:248`) — row deleted.~~
+   ~~(`internal/web/detail_join_test.go:248`) — row deleted.~~
    ~~- The 2026-10-23 16-21 gate report's five bounded items were already rows;~~
-     ~~its §f brainstorm stayed out of the backlog by design.~~
+   ~~its §f brainstorm stayed out of the backlog by design.~~
 2. ~~**Three new rows added for gaps the plan surfaced:** document the~~ done (docs-health pass 2026-10-26)
    ~~2026-10-23 surface (refresh / schema v2 / doctrine / CHANGELOG), docs drift~~
    ~~gates (counts + links), and the audit of the five living docs that this~~

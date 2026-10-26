@@ -6,8 +6,9 @@ the superb call-insights platform (the SUPERB plan:
 Read-only over every source: FreeSWITCH CDRs, Telnyx conversations/recordings
 APIs, the receiver webhook JSONL. The index DB is disposable and always
 re-derivable; never add a write-back path to any source. The sibling repo
-(nix-international-telephony) later gets only a thin NixOS deploy module;
-webphone later gets a read-only deep link, never a data dependency.
+(nix-international-telephony) gets only a thin NixOS deploy module (LANDED:
+`modules/telephony/lens.nix`, backup + purge timers); webphone gets a
+read-only deep link, never a data dependency.
 
 ## Stack decisions
 
@@ -37,8 +38,7 @@ webphone later gets a read-only deep link, never a data dependency.
   graph rides free — promoting it to direct adds no new module.
   server_timing has NO middleware constructor in any release (wrap
   manually); `entitytag` stays indirect (`go-etag/server` re-exports
-  everything). Considered and NOT adopted: the decision records live in
-  docs/planning/archived/2026-10-12_12-47_* and docs/drafts/.
+  everything).
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
   `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — never hand-roll harness
@@ -53,16 +53,16 @@ webphone later gets a read-only deep link, never a data dependency.
   Stay on the PUBLISHED templ-components version — no local replace
   (breaks hermetic nix); hand-roll missing thin pieces.
 - **UI theme — signal palette (2026-10-12; heatmap bridge 2026-10-15):**
-  app.css overrides `--color-tc-primary` (teal-700 #0f766e), `-hover`
-  (teal-800), `--color-tc-info` (teal-700) in an @theme block placed AFTER
+  app.css overrides the `--color-tc-primary`/`-hover`/`--color-tc-info`
+  trio to the teal family in an @theme block placed AFTER
   the `templ-components-theme.css` import (later @theme wins; the theme
   binds `--color-blue-600: var(--color-tc-primary)`, so one override
   re-skins every library blue). The one component OFF the token chain is
   display.Heatmap: it fills via rgba(var(--ds-brand-rgb), α) and rings its
   peak cell with var(--ds-brand), both defaulting to violet-600 — app.css
-  re-bridges the pair in a :root/.dark block after the imports (teal-700
-  light, teal-400 dark; the rgb triplets must stay comma-separated — legacy
-  rgba contract). Never hand-write `bg-blue-*` in pbx-lens .templ files —
+  re-bridges the pair in a :root/.dark block after the imports (light/dark
+  teals; the rgb triplets must stay comma-separated — legacy rgba contract).
+  Never hand-write `bg-blue-*` in pbx-lens .templ files —
   the library's own classes re-skin through the token chain.
 - **templ-components adoption map:** per-component truth for THIS
   repo lives in docs/templ-components-adoption.md (skill docs drift ahead
@@ -83,7 +83,12 @@ webphone later gets a read-only deep link, never a data dependency.
   embeds it; nix preBuild still regenerates; 2026-10-15 v0.2.0 CI fix);
   *_templ.go stays gitignored.
   `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
-  break via `nix run .#update-vendor-hash` on a CLEAN tree (never nix-hash-fix, BuildFlow#55).
+  break via `nix run .#update-vendor-hash` on a CLEAN tree (never nix-hash-fix,
+  BuildFlow#55) and verify ANY hash touch against root AND devShell
+  (`nix develop -c echo ok`) — `nix flake check` never builds devShells, so
+  its green masked the 2026-10-25 devshell break. `scripts/cut-release.sh`
+  guards version-const parity (the v0.3.0 tag shipped printing 0.2.0 —
+  const bumped on main post-tag).
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
   govulncheck, art-dupl (ZERO-GROUP GATE: `art-dupl check -t 4 --min-lines 2 .`
@@ -92,7 +97,7 @@ webphone later gets a read-only deep link, never a data dependency.
   signature/type matches, which are shape coincidence, not duplication.
   TRAP: the default report hides a suppressed bucket that CAN hold real
   clones (four were extracted 2026-10-24); audit with `--show-suppressed`
-  after pin bumps. docs/art-dupl-baseline.md owns mechanics/history). Dependabot watches github-actions + gomod.
+  after pin bumps; invoke the gate only via `scripts/check-dedup-gate.sh` (refuses non-pin binaries). docs/art-dupl-baseline.md owns mechanics/history). Dependabot watches github-actions + gomod.
   BuildFlow stays the LOCAL gate; the flake's
   generic apps.test/apps.lint stay module-generated conveniences, not a second
   gate. Every Go-compiling CI job runs `go tool templ generate` first
@@ -106,33 +111,32 @@ webphone later gets a read-only deep link, never a data dependency.
   subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog`
   is the DB-free exception: `cli.RenderCatalog`/`cli.RenderArchitecture`
   render the eventcatalog tree (+ `-architecture` HTML) for the hub; see
-  `.eventcatalog-hub.json`. Hub bootstrap norm: `-plain` always skips the
-  generated bootstrap files, `-skip-bootstrap` opts out of normal exports —
-  the merging hub owns site title, core pin, and dependencies). Flag
-  validation for the index-opening subcommands is shared: `requireDB` and
-  `requireOneArg` in package main (messages derive from `fs.Name()`, so a new
-  subcommand gets consistent rejections for free). The `internal/ingest` ROOT
+  `.eventcatalog-hub.json`. Hub bootstrap norm: `-plain` always skips
+  generated bootstrap files, `-skip-bootstrap` opts out — the merging hub
+  owns site title, core pin, dependencies). Flag validation is shared
+  (`requireDB`/`requireOneArg` in package main; messages derive from
+  `fs.Name()`, so new subcommands reject consistently). The `internal/ingest` ROOT
   package hosts the shared parser scaffolding — `Result` (observations +
   skipped-row count) and `NewScanner`/`EachLine` (64 KiB→1 MiB bounded line
   scan; `EachLine` trims and skips blanks). `cdr.Parse`/`webhook.Parse` return
   `ingest.Result` directly (no per-package Result alias — one type, no split
-  brain); `agent.Result` keeps its own shape (Transcripts, not Observations).
-  CDR keeps its own scan loop (semicolon-trimming CSV semantics), but through
+  brain); `agent.Result` keeps its own shape (Transcripts, not Observations);
+  CDR keeps its own scan loop (semicolon CSV semantics) but through
   `ingest.NewScanner`. Support: `internal/wire` (FlexTime + shared decode
-  helpers; directly unit-tested), `internal/backup` (VACUUM INTO snapshot
-  - integrity verify), `internal/retention` (Policy/OldViews/Retire behind
-    `purge`; `Policy.Admits` also gates serve-poller `-max-age`, 0 = keep
-    everything). Projection record keys are BARE (`calls.RecordKey` =
-    `StreamID.Get()`; the projection adapter's bare ID) — never hand-build
-    one, and read through `calls.LookupView` (its marker-prefixed fallback
-    keeps pre-flip rows reachable; docs/gotchas.md has the incident).
-    `calls.DefaultExcerptMax` (200 runes) caps every excerpt; source mappers
-    select via `calls.Excerpt` (first user turn, fallback first turn). The serve htpasswd timing pad hashes at the
-    LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
-    when touching auth.go; SIGHUP reloads the file (a broken reload keeps the
-    running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
-    FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
-    deliberately not honored).
+  helpers; directly unit-tested), `internal/backup` (VACUUM INTO snapshot +
+  integrity verify), `internal/retention` (Policy/OldViews/Retire behind
+  `purge`; `Policy.Admits` also gates serve-poller `-max-age`, 0 = keep
+  everything). Projection record keys are BARE (`calls.RecordKey` =
+  `StreamID.Get()`; the projection adapter's bare ID) — never hand-build
+  one, and read through `calls.LookupView` (its marker-prefixed fallback
+  keeps pre-flip rows reachable; docs/gotchas.md has the incident).
+  `calls.DefaultExcerptMax` (200 runes) caps every excerpt; source mappers
+  select via `calls.Excerpt` (first user turn, fallback first turn). The serve htpasswd timing pad hashes at the
+  LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
+  when touching auth.go; SIGHUP reloads the file (a broken reload keeps the
+  running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
+  FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
+  deliberately not honored).
 - **serve/UI:** `serve` composes appkit around `web.Register`:
   ServiceConfig{Addr, `Version` → `/version`, `Metrics` → `/metrics`
   (explicit `AllowUnauthenticated` opt-in; both beside the appkit
@@ -141,20 +145,17 @@ webphone later gets a read-only deep link, never a data dependency.
   former 30 s deadline truncated both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`;
   READY/STOPPING/WATCHDOG under the manager) + htpasswd auth. The
   ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
-  Compression → ETag; the ordering doctrine, the ETag skip policy, the
-  render-buffering trap, and the `Cache-Control: no-cache` revalidation contract) lives in
+  Compression → ETag; ordering doctrine, ETag skip policy, render-buffering
+  trap, the `Cache-Control: no-cache` revalidation contract) lives in
   docs/http-stack.md — read it before touching caching, timing, or the
-  recording route (that doc owns the recording proxy's two-hop budget).
+  recording route (it owns the two-hop budget).
   Every UI route is a query or a proxy, never a write. Exports and the
   dashboard STREAM via keyset pagination (`StreamExportCalls`, 5k-row pages,
   memory-bounded, no row cap); day buckets resolve in Europe/Berlin (R2
   2026-10-12 — bare date filters too), an idle index drifts out of the
   chart. htmx polling (R9): `/frag/dashboard` 30 s, `/frag/staleness`
   60 s, runtime self-hosted at `/static/htmx.min.js` — no CDN.
-  `/favicon.svg` (embedded lens mark) satisfies layout.Base's default favicon
-  link; `/api/ops` (R15) serves the poller's per-source counters behind the same auth. The NixOS
-  module LANDED in nix-international-telephony (`modules/telephony/lens.nix`,
-  backup + purge timers).
+  `/favicon.svg` (embedded lens mark) satisfies layout.Base's favicon link; `/api/ops` (R15) serves per-source counters behind the same auth.
   Detail page = READ-TIME join (`CallDetailPage`; rules in
   docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List + dashboard collapse
   duplicate source rows onto the representative row (CDR first;
@@ -209,11 +210,10 @@ Concurrent sessions + daemon: the norm is docs/concurrency.md.
 
 - **docs/gotchas.md** — war stories: record keys, the one-shot drain,
   full-recompute folds, FTS5, tombstones, drain-before-enrich, `Exists`.
-- **docs/status/archived/** + **docs/planning/archived/** — 59 reports, every
+- **docs/status/archived/** + **docs/planning/archived/** — 69 reports, every
   executed plan (manifests in each README): CLOSED history — never harvest
   or re-open (living backlog: TODO_LIST.md).
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision.
 - **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
-- **docs/upstream-filings.md** — every filing ledger and its upstream state.
-- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware chain, component map), **docs/research/README.md** (the deep-dive index).
+- **docs/upstream-filings.md** — every filing ledger and its upstream state.- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware chain, component map), **docs/research/README.md** (the deep-dive index).

@@ -18,9 +18,9 @@ swept everything, HEAD d45f5a6).
 2. ~~**Four extractions, behavior-identical** (error strings, Server-Timing~~ done (docs-health pass 2026-10-26)
    ~~labels, header order preserved; full suite green after each step):~~
    ~~- static handler trio → `staticAsset` struct + `staticRoutes` map (one~~
-     ~~`//nolint:gochecknoglobals`, house precedent) + one `serve` method;~~
+   ~~`//nolint:gochecknoglobals`, house precedent) + one `serve` method;~~
    ~~- `list`/`stalenessFragment` → `queryListStaleness` returning a typed~~
-     ~~`listStaleness` struct (the two trailing bools cannot transpose);~~
+   ~~`listStaleness` struct (the two trailing bools cannot transpose);~~
    ~~- `dashboard`/`dashboardFragment` → `queryDashboardStats`;~~
    ~~- export format preamble → `beginExportResponse(w, r, contentType, disposition)`.~~
 3. ~~**Gate recalibration: 23 pinned groups → ZERO.** `--min-lines 2` removes~~ done (docs-health pass 2026-10-26)

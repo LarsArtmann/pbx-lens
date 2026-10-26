@@ -5,7 +5,30 @@ carries `done` / `Won't implement` / `→ routed` strikethrough markers; the
 living backlog is [TODO_LIST.md](../../../TODO_LIST.md)). Do not harvest from
 here — terminal state. Archived 2026-10-12 by the docs-health AUDIT pass,
 2026-10-17 by the corpus-closing sweep, 2026-10-17 (second pass) by the
-live-set close-out, and 2026-10-23 by the post-receipt sweep (manifests below).
+live-set close-out, 2026-10-23 by the post-receipt sweep, and 2026-10-26 by
+the v0.3.0-state sweep (manifests below).
+
+## Archive manifest (bulk sweep 2026-10-26 — the v0.3.0-state close-out)
+
+The whole 2026-10-23/24 live set annotated inline against the shipped v0.3.0
+state (the analytics surface, the go-cqrs-lite wave, the dedup-to-zero gate
+lineage, the CI pin enforcement) and the 2026-10-25/26 receipts; check-rows
+ran COMPLETE on every file BEFORE the move. Surviving open work was routed to
+its live TODO_LIST row (filings queue, detect-only advisory triage, answer
+sheet, quarterly windows) — nothing was dropped.
+
+| File                                                                        | Classification      | Deciding reason                                                                                                                                           |
+| --------------------------------------------------------------------------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-23_16-21_buildflow-44-of-72-triage-probe-dedup-gate-recovery.md     | ANNOTATE → ARCHIVED | all 15 receipts verified standing; the §f 50-item brainstorm fully dispositioned (done/routed/NOT-DO); §g routed (filings queue, ROADMAP vulnix question) |
+| 2026-10-23_16-47_docs-health-audit-analytics-reframe-and-corpus-closeout.md | ANNOTATE → ARCHIVED | the pass's own corpus ledger; §f 50 all done (the three analytics slices shipped 10-25) or routed; its f50 cadence item executed BY this sweep            |
+| 2026-10-23_17-10_pareto-planning-truth-first-analytics.md                   | ANNOTATE → ARCHIVED | the planning snapshot superseded by execution; T1-T27 verdicts land in the 10-25 reports; §g3 moot (all three slices shipped)                             |
+| 2026-10-24_11-37_dedup-audit-self-review-serve-test-bootstrap.md            | ANNOTATE → ARCHIVED | the dedup lineage closed by the zero-group gate + pin enforcement; §f 26 dispositioned; §g answered (gate policy, quiet-box, teardown order)              |
+| 2026-10-24_12-33_dedup-to-zero-baseline-gate.md                             | ANNOTATE → ARCHIVED | parity proven (CI green from run one); suppressed bucket audited same day (13-30); the policy change ratified by outcome                                  |
+| 2026-10-24_13-30_dedup-pass2-zero-groups.md                                 | ANNOTATE → ARCHIVED | the recalibration receipts verified standing; the three 12:33 questions answered in §e                                                                    |
+| 2026-10-24_17-20_dedup-pass2-brutal-self-review-full-status.md              | ANNOTATE → ARCHIVED | §f 26 done/routed/NOT-DO against the 315587e pin doctrine and the 2026-10-25/26 receipts; §g3 answered by the ratified concurrency norm                   |
+| 2026-10-24_18-30_gocqrs-lite-module-audit-session.md                        | ANNOTATE → ARCHIVED | the §f 50-item plan executed by the 2026-10-25 wave (20/21 + the P-tail); §g answered in the header (owner, same day)                                     |
+| 2026-10-24_18-59_dedup-to-zero-third-pass.md                                | ANNOTATE → ARCHIVED | superseded verdicts corrected inline (the utils/format postscript); §f 50 standing-contract items verified or routed                                      |
+| 2026-10-24_19-30_templ-components-deep-dive-audit.md                        | ANNOTATE → ARCHIVED | actions ①–④ executed 2026-10-25 (utils/format, v1.24.0, the "never" guard, the map repair); §g answered by execution                                      |
 
 ## Archive manifest (sweep 2026-10-23 — post-receipt live set)
 

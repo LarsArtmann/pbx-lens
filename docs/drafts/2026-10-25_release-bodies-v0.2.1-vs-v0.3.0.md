@@ -1,5 +1,10 @@
 # Release bodies — v0.2.1 (patch) vs v0.3.0 (minor) — prepared 2026-10-25
 
+> **RESOLVED 2026-10-26 (owner): v0.3.0 shipped** — the minor shape, cut via
+> cut-release.sh (retry 3) and served by the module proxy; the shipped notes
+> live in 2026-10-26_v0.3.0-release-notes-shipped.md. This file is the
+> decision record; nothing here is open.
+
 Owner question (15-39 report §g2): which shape? Both bodies are ready to
 paste; the CHANGELOG split each implies is spelled out under "CHANGELOG
 mechanics". The `Unreleased` span is large (2026-10-24 → 2026-10-25: catalog
