@@ -17,23 +17,23 @@ race was verified, none lost work.
 
 ## a) FULLY DONE
 
-| Work | Receipt |
-| --- | --- |
-| **Nix gate repair**: the 2026-10-25 sweep had clobbered cqrs-lint's two fixed-output pins (source hash → placeholder, vendorHash ← pbx-lens's hash); devshell broken for every consumer while `nix flake check` stayed green | Restored both pins from git history + the FOD mismatch output; false "re-derived" comment corrected (`7ff3173`); BuildFlow's red nix lane (nix-build, dprint, prettier, vulnix — one root cause) un-red |
-| **Verification gap recorded**: `nix flake check` never builds devShells; three distinct hashes (repo vendorHash, cqrs-lint vendorHash, cqrs-lint source hash) must never be cross-pasted | docs/gotchas.md entry (`c218055`) with the one-command catch recipe |
-| **Review plan**: 7-lane Pareto plan (R1 domain → R7 report), D2 graph inlined | docs/planning/2026-10-26_11-20…plan.html (`d496182`) |
-| **R1–R6 review lanes**: all 59 Go source files read end-to-end (calls, ingest×4+wire, search, retention, backup, web×18, cli×10, cmd×8, app); templ surface verified via palette gates, goldens, targeted scans; CI/scripts/flake audited | Findings below; verdicts in the review report |
-| **Defect 1 (Critical)**: lone-`;` CDR line became empty AFTER the blank check → `csv` returned `io.EOF` → one formatting-noise line failed the whole Master.csv | Trim order fixed; found LIVE by the `rapid` property test on a fresh seed; failfile committed as replay seed (`d061415`, `3cdc5b2`) |
-| **Defect 2 (High)**: Telnyx ingest client rode `http.DefaultClient` (no header timeout) → a stalled upstream pinned poller passes forever | Transport cloned with 30 s ResponseHeaderTimeout; recording proxy's unbounded-body doctrine untouched (`8ea7937`) |
-| **Defect 3 (minor, self-inflicted)**: the CDR fix missed `wsl_v5` spacing (lint not run before that commit) | Caught at the final receipt, fixed (`295eb3e`) |
-| **Series verification**: all 3 ticketed items of the 2026-10-11 review verified LANDED (recording upstream timeout + throttle, `RecordingFetcher`, `EXPORT_INCOMPLETE` stream markers) | Evidence table in the review report §02 |
-| **Accepted-debt audit**: 7 files >350 lines (cohesive, advisory-only); cqrs-lint 19 infos (policy-decided); json v1/v2 mix (deliberate adoption order, FlexTime pins ingest DTOs to v1 semantics); 17 suppressed art-dupl groups (≤18-line templ shape) | Review report §05, with reasons |
-| **Review report**: styled series snapshot with post-fix gate receipt | docs/reviews/2026-10-26_11-25_full-code-review.html (`2e222ab`) |
-| **Final gate receipt on the end-state tree**: nix build + flake check + devshell, full `go test ./...` (property replaying), golangci-lint 0 issues, art-dupl zero-group, agents-budget 219/219, doc links 0 broken, doc test claims 0 phantom | All green; nothing pushed |
+| Work                                                                                                                                                                                                                                                    | Receipt                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Nix gate repair**: the 2026-10-25 sweep had clobbered cqrs-lint's two fixed-output pins (source hash → placeholder, vendorHash ← pbx-lens's hash); devshell broken for every consumer while `nix flake check` stayed green                            | Restored both pins from git history + the FOD mismatch output; false "re-derived" comment corrected (`7ff3173`); BuildFlow's red nix lane (nix-build, dprint, prettier, vulnix — one root cause) un-red |
+| **Verification gap recorded**: `nix flake check` never builds devShells; three distinct hashes (repo vendorHash, cqrs-lint vendorHash, cqrs-lint source hash) must never be cross-pasted                                                                | docs/gotchas.md entry (`c218055`) with the one-command catch recipe                                                                                                                                     |
+| **Review plan**: 7-lane Pareto plan (R1 domain → R7 report), D2 graph inlined                                                                                                                                                                           | docs/planning/2026-10-26_11-20…plan.html (`d496182`)                                                                                                                                                    |
+| **R1–R6 review lanes**: all 59 Go source files read end-to-end (calls, ingest×4+wire, search, retention, backup, web×18, cli×10, cmd×8, app); templ surface verified via palette gates, goldens, targeted scans; CI/scripts/flake audited               | Findings below; verdicts in the review report                                                                                                                                                           |
+| **Defect 1 (Critical)**: lone-`;` CDR line became empty AFTER the blank check → `csv` returned `io.EOF` → one formatting-noise line failed the whole Master.csv                                                                                         | Trim order fixed; found LIVE by the `rapid` property test on a fresh seed; failfile committed as replay seed (`d061415`, `3cdc5b2`)                                                                     |
+| **Defect 2 (High)**: Telnyx ingest client rode `http.DefaultClient` (no header timeout) → a stalled upstream pinned poller passes forever                                                                                                               | Transport cloned with 30 s ResponseHeaderTimeout; recording proxy's unbounded-body doctrine untouched (`8ea7937`)                                                                                       |
+| **Defect 3 (minor, self-inflicted)**: the CDR fix missed `wsl_v5` spacing (lint not run before that commit)                                                                                                                                             | Caught at the final receipt, fixed (`295eb3e`)                                                                                                                                                          |
+| **Series verification**: all 3 ticketed items of the 2026-10-11 review verified LANDED (recording upstream timeout + throttle, `RecordingFetcher`, `EXPORT_INCOMPLETE` stream markers)                                                                  | Evidence table in the review report §02                                                                                                                                                                 |
+| **Accepted-debt audit**: 7 files >350 lines (cohesive, advisory-only); cqrs-lint 19 infos (policy-decided); json v1/v2 mix (deliberate adoption order, FlexTime pins ingest DTOs to v1 semantics); 17 suppressed art-dupl groups (≤18-line templ shape) | Review report §05, with reasons                                                                                                                                                                         |
+| **Review report**: styled series snapshot with post-fix gate receipt                                                                                                                                                                                    | docs/reviews/2026-10-26_11-25_full-code-review.html (`2e222ab`)                                                                                                                                         |
+| **Final gate receipt on the end-state tree**: nix build + flake check + devshell, full `go test ./...` (property replaying), golangci-lint 0 issues, art-dupl zero-group, agents-budget 219/219, doc links 0 broken, doc test claims 0 phantom          | All green; nothing pushed                                                                                                                                                                               |
 
 ## b) PARTIALLY DONE
 
-- **Every-test-file visit** (skill's letter): 76 test files were *exercised*
+- **Every-test-file visit** (skill's letter): 76 test files were _exercised_
   (full suite, property replay, gate tests) and the critical ones read
   (property, domain, seam/golden), but not all 76 were read line-by-line. The
   report's stat card says "59 Go source files" — accurate, but the skill asked
@@ -121,58 +121,58 @@ against re-verification.
 Owner-gated items are marked 🔵 (cannot start without you); the rest are
 executable. Sorted roughly by impact.
 
-| # | Thing | State |
-| --- | --- | --- |
-| 1 | 🔵 Release execution: v0.2.1 vs v0.3.0 (CHANGELOG split → cut-release → proxy check); bodies drafted | owner shape call |
-| 2 | 🔵 PR #3 disposition: rebase-and-watch vs close + hand-rolled sqlite bump, then dependabot github-actions-only grouping | owner call |
-| 3 | Browser-lane proof owed by the plan: `verify-all.sh` green + screenshot baselines for anomaly/segments/spend cards | executable |
-| 4 | `scripts/verify-nix.sh` (build + flake check + devshell echo in one command) from the gotcha's recipe | executable, small |
-| 5 | Add the lint+dupl battery to the pre-push ritual doc (and to my own loop) so 3cdc5b2-class misses die | executable, small |
-| 6 | Two-pin sweep checklist in AGENTS.md/docs (go.mod sweeps touch vendorHash.nix AND both cqrs-lint pins) | executable, small |
-| 7 | Read-model rebuild subcommand (ProjectionHost.Reset + replay) — buildable locally even though the RUN is 🔵 owner-timed | executable (L) |
-| 8 | FTS tokenizer explicit coverage table test (if not already landed with transcript search — verify first) | verify-then-do |
-| 9 | Export compression decision note (P17.2; PII note is 🔵) | executable |
-| 10 | P12 remainder: harvest any surviving §f items from the 15-39/16-58/17-12 reports into TODO_LIST | verify-then-do |
-| 11 | P13 sibling folds: call_direction into the CDR template, lens.nix backup wording, webphone deep link | sibling window |
-| 12 | P14 lint residue: gofumpt/v2.14 parity, unknown-`//nolint` grep, AGENTS-budget CI job | executable |
-| 13 | P15 remainder: print-stylesheet audit + committed baselines for the new cards | executable |
-| 14 | P16 remainder check: ETag counters landed (`caching.go`); verify retention/purge-lag SLO surface is complete | verify-then-do |
-| 15 | P18: backup restore drill landed in CI (`TestRestoreDrillSnapshotToFreshIndex`) — verify FTS-trap table test likewise | verify-then-do |
-| 16 | P19 watchlist sweep: versions.json drift after the next tag wave; art-dupl suppressed audit (stats audit done this session) | partially done |
-| 17 | 🔵 Decision pack D1–D5 (date/number vocabulary, control rows, export note, AI-share tone) | owner answers |
-| 18 | 🔵 CSP enforce flip at the next host deploy (sweep is enforce-clean) | owner risk call |
+| #  | Thing                                                                                                                                   | State                               |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| 1  | 🔵 Release execution: v0.2.1 vs v0.3.0 (CHANGELOG split → cut-release → proxy check); bodies drafted                                    | owner shape call                    |
+| 2  | 🔵 PR #3 disposition: rebase-and-watch vs close + hand-rolled sqlite bump, then dependabot github-actions-only grouping                 | owner call                          |
+| 3  | Browser-lane proof owed by the plan: `verify-all.sh` green + screenshot baselines for anomaly/segments/spend cards                      | executable                          |
+| 4  | `scripts/verify-nix.sh` (build + flake check + devshell echo in one command) from the gotcha's recipe                                   | executable, small                   |
+| 5  | Add the lint+dupl battery to the pre-push ritual doc (and to my own loop) so 3cdc5b2-class misses die                                   | executable, small                   |
+| 6  | Two-pin sweep checklist in AGENTS.md/docs (go.mod sweeps touch vendorHash.nix AND both cqrs-lint pins)                                  | executable, small                   |
+| 7  | Read-model rebuild subcommand (ProjectionHost.Reset + replay) — buildable locally even though the RUN is 🔵 owner-timed                 | executable (L)                      |
+| 8  | FTS tokenizer explicit coverage table test (if not already landed with transcript search — verify first)                                | verify-then-do                      |
+| 9  | Export compression decision note (P17.2; PII note is 🔵)                                                                                | executable                          |
+| 10 | P12 remainder: harvest any surviving §f items from the 15-39/16-58/17-12 reports into TODO_LIST                                         | verify-then-do                      |
+| 11 | P13 sibling folds: call_direction into the CDR template, lens.nix backup wording, webphone deep link                                    | sibling window                      |
+| 12 | P14 lint residue: gofumpt/v2.14 parity, unknown-`//nolint` grep, AGENTS-budget CI job                                                   | executable                          |
+| 13 | P15 remainder: print-stylesheet audit + committed baselines for the new cards                                                           | executable                          |
+| 14 | P16 remainder check: ETag counters landed (`caching.go`); verify retention/purge-lag SLO surface is complete                            | verify-then-do                      |
+| 15 | P18: backup restore drill landed in CI (`TestRestoreDrillSnapshotToFreshIndex`) — verify FTS-trap table test likewise                   | verify-then-do                      |
+| 16 | P19 watchlist sweep: versions.json drift after the next tag wave; art-dupl suppressed audit (stats audit done this session)             | partially done                      |
+| 17 | 🔵 Decision pack D1–D5 (date/number vocabulary, control rows, export note, AI-share tone)                                               | owner answers                       |
+| 18 | 🔵 CSP enforce flip at the next host deploy (sweep is enforce-clean)                                                                    | owner risk call                     |
 | 19 | 🔵 Stamp-churn doctrine: client-side "Updated" stamp for real 304s; measure the /frag/dashboard 304-hit rate first (probe-able locally) | owner product call, prep executable |
-| 20 | 🔵 PII enforcement boundary (E164/ParticipantHash; one-pager ready) | owner call |
-| 21 | 🔵 >1MiB transcript buffer policy (OnBufferOverflow log exists) | owner call |
-| 22 | 🔵 Coverage: accept 70 or chase the fleet 80 (measured ~73) | owner call |
-| 23 | 🔵 Catalog infra push (shipped locally 2026-10-24; needs push path) | owner push |
-| 24 | 🔵 Production ContentHash-v2 re-ingest (rehearse `refresh -since 0` classify-only, then `-apply`) | owner deploy window |
-| 25 | 🔵 Host deploys with current lens module options (`aiDids` newly available) | owner deploy |
-| 26 | 🔵 MOS poller T15 execution (design done; window 2027-01) | window-gated |
-| 27 | 🔵 One-time read-model rebuild RUN (after #7 builds the tooling) | owner deploy timing |
-| 28 | 🔵 Lint-policy intent (lll scope, run.go "1.27", tagliatelle) → then `golangci-lint config verify` gate + hooks-residue CI rows | owner, then executable |
-| 29 | 🔵 Upstream filings queue (CopyButton nonce, Card TitleTag, statix exit-0, buildflow advisory-vs-fatal) | owner go-ahead |
-| 30 | Explicit parser trim-edge table cases (bare `;`, `""`, whitespace-only) in cdr_test for readability (rapid covers the behavior) | executable, small |
-| 31 | Ingest-client header-timeout observability: count/log when the 30 s budget trips (ops signal) | executable, small |
-| 32 | `watchSIGHUP` logging via Options.Log for log-shape uniformity (cosmetic) | executable, small |
-| 33 | Boundary property for `webhook.Parse` fold (arbitrary bytes → no error, order-independent) in the rapid style | executable |
-| 34 | Boundary property for `search.MatchExpression` (arbitrary bytes → valid FTS5 or rejection) | executable |
-| 35 | Confirm dependabot proposes bumps for the newly-direct deps (httputil, server_timing, go-etag/server) | wait weekly cycle |
-| 36 | 🔵 Browser-level 304 + DOM-churn check (htmx polls revalidate) | owner manual |
-| 37 | 🔵 Pixel-baseline durable home (v4 saved 2026-10-25) | owner call |
-| 38 | 🔵 Mobile card-list for the calls table (375px) | owner taste call |
-| 39 | 🔵 BuildFlow#56 local rebuild confirmation | owner env |
-| 40 | 🔵 Sibling: backup-rotation wording fold into lens.nix | sibling window |
-| 41 | Watch dependabot-core#16538; answer maintainer questions | watch |
-| 42 | Watch go-etag#2 (Flush observability); fold when it lands | watch |
-| 43 | Fold templ-components #48/#49/#50/#51/#52/#55/#59/#60/#61/#63 when they land (local guards retire) | watch, bump-triggered |
-| 44 | Telnyx live-API quarterly re-verify + MP3 Range check (window 2027-01, m27.9) | window-gated |
-| 45 | Next-release proxy-tail watch in cut-release.sh (bounded retry only if it flakes) | after first real release |
-| 46 | ROADMAP: spend trend per week/month chart | raw idea |
-| 47 | ROADMAP: cost intelligence grouping | raw idea |
-| 48 | ROADMAP: retention SLO dashboards beyond /api/ops | raw idea |
-| 49 | ROADMAP: per-segment rates & saved-views graduates (P7 landed; demand-gate the rest) | raw idea |
-| 50 | ROADMAP: demand-gated outcome analytics (answer-rate P11 verify-first) | raw idea |
+| 20 | 🔵 PII enforcement boundary (E164/ParticipantHash; one-pager ready)                                                                     | owner call                          |
+| 21 | 🔵 >1MiB transcript buffer policy (OnBufferOverflow log exists)                                                                         | owner call                          |
+| 22 | 🔵 Coverage: accept 70 or chase the fleet 80 (measured ~73)                                                                             | owner call                          |
+| 23 | 🔵 Catalog infra push (shipped locally 2026-10-24; needs push path)                                                                     | owner push                          |
+| 24 | 🔵 Production ContentHash-v2 re-ingest (rehearse `refresh -since 0` classify-only, then `-apply`)                                       | owner deploy window                 |
+| 25 | 🔵 Host deploys with current lens module options (`aiDids` newly available)                                                             | owner deploy                        |
+| 26 | 🔵 MOS poller T15 execution (design done; window 2027-01)                                                                               | window-gated                        |
+| 27 | 🔵 One-time read-model rebuild RUN (after #7 builds the tooling)                                                                        | owner deploy timing                 |
+| 28 | 🔵 Lint-policy intent (lll scope, run.go "1.27", tagliatelle) → then `golangci-lint config verify` gate + hooks-residue CI rows         | owner, then executable              |
+| 29 | 🔵 Upstream filings queue (CopyButton nonce, Card TitleTag, statix exit-0, buildflow advisory-vs-fatal)                                 | owner go-ahead                      |
+| 30 | Explicit parser trim-edge table cases (bare `;`, `""`, whitespace-only) in cdr_test for readability (rapid covers the behavior)         | executable, small                   |
+| 31 | Ingest-client header-timeout observability: count/log when the 30 s budget trips (ops signal)                                           | executable, small                   |
+| 32 | `watchSIGHUP` logging via Options.Log for log-shape uniformity (cosmetic)                                                               | executable, small                   |
+| 33 | Boundary property for `webhook.Parse` fold (arbitrary bytes → no error, order-independent) in the rapid style                           | executable                          |
+| 34 | Boundary property for `search.MatchExpression` (arbitrary bytes → valid FTS5 or rejection)                                              | executable                          |
+| 35 | Confirm dependabot proposes bumps for the newly-direct deps (httputil, server_timing, go-etag/server)                                   | wait weekly cycle                   |
+| 36 | 🔵 Browser-level 304 + DOM-churn check (htmx polls revalidate)                                                                          | owner manual                        |
+| 37 | 🔵 Pixel-baseline durable home (v4 saved 2026-10-25)                                                                                    | owner call                          |
+| 38 | 🔵 Mobile card-list for the calls table (375px)                                                                                         | owner taste call                    |
+| 39 | 🔵 BuildFlow#56 local rebuild confirmation                                                                                              | owner env                           |
+| 40 | 🔵 Sibling: backup-rotation wording fold into lens.nix                                                                                  | sibling window                      |
+| 41 | Watch dependabot-core#16538; answer maintainer questions                                                                                | watch                               |
+| 42 | Watch go-etag#2 (Flush observability); fold when it lands                                                                               | watch                               |
+| 43 | Fold templ-components #48/#49/#50/#51/#52/#55/#59/#60/#61/#63 when they land (local guards retire)                                      | watch, bump-triggered               |
+| 44 | Telnyx live-API quarterly re-verify + MP3 Range check (window 2027-01, m27.9)                                                           | window-gated                        |
+| 45 | Next-release proxy-tail watch in cut-release.sh (bounded retry only if it flakes)                                                       | after first real release            |
+| 46 | ROADMAP: spend trend per week/month chart                                                                                               | raw idea                            |
+| 47 | ROADMAP: cost intelligence grouping                                                                                                     | raw idea                            |
+| 48 | ROADMAP: retention SLO dashboards beyond /api/ops                                                                                       | raw idea                            |
+| 49 | ROADMAP: per-segment rates & saved-views graduates (P7 landed; demand-gate the rest)                                                    | raw idea                            |
+| 50 | ROADMAP: demand-gated outcome analytics (answer-rate P11 verify-first)                                                                  | raw idea                            |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
