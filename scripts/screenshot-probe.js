@@ -48,9 +48,12 @@ const KNOWN_SURFACES = [
   "notfound",
   "detail-rec",
   "print",
+  "ops",
   "empty-calls",
   "empty-search",
   "empty-dashboard",
+  "empty-ops",
+  "ops-wired",
   "long-excerpt",
 ];
 const ONLY = args.includes("--only")
@@ -142,6 +145,10 @@ const NEEDS_DISCOVERY =
       // played, so no network error noise lands in the capture).
       ["notfound", "/calls/no-such-stream/none"],
       ["detail-rec", "/calls/telnyx-conversation/smoke-0001"],
+      // The ops page joins the corpus (2026-10-26): live poller + live
+      // retention posture on the seeded index (the wired/empty variants
+      // get their own phases below).
+      ["ops", "/ops"],
     ];
     // Drift guard (2026-10-17): a page added to the capture loop without a
     // KNOWN_SURFACES label (or vice versa) is a silent --only hole — fail
@@ -234,7 +241,7 @@ const NEEDS_DISCOVERY =
     // --- Empty-index phase (plan M3/F8): first-run corpus variant. The
     // smoke corpus never shows the "no calls yet" ladders, so restart the
     // serve against a truly empty DB and capture the three index pages.
-    if (["empty-calls", "empty-search", "empty-dashboard"].some(wanted)) {
+    if (["empty-calls", "empty-search", "empty-dashboard", "empty-ops"].some(wanted)) {
       await probe.stopProbe(serve);
       const emptyDB = path.join(OUT, "empty.db");
       if (fs.existsSync(emptyDB)) fs.rmSync(emptyDB);
@@ -251,6 +258,7 @@ const NEEDS_DISCOVERY =
           ["empty-calls", "/"],
           ["empty-search", "/search"],
           ["empty-dashboard", "/dashboard"],
+          ["empty-ops", "/ops"],
         ];
         for (const theme of themes) {
           const ctx = await browser.createBrowserContext();
@@ -328,6 +336,33 @@ const NEEDS_DISCOVERY =
         }
       } finally {
         probe.stopProbe(longServe);
+      }
+    }
+
+    // --- Wired-ops phase (2026-10-26): the canned STALE poller fixture on
+    // the seeded index with an ACTIVE retention window — the alert + the
+    // healthy active card in one capture. The main "ops" surface keeps the
+    // representative live posture; this phase is the diagnostic visual.
+    if (wanted("ops-wired")) {
+      await probe.stopProbe(serve);
+      const wiredPort = await probe.findFreePort();
+      const wiredServe = await probe.serveProbe(bin, DB, wiredPort, ["-wired-ops", "-max-age", "24h"]);
+      const wiredBase = `http://127.0.0.1:${wiredPort}`;
+      try {
+        for (const theme of themes) {
+          const ctx = await browser.createBrowserContext();
+          const page = await ctx.newPage();
+          await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
+          await page.setViewport({ width: viewports[1].w, height: viewports[1].h });
+          await page.goto(`${wiredBase}/ops`, { waitUntil: "networkidle0", timeout: 20000 });
+          const file = path.join(OUT, `ops-wired-${theme}.png`);
+          await page.screenshot({ path: file, fullPage: true });
+          n++;
+          console.log("captured", file);
+          await ctx.close();
+        }
+      } finally {
+        probe.stopProbe(wiredServe);
       }
     }
 
