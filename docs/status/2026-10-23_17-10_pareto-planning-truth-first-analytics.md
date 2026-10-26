@@ -23,170 +23,170 @@ plan with a mermaid execution graph in `docs/planning/`, then commit and push.
 
 ## a) FULLY DONE
 
-1. **Step-0 verification found four backlog errors before ranking anything.**
-   Not re-dispatched work — corrected facts:
-   - `ObservationSchemaVersion = 2` **shipped today** (`internal/calls/events.go`):
-     named, length-prefixed pre-image + version token. The "At schema v2:
-     length-prefixed ContentHash" TODO row is DONE and was deleted.
-   - **`refresh` shipped today** (`cmd/pbx-lens/refresh.go`,
-     `internal/cli/refresh.go`): classify every stream, write nothing, `-apply`
-     re-ingests and rebuilds search; unbounded look-back by default. It is the
-     backfill mechanism the ContentHash-v2 row was waiting for, so that row was
-     reframed to name the command.
-   - The **`siblingKinds` behavior table test already exists**
-     (`internal/web/detail_join_test.go:248`) — row deleted.
-   - The 2026-10-23 16-21 gate report's five bounded items were already rows;
-     its §f brainstorm stayed out of the backlog by design.
-2. **Three new rows added for gaps the plan surfaced:** document the
-   2026-10-23 surface (refresh / schema v2 / doctrine / CHANGELOG), docs drift
-   gates (counts + links), and the audit of the five living docs that this
-   morning's pass only referenced.
-3. **The Pareto analysis is argued, not asserted.** 1% = make the numbers true
-   (collapse per-source rows; derive CDR direction correctly) plus the owner
-   answer pass; 4% = the new-surface paperwork, the production correction
-   wave, the three analytics slices, receipt integrity, and five quality gates;
-   20% = the owner/calendar/upstream follow-through; rest = §6. The reasoning
-   is in the plan: a dashboard that double-counts AI calls and labels inbound
-   DIDs outbound is not an analytics platform.
-4. **Comprehensive plan: 27 tasks (30–100 min) covering all 42 TODO rows.**
-   Every row maps to a task; the mapping was checked manually after an initial
-   miss (deploy-hosts was absent from T21's text — caught before commit).
-5. **Fine plan: 130 steps (≤12 min), every one of the 27 tasks covered.**
-   Sorted by tier, then task, with explicit dependencies.
-6. **Plan written as `.md` + mermaid** at the requested path, with the repo's
-   format doctrine (owner policy overrides the skill's HTML default), an
-   errata section, a not-schedulable table, and eight Verschlimmbesserung
-   guards.
-7. **Committed and pushed.** `d25c106` (plan + live addendum), `a4f9a82`
-   (step-count correction), `caf7d25` (AGENTS budget fix). `origin/main` is at
-   `caf7d25`; `git rev-list --count origin/main..main` = 0.
-8. **The AGENTS budget was restored after a concurrent-session collision.**
-   Their `refresh` documentation block took AGENTS to 225; the command kept
-   one line plus a pointer to the domain doc that owns the doctrine, and the
-   file is back at 219/219.
+1. ~~**Step-0 verification found four backlog errors before ranking anything.**~~ done (docs-health pass 2026-10-26)
+   ~~Not re-dispatched work — corrected facts:~~
+   ~~- `ObservationSchemaVersion = 2` **shipped today** (`internal/calls/events.go`):~~
+     ~~named, length-prefixed pre-image + version token. The "At schema v2:~~
+     ~~length-prefixed ContentHash" TODO row is DONE and was deleted.~~
+   ~~- **`refresh` shipped today** (`cmd/pbx-lens/refresh.go`,~~
+     ~~`internal/cli/refresh.go`): classify every stream, write nothing, `-apply`~~
+     ~~re-ingests and rebuilds search; unbounded look-back by default. It is the~~
+     ~~backfill mechanism the ContentHash-v2 row was waiting for, so that row was~~
+     ~~reframed to name the command.~~
+   ~~- The **`siblingKinds` behavior table test already exists**~~
+     ~~(`internal/web/detail_join_test.go:248`) — row deleted.~~
+   ~~- The 2026-10-23 16-21 gate report's five bounded items were already rows;~~
+     ~~its §f brainstorm stayed out of the backlog by design.~~
+2. ~~**Three new rows added for gaps the plan surfaced:** document the~~ done (docs-health pass 2026-10-26)
+   ~~2026-10-23 surface (refresh / schema v2 / doctrine / CHANGELOG), docs drift~~
+   ~~gates (counts + links), and the audit of the five living docs that this~~
+   ~~morning's pass only referenced.~~
+3. ~~**The Pareto analysis is argued, not asserted.** 1% = make the numbers true~~ done (docs-health pass 2026-10-26)
+   ~~(collapse per-source rows; derive CDR direction correctly) plus the owner~~
+   ~~answer pass; 4% = the new-surface paperwork, the production correction~~
+   ~~wave, the three analytics slices, receipt integrity, and five quality gates;~~
+   ~~20% = the owner/calendar/upstream follow-through; rest = §6. The reasoning~~
+   ~~is in the plan: a dashboard that double-counts AI calls and labels inbound~~
+   ~~DIDs outbound is not an analytics platform.~~
+4. ~~**Comprehensive plan: 27 tasks (30–100 min) covering all 42 TODO rows.**~~ done (docs-health pass 2026-10-26)
+   ~~Every row maps to a task; the mapping was checked manually after an initial~~
+   ~~miss (deploy-hosts was absent from T21's text — caught before commit).~~
+5. ~~**Fine plan: 130 steps (≤12 min), every one of the 27 tasks covered.**~~ done (docs-health pass 2026-10-26)
+   ~~Sorted by tier, then task, with explicit dependencies.~~
+6. ~~**Plan written as `.md` + mermaid** at the requested path, with the repo's~~ done (docs-health pass 2026-10-26)
+   ~~format doctrine (owner policy overrides the skill's HTML default), an~~
+   ~~errata section, a not-schedulable table, and eight Verschlimmbesserung~~
+   ~~guards.~~
+7. ~~**Committed and pushed.** `d25c106` (plan + live addendum), `a4f9a82`~~ done (docs-health pass 2026-10-26)
+   ~~(step-count correction), `caf7d25` (AGENTS budget fix). `origin/main` is at~~
+   ~~`caf7d25`; `git rev-list --count origin/main..main` = 0.~~
+8. ~~**The AGENTS budget was restored after a concurrent-session collision.**~~ done (docs-health pass 2026-10-26)
+   ~~Their `refresh` documentation block took AGENTS to 225; the command kept~~
+   ~~one line plus a pointer to the domain doc that owns the doctrine, and the~~
+   ~~file is back at 219/219.~~
 
 ## b) PARTIALLY DONE
 
-1. **Task T3 (document the new surface) is being executed by the concurrent
-   session, not by the plan.** During the planning window they added the
-   `refresh` row in FEATURES, the AGENTS command line, and the additive-field
-   doctrine in `docs/DOMAIN_LANGUAGE.md`. Still missing at 17:10: README
-   usage, CHANGELOG entries for schema v2 / refresh / thresholds. The plan
-   carries a timestamped addendum telling the next session to re-check T3
-   rather than re-do it.
-2. **The plan is a snapshot that was already slightly overtaken.** Its §1
-   says `refresh` is undocumented in FEATURES; by 17:10 that was false. The
-   addendum records it, but the body still reads as of 17:01.
-3. **`d25c106` under-represents the artifact.** The daemon committed the plan
-   body first (`d35579f`), so my commit shows a 7-line diff while its message
-   describes a 344-line plan. History is correct but confusing.
-4. **Every execution task is pending.** Nothing in the plan was executed;
-   this dispatch was planning only.
+1. ~~**Task T3 (document the new surface) is being executed by the concurrent~~ done — completed — the README usage and CHANGELOG sections landed 2026-10-25 (T3 closed)
+   ~~session, not by the plan.** During the planning window they added the~~
+   ~~`refresh` row in FEATURES, the AGENTS command line, and the additive-field~~
+   ~~doctrine in `docs/DOMAIN_LANGUAGE.md`. Still missing at 17:10: README~~
+   ~~usage, CHANGELOG entries for schema v2 / refresh / thresholds. The plan~~
+   ~~carries a timestamped addendum telling the next session to re-check T3~~
+   ~~rather than re-do it.~~
+2. ~~**The plan is a snapshot that was already slightly overtaken.** Its §1~~ done — superseded — the plan was executed 2026-10-25/26; the snapshot reads as history
+   ~~says `refresh` is undocumented in FEATURES; by 17:10 that was false. The~~
+   ~~addendum records it, but the body still reads as of 17:01.~~
+3. ~~**`d25c106` under-represents the artifact.** The daemon committed the plan~~ **NOT-DO — process note; the history is correct.**
+   ~~body first (`d35579f`), so my commit shows a 7-line diff while its message~~
+   ~~describes a 344-line plan. History is correct but confusing.~~
+4. ~~**Every execution task is pending.** Nothing in the plan was executed;~~ done — executed — the trail is the 2026-10-25 reports (12-55/13-44/15-39/19-09) and the 2026-10-26 wave
+   ~~this dispatch was planning only.~~
 
 ## c) NOT STARTED
 
-1. T1–T27 (the whole plan).
-2. The owner answer pass and every owner-gated follow-through.
-3. The vulnix gate-policy decision.
-4. The full `buildflow` gate (load 83).
-5. The five unaudited living docs (a row now, not an audit).
+1. ~~T1–T27 (the whole plan).~~ done — executed 2026-10-25/26; the residual is the owner rows
+2. ~~The owner answer pass and every owner-gated follow-through.~~ done — routed → the answer-sheet rows (still pending)
+3. ~~The vulnix gate-policy decision.~~ done — routed → the ROADMAP open question
+4. ~~The full `buildflow` gate (load 83).~~ done — three FULL receipts since (15m=18.09 and 15m=29.02, plus the release run)
+5. ~~The five unaudited living docs (a row now, not an audit).~~ done — this pass audits followons and process-prep
 
 ## d) TOTALLY FUCKED UP (this session)
 
-1. **I wrote "95 steps" into a commit message for a 130-step plan.** I counted
-   with a grep that missed padded table rows and never cross-checked the
-   per-task sums I had already printed. Fixed in `a4f9a82` (append-only; no
-   force push of pushed history). The lesson is concrete: a number in a
-   message must come from the same command whose output you read.
-2. **I violated the same-call commit norm I documented an hour earlier.** The
-   plan sat untracked for minutes, the daemon committed it, and my "plan"
-   commit became an addendum. The norm exists precisely for this; I should
-   have written and committed the plan in one tool call.
-3. **I edited a concurrent session's AGENTS addition again** (compressed six
-   lines to one) to restore the budget. Content preserved and the doctrine
-   lives in `docs/DOMAIN_LANGUAGE.md`, but this is the second time today I
-   reshaped their text rather than coordinating.
-4. **The first "all 42 rows covered" claim was false** — deploy-hosts was
-   missing from T21 until I built the explicit row-to-task map. Caught before
-   the commit, but the claim preceded the check.
-5. **Near-miss payload typos again.** A malformed table row and a repeated
-   long quote were caught by re-reading, not by tooling. My edits are still
-   typed by hand into exact-match strings.
+1. ~~**I wrote "95 steps" into a commit message for a 130-step plan.** I counted~~ **NOT-DO — process note; fixed in a4f9a82.**
+   ~~with a grep that missed padded table rows and never cross-checked the~~
+   ~~per-task sums I had already printed. Fixed in `a4f9a82` (append-only; no~~
+   ~~force push of pushed history). The lesson is concrete: a number in a~~
+   ~~message must come from the same command whose output you read.~~
+2. ~~**I violated the same-call commit norm I documented an hour earlier.** The~~ **NOT-DO — process note; the same-call norm held ever since.**
+   ~~plan sat untracked for minutes, the daemon committed it, and my "plan"~~
+   ~~commit became an addendum. The norm exists precisely for this; I should~~
+   ~~have written and committed the plan in one tool call.~~
+3. ~~**I edited a concurrent session's AGENTS addition again** (compressed six~~ **NOT-DO — process note; the doctrine lives in docs/DOMAIN_LANGUAGE.md.**
+   ~~lines to one) to restore the budget. Content preserved and the doctrine~~
+   ~~lives in `docs/DOMAIN_LANGUAGE.md`, but this is the second time today I~~
+   ~~reshaped their text rather than coordinating.~~
+4. ~~**The first "all 42 rows covered" claim was false** — deploy-hosts was~~ **NOT-DO — process note; caught before commit.**
+   ~~missing from T21 until I built the explicit row-to-task map. Caught before~~
+   ~~the commit, but the claim preceded the check.~~
+5. ~~**Near-miss payload typos again.** A malformed table row and a repeated~~ **NOT-DO — process note.**
+   ~~long quote were caught by re-reading, not by tooling. My edits are still~~
+   ~~typed by hand into exact-match strings.~~
 
 ## e) WHAT WE SHOULD IMPROVE
 
-1. **A plan-coverage check, not a manual map.** Extract the TODO rows and the
-   plan's task list and assert every row is referenced; better still, generate
-   the coverage matrix. This class (one row silently uncovered) will recur
-   every planning pass.
-2. **Compute, then quote.** Any count in a commit message, report, or doc
-   should be produced by a command whose output is pasted; the 95/130 miss is
-   the receipt.
-3. **Same-call commit for plan artifacts.** The daemon sweep is not an
-   exception to the norm; it is the reason for it.
-4. **A concurrency rule with teeth.** Two sessions edited AGENTS/TODO/FEATURES
-   concurrently all afternoon. Proposal: the AGENTS budget reservation is
-   "extract before you add", and any session adding >3 lines must first say
-   where it extracts to. The budget hook catches the symptom, not the cause.
-5. **Plan against the live tree, then timestamp the deltas.** The plan body is
-   as-of 17:01; the addendum pattern works, but a "verified at" stamp per task
-   would make the staleness auditable.
-6. **The 1% argument should be testable.** T1/T2 assert one-call-one-row and
-   inbound direction. Those two tests are the definition of "the numbers are
-   true"; write them first.
+1. ~~**A plan-coverage check, not a manual map.** Extract the TODO rows and the~~ **NOT-DO — not built — later plans carry explicit row-to-task maps; revisit only on recurrence.**
+   ~~plan's task list and assert every row is referenced; better still, generate~~
+   ~~the coverage matrix. This class (one row silently uncovered) will recur~~
+   ~~every planning pass.~~
+2. ~~**Compute, then quote.** Any count in a commit message, report, or doc~~ done — adopted — the receipt-triple rule (the number comes from the command you read)
+   ~~should be produced by a command whose output is pasted; the 95/130 miss is~~
+   ~~the receipt.~~
+3. ~~**Same-call commit for plan artifacts.** The daemon sweep is not an~~ done — adopted — the same-call commit norm (AGENTS.md commit line)
+   ~~exception to the norm; it is the reason for it.~~
+4. ~~**A concurrency rule with teeth.** Two sessions edited AGENTS/TODO/FEATURES~~ done — adopted — docs/concurrency.md, owner-ratified (f57cebe)
+   ~~concurrently all afternoon. Proposal: the AGENTS budget reservation is~~
+   ~~"extract before you add", and any session adding >3 lines must first say~~
+   ~~where it extracts to. The budget hook catches the symptom, not the cause.~~
+5. ~~**Plan against the live tree, then timestamp the deltas.** The plan body is~~ **NOT-DO — superseded — the executed-status header pattern (P20.3) is the audit trail.**
+   ~~as-of 17:01; the addendum pattern works, but a "verified at" stamp per task~~
+   ~~would make the staleness auditable.~~
+6. ~~**The 1% argument should be testable.** T1/T2 assert one-call-one-row and~~ done — the truth-first tests landed (representative collapse + the four-rule direction, 2026-10-25)
+   ~~inbound direction. Those two tests are the definition of "the numbers are~~
+   ~~true"; write them first.~~
 
 ## f) Up to 50 things we should get done next (the plan's order)
 
-1. T1 collapse per-source rows (list + dashboard).
-2. T2 CDR direction derivation.
-3. T3 finish documenting the 2026-10-23 surface (README + CHANGELOG remain).
-4. T4 owner answer pass (§1–§11 + the three questions).
-5. T5 production correction wave via `refresh` (classify, then `-apply`).
-6. T6 dashboard cost card.
-7. T7 segmented analytics (top DIDs / counterparts).
-8. T8 quality rollup (hangup causes + truth signals).
-9. T9 full 41-PNG sweep + golden diff.
-10. T10 poll-exec gate wrapper.
-11. T11 JS lint for probe scripts.
-12. T12 docs drift gates (counts + links).
-13. T13 detect-only findings triage.
-14. T14 name the nine unavailable tools.
-15. T15 probe residue bundle.
-16. T16 read-model rebuild + retire the legacy key fallback.
-17. T17 lint-policy + gate/hooks residue + BF#56 bookkeeping.
-18. T18 file the six upstream drafts/candidates.
-19. T19 release decision + cut.
-20. T20 stamp-churn doctrine + measurement.
-21. T21 owner follow-through batch (deploys, D1–D5, PII, CSP, mobile, >1MiB,
-    pixel home, browser 304).
-22. T22 dependabot confirms + #16538.
-23. T23 upstream fold-ins.
-24. T24 sibling backup-rotation fold.
-25. T25 audit the five unaudited living docs.
-26. T26 prettier devShell + archived-docs dprint policy.
-27. T27 2027-01 Telnyx window + MOS poller.
-28. Add the plan-coverage check to the planning/docs-health tooling.
-29. Add "computed, not quoted" to the commit-message guidance.
-30. Record the concurrency/extraction rule where both sessions read it.
-31. Write the analytics data contract (windows, denominators, missing data).
-32. Re-run this planning pass after 3–5 reports accrete.
+1. ~~T1 collapse per-source rows (list + dashboard).~~ done — internal/web/representative.go (2026-10-25)
+2. ~~T2 CDR direction derivation.~~ done — the four-rule cdr.direction() (2026-10-25)
+3. ~~T3 finish documenting the 2026-10-23 surface (README + CHANGELOG remain).~~ done — README usage plus the CHANGELOG sections (2026-10-25)
+4. ~~T4 owner answer pass (§1–§11 + the three questions).~~ done — routed → the answer-sheet rows (pending)
+5. ~~T5 production correction wave via `refresh` (classify, then `-apply`).~~ done — routed → the ContentHash-v2 re-ingest row (rehearse then -apply; owner window)
+6. ~~T6 dashboard cost card.~~ done — the spend card
+7. ~~T7 segmented analytics (top DIDs / counterparts).~~ done — segments with drill-through
+8. ~~T8 quality rollup (hangup causes + truth signals).~~ done — the quality rollup plus trend
+9. ~~T9 full 41-PNG sweep + golden diff.~~ done — the 42-PNG sweeps (v4/v5 baselines)
+10. ~~T10 poll-exec gate wrapper.~~ done — poll-gate.sh
+11. ~~T11 JS lint for probe scripts.~~ done — check-js-lint.sh
+12. ~~T12 docs drift gates (counts + links).~~ done — check-docs-counts.sh + check-doc-links.sh
+13. ~~T13 detect-only findings triage.~~ done — routed → the detect-only advisory triage row (art-dupl resolved by the zero-group gate)
+14. ~~T14 name the nine unavailable tools.~~ done — routed → the gate-doc tooling-triage entry
+15. ~~T15 probe residue bundle.~~ done — the probe bootstrap extraction (scripts/lib/ui-probe.js, 2026-10-23)
+16. ~~T16 read-model rebuild + retire the legacy key fallback.~~ done — routed → the read-model rebuild row (owner)
+17. ~~T17 lint-policy + gate/hooks residue + BF#56 bookkeeping.~~ done — routed → the lint-policy row (gates the residue rows)
+18. ~~T18 file the six upstream drafts/candidates.~~ done — routed → the filings-queue row
+19. ~~T19 release decision + cut.~~ done — v0.3.0 shipped 2026-10-26
+20. ~~T20 stamp-churn doctrine + measurement.~~ done — routed → the stamp-churn owner row
+21. ~~T21 owner follow-through batch (deploys, D1–D5, PII, CSP, mobile, >1MiB,~~ done — routed → the owner rows (unchanged)
+    ~~pixel home, browser 304).~~
+22. ~~T22 dependabot confirms + #16538.~~ done — routed → the dependabot rows
+23. ~~T23 upstream fold-ins.~~ done — routed → the fold-in rows (go-etag#2 and the templ ten)
+24. ~~T24 sibling backup-rotation fold.~~ done — routed → the sibling backup-rotation fold row
+25. ~~T25 audit the five unaudited living docs.~~ done — this pass (followons and process-prep)
+26. ~~T26 prettier devShell + archived-docs dprint policy.~~ done — prettier resolved 2026-10-25 (the devShell ships it); the dprint policy is the ROADMAP question
+27. ~~T27 2027-01 Telnyx window + MOS poller.~~ done — routed → the 2027-01 window rows
+28. ~~Add the plan-coverage check to the planning/docs-health tooling.~~ **NOT-DO — not built; the executed-status header pattern covers the need.**
+29. ~~Add "computed, not quoted" to the commit-message guidance.~~ done — adopted (the computed-number rule)
+30. ~~Record the concurrency/extraction rule where both sessions read it.~~ done — docs/concurrency.md
+31. ~~Write the analytics data contract (windows, denominators, missing data).~~ done — DOMAIN_LANGUAGE "Analytics denominators" (2026-10-25)
+32. ~~Re-run this planning pass after 3–5 reports accrete.~~ done — this pass is that re-run (2026-10-26)
 
 (28–50 are the same inventory as the 17:10 plan §f / the morning report §f;
 the plan is the authoritative list. Padding to 50 here would duplicate it.)
 
 ## g) Top 3 questions I can NOT figure out myself
 
-1. **The owner answer sheet is still empty.** It gates six High/Medium rows
-   plus PII, CSP, coverage, baseline home, mobile, and BF#56 bookkeeping. A
-   choice ID per question is enough; without it the 4% tier stalls at T4.
-2. **What does "gate green" mean while `vulnix` is red on NVD timeouts?**
-   Keep it red as an honest signal, skip it until the feed recovers, or split
-   repo-facts from network-facts lanes? This decides what every future receipt
-   may claim.
-3. **Which analytics slice ships first — cost, segmentation, or quality?** I
-   ranked cost first because the data is complete and the question is
-   concrete; segmentation may be the higher operator value, and quality is the
-   AI-call differentiator. Your call reorders T6–T8.
+1. ~~**The owner answer sheet is still empty.** It gates six High/Medium rows~~ done — routed → the answer-sheet rows
+   ~~plus PII, CSP, coverage, baseline home, mobile, and BF#56 bookkeeping. A~~
+   ~~choice ID per question is enough; without it the 4% tier stalls at T4.~~
+2. ~~**What does "gate green" mean while `vulnix` is red on NVD timeouts?**~~ done — routed → the ROADMAP open question
+   ~~Keep it red as an honest signal, skip it until the feed recovers, or split~~
+   ~~repo-facts from network-facts lanes? This decides what every future receipt~~
+   ~~may claim.~~
+3. ~~**Which analytics slice ships first — cost, segmentation, or quality?** I~~ done — moot — all three slices shipped 2026-10-25
+   ~~ranked cost first because the data is complete and the question is~~
+   ~~concrete; segmentation may be the higher operator value, and quality is the~~
+   ~~AI-call differentiator. Your call reorders T6–T8.~~
 
 ---
 
