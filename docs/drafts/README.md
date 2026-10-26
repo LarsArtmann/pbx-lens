@@ -35,3 +35,4 @@
 | `2026-10-26_v0.3.0-release-notes-paste-ready.md`                  | —                       | LIVE — the shipped notes with the meta header stripped; the file `gh release create --notes-file` consumes (T3)     |
 | `2026-10-26_v031-vs-wait-one-pager.md`                            | —                       | LIVE — owner decision: repair the misprinted v0.3.0 tag with v0.3.1, or wait for v0.4.0 (T3; default: wait)         |
 | `2026-10-26_tag-ci-first-push-watch-checklist.md`                 | —                       | LIVE — what to watch when the first `v*` tag proves the `cf6e393` trigger live (T3; cutting probe tags stays §g1)   |
+| `2026-10-26_advisory-triage-jsonv2-inventory.md`                  | —                       | LIVE — T13 dispositions: branching/file-size ACCEPTED, the jsonv2 flip surface ordered P0-P3 (the standing flip order) |
