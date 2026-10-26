@@ -111,3 +111,11 @@ DECISION.
   `decider.StrictApply` were both considered; StrictApply rejected above
   (loses the Corruption family), and handwritten constructors stay because
   the flat domain has only two commands.
+- **B010 (informational, declined — re-verified 2026-10-26)**: the four
+  explicit `catalog.Event[...]` registrations in `BuildCatalog` are the
+  whole catalog; `cqrs-gen`'s struct-tag codegen would buy nothing at this
+  size and cost a generated-code layer the repo deliberately avoids
+  (AGENTS: generated vs handwritten — right tool for the job). Revisit on
+  the E003 trigger (a second aggregate), where registration count stops
+  being trivial. The 2026-10-26 pass found the census UNCHANGED at 19
+  findings (this B010 row was the only code missing a disposition).
