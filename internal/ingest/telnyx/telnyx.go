@@ -23,6 +23,14 @@ const (
 	// detailRecordsPageSize is /detail_records' page[size] maximum per the
 	// endpoint schema (other list endpoints allow 100).
 	detailRecordsPageSize = 50
+
+	// ingestHeaderTimeout bounds each API call's time-to-response-headers.
+	// Every client call reads a bounded JSON body (maxBodyBytes), so the
+	// header budget is the whole liveness story: without it a connection
+	// that accepts but never answers pins the poller's pass forever (the
+	// same stall class the recording proxy bounds with its own transport —
+	// full-code-review 2026-10-11 ticketed both, the proxy landed first).
+	ingestHeaderTimeout = 30 * time.Second
 )
 
 type Client struct {
@@ -38,7 +46,22 @@ func NewClient(apiKey, baseURL string) *Client {
 		base = DefaultBase
 	}
 
-	return &Client{base: base, apiKey: apiKey, http: http.DefaultClient, PageSize: defaultPageSize}
+	return &Client{base: base, apiKey: apiKey, http: newIngestHTTPClient(), PageSize: defaultPageSize}
+}
+
+// newIngestHTTPClient clones the default transport and adds the response-
+// header budget. The body streaming concern does not exist here (bounded
+// JSON reads), so no route needs an escape hatch from this bound.
+func newIngestHTTPClient() *http.Client {
+	base, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		base = &http.Transport{}
+	}
+
+	transport := base.Clone()
+	transport.ResponseHeaderTimeout = ingestHeaderTimeout
+
+	return &http.Client{Transport: transport}
 }
 
 type ListOptions struct {
