@@ -101,11 +101,13 @@
             doCheck = false;
             # The monorepo root carries a go.work; without this, `go mod
             # vendor` in the modules FOD runs in workspace mode and dies.
-            # vendorHash re-derived 2026-10-25 after a Go toolchain bump
-            # changed the vendored tree (the old hash had been cached, so the
-            # devShell only broke once the FOD had to rebuild).
+            # This hash is cqrs-lint's OWN module set at the pinned rev
+            # above; it does not track this repo's go.mod. The 2026-10-25
+            # pbx-lens sweep briefly overwrote it with this repo's
+            # vendorHash (3I97v…) and the devshell died at the FOD;
+            # restored 2026-10-26 — the FOD mismatch names this hash.
             env.GOWORK = "off";
-            vendorHash = "sha256-3I97vRD8F5FRiUYkQNn38aixOHHaJIEyetjlxrGLLHo=";
+            vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
           };
         in
         {
