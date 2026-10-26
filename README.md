@@ -250,7 +250,8 @@ DSN path and pointing `serve` at it — the serve startup rebuild recreates
 the search index. The full chain (snapshot → verify → restore → rows and
 FTS hits match the source) is a checked-in test,
 `internal/backup/restore_drill_test.go`, so "backups work" stays a proven
-claim instead of a hope.
+claim instead of a hope. Latest receipt: green on the current schema
+(2026-10-26, 0.02s).
 
 ### Deep-link contract (for webphone and friends)
 

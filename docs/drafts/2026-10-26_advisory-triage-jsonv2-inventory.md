@@ -37,7 +37,7 @@ GOEXPERIMENT=jsonv2 is set fleet-wide but nothing imports
 encoding/json/v2 yet; the env var becomes load-bearing when a surface
 needs v2. The flip surface, measured today: **15 encoding/json call sites
 across 9 files, ~107 json struct tags across 10 files** (the 15-09
-audit's "39 findings" counted types, not sites; both are inventories of
+audit's "39 findings" counted files, not sites; both are inventories of
 the same surface).
 
 | Tier | Surface                                                                             | Why it risks the flip                                                                                                                                           |
