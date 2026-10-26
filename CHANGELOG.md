@@ -7,6 +7,28 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-26 (ops browser-truth: the corpus and the probe catch up with the SLO feature)
+
+- **The `/ops` page joined the screenshot corpus**: the main sweep captures
+  ops light/dark × mobile/desktop; the empty-index phase captures
+  `empty-ops`; a new `ops-wired` phase captures the canned stale-poller
+  fixture under an ACTIVE retention window (stale alert + healthy active
+  card in one frame). 50 PNGs per full sweep, up from 42.
+- **`verify-ops-verdict.js` asserts the retention section live**: `active`
+  must be a boolean (false on the no-`-max-age` probe serve) and the four
+  SLO keys must be present, number-or-null — the retention feature had a
+  Go test + a golden but no live-composition proof.
+
+### Changed — 2026-10-26 (the ops card stops borrowing the scan-failure word)
+
+- **An empty index under an active retention window now renders "nothing
+  is due — the index is empty"** instead of "Purge lag: unknown": nothing
+  is indexed, so nothing can be due. The failed-scan case (a genuinely
+  unknown answer) keeps "unknown — the oldest-view scan failed", and the
+  oldest-view row distinguishes the two postures the same way. The page
+  tracks the distinction via a scan-succeeded-and-empty bit; the JSON's
+  null contract is unchanged.
+
 ### Added — 2026-10-26 (operator depth: the retention SLO facts)
 
 - **Retention SLO fields on `/api/ops` and the `/ops` card** (the P16

@@ -29,3 +29,9 @@
 | `templ-components-tablerow-focus-indicator.md`                    | templ-components#49     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)                                                            |
 | `2026-10-15_templ-components_nav-id-etag-volatility.md`           | templ-components#55     | FILED — OPEN upstream (own repo; re-verified 2026-10-17)                                                            |
 | `treefmt-nix-545-comment.md`                                      | numtide/treefmt-nix#545 | FILED — filed upstream 2026-10-02; OPEN (re-verified 2026-10-17)                                                    |
+| `2026-10-25_comment-52-ops-use-case.md`                           | templ-components#52     | FILED — upstream comment drafted (registered 2026-10-26; was missing from this table)                               |
+| `2026-10-25_release-bodies-v0.2.1-vs-v0.3.0.md`                   | —                       | local artifact — RESOLVED: v0.3.0 cut 2026-10-26 (registered 2026-10-26; was missing from this table)               |
+| `2026-10-26_v0.3.0-release-notes-shipped.md`                      | —                       | LIVE — tag shipped 2026-10-26; gh release object awaits the owner token (registered 2026-10-26)                     |
+| `2026-10-26_v0.3.0-release-notes-paste-ready.md`                  | —                       | LIVE — the shipped notes with the meta header stripped; the file `gh release create --notes-file` consumes (T3)     |
+| `2026-10-26_v031-vs-wait-one-pager.md`                            | —                       | LIVE — owner decision: repair the misprinted v0.3.0 tag with v0.3.1, or wait for v0.4.0 (T3; default: wait)         |
+| `2026-10-26_tag-ci-first-push-watch-checklist.md`                 | —                       | LIVE — what to watch when the first `v*` tag proves the `cf6e393` trigger live (T3; cutting probe tags stays §g1)   |

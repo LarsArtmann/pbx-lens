@@ -10,12 +10,12 @@
 The `v0.3.0` tag was cut from a tree where `cmd/pbx-lens/main.go` still
 declared `version = "0.2.0"`. Consequences, precisely scoped:
 
-| Surface                                                              | State       |
-| -------------------------------------------------------------------- | ----------- |
-| Module proxy `go install github.com/larsartmann/pbx-lens/cmd/pbx-lens@v0.3.0` | Correct (proxy stamps the tag, not the const) |
-| Binary built FROM the tag (`nix build` at the tag, release artifact) | Prints `0.2.0` on `version` and `/version` |
-| Main branch today                                                    | Fixed — const is `0.3.0` (`f5631f2`) |
-| Recurrence risk                                                      | Closed — `scripts/cut-release.sh` refuses a tag whose requested version ≠ the const |
+| Surface                                                                       | State                                                                               |
+| ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Module proxy `go install github.com/larsartmann/pbx-lens/cmd/pbx-lens@v0.3.0` | Correct (proxy stamps the tag, not the const)                                       |
+| Binary built FROM the tag (`nix build` at the tag, release artifact)          | Prints `0.2.0` on `version` and `/version`                                          |
+| Main branch today                                                             | Fixed — const is `0.3.0` (`f5631f2`)                                                |
+| Recurrence risk                                                               | Closed — `scripts/cut-release.sh` refuses a tag whose requested version ≠ the const |
 
 No data, no index, no API behavior is affected — the misprint is one
 string in the binary's self-report.
