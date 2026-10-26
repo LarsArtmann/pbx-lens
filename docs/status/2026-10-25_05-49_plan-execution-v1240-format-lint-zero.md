@@ -146,7 +146,7 @@ routing rigor.
 
 **Hardening / gate integrity:**
 13. [S] Concurrent-session claim file (e6) — or an explicit owner decision that parallel sessions are acceptable (g1).
-14. [S] `poll-gate.sh` wired into AGENTS.md Commands as the documented FULL-gate entry (it exists; the docs still say bare `buildflow --build-mode full`).
+14. ~~[S] `poll-gate.sh` wired into AGENTS.md Commands as the documented FULL-gate entry (it exists; the docs still say bare `buildflow --build-mode full`).~~ done — AGENTS.md Commands carries poll-gate.sh as THE gate entry (AGENTS.md:188-189)
 15. [B] Keep the zero-group art-dupl contract: new multi-line clone → extract, never baseline-accept without review.
 16. [B] Re-check `internal/ingest` for clone pressure on the next mapper change.
 17. [B] Quarterly suppressed-bucket review (calendar item, not ritual).

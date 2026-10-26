@@ -67,8 +67,8 @@ documented load policy (box at loadavg 55/92/97, not this session's load).**
    session (build, full -race suite, coverage, gofmt, tidy -diff, golangci
    full repo, art-dupl gate, cqrs-lint, nix build, devShell eval); only
    the single receipt is missing. Run it at the next calm window.
-2. **Hooks activation** (`git config core.hooksPath .githooks`) — owner
-   call; the budget gate it would enforce now passes (218/219).
+2. ~~**Hooks activation** (`git config core.hooksPath .githooks`) — owner~~ done — git config core.hooksPath = .githooks (active in this clone)
+   ~~call; the budget gate it would enforce now passes (218/219).~~
 3. Concurrent session's status report (08-08) landed mid-session via the
    daemon; this session's work is disjoint from it (verified per commit).
 

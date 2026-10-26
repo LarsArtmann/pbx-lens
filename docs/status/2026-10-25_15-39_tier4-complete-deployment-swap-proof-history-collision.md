@@ -179,20 +179,20 @@ rewrite collided with an externally-pushed branch.
 
 ## f) Next (ranked; provenance: 10-46 plan unless marked NEW)
 
-1. Push `e10e15a` (fast-forward) and watch CI — includes the new Guard
-   Self-Tests job. (NEW)
+1. ~~Push `e10e15a` (fast-forward) and watch CI — includes the new Guard~~ done — CI green watched to completion (run 40210321319, 17-12 §a3)
+   ~~Self-Tests job. (NEW)~~
 2. FULL gate receipt at a calm window: `nix develop -c bash
    scripts/poll-gate.sh -- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow
    --build-mode dev` — none recorded today. (NEW)
 3. Browser lane `bash scripts/verify-all.sh` — the anomaly note and the
    firstpage metric have no browser-level proof. (NEW)
-4. Doc-claims gate: extract backticked Test-prefixed names from docs/*.md, assert
-   existence; seeded red first. (NEW, from §e2)
-5. The 10-46 plan's executed-status header + this report's index row.
-   (NEW)
-6. P25: draft BOTH release bodies (v0.2.1 patch vs v0.3.0 minor +
-   Unreleased split) via `scripts/cut-release.sh --dry-run` so the
-   owner's call is five minutes.
+4. ~~Doc-claims gate: extract backticked Test-prefixed names from docs/*.md, assert~~ done — scripts/check-doc-test-claims.sh shipped; red path proven by the 17-12 incident
+   ~~existence; seeded red first. (NEW, from §e2)~~
+5. ~~The 10-46 plan's executed-status header + this report's index row.~~ done — 10-46 plan header Status: EXECUTED; live-table index row present
+   ~~(NEW)~~
+6. ~~P25: draft BOTH release bodies (v0.2.1 patch vs v0.3.0 minor +~~ done — docs/drafts/2026-10-25_release-bodies-v0.2.1-vs-v0.3.0.md (RESOLVED banner)
+   ~~Unreleased split) via `scripts/cut-release.sh --dry-run` so the~~
+   ~~owner's call is five minutes.~~
 7. P19.2: idempotent-replay cost bench + receipt row.
 8. P19.3 parser fuzz seeds (cdr/webhook/agent) + P19.4 -race receipt.
 9. P20.4: harvest this week's three §f lists into TODO/ROADMAP with
@@ -221,10 +221,10 @@ rewrite collided with an externally-pushed branch.
 23. Telnyx live-API quarterly re-verify (recordings m27.9 window).
 24. PII policy: `E164`/`ParticipantHash` exist but stored fields stay raw
     — the enforcement decision is still open.
-25. Retention SLO dashboard on top of `/api/ops` (the "is the index
-    healthy" half-answer).
-26. Ops counters via the etag hooks (`OnETagGenerated`/`On304`, pinned
-    v0.6.1 has them; TODO_LIST row).
+25. ~~Retention SLO dashboard on top of `/api/ops` (the "is the index~~ done at `cf6e393`
+    ~~healthy" half-answer).~~
+26. ~~Ops counters via the etag hooks (`OnETagGenerated`/`On304`, pinned~~ done — internal/web/caching.go:78-79 (OnETagGenerated/On304 into /api/ops)
+    ~~v0.6.1 has them; TODO_LIST row).~~
 27. Export streaming compression decision (streams skip ETag; do they want
     q-negotiated gzip on the wire?).
 28. Golden expansion: new cards (anomaly note, segments, spend) have unit

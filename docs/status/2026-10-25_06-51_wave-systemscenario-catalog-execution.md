@@ -161,7 +161,7 @@ corrected); two process failures caused by me hit CI and were fixed forward.
 
 **Docs/memory**
 26. AGENTS.md budget extraction to ≤219 (harvested row).
-27. Activate `git config core.hooksPath .githooks` in this clone (the budget + doc gates are dormant here!).
+27. ~~Activate `git config core.hooksPath .githooks` in this clone (the budget + doc gates are dormant here!).~~ done — git config core.hooksPath = .githooks (active in this clone)
 28. Gotchas entry: systemscenario Adopt for multi-act flows (half-documented in the window entry).
 29. Gotchas entry: out-of-band AppendBatch inside a decide rolls the dispatch tx back silently.
 30. Docs/plan errata cross-link: mark T1–T21 execution state in the plan file header (Status: EXECUTED).

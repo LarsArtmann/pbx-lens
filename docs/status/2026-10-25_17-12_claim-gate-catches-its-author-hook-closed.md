@@ -79,15 +79,15 @@ hour, and left main green through CI (run `40210321319` on `0a83df4`).
 
 ## f) Next (ranked)
 
-1. Browser lane `bash scripts/verify-all.sh` (three docs gates + four
-   probes; first lane proof for the claim gate).
+1. ~~Browser lane `bash scripts/verify-all.sh` (three docs gates + four~~ done — verify-all.sh:100 runs the claim gate; lane green 2026-10-26 (cf6e393 pass)
+   ~~probes; first lane proof for the claim gate).~~
 2. FULL gate receipt at the calm window (poll-gate → buildflow; 15-min
    load was 62.66 at 15:44 — re-check first).
 3. P19.2 idempotent-replay bench + receipt row.
 4. P19.4 `-race ./internal/ingest` receipt.
 5. P20.4 harvest the three §f lists into TODO/ROADMAP with provenance.
-6. Annotate the 16-58 report's §f item 15 (hook wiring) with its done-at
-   marker (resolved by this session, §a1).
+6. ~~Annotate the 16-58 report's §f item 15 (hook wiring) with its done-at~~ done — in the 2026-10-26 truth sweep (16-58 f15 annotated with the hook-wiring receipt)
+   ~~marker (resolved by this session, §a1).~~
 7. P14 saved views.
 8. P15 transcript-mode search (gotchas FTS5 section first).
 9. P16 per-DID segment pages.

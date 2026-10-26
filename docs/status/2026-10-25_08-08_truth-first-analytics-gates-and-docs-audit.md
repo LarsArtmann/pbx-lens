@@ -272,17 +272,17 @@ Architecture / correctness
     at a glance.
 
 Gates / tooling
-11. Wire `check-docs-counts.sh` + `check-doc-links.sh` into CI.
-12. Add a CI job that runs the four `--self-test` modes (`poll-gate`,
-`check-js-lint`, `check-docs-counts`, `check-doc-links`).
+11. ~~Wire `check-docs-counts.sh` + `check-doc-links.sh` into CI.~~ done — both gates run in CI (.github/workflows/ci.yml:256-257)
+12. ~~Add a CI job that runs the four `--self-test` modes (`poll-gate`,~~ done — five --self-test red-path proofs run in CI (ci.yml:239-249)
+~~`check-js-lint`, `check-docs-counts`, `check-doc-links`).~~
 13. Add `shellcheck` to the pre-commit chain (it is in the devShell already and
 reported zero findings when trialled).
-14. Add `oxlint` to CI (it is now in the devShell and the config is committed).
+14. ~~Add `oxlint` to CI (it is now in the devShell and the config is committed).~~ done — oxlint installed and check-js-lint gate run in CI (ci.yml:222-226)
 15. Teach `scripts/verify-all.sh` a `--no-browser` mode so CI can run the
 non-browser half without chromium.
-16. Make `poll-gate.sh` the documented receipt entry point in
-docs/buildflow-dev-gate.md and scripts/README (done in README; gate doc
-still describes the old loop).
+16. ~~Make `poll-gate.sh` the documented receipt entry point in~~ done — docs/buildflow-dev-gate.md:354 "Run the gate through scripts/poll-gate.sh, never bare"
+~~docs/buildflow-dev-gate.md and scripts/README (done in README; gate doc~~
+~~still describes the old loop).~~
 17. Add a `--strict-await` lint idea: fail tests whose scenario awaits exceed a
 budget.
 18. Grow the docs-count gate to verify the FEATURES row counts per status

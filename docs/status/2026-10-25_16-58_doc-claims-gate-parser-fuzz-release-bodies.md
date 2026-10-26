@@ -140,8 +140,8 @@ two blocked by load, and the batch landed as ONE clean push (`22c9fc9`).
 
 ## f) Next (ranked; NEW = this session's additions, else 15-39 §f / 10-46)
 
-1. **Browser lane** `bash scripts/verify-all.sh` — now runs three docs
-   gates + four probes; first proof of the claim gate in the lane.
+1. ~~**Browser lane** `bash scripts/verify-all.sh` — now runs three docs~~ done — verify-all.sh:100 runs the claim gate; lane green 2026-10-26 (cf6e393 pass)
+   ~~gates + four probes; first proof of the claim gate in the lane.~~
 2. **FULL gate receipt** at the calm window: `nix develop -c bash
    scripts/poll-gate.sh -- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow
    --build-mode dev` (or full mode when load < 40).
@@ -163,8 +163,8 @@ two blocked by load, and the batch landed as ONE clean push (`22c9fc9`).
 13. **Daemon norm** per §g3's answer (claim files vs never-reset).
 14. Annotate the 15-39 report's §f items 4/5/6 with `done at` markers
     (they are resolved inline now).
-15. AGENTS Commands: budget-neutral swap adding the claim gate beside the
-    docs gates (219/219 held; the swap must stay neutral).
+15. ~~AGENTS Commands: budget-neutral swap adding the claim gate beside the~~ done — check-doc-test-claims.sh runs in .githooks/pre-commit (the 17-12 incident fix, stronger than the AGENTS line)
+    ~~docs gates (219/219 held; the swap must stay neutral).~~
 16. Re-audit the art-dupl suppressed bucket after the next
     templ-components bump (`--show-suppressed`, AGENTS standing trap).
 17. Re-verify versions.json after the next go-cqrs-lite tag wave.
@@ -173,8 +173,8 @@ two blocked by load, and the batch landed as ONE clean push (`22c9fc9`).
 20. Telnyx live-API quarterly re-verify (recordings m27.9 window).
 21. PII enforcement decision (`E164`/`ParticipantHash` exist, stored
     fields stay raw).
-22. Retention SLO dashboard on /api/ops.
-23. Ops counters via the pinned etag hooks (OnETagGenerated/On304).
+22. ~~Retention SLO dashboard on /api/ops.~~ done at `cf6e393`
+23. ~~Ops counters via the pinned etag hooks (OnETagGenerated/On304).~~ done — internal/web/caching.go:78-79 (OnETagGenerated/On304)
 24. Export streaming compression decision (streams skip ETag; wire gzip?).
 25. Screenshot-probe baseline refresh (new cards: anomaly note, segments,
     spend).

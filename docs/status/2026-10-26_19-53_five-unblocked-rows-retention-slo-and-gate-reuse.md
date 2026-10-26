@@ -243,7 +243,7 @@ are ranked in §f, not half-started.
 32. The rest of the Blocked table is owner-gated and correctly parked
     (PII, CSP flip, host deploys, production re-ingest, read-model
     rebuild, coverage floor, pixel strategy, T15 MOS window 2027-01).
-33-50. (Fold points 32's owner rows into the next Pareto plan together
+    33-50. (Fold points 32's owner rows into the next Pareto plan together
     with the surviving 16-00/17-29 §f tails — go-licenses, file-size,
     jsonv2, branching-flow, cqrs-lint, vuln maps, binary rebuild, and
     the upstream filings queue of four staged drafts; nothing there is

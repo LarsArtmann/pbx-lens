@@ -168,15 +168,15 @@ release bodies). Also not run yet this session: `golangci-lint run ./...`
 6. bash scripts/verify-all.sh (dashboard/detail surfaces changed: Rate
    column, trend line, History item).
 7. git push (five unpushed commits at interruption).
-8. P11.1: swap AGENTS' bare `buildflow` line for `scripts/poll-gate.sh`
-   (budget-neutral).
-9. P11.2: FULL-gate section of docs/buildflow-dev-gate.md around the
-   wrapper; record the receipt (15m=6.06, 60/0/0).
+8. ~~P11.1: swap AGENTS' bare `buildflow` line for `scripts/poll-gate.sh`~~ done — AGENTS.md Commands carries the poll-gate.sh entry (AGENTS.md:188-189)
+   ~~(budget-neutral).~~
+9. ~~P11.2: FULL-gate section of docs/buildflow-dev-gate.md around the~~ done — docs/buildflow-dev-gate.md:354 wraps the wrapper; receipt recorded (CHANGELOG: First calm-window FULL-gate receipt)
+   ~~wrapper; record the receipt (15m=6.06, 60/0/0).~~
 10. P9.1: verify the art-dupl fork tag exists; pin CI to it.
 11. P9.2: triage the dependabot sqlite PR (read the run log, classify; do
     not merge — weekly owner confirmation owns that).
-12. P9.3: CI job running the four `--self-test` gates.
-13. P9.4: + the two docs gates in the same job.
+12. ~~P9.3: CI job running the four `--self-test` gates.~~ done — five --self-test red-path proofs run in CI (ci.yml:239-249)
+13. ~~P9.4: + the two docs gates in the same job.~~ done — the two docs gates run in CI (ci.yml:256-257)
 14. P9.5: watch the run; record the receipt.
 15. P8.1: golden for the retire path (scenario + ThenGoldenWithPayloads).
 16. P8.2: property oracle over corrected/enriched sequences.
@@ -201,7 +201,7 @@ release bodies). Also not run yet this session: `golangci-lint run ./...`
     "not reported" elsewhere).
 35. P19 testing batch 2 (memory↔sqlite equivalence, replay-cost bench,
     parser fuzz seeds).
-36. P20 docs hygiene: systemscenario multi-act + AppendBatch rollback
+36. P20 docs hygiene: systemscenario multi-act + AppendBatch rollback **→ gotchas landed (docs/gotchas.md:382,387); the §f harvest landed via the 19-54 audit + the 2026-10-26 Pareto plan (b889b6b); plan status headers still open**
     gotchas (already partly in gotchas via 08-53? verify before writing),
     plan status headers, harvest ALL FIVE live §f lists.
 37. P21 versions.json in the go-cqrs-lite checkout (verify the checkout
@@ -213,7 +213,7 @@ release bodies). Also not run yet this session: `golangci-lint run ./...`
 41. P25 both release bodies rehearsed with cut-release.sh --dry-run.
 42. TODO_LIST: delete the Server-Timing row when P13 lands.
 43. TODO_LIST: delete versions.json row when P21 lands.
-44. Re-run docs gates after the 08-53 harvest (counts must stay true).
+44. ~~Re-run docs gates after the 08-53 harvest (counts must stay true).~~ done — all four doc gates green through 2026-10-26 (cf6e393 pass)
 45. Anomaly-vs-saved-views ordering is settled (plan: anomaly first) — no
     owner input needed.
 46. Consider prettier-fleet residue filing to crush-config (out of repo).

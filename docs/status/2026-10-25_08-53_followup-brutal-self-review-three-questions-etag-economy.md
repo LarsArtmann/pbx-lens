@@ -144,7 +144,7 @@ route's ETag every second, silently killing the 30 s poll's 304 economy.**
 
 **This session's direct follow-ups**
 
-1. Re-run the browser lane after the pill change: `bash scripts/verify-all.sh` + `node scripts/screenshot-probe.js --only dashboard --diff` vs baseline (stamp value quantized; format unchanged — verify, don't assume).
+1. ~~Re-run the browser lane after the pill change: `bash scripts/verify-all.sh` + `node scripts/screenshot-probe.js --only dashboard --diff` vs baseline (stamp value quantized; format unchanged — verify, don't assume).~~ done — verify-all green, 42 PNGs (the cf6e393 pass, 2026-10-26)
 2. Make the body-drift probe a permanent test: assert every ETagged route renders byte-stable across >1.1 s absent a data change (the 304-economy guard).
 3. Re-run the cqrs-lint census with the restored 4.16.0 binary; reconcile against docs/cqrs-lint-policy.md (P015 is new).
 4. buildflow dev-gate green receipt at the calm window (TODO row has the exact condition; tree frozen for the duration).
@@ -170,13 +170,13 @@ route's ETag every second, silently killing the 30 s poll's 304 economy.**
 22. Property test for LookupView's legacy-marker fallback.
 23. Bench: idempotent replay cost as its own receipt row.
 24. Durable scripts/ runner for bench receipts (exit /tmp).
-25. Quiet-box bench re-measure (poll 304/200 + ingest) — the 304 receipt should be re-taken AFTER #2, on the fixed route.
+25. Quiet-box bench re-measure (poll 304/200 + ingest) — the 304 receipt should be re-taken AFTER #2, on the fixed route. **→ re-measured — http-stack.md:172 two generations (88/94 vs 82/101 µs), ingest in AGENTS (2026-10-25: 8.7/6.1 µs); the after-drift-probe re-take stays open (#2)**
 26. Re-render the exported catalog tree + architecture.html into docs/catalog (checked-in copy predates the queries).
 27. Hub-side rehearsal with the queries declared (merge.py strict gate).
 28. EventCatalog visualizer pass over the new containers/queries.
 29. Regenerate versions.json in the go-cqrs-lite checkout.
-30. Gotchas entry: systemscenario Adopt for multi-act flows (half-documented).
-31. Gotchas entry: out-of-band AppendBatch inside a decide rolls the dispatch tx back silently.
+30. ~~Gotchas entry: systemscenario Adopt for multi-act flows (half-documented).~~ done — docs/gotchas.md:382 (systemscenario.Adopt for multi-act flows)
+31. ~~Gotchas entry: out-of-band AppendBatch inside a decide rolls the dispatch tx back silently.~~ done — docs/gotchas.md:387 (AppendBatch mid-handler rolls the dispatch tx back)
 32. Quiet-week volume-chart filing (owner pack D3).
 33. Date/number vocabulary pack D1 execution once answered.
 34. Export-note collapse (D4) once answered.

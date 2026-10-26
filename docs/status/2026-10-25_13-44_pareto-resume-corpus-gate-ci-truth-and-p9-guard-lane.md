@@ -182,7 +182,7 @@ P22 (sibling folds), P23 (lint/gate residue), P24 (analytics docs), P25
 
 ## f) Next (ranked, provenance: 10-46 plan unless marked NEW)
 
-1. Close PR #4, delete branch `proof/red-docs-gate` (receipt: this report
+1. Close PR #4, delete branch `proof/red-docs-gate` (receipt: this report **→ branch proof/red-docs-gate absent from this clone (2026-10-26); PR closure unverifiable while the gh token is dead**
    §a8). [NEW, 1 min]
 2. P8.1 retire payload golden (design in §b2). [plan]
 3. P8.2 corrected/enriched property oracle (design in §b2). [plan]
@@ -225,8 +225,8 @@ P22 (sibling folds), P23 (lint/gate residue), P24 (analytics docs), P25
 23. File the rg-guard `-run` misfire in crush-config (§d6/§e4). [NEW]
 24. TODO_LIST: art-dupl tag verification result row (no usable tag; commit
     pin is final unless the fork retags). [NEW]
-25. Watch next dependabot PRs for the SAME go.mod mangling class; add the
-    AGENTS/TODO note from §e5. [NEW]
+25. ~~Watch next dependabot PRs for the SAME go.mod mangling class; add the~~ done — AGENTS.md carries the templ dependabot-mangling warning (manual bumps only)
+    ~~AGENTS/TODO note from §e5. [NEW]~~
 
 (Items beyond 25 are the 10-46 plan's owner/calendar-gated §6 table —
 unchanged, still TODO rows.)
