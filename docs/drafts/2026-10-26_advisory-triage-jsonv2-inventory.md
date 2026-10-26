@@ -51,3 +51,18 @@ Verdict: stay on v1 semantics until a surface demands v2; when one does,
 flip P3 → P2 first (decode-only), P1 behind its exact-wire tests, and P0
 LAST with a stored-hash compatibility proof. This table is the standing
 order of operations.
+
+## 4. Lint-tool residue (T7, 2026-10-26)
+
+- **`//nolint` census**: 15 directives across 7 files, EVERY one carries a
+  reason. `gochecknoglobals`/`gosec`/`nilerr`/`nilnil`/`gosmopolitan` are
+  enabled golangci linters (directives live); `erraudit` (×2,
+  cmd/pbx-lens/catalog.go) is a CROSS-TOOL directive — erraudit is the
+  fleet's error-handling linter outside .golangci.yml, so golangci cannot
+  see or warn about it. Not dead; kept.
+- **Version skew (the real find)**: the devShell takes `pkgs.golangci-lint`
+  UNPINNED and today resolves v2.15.0, while CI pins v2.14 (ci.yml
+  GOLANGCI_LINT_VERSION). The 16-00 §e2 rule says gate binaries at the CI
+  pin are step zero. v2.14 verdicts on this tree: probe pending — the
+  alignment decision (flake pin down to v2.14, or CI up to v2.15) is
+  recorded as its own TODO row rather than chosen unilaterally.
