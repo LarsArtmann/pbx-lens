@@ -78,6 +78,21 @@ func (r RefreshReport) String() string {
 	)
 }
 
+// RefreshReadError reports a failed read-model lookup while classifying one
+// stream: the measurement itself failed, so the report is incomplete. The
+// per-stream outcomes are data in RefreshReport, not errors; this type carries
+// only the read failure, with the stream named for the operator.
+type RefreshReadError struct {
+	Stream string
+	Err    error
+}
+
+func (e *RefreshReadError) Error() string {
+	return fmt.Sprintf("refresh: read view for %s: %v", e.Stream, e.Err)
+}
+
+func (e *RefreshReadError) Unwrap() error { return e.Err }
+
 // ClassifyRefresh compares each fetched observation with its stored view
 // without dispatching anything. This is the measurement half of the
 // additive-field doctrine (see calls.ObservationSchemaVersion): a schema bump
@@ -90,7 +105,7 @@ func ClassifyRefresh(
 	ctx context.Context,
 	reader *metaengine.TypedReader[calls.CallView],
 	observations []calls.Observation,
-) (RefreshReport, error) {
+) (RefreshReport, *RefreshReadError) {
 	report := RefreshReport{Total: len(observations), Findings: make([]RefreshFinding, 0, len(observations))}
 
 	for _, obs := range observations {
@@ -109,7 +124,7 @@ func ClassifyRefresh(
 
 		view, found, err := calls.LookupView(ctx, reader, sid)
 		if err != nil {
-			return report, fmt.Errorf("refresh: read view for %s: %w", stream, err)
+			return report, &RefreshReadError{Stream: stream, Err: err}
 		}
 
 		if !found {
