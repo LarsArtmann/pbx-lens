@@ -83,7 +83,7 @@ func TestRefreshClassifiesThenBackfills(t *testing.T) {
 	var classify bytes.Buffer
 
 	if err := runRefresh(baseArgs, &classify); err != nil {
-		t.Fatalf("runRefresh(classify): %v", err)
+		t.Fatalf("runRefresh(classify): %T %v", err, err)
 	}
 
 	for _, want := range []string{"1 new", "would write 1", "classify-only"} {
