@@ -330,6 +330,22 @@ func TestParseRejectsOverlongExtraColumns(t *testing.T) {
 	}
 }
 
+func TestParseSkipsUnparseableStartStamp(t *testing.T) {
+	t.Parallel()
+
+	line := `"","1000","+4930123456","default","not-a-stamp","","","60","58","NORMAL_CLEARING","aaaabbbb-3333-4444-8555-666677778890","","","4.2","outbound"`
+
+	res, err := Parse(strings.NewReader(line))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 0 || res.Skipped != 1 {
+		t.Fatalf("a malformed start_stamp must skip the row, not crash: %d observations, %d skipped",
+			len(res.Observations), res.Skipped)
+	}
+}
+
 func TestParseDirectionHeuristicEdges(t *testing.T) {
 	t.Parallel()
 

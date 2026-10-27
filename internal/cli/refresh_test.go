@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -145,5 +146,25 @@ func TestRefreshReportStringNamesEveryOutcome(t *testing.T) {
 		if !strings.Contains(got, want) {
 			t.Errorf("report %q must mention %q", got, want)
 		}
+	}
+}
+
+func TestRefreshReadErrorCarriesStreamAndCause(t *testing.T) {
+	t.Parallel()
+
+	cause := errors.New("read-model unavailable")
+	err := newRefreshReadError("freeswitch-cdr:abc-123", cause)
+
+	if got, want := err.Error(), "refresh: read view for freeswitch-cdr:abc-123: read-model unavailable"; got != want {
+		t.Errorf("Error() = %q, want %q", got, want)
+	}
+
+	if !errors.Is(err, cause) {
+		t.Error("errors.Is should reach the read cause through Unwrap")
+	}
+
+	var read *RefreshReadError
+	if !errors.As(err, &read) || read.Stream != "freeswitch-cdr:abc-123" {
+		t.Errorf("errors.As should recover the carrier with the stream, got %+v", read)
 	}
 }

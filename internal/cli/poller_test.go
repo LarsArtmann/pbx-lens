@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -338,5 +339,100 @@ func TestSnapshotAnyReportsStaleVerdict(t *testing.T) {
 
 	if stale, ok := payload["stale"].(bool); !ok || !stale {
 		t.Errorf("stale = %v, want true at three missed cadences", payload["stale"])
+	}
+}
+
+func TestPollFileCarriesStepPathAndCause(t *testing.T) {
+	t.Parallel()
+
+	fed := IngestStats{Total: 3, Recorded: 3}
+	feedBoom := errors.New("feed boom")
+
+	existing := filepath.Join(t.TempDir(), "calls.cdr")
+	if err := os.WriteFile(existing, []byte("row"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cases := []struct {
+		name       string
+		path       string
+		feed       func(*os.File) (IngestStats, error)
+		wantOp     string
+		wantStats  IngestStats
+		wantIs     error
+		wantPrefix string
+	}{
+		{
+			name:       "open failure names the step and wraps the cause",
+			path:       filepath.Join(t.TempDir(), "missing.cdr"),
+			wantOp:     "open",
+			wantIs:     os.ErrNotExist,
+			wantPrefix: "open ",
+		},
+		{
+			name:   "feed failure wins over the close result",
+			path:   existing,
+			feed:   func(f *os.File) (IngestStats, error) { _ = f.Close(); return IngestStats{}, feedBoom },
+			wantOp: "feed",
+			wantIs: feedBoom,
+		},
+		{
+			name:       "close failure surfaces only after a clean feed",
+			path:       existing,
+			feed:       func(f *os.File) (IngestStats, error) { _ = f.Close(); return IngestStats{}, nil },
+			wantOp:     "close",
+			wantIs:     os.ErrClosed,
+			wantPrefix: "close ",
+		},
+		{
+			name:      "success passes the feed stats through untouched",
+			path:      existing,
+			feed:      func(*os.File) (IngestStats, error) { return fed, nil },
+			wantStats: fed,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			stats, err := pollFile(tc.path, tc.feed)
+
+			if tc.wantOp == "" {
+				if err != nil {
+					t.Fatalf("pollFile: %v", err)
+				}
+
+				if stats.Total != tc.wantStats.Total || stats.Recorded != tc.wantStats.Recorded ||
+					stats.Corrected != tc.wantStats.Corrected || len(stats.Rejected) != len(tc.wantStats.Rejected) {
+					t.Fatalf("stats = %+v, want %+v", stats, tc.wantStats)
+				}
+
+				return
+			}
+
+			if stats.Total != 0 || stats.Recorded != 0 || stats.Corrected != 0 || len(stats.Rejected) != 0 {
+				t.Errorf("stats = %+v, want zero on failure", stats)
+			}
+
+			var pollErr *pollFileError
+			if !errors.As(err, &pollErr) {
+				t.Fatalf("pollFile: %v, want a *pollFileError", err)
+			}
+
+			if pollErr.Op != tc.wantOp || pollErr.Path != tc.path {
+				t.Errorf("carrier = %s %q, want %s %q", pollErr.Op, pollErr.Path, tc.wantOp, tc.path)
+			}
+
+			if tc.wantPrefix != "" {
+				if got := pollErr.Error(); !strings.HasPrefix(got, tc.wantPrefix+tc.path+": ") {
+					t.Errorf("Error() = %q, want prefix %q", got, tc.wantPrefix+tc.path+": ")
+				}
+			}
+
+			if tc.wantIs != nil && !errors.Is(err, tc.wantIs) {
+				t.Errorf("errors.Is(err, %v) = false, the Unwrap chain is broken", tc.wantIs)
+			}
+		})
 	}
 }
