@@ -11,6 +11,13 @@ const fixture13 = `"John Doe","17287289311","2000","public","2026-10-09 19:51:25
 "","1000","+17287289311","default","2026-10-09 20:20:00","2026-10-09 20:20:02","2026-10-09 20:20:28","28","26","NORMAL_CLEARING","aaaa2222-3333-4bbb-8bbb-000000000002","","artmann"
 `
 
+// fixture13Clamp pins the billsec clamp: rows whose billsec column is
+// negative or unparseable (the atoi error fallback is -1) must yield
+// DurationSecs 0, never a negative duration.
+const fixture13Clamp = `"John Doe","17287289311","2000","public","2026-10-09 19:51:25","2026-10-09 19:51:26","2026-10-09 19:51:51","26","-5","NORMAL_CLEARING","clamp-1111-4aaa-9aaa-00000000000a","b0a9-2222",""
+"","1000","+17287289311","default","2026-10-09 20:20:00","2026-10-09 20:20:02","2026-10-09 20:20:28","28","not-a-number","NORMAL_CLEARING","clamp-2222-3333-4bbb-8bbb-00000000000b","","artmann"
+`
+
 // fixture13MOS is the default template with mod_cdr_csv's extra
 // rtp_audio_in_mos column appended.
 const fixture13MOS = `"John Doe","17287289311","2000","public","2026-10-09 19:51:25","2026-10-09 19:51:26","2026-10-09 19:51:51","26","25","NORMAL_CLEARING","f0e1d2c3-1111-4aaa-9aaa-000000000001","b0a9-2222","","4.4"` + "\n"
@@ -54,6 +61,25 @@ func TestParseDefaultTemplate(t *testing.T) {
 
 	if out.Kind != calls.SourceFreeSwitchCDR {
 		t.Fatalf("kind wrong: %+v", out)
+	}
+}
+
+func TestParseClampsNonPositiveBillsecToZero(t *testing.T) {
+	res, err := Parse(strings.NewReader(fixture13Clamp))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(res.Observations) != 2 || res.Skipped != 0 {
+		t.Fatalf("got %d observations, %d skipped", len(res.Observations), res.Skipped)
+	}
+
+	if got := res.Observations[0].DurationSecs; got != 0 {
+		t.Fatalf("negative billsec must clamp to 0, got %d", got)
+	}
+
+	if got := res.Observations[1].DurationSecs; got != 0 {
+		t.Fatalf("unparseable billsec (atoi fallback -1) must clamp to 0, got %d", got)
 	}
 }
 

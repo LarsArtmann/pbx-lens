@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -451,5 +452,30 @@ func TestPollFileCarriesStepPathAndCause(t *testing.T) {
 
 			assertPollFileFailure(t, tc, stats, err)
 		})
+	}
+}
+
+// TestPollFileOpenFailureClassifiesAsTransient pins the errorfamily verdict
+// for a poll open failure: nothing in this process registers the stdlib
+// sentinel map (errorfamily.DefaultRegistry starts empty), so Classify walks
+// the pollFileError → *fs.PathError → os.ErrNotExist chain, finds no
+// registered family, and lands on the fail-open default Transient. That is
+// the right semantics for the poller — a missing source file is an expected,
+// possibly-later-present state (see TestPollOnceSkipsMissingSourcesWithout
+// Failing), not a caller fault — so /api/ops-style consumers see a stable,
+// retryable family without knowing the carrier type. If a consumer ever
+// needs Rejection semantics, that is the moment to register stdlib defaults
+// (DOMAIN_LANGUAGE § Typed error carriers: carriers stay unclassified until
+// a consumer needs the family).
+func TestPollFileOpenFailureClassifiesAsTransient(t *testing.T) {
+	t.Parallel()
+
+	_, err := pollFile(filepath.Join(t.TempDir(), "missing.cdr"), nil)
+	if err == nil {
+		t.Fatal("pollFile on a missing file must fail")
+	}
+
+	if got := errorfamily.Classify(err); got != errorfamily.Transient {
+		t.Fatalf("Classify(poll open failure) = %v, want Transient (fail-open default, no registered sentinels)", got)
 	}
 }
