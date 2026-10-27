@@ -1,6 +1,5 @@
 > [!NOTE]
-> **LIVE DRAFT — do NOT file yet.**
-> This filing was drafted by GLM-5.3 via Crush from an AI-run investigation (the 2026-10-27 erraudit filings staging), not at my request.
+> This filing was drafted by GLM-5.3 via Crush from an AI-run investigation (the 2026-10-27 erraudit filings staging), not at my request. **LIVE DRAFT — do NOT file yet.**
 >
 > - [ ] MANUALLY REVIEWED by `@Lars Artmann` at `[<date-time>]`
 
@@ -33,9 +32,9 @@ $ erraudit lint ./... --max --format json | grep -c StdlibConstructor
 ```
 
 `--format table` and `--format json` agree: zero findings. The detector
-itself works — `internal/ast/enforce_stdlib_test.go`
-(`TestEnforceErrorFamily_FlagOn`) passes, so `WithEnforceErrorFamily(true)`
-+ `Analyze(file)` emits `stdlib_constructor` violations at the unit level.
+itself works — erraudit's own unit tests in `internal/ast/enforce_stdlib_test.go`
+prove `WithEnforceErrorFamily(true)` + `Analyze(file)` emits
+`stdlib_constructor` violations at the unit level.
 The loss happens in the lint runner.
 
 ## Mechanism (source at `61a744ce`)
@@ -100,3 +99,5 @@ pbx-lens `docs/DOMAIN_LANGUAGE.md` § "Typed error carriers" records the
 gap and the standing do-not-migrate answer; when this lands, its census
 table becomes the triage list and the acceptance gate may go red on the 8
 sites (expected; owner call at that point).
+
+💘 Generated with Crush

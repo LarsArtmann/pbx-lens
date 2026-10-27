@@ -1,6 +1,5 @@
 > [!NOTE]
-> **LIVE DRAFT — do NOT file yet.**
-> This filing was drafted by GLM-5.3 via Crush from an AI-run investigation (the 2026-10-27 erraudit filings staging), not at my request.
+> This filing was drafted by GLM-5.3 via Crush from an AI-run investigation (the 2026-10-27 erraudit filings staging), not at my request. **LIVE DRAFT — do NOT file yet.**
 >
 > - [ ] MANUALLY REVIEWED by `@Lars Artmann` at `[<date-time>]`
 
@@ -113,3 +112,5 @@ noise (nearest: #2 nolint namespace — different topic).
 pbx-lens's acceptance gate reads text-mode lint output; findings 2 and 3
 were first observed live there on 2026-10-27 (docs/status reports 19-17
 §c3 and 20-08 §b3), and finding 1 surfaced while staging this filing.
+
+💘 Generated with Crush
