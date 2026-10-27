@@ -7,6 +7,19 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-27 (erraudit --max: typed error carriers instead of bare-error construction)
+
+- **The three `generic_return` findings under `erraudit lint ./... --max`
+  are fixed at the root**: `pollFileError` (os.PathError-style Op/Path/Err)
+  and `RefreshReadError` (Stream/Err) now carry the failed step and stream
+  as structure, built via `newPollFileError`/`newRefreshReadError`, and the
+  CDR timestamp parse moved into `parseStartStamp`. The function signatures
+  keep the idiomatic `error` return on purpose: a concrete
+  `*RefreshReadError` signature typed-nil-trapped the first caller that
+  reused `err` (caught by TestRefreshClassifiesThenBackfills; the lesson
+  lives in docs/gotchas.md). Side win: feed/close poll failures now name
+  the file path in the log, which the bare passthrough lost.
+
 ### Fixed — 2026-10-27 (BuildFlow binary freshness, the gate's fleet binary)
 
 - **The gate's fleet binary is fresh again**: BuildFlow daemon commits had

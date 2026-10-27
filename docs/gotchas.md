@@ -469,3 +469,22 @@ caught only because the new test pinned exact numbers. Lesson: a limit-1
 extreme-value read must name its direction and TEST the extreme — and a
 comment that describes order without a test pinning it is a future
 60-second-off production figure.
+
+## A concrete pointer error return is a typed-nil landmine (paid for, 2026-10-27)
+
+Satisfying erraudit's `--enforce-generic-return` (`lint --max` flags
+functions returning bare `error` after creating one with fmt.Errorf) by
+retyping `ClassifyRefresh` to return `*RefreshReadError` detonated within
+minutes: cmd's `err` was first declared as `error` (from
+FetchTelnyxObservations), so `report, err := cli.ClassifyRefresh(…)`
+REUSED the `error`-typed variable — `:=` needs only one new name on the
+left — and the returned nil `*RefreshReadError` converted into a non-nil
+error interface. The success path died with
+`runRefresh(classify): <nil>` (fmt prints `<nil>` for the nil pointer
+instead of calling Error), caught by TestRefreshClassifiesThenBackfills.
+The repo pattern is therefore: keep the idiomatic `error` signature,
+build the typed error inside a `newXxxError` constructor — the
+constructor also satisfies the analyzer's pure-forwarder exemption, so
+the finding clears without the landmine — and let callers keep reusing
+`err` safely. `pollFileError` (os.PathError's Op/Path/Err triplet) and
+`RefreshReadError` (Stream/Err) both follow this shape.
