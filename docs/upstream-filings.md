@@ -30,17 +30,17 @@ class (#61 cannot bite).**
 go-ahead, dupe-searched clean against all 11 existing issues):**
 
 - **erraudit (staged, unfiled)**: `lint` silently drops every `--enforce-*`
-policy except generic_return — the AST path runs only when
-`EnforceGenericReturn` is on and the merge keeps one violation type
-(source-pinned at `61a744ce`, `lint_runner.go`; live-reproduced with a
-one-file probe). Draft:
-`docs/drafts/2026-10-27_erraudit-lint-enforce-flags-noop.md`.
+  policy except generic_return — the AST path runs only when
+  `EnforceGenericReturn` is on and the merge keeps one violation type
+  (source-pinned at `61a744ce`, `lint_runner.go`; live-reproduced with a
+  one-file probe). Draft:
+  `docs/drafts/2026-10-27_erraudit-lint-enforce-flags-noop.md`.
 - **erraudit (staged, unfiled)**: lint reporter honesty — `--format tree`
-contradicts text (metrics from a zeroed minimal graph), the
-violations-found banner carries no count (unfilled
-`ErrViolationsFound` template), JSON `filesScanned` is always 0, and
-directory promotion prints informational noise to stderr. Draft:
-`docs/drafts/2026-10-27_erraudit-lint-reporter-honesty.md`.
+  contradicts text (metrics from a zeroed minimal graph), the
+  violations-found banner carries no count (unfilled
+  `ErrViolationsFound` template), JSON `filesScanned` is always 0, and
+  directory promotion prints informational noise to stderr. Draft:
+  `docs/drafts/2026-10-27_erraudit-lint-reporter-honesty.md`.
 
 - **go-cqrs-lite#62** (CLOSED upstream 2026-10-17; fold-in = the 2027-01 watch): sqliteengine binds filter values raw (`filter_clause.go:44`,
   `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,

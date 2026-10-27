@@ -175,14 +175,14 @@ Every inline error-creation site outside tests, judged against `--max`
 8 sites, 5 files; the webhook and telnyx parse paths carry ZERO inline
 creations — kept clean deliberately, not accidentally):
 
-| Site (2026-10-27 lines)        | Function                           | Satisfying exemption                | Verdict  |
-| ------------------------------ | ---------------------------------- | ----------------------------------- | -------- |
-| internal/ingest/cdr/cdr.go:279 | `parseStartStamp`                  | `Parse*` constructor name           | accepted |
-| internal/ingest/agent/agent.go:133,140,144 | `ParseDir` (open/read/close transcript) | `Parse*` constructor name | accepted |
-| internal/wire/flextime.go:44   | `(*FlexTime).UnmarshalJSON`        | stdlib interface method             | accepted |
-| internal/wire/flextime.go:15   | sentinel `ErrUnparseableTimestamp` | package-level sentinel (no fn body) | accepted |
-| internal/search/search.go:569  | sentinel `ErrNoSearchIndex`        | package-level sentinel (no fn body) | accepted |
-| cmd/pbx-lens/refresh.go:21     | sentinel `errDBRequired`           | package-level sentinel (no fn body) | accepted |
+| Site (2026-10-27 lines)                    | Function                                | Satisfying exemption                | Verdict  |
+| ------------------------------------------ | --------------------------------------- | ----------------------------------- | -------- |
+| internal/ingest/cdr/cdr.go:279             | `parseStartStamp`                       | `Parse*` constructor name           | accepted |
+| internal/ingest/agent/agent.go:133,140,144 | `ParseDir` (open/read/close transcript) | `Parse*` constructor name           | accepted |
+| internal/wire/flextime.go:44               | `(*FlexTime).UnmarshalJSON`             | stdlib interface method             | accepted |
+| internal/wire/flextime.go:15               | sentinel `ErrUnparseableTimestamp`      | package-level sentinel (no fn body) | accepted |
+| internal/search/search.go:569              | sentinel `ErrNoSearchIndex`             | package-level sentinel (no fn body) | accepted |
+| cmd/pbx-lens/refresh.go:21                 | sentinel `errDBRequired`                | package-level sentinel (no fn body) | accepted |
 
 All eight ride NAMED exemptions (constructor-name, stdlib-interface,
 sentinel), so the silence under `lint --max` is known-good for the

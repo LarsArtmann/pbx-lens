@@ -143,18 +143,18 @@ This is the honest closeout the owner asked for by name.
 
 ## f) Up to 50 things to get done next (ranked; harvest status)
 
-| #  | Task                                                                              | Impact   | Effort | Category      | Harvested                |
-| -- | --------------------------------------------------------------------------------- | -------- | ------ | ------------- | ------------------------ |
-| 1  | Owner: the five unlock decisions (D1–D5, AGENTS budget, §g ratification, PII boundary, stamp-churn) | Critical | S      | Decision      | TODO_LIST Blocked        |
-| 2  | Owner: go-ahead (or edits) on the two staged erraudit filings                     | Medium   | S      | Quality       | TODO_LIST Blocked queue  |
-| 3  | Deploy bundle in one window: hosts + aiDids + CSP flip + read-model rebuild + ContentHash-v2 re-ingest | High | L | Deployment | TODO_LIST Blocked        |
-| 4  | Fresh solo poll-gate receipt on the settled tree                                  | High     | L      | Quality       | standing doctrine       |
-| 5  | Push the cross-repo commits (SKILLS `6077abd`, crush-config `f0a9497`)            | Medium   | S      | Cleanup       | this report §b2         |
-| 6  | Fold in upstream landings as they come: templ-components ×10, go-etag#2           | Low      | 30min  | Upstream      | TODO_LIST Blocked        |
-| 7  | Telnyx quarterly checklist when the 2027-01 window opens (Detail Records + MOS poller T15) | High | XL | Feature   | TODO_LIST Blocked        |
-| 8  | Watch dependabot weekly for the newly-direct deps; watch erraudit for the enforce fix | Low | 10min | Watch     | TODO_LIST Low            |
-| 9  | Annotate + archive the 20-08/21-05/21-10 live set when their items resolve (docs-health cycle) | Low | S | Docs | standing cycle     |
-| 10 | erraudit enforce fix lands → re-run `--max`, triage the 8 census sites against the do-not-migrate doctrine | High | S | Quality | DOMAIN_LANGUAGE caveat |
+| #  | Task                                                                                                       | Impact   | Effort | Category   | Harvested               |
+| -- | ---------------------------------------------------------------------------------------------------------- | -------- | ------ | ---------- | ----------------------- |
+| 1  | Owner: the five unlock decisions (D1–D5, AGENTS budget, §g ratification, PII boundary, stamp-churn)        | Critical | S      | Decision   | TODO_LIST Blocked       |
+| 2  | Owner: go-ahead (or edits) on the two staged erraudit filings                                              | Medium   | S      | Quality    | TODO_LIST Blocked queue |
+| 3  | Deploy bundle in one window: hosts + aiDids + CSP flip + read-model rebuild + ContentHash-v2 re-ingest     | High     | L      | Deployment | TODO_LIST Blocked       |
+| 4  | Fresh solo poll-gate receipt on the settled tree                                                           | High     | L      | Quality    | standing doctrine       |
+| 5  | Push the cross-repo commits (SKILLS `6077abd`, crush-config `f0a9497`)                                     | Medium   | S      | Cleanup    | this report §b2         |
+| 6  | Fold in upstream landings as they come: templ-components ×10, go-etag#2                                    | Low      | 30min  | Upstream   | TODO_LIST Blocked       |
+| 7  | Telnyx quarterly checklist when the 2027-01 window opens (Detail Records + MOS poller T15)                 | High     | XL     | Feature    | TODO_LIST Blocked       |
+| 8  | Watch dependabot weekly for the newly-direct deps; watch erraudit for the enforce fix                      | Low      | 10min  | Watch      | TODO_LIST Low           |
+| 9  | Annotate + archive the 20-08/21-05/21-10 live set when their items resolve (docs-health cycle)             | Low      | S      | Docs       | standing cycle          |
+| 10 | erraudit enforce fix lands → re-run `--max`, triage the 8 census sites against the do-not-migrate doctrine | High     | S      | Quality    | DOMAIN_LANGUAGE caveat  |
 
 (The remaining ~24 TODO rows are unchanged owner/cycle-gated backlog —
 not re-listed; TODO_LIST.md remains the living source.)

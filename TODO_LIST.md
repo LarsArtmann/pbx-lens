@@ -12,12 +12,13 @@
 > the three Unblocked rows LANDED (forwarder census recorded in
 > DOMAIN_LANGUAGE; two erraudit filings staged — the enforce-look found a
 > TOOL GAP, see the filing drafts; cross-repo sync committed in crush-config
-> + SKILLS), two Blocked rows resolved by events (the push backlog — origin
-> level under the ratified norm; the v0.3.0 GitHub release object — token
-> recovered, published 2026-10-27T19:50:06Z), and three Low-impact pins
-> landed (billsec clamp, Classify=Transient, the enforce-* verdict). All
-> logged in CHANGELOG Unreleased. The Unblocked table is empty again; the
-> Blocked and remaining Low-impact rows are untouched.
+>
+> - SKILLS), two Blocked rows resolved by events (the push backlog — origin
+>   level under the ratified norm; the v0.3.0 GitHub release object — token
+>   recovered, published 2026-10-27T19:50:06Z), and three Low-impact pins
+>   landed (billsec clamp, Classify=Transient, the enforce-* verdict). All
+>   logged in CHANGELOG Unreleased. The Unblocked table is empty again; the
+>   Blocked and remaining Low-impact rows are untouched.
 >
 > Refreshed 2026-10-26 (evening pass): the five Unblocked rows LANDED and
 > moved to CHANGELOG Unreleased — tag-triggered CI (v* tags run the same

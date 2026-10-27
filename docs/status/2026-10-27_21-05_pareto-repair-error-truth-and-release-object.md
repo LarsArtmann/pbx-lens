@@ -33,7 +33,7 @@ verify" directive over the 2026-10-27 20-08 harvest state. Companion plan:
    expected-later state). Pinned as
    `TestPollFileOpenFailureClassifiesAsTransient` with the full rationale.
    Commits `ef3a3be`/`0e9eb48`.
-5. **The --enforce-* deliberate look → TOOL GAP, not known-good silence.**
+5. __The --enforce-_ deliberate look → TOOL GAP, not known-good silence._*
    Probe module + source bisect pinned it: under `lint`, the AST path runs
    only when `--enforce-generic-return` is on, and the merge keeps only
    generic_return violations — so `--enforce-go-error-family`/`-samber-oops`/
@@ -117,13 +117,13 @@ verify" directive over the 2026-10-27 20-08 harvest state. Companion plan:
 
 ## f) Next (ranked)
 
-| # | Task                                       | Impact   | Effort | Harvested |
-| - | ------------------------------------------ | -------- | ------ | --------- |
-| 1 | Owner: the five decisions (D1–D5, budget, §g ratification, PII, stamp-churn) | Critical | S | TODO_LIST Blocked |
-| 2 | Owner: go-ahead on the two erraudit filings | Medium   | S | TODO_LIST Blocked |
-| 3 | Deploy bundle: hosts + aiDids + CSP flip + rebuild + ContentHash-v2 re-ingest | High | L | TODO_LIST Blocked |
-| 4 | Solo poll-gate receipt on the settled tree | High     | L | standing |
-| 5 | Upstream fold-ins + watches (templ-components ×10, go-etag#2, dependabot weekly) | Low | 30min | TODO_LIST |
+| # | Task                                                                             | Impact   | Effort | Harvested         |
+| - | -------------------------------------------------------------------------------- | -------- | ------ | ----------------- |
+| 1 | Owner: the five decisions (D1–D5, budget, §g ratification, PII, stamp-churn)     | Critical | S      | TODO_LIST Blocked |
+| 2 | Owner: go-ahead on the two erraudit filings                                      | Medium   | S      | TODO_LIST Blocked |
+| 3 | Deploy bundle: hosts + aiDids + CSP flip + rebuild + ContentHash-v2 re-ingest    | High     | L      | TODO_LIST Blocked |
+| 4 | Solo poll-gate receipt on the settled tree                                       | High     | L      | standing          |
+| 5 | Upstream fold-ins + watches (templ-components ×10, go-etag#2, dependabot weekly) | Low      | 30min  | TODO_LIST         |
 
 ## g) Questions for the owner
 
