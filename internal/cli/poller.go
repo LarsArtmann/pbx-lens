@@ -391,22 +391,26 @@ func (e *pollFileError) Error() string {
 
 func (e *pollFileError) Unwrap() error { return e.Err }
 
+func newPollFileError(op, path string, err error) *pollFileError {
+	return &pollFileError{Op: op, Path: path, Err: err}
+}
+
 // pollFile opens, feeds, and closes a file source.
-func pollFile(path string, feed func(*os.File) (IngestStats, error)) (IngestStats, *pollFileError) {
+func pollFile(path string, feed func(*os.File) (IngestStats, error)) (IngestStats, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return IngestStats{}, &pollFileError{Op: "open", Path: path, Err: err}
+		return IngestStats{}, newPollFileError("open", path, err)
 	}
 
 	stats, feedErr := feed(file)
 	closeErr := file.Close()
 
 	if feedErr != nil {
-		return IngestStats{}, &pollFileError{Op: "feed", Path: path, Err: feedErr}
+		return IngestStats{}, newPollFileError("feed", path, feedErr)
 	}
 
 	if closeErr != nil {
-		return IngestStats{}, &pollFileError{Op: "close", Path: path, Err: closeErr}
+		return IngestStats{}, newPollFileError("close", path, closeErr)
 	}
 
 	return stats, nil

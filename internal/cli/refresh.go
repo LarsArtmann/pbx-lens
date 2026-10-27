@@ -93,6 +93,10 @@ func (e *RefreshReadError) Error() string {
 
 func (e *RefreshReadError) Unwrap() error { return e.Err }
 
+func newRefreshReadError(stream string, err error) *RefreshReadError {
+	return &RefreshReadError{Stream: stream, Err: err}
+}
+
 // ClassifyRefresh compares each fetched observation with its stored view
 // without dispatching anything. This is the measurement half of the
 // additive-field doctrine (see calls.ObservationSchemaVersion): a schema bump
@@ -105,7 +109,7 @@ func ClassifyRefresh(
 	ctx context.Context,
 	reader *metaengine.TypedReader[calls.CallView],
 	observations []calls.Observation,
-) (RefreshReport, *RefreshReadError) {
+) (RefreshReport, error) {
 	report := RefreshReport{Total: len(observations), Findings: make([]RefreshFinding, 0, len(observations))}
 
 	for _, obs := range observations {
@@ -124,7 +128,7 @@ func ClassifyRefresh(
 
 		view, found, err := calls.LookupView(ctx, reader, sid)
 		if err != nil {
-			return report, &RefreshReadError{Stream: stream, Err: err}
+			return report, newRefreshReadError(stream, err)
 		}
 
 		if !found {
