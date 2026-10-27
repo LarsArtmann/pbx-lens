@@ -487,4 +487,6 @@ build the typed error inside a `newXxxError` constructor — the
 constructor also satisfies the analyzer's pure-forwarder exemption, so
 the finding clears without the landmine — and let callers keep reusing
 `err` safely. `pollFileError` (os.PathError's Op/Path/Err triplet) and
-`RefreshReadError` (Stream/Err) both follow this shape.
+`RefreshReadError` (Stream/Err) both follow this shape. The convention
+this pattern establishes lives in docs/DOMAIN_LANGUAGE.md § "Typed
+error carriers".

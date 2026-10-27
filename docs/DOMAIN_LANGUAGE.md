@@ -146,6 +146,28 @@ source row is completed from its sibling row that observed the same call.
   line). The export deliberately stays per-source — a forensic dump carries
   every row under its own identity (`internal/web/representative.go`).
 
+## Typed error carriers (2026-10-27)
+
+A function that creates an error internally keeps the idiomatic `error`
+return and never assembles the value inline — it constructs a named
+carrier through a `newXxxError` constructor:
+
+- **`pollFileError`** (internal/cli) — Op/Path/Err, the os.PathError
+  triplet, one per failed poll step (open, feed, close).
+- **`RefreshReadError`** (internal/cli) — Stream/Err, a failed read-model
+  lookup while classifying one stream.
+
+The constructor satisfies erraudit `--enforce-generic-return`'s
+pure-forwarder exemption, so `lint --max` clears without retyping
+signatures, and it keeps the typed-nil trap of concrete pointer returns
+unrepresentable (docs/gotchas.md, paid for 2026-10-27). Every carrier
+implements `Unwrap`, so `errors.Is`/`errors.As` and
+`errorfamily.Classify` reach the cause; the carriers stay deliberately
+UNclassified in go-error-family terms until a consumer needs the family.
+New code follows this shape deliberately; the remaining
+forwarder-exempt functions are accepted as-is (the 2026-10-27 doctrine
+call: fix what `--max` flags, no repo-wide sweep).
+
 ## Bounded contexts
 
 | Term         | Telnyx context                                                                                                             | FreeSWITCH context                                                                                                                                             |

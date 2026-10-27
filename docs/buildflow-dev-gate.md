@@ -486,3 +486,18 @@ Lesson, twice over: a receipt is only as honest as the arm (rule 2 of
 docs/concurrency.md now names the void-over-policy case), and an FOD
 mismatch names the hash to restore — read the "got" line, never let an
 automatic repair write hashes.
+
+## The erraudit `--max` audit is ad-hoc, not a gate (2026-10-27)
+
+`GOEXPERIMENT=jsonv2 erraudit lint ./... --max` is an OCCASIONAL audit,
+deliberately outside the gate: exit 0 is the bar whenever error-handling
+code changes (the 2026-10-27 session cleared three `generic_return`
+findings with typed carriers, see docs/DOMAIN_LANGUAGE.md § "Typed
+error carriers"), but BuildFlow/CI do not run it. Why not: erraudit
+ships on the system PATH only — it is not a flake input or a go.mod
+`tool`, so a gate step would not be hermetic, and pinning a fast-moving
+private linter into three places (flake, CI, vendor hash) buys little
+while the finding count is zero. Revisit triggers: erraudit becomes
+flake-pinnable (published/tagged), or `--max` finds a regression the
+ad-hoc cadence missed — then promote to a BuildFlow step following the
+golangci-lint step's shape and re-verify root AND devShell.
