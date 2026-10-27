@@ -342,26 +342,56 @@ func TestSnapshotAnyReportsStaleVerdict(t *testing.T) {
 	}
 }
 
+var errFeedBoom = errors.New("feed boom")
+
+type pollFileCase struct {
+	name       string
+	path       string
+	feed       func(*os.File) (IngestStats, error)
+	wantOp     string
+	wantStats  IngestStats
+	wantIs     error
+	wantPrefix string
+}
+
+func assertPollFileFailure(t *testing.T, tc pollFileCase, stats IngestStats, err error) {
+	t.Helper()
+
+	if stats.Total != 0 || stats.Recorded != 0 || stats.Corrected != 0 || len(stats.Rejected) != 0 {
+		t.Errorf("stats = %+v, want zero on failure", stats)
+	}
+
+	pollErr, ok := errors.AsType[*pollFileError](err)
+	if !ok {
+		t.Fatalf("pollFile: %v, want a *pollFileError", err)
+	}
+
+	if pollErr.Op != tc.wantOp || pollErr.Path != tc.path {
+		t.Errorf("carrier = %s %q, want %s %q", pollErr.Op, pollErr.Path, tc.wantOp, tc.path)
+	}
+
+	if tc.wantPrefix != "" {
+		if got := pollErr.Error(); !strings.HasPrefix(got, tc.wantPrefix+tc.path+": ") {
+			t.Errorf("Error() = %q, want prefix %q", got, tc.wantPrefix+tc.path+": ")
+		}
+	}
+
+	if tc.wantIs != nil && !errors.Is(err, tc.wantIs) {
+		t.Errorf("errors.Is(err, %v) = false, the Unwrap chain is broken", tc.wantIs)
+	}
+}
+
 func TestPollFileCarriesStepPathAndCause(t *testing.T) {
 	t.Parallel()
 
 	fed := IngestStats{Total: 3, Recorded: 3}
-	feedBoom := errors.New("feed boom")
 
 	existing := filepath.Join(t.TempDir(), "calls.cdr")
 	if err := os.WriteFile(existing, []byte("row"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 
-	cases := []struct {
-		name       string
-		path       string
-		feed       func(*os.File) (IngestStats, error)
-		wantOp     string
-		wantStats  IngestStats
-		wantIs     error
-		wantPrefix string
-	}{
+	cases := []pollFileCase{
 		{
 			name:       "open failure names the step and wraps the cause",
 			path:       filepath.Join(t.TempDir(), "missing.cdr"),
@@ -370,16 +400,24 @@ func TestPollFileCarriesStepPathAndCause(t *testing.T) {
 			wantPrefix: "open ",
 		},
 		{
-			name:   "feed failure wins over the close result",
-			path:   existing,
-			feed:   func(f *os.File) (IngestStats, error) { _ = f.Close(); return IngestStats{}, feedBoom },
+			name: "feed failure wins over the close result",
+			path: existing,
+			feed: func(f *os.File) (IngestStats, error) {
+				_ = f.Close()
+
+				return IngestStats{}, errFeedBoom
+			},
 			wantOp: "feed",
-			wantIs: feedBoom,
+			wantIs: errFeedBoom,
 		},
 		{
-			name:       "close failure surfaces only after a clean feed",
-			path:       existing,
-			feed:       func(f *os.File) (IngestStats, error) { _ = f.Close(); return IngestStats{}, nil },
+			name: "close failure surfaces only after a clean feed",
+			path: existing,
+			feed: func(f *os.File) (IngestStats, error) {
+				_ = f.Close()
+
+				return IngestStats{}, nil
+			},
 			wantOp:     "close",
 			wantIs:     os.ErrClosed,
 			wantPrefix: "close ",
@@ -411,28 +449,7 @@ func TestPollFileCarriesStepPathAndCause(t *testing.T) {
 				return
 			}
 
-			if stats.Total != 0 || stats.Recorded != 0 || stats.Corrected != 0 || len(stats.Rejected) != 0 {
-				t.Errorf("stats = %+v, want zero on failure", stats)
-			}
-
-			pollErr, ok := errors.AsType[*pollFileError](err)
-			if !ok {
-				t.Fatalf("pollFile: %v, want a *pollFileError", err)
-			}
-
-			if pollErr.Op != tc.wantOp || pollErr.Path != tc.path {
-				t.Errorf("carrier = %s %q, want %s %q", pollErr.Op, pollErr.Path, tc.wantOp, tc.path)
-			}
-
-			if tc.wantPrefix != "" {
-				if got := pollErr.Error(); !strings.HasPrefix(got, tc.wantPrefix+tc.path+": ") {
-					t.Errorf("Error() = %q, want prefix %q", got, tc.wantPrefix+tc.path+": ")
-				}
-			}
-
-			if tc.wantIs != nil && !errors.Is(err, tc.wantIs) {
-				t.Errorf("errors.Is(err, %v) = false, the Unwrap chain is broken", tc.wantIs)
-			}
+			assertPollFileFailure(t, tc, stats, err)
 		})
 	}
 }

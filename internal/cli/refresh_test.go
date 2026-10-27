@@ -149,17 +149,18 @@ func TestRefreshReportStringNamesEveryOutcome(t *testing.T) {
 	}
 }
 
+var errReadModelDown = errors.New("read-model unavailable")
+
 func TestRefreshReadErrorCarriesStreamAndCause(t *testing.T) {
 	t.Parallel()
 
-	cause := errors.New("read-model unavailable")
-	err := newRefreshReadError("freeswitch-cdr:abc-123", cause)
+	err := newRefreshReadError("freeswitch-cdr:abc-123", errReadModelDown)
 
 	if got, want := err.Error(), "refresh: read view for freeswitch-cdr:abc-123: read-model unavailable"; got != want {
 		t.Errorf("Error() = %q, want %q", got, want)
 	}
 
-	if !errors.Is(err, cause) {
+	if !errors.Is(err, errReadModelDown) {
 		t.Error("errors.Is should reach the read cause through Unwrap")
 	}
 
