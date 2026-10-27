@@ -1,0 +1,126 @@
+# Session status — erraudit `--max` generic_return: typed error carriers, the typed-nil landmine
+
+**When:** 2026-10-27, ~18:55–19:17 CET · **Scope:** one task — `erraudit lint ./... --max` exited 2 with three `generic_return` findings; fix at the root, verify, record.
+**Concurrent sessions:** the auto-commit daemon swept the Go changes into four `chore: auto-commit` commits while this session ran (the norm, docs/concurrency.md); this file plus `docs/status/README.md` are the only un-daemoned edits at write time.
+
+## What the findings were, and what the rule actually is
+
+```
+internal/cli/poller.go:379        pollFile         returns bare error
+internal/cli/refresh.go:89        ClassifyRefresh  returns bare error
+internal/ingest/cdr/cdr.go:273    observation      returns bare error
+```
+
+`--max` = `--type-aware + --no-suppress + --explain + --disable-extensions` and every `--enforce-*` check. The relevant one, `--enforce-generic-return` ("off by default — returning error is standard Go practice", confidence 0.60), is enforced by the AST policy in erraudit's own source (`internal/ast/predicates.go:139`, read from `~/projects/erraudit` — the binary's home repo is local): a function is flagged when its results contain the **bare `error` ident** AND its body **creates errors** (`errors.New`, `errors.Join`, `fmt.Errorf`; `.Wrap`/`.Wrapf` count too). Three exemptions: stdlib interface methods, `New*`/`Wrap*`/`Parse*` names, and **pure forwarders** (no internal error creation). Because `--max` includes `--no-suppress`, `//nolint` could not mask these — the signature or the body had to genuinely change.
+
+## a) FULLY DONE
+
+1. **The acceptance gate is green: `GOEXPERIMENT=jsonv2 erraudit lint ./... --max` → exit 0** (was exit 2, three findings). Re-run after every rework and again on the final tree.
+2. **`pollFile` (internal/cli/poller.go)** — new `pollFileError` carrying the stdlib `os.PathError` triplet (Op/Path/Err) with `Error()`/`Unwrap()`, built via `newPollFileError("open"|"feed"|"close", path, err)`. Behavior preserved exactly (close error still surfaces only when feed succeeded); feed/close failures now carry the file path, which the bare passthrough lost. Committed by the daemon (HEAD contains 4 `newPollFileError` hits, verified via `git show HEAD:`).
+3. **`ClassifyRefresh` (internal/cli/refresh.go)** — new exported `RefreshReadError{Stream, Err}` with `Error()`/`Unwrap()`; message format identical to the old `fmt.Errorf` (`refresh: read view for %s: …`), and the Unwrap chain keeps go-error-family classification walking through to the LookupView cause. Exported so cmd can `errors.AsType` it. Committed by the daemon.
+4. **`observation` (internal/ingest/cdr/cdr.go)** — the timestamp parse extracted into `parseStartStamp(raw string) (time.Time, error)` next to its sibling `parseDeclaredDirection`; `observation` is now a pure assembler + `obs.Validate()` passthrough, so the forwarder exemption applies with no signature change and no new type. Committed by the daemon.
+5. **Full verification stack on the final tree:** `go build ./...` ✓ · `go test ./...` ✓ (run twice — once mid-session, once final) · `go test -race` on internal/cli, internal/ingest/cdr, cmd/pbx-lens ✓ · `go vet` on the three ✓ · `golangci-lint run` on the three (repo config, incl. `mnd`/`errname`/`wrapcheck`) → **0 issues** · `scripts/check-doc-links.sh` ✓ after the doc edits.
+6. **The typed-nil landmine found, root-caused, and designed out** — see (d)1. The repo's own e2e test caught my first design within minutes; the rework makes the trap impossible rather than merely avoided.
+7. **Docs recorded where they live:** war story appended to `docs/gotchas.md` ("A concrete pointer error return is a typed-nil landmine", paid-for 2026-10-27); CHANGELOG `[Unreleased]` Fixed entry added. AGENTS.md deliberately untouched — the budget check shows **219/219 lines, zero headroom**, and deleting curated lines to make room is an owner decision, not a drive-by.
+
+## b) PARTIALLY DONE
+
+1. **The typed-error doctrine is recorded as a war story, not yet as a convention.** `docs/gotchas.md` owns the negative lesson (what detonated); the *positive* rule — keep idiomatic `error` signatures, construct typed carriers via `newXxxError`, rely on the forwarder exemption — exists only in the code and the CHANGELOG prose. `docs/DOMAIN_LANGUAGE.md` is the natural home. Effort to finish: S. Blocker: none, except AGENTS.md budget pressure for any pointer added from AGENTS.md itself.
+2. **Test coverage of the new types is indirect.** `TestRefreshClassifiesThenBackfills` exercises the success path end-to-end and organically pinned the typed-nil failure; nothing directly pins `pollFileError`/`RefreshReadError` `Error()`/`Unwrap()` rendering, `pollFile`'s three op paths have no direct table test, and I never confirmed which malformed field the existing cdr skip test (cdr_test.go:327) actually feeds — so "the malformed-start_stamp path is covered" is unverified. Effort: S each. Blocker: none.
+3. **No formal BuildFlow receipt for the post-change tree.** Verification was the proportionate targeted stack (build/tests/race/vet/golangci/erraudit/doc-links, all green); the poll-gate BuildFlow run (solo, load-gated, long) was not executed. Whether the tree needs a fresh receipt before the next release is an owner call. Effort: L (wall-clock), S (attention).
+4. **The unpushed push persists.** Mid-session git state said `ahead of 'origin/main' by 1` before the daemon kept committing; prior live reports (09-42, 23-48) already flag the unpushed backlog as overdue. Not this session's call to make; still open. Effort: S + owner go-ahead.
+
+## c) NOT STARTED (planned by this session, zero code written)
+
+1. **Gating `erraudit lint ./... --max`.** Right now the check is an ad-hoc owner command; nothing in the repo re-runs it, so the first future `fmt.Errorf` added inside a currently-exempt function re-flags silently. A gate needs a decision (see §g1) plus a flake pin — erraudit resolves from the system PATH (`/run/current-system/sw/bin`), not the devShell. Not started: waiting on §g1/§g3.
+2. **go-error-family classification for the two new error types.** They are plain typed carriers; `errorfamily.Classify` walks `Unwrap()`, so causes keep their families, but the carriers themselves are unclassified. Whether they should declare families (and which) is a policy question (§g2). Not started: waiting on §g2.
+3. **Upstream erraudit filings** noticed this session, not filed: `--format tree` swallows the `--explain` text even under `--max` (the "why" only came from reading the source); the summary banner renders an unfilled template (`[Rejection:violations.found]` with no count); stderr noise when passing directories (`promoting directory … to package pattern`). Each needs the verify-before-filing gate + a `docs/upstream-filings.md` ledger row. Not started: out of the session's fix scope.
+4. **Cross-project lesson harvest:** the typed-nil-under-`--enforce-generic-return` lesson generalizes to every repo that runs erraudit `--max` — it belongs in crush-config's `references/lessons.md` (committed, never in-session) and arguably as a `generic_return` section in the `go-error-modernization` skill, whose verification table still calls the binary "not publicly findable" while its source sits at `~/projects/erraudit`. Not started: different repo, needs its own commit.
+5. **TODO_LIST harvest of §f below** — per the status-report contract, §f is HARVEST input. Waiting for instructions per the session's closing command.
+
+## d) TOTALLY FUCKED UP (this session's own failures, named)
+
+1. **My first design shipped the exact landmine I had already identified.** During design I wrote, in so many words: "returning a concrete pointer type has the typed-nil hazard — pointer type with literal nil only". Then I implemented `*RefreshReadError` anyway. cmd's `err` was first declared as `error` (from `FetchTelnyxObservations`), so `report, err := cli.ClassifyRefresh(…)` **reused** the `error`-typed variable (`:=` needs only one new name), the returned nil `*RefreshReadError` converted into a non-nil interface, and the success path died with `runRefresh(classify): <nil>`. Severity: blocked the cmd test suite (caught before any commit by me — the daemon did sweep the broken intermediate state into history). Root cause: a design hazard I documented and then ignored when writing the signature. Mitigation now structural: typed carriers behind constructors, idiomatic `error` signatures — the trap is impossible, not avoided. Lesson recorded in `docs/gotchas.md`.
+2. **The failure surfaced only because I widened the test scope on a hunch.** After the first file's change I ran `go test ./internal/cli/` — green — and moved on; the trap lived in `cmd/pbx-lens`, a **caller of the changed exported function**. If `TestRefreshClassifiesThenBackfills` had been weaker (say, assert-only-output), a broken CLI verb ships. The rule I violated: after changing an exported signature, immediately run the **widest** scope that imports it, not the owning package.
+3. **A debug edit rode the daemon into history.** To root-cause the `<nil>` I patched the test's `Fatalf` to `%T %v`; the daemon committed that intermediate state (and the first vet-format stumble `%#[1]v` — flagged by the printf check, fixed to two args — never landed anywhere but my editor). The revert is exact, but HEAD history now contains a one-commit window where the test printed types. Known norm (daemon, docs/concurrency.md), still history noise I authored.
+4. **I verified "message byte-identical" by reading, not by pinning.** The claim is true today (format string compared by eye against the old `fmt.Errorf`), but no test pins it, so nothing stops a future format drift. An honest caveat to an otherwise verified receipt set.
+5. **I reproduced the findings before reading the rule's source, then implemented before finishing the research.** Reading `predicates.go` first (it is local!) would have surfaced the forwarder exemption and the constructor pattern in step one and skipped the entire (d)1 incident. The cost was one failed design cycle; the lesson is sequencing, not knowledge.
+6. **AGENTS.md budget blocked the doctrine note and I accepted that silently in-plan.** 219/219 means every future "record this in AGENTS.md" impulse dies the same way; the repo needs an owner decision on the budget (re-curate vs. raise), and I should have surfaced it as a question this session instead of a footnote. Now it is §g material (folded into §f items).
+
+Nothing else is broken: no failing tests, no red gates, no user-facing defects introduced; the tree at HEAD passes the full verification stack.
+
+## e) WHAT WE SHOULD IMPROVE
+
+1. **Design gate for signature changes: "who calls this, and what type is their `err` today?"** The trap was derivable from the call site I had already read. Concrete fix: before changing any exported return type, grep the callers and check whether `err` is freshly declared or reused from an earlier `error` declaration in the same function.
+2. **Test-scope rule for exported-surface changes:** owning package first is not enough; run every importing package's tests immediately. `./...` is cheap here (~seconds apart from the few system-booting suites).
+3. **Read the local linter's source before the first fix attempt.** erraudit's detector, exemptions, and intent are a `grep` away in `~/projects/erraudit`. The skill even warns the tool is private — its source being local makes speculation inexcusable.
+4. **Stash-bisect earlier.** The clean-tree stash check took 20 seconds and decisively blamed my change; I ran it only after two rounds of speculation about `<nil>` semantics.
+5. **Format-debug discipline:** plain `%T %v` with two args; arg-index tricks trip the printf vet and cost a cycle.
+6. **`--max` without a gate is a regression lottery** — the exemption set is a fingerprint: any future `fmt.Errorf` inside a currently-clean function re-flags. Either gate it or write down that it is ad-hoc (§f1).
+7. **The error-typing convention needs one canonical home** (DOMAIN_LANGUAGE.md), with gotchas/CHANGELOG pointing at it — three prose locations for one doctrine will drift.
+8. **Unverified skill claims should be verified opportunistically:** `GOEXPERIMENT=jsonv2` for erraudit runs is "unverified" in the skill; whether it is load-bearing for `lint` (vs. only for builds under some goersions) is a one-CLI-experiment question nobody has run.
+
+## f) Up to 50 things we should get done next
+
+Ranked by impact; §f feeds docs-health HARVEST (the actionable rows belong in TODO_LIST.md, the speculative ones in ROADMAP.md). Effort: S <30 min, M 30 min–2 h, L >2 h.
+
+| # | Task | Impact | Effort | Category |
+|---|------|--------|--------|----------|
+| 1 | Decide the erraudit `--max` policy: enforced gate (script/BuildFlow step/CI) vs. documented ad-hoc audit; write the decision in AGENTS.md or docs/buildflow-dev-gate.md | Critical | S | Quality |
+| 2 | If gated: pin erraudit into the flake devShell (currently system PATH only) so the gate is hermetic | High | S | Quality |
+| 3 | Write the positive typed-error convention into docs/DOMAIN_LANGUAGE.md: idiomatic `error` signatures, `newXxxError` constructors, forwarder exemption as the satisfying pattern | High | S | Documentation |
+| 4 | Direct table test for `pollFile`: open-fail, feed-fail, close-fail, success — pins Op/Path/Err rendering and the feed-before-close ordering | High | S | Quality |
+| 5 | Direct unit test for `RefreshReadError` (`Error()` format + `Unwrap()` chain) and one for `pollFileError` | Medium | S | Quality |
+| 6 | Confirm which malformed field cdr_test.go:327 feeds; pin the unparseable-`start_stamp` skip path explicitly (currently unverified coverage) | Medium | S | Quality |
+| 7 | Decide go-error-family classification for `pollFileError`/`RefreshReadError` (§g2); if classified, pin with a `Classify` test | Medium | S | Quality |
+| 8 | Sweep for other forwarder-exempt functions (bare `error` + no inline creation) that would flag on a future inline `fmt.Errorf`; pre-type hot paths or document acceptance per function | Medium | M | Quality |
+| 9 | Land the owner decision on the AGENTS.md 219-line budget (re-curate vs. raise) — it has now blocked doc additions in at least two sessions | Medium | S | Documentation |
+| 10 | Add the exact `erraudit lint ./... --max` command to AGENTS.md Commands once §1 decides (budget-dependent) | Medium | S | Documentation |
+| 11 | Fresh poll-gate BuildFlow receipt on the post-change tree if a closeout receipt is wanted before the next release | High | L | Quality |
+| 12 | Push the unpushed commit backlog (owner go-ahead; flagged overdue by 09-42 and 23-48) | High | S | Cleanup |
+| 13 | HARVEST this report's §f into TODO_LIST.md / ROADMAP.md (docs-health) | Medium | S | Documentation |
+| 14 | File upstream erraudit issues after verify-before-filing: `--format tree` hides `--explain` under `--max`; summary banner prints `[Rejection:violations.found]` without the count; directory-arg promotion stderr noise; register in docs/upstream-filings.md | Low | M | Quality |
+| 15 | Add the typed-nil/generic_return lesson to crush-config `references/lessons.md` (committed there, never in-session) | Medium | M | Documentation |
+| 16 | Update the `go-error-modernization` skill: add a `generic_return`/typed-constructor section; refresh its verification table (the binary's source is local at `~/projects/erraudit`; `--max`, lint determinism now observed) | Medium | M | Documentation |
+| 17 | Verify whether `GOEXPERIMENT=jsonv2` is load-bearing for `erraudit lint` (the skill mandates it "unverified"); record the answer in the skill | Low | S | Quality |
+| 18 | Run `erraudit nolint-audit .` to confirm no stale directives after the session (expected clean: no directives added) | Low | S | Quality |
+| 19 | Run the skill's `erraudit fix` dry-run sweep once to confirm zero auto-fixable legacy patterns repo-wide | Low | S | Quality |
+| 20 | Idea, upstream: a rule for "function returns concrete pointer error type" (the typed-nil generator) — erraudit or golangci plugin; needs the linter-building skill's decision tree first | Low | M | Quality |
+| 21 | Surface cdr row-rejection reasons: `Result.Skipped` counts without the why (Validate/parse) while telnyx carries a rejected list; consider parity | Medium | M | Feature |
+| 22 | Verify + pin `atoi` negative-clamp semantics in cdr (`max(atoi(...), 0)` on billsec) — noticed, intent undocumented | Low | S | Quality |
+| 23 | Check webhook/telnyx parse functions under the same doctrine exposure as cdr (currently clean under `--max`; keep them that way deliberately, not accidentally) | Low | S | Quality |
+| 24 | Decide whether `observation()`'s `Validate()` passthrough stays bare `error` long-term or gets a typed shape under the §3 doctrine | Low | S | Quality |
+| 25 | Pin `errorfamily.Classify` behavior for poll open failures (fs errors through the new Unwrap chain) so /api/ops-style consumers get a stable family | Low | S | Quality |
+| 26 | Consider wiring `erraudit lsp` into the editor config (noticed in help; untested) | Low | S | Quality |
+| 27 | Annotate + archive this report when its items resolve (live-set discipline) | Low | S | Documentation |
+| 28 | When §3 lands, add a one-line pointer from docs/gotchas.md's war story to the convention (single-source the doctrine) | Low | S | Documentation |
+| 29 | Cross-check the `--enforce-go-error-family`/`--enforce-coded-errors` checks under `--max` against this repo's errorfamily usage — currently silent (verified: exit 0), but worth one deliberate look so the silence is known-good, not unexamined | Low | S | Quality |
+| 30 | Owner review of §g answers → unblocks §f rows 1, 7, 8 | Critical | S | Quality |
+| 31 | If §1 gates on CI: add the erraudit lane to `.github/workflows/ci.yml` following the existing single-module pattern | Medium | S | Quality |
+| 32 | Add `parseStartStamp` to any layout/table-driven parse test seam if cdr gains more stamp columns (note only — no current need) | Low | S | Quality |
+| 33 | Consider a tiny fixture test asserting `runRefresh` classify output still contains "1 new" after any future RefreshReport changes (the e2e already does; guard against weakening it) | Low | S | Quality |
+| 34 | Record in docs/buildflow-dev-gate.md the targeted-verification stack used this session as the acceptable fast path for error-type-only changes (if the owner agrees) | Low | S | Documentation |
+| 35 | After the doctrine lands, do one `grep -n "fmt.Errorf" internal/ | wc` style census to keep the exemption surface known | Low | S | Quality |
+
+Items 35 is the honest ceiling from one session's observations — the rest would be invented scope. Items 1–3, 7–10, 30 are the high-leverage core; most others are S-effort pins and filings.
+
+## g) Three questions I cannot answer myself
+
+1. **Gate or audit?** Should `erraudit lint ./... --max` become an enforced repo gate (BuildFlow step and/or CI lane, which implies flake-pinning the binary), or stay an occasional manual audit with the known silent-regression risk? I tried to infer the intent from the repo (no erraudit in AGENTS.md, CI, flake, or scripts — only CHANGELOG/gotchas history), and it is genuinely ambiguous: the tool's own docs call the check opt-in noise, but you ran it with `--max` twice-standard strictness.
+2. **Error-family policy for the new carriers?** Should `pollFileError` and `RefreshReadError` be classified into go-error-family explicitly (e.g. poll feed → Transient, refresh read → Infrastructure), or stay unclassified and ride their Unwrap chains? The ops surface (/api/ops, cmd exit codes via `errorfamily.ExitCode`) behaves differently depending on the answer, and which families fit is a deployment-policy call, not a code question.
+3. **Doctrine ambition?** Is the steady state "the three flagged functions are fixed; the forwarder exemption is accepted forever" (document-and-move-on), or "drive every inline-error-creating function to typed constructors repo-wide" (a sweeping quality pass)? The first is 30 minutes of docs; the second is a repo-wide refactor wave. I cannot tell from three findings which ambition `--max` expresses.
+
+## Receipts (final tree)
+
+```
+GOEXPERIMENT=jsonv2 erraudit lint ./... --max   → exit 0
+GOEXPERIMENT=jsonv2 go build ./...              → ok
+GOEXPERIMENT=jsonv2 go test ./...               → ok (all packages)
+GOEXPERIMENT=jsonv2 go test -race ./internal/cli/ ./internal/ingest/cdr/ ./cmd/pbx-lens/ → ok
+GOEXPERIMENT=jsonv2 go vet (three packages)     → ok
+golangci-lint run (repo config, three packages) → 0 issues
+bash scripts/check-doc-links.sh                 → exit 0
+bash scripts/check-agents-budget.sh             → 219/219 (untouched)
+```
+
+Daemon commits carrying this session's Go changes: `e728aca`, `eac4527`, `8fbc37f`, `315da52` (contents verified against the final versions via `git show HEAD:`). Manual edits at write time: this file + docs/status/README.md live-table row.
