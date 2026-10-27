@@ -1,0 +1,1135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pbx-lens pareto plan — 2026-10-27</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="top-bar">
+      <span>PARETO PLAN + EXECUTION REPORT</span>
+      <span>2026-10-27</span>
+      <span>pbx-lens / Crush session</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#incident">The Incident (P0)</a>
+          <a href="#comprehensive">Comprehensive Plan</a>
+          <a href="#fine">Fine Breakdown (Executed)</a>
+          <a href="#graph">Execution Graph</a>
+          <a href="#owner">Owner-Gated Backlog</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Pareto Plan — Executed Same-Night</div>
+          <h1>Post-v0.3.0: repair, error-truth closure, and the owner-gated backlog</h1>
+          <p class="hero-subtitle">
+            All 38 TODO rows ranked and sliced into ≤12-minute tasks; the 8
+            unblocked ones executed and verified tonight; the ~30 owner-gated
+            rows parked with their exact decision gates.
+          </p>
+        </div>
+
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">38</div>
+            <div class="stat-label">TODO rows in scope</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">8</div>
+            <div class="stat-label">Resolved tonight</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">30</div>
+            <div class="stat-label">Owner-gated / watch</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Incident repaired (P0)</div>
+          </div>
+        </div>
+
+        <div class="card card-problem">
+          <h4>The night opened with an active incident</h4>
+          <p>
+            A concurrent <code>buildflow --fix --build-mode=full</code> run executed with
+            <code>.buildflow.yml</code> missing from the working tree, so the formatter excludes were
+            not loaded: <code>htmx.min.js</code> was pretty-printed (1 → 3415 lines), the generated
+            <code>styles.css</code> foreign-formatted (+5993 lines), and the daemon committed and nearly
+            pushed the damage — the exact incident class the deleted config's own comments document
+            from 2026-10-12 and 2026-10-15.
+          </p>
+        </div>
+        <div class="card card-solution">
+          <h4>Repaired forward, damage never entered pushed history</h4>
+          <p>
+            All three files restored byte-identical to the last receipted tree (<code>8ff9912</code>);
+            because both the damage commit and the restore sat unpushed, the ratified rule-3 squash
+            dropped the pair entirely — HEAD, origin, and working tree reconverged clean. The restored
+            config validates clean (<code>buildflow config lint</code> exit 0) and the CSS gate plus
+            golden pages pass on the restored bytes.
+          </p>
+        </div>
+
+        <h2 id="incident"><span class="num">01</span>The Incident (P0 — the 1% tier)</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Incident</span>
+          <h3>Guard config deletion let formatters rewrite vendored assets</h3>
+          <div class="where">.buildflow.yml (deleted) · internal/web/static/htmx.min.js · internal/web/static/styles.css</div>
+          <p>
+            Timeline: 20:23:25 the concurrent full-fix run started; 20:23:49 htmx.min.js
+            pretty-printed (oxfmt without the <code>*.min.js</code> exclude); 20:26:10 the daemon swept
+            all three changes into <code>32f86a4</code>. Root cause of the exposure: the config deletion's
+            author is unknown — no BuildFlow code path deletes it (source-verified), all its keys are
+            still canonical, and no doc records a removal decision.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Byte-identical restore from <code>8ff9912</code>; damage+restore commit pair dropped while
+            unpushed (concurrency rule 3); <code>config lint</code> clean under the current binary;
+            incident recorded here and in the status report. Residual risk: an unknown actor deleted a
+            load-bearing config once — the incident class is documented, the author is not.
+          </div>
+        </div>
+
+        <h2 id="comprehensive"><span class="num">02</span>Comprehensive Plan — every TODO row, ranked</h2>
+        <p>
+          Sorted by importance / customer value, then effort. Tier: the Pareto cut each row belongs to
+          (1% = done-first repair, 4% = tonight's closure, 20% = owner-gated high impact, rest = watch).
+        </p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th><th>Task</th><th>Tier</th><th>Impact</th><th>Effort</th><th>Tonight</th><th>Gate</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Working-tree repair: restore guard config + vendored assets, drop damage pair</td><td>1%</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td><span class="badge badge-fixed">DONE</span></td><td>—</td></tr>
+              <tr><td>2</td><td>Forwarder-exemption census: judge all 8 inline error sites, record acceptance</td><td>4%</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-fixed">DONE</span></td><td>—</td></tr>
+              <tr><td>3</td><td>Stage erraudit filings (verify-before-filing + github-voice), register in ledger</td><td>4%</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-fixed">DONE</span></td><td>—</td></tr>
+              <tr><td>4</td><td>Cross-repo learnings sync: typed-nil lesson, skill update, GOEXPERIMENT check</td><td>4%</td><td><span class="badge badge-medium">Medium</span></td><td>M</td><td><span class="badge badge-fixed">DONE</span></td><td>—</td></tr>
+              <tr><td>5</td><td>Publish v0.3.0 GitHub Release object (token recovered)</td><td>4%</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td><span class="badge badge-fixed">DONE</span></td><td>— (was token)</td></tr>
+              <tr><td>6</td><td>Push backlog (stale — origin level, pushes flowing)</td><td>1%</td><td><span class="badge badge-high">High</span></td><td>S</td><td><span class="badge badge-fixed">DONE</span></td><td>— (resolved by event)</td></tr>
+              <tr><td>7</td><td>Pin billsec clamp semantics (negative + unparseable → 0)</td><td>4%</td><td><span class="badge badge-low">Low</span></td><td>S</td><td><span class="badge badge-fixed">DONE</span></td><td>—</td></tr>
+              <tr><td>8</td><td>Pin errorfamily.Classify for poll open failure (= Transient, fail-open)</td><td>4%</td><td><span class="badge badge-low">Low</span></td><td>S</td><td><span class="badge badge-fixed">DONE</span></td><td>—</td></tr>
+              <tr><td>9</td><td>Deliberate look at --enforce-* silence → TOOL GAP found + recorded</td><td>4%</td><td><span class="badge badge-low">Low</span></td><td>S</td><td><span class="badge badge-fixed">DONE</span></td><td>—</td></tr>
+              <tr><td>10</td><td>Production re-ingest for ContentHash v2 (rehearse classify-only, then -apply)</td><td>20%</td><td><span class="badge badge-critical">High</span></td><td>60min</td><td>—</td><td>prod deploy path</td></tr>
+              <tr><td>11</td><td>Deploy both hosts with current lens module options (aiDids)</td><td>20%</td><td><span class="badge badge-critical">High</span></td><td>30min</td><td>—</td><td>host deploy</td></tr>
+              <tr><td>12</td><td>Owner decision pack D1–D5 (dates, control rows, chart filing, collapse, tone)</td><td>20%</td><td><span class="badge badge-critical">High</span></td><td>30min</td><td>—</td><td>owner answers</td></tr>
+              <tr><td>13</td><td>Stamp-churn doctrine: client-side render + AFTER 304 numbers</td><td>20%</td><td><span class="badge badge-critical">High</span></td><td>S</td><td>—</td><td>owner call</td></tr>
+              <tr><td>14</td><td>T15 MOS poller execution (design done; needs Telnyx window 2027-01)</td><td>20%</td><td><span class="badge badge-critical">High</span></td><td>XL</td><td>—</td><td>API window</td></tr>
+              <tr><td>15</td><td>One-time read-model rebuild (bare-key flip residue)</td><td>20%</td><td><span class="badge badge-medium">Medium</span></td><td>L</td><td>—</td><td>prod deploy</td></tr>
+              <tr><td>16</td><td>PII enforcement at chosen boundary (one-pager ready)</td><td>20%</td><td><span class="badge badge-medium">Medium</span></td><td>L</td><td>—</td><td>owner boundary call</td></tr>
+              <tr><td>17</td><td>Push catalog infra expansion (shipped locally, rehearsal green)</td><td>20%</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>—</td><td>push path</td></tr>
+              <tr><td>18</td><td>CSP enforce-mode flip (bundle with next host deploy)</td><td>20%</td><td><span class="badge badge-medium">Medium</span></td><td>30min</td><td>—</td><td>owner risk call</td></tr>
+              <tr><td>19</td><td>AGENTS.md 219/219 budget decision (re-curate vs raise)</td><td>20%</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>—</td><td>owner call</td></tr>
+              <tr><td>20</td><td>BuildFlow advisory-vs-fatal filing decision</td><td>rest</td><td><span class="badge badge-medium">Medium</span></td><td>S</td><td>—</td><td>owner</td></tr>
+              <tr><td>21</td><td>Owner ratification of the three typed-error §g defaults</td><td>20%</td><td><span class="badge badge-critical">Critical</span></td><td>S</td><td>—</td><td>owner review</td></tr>
+              <tr><td>22</td><td>Upstream filings queue: file the staged drafts (incl. tonight's two erraudit)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>30min</td><td>—</td><td>per-filing go-ahead</td></tr>
+              <tr><td>23</td><td>Fold-ins when upstream lands: templ-components ×10, go-etag#2</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>30min</td><td>—</td><td>upstream</td></tr>
+              <tr><td>24</td><td>Telnyx Detail Records live-verify (2027-01 window)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>30min</td><td>—</td><td>API window</td></tr>
+              <tr><td>25</td><td>Coverage floor chase to 80% or accept 70</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>60min</td><td>—</td><td>owner call</td></tr>
+              <tr><td>26</td><td>Pixel-baseline strategy home (machine-local vs committed corpus)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>15min</td><td>—</td><td>owner pick</td></tr>
+              <tr><td>27</td><td>Browser-level htmx 304 revalidation check</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>15min</td><td>—</td><td>owner manual</td></tr>
+              <tr><td>28</td><td>Dependabot weekly run confirmation for newly-direct deps</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>10min</td><td>—</td><td>weekly cycle</td></tr>
+              <tr><td>29</td><td>Sibling repo: backup-rotation opinion fold into lens.nix comments</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>15min</td><td>—</td><td>sibling</td></tr>
+              <tr><td>30</td><td>Mobile card-list for the calls table (taste call)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>L</td><td>—</td><td>owner taste</td></tr>
+              <tr><td>31</td><td>Lint-policy intent confirmation (lll scope, run.go floor, tagliatelle)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>15min</td><td>—</td><td>owner answer</td></tr>
+              <tr><td>32</td><td>Gate-hardening residue (config verify surface)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>30min</td><td>—</td><td>lint-policy answer</td></tr>
+              <tr><td>33</td><td>LICENSE files for larsartmann modules (17 no-license errors)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>30min</td><td>—</td><td>owner repos</td></tr>
+              <tr><td>34</td><td>AGENTS-budget CI job variant (hooks residue)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>15min</td><td>—</td><td>lint-policy answer</td></tr>
+              <tr><td>35</td><td>Advisory triage dispositions (detect-only lanes) + dependabot-core watch</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>60min</td><td>—</td><td>documented/watch</td></tr>
+              <tr><td>36</td><td>Fast-path verification stack recording (targeted-verification doctrine)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>—</td><td>owner nod</td></tr>
+              <tr><td>37</td><td>Watch cut-release proxy tail (bounded retry only if it flakes)</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>S</td><td>—</td><td>first release</td></tr>
+              <tr><td>38</td><td>&gt;1MiB marathon transcript buffer policy</td><td>rest</td><td><span class="badge badge-low">Low</span></td><td>15min</td><td>—</td><td>owner policy</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="fine"><span class="num">03</span>Fine Breakdown — tonight's executed tasks (each ≤12 min)</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>#</th><th>Task</th><th>Min</th><th>Verification</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Diagnose the three unexplained working-tree changes (mtimes, process cwds, buildflow history)</td><td>8</td><td>Full timeline reconstructed; concurrent --fix run identified</td></tr>
+              <tr><td>2</td><td>Confirm no BuildFlow code path deletes .buildflow.yml; keys still canonical</td><td>5</td><td>Source grep over ~/projects/BuildFlow; skill references</td></tr>
+              <tr><td>3</td><td>Restore the three files byte-identical from 8ff9912</td><td>4</td><td><code>git diff 8ff9912</code> empty except untracked config</td></tr>
+              <tr><td>4</td><td>Spot-verify restored assets (CSS gate + golden pages)</td><td>2</td><td><code>go test ./internal/web/ -run TestCSS|TestGolden|...</code> ok 0.150s</td></tr>
+              <tr><td>5</td><td>Drop the unpushed damage+restore pair; push clean state</td><td>3</td><td>HEAD == origin == 8ff9912; tree clean</td></tr>
+              <tr><td>6</td><td>Validate restored config under current binary</td><td>1</td><td><code>buildflow config lint</code> → "config clean", exit 0</td></tr>
+              <tr><td>7</td><td>Census grep + read all 8 error-creation sites</td><td>8</td><td>8 sites / 5 files; function names resolved</td></tr>
+              <tr><td>8</td><td>Judge each site (Parse*, stdlib-interface, sentinels) + record table</td><td>6</td><td>DOMAIN_LANGUAGE census section; doc-links 0 broken</td></tr>
+              <tr><td>9</td><td>Billsec clamp pin test (negative + unparseable rows)</td><td>6</td><td><code>TestParseClampsNonPositiveBillsecToZero</code> ok; lint 0</td></tr>
+              <tr><td>10</td><td>Classify pin: first draft failed (wanted Rejection), root-caused to unregistered stdlib defaults</td><td>10</td><td><code>TestPollFileOpenFailureClassifiesAsTransient</code> ok</td></tr>
+              <tr><td>11</td><td>enforce-* look: probe module + source bisect</td><td>12</td><td>No-op pinned at lint_runner.go (61a744ce); DOMAIN_LANGUAGE caveat</td></tr>
+              <tr><td>12</td><td>Duplicate search + verbatim source quotes at binary commit</td><td>6</td><td>gh search all states; quotes captured at 61a744ce</td></tr>
+              <tr><td>13</td><td>Write both erraudit drafts (banner, TL;DR, repro, ask)</td><td>10</td><td>check-draft: 0 FAIL 0 WARN × 2</td></tr>
+              <tr><td>14</td><td>Register drafts in drafts/README + upstream-filings ledger</td><td>5</td><td>Doc gates green (after phantom-fix commit e15215c)</td></tr>
+              <tr><td>15</td><td>typed-nil lesson → crush-config lessons.md</td><td>6</td><td>Commit f0a9497; format matches entry style</td></tr>
+              <tr><td>16</td><td>go-error-modernization: 4 verification rows + generic_return section</td><td>10</td><td>Commit 6077abd in SKILLS repo</td></tr>
+              <tr><td>17</td><td>GOEXPERIMENT load-bearing check</td><td>2</td><td>lint --max identical with/without env; recorded in skill</td></tr>
+              <tr><td>18</td><td>v0.3.0 release: strip comment, create, verify</td><td>4</td><td>gh release view: published 2026-10-27T19:50:06Z</td></tr>
+              <tr><td>19</td><td>This plan (D2 graph + tables)</td><td>12</td><td>d2 compiled 39KB SVG; this file</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 id="graph"><span class="num">04</span>Execution Graph</h2>
+        <div class="card">
+          <h4>Lanes: repair → error-truth closure → sync/release → records → owner-gated remainder</h4>
+          <div id="d2-graph" style="width: 100%; overflow-x: auto;">
+<?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 6586 782"><svg class="d2-2241196801 d2-svg" width="6586" height="782" viewBox="-34 -95 6586 782"><rect x="-34" y="-95" width="6586" height="782" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-2241196801 .text {
+	font-family: "d2-2241196801-font-regular";
+}
+@font-face {
+	font-family: d2-2241196801-font-regular;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-2241196801 .text-bold {
+	font-family: "d2-2241196801-font-bold";
+}
+@font-face {
+	font-family: d2-2241196801-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-2241196801 .text-italic {
+	font-family: "d2-2241196801-font-italic";
+}
+@font-face {
+	font-family: d2-2241196801-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-2241196801 .fill-N1{fill:#0A0F25;}
+		.d2-2241196801 .fill-N2{fill:#676C7E;}
+		.d2-2241196801 .fill-N7{fill:#FFFFFF;}
+		.d2-2241196801 .fill-B1{fill:#0D32B2;}
+		.d2-2241196801 .fill-B4{fill:#E3E9FD;}
+		.d2-2241196801 .fill-B5{fill:#EDF0FD;}
+		.d2-2241196801 .fill-AA4{fill:#EDF0FD;}
+		.d2-2241196801 .stroke-B1{stroke:#0D32B2;}
+		.d2-2241196801 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="cmVwYWly"><g class="shape" ><rect x="67" y="384" width="1534" height="158" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="834" y="371" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">P0 Repair (1% tier — 51% of value)</text></g><g class="dHJ1dGg="><g class="shape" ><rect x="1929" y="196" width="1023" height="300" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="2440.5" y="183" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">P1/P2 Error-truth closure (4% tier)</text></g><g class="c3luYw=="><g class="shape" ><rect x="3280" y="271" width="664" height="300" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="3612" y="258" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">P2 Sync + release</text></g><g class="ZG9jcw=="><g class="shape" ><rect x="4272" y="346" width="1296" height="142" stroke="#0D32B2" fill="#E3E9FD" class=" stroke-B1 fill-B4" style="stroke-width:2;" /></g><text x="4920" y="333" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">P3 Records</text></g><g class="b3duZXI="><g class="shape" ><path d="M 5983 70 C 5983 46 6172 46 6193 46 C 6213 46 6402 46 6402 70 V 562 C 6402 586 6213 586 6193 586 C 6172 586 5983 586 5983 562 V 70 Z" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-AA4" style="stroke-width:2;" /><path d="M 5983 70 C 5983 94 6172 94 6193 94 C 6213 94 6402 94 6402 70" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-AA4" style="stroke-width:2;" /></g><text x="6192.5" y="33" fill="#0A0F25" class="text fill-N1" style="text-anchor:middle;font-size:28px">Owner-gated backlog (~30 rows, unchanged)</text></g><g class="cmVwYWlyLmluY2lkZW50"><g class="shape" ><rect x="97" y="414" width="221" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="207.5" y="452.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="207.5" dy="0">Guard config deleted</tspan><tspan x="207.5" dy="17.666667">+ formatter damage</tspan><tspan x="207.5" dy="17.666667">(daemon-swept 32f86a4)</tspan></text></g><g class="cmVwYWlyLnJlc3RvcmU="><g class="shape" ><rect x="512" y="414" width="219" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="621.5" y="452.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="621.5" dy="0">Restore .buildflow.yml +</tspan><tspan x="621.5" dy="17.666667">htmx.min.js + styles.css</tspan><tspan x="621.5" dy="17.666667">from 8ff9912</tspan></text></g><g class="cmVwYWlyLnZlcmlmeQ=="><g class="shape" ><rect x="925" y="422" width="221" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1035.5" y="460.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="1035.5" dy="0">CSS gate + goldens green</tspan><tspan x="1035.5" dy="18.5">config lint clean</tspan></text></g><g class="cmVwYWlyLmxhbmQ="><g class="shape" ><rect x="1340" y="422" width="231" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="1455.5" y="460.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="1455.5" dy="0">Drop damage+restore pair</tspan><tspan x="1455.5" dy="18.5">(unpushed) — push clean</tspan></text></g><g class="dHJ1dGguY2Vuc3Vz"><g class="shape" ><rect x="1959" y="368" width="212" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2065" y="406.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2065" dy="0">Forwarder census</tspan><tspan x="2065" dy="17.666667">8 sites judged</tspan><tspan x="2065" dy="17.666667">(all named exemptions)</tspan></text></g><g class="dHJ1dGgucGlucw=="><g class="shape" ><rect x="2365" y="226" width="202" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2466" y="264.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2466" dy="0">billsec clamp pin +</tspan><tspan x="2466" dy="18.5">Classify=Transient pin</tspan></text></g><g class="dHJ1dGguZW5mb3JjZQ=="><g class="shape" ><rect x="2386" y="368" width="161" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2466.5" y="406.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2466.5" dy="0">enforce-* look:</tspan><tspan x="2466.5" dy="17.666667">TOOL GAP found</tspan><tspan x="2466.5" dy="17.666667">(source-pinned)</tspan></text></g><g class="dHJ1dGguZmlsaW5ncw=="><g class="shape" ><rect x="2761" y="293" width="161" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="2841.5" y="331.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2841.5" dy="0">2 erraudit drafts</tspan><tspan x="2841.5" dy="17.666667">voice-checked,</tspan><tspan x="2841.5" dy="17.666667">dupe-searched</tspan></text></g><g class="c3luYy5sZXNzb25z"><g class="shape" ><rect x="3331" y="301" width="172" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3417" y="339.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="3417" dy="0">typed-nil lesson →</tspan><tspan x="3417" dy="18.5">crush-config</tspan></text></g><g class="c3luYy5za2lsbA=="><g class="shape" ><rect x="3310" y="443" width="214" height="98" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3417" y="481.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="3417" dy="0">go-error-modernization</tspan><tspan x="3417" dy="17.666667">4 claims verified +</tspan><tspan x="3417" dy="17.666667">generic_return section</tspan></text></g><g class="c3luYy5yZWxlYXNl"><g class="shape" ><rect x="3718" y="376" width="196" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="3816" y="414.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="3816" dy="0">v0.3.0 GitHub release</tspan><tspan x="3816" dy="18.5">object published</tspan></text></g><g class="ZG9jcy5wbGFu"><g class="shape" ><rect x="4302" y="384" width="153" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4378.5" y="422.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">This HTML plan</text></g><g class="ZG9jcy5zdGF0dXM="><g class="shape" ><rect x="4649" y="376" width="151" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="4724.5" y="414.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="4724.5" dy="0">Status report +</tspan><tspan x="4724.5" dy="18.5">live-set row</tspan></text></g><g class="ZG9jcy50b2Rv"><g class="shape" ><rect x="4994" y="376" width="186" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="5087" y="414.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="5087" dy="0">TODO_LIST harvest:</tspan><tspan x="5087" dy="18.5">8 rows resolved</tspan></text></g><g class="ZG9jcy5iYXR0ZXJ5"><g class="shape" ><rect x="5374" y="376" width="164" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="5456" y="414.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="5456" dy="0">Final verification</tspan><tspan x="5456" dy="18.5">battery</tspan></text></g><g class="b3duZXIuZGVwbG95cw=="><g class="shape" ><rect x="6096" y="86" width="193" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6192.5" y="124.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">host deploys + aiDids</text></g><g class="b3duZXIucmVpbmdlc3Q="><g class="shape" ><rect x="6080" y="212" width="225" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6192.5" y="250.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">ContentHash v2 re-ingest</text></g><g class="b3duZXIucGlp"><g class="shape" ><rect x="6111" y="338" width="164" height="66" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6193" y="376.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">PII boundary call</text></g><g class="b3duZXIuZGVjaXNpb25z"><g class="shape" ><rect x="6084" y="464" width="218" height="82" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-B5" style="stroke-width:2;" /></g><text x="6193" y="502.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="6193" dy="0">D1-D5 pack + budget</tspan><tspan x="6193" dy="18.5">+ CSP flip + stamp-churn</tspan></text></g><g class="cmVwYWlyLihpbmNpZGVudCAtJmd0OyByZXN0b3JlKVswXQ=="><marker id="mk-d2-2241196801-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 320 463 C 395.600006 463 434.399994 463 508 463" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="cmVwYWlyLihyZXN0b3JlIC0mZ3Q7IHZlcmlmeSlbMF0="><path d="M 733 463 C 808.599976 463 847.400024 463 921 463" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="cmVwYWlyLih2ZXJpZnkgLSZndDsgbGFuZClbMF0="><path d="M 1148 463 C 1223.599976 463 1262.400024 463 1336 463" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="dHJ1dGguKGNlbnN1cyAtJmd0OyBlbmZvcmNlKVswXQ=="><path d="M 2173 417 C 2248.600098 417 2291.5 417 2381.5 417" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="dHJ1dGguKGVuZm9yY2UgLSZndDsgZmlsaW5ncylbMF0="><path d="M 2549.5 417 C 2640.699951 417 2683.399902 408.799988 2757.315606 377.557319" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="dHJ1dGguKHBpbnMgLSZndDsgZmlsaW5ncylbMF0="><path d="M 2569 267 C 2644.600098 267 2683.399902 275.200012 2757.315606 306.442681" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="c3luYy4obGVzc29ucyAtJmd0OyByZWxlYXNlKVswXQ=="><path d="M 3505 342 C 3597.399902 342 3640.399902 349.399994 3714.262659 377.574418" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="c3luYy4oc2tpbGwgLSZndDsgcmVsZWFzZSlbMF0="><path d="M 3526 492 C 3601.600098 492 3640.399902 484.600006 3714.262659 456.425582" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="ZG9jcy4ocGxhbiAtJmd0OyBzdGF0dXMpWzBd"><path d="M 4457 417 C 4532.600098 417 4571.399902 417 4645 417" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="ZG9jcy4oc3RhdHVzIC0mZ3Q7IHRvZG8pWzBd"><path d="M 4802 417 C 4877.600098 417 4916.399902 417 4990 417" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="ZG9jcy4odG9kbyAtJmd0OyBiYXR0ZXJ5KVswXQ=="><path d="M 5182 417 C 5257.600098 417 5296.399902 417 5370 417" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="KHJlcGFpciAtJmd0OyB0cnV0aClbMF0="><path d="M 1603 463 C 1732.199951 463 1797.800049 463 1925 463" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="KHRydXRoIC0mZ3Q7IHN5bmMpWzBd"><path d="M 2954 342 C 3083.199951 342 3148.800049 342 3276 342" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="KHN5bmMgLSZndDsgZG9jcylbMF0="><path d="M 3946 417 C 4075.199951 417 4140.799805 417 4268 417" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /></g><g class="KGRvY3MgLSZndDsgb3duZXIpWzBd"><path d="M 5570 417 C 5760.799805 417 5843.799805 417 5979 417" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2241196801-3488378134)" mask="url(#d2-2241196801)" /><text x="5776" y="423" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">remaining after tonight</text></g><mask id="d2-2241196801" maskUnits="userSpaceOnUse" x="-34" y="-95" width="6586" height="782">
+<rect x="-34" y="-95" width="6586" height="782" fill="white"></rect>
+<rect x="5697" y="407" width="158" height="21" fill="black"></rect>
+</mask></svg></svg>
+
+          </div>
+        </div>
+
+        <h2 id="owner"><span class="num">05</span>Owner-Gated Backlog — the decisions that unlock the 20% tier</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Decision</span>
+          <h3>One word each, several rows fall</h3>
+          <div class="where">TODO_LIST Blocked section</div>
+          <p>
+            The remaining high-impact rows hang on a handful of owner answers: the D1–D5 UI decision
+            pack (D1 gates an all-surfaces date change), the AGENTS.md budget (re-curate vs raise —
+            blocked doc additions in three sessions now), the typed-error §g defaults (ratify or
+            override tonight's documented defaults), the PII boundary call, and the stamp-churn
+            doctrine. The deploy-gated rows (hosts, ContentHash-v2 re-ingest, read-model rebuild,
+            CSP flip) ride the next deploy window together.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Highest-leverage next session</strong>
+            Answer the five decisions above, then execute the deploy bundle: hosts + aiDids + CSP flip +
+            rebuild + ContentHash-v2 re-ingest in one window — five TODO rows in one deploy.
+          </div>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">New tonight</span>
+          <h3>Two staged erraudit filings await go-ahead</h3>
+          <div class="where">docs/drafts/2026-10-27_erraudit-lint-*.md</div>
+          <p>
+            Both source-pinned, voice-checked, dupe-searched. Filing them also decides whether the
+            pbx-lens acceptance gate keeps relying on a lint mode whose enforce half is a no-op.
+          </p>
+        </div>
+      </main>
+    </div>
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
