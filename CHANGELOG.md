@@ -37,7 +37,9 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   been proven via the `POLL_GATE_EXEC` stub). The replace contract is
   seeded into the self-test (5/5), shellcheck is clean, and the first
   receipt over the fixed wrapper banked (run `20261026-223553-b4759eaa`,
-  51/0/0, exit 0).
+  51/0/0, exit 0); a fresh closeout receipt banked 2026-10-27 (run
+  `20261027-050740-2cbac547`, 51/0/0, exit 0) — the first over the
+  rebuilt fleet binary).
 
 ### Added — 2026-10-26 (advisory truth: the tokenizer traps, the 304 harness, the triage)
 

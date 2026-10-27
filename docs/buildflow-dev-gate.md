@@ -257,6 +257,19 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   change; the second attempt was never armed because the machine
   rebooted under the poller. Receipt discipline note: run the gate SOLO —
   parallel probes are lane work, and the gate starves on them.
+- **Dev-mode receipt over the closeout tree (2026-10-27 06:07, commit
+  b76d9dd, armed by `scripts/poll-gate.sh` solo after one
+  starvation-refusal)**: START LOAD **34.38/29.13/34.68 (policy: 15m <
+  40)**, `env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev` =
+  **51 success, 0 failed, 0 skipped (+5 via config)**, exit 0, wall
+  59.5s, run `20261027-050740-2cbac547` — "passed with warnings 47/66,
+  337 findings", again the documented detect-only set. Provenance: the
+  first attempt armed at 15m=36.38 and lost one step to spawn starvation
+  (the machine spiked mid-run; the rerun-quiet advice was the fix), the
+  second banked green but its receipt line was lost to an output
+  truncation — the re-run above is the banked one, and it is also the
+  FIRST receipt over the REBUILT fleet binary (BuildFlow 49ced3e, the
+  binary-freshness closure above).
 - **Gate tools trail module toolchain floors (paid for, 2026-10-15; CLOSED
   2026-10-18)**: the go-appkit v0.9.0 bump moved go.mod's floor to 1.27.2,
   and the full gate then failed TWO steps — `go` and `govalid` — with
