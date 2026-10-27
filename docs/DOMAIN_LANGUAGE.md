@@ -168,6 +168,27 @@ New code follows this shape deliberately; the remaining
 forwarder-exempt functions are accepted as-is (the 2026-10-27 doctrine
 call: fix what `--max` flags, no repo-wide sweep).
 
+### Forwarder-exemption census (2026-10-27 evening)
+
+Every inline error-creation site outside tests, judged against `--max`
+(census grep `fmt\.Errorf\|errors\.New(` over `internal/` + `cmd/`:
+8 sites, 5 files; the webhook and telnyx parse paths carry ZERO inline
+creations — kept clean deliberately, not accidentally):
+
+| Site (2026-10-27 lines)        | Function                           | Satisfying exemption                | Verdict  |
+| ------------------------------ | ---------------------------------- | ----------------------------------- | -------- |
+| internal/ingest/cdr/cdr.go:279 | `parseStartStamp`                  | `Parse*` constructor name           | accepted |
+| internal/ingest/agent/agent.go:133,140,144 | `ParseDir` (open/read/close transcript) | `Parse*` constructor name | accepted |
+| internal/wire/flextime.go:44   | `(*FlexTime).UnmarshalJSON`        | stdlib interface method             | accepted |
+| internal/wire/flextime.go:15   | sentinel `ErrUnparseableTimestamp` | package-level sentinel (no fn body) | accepted |
+| internal/search/search.go:569  | sentinel `ErrNoSearchIndex`        | package-level sentinel (no fn body) | accepted |
+| cmd/pbx-lens/refresh.go:21     | sentinel `errDBRequired`           | package-level sentinel (no fn body) | accepted |
+
+All eight ride NAMED exemptions (constructor-name, stdlib-interface,
+sentinel), so the silence under `lint --max` is known-good, not unexamined:
+a new inline creation inside a non-exempt function re-flags immediately.
+Re-run the census grep whenever error-handling code changes.
+
 ## Bounded contexts
 
 | Term         | Telnyx context                                                                                                             | FreeSWITCH context                                                                                                                                             |
