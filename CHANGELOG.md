@@ -7,6 +7,44 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-27 (pareto session: repair, error-truth closure, release object)
+
+- **The forwarder-exemption census is recorded** (docs/DOMAIN_LANGUAGE.md):
+  all 8 inline error-creation sites judged against `--max` — every one rides
+  a named exemption (`Parse*` names, stdlib interface methods, package-level
+  sentinels), and the webhook/telnyx paths carry zero inline creations. The
+  enforce-silence verdict is honest: `--enforce-go-error-family` under
+  `lint` is a TOOL GAP (erraudit's runner drops non-generic_return AST
+  violations), not acceptance — filing staged.
+- **Two pins**: `TestParseClampsNonPositiveBillsecToZero` (negative AND
+  unparseable billsec clamp to DurationSecs 0) and
+  `TestPollFileOpenFailureClassifiesAsTransient` (Classify lands on the
+  fail-open default because the process registers no stdlib sentinels —
+  the right family for a poller's missing-file case).
+- **Two erraudit filings staged** (docs/drafts/2026-10-27_*): the enforce
+  no-op and a four-part reporter-honesty consolidation — both source-pinned
+  at the binary's commit, dupe-searched, voice-checked; waiting on owner
+  go-ahead per the filings queue.
+- **v0.3.0 GitHub Release object published** (2026-10-27T19:50:06Z) from
+  the paste-ready notes — the token-blocked row resolved by event.
+- **Cross-repo sync landed**: the typed-nil lesson in crush-config
+  references/lessons.md, and the go-error-modernization skill's four
+  erraudit claims verified (incl. GOEXPERIMENT=jsonv2 NOT load-bearing for
+  lint) plus a generic_return/typed-constructor section.
+- **The 38-row pareto plan** (docs/planning/2026-10-27_20-50_*.html) with
+  the execution graph; two stale TODO rows deleted (push backlog, release
+  object).
+
+### Fixed — 2026-10-27 (formatter incident: guard config restored, damage dropped from history)
+
+- A concurrent `buildflow --fix` full run executed with `.buildflow.yml`
+  missing from the working tree, so oxfmt pretty-printed htmx.min.js
+  (1 → 3415 lines) and a foreign formatter rewrote the generated styles.css
+  (+5993) — the documented incident class. All three files restored
+  byte-identical to the last receipted tree; the unpushed damage+restore
+  commit pair was dropped entirely per the concurrency norm (rule 3), and
+  the restored config validates clean under the current binary.
+
 ### Added — 2026-10-27 (typed-error follow-through: tests, doctrine, decisions)
 
 - **The new carriers are pinned by tests**: `TestPollFileCarriesStepPathAndCause`
