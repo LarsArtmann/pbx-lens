@@ -185,9 +185,18 @@ creations — kept clean deliberately, not accidentally):
 | cmd/pbx-lens/refresh.go:21     | sentinel `errDBRequired`           | package-level sentinel (no fn body) | accepted |
 
 All eight ride NAMED exemptions (constructor-name, stdlib-interface,
-sentinel), so the silence under `lint --max` is known-good, not unexamined:
-a new inline creation inside a non-exempt function re-flags immediately.
-Re-run the census grep whenever error-handling code changes.
+sentinel), so the silence under `lint --max` is known-good for the
+generic_return rule: a new inline creation inside a non-exempt function
+re-flags immediately. CAVEAT (2026-10-27 evening, source-verified against
+erraudit 61a744c): the `--enforce-go-error-family`/`--enforce-coded-errors`
+silence under `lint` is a TOOL GAP, not acceptance — `lint_runner.go` keeps
+only generic_return violations from the AST path and skips that path
+entirely unless generic-return is on, so the constructor check never runs
+(filing staged). If erraudit fixes it, these 8 sites WILL flag (all are
+stdlib constructors); the standing doctrine answer is to keep sentinels
+idiomatic and carriers unclassified, i.e. NOT migrate — the flag scope
+becomes an owner call at that point. Re-run the census grep whenever
+error-handling code changes.
 
 ## Bounded contexts
 
