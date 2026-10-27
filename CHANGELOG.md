@@ -7,6 +7,26 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-10-27 (typed-error follow-through: tests, doctrine, decisions)
+
+- **The new carriers are pinned by tests**: `TestPollFileCarriesStepPathAndCause`
+  walks pollFile's open/feed/close/success table (feed-fail beats close-fail,
+  close failures surface only after a clean feed, stats pass through
+  untouched), `TestRefreshReadErrorCarriesStreamAndCause` pins the
+  Error()/Unwrap/errors.As contract, and `TestParseSkipsUnparseableStartStamp`
+  closes the one uncovered CDR skip path (the pre-existing skip test at
+  cdr_test.go exercised the overlong-columns path, not the stamp).
+- **The doctrine landed**: docs/DOMAIN_LANGUAGE.md § "Typed error carriers"
+  states the convention (idiomatic `error` signatures, `newXxxError`
+  constructors, Unwrap for Is/As/Classify, carriers deliberately
+  unclassified until a consumer needs families), docs/gotchas.md points at
+  it, and docs/buildflow-dev-gate.md records the gate decision:
+  `erraudit lint ./... --max` stays an OCCASIONAL AUDIT, not a BuildFlow/CI
+  gate (erraudit is not flake-pinned; revisit when it is, or on the first
+  regression the ad-hoc cadence misses). The three open §g questions from
+  the status report are answered with these documented defaults; the
+  owner can override in place.
+
 ### Fixed — 2026-10-27 (erraudit --max: typed error carriers instead of bare-error construction)
 
 - **The three `generic_return` findings under `erraudit lint ./... --max`

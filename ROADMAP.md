@@ -150,6 +150,15 @@ rides its own trigger — the actionable bounded versions live in TODO_LIST):
   conditional-replay helper at 22>20 during the 2026-10-18 flake fix —
   decide once whether test files get a raised threshold, a nolint-ledger
   row, or plain extraction. One decision, then the config or the row.
+- Upstream erraudit rule idea (2026-10-27 harvest): a "concrete pointer
+  error return" detector — the typed-nil generator this repo paid for
+  (docs/gotchas.md) — as an erraudit rule or golangci plugin; run the
+  linter-building decision tree before building
+- Wire `erraudit lsp` into the editor config (noticed in `erraudit help`;
+  untested) (2026-10-27 harvest)
+- Surface CDR row-rejection reasons: `Result.Skipped` counts without the
+  why, while Telnyx ingest carries a rejected list — parity if operator
+  demand shows up (2026-10-27 harvest)
 
 ### 3. Ecosystem integration (plan phase 4)
 
