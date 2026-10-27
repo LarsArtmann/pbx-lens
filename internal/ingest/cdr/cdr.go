@@ -270,15 +270,27 @@ func parseDeclaredDirection(raw string) (calls.Direction, bool) {
 	return declared, true
 }
 
+// parseStartStamp parses the row's start_stamp column against the CDR stamp
+// layout; the rejection names the offending value so a malformed row is
+// diagnosable from the skip count alone.
+func parseStartStamp(raw string) (time.Time, error) {
+	started, err := time.Parse(stampLayout, raw)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("start_stamp %q: %w", raw, err)
+	}
+
+	return started, nil
+}
+
 func observation(
 	byColumn map[string]string,
 	opts ParseOptions,
 	mos float64,
 	declared calls.Direction,
 ) (calls.Observation, error) {
-	started, err := time.Parse(stampLayout, byColumn["start_stamp"])
+	started, err := parseStartStamp(byColumn["start_stamp"])
 	if err != nil {
-		return calls.Observation{}, fmt.Errorf("start_stamp %q: %w", byColumn["start_stamp"], err)
+		return calls.Observation{}, err
 	}
 
 	billsec := max(atoi(byColumn["billsec"]), 0)
