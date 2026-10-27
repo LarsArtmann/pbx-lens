@@ -415,8 +415,8 @@ func TestPollFileCarriesStepPathAndCause(t *testing.T) {
 				t.Errorf("stats = %+v, want zero on failure", stats)
 			}
 
-			var pollErr *pollFileError
-			if !errors.As(err, &pollErr) {
+			pollErr, ok := errors.AsType[*pollFileError](err)
+			if !ok {
 				t.Fatalf("pollFile: %v, want a *pollFileError", err)
 			}
 

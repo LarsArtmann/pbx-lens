@@ -163,8 +163,8 @@ func TestRefreshReadErrorCarriesStreamAndCause(t *testing.T) {
 		t.Error("errors.Is should reach the read cause through Unwrap")
 	}
 
-	var read *RefreshReadError
-	if !errors.As(err, &read) || read.Stream != "freeswitch-cdr:abc-123" {
-		t.Errorf("errors.As should recover the carrier with the stream, got %+v", read)
+	read, ok := errors.AsType[*RefreshReadError](err)
+	if !ok || read.Stream != "freeswitch-cdr:abc-123" {
+		t.Errorf("errors.AsType should recover the carrier with the stream, got %+v", read)
 	}
 }
