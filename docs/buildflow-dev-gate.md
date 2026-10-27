@@ -330,6 +330,23 @@ Status at extraction: 2026-10-11 full pass — gate PASSES with warnings.
   churn, the FOD-hash advisory, and AGENTS size. Counts drift with the
   fleet's tool list, never with this repo's policy: judge a doctor run by
   whether every mark fits a disposition, not by the number.
+- **Binary freshness closed (2026-10-27, TODO row closed)**: the
+  stale-binary advisory above (and its 2026-10-23 doctor warning) is
+  retired — the rebuild had been blocked because BuildFlow daemon commits
+  (24dff8181, 0b3c1d302) landed dependency changes without the vendorHash
+  refresh, so every `nix build` of the BuildFlow flake died on a
+  fixed-output hash mismatch. Repaired per the book: `nix run
+  .#update-vendor-hash` on the clean tree (9y4NB… → ffjf0h…, rebuild
+  green), then `nix run .#reinstall` — REINSTALL-OK at
+  `buildflow-49ced3e`, and `buildflow doctor` reports
+  `env/binary-freshness ✓ binary is current (built at HEAD 49ced3e)`.
+  Worktree trap for future repairs: BuildFlow's go.mod carries a RELATIVE
+  `../go-finding/toolsdk` replace, so its pre-commit build gate cannot
+  run from a `git worktree` (the relative path resolves against the
+  worktree's parent and collides with the absolute replace in
+  tools/go.mod) — repair and commit from the main checkout. The
+  `workspace/gomod-freshness` doctor warning is environmental (the
+  per-module scan was killed under load ≈85), not a gate step.
 
 ### The gate's "N tools unavailable (health check failed)" list, named (2026-10-23)
 

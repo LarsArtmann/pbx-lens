@@ -7,6 +7,16 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-10-27 (BuildFlow binary freshness, the gate's fleet binary)
+
+- **The gate's fleet binary is fresh again**: BuildFlow daemon commits had
+  landed dependency changes without the vendorHash refresh, breaking every
+  nix build of that flake and leaving the installed `buildflow` months
+  behind its HEAD. Repaired on the clean tree (`.#update-vendor-hash` →
+  `.#reinstall`); `buildflow doctor` now reports binary-freshness green at
+  HEAD 49ced3e. Receipt and the worktree replace-path trap live in
+  docs/buildflow-dev-gate.md.
+
 ### Changed — 2026-10-26 (CI lint pin aligned with the devShell build)
 
 - **CI's golangci-lint pin moves v2.14 → v2.15**: the devShell's
