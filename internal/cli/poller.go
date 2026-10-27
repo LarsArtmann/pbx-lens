@@ -375,21 +375,41 @@ func ingestStatsFor(
 	return stats
 }
 
+// pollFileError reports one failed step of a file-source poll: the step
+// (open, feed, close), the file, and the underlying cause. The poll loop
+// only logs the error, so the step and path must make the log line
+// self-sufficient.
+type pollFileError struct {
+	Op   string
+	Path string
+	Err  error
+}
+
+func (e *pollFileError) Error() string {
+	return fmt.Sprintf("%s %s: %v", e.Op, e.Path, e.Err)
+}
+
+func (e *pollFileError) Unwrap() error { return e.Err }
+
 // pollFile opens, feeds, and closes a file source.
-func pollFile(path string, feed func(*os.File) (IngestStats, error)) (IngestStats, error) {
+func pollFile(path string, feed func(*os.File) (IngestStats, error)) (IngestStats, *pollFileError) {
 	file, err := os.Open(path)
 	if err != nil {
-		return IngestStats{}, fmt.Errorf("opening %s: %w", path, err)
+		return IngestStats{}, &pollFileError{Op: "open", Path: path, Err: err}
 	}
 
 	stats, feedErr := feed(file)
 	closeErr := file.Close()
 
 	if feedErr != nil {
-		return IngestStats{}, feedErr
+		return IngestStats{}, &pollFileError{Op: "feed", Path: path, Err: feedErr}
 	}
 
-	return stats, closeErr
+	if closeErr != nil {
+		return IngestStats{}, &pollFileError{Op: "close", Path: path, Err: closeErr}
+	}
+
+	return stats, nil
 }
 
 func mergeStats(into, from IngestStats) IngestStats {
