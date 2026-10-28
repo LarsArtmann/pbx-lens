@@ -27,6 +27,13 @@
       flake-parts,
       ...
     }:
+    let
+      # Single source of truth for the Go toolchain attr: goPkgAttr (the
+      # sandbox package build) and the perSystem `go` binding below
+      # (devShell, cqrs-lint, the templ-fmt wrapper) must resolve to the
+      # same go_1_XX or the two silently drift apart.
+      goAttr = "go_1_27";
+    in
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         inputs.go-nix-helpers.flakeModules.go-standard
@@ -36,9 +43,34 @@
       go-standard = {
         pname = "pbx-lens";
         description = "Unified call-history index: read-only ingest of FreeSWITCH CDRs, Telnyx conversations, recordings and the webhook log into one sqlite read model";
-        goPkgAttr = "go_1_27";
+        goPkgAttr = goAttr;
         goExperiment = "jsonv2";
         vendorHash = import ./vendorHash.nix;
+        # Eval-time flake.lock guards: the nixpkgs lock node must stay a
+        # github original (the global registry rewrites github: URLs to
+        # stale tarball pointers) and every follows pair below must stay
+        # encoded as a node-name follow — a dropped follow smuggles a
+        # second nixpkgs rev into the lock. Failures surface on the next
+        # nix eval, not as silent drift (go-nix-helpers "nix-email
+        # pattern").
+        enableLockGuards = true;
+        lockGuards.expectedFollows = [
+          {
+            node = "flake-parts";
+            input = "nixpkgs-lib";
+            follows = "nixpkgs";
+          }
+          {
+            node = "go-nix-helpers";
+            input = "nixpkgs";
+            follows = "nixpkgs";
+          }
+          {
+            node = "git-hooks";
+            input = "nixpkgs";
+            follows = "nixpkgs";
+          }
+        ];
         # The binary lives in cmd/pbx-lens. The module default builds the
         # root directory, which holds no Go package — the build then
         # "succeeds" with an empty result and no bin/pbx-lens.
@@ -67,18 +99,33 @@
           homepage = "https://github.com/larsartmann/pbx-lens";
           mainProgram = "pbx-lens";
           platforms = inputs.nixpkgs.lib.platforms.unix;
+          # go-standard hardcodes licenses.mit; this repo is PROPRIETARY
+          # (LICENSE). extraMeta merges OVER the module meta, so pin the
+          # truth here until the module grows a license option.
+          license = inputs.nixpkgs.lib.licenses.unfree;
         };
       };
 
+      # pbx-lens is proprietary (LICENSE: "All rights reserved"), so its
+      # package meta is honestly licenses.unfree (extraMeta above). An
+      # unfree package needs an allowUnfree nixpkgs instance to build;
+      # re-instantiating the LOCKED nixpkgs for this flake only is the
+      # documented exception to "never re-instantiate nixpkgs"
+      # (journal/Zlota44 pattern) — derivation hashes are unchanged, only
+      # the eval-time unfree filter differs.
       perSystem =
         {
           config,
-          pkgs,
+          system,
           ...
         }:
         let
+          pkgs = import inputs.nixpkgs {
+            localSystem = system;
+            config.allowUnfree = true;
+          };
           inherit (pkgs) lib;
-          go = pkgs.go_1_27;
+          go = pkgs.${goAttr};
 
           # cqrs-lint is its own module (…/cmd/cqrs-lint/v4) inside the
           # go-cqrs-lite monorepo, so the build roots there. Pinned to the
@@ -108,9 +155,17 @@
             # restored 2026-10-26 — the FOD mismatch names this hash.
             env.GOWORK = "off";
             vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
+            meta = {
+              description = "cqrs-lint from go-cqrs-lite, pinned to the cmd/cqrs-lint/v4.16.0 tag";
+              license = lib.licenses.unfree;
+            };
           };
         in
         {
+          # Feed the allowUnfree instance to every perSystem module
+          # (go-standard, treefmt, git-hooks) — not just this block.
+          _module.args.pkgs = pkgs;
+
           treefmt = {
             # flake.nix, not go.mod, marks the root: both sit at the tree
             # base, but BuildFlow's nix-fmt round-trip detect copies only
@@ -195,10 +250,16 @@
             program = lib.getExe (
               pkgs.writeShellApplication {
                 name = "update-vendor-hash";
-                runtimeInputs = with pkgs; [
-                  nix
-                  git
-                  gnused
+                # Hermetic: the text shells out to coreutils (cp/mv/rm/
+                # head) and PCRE grep; undeclared, the app works only
+                # where the ambient PATH happens to provide them
+                # (update-styles declares gnugrep for the same reason;
+                # gnused was vestigial — nothing here runs sed).
+                runtimeInputs = [
+                  pkgs.coreutils
+                  pkgs.git
+                  pkgs.gnugrep
+                  pkgs.nix
                 ];
                 text = ''
                   set -euo pipefail
