@@ -63,58 +63,58 @@
 
 ## f) Next things (up to 50, impact-ranked)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | File go-nix-helpers issue: go-standard hardcodes `licenses.mit` — ask for a `license` option (source-pinned at `go-standard.nix:966`) | Critical (fleet meta lie) | S | Bug |
-| 2 | Write the two staged filing drafts in `docs/drafts/` (license option; sandboxed templ-check GOMODCACHE fix) | High | S | Documentation |
-| 3 | Owner go-ahead decision on both filings (blocking #1) | Critical | S | Decision |
-| 4 | Sibling: fix the "both units share the dynamic user" comment in `lens.nix` (factually wrong) | High | S | Bug |
-| 5 | Sibling: add `MemoryMax` to `pbx-lens.service` (value = owner call) | High | S | Feature |
-| 6 | Sibling: probe the StateDirectory chown race (backup/purge re-chown vs serve poller new-fd opens) in the VM suite | High | M | Bug |
-| 7 | Sibling: raise backup/purge hardening to main-service parity (ProtectKernel*, SystemCallFilter, LockPersonality, RestrictNamespaces…) | Medium | S | Quality |
-| 8 | Sibling: add missing baseline hardening to main service (ProtectClock, ProtectKernelLogs, RestrictRealtime, RestrictSUIDSGID) | Medium | S | Quality |
-| 9 | Fleet sweep: `extraMeta.license = unfree` across the ~15 proprietary go-standard consumers still shipping meta=mit | High | M | Bug |
-| 10 | Build the update-vendor-hash script derivation once (shellcheck receipt; `--expr` coercion trick) | Medium | S | Quality |
-| 11 | Run `statix check .` + `deadnix --fail .` locally (CI-parity receipt for this session's flake edits) | Medium | S | Quality |
-| 12 | Verify daemon commit `baab847` diff == exactly the session's flake.nix edits | Medium | S | Cleanup |
-| 13 | Pin down why `checks.format` is green while `checks.pre-commit` reds (env delta: goPkg injection? GOTOOLCHAIN? treefmt args?) | High | M | Bug |
-| 14 | Upstream fix: give sandboxed treefmt/pre-commit checks the package's proxyVendor goModules FOD as GOMODCACHE | High | M | Bug |
-| 15 | Investigate the 00:57 extraction race: WHICH concurrent process ran go during `nix run .#update-styles` (daemon? LSP? another session?) | Medium | M | Bug |
-| 16 | Nail the exact poisoned-GOCACHE mechanism (empty-parse state cached across runs) — if it's a go bug, file it upstream | Medium | L | Bug |
-| 17 | Decide + document CHANGELOG policy for non-release changes (license honesty!) | Medium | S | Documentation |
-| 18 | HARVEST this report's section (f) into TODO_LIST.md (pending user go-ahead) | High | S | Documentation |
-| 19 | Add a CI lane running `nix flake check` once the pre-commit leg is fixed (or allowlisted) | Medium | M | Feature |
-| 20 | Extract cqrs-lint builder and/or the two hand-written apps from flake.nix (file now ~335 lines, over the 300 monolith guidance) | Low | M | Cleanup |
-| 21 | Consider `lockGuards.expectedNixpkgsRev` (fleet pin) — currently only structural guards | Low | S | Feature |
-| 22 | Consider a hermetic templ FOD binary for update-styles (removes run-time network for `go tool templ`) | Low | M | Feature |
-| 23 | Cross-system FOD sanity: aarch64-darwin/aarch64-linux vendor hashes are eval-only today (`flake check` builds current system only); add cross build or narrow `systems` | Medium | M | Quality |
-| 24 | go-nix-helpers#7 fold-in watch: once landed, drop the local templ-formatter `mkForce` wrapper | Medium | S | Cleanup |
-| 25 | Re-verify the flake.nix "pkgs.templ is FMT-ONLY and DRIFTS" comment claims after the next go-nix-helpers bump | Low | S | Documentation |
-| 26 | Bump go-nix-helpers input (brings #7 + eventual license option) then re-run the gate | Medium | S | Cleanup |
-| 27 | Monitor next nixpkgs go_1_XX bump: `goAttr` single-sourcing makes it a one-line change; stalePinWarning will announce it | Low | S | Cleanup |
-| 28 | Sibling: assertions in lens.nix (e.g. htpasswdFile null only acceptable with loopback address) | Medium | S | Feature |
-| 29 | Sibling: document pollMaxAge vs retention.maxAge interplay (two age windows, easy to confuse) | Low | S | Documentation |
-| 30 | Sibling VM suite: backup-during-poll collision test (proves/disproves the EACCES window empirically) | High | M | Bug |
-| 31 | Trim `deploy/nixos/module-draft.nix` to a pointer-only stub (full option list can mislead despite the frozen header) | Low | S | Cleanup |
-| 32 | AGENTS.md: one explicit paragraph on which `nix flake check` legs are authoritative vs known-false-positive | Medium | S | Documentation |
-| 33 | Consider `nixosModules` export from pbx-lens flake? — NO per current design (sibling owns deploy); document the decision inline where module-draft lives | Low | S | Documentation |
-| 34 | Normalize runtimeInputs style across both hand-written apps (alphabetical, no `with`) | Low | S | Cleanup |
-| 35 | Capture `nix flake show` inventory as a receipt appendix convention for future nix reviews | Low | S | Documentation |
-| 36 | Personal lesson → crush-config `references/lessons.md` candidate: fresh-dir probe discipline + PIPESTATUS discipline (cross-project) | Medium | S | Documentation |
-| 37 | go tool cache: consider GOTOOLDIR pinned per-repo to isolate devShell tool builds from ambient-cache poisonings | Low | M | Feature |
-| 38 | Re-run the full BuildFlow gate (poll-gate.sh) after the flake changes — not run this session; CI covers part | Medium | M | Quality |
-| 39 | Check whether CI's GO_VERSION (1.27) vs go.mod floor (1.27.2) vs nix goAttr drift can be single-sourced across ci.yml + flake.nix | Low | M | Quality |
-| 40 | Sibling: `types.path` credential options note — document that callers MUST pass runtime paths (store-literal would leak secrets to the store) | Medium | S | Documentation |
-| 41 | Consider enabling `lintAsCheck` in go-standard config for a hermetic local lint receipt | Low | S | Feature |
-| 42 | Watch: nixpkgs treefmt-nix#545 fold-in (templ formatter go pin) — related to the wrapper workaround | Low | S | Cleanup |
-| 43 | Evaluate cqrs-lint as a flake input instead of inline buildGoModule (lockfile-managed pin vs inline rev) | Low | M | Quality |
-| 44 | The `nix fmt -- --check` flag pitfall: this treefmt version wants `--ci`; note in AGENTS.md commands section | Low | S | Documentation |
-| 45 | docs/templ-components-adoption.md + this review both touch flake pins — cross-reference the version-bump ritual (run both on bumps) | Low | S | Documentation |
-| 46 | Sibling: `SystemCallFilter = "@system-service"` on backup/purge too (main service has it) | Medium | S | Quality |
-| 47 | Re-check `enableOverlay` output attr name (`pbx-lens`) still matches directory — trivial, guards against renames | Low | S | Cleanup |
-| 48 | If the license option lands upstream: remove pbx-lens/journal/Zlota44 extraMeta workarounds (fold-in) | Medium | S | Cleanup |
-| 49 | Add the shared-GOCACHE poison fingerprint to the fleet-level docs (other machines with /mnt/buildcache can hit it) | Medium | S | Documentation |
-| 50 | Schedule the quarterly docs/telnyx-live-api.md re-verification (window 2027-01, m27.9) — noticed in AGENTS.md, unrelated to nix but due | Low | S | Documentation |
+| #  | Task                                                                                                                                                                    | Impact                    | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------- | ------ | ------------- |
+| 1  | File go-nix-helpers issue: go-standard hardcodes `licenses.mit` — ask for a `license` option (source-pinned at `go-standard.nix:966`)                                   | Critical (fleet meta lie) | S      | Bug           |
+| 2  | Write the two staged filing drafts in `docs/drafts/` (license option; sandboxed templ-check GOMODCACHE fix)                                                             | High                      | S      | Documentation |
+| 3  | Owner go-ahead decision on both filings (blocking #1)                                                                                                                   | Critical                  | S      | Decision      |
+| 4  | Sibling: fix the "both units share the dynamic user" comment in `lens.nix` (factually wrong)                                                                            | High                      | S      | Bug           |
+| 5  | Sibling: add `MemoryMax` to `pbx-lens.service` (value = owner call)                                                                                                     | High                      | S      | Feature       |
+| 6  | Sibling: probe the StateDirectory chown race (backup/purge re-chown vs serve poller new-fd opens) in the VM suite                                                       | High                      | M      | Bug           |
+| 7  | Sibling: raise backup/purge hardening to main-service parity (ProtectKernel*, SystemCallFilter, LockPersonality, RestrictNamespaces…)                                   | Medium                    | S      | Quality       |
+| 8  | Sibling: add missing baseline hardening to main service (ProtectClock, ProtectKernelLogs, RestrictRealtime, RestrictSUIDSGID)                                           | Medium                    | S      | Quality       |
+| 9  | Fleet sweep: `extraMeta.license = unfree` across the ~15 proprietary go-standard consumers still shipping meta=mit                                                      | High                      | M      | Bug           |
+| 10 | Build the update-vendor-hash script derivation once (shellcheck receipt; `--expr` coercion trick)                                                                       | Medium                    | S      | Quality       |
+| 11 | Run `statix check .` + `deadnix --fail .` locally (CI-parity receipt for this session's flake edits)                                                                    | Medium                    | S      | Quality       |
+| 12 | Verify daemon commit `baab847` diff == exactly the session's flake.nix edits                                                                                            | Medium                    | S      | Cleanup       |
+| 13 | Pin down why `checks.format` is green while `checks.pre-commit` reds (env delta: goPkg injection? GOTOOLCHAIN? treefmt args?)                                           | High                      | M      | Bug           |
+| 14 | Upstream fix: give sandboxed treefmt/pre-commit checks the package's proxyVendor goModules FOD as GOMODCACHE                                                            | High                      | M      | Bug           |
+| 15 | Investigate the 00:57 extraction race: WHICH concurrent process ran go during `nix run .#update-styles` (daemon? LSP? another session?)                                 | Medium                    | M      | Bug           |
+| 16 | Nail the exact poisoned-GOCACHE mechanism (empty-parse state cached across runs) — if it's a go bug, file it upstream                                                   | Medium                    | L      | Bug           |
+| 17 | Decide + document CHANGELOG policy for non-release changes (license honesty!)                                                                                           | Medium                    | S      | Documentation |
+| 18 | HARVEST this report's section (f) into TODO_LIST.md (pending user go-ahead)                                                                                             | High                      | S      | Documentation |
+| 19 | Add a CI lane running `nix flake check` once the pre-commit leg is fixed (or allowlisted)                                                                               | Medium                    | M      | Feature       |
+| 20 | Extract cqrs-lint builder and/or the two hand-written apps from flake.nix (file now ~335 lines, over the 300 monolith guidance)                                         | Low                       | M      | Cleanup       |
+| 21 | Consider `lockGuards.expectedNixpkgsRev` (fleet pin) — currently only structural guards                                                                                 | Low                       | S      | Feature       |
+| 22 | Consider a hermetic templ FOD binary for update-styles (removes run-time network for `go tool templ`)                                                                   | Low                       | M      | Feature       |
+| 23 | Cross-system FOD sanity: aarch64-darwin/aarch64-linux vendor hashes are eval-only today (`flake check` builds current system only); add cross build or narrow `systems` | Medium                    | M      | Quality       |
+| 24 | go-nix-helpers#7 fold-in watch: once landed, drop the local templ-formatter `mkForce` wrapper                                                                           | Medium                    | S      | Cleanup       |
+| 25 | Re-verify the flake.nix "pkgs.templ is FMT-ONLY and DRIFTS" comment claims after the next go-nix-helpers bump                                                           | Low                       | S      | Documentation |
+| 26 | Bump go-nix-helpers input (brings #7 + eventual license option) then re-run the gate                                                                                    | Medium                    | S      | Cleanup       |
+| 27 | Monitor next nixpkgs go_1_XX bump: `goAttr` single-sourcing makes it a one-line change; stalePinWarning will announce it                                                | Low                       | S      | Cleanup       |
+| 28 | Sibling: assertions in lens.nix (e.g. htpasswdFile null only acceptable with loopback address)                                                                          | Medium                    | S      | Feature       |
+| 29 | Sibling: document pollMaxAge vs retention.maxAge interplay (two age windows, easy to confuse)                                                                           | Low                       | S      | Documentation |
+| 30 | Sibling VM suite: backup-during-poll collision test (proves/disproves the EACCES window empirically)                                                                    | High                      | M      | Bug           |
+| 31 | Trim `deploy/nixos/module-draft.nix` to a pointer-only stub (full option list can mislead despite the frozen header)                                                    | Low                       | S      | Cleanup       |
+| 32 | AGENTS.md: one explicit paragraph on which `nix flake check` legs are authoritative vs known-false-positive                                                             | Medium                    | S      | Documentation |
+| 33 | Consider `nixosModules` export from pbx-lens flake? — NO per current design (sibling owns deploy); document the decision inline where module-draft lives                | Low                       | S      | Documentation |
+| 34 | Normalize runtimeInputs style across both hand-written apps (alphabetical, no `with`)                                                                                   | Low                       | S      | Cleanup       |
+| 35 | Capture `nix flake show` inventory as a receipt appendix convention for future nix reviews                                                                              | Low                       | S      | Documentation |
+| 36 | Personal lesson → crush-config `references/lessons.md` candidate: fresh-dir probe discipline + PIPESTATUS discipline (cross-project)                                    | Medium                    | S      | Documentation |
+| 37 | go tool cache: consider GOTOOLDIR pinned per-repo to isolate devShell tool builds from ambient-cache poisonings                                                         | Low                       | M      | Feature       |
+| 38 | Re-run the full BuildFlow gate (poll-gate.sh) after the flake changes — not run this session; CI covers part                                                            | Medium                    | M      | Quality       |
+| 39 | Check whether CI's GO_VERSION (1.27) vs go.mod floor (1.27.2) vs nix goAttr drift can be single-sourced across ci.yml + flake.nix                                       | Low                       | M      | Quality       |
+| 40 | Sibling: `types.path` credential options note — document that callers MUST pass runtime paths (store-literal would leak secrets to the store)                           | Medium                    | S      | Documentation |
+| 41 | Consider enabling `lintAsCheck` in go-standard config for a hermetic local lint receipt                                                                                 | Low                       | S      | Feature       |
+| 42 | Watch: nixpkgs treefmt-nix#545 fold-in (templ formatter go pin) — related to the wrapper workaround                                                                     | Low                       | S      | Cleanup       |
+| 43 | Evaluate cqrs-lint as a flake input instead of inline buildGoModule (lockfile-managed pin vs inline rev)                                                                | Low                       | M      | Quality       |
+| 44 | The `nix fmt -- --check` flag pitfall: this treefmt version wants `--ci`; note in AGENTS.md commands section                                                            | Low                       | S      | Documentation |
+| 45 | docs/templ-components-adoption.md + this review both touch flake pins — cross-reference the version-bump ritual (run both on bumps)                                     | Low                       | S      | Documentation |
+| 46 | Sibling: `SystemCallFilter = "@system-service"` on backup/purge too (main service has it)                                                                               | Medium                    | S      | Quality       |
+| 47 | Re-check `enableOverlay` output attr name (`pbx-lens`) still matches directory — trivial, guards against renames                                                        | Low                       | S      | Cleanup       |
+| 48 | If the license option lands upstream: remove pbx-lens/journal/Zlota44 extraMeta workarounds (fold-in)                                                                   | Medium                    | S      | Cleanup       |
+| 49 | Add the shared-GOCACHE poison fingerprint to the fleet-level docs (other machines with /mnt/buildcache can hit it)                                                      | Medium                    | S      | Documentation |
+| 50 | Schedule the quarterly docs/telnyx-live-api.md re-verification (window 2027-01, m27.9) — noticed in AGENTS.md, unrelated to nix but due                                 | Low                       | S      | Documentation |
 
 ## g) Questions I can NOT answer myself
 
@@ -124,4 +124,4 @@
 
 ---
 
-*Point-in-time snapshot. Section (f) is the HARVEST input for TODO_LIST.md — not yet harvested, awaiting user go-ahead. Auto-commit daemon will pick this file up.*
+_Point-in-time snapshot. Section (f) is the HARVEST input for TODO_LIST.md — not yet harvested, awaiting user go-ahead. Auto-commit daemon will pick this file up._
