@@ -42,6 +42,25 @@ go-ahead, dupe-searched clean against all 11 existing issues):**
   directory promotion prints informational noise to stderr. Draft:
   `docs/drafts/2026-10-27_erraudit-lint-reporter-honesty.md`.
 
+**Staged 2026-10-28 (nix review — two go-nix-helpers candidates waiting on
+owner go-ahead; both source-verified in the go-nix-helpers checkout):**
+
+- **go-nix-helpers (staged, unfiled)**: go-standard hardcodes
+  `meta.license = licenses.mit` (`modules/go-standard.nix:966`) — every
+  proprietary LarsArtmann consumer (pbx-lens, journal, Zlota44 at least)
+  ships a package whose meta lies until it re-overrides via extraMeta.
+  Ask: a `license` option (default unfree, or explicit per-consumer).
+  pbx-lens/journal already carry the extraMeta workaround; fold when the
+  option lands.
+- **go-nix-helpers / git-hooks (staged, unfiled)**: sandboxed templ-format
+  checks false-positive on import-dependent alignment. templ fmt shells
+  out to `go` for import processing; the pre-commit-check sandbox has no
+  network/module cache, formats degraded, and wants different bytes than
+  every online `nix fmt` (pbx-lens dashboard.templ 29043 vs 29046,
+  2026-10-28; full war story in docs/gotchas.md). Candidate fix: give the
+  check env the package's proxyVendor goModules FOD as GOMODCACHE so
+  `go list` resolves offline.
+
 - **go-cqrs-lite#62** (CLOSED upstream 2026-10-17; fold-in = the 2027-01 watch): sqliteengine binds filter values raw (`filter_clause.go:44`,
   `planned_filter.go:77`) — time.Time miscompares vs RFC3339 JSON (Le/Lt leak the day,
   Ge/Gt drop it, Eq never). In-repo fix stays: bind `rfc3339Nano` strings.

@@ -490,3 +490,44 @@ the finding clears without the landmine — and let callers keep reusing
 `RefreshReadError` (Stream/Err) both follow this shape. The convention
 this pattern establishes lives in docs/DOMAIN_LANGUAGE.md § "Typed
 error carriers".
+
+## A poisoned shared GOCACHE makes go1.27.3 read cached x/tools as empty — `go tool templ` dies on "expected 'package', found 'EOF'" (paid for, 2026-10-28)
+
+An interrupted module-cache extraction (a `go tool templ` cold build raced
+`go: downloading` in /mnt/buildcache/go-mod at 00:57) left the SHARED
+GOCACHE (/mnt/buildcache/go-build) holding go1.27.3-keyed state under which
+every later `go build` of x/tools v0.52.0 reports
+`…/x/tools@v0.52.0/go/packages/doc.go:1:1: expected 'package', found 'EOF'`
+— while `parser.ParseFile` on the very same file succeeds and go1.27.2 with
+its own cache keys compiles fine. Diagnosis ladder that worked: (1) parse
+the file with a standalone go/parser probe (OK — not a mount/read bug), (2)
+`go mod download <mod>@<ver>` (HASH-OK — not a corrupt module cache), (3)
+rebuild with a BRAND-NEW GOCACHE (green) vs the shared one (red,
+deterministically) — so the poison lives in the shared GOCACHE, not in
+GOMODCACHE or the toolchain. Cure: `GOCACHE=<shared> go clean -cache` (then
+expect one benign `unlinkat … directory not empty` when the healing build
+itself repopulates mid-clean). Blast radius while poisoned: every cold
+`go tool templ` under the store go (nix run .#update-styles, devShell
+codegen) — the sandbox package build is immune (FOD vendoring, private
+sandbox GOCACHE). Fingerprint to remember: the error names ONE file per
+x/tools package (doc.go, enclosing.go, forward.go) and raw parses are fine.
+
+## checks.pre-commit formats templ WITHOUT module resolution — the sandbox wants different bytes than every online `nix fmt` (paid for, 2026-10-28)
+
+`nix flake check` failed only at checks.pre-commit (git-hooks' sandboxed
+run): treefmt's templ formatter there reformatted internal/web/dashboard.templ
+29043 → 29046 bytes, while the committed file is stable under local
+`nix fmt -- --ci`, `--no-cache`, fresh GOCACHEs, AND CI's online lane —
+checks.format (go-standard's hermeticTreefmtCheck) stays green in the same
+evaluation. The three differing lines all carry import-dependent
+expressions (`{ strconv.Itoa(…) }`): templ fmt shells out to `go` for
+import processing, and the pre-commit sandbox has neither network nor a
+module cache, so it formats in a degraded mode that aligns those lines
+differently. The trap: "fixing" the red by committing the sandbox's 29046
+bytes would immediately re-red every ONLINE formatter (CI's nix-lint lane
+is the truth). Correct response: leave the file, trust the online format,
+and treat checks.pre-commit's templ leg as a known false positive until
+the check env gains an offline module source (candidate: inject the
+package's proxyVendor goModules FOD as GOMODCACHE — staged upstream in
+docs/upstream-filings.md). Verified pre-existing at HEAD 2026-10-28 via a
+detached worktree build of the same check.

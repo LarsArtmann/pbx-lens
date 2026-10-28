@@ -88,7 +88,23 @@ read-only deep link, never a data dependency.
   (`nix develop -c echo ok`) — `nix flake check` never builds devShells, so
   its green masked the 2026-10-25 devshell break. `scripts/cut-release.sh`
   guards version-const parity (the v0.3.0 tag shipped printing 0.2.0 —
-  const bumped on main post-tag).
+  const bumped on main post-tag). 2026-10-28 nix-review hardening:
+  extraMeta.license = unfree (go-standard hardcodes mit; this repo is
+  PROPRIETARY — extraMeta merges OVER the module meta) plus the allowUnfree
+  pkgs re-instantiation (journal/Zlota44 pattern: perSystem imports the
+  LOCKED nixpkgs with config.allowUnfree and feeds every perSystem module
+  via `_module.args.pkgs`; derivation hashes unchanged); enableLockGuards
+  pins the three follows pairs + the github-original nixpkgs lock node at
+  eval time; ONE `goAttr` string feeds BOTH goPkgAttr and the perSystem
+  `go` binding (else sandbox build and devShell toolchains can drift);
+  update-vendor-hash declares coreutils+gnugrep (its text shells out to
+  them; gnused was vestigial); cqrs-lint carries meta (unfree). KNOWN
+  pre-existing (verified at HEAD 2026-10-28): checks.pre-commit
+  false-positives on import-dependent templ alignment — the sandbox
+  formats without module resolution and wants different bytes than any
+  online `nix fmt` (CI lane is the truth; NEVER commit the sandbox's
+  drift — docs/gotchas.md 2026-10-28, staged upstream in
+  docs/upstream-filings.md).
 - **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
   pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
   govulncheck, art-dupl (ZERO-GROUP GATE: `art-dupl check -t 4 --min-lines 2 .`
