@@ -138,7 +138,7 @@
               owner = "LarsArtmann";
               repo = "go-cqrs-lite";
               rev = "5a08b0ead55cd923b3b08cd45aba07d425aa193e";
-              hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+              hash = "sha256-BH3IGPqOie1RLaxATrWtnsbCpXVv3iEgKLHRR5Tlv+Y=";
             };
             sourceRoot = "source/cmd/cqrs-lint";
             # cqrs-lint's own tests run fixture projects through `go`, which
@@ -154,7 +154,7 @@
             # vendorHash (3I97v…) and the devshell died at the FOD;
             # restored 2026-10-26 — the FOD mismatch names this hash.
             env.GOWORK = "off";
-            vendorHash = "sha256-3I97vRD8F5FRiUYkQNn38aixOHHaJIEyetjlxrGLLHo=";
+            vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
             meta = {
               description = "cqrs-lint from go-cqrs-lite, pinned to the cmd/cqrs-lint/v4.16.0 tag";
               license = lib.licenses.unfree;
@@ -266,8 +266,20 @@
                   root="$(git rev-parse --show-toplevel)"
                   hash_file="$root/vendorHash.nix"
                   cp "$hash_file" "$hash_file.bak"
-                  restore() { mv "$hash_file.bak" "$hash_file"; }
-                  trap restore ERR
+                  # Restore on ANY exit, signals included. A probe interrupted
+                  # by Ctrl-C, a session/desktop logout (SIGTERM) or a killed
+                  # build used to leave the placeholder in the TRACKED file,
+                  # and the auto-commit daemon then committed it — the
+                  # 2026-10-25 and 2026-11-01 incidents that shipped a broken
+                  # pin and redded every downstream build.
+                  restore() {
+                    if [ -f "$hash_file.bak" ]; then
+                      mv "$hash_file.bak" "$hash_file"
+                    fi
+                  }
+                  trap restore EXIT
+                  trap 'exit 130' INT
+                  trap 'exit 143' TERM HUP
                   fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
                   printf '"%s"\n' "$fake" > "$hash_file"
                   out="$(nix build "$root#default" --no-link 2>&1 || true)"
@@ -279,8 +291,9 @@
                   fi
                   printf '"%s"\n' "$got" > "$hash_file"
                   nix build "$root#default" --no-link
+                  # Clears the marker the EXIT trap keys on: the restored .bak
+                  # is gone, so a successful run keeps the NEW hash.
                   rm -f "$hash_file.bak"
-                  trap - ERR
                   echo "vendorHash.nix updated to $got and verified with a green build."
                 '';
               }

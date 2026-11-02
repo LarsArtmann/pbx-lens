@@ -7,6 +7,28 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-11-02 (an interrupted vendor-hash probe shipped a placeholder; three hash sites restored)
+
+- **All three hash pins are back to their real values.** `vendorHash.nix`
+  carries `sha256-3I97v…` again, and `flake.nix`'s cqrs-lint pins carry
+  their OWN values (`BH3IGP…` for the go-cqrs-lite source,
+  `jTwZn/…` for cqrs-lint's module set). The committed state left by the
+  2026-11-01 heuristic auto-commit had the placeholder in the source hash
+  and in `vendorHash.nix`, plus this repo's vendor hash pasted over
+  cqrs-lint's — so `nix build .#default` and the devShell both died at a
+  fixed-output derivation, and the downstream PBX toplevel build failed
+  first (2026-11-02, `pbx-lens-ab569db…-go-modules`). `go.mod`/`go.sum`
+  never moved across that window, so the pre-sweep hashes are the correct
+  ones, not a re-probe guess.
+- **The repair app can no longer leave the placeholder behind.**
+  `update-vendor-hash` now restores on ANY exit — an EXIT trap plus
+  INT/TERM/HUP handlers — instead of only on ERR. An interrupted probe
+  (Ctrl-C, session teardown, killed build) used to strand the fake value in
+  the tracked file, which the auto-commit daemon then committed; that is
+  the exact mechanism behind 2026-10-25 and this recurrence. The success
+  path still keeps the freshly verified hash (it deletes the `.bak` marker
+  the trap keys on).
+
 ### Added — 2026-10-27 (pareto session: repair, error-truth closure, release object)
 
 - **The forwarder-exemption census is recorded** (docs/DOMAIN_LANGUAGE.md):
