@@ -98,3 +98,20 @@ func workerRoundState(states []projectionhost.WorkerState) (bool, bool) {
 
 	return allDone, anyFailed
 }
+
+// ProjectionWorkersReady is the serve readiness predicate (plan T17): every
+// projection worker is actively serving the read model — running or live.
+// A failed worker (restart budget exhausted) or one stuck in backoff votes
+// NOT ready, so /health/ready answers 503 until the read model is current
+// again; idle means "launched but not drained" (never ready mid-startup),
+// draining/stopped mean shutdown (the appkit probe flips false there
+// anyway). No workers at all is vacuously ready.
+func ProjectionWorkersReady(states []projectionhost.WorkerState) bool {
+	for _, state := range states {
+		if state.Status != projectionhost.WorkerRunning && state.Status != projectionhost.WorkerLive {
+			return false
+		}
+	}
+
+	return true
+}

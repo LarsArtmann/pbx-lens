@@ -148,6 +148,15 @@ func serve(args []string) {
 		fatal(err)
 	}
 
+	// Readiness is the read model's honesty (plan T17): /health/ready
+	// answers 503 while any projection worker is failed, backing off, or
+	// not yet drained — the drain above already brought them live, so the
+	// probe guards the SERVE lifetime (a worker exhausting its restart
+	// budget mid-flight stops claiming ready).
+	serviceConfig.ReadyCheck = func() bool {
+		return cli.ProjectionWorkersReady(sys.ProjectionHost().Status())
+	}
+
 	svc, err := appkit.NewService(serviceConfig)
 	if err != nil {
 		fatal(err)

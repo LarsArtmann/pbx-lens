@@ -234,6 +234,17 @@ const fail = probe.fail;
     });
     if (!focusVisible) fail("first Tab stop has no visible focus indicator");
 
+    // --- Contract F: projection readiness (plan T17) -------------------
+    // /health/ready must answer 200 while the drained workers are live
+    // (the lane's serve instance boots through the startup drain), and
+    // /health/live stays 200. A 503 here means a worker died mid-serve —
+    // exactly what the probe exists to catch.
+    const ready = await page.goto(`${BASE}/health/ready`, { waitUntil: "load" });
+    console.log("health/ready status:", ready.status());
+    if (![200, 304].includes(ready.status())) fail(`/health/ready status ${ready.status()}, want 200 (workers live)`);
+    const live = await page.goto(`${BASE}/health/live`, { waitUntil: "load" });
+    if (![200, 304].includes(live.status())) fail(`/health/live status ${live.status()}, want 200`);
+
     console.log(process.exitCode ? "RESULT: FAILED" : "RESULT: ALL PASS");
   } finally {
     await browser.close();

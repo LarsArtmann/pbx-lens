@@ -203,9 +203,21 @@ now measured (`BenchmarkIngestCDRReplayNoOp`, 2026-10-25, 15-min load ≈ 20
 76 allocs — ~20% under a fresh dispatch and ~2.4× less memory, so a source
 re-offering already-indexed rows is priced just above the parse floor.
 
-## Version and metrics
+## Version, metrics, and readiness
 
 `ServiceConfig.Version` → `GET /version` + `appkit_build_info`; `Metrics`
 with the explicit `AllowUnauthenticated` opt-in → `GET /metrics` (Prometheus
 text). Both exist beside the appkit `/health{,/live,/ready}` routes; auth
 posture is the htpasswd middleware or loopback-only dev.
+
+`/health/ready` is projection-worker readiness (2026-11-04, plan T17): the
+serve wiring sets `ReadyCheck` to `cli.ProjectionWorkersReady` over
+`sys.ProjectionHost().Status()` — ready while every worker is
+running/live, 503 when any is failed (restart budget exhausted), in
+backoff, or not yet drained. The startup drain brings workers live before
+`svc.Run`, so the probe guards the SERVE lifetime: a worker dying
+mid-flight stops claiming ready instead of leaving the load balancer
+pointed at a stale read model. Idle/draining/stopped never pass. (Idea
+attribution: the readiness bridge pattern is cqrs-htmx's health-bridge
+idea — docs/review/libs/cqrs-htmx.md — built here on appkit's `ReadyCheck`
+plus projectionhost worker states.)
