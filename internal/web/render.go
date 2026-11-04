@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"log/slog"
 	"net/http"
 	"strconv"
 
@@ -23,7 +24,11 @@ func render(w http.ResponseWriter, r *http.Request, component templ.Component) {
 	var page bytes.Buffer
 
 	if err := component.Render(r.Context(), &page); err != nil {
-		http.Error(w, "rendering the page failed: "+err.Error(), http.StatusInternalServerError)
+		// The render error can name template internals — log it, ship only
+		// the generic line (slog lands in the same journald stream the serve
+		// process installs).
+		slog.Error("rendering the page failed", "error", err)
+		http.Error(w, "rendering the page failed", http.StatusInternalServerError)
 
 		return
 	}

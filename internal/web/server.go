@@ -190,7 +190,7 @@ func (s *server) queryListStaleness(w http.ResponseWriter, r *http.Request) (lis
 	stop()
 
 	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return listStaleness{}, false
 	}
@@ -351,7 +351,7 @@ func (s *server) queryDashboardStats(w http.ResponseWriter, r *http.Request) (Da
 	stop()
 
 	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return DashboardStats{}, "", false
 	}
@@ -497,7 +497,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return
 	}
@@ -616,10 +616,15 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if poller == nil && cache == nil {
-		http.Error(
+		s.writeIndexError(
 			w,
-			"no ops counters are wired: /api/ops needs a running poller or the etag cache middleware behind it",
+			errorfamily.NewInfrastructure(
+				"lens.web.ops_unwired",
+				"no ops counters are wired: /api/ops needs a running poller or the etag cache middleware behind it",
+			),
 			http.StatusServiceUnavailable,
+			"no ops counters are wired: /api/ops needs a running poller or the etag cache middleware behind it",
+			true,
 		)
 
 		return
@@ -629,7 +634,7 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 
 	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context()), retention))
 	if err != nil {
-		http.Error(w, "encoding ops counters failed: "+err.Error(), http.StatusInternalServerError)
+		s.writeIndexError(w, err, http.StatusInternalServerError, "encoding ops counters failed", true)
 
 		return
 	}

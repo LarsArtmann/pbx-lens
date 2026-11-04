@@ -28,7 +28,7 @@ func (s *server) segmentPage(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return
 	}

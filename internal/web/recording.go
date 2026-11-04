@@ -66,7 +66,7 @@ func (s *server) recording(w http.ResponseWriter, r *http.Request) {
 
 	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
 	if err != nil {
-		http.Error(w, "reading the call index failed: "+err.Error(), http.StatusInternalServerError)
+		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return
 	}
@@ -129,7 +129,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 			return
 		}
 
-		http.Error(w, "fetching the recording metadata failed: "+err.Error(), http.StatusBadGateway)
+		s.writeIndexError(w, err, http.StatusBadGateway, "fetching the recording metadata failed; the detail is in the server log", false)
 
 		return
 	}
@@ -147,7 +147,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 
 	upstream, err := http.NewRequestWithContext(r.Context(), http.MethodGet, audio, nil)
 	if err != nil {
-		http.Error(w, "building the upstream request failed: "+err.Error(), http.StatusInternalServerError)
+		s.writeIndexError(w, err, http.StatusInternalServerError, "building the upstream request failed; the detail is in the server log", false)
 
 		return
 	}
@@ -163,7 +163,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 	headerStop()
 
 	if err != nil {
-		http.Error(w, "fetching the recording audio failed: "+err.Error(), http.StatusBadGateway)
+		s.writeIndexError(w, err, http.StatusBadGateway, "fetching the recording audio failed; the detail is in the server log", false)
 
 		return
 	}

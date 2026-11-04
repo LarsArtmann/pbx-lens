@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
@@ -48,10 +49,15 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if s.search == nil {
-		http.Error(
+		s.writeIndexError(
 			w,
-			"search needs a sqlite index: restart serve with -db <file> (memory deployments have no FTS)",
+			errorfamily.NewInfrastructure(
+				"lens.web.search_unwired",
+				"search needs a sqlite index: restart serve with -db <file> (memory deployments have no FTS)",
+			),
 			http.StatusServiceUnavailable,
+			"search needs a sqlite index: restart serve with -db <file> (memory deployments have no FTS)",
+			false,
 		)
 
 		return
@@ -64,7 +70,7 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		http.Error(w, "search failed: "+err.Error(), http.StatusBadRequest)
+		s.writeIndexError(w, err, http.StatusBadRequest, "search failed for that query; the detail is in the server log", false)
 
 		return
 	}
