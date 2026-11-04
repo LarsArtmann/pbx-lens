@@ -40,8 +40,7 @@ read-only deep link, never a data dependency.
   indirect (`go-etag/server` re-exports everything).
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
-  `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — never hand-roll harness
-  bookkeeping; committed rapid `.fail` seeds are regression pins (docs/gotchas.md).
+  `app.DomainConfig()`/`app.DeploymentConfig(dsn)`, never hand-rolled harness bookkeeping; committed rapid `.fail` seeds are regression pins (docs/gotchas.md).
 - **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
   sweep budgeted; versions.json lies — verify with `git tag --contains`).
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep + v1.26.0):
@@ -87,13 +86,14 @@ read-only deep link, never a data dependency.
   `scripts/cut-release.sh` guards version-const parity (v0.3.0 shipped printing
   0.2.0). Hardening (2026-10-28 nix-review): extraMeta.license = unfree (this
   repo is PROPRIETARY; extraMeta merges OVER the module meta), allowUnfree pkgs
-  re-instantiated per-system from the LOCKED nixpkgs via `_module.args.pkgs`,
-  enableLockGuards pins the follows pairs + the nixpkgs lock node, ONE `goAttr`
-  feeds both goPkgAttr and the perSystem `go` binding (else sandbox and devShell
-  toolchains drift), update-vendor-hash declares coreutils+gnugrep, cqrs-lint
-  carries meta. KNOWN pre-existing: checks.pre-commit false-positives on
-  import-dependent templ alignment (the sandbox formats without module
-  resolution; the CI lane is truth — NEVER commit its drift; docs/gotchas.md).
+  re-instantiated per-system from the LOCKED nixpkgs via `_module.args.pkgs`
+  (hashes unchanged), enableLockGuards pins the follows pairs + nixpkgs lock
+  node, ONE `goAttr` feeds both goPkgAttr and the perSystem `go` binding (else
+  sandbox and devShell toolchains drift), update-vendor-hash declares
+  coreutils+gnugrep, cqrs-lint carries meta. KNOWN pre-existing:
+  checks.pre-commit false-positives on import-dependent templ alignment — the
+  sandbox formats without module resolution, the CI lane is truth, NEVER commit
+  its drift (docs/gotchas.md).
 - **CI:** GitHub Actions (`.github/workflows/ci.yml`, go-output's pattern):
   build+test(-race)+coverage+tidy, golangci-lint, govulncheck, and the art-dupl
   ZERO-GROUP GATE (`art-dupl check -t 4 --min-lines 2 .` vs
@@ -101,10 +101,10 @@ read-only deep link, never a data dependency.
   coincidences, and the default report hides a suppressed bucket that CAN hold
   real clones — audit with `--show-suppressed` after pin bumps; invoke only via
   `scripts/check-dedup-gate.sh`). Every Go-compiling job runs `go tool templ
-  generate` first (`*_templ.go` gitignored; the CLI is a go.mod `tool`, so
-  `go run .../cmd/templ` FAILS). The golangci-lint pin must be BUILT with go ≥
-  the module's level, and `.golangci.yml` enables `mnd` — run
-  `golangci-lint run ./...` before pushing. BuildFlow stays the LOCAL gate.
+  generate` first (`*_templ.go` gitignored; the CLI is a go.mod `tool`, so `go run .../cmd/templ` FAILS).
+  The golangci-lint pin must be BUILT with go ≥ the module's level, and
+  `.golangci.yml` enables `mnd` — run `golangci-lint run ./...` before pushing.
+  BuildFlow stays the LOCAL gate (the flake's apps.test/apps.lint are conveniences, not a second gate); Dependabot watches github-actions + gomod.
 - **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version)
   lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog` is the DB-free
   exception: `cli.RenderCatalog`/`cli.RenderArchitecture` render the
