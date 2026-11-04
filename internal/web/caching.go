@@ -5,6 +5,7 @@ import (
 	"strings"
 	"sync/atomic"
 
+	errorfamily "github.com/larsartmann/go-error-family"
 	etag "github.com/larsartmann/go-etag/server"
 	"github.com/larsartmann/httputil"
 )
@@ -17,6 +18,7 @@ type CacheCounters struct {
 	generated   atomic.Uint64
 	notModified atomic.Uint64
 	overflows   atomic.Uint64
+	writeErrors atomic.Uint64
 }
 
 // NewCacheCounters builds an empty counter set.
@@ -35,6 +37,7 @@ type CacheStats struct {
 	NotModified     uint64  `json:"not_modified"`
 	HitRatio        float64 `json:"hit_ratio"`
 	BufferOverflows uint64  `json:"buffer_overflows"`
+	WriteErrors     uint64  `json:"write_errors"`
 }
 
 // Snapshot reads the counters atomically. Individual fields are consistent;
@@ -54,6 +57,7 @@ func (c *CacheCounters) Snapshot() CacheStats {
 		NotModified:     notModified,
 		HitRatio:        ratio,
 		BufferOverflows: c.overflows.Load(),
+		WriteErrors:     c.writeErrors.Load(),
 	}
 }
 
@@ -65,10 +69,13 @@ func (c *CacheCounters) Snapshot() CacheStats {
 // handlers that compute data-derived tags instead of body hashes.
 //
 // Stats, when non-nil, receives one counter per middleware outcome
-// (generated tag, 304, buffer overflow); nil disables the hooks. Log, when
-// non-nil, receives the overflow warning — a response larger than the
-// buffer streams without an ETag, and operators should know that happened
-// rather than infer it from a missing hit.
+// (generated tag, 304, buffer overflow, post-commit write error); nil
+// disables the hooks. Log, when non-nil, receives the overflow warning — a
+// response larger than the buffer streams without an ETag, and operators
+// should know that happened rather than infer it from a missing hit — and
+// the write-error warning: a client gone mid-flush drops the buffered body
+// after the header already committed, unreportable through net/http, so
+// OnError is the only witness.
 func ETagMiddleware(stats *CacheCounters, log func(msg string, args ...any)) httputil.Middleware {
 	cfg := etag.DefaultETagConfig()
 	cfg.SkipIfPresent = true
@@ -85,6 +92,14 @@ func ETagMiddleware(stats *CacheCounters, log func(msg string, args ...any)) htt
 					"etag buffer overflow: response body exceeded the buffer and streams without an ETag",
 					"limit_bytes", limit,
 				)
+			}
+		}
+
+		cfg.OnError = func(e *errorfamily.Error) {
+			stats.writeErrors.Add(1)
+
+			if log != nil {
+				log("etag post-commit write failed", "family", e.Family().String(), "code", e.Code(), "detail", e.Message())
 			}
 		}
 	}

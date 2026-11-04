@@ -15,6 +15,7 @@ import (
 	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/wire"
 )
@@ -235,14 +236,16 @@ func TestHTTPErrorFamilies(t *testing.T) {
 			t.Fatalf("status %d: want error", tc.status)
 		}
 
+		// The AsType guard stays: AssertFamily alone would pass a plain
+		// error whose fail-open classification matches. The code check is a
+		// contains-match (codes embed the HTTP status), so AssertCode's
+		// exact compare cannot replace it.
 		ef, ok := errors.AsType[*errorfamily.Error](err)
 		if !ok {
 			t.Fatalf("status %d: not an errorfamily error: %v", tc.status, err)
 		}
 
-		if ef.Family() != tc.want {
-			t.Fatalf("status %d: family %v, want %v", tc.status, ef.Family(), tc.want)
-		}
+		errorfamilytest.AssertFamily(t, err, tc.want)
 
 		if !strings.Contains(ef.Code(), strconv.Itoa(tc.status)) {
 			t.Fatalf("status %d: code %q lacks status", tc.status, ef.Code())

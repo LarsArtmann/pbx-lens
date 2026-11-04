@@ -12,6 +12,7 @@ import (
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -475,7 +476,7 @@ func TestPollFileOpenFailureClassifiesAsTransient(t *testing.T) {
 		t.Fatal("pollFile on a missing file must fail")
 	}
 
-	if got := errorfamily.Classify(err); got != errorfamily.Transient {
-		t.Fatalf("Classify(poll open failure) = %v, want Transient (fail-open default, no registered sentinels)", got)
-	}
+	// The fail-open default classifies a plain os error as Transient (no
+	// registered sentinels) — the poller retries it next tick.
+	errorfamilytest.AssertFamily(t, err, errorfamily.Transient)
 }
