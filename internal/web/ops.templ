@@ -199,14 +199,9 @@ func opsPollerItems(p opsPoller) []display.DefinitionItem {
 	}
 
 	lastPass := display.DefinitionItem{Term: "Last pass"}
-	if p.LastPass.IsZero() {
-		// A poller that has never completed a pass has no "Jan 1, 0001"
-		// date to show (RelativeTime has no empty escape upstream —
-		// templ-components#52): "never" is the honest word.
-		lastPass.Detail = "never"
-	} else {
-		lastPass.DetailComponent = display.RelativeTime(display.RelativeTimeProps{Time: p.LastPass})
-	}
+	// EmptyText (templ-components#52, folded) renders "never" for a poller
+	// that has never completed a pass — no "Jan 1, 0001" date noise.
+	lastPass.DetailComponent = display.RelativeTime(display.RelativeTimeProps{Time: p.LastPass, EmptyText: "never"})
 
 	return []display.DefinitionItem{
 		{

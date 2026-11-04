@@ -170,7 +170,7 @@ func TestOpsPageUnknownVerdictNeverLies(t *testing.T) {
 func TestOpsPageNeverRanPassSaysNever(t *testing.T) {
 	// A poller that has never completed a pass carries no last_pass at all:
 	// the page must say "never", not render the zero time as "Jan 1, 0001"
-	// (templ-components#52 has no empty escape).
+	// (RelativeTimeProps.EmptyText, the templ-components#52 fold).
 	mux := newTestServerWith(t, Options{Ops: func() any {
 		return map[string]any{
 			"sources": map[string]any{

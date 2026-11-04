@@ -180,7 +180,11 @@ parentheses): 304 revalidation ≈ 88 µs/op (82), full 200 ≈ 94 µs/op (101)
 → ~11k polls/s per box. At the 30 s
 dashboard poll a viewer costs ~0.033 req/s; the cache contract, not CPU, is
 the scaling story. (The raw FNV-64a tag hash alone is µs-scale, sized by
-body: ≈22 µs @ 25 KB, ≈104 µs @ 122 KB — measured 2026-10-15.)
+body: ≈22 µs @ 25 KB, ≈104 µs @ 122 KB — measured 2026-10-15.) The
+2026-11-04 swap to the library `ServerTimingMiddleware` constructor was
+verified performance-neutral: identical allocs/op (1216–1218 both trees)
+and ns/op inside run noise on the loaded audit box (quiet-box ceiling
+stands).
 
 Ingest per-row cost (re-measured 2026-10-25 on the same quiet box,
 `BenchmarkIngestCDR{Parse,Dispatch}`; the 2026-10-25 numbers taken under
