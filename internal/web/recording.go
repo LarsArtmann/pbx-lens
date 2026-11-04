@@ -129,7 +129,13 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 			return
 		}
 
-		s.writeIndexError(w, err, http.StatusBadGateway, "fetching the recording metadata failed; the detail is in the server log", false)
+		// The Telnyx client classifies its errors (a 500 maps Transient →
+		// 503), but this boundary is a PROXY: an upstream failure is an
+		// honest 502 regardless of the upstream's own family — the pinned
+		// negative-path contract (TestRecordingNegativePathsAnswerHonestly).
+		// The family's value here is the no-leak body and the logged detail.
+		s.logf("fetching the recording metadata failed: %v", err)
+		http.Error(w, "fetching the recording metadata failed; the detail is in the server log", http.StatusBadGateway)
 
 		return
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/go-cqrs-lite/systemscenario/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/pbx-lens/internal/app"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/retention"
@@ -80,9 +81,7 @@ func TestOptimisticConcurrencyRejectsStaleWriter(t *testing.T) {
 		t.Fatalf("stale save error = %v, want errors.Is event.ErrVersionConflict", err)
 	}
 
-	if got := errorfamily.Classify(err); got != errorfamily.Conflict {
-		t.Fatalf("stale save error family = %v, want Conflict", got)
-	}
+	errorfamilytest.AssertFamily(t, err, errorfamily.Conflict)
 
 	// Terminal scenario assertion: re-recording the unchanged snapshot is a
 	// no-op (zero act events), then the journal-shape check at t level — the
