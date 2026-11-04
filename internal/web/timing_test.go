@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	servertiming "github.com/larsartmann/httputil/server_timing"
 )
 
 // TestServerTimingHeaderOnPlainRoute pins the middleware's every-route
@@ -18,7 +20,7 @@ func TestServerTimingHeaderOnPlainRoute(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	timed := ServerTimingMiddleware()(mux)
+	timed := servertiming.ServerTimingMiddleware()(mux)
 
 	rec := httptest.NewRecorder()
 	timed.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/health/live", nil))

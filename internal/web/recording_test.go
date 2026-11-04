@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
@@ -494,7 +495,7 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 		Recordings: RecordingOptions{Telnyx: telnyx.NewClient(auditAPIKey, api.URL+"/v2")},
 	}, telnyxRecordingObservation())
 
-	timed := ServerTimingMiddleware()(mux)
+	timed := servertiming.ServerTimingMiddleware()(mux)
 
 	rec := httptest.NewRecorder()
 	timed.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/calls/telnyx-conversation/conv-rec/recording", nil))

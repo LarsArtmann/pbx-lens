@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -261,7 +262,7 @@ func TestExportKeysetStallFailsLoudly(t *testing.T) {
 // when the filter matched nothing: the first page query still ran.
 func TestExportCarriesFirstPageTiming(t *testing.T) {
 	started := testCallStarted()
-	mux := ServerTimingMiddleware()(newTestServer(t,
+	mux := servertiming.ServerTimingMiddleware()(newTestServer(t,
 		webObservation("conv-a", started),
 		webObservation("conv-b", started.Add(time.Minute)),
 	))
@@ -291,7 +292,7 @@ func TestExportCarriesFirstPageTiming(t *testing.T) {
 		})
 	}
 
-	empty := ServerTimingMiddleware()(newTestServer(t))
+	empty := servertiming.ServerTimingMiddleware()(newTestServer(t))
 
 	rec := httptest.NewRecorder()
 	empty.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/export.jsonl?number=%2B19999999999", nil))

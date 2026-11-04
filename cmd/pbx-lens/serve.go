@@ -11,6 +11,7 @@ import (
 	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-appkit/systemd"
 	"github.com/larsartmann/httputil"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/search"
@@ -325,7 +326,7 @@ func buildServiceConfig(
 	}
 
 	serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
-		web.ServerTimingMiddleware(),
+		servertiming.ServerTimingMiddleware(),
 		httputil.Compression(httputil.DefaultCompressionConfig()),
 		web.ETagMiddleware(cacheStats, log),
 	)
