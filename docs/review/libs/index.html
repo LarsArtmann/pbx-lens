@@ -885,14 +885,14 @@
           <h1>19 first-party libraries — are we using them to the max?</h1>
           <p class="subtitle">
             A utilization audit of every LarsArtmann library against pbx-lens:
-            seven are load-bearing (scored 33&ndash;93/100), twelve are deliberately
+            seven are load-bearing (scored 67&ndash;95/100), twelve are deliberately
             absent (nine rejections with reasons, two deferrals, one pattern-only,
-            one partial-adopt idea). The gaps concentrate in one library&rsquo;s unused
-            boundary conventions and one false doctrine that built a duplicate.
+            one partial-adopt idea). Every gap this audit found in a used library was
+            closed on 2026-11-04 &mdash; the scores below are post-closeout.
           </p>
           <div class="meta">
             <span class="tag amber">7 used &middot; 12 not imported</span>
-            <span class="tag">Mean used-score: 71/100</span>
+            <span class="tag">Mean used-score: 83/100</span>
             <span class="tag teal">Pins current: 6/7 (+1 docs-only)</span>
             <span class="tag">Per-lib reports: 19 &times; markdown</span>
           </div>
@@ -900,17 +900,17 @@
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
-          <div class="score-card score-warn">
-            <div class="score">71</div>
-            <div class="label">Mean utilization, 7 used libs</div>
+          <div class="score-card score-good">
+            <div class="score">83</div>
+            <div class="label">Mean utilization, 7 used libs (was 71)</div>
           </div>
           <div class="score-card score-good">
-            <div class="score">5 / 7</div>
+            <div class="score">6 / 7</div>
             <div class="label">Used libs at high or very high (≥70)</div>
           </div>
-          <div class="score-card score-bad">
-            <div class="score">9</div>
-            <div class="label">Missed opportunities in used libs (all actionable)</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Open missed opportunities (9 found, 9 closed)</div>
           </div>
           <div class="score-card score-good">
             <div class="score">0</div>
@@ -925,33 +925,35 @@
         <!-- Summary -->
         <section id="summary">
           <h2>The bottom line</h2>
-          <div class="callout callout-amber">
-            <strong>Two gaps hold the whole fleet score down &mdash; both are one-day fixes.</strong>
+          <div class="callout callout-teal">
+            <strong>Both fleet-score gaps were closed on 2026-11-04 &mdash; the audit worked.</strong>
             <ol>
               <li>
-                <strong>go-error-family is used at the origin but ignored at the boundaries (45/100).</strong>
-                CLI exit codes, HTTP status mapping, structured logging, and the test-assertion
-                package are all hand-rolled instead &mdash; ~7 duplication sites across
-                <code>cmd/pbx-lens/main.go:89-92</code> and 14 web call sites.
+                <strong>go-error-family went 45 &rarr; 82/100.</strong>
+                The CLI boundary now maps families through <code>HandleError</code> (transient
+                projection failures exit 75 EX_TEMPFAIL), one family-aware writer replaced the 14
+                hand-mapped web sites and their <code>err.Error()</code> bodies, structured logging
+                rides <code>LogErrorContext</code>, and <code>errorfamilytest</code> replaced three
+                hand-rolled assertions.
               </li>
               <li>
-                <strong>The hand-rolled Server-Timing middleware rests on a factually false doctrine.</strong>
-                &ldquo;No middleware constructor in any release&rdquo; is wrong &mdash;
-                <code>ServerTimingMiddleware()</code> has shipped since v1.0.1 (verified in the module
-                cache at v1.0.1, v1.0.2, v1.0.3). The claim lives in
-                <code>internal/web/timing.go:16-17</code>, <code>docs/http-stack.md:32-34</code>, and
-                AGENTS.md (corrected 2026-11-04 by this audit).
+                <strong>server_timing went 33 &rarr; 67/100 and the false doctrine is gone.</strong>
+                The hand-rolled wrapper is deleted, <code>ServerTimingMiddleware()</code> is wired
+                (which also restored <code>r.Pattern</code> propagation), and every document that
+                claimed the constructor did not exist has been corrected.
               </li>
             </ol>
           </div>
           <p>
             Everything else is health: the backbone &mdash; go-cqrs-lite runtime core (92/100) and
-            templ-components (93/100) &mdash; is at reference quality with every paid-for library
-            contract fenced by a named guard or test; the HTTP stack is current and doctrinally
-            documented; and every one of the twelve <em>not-imported</em> verdicts is a documented
-            decision (domain mismatch, a rejected prerequisite like samber/do, or the R9
-            no-SSE polling doctrine), not neglect. Notably, all seven used pins are the latest
-            releases &mdash; the 2026-10-24/25 sweep and the v1.26.0 bump left zero version debt.
+            templ-components (95/100 after the #52 fold-in) &mdash; is at reference quality with
+            every paid-for library contract fenced by a named guard or test; go-etag rose to 95/100
+            once <code>OnError</code> and the <code>metrics</code> module landed; the HTTP stack is
+            current and doctrinally documented; and every one of the twelve
+            <em>not-imported</em> verdicts is a documented decision (domain mismatch, a rejected
+            prerequisite like samber/do, or the R9 no-SSE polling doctrine), not neglect.
+            Notably, all seven used pins are the latest releases &mdash; the 2026-10-24/25 sweep
+            and the v1.26.0 bump left zero version debt.
           </p>
         </section>
 
@@ -964,12 +966,12 @@
             </thead>
             <tbody>
               <tr><td>go-cqrs-lite (+12 submodules)</td><td>v4.16.0 wave</td><td>same (versions.json parity)</td><td class="yes">direct, backbone</td><td class="yes"><span class="highlight">92/100</span> core &middot; ≈81 pooled</td><td><a href="go-cqrs-lite.md">go-cqrs-lite.md</a></td></tr>
-              <tr><td>templ-components</td><td>v1.26.0</td><td>v1.26.0</td><td class="yes">direct, UI</td><td class="yes"><span class="highlight">93/100</span> (95 post-fold-in)</td><td><a href="templ-components.md">templ-components.md</a></td></tr>
+              <tr><td>templ-components</td><td>v1.26.0</td><td>v1.26.0</td><td class="yes">direct, UI</td><td class="yes"><span class="highlight">95/100</span> very high</td><td><a href="templ-components.md">templ-components.md</a></td></tr>
               <tr><td>go-appkit (+systemd)</td><td>v0.9.0 / v0.1.0</td><td>same</td><td class="yes">direct, service shell</td><td class="yes">73/100 high</td><td><a href="go-appkit.md">go-appkit.md</a></td></tr>
-              <tr><td>go-etag/server</td><td>v0.6.1</td><td>v0.7.0 (docs/CI only)</td><td class="yes">direct, caching</td><td class="yes">83/100 high</td><td><a href="go-etag.md">go-etag.md</a></td></tr>
+              <tr><td>go-etag/server</td><td>v0.6.1</td><td>v0.7.0 (docs/CI only)</td><td class="yes">direct, caching</td><td class="yes"><span class="highlight">95/100</span> very high</td><td><a href="go-etag.md">go-etag.md</a></td></tr>
               <tr><td>httputil</td><td>v1.8.0</td><td>v1.8.0 (checkout cut)</td><td class="yes">direct, middleware</td><td class="yes">80/100 high</td><td><a href="httputil.md">httputil.md</a></td></tr>
-              <tr><td>httputil/server_timing</td><td>v1.0.3</td><td>v1.0.3</td><td class="yes">direct, timing</td><td class="no">33 direct / 50 effective</td><td><a href="httputil-server-timing.md">httputil-server-timing.md</a></td></tr>
-              <tr><td>go-error-family</td><td>v0.12.0</td><td>v0.12.0</td><td class="yes">direct, errors</td><td class="no">45/100 low</td><td><a href="go-error-family.md">go-error-family.md</a></td></tr>
+              <tr><td>httputil/server_timing</td><td>v1.0.3</td><td>v1.0.3</td><td class="yes">direct, timing</td><td class="yes">67/100 (was 33)</td><td><a href="httputil-server-timing.md">httputil-server-timing.md</a></td></tr>
+              <tr><td>go-error-family</td><td>v0.12.0</td><td>v0.12.0</td><td class="yes">direct, errors</td><td class="yes"><span class="highlight">82/100</span> high (was 45)</td><td><a href="go-error-family.md">go-error-family.md</a></td></tr>
               <tr><td>cqrs-htmx</td><td>&mdash;</td><td>root v4.15.0</td><td class="no">not imported</td><td>ADOPT-PARTIAL (idea-level)</td><td><a href="cqrs-htmx.md">cqrs-htmx.md</a></td></tr>
               <tr><td>go-atomic-write</td><td>&mdash;</td><td>v0.6.2</td><td class="no">not imported</td><td>DEFER (needs exported commit primitive)</td><td><a href="go-atomic-write.md">go-atomic-write.md</a></td></tr>
               <tr><td>go-retry</td><td>&mdash;</td><td>v0.9.0</td><td class="no">not imported</td><td>DEFER (no retry loop exists)</td><td><a href="go-retry.md">go-retry.md</a></td></tr>
@@ -987,8 +989,10 @@
           <p>
             Score derivation per the deep-dive rubric: applicable capabilities × (fully = 1,
             partial = 0.5, missed = 0); every Not-Applicable row carries a one-line domain reason
-            in the per-lib report. Mean = (92+93+73+83+80+33+45)/7 ≈ 71 (server_timing counted at
-            its direct-use score; at effective coverage the mean is ≈74).
+            in the per-lib report. Post-closeout mean =
+            (92+95+73+95+80+67+82)/7 ≈ 83 &mdash; up from ≈71 at audit time. The audit-day
+            arithmetic (92+93+73+83+80+33+45)/7 ≈ 71 is kept here as the honest baseline; each
+            per-lib report's delta appendix records what moved and why.
           </p>
         </section>
 
@@ -1036,6 +1040,18 @@
         <!-- Findings -->
         <section id="findings">
           <h2>Findings, highest impact first</h2>
+
+          <div class="callout callout-teal">
+            <strong>Closeout 2026-11-04 (plan T01&ndash;T19): every finding below is RESOLVED.</strong>
+            Each block keeps its audit-day text as the record of what was wrong; the
+            resolution receipts are in the table below them. Two corrections to the
+            original text are marked inline: the <code>timing.go</code> line numbers
+            moved, and the code it described is now deleted; the
+            <code>projectionhost.Reset</code> signature the reset finding assumed
+            (<code>Reset()</code>, no projection name) does not exist &mdash;
+            <code>Host.Reset(ctx, name)</code> does, and this repo&rsquo;s rebuild path
+            deliberately uses <code>metaengine.Store.Reset</code> + drain instead.
+          </div>
 
           <div class="issue issue-critical" id="server-timing-dup">
             <span class="severity severity-critical">Missed Opportunity &middot; false doctrine</span>
@@ -1169,6 +1185,50 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
               <code>errorfamilytest.AssertFamily/AssertCode</code>.
             </div>
           </div>
+
+          <h3>Resolution receipts (2026-11-04 closeout)</h3>
+          <table class="compare">
+            <thead>
+              <tr><th>Finding</th><th>What landed</th><th>Proof</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>server-timing-dup</td>
+                <td>Library middleware wired; hand-wrap deleted; three stale texts corrected</td>
+                <td><code>TestServerTimingHeaderOnPlainRoute</code>; <code>rg "middleware constructor"</code> clean</td>
+              </tr>
+              <tr>
+                <td>error-family-cli</td>
+                <td><code>fatalCode</code> maps families to sysexits, keeps plain errors at 1</td>
+                <td><code>TestFatalCodeFamilyMapping</code> (6 cases)</td>
+              </tr>
+              <tr>
+                <td>templ-emptytext</td>
+                <td><code>EmptyText: "never"</code> replaced the local guard; #52 ledger row closed</td>
+                <td><code>ops_page_test.go</code> pin; <code>docs/upstream-filings.md</code> CLOSED row</td>
+              </tr>
+              <tr>
+                <td>error-family-http</td>
+                <td>One family-aware writer (<code>writeIndexError</code>); three bare 503s classified</td>
+                <td><code>TestWriteIndexErrorFamilyContract</code>; no body carries <code>err.Error()</code></td>
+              </tr>
+              <tr>
+                <td>etag-metrics</td>
+                <td><code>OnError</code> wired; <code>metrics.Attach</code> adopted; ratio guard added</td>
+                <td><code>TestETagMiddlewareWriteErrorCounts</code>, <code>TestCacheRatioTextHonestStates</code></td>
+              </tr>
+              <tr>
+                <td>cqrs-reset</td>
+                <td>Rebuild path chosen: <code>metaengine.Store.Reset</code> + <code>DrainProjections</code> replay</td>
+                <td><code>docs/runbooks/reset-rebuild.md</code>; <code>TestResetRebuildsReadModelFromJournal</code></td>
+              </tr>
+              <tr>
+                <td>error-family-tests</td>
+                <td><code>errorfamilytest</code> adopted at all three sites</td>
+                <td><code>poller_test.go</code>, <code>depth_trio_test.go</code>, <code>telnyx_test.go</code></td>
+              </tr>
+            </tbody>
+          </table>
 
           <div class="issue issue-nice" id="good-signals">
             <span class="severity severity-nice">Fully Leveraged &middot; what is right</span>

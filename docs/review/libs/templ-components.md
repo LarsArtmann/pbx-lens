@@ -1,7 +1,7 @@
 # templ-components — utilization audit (pbx-lens)
 
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/templ-components v1.26.0` (+ `/htmx`, `/icons`, `/utils` all v1.26.0; go.mod:26-29) · **Status:** USED
-**Adoption score:** **93/100 (very high)** — 26.0 of 28 applicable capabilities (24 fully ×1.0 + 4 partially ×0.5; 10 of 38 inventory rows N/A with reasons). **95/100 after the recommended #52 fold-in.**
+**Adoption score:** **95/100 (very high)** — 26.5 of 28 applicable capabilities (25 fully ×1.0 + 3 partially ×0.5; 10 of 38 inventory rows N/A with reasons). The #52 fold-in (`RelativeTimeProps.EmptyText` replacing the local "never" guard) landed 2026-11-04, taking the audit-day 93 to 95.
 **Prior reports:** [2026-10-24_templ-components-deep-dive.html](../../research/2026-10-24_templ-components-deep-dive.html) (91/100 at v1.23.0; 38 capabilities) and the delta appendix of its own 2026-10-25 re-run. This report supersedes their version-currency rows (pin now v1.26.0, current), their #52-blocked status, and the "six page surfaces" census (seven as of `segment.templ`). Per-component truth map: `docs/templ-components-adoption.md`.
 
 ## Verdict

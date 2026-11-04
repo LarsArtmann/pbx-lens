@@ -1,7 +1,7 @@
 # go-error-family — utilization audit (pbx-lens)
 
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/go-error-family v0.12.0` (go.mod:22) · **Status:** USED
-**Adoption score:** **45/100 (low)** — 5 of 11 applicable capabilities used appropriately (fully = 1, partial = 0.5 per the deep-dive rubric; registries/retry/tone surface graded Not Applicable with reasons below).
+**Adoption score:** **82/100 (high)** — 9 of 11 applicable capabilities used appropriately (fully = 1, partial = 0.5 per the deep-dive rubric); the four boundary misses (exit codes, HTTP mapping, structured logging, test assertions) all closed 2026-11-04. Registries/retry/tone surface graded Not Applicable with reasons below.
 **Fleet report:** [index.html](index.html)
 
 ## Verdict
@@ -67,3 +67,45 @@ rg -nF "os.Exit(1)" cmd/pbx-lens/main.go                         # finding 1
 rg -n "http.Error" internal/web                                  # finding 2/3 sites
 git -C /home/lars/projects/go-error-family tag --sort=-v:refname | head -3
 ```
+
+## Delta appendix — 2026-11-04 closeout (plan T04–T08)
+
+All five recommendations executed the day of the audit:
+
+1. **CLI boundary (T04).** `fatalCode` in `cmd/pbx-lens/main.go` splits the
+   boundary: classified errors go through `errorfamily.HandleError` (so the
+   projection timeout now exits 75 EX_TEMPFAIL with What/Why/Fix), plain
+   errors keep the legacy one-liner and exit 1 — deliberately NOT routed
+   through `ExitCode`, because `Classify` fail-opens unclassified errors to
+   Transient and a plain bug must never advertise "retry later". Pinned by
+   `TestFatalCodeFamilyMapping` (6 cases).
+2. **Web boundary (T05/T06).** One family-aware writer,
+   `internal/web/errors.go writeIndexError`, replaced the hand mappings:
+   classified errors take `Family.HTTPStatus()` and the body carries ONLY
+   crafted safe text (never `err.Error()`) in either the text or the
+   `{error, family, code}` JSON shape; unclassified keep the caller's
+   fallback status. The three bare 503s were classified at source
+   (`NewInfrastructure` / `WrapInfrastructure`). One deliberate exception:
+   the recording proxy's metadata failure keeps 502, because proxy
+   semantics beat the family's status — it still logs through
+   `LogErrorContext`.
+3. **Structured logging (T08).** A `logFuncHandler` slog adapter feeds
+   `LogErrorContext`, so family/code/retryable/exit_code/context.* ride
+   every index-read failure; the export stream uses it too.
+4. **`errorfamilytest` adopted (T07)** in all three assertion sites —
+   `poller_test.go`, `depth_trio_test.go`, `telnyx_test.go` (the last keeps
+   an explicit contains-check, with a comment, because a fail-open
+   `Classify` makes `AssertFamily` pass for unclassified errors).
+5. **Marker canonicalized (T08).** `exportError` gained a `Context` map fed
+   by `errorfamily.Contextual` (`AsType`), so a truncated download says
+   WHERE it stopped; `Code(err)` consumers stay unchanged.
+
+Score movement: **45/100 → 82/100** (4 of the 5 ❌ rows became ✅:
+`HandleError`, `HTTPStatus`, `LogErrorContext`, `errorfamilytest`). The
+residual gaps that keep it under 100 are breadth, not convention: only
+`WrapInfrastructure` of the 12 wrap variants is used, the fluent
+`JSON`/`Summary` surface is still hand-rolled (the marker keeps its own
+struct), and `Classify` appears only in tests. `WithContext` is now
+CONSUMED (`Contextual` read at the export marker) but never SET by
+production code — attaching `call_id` at the source is the natural next
+step, and the largest remaining win.

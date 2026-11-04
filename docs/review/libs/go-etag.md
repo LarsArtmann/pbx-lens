@@ -1,7 +1,7 @@
 # go-etag — utilization audit (pbx-lens)
 
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/go-etag/server v0.6.1` (go.mod:23; `entitytag` v0.6.1 indirect — re-exported by server, `go mod why` verified) · **Status:** USED
-**Adoption score:** **83/100 (high)** — 10 of 12 applicable config knobs/areas used (5 knobs wired, 3 defaulted, `OnError` unwired, `Validate` N/A; entitytag parse/match re-exports N/A).
+**Adoption score:** **95/100 (very high)** — every applicable config knob/area is now wired (5 knobs explicit, 3 defaulted, plus `OnError` and the `go-etag/metrics` module adopted 2026-11-04; `Validate` N/A, entitytag parse/match re-exports N/A). The residual 5 is the standing `go-etag/client` Hold, not an unadopted capability.
 **Fleet report:** [index.html](index.html)
 
 ## Verdict
@@ -59,3 +59,31 @@ go doc github.com/larsartmann/go-etag/server ETagConfig
 git -C /home/lars/projects/go-etag log --oneline v0.6.1..v0.7.0 | head
 ls /home/lars/projects/go-etag/metrics   # module exists, not in pbx-lens graph
 ```
+
+## Delta appendix — 2026-11-04 closeout (plan T11/T12/T13)
+
+All three findings closed the day of the audit, in this order:
+
+1. **`OnError` wired (T11).** `ETagConfig.OnError` now counts post-commit
+   write failures into a local `writeErrors` atomic and logs them. It is
+   deliberately NOT routed through `metrics.Attach`: upstream's `Attach`
+   covers the generated/304/overflow hooks but not `OnError`, so the
+   counter lives beside the façade (re-checked at the pin,
+   `metrics@v0.6.1/metrics.go`). Surfaced on `/ops` as the "Write errors"
+   row plus an alert; pinned by `TestETagMiddlewareWriteErrorCounts`.
+2. **`go-etag/metrics` adopted (T12).** `CacheCounters` is now a façade
+   over `metrics.Counters`, attached with `Attach`'s preserve-and-append
+   contract (our overflow-log hook composes after the counter hook). The
+   hand-rolled `Snapshot`/ratio arithmetic is gone; `+v0.6.1` of the
+   `metrics` module is in the graph (promotion precedent: an already-
+   vendored family member rides free) and the vendor hashes were re-cut
+   and verified against BOTH the package build and the devShell.
+3. **Ratio guard (T13).** `cacheRatioText` refuses to print a lie: it
+   shows `n/a` until a handler sets tags and raises an explicit
+   `>100% — adopted handler tags` banner in the documented >1 case instead
+   of a clamped fake percentage. Pinned by `TestCacheRatioTextHonestStates`.
+
+Score movement: **83/100 → 95/100**. Every applicable knob/area is now
+wired (`OnError`, `metrics.Attach`); the residual 5 is the standing
+`go-etag/client` Hold (Telnyx ETag emission unverified, window 2027-01)
+and the display-guard caveat rather than an unadopted capability.
