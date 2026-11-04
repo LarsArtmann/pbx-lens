@@ -5,7 +5,9 @@ import (
 	"strings"
 	"sync/atomic"
 
-	etag "github.com/larsartmann/go-etag/metrics"
+	errorfamily "github.com/larsartmann/go-error-family"
+	etagmetrics "github.com/larsartmann/go-etag/metrics"
+	etag "github.com/larsartmann/go-etag/server"
 	"github.com/larsartmann/httputil"
 )
 
@@ -17,13 +19,13 @@ import (
 // use; the middleware increments from request goroutines while the ops
 // handler snapshots.
 type CacheCounters struct {
-	inner       *etag.Counters
+	inner       *etagmetrics.Counters
 	writeErrors atomic.Uint64
 }
 
 // NewCacheCounters builds an empty counter set.
 func NewCacheCounters() *CacheCounters {
-	return &CacheCounters{inner: &etag.Counters{}}
+	return &CacheCounters{inner: &etagmetrics.Counters{}}
 }
 
 // CacheStats is the /api/ops "cache" section: a point-in-time read of the
@@ -100,8 +102,22 @@ func ETagMiddleware(stats *CacheCounters, log func(msg string, args ...any)) htt
 		}
 	}
 
-	wired, counters := etag.Attach(cfg)
+	wired, counters := etagmetrics.Attach(cfg)
 	stats.inner = counters
 
 	return etag.New(wired)
+}
+
+// skipBodyCaching excludes the routes where a body-hash ETag is wrong or
+// pointless: the two exports and the recording proxy stream unbounded (the
+// buffer must never engage), and the staleness fragment plus freshness
+// probe embed an age that changes on every response, so they could never
+// revalidate. Everything else is a stable-until-the-index-moves query.
+func skipBodyCaching(r *http.Request) bool {
+	path := r.URL.Path
+
+	return path == "/frag/staleness" ||
+		path == "/api/freshness" ||
+		strings.HasPrefix(path, "/api/export.") ||
+		strings.HasSuffix(path, "/recording")
 }
