@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/larsartmann/httputil/server_timing"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 

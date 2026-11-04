@@ -40,7 +40,8 @@ func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 	countStop()
 
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusInternalServerError, "counting calls failed; the detail is in the server log", true)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError,
+			"counting calls failed; the detail is in the server log", true)
 
 		return
 	}

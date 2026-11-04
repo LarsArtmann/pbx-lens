@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/larsartmann/httputil/server_timing"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
