@@ -7,11 +7,13 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/projectionhost/v4"
 )
 
-// TestProjectionWorkersReady pins the /health/ready predicate (plan T17):
-// only running/live workers keep the serve claiming ready — a worker that
-// exhausted its restart budget (failed) or sits in backoff mid-restart
-// votes the whole host NOT ready, and startup/shutdown states never pass.
-// An empty worker list is vacuously ready (nothing to be not-ready about).
+// TestProjectionWorkersReady pins the /health/ready predicate (plan T17).
+// It asks "is anything broken?" — never "is a round in flight?". A worker in
+// backoff or failed votes NOT ready; idle, running, live, draining and
+// stopped are all healthy worker states for a batch-drain host whose poller
+// re-drains on every tick (so a healthy serve spends most of its life in
+// WorkerStopped — assuming otherwise made /health/ready answer 503 forever,
+// caught by scripts/verify-ui-contract.js Contract F).
 func TestProjectionWorkersReady(t *testing.T) {
 	tests := []struct {
 		name   string
@@ -32,16 +34,38 @@ func TestProjectionWorkersReady(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "running counts as ready (mid-replay is serving)",
+			name: "running counts as ready (mid-drain is serving)",
 			states: []projectionhost.WorkerState{
 				{Name: "call_views", Status: projectionhost.WorkerRunning},
 			},
 			want: true,
 		},
 		{
+			name: "idle (registered, not yet started) is ready",
+			states: []projectionhost.WorkerState{
+				{Name: "call_views", Status: projectionhost.WorkerIdle},
+			},
+			want: true,
+		},
+		{
+			name: "draining (finishing in-flight events) is ready",
+			states: []projectionhost.WorkerState{
+				{Name: "call_views", Status: projectionhost.WorkerDraining},
+			},
+			want: true,
+		},
+		{
+			name: "stopped (drain complete, waiting for next tick) is ready",
+			states: []projectionhost.WorkerState{
+				{Name: "call_views", Status: projectionhost.WorkerStopped},
+				{Name: "fts", Status: projectionhost.WorkerStopped},
+			},
+			want: true,
+		},
+		{
 			name: "one failed worker votes not ready",
 			states: []projectionhost.WorkerState{
-				{Name: "call_views", Status: projectionhost.WorkerLive},
+				{Name: "call_views", Status: projectionhost.WorkerStopped},
 				{Name: "fts", Status: projectionhost.WorkerFailed, LastError: "boom"},
 			},
 			want: false,
@@ -50,27 +74,6 @@ func TestProjectionWorkersReady(t *testing.T) {
 			name: "backoff mid-restart votes not ready",
 			states: []projectionhost.WorkerState{
 				{Name: "fts", Status: projectionhost.WorkerBackoff},
-			},
-			want: false,
-		},
-		{
-			name: "idle (launched, not drained) votes not ready",
-			states: []projectionhost.WorkerState{
-				{Name: "call_views", Status: projectionhost.WorkerIdle},
-			},
-			want: false,
-		},
-		{
-			name: "draining (shutdown) votes not ready",
-			states: []projectionhost.WorkerState{
-				{Name: "call_views", Status: projectionhost.WorkerDraining},
-			},
-			want: false,
-		},
-		{
-			name: "stopped votes not ready",
-			states: []projectionhost.WorkerState{
-				{Name: "call_views", Status: projectionhost.WorkerStopped},
 			},
 			want: false,
 		},

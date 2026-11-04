@@ -212,12 +212,20 @@ posture is the htpasswd middleware or loopback-only dev.
 
 `/health/ready` is projection-worker readiness (2026-11-04, plan T17): the
 serve wiring sets `ReadyCheck` to `cli.ProjectionWorkersReady` over
-`sys.ProjectionHost().Status()` — ready while every worker is
-running/live, 503 when any is failed (restart budget exhausted), in
-backoff, or not yet drained. The startup drain brings workers live before
-`svc.Run`, so the probe guards the SERVE lifetime: a worker dying
-mid-flight stops claiming ready instead of leaving the load balancer
-pointed at a stale read model. Idle/draining/stopped never pass. (Idea
-attribution: the readiness bridge pattern is cqrs-htmx's health-bridge
-idea — docs/review/libs/cqrs-htmx.md — built here on appkit's `ReadyCheck`
-plus projectionhost worker states.)
+`sys.ProjectionHost().Status()`. The predicate asks ONE question — **is any
+worker broken?** A worker in `backoff` (restarting, budget not yet spent) or
+`failed` (restart budget exhausted, read model permanently behind) votes 503;
+everything else votes ready. That asymmetry is forced by the host's
+lifecycle: it is a **batch drainer**, not a live tail, so a healthy worker is
+`idle` before the first drain, `running`/`live` during it, `draining` while
+in-flight events finish, and `stopped` once caught up — and the serve poller
+re-drains on every tick, so a healthy process spends most of its life
+`stopped`. (The startup drain runs before `svc.Run`, so the first probe
+already sees a caught-up read model.) The first cut of this predicate
+required `running`/`live` and therefore answered 503 on a perfectly healthy
+serve — `scripts/verify-ui-contract.js` Contract F caught it; the comment
+pairs in `internal/cli/system.go` now cross-link the predicate with
+`workerRoundState`, which reads the SAME states the opposite way (drain
+success requires `stopped`). (Idea attribution: the readiness bridge pattern
+is cqrs-htmx's health-bridge idea — docs/review/libs/cqrs-htmx.md — built
+here on appkit's `ReadyCheck` plus projectionhost worker states.)

@@ -235,13 +235,18 @@ const fail = probe.fail;
     if (!focusVisible) fail("first Tab stop has no visible focus indicator");
 
     // --- Contract F: projection readiness (plan T17) -------------------
-    // /health/ready must answer 200 while the drained workers are live
-    // (the lane's serve instance boots through the startup drain), and
-    // /health/live stays 200. A 503 here means a worker died mid-serve —
-    // exactly what the probe exists to catch.
+    // /health/ready must answer 200 on a healthy serve, and /health/live
+    // stays 200. The predicate reports BROKEN workers (failed/backoff), not
+    // "a drain is in flight": this host is a batch drainer, so the workers
+    // of the lane's serve instance are normally WorkerStopped (caught up,
+    // waiting for the poller's next tick). A 503 here means a worker really
+    // did exhaust its restart budget — exactly what the probe exists to
+    // catch. (This probe is why the first predicate, which required
+    // running/live, was caught instead of shipping.)
     const ready = await page.goto(`${BASE}/health/ready`, { waitUntil: "load" });
     console.log("health/ready status:", ready.status());
-    if (![200, 304].includes(ready.status())) fail(`/health/ready status ${ready.status()}, want 200 (workers live)`);
+    if (![200, 304].includes(ready.status()))
+      fail(`/health/ready status ${ready.status()}, want 200 (no broken workers)`);
     const live = await page.goto(`${BASE}/health/live`, { waitUntil: "load" });
     if (![200, 304].includes(live.status())) fail(`/health/live status ${live.status()}, want 200`);
 

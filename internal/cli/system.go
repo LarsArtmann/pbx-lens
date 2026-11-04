@@ -76,6 +76,12 @@ func DrainProjections(ctx context.Context, sys *system.System) error {
 // drainPollInterval is the status-poll cadence while awaiting drain workers.
 const drainPollInterval = 2 * time.Millisecond
 
+// workerRoundState classifies a drain round: allDone (every worker reached
+// WorkerStopped) and anyFailed (some worker exhausted its restart budget).
+// See ProjectionWorkersReady for the OPPOSITE reading of the same states —
+// a stopped worker is drain success here and health there. Do not unify the
+// two predicates: drain wants "the batch finished", readiness wants "nothing
+// is broken", and in a drain-then-exit host those are different questions.
 func workerRoundState(states []projectionhost.WorkerState) (bool, bool) {
 	allDone, anyFailed := true, false
 
@@ -99,16 +105,25 @@ func workerRoundState(states []projectionhost.WorkerState) (bool, bool) {
 	return allDone, anyFailed
 }
 
-// ProjectionWorkersReady is the serve readiness predicate (plan T17): every
-// projection worker is actively serving the read model — running or live.
-// A failed worker (restart budget exhausted) or one stuck in backoff votes
-// NOT ready, so /health/ready answers 503 until the read model is current
-// again; idle means "launched but not drained" (never ready mid-startup),
-// draining/stopped mean shutdown (the appkit probe flips false there
-// anyway). No workers at all is vacuously ready.
+// ProjectionWorkersReady is the serve readiness predicate (plan T17). It
+// answers ONE question: is anything broken? A worker in WorkerBackoff (about
+// to restart, budget not yet spent) or WorkerFailed (budget spent, read model
+// permanently behind) is broken and votes NOT ready, so /health/ready answers
+// 503 until that clears. Every other state is healthy in THIS architecture:
+// the projection host is a batch drainer, so workers are WorkerIdle before the
+// first drain, WorkerRunning/WorkerLive during it, WorkerDraining while
+// in-flight events finish, and WorkerStopped once caught up — the serve poller
+// re-drains on its tick, so a healthy process spends most of its life stopped.
+// An empty list is vacuously ready.
+//
+// This is the deliberate inverse of workerRoundState above: drain success
+// requires WorkerStopped, readiness requires the absence of failure. Stopped
+// workers are why the first cut of this predicate answered 503 on a healthy
+// serve (scripts/verify-ui-contract.js Contract F caught it).
 func ProjectionWorkersReady(states []projectionhost.WorkerState) bool {
 	for _, state := range states {
-		if state.Status != projectionhost.WorkerRunning && state.Status != projectionhost.WorkerLive {
+		switch state.Status {
+		case projectionhost.WorkerBackoff, projectionhost.WorkerFailed:
 			return false
 		}
 	}

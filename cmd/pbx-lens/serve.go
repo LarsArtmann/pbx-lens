@@ -149,10 +149,12 @@ func serve(args []string) {
 	}
 
 	// Readiness is the read model's honesty (plan T17): /health/ready
-	// answers 503 while any projection worker is failed, backing off, or
-	// not yet drained — the drain above already brought them live, so the
-	// probe guards the SERVE lifetime (a worker exhausting its restart
-	// budget mid-flight stops claiming ready).
+	// answers 503 while any projection worker is failed (restart budget
+	// exhausted) or backing off. Every other state is healthy here — the
+	// host is a batch drainer, so workers sit idle before the first drain,
+	// run during it, and stop once caught up; the poller below re-drains on
+	// every tick. Treating "stopped" as unready made a healthy serve answer
+	// 503 forever (scripts/verify-ui-contract.js Contract F caught it).
 	serviceConfig.ReadyCheck = func() bool {
 		return cli.ProjectionWorkersReady(sys.ProjectionHost().Status())
 	}
