@@ -1,7 +1,7 @@
 # httputil/server_timing — utilization audit (pbx-lens)
 
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/httputil/server_timing v1.0.3` (go.mod:25) · **Status:** USED
-**Adoption score:** **33/100 direct (low)** — 2 of 6 applicable primitives called directly; **50/100 effective (moderate)** — a third primitive is covered by a hand-rolled wrapper that diverges from the maintained path.
+**Adoption score:** **67/100 direct (moderate)** — 2 of 3 applicable primitives called directly (`MeasureServerTiming`, `ServerTimingMiddleware`); **67/100 effective** — every used capability rides the maintained path since the 2026-11-04 swap deleted the divergent hand-wrap (`ServerTimingMiddlewareWhen` declined by recorded decision: single-operator htpasswd surface, docs/http-stack.md).
 **Fleet report:** [index.html](index.html)
 
 ## Verdict
@@ -28,10 +28,10 @@ Ground truth: v1.0.3 module cache — 15 exported symbols, stdlib-only.
 
 | Symbol | Used? |
 |---|---|
-| `WrapServerTiming` | ✅ `internal/web/timing.go:21` |
+| `WrapServerTiming` | ❌ no longer called (was the hand-wrap's plumbing; wrapper deleted 2026-11-04) |
 | `MeasureServerTiming` | ✅ 11 call sites: `timing.go:40` (firstpage); `server.go:187,348,494`; `freshness.go:25,36`; `recording.go:120,160`; `search.go:60`; `segment_page.go:24`; `ops.go:147` (12 rg lines incl. one comment) |
-| `ServerTimingMiddleware` | ❌ hand-rolled duplicate instead |
-| `ServerTimingMiddlewareWhen` | ❌ (the gating variant, unused) |
+| `ServerTimingMiddleware` | ✅ `cmd/pbx-lens/serve.go` (the 2026-11-04 swap) |
+| `ServerTimingMiddlewareWhen` | ❌ declined by recorded decision (unconditional OK behind htpasswd; escape named in docs/http-stack.md) |
 | `RecordServerTiming` | ❌ (plain `Measure` suffices) |
 | `MeasureWithDesc` | ❌ (descriptions unused) |
 
@@ -60,11 +60,32 @@ Pin v1.0.3 == latest release ("zero drift since v1.0.3" per httputil v1.7.0 CHAN
 1. Swap to the library middleware + correct `timing.go:16-17`, `docs/http-stack.md:32-34` (one commit).
 2. Evaluate `ServerTimingMiddlewareWhen` gating in the same change.
 
+## Delta appendix — 2026-11-04 closeout (plan T01/T02/T03)
+
+All three recommendations executed the day of this audit:
+
+1. `serve.go` wires `servertiming.ServerTimingMiddleware()`; the hand-wrap
+   (`timing.go:18-25`) and its false justifying comment are deleted. A/B
+   bench: allocs/op identical (1216–1218 both trees), ns/op inside box
+   noise — performance-neutral.
+2. Gating decision recorded: UNCONDITIONAL (single-operator htpasswd;
+   `ServerTimingMiddlewareWhen` is the named escape for any future public
+   route) — docs/http-stack.md middleware item 3.
+3. All false-claim carriers corrected (timing.go comment deleted with the
+   wrapper, http-stack.md rewritten, AGENTS.md shrunk to a pointer, the
+   2026-10-12 HTML carries an errata on finding #2). A guard test pins
+   header presence on a plain route (`TestServerTimingHeaderOnPlainRoute`).
+
+Score movement: 33/50 → 67/67 (the wrapper-divergence penalty is gone;
+the remaining gap is the two never-applicable plumbing primitives and the
+recorded When-decline).
+
 ## How to verify
 
 ```console
 rg -n "func ServerTimingMiddleware" ~/go/pkg/mod/github.com/larsartmann/httputil/server_timing@v1.0.3/server_timing.go
-sed -n '14,26p' internal/web/timing.go
+rg -n "ServerTimingMiddleware" cmd/pbx-lens/serve.go
 rg -n "MeasureServerTiming" internal/web -g '!*_templ.go' | wc -l   # 11
-rg -in "middleware constructor" internal/web/timing.go docs/http-stack.md
+rg -in "middleware constructor" internal/web/timing.go docs/http-stack.md   # zero hits
+GOEXPERIMENT=jsonv2 go test ./internal/web/ -run TestServerTimingHeaderOnPlainRoute
 ```

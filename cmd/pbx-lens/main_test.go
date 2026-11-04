@@ -7,6 +7,12 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 )
 
+var (
+	errPlainBug       = errors.New("plain bug")
+	errPlainSecond    = errors.New("second plain bug")
+	errPlainNoBackend = errors.New("no index")
+)
+
 // TestFatalCodeFamilyMapping pins the CLI boundary contract: family-classified
 // errors map through the library's sysexits table (Transient = 75
 // EX_TEMPFAIL, e.g. the projection-timeout fatal), while non-family errors
@@ -19,11 +25,19 @@ func TestFatalCodeFamilyMapping(t *testing.T) {
 		want int
 	}{
 		{"rejection stays 1", errorfamily.NewRejection("lens.cli.missing_db", "needs -db"), 1},
-		{"projection timeout exits 75", errorfamily.NewTransient("lens.cli.projection_timeout", "did not converge"), 75},
-		{"infrastructure exits 69", errorfamily.WrapInfrastructure(errors.New("no index"), "lens.cli.catalog", "x"), 69},
+		{
+			name: "projection timeout exits 75",
+			err:  errorfamily.NewTransient("lens.cli.projection_timeout", "did not converge"),
+			want: 75,
+		},
+		{
+			name: "infrastructure exits 69",
+			err:  errorfamily.WrapInfrastructure(errPlainNoBackend, "lens.cli.catalog", "x"),
+			want: 69,
+		},
 		{"corruption exits 65", errorfamily.NewCorruption("lens.cli.corrupt", "bad"), 65},
-		{"non-family keeps legacy 1", errors.New("plain bug"), 1},
-		{"wrapped non-family keeps 1", errorfamily.Compose(errors.New("a"), errors.New("b")), 1},
+		{"non-family keeps legacy 1", errPlainBug, 1},
+		{"wrapped non-family keeps 1", errorfamily.Compose(errPlainBug, errPlainSecond), 1},
 	}
 
 	for _, tc := range tests {

@@ -1051,6 +1051,17 @@
               hops. pbx-lens wraps this in internal/web/timing.go once and
               instruments the named hops at each handler.
             </p>
+            <p>
+              <strong>Errata (2026-11-04, fleet audit):</strong> the claim
+              &ldquo;no released version ships a middleware constructor&rdquo;
+              was wrong at this report&rsquo;s own pin &mdash; v1.0.2 shipped
+              <code>ServerTimingMiddleware()</code> (and v1.0.1 before it;
+              verified in the module cache at all three releases). The
+              hand-wrap was a duplicate of the maintained path; the wiring
+              swapped onto the library constructor on 2026-11-04 and the
+              duplicate was deleted. Full re-verification:
+              docs/review/libs/httputil-server-timing.md.
+            </p>
           </div>
 
           <div class="issue issue-nice" id="issue-3">
