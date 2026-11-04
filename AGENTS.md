@@ -31,15 +31,13 @@ read-only deep link, never a data dependency.
   `GOEXPERIMENT=jsonv2` (fleet house style; nothing imports encoding/json/v2
   yet — the env var becomes load-bearing when a surface needs it).
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
-  (below) + `templ-components/htmx` (rides the root pin). No testify
-  (banned; stdlib table-driven tests), no cobra, no ORM. Promotion
-  precedent (bcrypt, x/time rate, templ-components/htmx, the 2026-10-12
-  HTTP-stack trio httputil/server_timing/go-etag): a module ALREADY in the
-  graph rides free — promoting it to direct adds no new module.
-  server_timing ships `ServerTimingMiddleware()`/`...When(pred)` since
-  v1.0.1 (the serve wiring uses it; Server-Timing doctrine lives in
-  docs/http-stack.md); `entitytag` stays indirect
-  (`go-etag/server` re-exports everything).
+  (below) + `templ-components/htmx` (rides the root pin). No testify (banned;
+  stdlib table-driven tests), no cobra, no ORM. Promotion precedent (bcrypt,
+  x/time rate, templ-components/htmx, the 2026-10-12 HTTP-stack trio
+  httputil/server_timing/go-etag): a module ALREADY in the graph rides free.
+  server_timing ships `ServerTimingMiddleware()`/`...When(pred)` since v1.0.1
+  (the serve wiring uses it; doctrine in docs/http-stack.md); `entitytag` stays
+  indirect (`go-etag/server` re-exports everything).
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
   `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — never hand-roll harness
@@ -47,159 +45,130 @@ read-only deep link, never a data dependency.
 - **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
   sweep budgeted; versions.json lies — verify with `git tag --contains`).
 - **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep + v1.26.0):
-  `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
-  owns SIGINT/SIGTERM + graceful drain; v0.10 WATCH: Server-Timing becomes
-  the default outermost middleware — delete the serve.go wiring on bump,
+  `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run owns
+  SIGINT/SIGTERM + graceful drain; v0.10 WATCH: Server-Timing becomes the
+  default outermost middleware — delete the serve.go wiring on bump,
   docs/review/libs/go-appkit.md), `templ-components` v1.26.0
-  (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1070
-  (codegen; manual bumps only — a dependabot templ PR mangles this go.mod;
-  ≥v1.27 templ-components will require templ ≥v0.3.1100 — one coordinated
-  bump, adoption-map checklist step 8).
-  Stay on the PUBLISHED templ-components version — no local replace
-  (breaks hermetic nix); hand-roll missing thin pieces.
+  (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1070 (codegen;
+  manual bumps only — a dependabot templ PR mangles this go.mod; ≥v1.27
+  templ-components needs templ ≥v0.3.1100 — one coordinated bump, adoption-map
+  checklist step 8). Stay on the PUBLISHED templ-components version — no local
+  replace (breaks hermetic nix); hand-roll missing thin pieces.
 - **UI theme — signal palette (2026-10-12; heatmap bridge 2026-10-15):**
-  app.css overrides the `--color-tc-primary`/`-hover`/`--color-tc-info`
-  trio to the teal family in an @theme block placed AFTER
-  the `templ-components-theme.css` import (later @theme wins; the theme
-  binds `--color-blue-600: var(--color-tc-primary)`, so one override
-  re-skins every library blue). The one component OFF the token chain is
-  display.Heatmap: it fills via rgba(var(--ds-brand-rgb), α) and rings its
-  peak cell with var(--ds-brand), both defaulting to violet-600 — app.css
-  re-bridges the pair in a :root/.dark block after the imports (light/dark
-  teals; the rgb triplets must stay comma-separated — legacy rgba contract).
-  Never hand-write `bg-blue-*` in pbx-lens .templ files —
-  the library's own classes re-skin through the token chain.
-- **templ-components adoption map:** per-component truth for THIS
-  repo lives in docs/templ-components-adoption.md (skill docs drift ahead
-  of the pinned tag; check the map before importing anything new; it also
-  carries the version-bump watchlist + corpus-script mechanics to run on
-  every bump — the v1.23.0 sweep skipped it once and paid for it).
-  Pin: v1.24.0. **utils/format is ADOPTED (2026-10-24)** — never hand-roll
-  duration/percent/dash formatting (dialect + the `-run 'TestGolden'`
-  goldens gotcha: docs/templ-components-adoption.md); keep
-  `mosGaugePercent` (domain math).
-- **Flake:** go-standard flakeModule from go-nix-helpers (go-output's
-  pattern): `subPackages = ["./cmd/pbx-lens"]` wires the package to the
-  real binary (the default `["."]` built the package-less root and shipped
-  an empty result); treefmt runs nixfmt + deadnix + statix only (BuildFlow
-  owns Go formatting). DevShell sets GOTOOLCHAIN=local + GOEXPERIMENT=jsonv2
-  (package list: the `nix develop` command line). UI codegen is a package preBuild (`templGenerationPolicy = "preBuild"`:
-  templ generate + tailwindcss → styles.css). styles.css is COMMITTED (CI
-  embeds it; nix preBuild still regenerates; 2026-10-15 v0.2.0 CI fix);
-  *_templ.go stays gitignored.
-  `vendorHash.nix` carries the landed vendor hash; repair a go.mod/go.sum
-  break via `nix run .#update-vendor-hash` on a CLEAN tree (never nix-hash-fix,
-  BuildFlow#55) and verify ANY hash touch against root AND devShell
-  (`nix develop -c echo ok`) — `nix flake check` never builds devShells, so
-  its green masked the 2026-10-25 devshell break. `scripts/cut-release.sh`
-  guards version-const parity (the v0.3.0 tag shipped printing 0.2.0 —
-  const bumped on main post-tag). 2026-10-28 nix-review hardening:
-  extraMeta.license = unfree (go-standard hardcodes mit; this repo is
-  PROPRIETARY — extraMeta merges OVER the module meta) plus the allowUnfree
-  pkgs re-instantiation (journal/Zlota44 pattern: perSystem imports the
-  LOCKED nixpkgs with config.allowUnfree and feeds every perSystem module
-  via `_module.args.pkgs`; derivation hashes unchanged); enableLockGuards
-  pins the three follows pairs + the github-original nixpkgs lock node at
-  eval time; ONE `goAttr` string feeds BOTH goPkgAttr and the perSystem
-  `go` binding (else sandbox build and devShell toolchains can drift);
-  update-vendor-hash declares coreutils+gnugrep (its text shells out to
-  them; gnused was vestigial); cqrs-lint carries meta (unfree). KNOWN
-  pre-existing (verified at HEAD 2026-10-28): checks.pre-commit
-  false-positives on import-dependent templ alignment — the sandbox
-  formats without module resolution and wants different bytes than any
-  online `nix fmt` (CI lane is the truth; NEVER commit the sandbox's
-  drift — docs/gotchas.md 2026-10-28, staged upstream in
-  docs/upstream-filings.md).
-- **CI:** GitHub Actions lane (`.github/workflows/ci.yml`, go-output's
-  pattern, single-module): build+test(-race)+coverage+tidy, golangci-lint,
-  govulncheck, art-dupl (ZERO-GROUP GATE: `art-dupl check -t 4 --min-lines 2 .`
-  vs `scripts/art-dupl-baseline.json`, which records ZERO accepted groups —
-  any new multi-line clone fails the lane; `--min-lines 2` drops 1-line
-  signature/type matches, which are shape coincidence, not duplication.
-  TRAP: the default report hides a suppressed bucket that CAN hold real
-  clones (four were extracted 2026-10-24); audit with `--show-suppressed`
-  after pin bumps; invoke the gate only via `scripts/check-dedup-gate.sh` (refuses non-pin binaries). docs/art-dupl-baseline.md owns mechanics/history). Dependabot watches github-actions + gomod.
-  BuildFlow stays the LOCAL gate; the flake's
-  generic apps.test/apps.lint stay module-generated conveniences, not a second
-  gate. Every Go-compiling CI job runs `go tool templ generate` first
-  (`*_templ.go` are gitignored; the templ CLI is pinned by a go.mod `tool`
-  directive — `go run github.com/a-h/templ/cmd/templ` FAILS: CLI-only deps
-  not in go.sum). The golangci-lint pin must be BUILT with go ≥ the
-  module's language level (v2.12 = go1.26 refuses the config; v2.14 =
-  go1.27.1), and the repo .golangci.yml enables `mnd` (local buildflow's
-  lint may not) — run `golangci-lint run ./...` before pushing.
-- **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version
-  subcommands) lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog`
-  is the DB-free exception: `cli.RenderCatalog`/`cli.RenderArchitecture`
-  render the eventcatalog tree (+ `-architecture` HTML) for the hub; see
-  `.eventcatalog-hub.json`. Hub bootstrap norm: `-plain` always skips
-  generated bootstrap files, `-skip-bootstrap` opts out — the merging hub
-  owns site title, core pin, dependencies). Flag validation is shared
-  (`requireDB`/`requireOneArg` in package main; messages derive from
-  `fs.Name()`, so new subcommands reject consistently). The `internal/ingest` ROOT
-  package hosts the shared parser scaffolding — `Result` (observations +
-  skipped-row count) and `NewScanner`/`EachLine` (64 KiB→1 MiB bounded line
-  scan; `EachLine` trims and skips blanks). `cdr.Parse`/`webhook.Parse` return
-  `ingest.Result` directly (no per-package Result alias — one type, no split
-  brain); `agent.Result` keeps its own shape (Transcripts, not Observations);
-  CDR keeps its own scan loop (semicolon CSV semantics) but through
-  `ingest.NewScanner`. Support: `internal/wire` (FlexTime + shared decode
-  helpers; directly unit-tested), `internal/backup` (VACUUM INTO snapshot +
+  app.css overrides the `--color-tc-primary`/`-hover`/`--color-tc-info` trio to
+  the teal family in an @theme block placed AFTER the
+  `templ-components-theme.css` import (later @theme wins; the theme binds
+  `--color-blue-600: var(--color-tc-primary)`, so one override re-skins every
+  library blue). The one component OFF the token chain is display.Heatmap: it
+  fills via rgba(var(--ds-brand-rgb), α) and rings its peak cell with
+  var(--ds-brand), both defaulting to violet-600 — app.css re-bridges the pair
+  in a :root/.dark block after the imports (light/dark teals; the rgb triplets
+  must stay comma-separated — legacy rgba contract). Never hand-write
+  `bg-blue-*` in pbx-lens .templ files.
+- **templ-components adoption map:** per-component truth for THIS repo lives
+  in docs/templ-components-adoption.md (skill docs drift ahead of the pinned
+  tag; check the map before importing anything new; it carries the version-bump
+  watchlist + corpus-script mechanics to run on every bump — the v1.23.0 sweep
+  skipped it once and paid for it). **utils/format is ADOPTED (2026-10-24)** —
+  never hand-roll duration/percent/dash formatting (dialect + the
+  `-run 'TestGolden'` goldens gotcha: docs/templ-components-adoption.md);
+  keep `mosGaugePercent` (domain math).
+- **Flake:** go-standard flakeModule (go-nix-helpers; go-output's pattern):
+  `subPackages = ["./cmd/pbx-lens"]` wires the package to the real binary (the
+  default `["."]` shipped an empty result); treefmt = nixfmt + deadnix + statix
+  (BuildFlow owns Go formatting); DevShell sets GOTOOLCHAIN=local +
+  GOEXPERIMENT=jsonv2 (package list: the `nix develop` command line). UI codegen
+  is a package preBuild (`templGenerationPolicy = "preBuild"`), and styles.css
+  is COMMITTED (CI embeds it); *_templ.go stays gitignored. `vendorHash.nix`
+  holds the landed hash: repair via `nix run .#update-vendor-hash` on a CLEAN
+  tree (never nix-hash-fix, BuildFlow#55) and verify ANY touch against root AND
+  devShell (`nix develop -c echo ok`) — `nix flake check` never builds
+  devShells, and its green masked the 2026-10-25 devshell break.
+  `scripts/cut-release.sh` guards version-const parity (v0.3.0 shipped printing
+  0.2.0). Hardening (2026-10-28 nix-review): extraMeta.license = unfree (this
+  repo is PROPRIETARY; extraMeta merges OVER the module meta), allowUnfree pkgs
+  re-instantiated per-system from the LOCKED nixpkgs via `_module.args.pkgs`,
+  enableLockGuards pins the follows pairs + the nixpkgs lock node, ONE `goAttr`
+  feeds both goPkgAttr and the perSystem `go` binding (else sandbox and devShell
+  toolchains drift), update-vendor-hash declares coreutils+gnugrep, cqrs-lint
+  carries meta. KNOWN pre-existing: checks.pre-commit false-positives on
+  import-dependent templ alignment (the sandbox formats without module
+  resolution; the CI lane is truth — NEVER commit its drift; docs/gotchas.md).
+- **CI:** GitHub Actions (`.github/workflows/ci.yml`, go-output's pattern):
+  build+test(-race)+coverage+tidy, golangci-lint, govulncheck, and the art-dupl
+  ZERO-GROUP GATE (`art-dupl check -t 4 --min-lines 2 .` vs
+  `scripts/art-dupl-baseline.json`; `--min-lines 2` drops 1-line shape
+  coincidences, and the default report hides a suppressed bucket that CAN hold
+  real clones — audit with `--show-suppressed` after pin bumps; invoke only via
+  `scripts/check-dedup-gate.sh`). Every Go-compiling job runs `go tool templ
+  generate` first (`*_templ.go` gitignored; the CLI is a go.mod `tool`, so
+  `go run .../cmd/templ` FAILS). The golangci-lint pin must be BUILT with go ≥
+  the module's level, and `.golangci.yml` enables `mnd` — run
+  `golangci-lint run ./...` before pushing. BuildFlow stays the LOCAL gate.
+- **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/version)
+  lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog` is the DB-free
+  exception: `cli.RenderCatalog`/`cli.RenderArchitecture` render the
+  eventcatalog tree + `-architecture` HTML for the hub; `.eventcatalog-hub.json`
+  — `-plain` skips generated bootstrap files, `-skip-bootstrap` opts out, the
+  merging hub owns site title/pins/deps). Flag validation is shared
+  (`requireDB`/`requireOneArg`; messages derive from `fs.Name()`). The
+  `internal/ingest` ROOT package hosts the shared parser scaffolding — `Result`
+  and `NewScanner`/`EachLine` (64 KiB→1 MiB bounded scan, trims + skips blanks);
+  `cdr.Parse`/`webhook.Parse` return `ingest.Result` directly (no per-package
+  alias — one type, no split brain), `agent.Result` keeps its own shape, CDR
+  keeps its semicolon-CSV loop through `ingest.NewScanner`. Support:
+  `internal/wire` (FlexTime + decode helpers), `internal/backup` (VACUUM INTO +
   integrity verify), `internal/retention` (Policy/OldViews/Retire behind
   `purge`; `Policy.Admits` also gates serve-poller `-max-age`, 0 = keep
   everything). Projection record keys are BARE (`calls.RecordKey` =
-  `StreamID.Get()`; the projection adapter's bare ID) — never hand-build
-  one, and read through `calls.LookupView` (its marker-prefixed fallback
-  keeps pre-flip rows reachable; docs/gotchas.md has the incident).
-  `calls.DefaultExcerptMax` (200 runes) caps every excerpt; source mappers
-  select via `calls.Excerpt` (first user turn, fallback first turn). The serve htpasswd timing pad hashes at the
-  LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that property
-  when touching auth.go; SIGHUP reloads the file (a broken reload keeps the
-  running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
+  `StreamID.Get()`) — never hand-build one, and read through `calls.LookupView`
+  (its marker-prefixed fallback keeps pre-flip rows reachable; docs/gotchas.md
+  has the incident). `calls.DefaultExcerptMax` (200 runes) caps every excerpt;
+  source mappers select via `calls.Excerpt`. The serve htpasswd timing pad
+  hashes at the LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that
+  property when touching auth.go; SIGHUP reloads the file (a broken reload keeps
+  the running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
   FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
   deliberately not honored).
 - **serve/UI:** `serve` composes appkit around `web.Register`:
-  ServiceConfig{Addr, `Version` → `/version`, `Metrics` → `/metrics`
-  (explicit `AllowUnauthenticated` opt-in; both beside the appkit
-  `/health{,/live,/ready}` routes), `WriteTimeout: NoTimeout` — exports and
-  the recording audio stream (WAV, else MP3 fallback) are unbounded and the
-  former 30 s deadline truncated both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`;
-  READY/STOPPING/WATCHDOG under the manager) + htpasswd auth. The
-  ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
+  ServiceConfig{Addr, `Version` → `/version`, `Metrics` → `/metrics` (explicit
+  `AllowUnauthenticated` opt-in; both beside the appkit `/health{,/live,/ready}`
+  routes), `WriteTimeout: NoTimeout` — exports and the recording audio stream
+  (WAV, else MP3 fallback) are unbounded and the former 30 s deadline truncated
+  both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`) + htpasswd auth.
+  The ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
   Compression → ETag; ordering doctrine, ETag skip policy, render-buffering
-  trap, the `Cache-Control: no-cache` revalidation contract) lives in
-  docs/http-stack.md — read it before touching caching, timing, or the
-  recording route (it owns the two-hop budget).
-  Every UI route is a query or a proxy, never a write. Exports and the
-  dashboard STREAM via keyset pagination (`StreamExportCalls`, 5k-row pages,
-  memory-bounded, no row cap); day buckets resolve in Europe/Berlin (R2
-  2026-10-12 — bare date filters too), an idle index drifts out of the
-  chart. htmx polling (R9): `/frag/dashboard` 30 s, `/frag/staleness`
-  60 s, runtime self-hosted at `/static/htmx.min.js` — no CDN.
-  `/favicon.svg` (embedded lens mark) satisfies layout.Base's favicon link; `/api/ops` (R15) serves per-source counters behind the same auth.
-  Detail page = READ-TIME join (`CallDetailPage`; rules in
-  docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List + dashboard collapse
-  duplicate source rows onto the representative row (CDR first;
-  `internal/web/representative.go`), export stays per-source. Analytics: spend,
-  "who calls what" segments (`?number=` drill-through), "how calls end" rates —
-  every figure carries its own denominator.
+  trap, `Cache-Control: no-cache` revalidation contract) lives in
+  docs/http-stack.md — read it before touching caching, timing, or the recording
+  route (it owns the two-hop budget). Every UI route is a query or a proxy,
+  never a write. Exports and the dashboard STREAM via keyset pagination
+  (`StreamExportCalls`, 5k-row pages, memory-bounded, no row cap); day buckets
+  resolve in Europe/Berlin (bare date filters too), an idle index drifts out of
+  the chart. htmx polling (R9): `/frag/dashboard` 30 s, `/frag/staleness` 60 s,
+  runtime self-hosted at `/static/htmx.min.js` — no CDN. `/favicon.svg`
+  (embedded lens mark) satisfies layout.Base's favicon link; `/api/ops` (R15)
+  serves per-source counters behind the same auth. Detail page = READ-TIME join
+  (`CallDetailPage`; rules in docs/DOMAIN_LANGUAGE.md § "Read-time call join").
+  List + dashboard collapse duplicate source rows onto the representative row
+  (CDR first; `internal/web/representative.go`), export stays per-source.
+  Analytics: spend, "who calls what" segments (`?number=` drill-through), "how
+  calls end" rates — every figure carries its own denominator.
 
 ## Domain
 
 - `Observation` = one source row. `SourceKind`: freeswitch-cdr |
-  telnyx-conversation | webhook-log | agent-transcript. `Direction`:
-  inbound | outbound; a Telnyx conversation touching a configured AI DID
-  (`-ai-did`) indexes inbound regardless of the declared direction. Numbers
-  stay raw; `E164`/`ParticipantHash` exist for the planned PII policy and are
-  NOT enforced yet.
+  telnyx-conversation | webhook-log | agent-transcript. `Direction`: inbound |
+  outbound; a Telnyx conversation touching a configured AI DID (`-ai-did`)
+  indexes inbound regardless of the declared direction. Numbers stay raw;
+  `E164`/`ParticipantHash` exist for the planned PII policy, NOT enforced yet.
 - Stream id = `<kind>:<native-id>` — deterministic: re-ingest is the same
-  stream; `call.record` is idempotent (same ContentHash replays to zero
-  events; a changed hash on a live stream = parsing bug — CDR rows are immutable).
+  stream; `call.record` is idempotent (same ContentHash replays to zero events;
+  a changed hash on a live stream = parsing bug — CDR rows are immutable).
 - Read model: `call_views`, one `CallView` per stream (`metaengine.OnRecordTyped` folds).
 - **Transcript truth:** the lens performs NO speech-to-text — `Transcript` is
   the source's own turns, verbatim; non-speech rows are `SourceEvents` (outside
-  ContentHash). The full rules (idle markers, turn times, call-fact signals,
-  the no-second-ASR rule): docs/DOMAIN_LANGUAGE.md § "Transcript truth".
+  ContentHash). Full rules (idle markers, turn times, call-fact signals, the
+  no-second-ASR rule): docs/DOMAIN_LANGUAGE.md § "Transcript truth".
 
 ## Commands
 
@@ -225,28 +194,26 @@ nix run .#update-vendor-hash          # after go.mod/go.sum; CLEAN tree only —
 
 Receipt-grade commits: `git add … && git commit …` in ONE call; amend only
 UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit code.
-Concurrent sessions + daemon: the norm is docs/concurrency.md.
+Concurrent sessions + daemon: docs/concurrency.md.
 
 ## Deep context (docs/) — read the full doc BEFORE touching its area
 
 - **docs/gotchas.md** — war stories: record keys, the one-shot drain,
   full-recompute folds, FTS5, tombstones, drain-before-enrich, `Exists`.
-- **docs/status/archived/** + **docs/planning/archived/** — 69 reports, every
-  executed plan (manifests in each README): CLOSED history — never harvest
-  or re-open (living backlog: TODO_LIST.md).
+- **docs/status/archived/** + **docs/planning/archived/** — every executed plan
+  (manifests in each README): CLOSED history, never harvest or re-open.
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
-- **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision.
-- **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
+- **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision;
+  **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
 - **docs/upstream-filings.md** — every filing ledger and its upstream state.
 - **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware
   chain, component map), **docs/research/README.md** (the deep-dive index).
-- **docs/review/libs/** (2026-11-04 fleet utilization audit) — per-lib
-  reports + index.html for ALL 19 first-party libs. Verdicts: 7 used —
-  cqrs-lite core 92 (pooled ≈81), templ-components 93, go-etag 83,
-  httputil 80, appkit 73, server_timing 33/50, go-error-family 45; 12 not
-  imported, each with a documented reason or a named flip-trigger (REJECT ×9,
-  DEFER ×2: go-retry/go-atomic-write, PATTERN-ONLY ×1: go-output,
-  ADOPT-PARTIAL ×1: cqrs-htmx readiness idea). Refresh a report on its pin
-  bump or when its flip-trigger fires; top actions live in index.html
-  (server_timing middleware swap + doctrine fix, error-family CLI/HTTP
-  boundary adoption).
+- **docs/review/libs/** (2026-11-04 fleet utilization audit; every finding
+  closed the same day) — per-lib reports + index.html for ALL 19 first-party
+  libs. Post-closeout scores: cqrs-lite core 92 (pooled ≈81), templ-components
+  95, go-etag 95, go-error-family 82, httputil 80, appkit 73, server_timing 67;
+  12 not imported, each with a documented reason or a named flip-trigger (REJECT
+  ×9, DEFER ×2: go-retry/go-atomic-write, PATTERN-ONLY ×1: go-output,
+  ADOPT-PARTIAL ×1: cqrs-htmx readiness). Refresh a report on its pin bump or
+  when its flip-trigger fires. Audit sessions default to report-then-wait and
+  execute only on the operator's explicit order (both happened 2026-11-04).
