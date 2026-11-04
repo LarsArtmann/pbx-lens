@@ -26,6 +26,11 @@ usages (#54 cannot bite), Grid is used once with the typed enum
 `display.GridCols4` (dashboard.templ:403) — no runtime-composed arbitrary
 class (#61 cannot bite).**
 
+**State check 2026-11-04 (gh, fleet-audit closeout T10): templ-components#52
+CLOSED upstream 2026-10-29 (COMPLETED — the EmptyText escape shipped). The
+ops zero-guard folded onto RelativeTimeProps.EmptyText ("never") the same
+day — local workaround deleted (internal/web/ops.templ).**
+
 **Staged 2026-10-27 (erraudit, own repo — two filings waiting on owner
 go-ahead, dupe-searched clean against all 11 existing issues):**
 
@@ -137,6 +142,12 @@ owner go-ahead; both source-verified in the go-nix-helpers checkout):**
   pbx-lens's hand-rolled `transcriptMatchLog` (T21); fold-in retires it
   (owner-gated, TODO_LIST). Draft:
   `docs/drafts/templ-components-scrollback-line-hook.md`.
+- **templ-components#52** (COMMENTED on 2026-10-25, issuecomment-6393164087;
+  CLOSED upstream 2026-10-29, COMPLETED): zero time.Time rendered date
+  noise ("Jan 1, 0001") — the `RelativeTimeProps.EmptyText` escape landed
+  upstream and pbx-lens folded the same day: the ops last-pass item renders
+  `EmptyText: "never"` (internal/web/ops.templ) and the pre-upstream
+  zero-guard is deleted; pinned by `TestOpsPageNeverRanPassSaysNever`.
 - **templ-components#55** (filed 2026-10-15, plan M8/F28 + M10): `EnsureID`
   mints a crypto/rand id per render when `BaseProps.ID` is empty
   (`utils/validate.go:32-45`; caller `navigation/nav_templ.go:80`), so every
