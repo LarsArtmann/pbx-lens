@@ -88,6 +88,23 @@ func printRejected(rejected []string) {
 }
 
 func fatal(err error) {
+	os.Exit(fatalCode(err))
+}
+
+// fatalCode is the CLI boundary contract: family-classified errors take the
+// library's sysexits mapping (Rejection/Conflict 1, Transient 75
+// EX_TEMPFAIL — e.g. the projection-timeout fatal, Infrastructure 69,
+// Corruption 65, Orchestration 70) plus the Wix What/Why/Fix message.
+// Non-family errors keep the legacy one-line "pbx-lens:" output and exit 1:
+// the registry fail-opens unclassified errors to Transient (75), and a
+// plain bug must never teach a script "will pass on retry".
+func fatalCode(err error) int {
+	var classified errorfamily.Classified
+	if errors.As(err, &classified) {
+		return errorfamily.HandleError(err)
+	}
+
 	fmt.Fprintln(os.Stderr, "pbx-lens:", err)
-	os.Exit(1)
+
+	return 1
 }
