@@ -5,6 +5,7 @@ import (
 	"embed"
 	"encoding/json/v2"
 	"io/fs"
+	"log/slog"
 	"maps"
 	"net/http"
 	"net/url"
@@ -162,6 +163,42 @@ func (s *server) logf(msg string, args ...any) {
 	}
 }
 
+// slogger adapts the injected log func to *slog.Logger so family-aware
+// emitters (errorfamily.LogErrorContext) can send their structured
+// family/code/retryable/context.* fields through the same sink the rest
+// of the web layer logs to. Nil log falls back to slog.Default (tests).
+func (s *server) slogger() *slog.Logger {
+	if s.log == nil {
+		return slog.Default()
+	}
+
+	return slog.New(&logFuncHandler{log: s.log})
+}
+
+type logFuncHandler struct {
+	log func(msg string, args ...any)
+}
+
+func (h *logFuncHandler) Enabled(context.Context, slog.Level) bool { return true }
+
+func (h *logFuncHandler) Handle(_ context.Context, r slog.Record) error {
+	args := make([]any, 0, r.NumAttrs()*2)
+
+	r.Attrs(func(a slog.Attr) bool {
+		args = append(args, a.Key, a.Value.Any())
+
+		return true
+	})
+
+	h.log(r.Message, args...)
+
+	return nil
+}
+
+func (h *logFuncHandler) WithAttrs([]slog.Attr) slog.Handler { return h }
+
+func (h *logFuncHandler) WithGroup(string) slog.Handler { return h }
+
 // listStaleness is the list page plus its staleness-banner inputs — the
 // shared read behind the list page and its polled region.
 type listStaleness struct {
@@ -190,7 +227,7 @@ func (s *server) queryListStaleness(w http.ResponseWriter, r *http.Request) (lis
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return listStaleness{}, false
 	}
@@ -351,7 +388,7 @@ func (s *server) queryDashboardStats(w http.ResponseWriter, r *http.Request) (Da
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return DashboardStats{}, "", false
 	}
@@ -497,7 +534,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return
 	}
@@ -618,6 +655,7 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 	if poller == nil && cache == nil {
 		s.writeIndexError(
 			w,
+			r,
 			errorfamily.NewInfrastructure(
 				"lens.web.ops_unwired",
 				"no ops counters are wired: /api/ops needs a running poller or the etag cache middleware behind it",
@@ -634,7 +672,7 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 
 	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context()), retention))
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "encoding ops counters failed", true)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "encoding ops counters failed", true)
 
 		return
 	}

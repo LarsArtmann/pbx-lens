@@ -28,7 +28,7 @@ func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", true)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", true)
 
 		return
 	}
@@ -40,7 +40,7 @@ func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 	countStop()
 
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "counting calls failed; the detail is in the server log", true)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "counting calls failed; the detail is in the server log", true)
 
 		return
 	}

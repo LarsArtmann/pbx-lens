@@ -51,6 +51,7 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	if s.search == nil {
 		s.writeIndexError(
 			w,
+			r,
 			errorfamily.NewInfrastructure(
 				"lens.web.search_unwired",
 				"search needs a sqlite index: restart serve with -db <file> (memory deployments have no FTS)",
@@ -70,7 +71,7 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusBadRequest, "search failed for that query; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusBadRequest, "search failed for that query; the detail is in the server log", false)
 
 		return
 	}

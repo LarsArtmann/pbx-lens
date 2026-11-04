@@ -17,7 +17,7 @@ import (
 // the raw error goes to the server log instead. jsonBody selects the
 // /api/* shape ({"error", "family", "code"}) over the http.Error text
 // shape; family/code are empty strings for unclassified errors.
-func (s *server) writeIndexError(w http.ResponseWriter, err error, fallbackStatus int, safeMsg string, jsonBody bool) {
+func (s *server) writeIndexError(w http.ResponseWriter, r *http.Request, err error, fallbackStatus int, safeMsg string, jsonBody bool) {
 	status := fallbackStatus
 	family := ""
 	code := errorfamily.Code(err)
@@ -25,9 +25,14 @@ func (s *server) writeIndexError(w http.ResponseWriter, err error, fallbackStatu
 	if classified, ok := errors.AsType[errorfamily.Classified](err); ok {
 		status = classified.ErrorFamily().HTTPStatus()
 		family = classified.ErrorFamily().String()
-	}
 
-	s.logf("%s failed: %v (status %d)", safeMsg, err, status)
+		// Classified errors log through the family emitter: family, code,
+		// retryable, exit_code, and context.* ride the record, retryables
+		// land at WARN, the rest at ERROR.
+		errorfamily.LogErrorContext(r.Context(), err, s.slogger())
+	} else {
+		s.logf("%s failed: %v (status %d)", safeMsg, err, status)
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 

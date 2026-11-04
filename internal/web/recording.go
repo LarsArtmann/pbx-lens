@@ -12,6 +12,7 @@ import (
 	"sync"
 	"time"
 
+	errorfamily "github.com/larsartmann/go-error-family"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
@@ -66,7 +67,7 @@ func (s *server) recording(w http.ResponseWriter, r *http.Request) {
 
 	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
 
 		return
 	}
@@ -133,8 +134,9 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 		// 503), but this boundary is a PROXY: an upstream failure is an
 		// honest 502 regardless of the upstream's own family — the pinned
 		// negative-path contract (TestRecordingNegativePathsAnswerHonestly).
-		// The family's value here is the no-leak body and the logged detail.
-		s.logf("fetching the recording metadata failed: %v", err)
+		// The family's value here is the no-leak body and the structured
+		// log record (family/code/retryable via LogErrorContext).
+		errorfamily.LogErrorContext(r.Context(), err, s.slogger())
 		http.Error(w, "fetching the recording metadata failed; the detail is in the server log", http.StatusBadGateway)
 
 		return
@@ -153,7 +155,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 
 	upstream, err := http.NewRequestWithContext(r.Context(), http.MethodGet, audio, nil)
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusInternalServerError, "building the upstream request failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, "building the upstream request failed; the detail is in the server log", false)
 
 		return
 	}
@@ -169,7 +171,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 	headerStop()
 
 	if err != nil {
-		s.writeIndexError(w, err, http.StatusBadGateway, "fetching the recording audio failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusBadGateway, "fetching the recording audio failed; the detail is in the server log", false)
 
 		return
 	}

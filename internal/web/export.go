@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/csv"
 	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -94,7 +95,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 			_, _ = w.Write(marker) //nolint:gosec // JSON-encoded ndjson attachment; never rendered as HTML
 		}
 
-		s.logf("export.jsonl stream failed", "err", err.Error())
+		errorfamily.LogErrorContext(r.Context(), err, s.slogger())
 	}
 }
 
@@ -141,7 +142,7 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 		// the log.
 		_ = writer.Write(exportErrorRow(err))
 
-		s.logf("export.csv stream failed", "err", err.Error())
+		errorfamily.LogErrorContext(r.Context(), err, s.slogger())
 	}
 
 	writer.Flush()
@@ -158,14 +159,23 @@ func exportErrorRow(err error) []string {
 }
 
 // exportErrorMarker renders a stream failure as one terminal JSONL object.
+// Family context (errorfamily.WithContext keys, e.g. call_id) rides along
+// so a truncated download says WHERE it stopped, not just that it did.
 func exportErrorMarker(err error) exportError {
-	return exportError{ExportIncomplete: exportIncompleteCode, Code: errorfamily.Code(err), Message: err.Error()}
+	marker := exportError{ExportIncomplete: exportIncompleteCode, Code: errorfamily.Code(err), Message: err.Error()}
+
+	if contextual, ok := errors.AsType[errorfamily.Contextual](err); ok {
+		marker.Context = contextual.ErrorContext()
+	}
+
+	return marker
 }
 
 type exportError struct {
-	ExportIncomplete string `json:"export_incomplete"`
-	Code             string `json:"code"`
-	Message          string `json:"message"`
+	ExportIncomplete string            `json:"export_incomplete"`
+	Code             string            `json:"code"`
+	Message          string            `json:"message"`
+	Context          map[string]string `json:"context,omitempty"`
 }
 
 // beginExport parses the shared filters and the pii mode; it writes the
