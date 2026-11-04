@@ -1010,17 +1010,20 @@
               All 25 pins match upstream <code>versions.json</code>.
             </li>
             <li class="strength">
-              <strong>templ-components &mdash; 26/28 applicable capabilities, zero hand-rolled parallel UI.</strong>
+              <strong>templ-components &mdash; 26.5/28 applicable capabilities, zero hand-rolled parallel UI.</strong>
               All 7 <code>.templ</code> pages build on the library; the newest page
               (<code>segment.templ</code>) reused dashboard cards wholesale; utils/format adopted at
-              26 sites; the v1.25.0&ndash;v1.26.0 chart/palette wave absorbed almost entirely for free.
+              26 sites; the v1.25.0&ndash;v1.26.0 chart/palette wave absorbed almost entirely for free,
+              and the last workaround (the ops &ldquo;never&rdquo; guard) folded into
+              <code>RelativeTimeProps.EmptyText</code> on 2026-11-04.
             </li>
             <li class="strength">
               <strong>HTTP stack &mdash; current and doctrinal.</strong>
               httputil 80/100 (SecurityHeaders/Nonce/Compression wired; v1.5.0 Content-Length
-              contract pinned by <code>TestCacheSemanticsHardening</code>); go-etag 83/100 (5 knobs
-              wired + 3 observability hooks feeding <code>/api/ops</code>); the middleware chain is
-              documented in <code>docs/http-stack.md</code>.
+              contract pinned by <code>TestCacheSemanticsHardening</code>); go-etag 95/100 (every
+              knob wired, incl. <code>OnError</code> + <code>metrics.Attach</code>); server_timing
+              67/100 with the library middleware finally in place; the chain is documented in
+              <code>docs/http-stack.md</code>.
             </li>
             <li class="strength">
               <strong>go-appkit &mdash; used exactly as designed.</strong>
@@ -1054,7 +1057,7 @@
           </div>
 
           <div class="issue issue-critical" id="server-timing-dup">
-            <span class="severity severity-critical">Missed Opportunity &middot; false doctrine</span>
+            <span class="severity severity-critical">Missed Opportunity &middot; false doctrine &middot; RESOLVED 2026-11-04</span>
             <h3>Hand-rolled Server-Timing middleware duplicates a constructor that has existed since v1.0.1</h3>
             <div class="where">internal/web/timing.go:16-25 &middot; docs/http-stack.md:32-34 &middot; AGENTS.md (corrected) &middot; prior audit finding #2</div>
             <p>
@@ -1080,7 +1083,7 @@ ExtraMiddlewares: []func(http.Handler) http.Handler{
           </div>
 
           <div class="issue issue-critical" id="error-family-cli">
-            <span class="severity severity-critical">Missed Opportunity &middot; high operator value</span>
+            <span class="severity severity-critical">Missed Opportunity &middot; high operator value &middot; RESOLVED 2026-11-04</span>
             <h3>CLI exits 1 for everything; the library maps families to sysexits + What/Why/Fix</h3>
             <div class="where">cmd/pbx-lens/main.go:89-92 &middot; cmd/pbx-lens/ops.go:99 &middot; internal/cli/system.go:58</div>
             <p>
@@ -1103,7 +1106,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
           </div>
 
           <div class="issue issue-important" id="templ-emptytext">
-            <span class="severity severity-important">Missed Opportunity &middot; blocked workarounded, unblock landed</span>
+            <span class="severity severity-important">Missed Opportunity &middot; blocked workarounded, unblock landed &middot; RESOLVED 2026-11-04</span>
             <h3>Ops zero-time guard is now replaceable by RelativeTimeProps.EmptyText (#52 closed upstream v1.25.0)</h3>
             <div class="where">internal/web/ops.go:296-298 &middot; internal/web/ops.templ:205-206 &middot; ops_page_test.go:172-189</div>
             <p>
@@ -1120,7 +1123,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
           </div>
 
           <div class="issue issue-important" id="error-family-http">
-            <span class="severity severity-important">Missed Opportunity &middot; removes a leak surface</span>
+            <span class="severity severity-important">Missed Opportunity &middot; removes a leak surface &middot; RESOLVED 2026-11-04</span>
             <h3>Fourteen web sites hand-map families to HTTP statuses and write err.Error() inline</h3>
             <div class="where">internal/web/server.go:182,193,354,500,507,555,618-626,632 &middot; export.go:176,192 &middot; search.go:50-55,67 &middot; freshness.go:31,43 &middot; segment_page.go:31 &middot; recording.go:111,235</div>
             <p>
@@ -1138,7 +1141,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
           </div>
 
           <div class="issue issue-important" id="etag-metrics">
-            <span class="severity severity-important">Missed Opportunity &middot; at next bump</span>
+            <span class="severity severity-important">Missed Opportunity &middot; at next bump &middot; RESOLVED 2026-11-04</span>
             <h3>Hand-built CacheCounters duplicates go-etag/metrics (not in graph)</h3>
             <div class="where">internal/web/caching.go:16-58 &middot; upstream metrics/metrics.go:11,38,72,87</div>
             <p>
@@ -1156,7 +1159,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
           </div>
 
           <div class="issue issue-important" id="cqrs-reset">
-            <span class="severity severity-important">Missed Opportunity &middot; fits a planned TODO exactly</span>
+            <span class="severity severity-important">Missed Opportunity &middot; fits a planned TODO exactly &middot; RESOLVED 2026-11-04</span>
             <h3>projectionhost.Reset is the planned legacy-key rebuild, already built upstream</h3>
             <div class="where">never called &middot; target: docs/gotchas.md record-key entry &middot; projectionadapter Resettable present at pin</div>
             <p>
@@ -1173,7 +1176,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
           </div>
 
           <div class="issue issue-important" id="error-family-tests">
-            <span class="severity severity-important">Partially Used &middot; zero-cost adoption</span>
+            <span class="severity severity-important">Partially Used &middot; zero-cost adoption &middot; RESOLVED 2026-11-04</span>
             <h3>errorfamilytest assertions unused; three test sites re-implement them</h3>
             <div class="where">internal/ingest/telnyx/telnyx_test.go:238-249 &middot; internal/cli/poller_test.go:478 &middot; internal/app/depth_trio_test.go:83-85</div>
             <p>
@@ -1274,20 +1277,20 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
 
         <!-- Opportunities -->
         <section id="proposal">
-          <h2>Top opportunities (sorted by impact &times; ease, descending)</h2>
+          <h2>Top opportunities (sorted by impact &times; ease) &mdash; all ten landed 2026-11-04</h2>
           <table class="compare">
-            <thead><tr><th>#</th><th>Opportunity</th><th>Impact</th><th>Ease</th><th>Priority</th></tr></thead>
+            <thead><tr><th>#</th><th>Opportunity</th><th>Impact</th><th>Ease</th><th>Priority</th><th>Status</th></tr></thead>
             <tbody>
-              <tr><td>1</td><td>Swap hand-rolled Server-Timing middleware for <code>servertiming.ServerTimingMiddleware()</code>; fix timing.go + http-stack.md + (done) AGENTS.md doctrine</td><td class="yes">5</td><td class="yes">5</td><td><span class="highlight">25</span></td></tr>
-              <tr><td>2</td><td>go-error-family CLI: <code>HandleError</code>/<code>ExitCode</code> (EX_TEMPFAIL for transient projection timeouts)</td><td class="yes">4</td><td class="yes">4</td><td><span class="highlight">16</span></td></tr>
-              <tr><td>3</td><td>templ-components: fold in #52 &mdash; <code>EmptyText: "never"</code> replaces the ops zero-guard; refresh filings ledger</td><td class="yes">3</td><td class="yes">5</td><td><span class="highlight">15</span></td></tr>
-              <tr><td>4</td><td>go-error-family web: <code>HTTPHandler</code> across ~14 status-mapping sites; classify the 3 bare 503s</td><td class="yes">4</td><td class="yes">3</td><td><span class="highlight">12</span></td></tr>
-              <tr><td>5</td><td>go-etag: wire <code>OnError</code> knob (write-failure telemetry)</td><td>2</td><td class="yes">4</td><td><span class="highlight">8</span></td></tr>
-              <tr><td>6</td><td>go-cqrs-lite: use <code>projectionhost.Reset</code> for the planned legacy-key read-model rebuild</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td></tr>
-              <tr><td>7</td><td>errorfamilytest assertions replace 3 hand-rolled test sites (no new module)</td><td>2</td><td class="yes">3</td><td><span class="highlight">6</span></td></tr>
-              <tr><td>8</td><td>/ready projection-worker readiness (modeled on cqrs-htmx&rsquo;s health bridge idea)</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td></tr>
-              <tr><td>9</td><td>go-etag: adopt <code>metrics.Attach</code>, delete CacheCounters (bundle with next bump)</td><td>2</td><td>2</td><td><span class="highlight">4</span></td></tr>
-              <tr><td>10</td><td>go-error-family: <code>WithContext</code>+<code>JSON</code> canonicalize the export error marker; <code>LogError</code> for structured logs</td><td>2</td><td>2</td><td><span class="highlight">4</span></td></tr>
+              <tr><td>1</td><td>Swap hand-rolled Server-Timing middleware for <code>servertiming.ServerTimingMiddleware()</code>; fix the doctrine carriers</td><td class="yes">5</td><td class="yes">5</td><td><span class="highlight">25</span></td><td class="yes">landed &mdash; plan T01/T02</td></tr>
+              <tr><td>2</td><td>go-error-family CLI: <code>HandleError</code> (EX_TEMPFAIL for transient projection timeouts)</td><td class="yes">4</td><td class="yes">4</td><td><span class="highlight">16</span></td><td class="yes">landed &mdash; T04</td></tr>
+              <tr><td>3</td><td>templ-components: fold in #52 &mdash; <code>EmptyText: "never"</code> replaces the ops zero-guard; refresh filings ledger</td><td class="yes">3</td><td class="yes">5</td><td><span class="highlight">15</span></td><td class="yes">landed &mdash; T09/T10</td></tr>
+              <tr><td>4</td><td>go-error-family web: family-aware writer across the status-mapping sites; classify the 3 bare 503s</td><td class="yes">4</td><td class="yes">3</td><td><span class="highlight">12</span></td><td class="yes">landed &mdash; T05/T06</td></tr>
+              <tr><td>5</td><td>go-etag: wire <code>OnError</code> knob (write-failure telemetry)</td><td>2</td><td class="yes">4</td><td><span class="highlight">8</span></td><td class="yes">landed &mdash; T11</td></tr>
+              <tr><td>6</td><td>go-cqrs-lite: rebuild the read model for the legacy-key retirement (Reset + drain)</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td><td class="yes">landed &mdash; T15 (Store.Reset, not Host.Reset)</td></tr>
+              <tr><td>7</td><td>errorfamilytest assertions replace 3 hand-rolled test sites (no new module)</td><td>2</td><td class="yes">3</td><td><span class="highlight">6</span></td><td class="yes">landed &mdash; T07</td></tr>
+              <tr><td>8</td><td>/ready projection-worker readiness (modeled on cqrs-htmx&rsquo;s health bridge idea)</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td><td class="yes">landed &mdash; T17 (failure-based predicate)</td></tr>
+              <tr><td>9</td><td>go-etag: adopt <code>metrics.Attach</code>, delete CacheCounters</td><td>2</td><td>2</td><td><span class="highlight">4</span></td><td class="yes">landed &mdash; T12/T13</td></tr>
+              <tr><td>10</td><td>go-error-family: <code>WithContext</code>+<code>JSON</code> canonicalize the export error marker; <code>LogError</code> for structured logs</td><td>2</td><td>2</td><td><span class="highlight">4</span></td><td class="yes">landed &mdash; T08 (context consumed, still never set at source)</td></tr>
             </tbody>
           </table>
         </section>
