@@ -55,5 +55,5 @@ rg -n "system.New" internal cmd --type go | head          # one composition root
 rg -n "OnRecordTyped|Remove\[" internal/calls/projection.go
 go doc github.com/larsartmann/go-cqrs-lite/projectionhost/v4 Host.Reset
 cat /home/lars/projects/go-cqrs-lite/versions.json        # pin parity
-git -C /home/lars/projects/go-cqrs-lite tag --contains v4.16.0 -- 2>/dev/null | head -2  # the verification habit
+git -C /home/lars/projects/go-cqrs-lite tag --contains system/v4.16.0 | head -2  # the verification habit (tags are module-prefixed)
 ```

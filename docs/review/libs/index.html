@@ -1244,7 +1244,7 @@ rg -n <span class="tok-string">"func ServerTimingMiddleware"</span> \
 rg -nF <span class="tok-string">"os.Exit(1)"</span> cmd/pbx-lens/main.go
 
 <span class="tok-comment"># 2. pin currency (used libs)</span>
-git -C /home/lars/projects/go-cqrs-lite tag --sort=-v:refname | head -3
+git -C /home/lars/projects/go-cqrs-lite tag --sort=-v:refname -l "system/v4.*" | head -3
 git -C /home/lars/projects/templ-components tag --sort=-v:refname | head -3
 git -C /home/lars/projects/go-etag tag --sort=-v:refname | head -3
 
