@@ -370,6 +370,20 @@ the actual latest tag was v4.2.1 (and other modules drift the same way). Any
 `git -C <checkout> tag --contains <commit>` and `git merge-base --is-ancestor`,
 never with versions.json. Filing upstream about it is on the watchlist.
 
+**Fresh receipt, 2026-11-04 (plan T14, full sweep of all 13 direct pins):**
+versions.json agreed with go.mod on every one that day (0 mismatches — the
+2026-10-25 drift has since been regenerated away; keep re-verify-on-bump).
+All 13 pins are real ANNOTATED tags whose commits match the module proxy's
+`Origin.Hash` exactly (spot-checked system/v4.16.0 = 94bcfd934,
+metaengine/v4.20.0 = 5f0a98eb4, event/v4.15.2 = 584f6e802). NO
+pseudo-version/untagged-master pins. One structural surprise worth keeping:
+for 12 of 13 pins the tag commit is NOT an ancestor of upstream master
+(`git merge-base --is-ancestor` fails; a common ancestor exists — the
+release line diverges from the auto-commit-daemon master line; id/v4.7.4 is
+the lone exception). So "tag reachable from master" is the WRONG receipt
+for this repo: the right one is (a) the annotated tag exists, (b) it peels
+to the proxy-served hash, (c) versions.json cross-checked per bump.
+
 ## The layout-stamp drift WARN never covered call_views (correction, 2026-10-25)
 
 The 2026-10-24 audit's F2 claimed metaengine v4.20.0's layout-stamp drift

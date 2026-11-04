@@ -144,6 +144,12 @@ func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
 
 	now := s.now()
 
+	// The deferred stop is an ORDERING CONTRACT, not convenience: the
+	// Server-Timing header flushes at the ops JSON's first body write, so
+	// the retention metric survives only while this function fully returns
+	// before opsHandler marshals and writes the payload. Streaming the
+	// JSON — or any body write before this returns — silently drops the
+	// metric; TestOpsAPICarriesRetentionTiming pins the contract e2e.
 	stop := servertiming.MeasureServerTiming(ctx, "retention")
 	defer stop()
 
