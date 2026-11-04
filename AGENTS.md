@@ -234,4 +234,16 @@ Concurrent sessions + daemon: the norm is docs/concurrency.md.
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision.
 - **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
-- **docs/upstream-filings.md** — every filing ledger and its upstream state.- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware chain, component map), **docs/research/README.md** (the deep-dive index).
+- **docs/upstream-filings.md** — every filing ledger and its upstream state.
+- **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware
+  chain, component map), **docs/research/README.md** (the deep-dive index).
+- **docs/review/libs/** (2026-11-04 fleet utilization audit) — per-lib
+  reports + index.html for ALL 19 first-party libs. Verdicts: 7 used —
+  cqrs-lite core 92 (pooled ≈81), templ-components 93, go-etag 83,
+  httputil 80, appkit 73, server_timing 33/50, go-error-family 45; 12 not
+  imported, each with a documented reason or a named flip-trigger (REJECT ×9,
+  DEFER ×2: go-retry/go-atomic-write, PATTERN-ONLY ×1: go-output,
+  ADOPT-PARTIAL ×1: cqrs-htmx readiness idea). Refresh a report on its pin
+  bump or when its flip-trigger fires; top actions live in index.html
+  (server_timing middleware swap + doctrine fix, error-family CLI/HTTP
+  boundary adoption).

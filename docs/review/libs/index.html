@@ -893,7 +893,7 @@
           <div class="meta">
             <span class="tag amber">7 used &middot; 12 not imported</span>
             <span class="tag">Mean used-score: 71/100</span>
-            <span class="tag teal">Pins current: 7/7</span>
+            <span class="tag teal">Pins current: 6/7 (+1 docs-only)</span>
             <span class="tag">Per-lib reports: 19 &times; markdown</span>
           </div>
         </header>
@@ -909,16 +909,16 @@
             <div class="label">Used libs at high or very high (≥70)</div>
           </div>
           <div class="score-card score-bad">
-            <div class="score">8</div>
-            <div class="label">Missed opportunities (all actionable)</div>
+            <div class="score">9</div>
+            <div class="label">Missed opportunities in used libs (all actionable)</div>
           </div>
           <div class="score-card score-good">
             <div class="score">0</div>
             <div class="label">Misuse / anti-patterns in prod code</div>
           </div>
           <div class="score-card score-good">
-            <div class="score">7 / 7</div>
-            <div class="label">Pins at latest release (version currency)</div>
+            <div class="score">6 / 7</div>
+            <div class="label">Pins at latest (go-etag: one docs-only release behind)</div>
           </div>
         </section>
 
@@ -1235,12 +1235,13 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
         <!-- Appendix -->
         <section id="appendix">
           <h2>How to verify</h2>
-          <p>Every claim is re-derivable; the per-lib reports carry their own verify blocks.</p>
+          <p>Every claim is re-derivable; the per-lib reports carry their own verify blocks.
+          Rendered proof (headless chromium, 2026-11-04): <a href="index-screenshot.png">index-screenshot.png</a>.</p>
           <pre><code><span class="tok-comment"># 1. the two headline gaps</span>
-rg -n <span class="tok-string">"no middleware constructor"</span> internal/web/timing.go docs/http-stack.md
+rg -in <span class="tok-string">"middleware constructor"</span> internal/web/timing.go docs/http-stack.md
 rg -n <span class="tok-string">"func ServerTimingMiddleware"</span> \
   ~/go/pkg/mod/github.com/larsartmann/httputil/server_timing@v1.0.3/server_timing.go
-rg -n <span class="tok-string">"os.Exit(1)"</span> cmd/pbx-lens/main.go
+rg -nF <span class="tok-string">"os.Exit(1)"</span> cmd/pbx-lens/main.go
 
 <span class="tok-comment"># 2. pin currency (used libs)</span>
 git -C /home/lars/projects/go-cqrs-lite tag --sort=-v:refname | head -3

@@ -29,7 +29,7 @@ Ground truth: v1.0.3 module cache — 15 exported symbols, stdlib-only.
 | Symbol | Used? |
 |---|---|
 | `WrapServerTiming` | ✅ `internal/web/timing.go:21` |
-| `MeasureServerTiming` | ✅ 11 sites: `server.go:187,348,494`; `freshness.go:25,36`; `recording.go:120,160`; `search.go:60`; `segment_page.go:24`; `ops.go:147`; (tests) |
+| `MeasureServerTiming` | ✅ 11 call sites: `timing.go:40` (firstpage); `server.go:187,348,494`; `freshness.go:25,36`; `recording.go:120,160`; `search.go:60`; `segment_page.go:24`; `ops.go:147` (12 rg lines incl. one comment) |
 | `ServerTimingMiddleware` | ❌ hand-rolled duplicate instead |
 | `ServerTimingMiddlewareWhen` | ❌ (the gating variant, unused) |
 | `RecordServerTiming` | ❌ (plain `Measure` suffices) |
@@ -66,5 +66,5 @@ Pin v1.0.3 == latest release ("zero drift since v1.0.3" per httputil v1.7.0 CHAN
 rg -n "func ServerTimingMiddleware" ~/go/pkg/mod/github.com/larsartmann/httputil/server_timing@v1.0.3/server_timing.go
 sed -n '14,26p' internal/web/timing.go
 rg -n "MeasureServerTiming" internal/web -g '!*_templ.go' | wc -l   # 11
-rg -n "no middleware constructor" internal/web/timing.go docs/http-stack.md
+rg -in "middleware constructor" internal/web/timing.go docs/http-stack.md
 ```
