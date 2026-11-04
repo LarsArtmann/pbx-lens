@@ -2,10 +2,12 @@ package app
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/larsartmann/go-cqrs-lite/decider/v4"
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	_ "github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4"
+	"github.com/larsartmann/go-cqrs-lite/projectionhost/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
@@ -61,7 +63,20 @@ func DomainConfig() system.DomainConfig {
 		},
 		Projections:           projection,
 		ProjectionTypeDecoder: typeDecoder,
+		// A worker exhausting its restart budget must not die silently
+		// (plan T16): the mid-drain callback logs at ERROR the moment it
+		// happens — the serve readiness probe (ProjectionWorkersReady) is
+		// the second witness, flipping /health/ready to 503.
+		ProjectionHostOptions: []projectionhost.HostOption{
+			projectionhost.WithOnFailed(OnProjectionFailed),
+		},
 	}
+}
+
+// OnProjectionFailed is the host's failure alert: journald visibility at
+// the moment a worker gives up, for both the CLI drains and serve.
+func OnProjectionFailed(projectionName, lastError string) {
+	slog.Error("projection worker exhausted its restart budget", "projection", projectionName, "last_error", lastError)
 }
 
 // DeploymentConfig maps a DSN onto the engine deployment: empty DSN boots the
