@@ -46,11 +46,15 @@ read-only deep link, never a data dependency.
   bookkeeping; committed rapid `.fail` seeds are regression pins (docs/gotchas.md).
 - **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
   sweep budgeted; versions.json lies — verify with `git tag --contains`).
-- **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep):**
+- **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep + v1.26.0):
   `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
-  owns SIGINT/SIGTERM + graceful drain), `templ-components` v1.23.0
+  owns SIGINT/SIGTERM + graceful drain; v0.10 WATCH: Server-Timing becomes
+  the default outermost middleware — delete the serve.go wiring on bump,
+  docs/review/libs/go-appkit.md), `templ-components` v1.26.0
   (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1070
-  (codegen; manual bumps only — a dependabot templ PR mangles this go.mod).
+  (codegen; manual bumps only — a dependabot templ PR mangles this go.mod;
+  ≥v1.27 templ-components will require templ ≥v0.3.1100 — one coordinated
+  bump, adoption-map checklist step 8).
   Stay on the PUBLISHED templ-components version — no local replace
   (breaks hermetic nix); hand-roll missing thin pieces.
 - **UI theme — signal palette (2026-10-12; heatmap bridge 2026-10-15):**

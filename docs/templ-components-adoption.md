@@ -1,4 +1,4 @@
-# templ-components v1.24.0 adoption map (consumer truth for THIS repo)
+# templ-components v1.26.0 adoption map (consumer truth for THIS repo)
 
 <!-- Extracted from AGENTS.md 2026-10-12 (220-line budget). The skill docs
      drift ahead of the pinned tag — this table is the truth for pbx-lens.
@@ -9,7 +9,9 @@
      upstream; ScrollbackLine still has no id/class hook (#51 OPEN).
      Re-audited against v1.24.0 on 2026-10-24: ARIA fixes for Heatmap and
      CopyButton (both rendered here); scrollable tables now emit
-     role="region"; #48/#49/#51 still OPEN, so the workarounds stay. -->
+     role="region"; #48/#49/#51 still OPEN, so the workarounds stay.
+     At the v1.26.0 pin (2026-11-04, fleet audit): EmptyText shipped (#52
+     folded), warning amber re-skin adopted via goldens/corpus. -->
 
 | Component                                                                                   | Status                            | Note                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -69,6 +71,17 @@
    duplication gate red — review the new/shifted groups, then refresh with
    `art-dupl baseline -t 4 --min-lines 2 . --baseline-path scripts/art-dupl-baseline.json`
    (gate contract + acceptance table: docs/art-dupl-baseline.md).
+7. **Filings-ledger state check (the step the v1.26.0 sweep skipped):** run
+   `gh issue list`/`view` over every OPEN templ-components filing in
+   docs/upstream-filings.md and update the ledger's state-check block — a
+   closure upstream (like #52) means a local workaround retires in the same
+   bump, not later.
+8. **Two-module templ gate (v1.27+):** templ-components ≥ v1.27.0 requires
+   a-h/templ ≥ v0.3.1100 (pbx-lens pins v0.3.1070) — ONE coordinated bump:
+   both go.mod pins together, goldens + codegen re-baselined, never mixed
+   into unrelated fixes (templ pins are manual-only; dependabot banned).
+   Watch upstream `scripts/check-templ-gate.sh`; fleet detail:
+   docs/review/libs/templ-components.md.
 
 ## Corpus trim decision (T17, 2026-10-12): KEEP the full corpus
 
