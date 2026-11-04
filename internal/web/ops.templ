@@ -261,7 +261,7 @@ templ opsCacheCard(c CacheStats) {
 		@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
 			{Term: "Tags generated", Detail: strconv.FormatUint(c.ETagGenerated, 10)},
 			{Term: "304 revalidations", Detail: strconv.FormatUint(c.NotModified, 10)},
-			{Term: "Hit ratio", Detail: format.Percent(c.HitRatio)},
+			{Term: "Hit ratio", Detail: cacheRatioText(c)},
 			{Term: "Buffer overflows", Detail: strconv.FormatUint(c.BufferOverflows, 10)},
 			{Term: "Write errors", Detail: strconv.FormatUint(c.WriteErrors, 10)},
 		}})

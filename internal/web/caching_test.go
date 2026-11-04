@@ -197,3 +197,32 @@ func httptestRequest(t *testing.T, path string) *http.Request {
 
 	return httptest.NewRequest(http.MethodGet, path, nil)
 }
+
+// TestCacheRatioTextHonestStates pins the hit-ratio display guard (plan
+// T13): the not-yet state reads as n/a, the library's documented
+// SkipIfPresent caveat (304s on adopted handler tags can push the ratio
+// above 1) renders as an explicit surprise instead of a lying percent,
+// and the normal window keeps the format dialect's exact bytes.
+func TestCacheRatioTextHonestStates(t *testing.T) {
+	tests := []struct {
+		name  string
+		stats CacheStats
+		want  string
+	}{
+		{"nothing resolved yet", CacheStats{}, "n/a — no tags resolved yet"},
+		{"normal window keeps dialect", CacheStats{ETagGenerated: 2, NotModified: 1, HitRatio: 0.5}, "50.0%"},
+		{
+			name:  "adopted tags render the surprise",
+			stats: CacheStats{ETagGenerated: 1, NotModified: 2, HitRatio: 2},
+			want:  ">100% — adopted handler tags",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := cacheRatioText(tc.stats); got != tc.want {
+				t.Errorf("cacheRatioText(%+v) = %q, want %q", tc.stats, got, tc.want)
+			}
+		})
+	}
+}
