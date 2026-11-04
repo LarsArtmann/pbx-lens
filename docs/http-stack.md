@@ -29,9 +29,11 @@ ExtraMiddlewares, in strict order:
    are ours while the default's `X-Frame-Options: DENY` survives untouched.
    Header-only and set before the first write, so every value rides into
    304 revalidations. Pinned by `TestSecurityHeadersContract`.
-3. **`web.ServerTimingMiddleware`** — W3C Server-Timing via
-   `servertiming.WrapServerTiming(w, r)`. NO middleware constructor exists in
-   any released `httputil/server_timing` version — always wrap manually.
+3. **Server-Timing middleware** — W3C Server-Timing. The library ships the
+   constructor `servertiming.ServerTimingMiddleware()` since v1.0.1
+   (`ServerTimingMiddlewareWhen(pred)` gates it per request); the
+   pre-constructor wiring wrapped `WrapServerTiming(w, r)` by hand — a
+   local duplicate the wiring moves onto the library constructor.
    Handlers add named metrics with `MeasureServerTiming(r.Context(), name)`
    and MUST call `stop()` BEFORE any `if err` branch and before the first
    body write: the header flushes at the first write, and metrics recorded

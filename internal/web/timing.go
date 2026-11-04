@@ -13,8 +13,11 @@ import (
 // header flush; handlers add named metrics with
 // servertiming.MeasureServerTiming before their first body write —
 // anything recorded after the response commits never reaches the header.
-// The released module surface has no middleware constructor, so the wiring
-// rides the library's own framework-adapter primitive, WrapServerTiming.
+// The library ships its own constructor since v1.0.1
+// (ServerTimingMiddleware / ServerTimingMiddlewareWhen); this wrapper
+// predates it and delegates to the lower-level WrapServerTiming primitive
+// — the wiring swaps onto the library constructor (deleting this
+// duplicate) rather than maintaining two wrappers.
 func ServerTimingMiddleware() httputil.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
