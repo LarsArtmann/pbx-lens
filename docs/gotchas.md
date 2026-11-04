@@ -545,3 +545,33 @@ the check env gains an offline module source (candidate: inject the
 package's proxyVendor goModules FOD as GOMODCACHE — staged upstream in
 docs/upstream-filings.md). Verified pre-existing at HEAD 2026-10-28 via a
 detached worktree build of the same check.
+
+## The projection host is a batch drainer — "stopped" is HEALTHY, and a failed worker is silent unless you wire the alert (paid for, 2026-11-04)
+
+`DrainProjections` (internal/cli/system.go) Stop → Start → await, and the
+host's workers exit (`WorkerStopped`) once caught up; the serve poller
+re-drains on every tick, so a healthy serve spends most of its life with
+every worker STOPPED. Two consequences, both learned the hard way in one
+afternoon (plan T17/T16):
+
+1. **Never write a readiness predicate from the enum's vocabulary.** The
+   first `/health/ready` required every worker to be `running`/`live`, which
+   is the LIVE-TAIL mental model this host does not have — a perfectly
+   healthy serve answered 503 forever, and it took the browser lane's
+   Contract F (`scripts/verify-ui-contract.js`) to notice. The predicate now
+   votes on failure only: `backoff` or `failed` → not ready, every other
+   state (idle before the drain, draining, stopped after it) → ready. The
+   cross-link comments on `workerRoundState` (drain success REQUIRES
+   `stopped`) and `ProjectionWorkersReady` (same states, opposite reading)
+   exist so nobody "unifies" them.
+2. **A worker that exhausts its restart budget fails SILENTLY** — the read
+   model simply stops advancing. `DomainConfig().ProjectionHostOptions` now
+   carries `projectionhost.WithOnFailed(OnProjectionFailed)` (ERROR to
+   journald at the moment it happens), and `ProjectionWorkersReady` is the
+   second witness (probe → 503). `TestDomainConfigWiresProjectionFailureAlert`
+   pins both the non-empty option list and the callback's log shape.
+
+Reading discipline that would have prevented the detour: read the
+LIFECYCLE the code actually implements (here: `DrainProjections` + the
+poller) before writing assertions about lifecycle states — the enum doc
+strings describe a generic live-tail host, not this one.
