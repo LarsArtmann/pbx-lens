@@ -348,3 +348,19 @@ func (p opsPoller) rejectedText() string {
 func joinReasons(reasons []string) string {
 	return strings.Join(reasons, " · ")
 }
+
+// cacheRatioText renders the ETag hit ratio honestly (plan T13): before
+// any tag is resolved the ratio is not a zero but a not-yet; above 1 it is
+// arithmetic evidence that 304s fired on handler-provided tags the
+// generator never counted (the library's documented SkipIfPresent caveat
+// — pbx-lens handlers set none today, so >1 means something changed).
+func cacheRatioText(stats CacheStats) string {
+	switch {
+	case stats.ETagGenerated == 0 && stats.NotModified == 0:
+		return "n/a — no tags resolved yet"
+	case stats.HitRatio > 1:
+		return ">100% — adopted handler tags"
+	default:
+		return format.Percent(stats.HitRatio)
+	}
+}
