@@ -60,9 +60,12 @@ ExtraMiddlewares, in strict order:
 - prefix `/api/export.` + suffix `/recording` — unbounded streams must never
   be buffered for hashing.
 
-`ETagConfig` hooks `OnETagGenerated` / `On304` / `OnBufferOverflow` exist in
-the pinned v0.6.1 (etag.go:67-88); wiring them into `/api/ops` counters is a
-TODO_LIST row.
+All four `ETagConfig` hooks are wired (pinned v0.6.1): `OnETagGenerated` /
+`On304` / `OnBufferOverflow` feed the `/api/ops` cache counters, and
+`OnError` (2026-11-04) counts post-commit write failures — a client gone
+mid-flush drops the buffered body after the header already committed,
+unreportable through net/http, so the counter is the only witness
+(`write_errors` in the JSON payload, the ops page's ETag card).
 
 ## Recording proxy: two bounded hops, unbounded body (T19 extraction, 2026-10-18)
 
