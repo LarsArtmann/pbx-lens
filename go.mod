@@ -3,7 +3,7 @@ module github.com/larsartmann/pbx-lens
 go 1.27.2
 
 require (
-	github.com/a-h/templ v0.3.1100
+	github.com/a-h/templ v0.3.1070
 	github.com/larsartmann/go-appkit v0.9.0
 	github.com/larsartmann/go-appkit/systemd v0.1.0
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.12.0
@@ -21,7 +21,7 @@ require (
 	github.com/larsartmann/go-cqrs-lite/systemscenario/v4 v4.2.1
 	github.com/larsartmann/go-error-family v0.12.0
 	github.com/larsartmann/go-etag/server v0.6.1
-	github.com/larsartmann/httputil v1.7.0
+	github.com/larsartmann/httputil v1.8.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
 	github.com/larsartmann/templ-components v1.26.0
 	github.com/larsartmann/templ-components/htmx v1.26.0

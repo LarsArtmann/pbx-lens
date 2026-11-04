@@ -1,4 +1,4 @@
-# templ-components@v1.24.0
+# templ-components@v1.26.0
 #283a:
 #bar-results
 #consumer-override
@@ -588,18 +588,12 @@
 --color-white
 --color-white:
 --color-white:#fff
---color-yellow-100
 --color-yellow-100:
---color-yellow-100:oklch
---color-yellow-100:var
 --color-yellow-200
 --color-yellow-200:
 --color-yellow-200:oklch
 --color-yellow-200:var
---color-yellow-300
 --color-yellow-300:
---color-yellow-300:oklch
---color-yellow-300:var
 --color-yellow-400
 --color-yellow-400:
 --color-yellow-400:oklch
@@ -723,6 +717,14 @@
 --tc-header-border
 --tc-header-border:
 --tc-header-border:var
+--tc-popover-area
+--tc-popover-area:
+--tc-popover-area:bottom
+--tc-popover-area:inline-end
+--tc-popover-area:inline-start
+--tc-popover-area:left
+--tc-popover-area:right
+--tc-popover-area:top
 --tc-sidebar-bg
 --tc-sidebar-bg:
 --tc-sidebar-bg:var
@@ -1057,6 +1059,7 @@
 -output
 -prerender
 -r
+-r.right
 -rotate-90
 -run
 -scanning
@@ -1076,6 +1079,7 @@
 -update
 -v
 -value
+-webkit-appearance:
 -webkit-appearance:-apple-pay-button
 -webkit-appearance:none
 -webkit-backdrop-filter
@@ -1190,7 +1194,6 @@
 .bg-violet-500
 .bg-violet-600
 .bg-white
-.bg-yellow-100
 .bg-yellow-50
 .bg-yellow-500
 .bg-yellow-600
@@ -1218,6 +1221,7 @@
 .border-gray-100
 .border-gray-200
 .border-gray-300
+.border-gray-400
 .border-gray-700
 .border-gray-800
 .border-green-200
@@ -1785,6 +1789,7 @@
 0-6.1-1.248-8.25-3.285z
 0-6.133-.815-8.716-2.247m0
 0-based
+0-height
 00-.1.661z
 00-.12-1.03l-2.268-9.64a3.375
 00-.182-.557l-4.204-3.602a.562.562
@@ -1903,6 +1908,7 @@
 10.5c-2.998
 10.5h-2.25a2.25
 100%-2rem
+100-part
 11-3.586-3.586l8.684-7.152c.833-.686.995-1.874.904-2.95a4.5
 11.168l3.71-3.938a.75.75
 11.25l.041-.02a.75.75
@@ -2064,9 +2070,11 @@
 ::backdrop
 ::backdrop.
 ::before
+::details-content
 ::file-selector-button
 ::placeholder
 ::selection
+::view-transition-group
 ::view-transition-new
 ::view-transition-old
 :after
@@ -2127,6 +2135,7 @@
 @sm:p-6
 @sm:px-6
 @starting-style
+@view-transition
 @xl:grid-cols-5
 @xl:grid-cols-6
 [%s]:
@@ -2208,6 +2217,7 @@
 [data-tc-palette-open]
 [data-tc-palette][data-tc-hotkey]
 [data-tc-polled-busy]
+[data-tc-position
 [data-tc-tabs]
 [data-tc-tag-remove]
 [data-tc-tag]
@@ -2223,9 +2233,11 @@
 [popover]:not
 [popover]:popover-open
 [popover]:popover-open[data-tc-anchor]
+[popover][data-tc-anchor]
 [tabindex]:not
 ]::after
 ]:not
+][data-tc-align
 _-prefixed
 __debounce
 __debounce.%dms
@@ -2261,6 +2273,12 @@ above-the-fold
 above:
 absent:
 absolute-date
+ac-bogus
+ac-cc
+ac-none
+ac-pass
+ac-user
+ac-zip
 academic-cap
 academic-cap:
 acc-1
@@ -2288,7 +2306,11 @@ adapts:
 add-btn
 add-card
 add:
+address-level1/2
+address-line1
+address-line2
 adv-section
+advance:
 advanced-filters
 advisory:
 affordances:
@@ -2315,14 +2337,17 @@ allow:
 always-below-trigger
 always-on
 always-visible
-amber-rendering
 anchor-fallback
+anchor-name:
+anchor-name:--x
+anchor-to-panel
 anchor:
 angle:
 animate-indeterminate-progress
 animate-ping
 animate-pulse
 animate-spin
+animate-to-intrinsic-sizes
 animate[-:]
 animated-icon
 animated_icon.templ
@@ -2385,6 +2410,7 @@ aria-controls
 aria-current
 aria-describedby
 aria-describedby.
+aria-details
 aria-disabled
 aria-drawer
 aria-expanded
@@ -2493,11 +2519,17 @@ auto-refresh
 auto-refreshes
 auto-refreshing
 auto-satisfy
+auto-shows
 auto-sized
 auto-submit
 auto-submit.
 auto-submits
 auto-targets
+autofill-address-form.
+autofill-payment-form
+autofill-ready
+autofill-sign-in-form
+autofill-sign-up-form
 available:
 avatar-img
 avatar_image
@@ -2566,7 +2598,6 @@ background-color:#4d179a4d
 background-color:#59168b33
 background-color:#59168b4d
 background-color:#6a728299
-background-color:#733e0a33
 background-color:#733e0a4d
 background-color:#78716c99
 background-color:#7b330633
@@ -2593,6 +2624,7 @@ background-image:linear-gradient
 background-image:radial-gradient
 background:
 background:0
+background:inherit
 backward-compat
 bad.templ:1:
 bad.templ:2:
@@ -2638,6 +2670,7 @@ bg-
 bg-%d
 bg-[radial-gradient
 bg-[var
+bg-amber-100
 bg-amber-50
 bg-amber-500
 bg-amber-600
@@ -2703,7 +2736,6 @@ bg-white/10
 bg-white/80
 bg-white/90
 bg-yellow
-bg-yellow-100
 bg-yellow-50
 bg-yellow-500
 bg-yellow-600
@@ -2712,6 +2744,10 @@ binary-pin
 binding:
 blank-line
 block
+block-size
+block-size:
+block-size:0
+block-size:auto
 block-vs-inline
 block:
 blocklist:
@@ -2816,6 +2852,7 @@ border-radius:.5rem
 border-radius:0
 border-radius:3.40282e38px
 border-radius:9999px
+border-radius:inherit
 border-radius:var
 border-red-200
 border-rose-200
@@ -2867,6 +2904,7 @@ bottom:-.25rem
 bottom:0
 bottom:100%
 bottom:calc
+bottom][data-tc-align
 bound-signal
 bounds:
 box-shadow
@@ -2945,6 +2983,7 @@ byte-identical
 byte-identical.
 byte-identically
 byte-identically.
+byte-slicing
 bytes:
 c-a
 c-b
@@ -2992,6 +3031,10 @@ cb-custom
 cb-disabled
 cb-help
 cb-selected
+cc-csc
+cc-exp
+cc-name
+cc-number
 cdn.jsdelivr.net:
 ceiling_pct
 chain:
@@ -3032,12 +3075,14 @@ child:
 children-carrying
 children-slot
 children:
+chunk[:cut]
 ci-repro.sh
 circle-stack
 circle-stack:
 circle-style
 circular_progress_
 claim:
+clamp:
 class-lookup
 class-shaped
 class:
@@ -3063,6 +3108,7 @@ clone-gate
 closed-drawer
 closed-modal
 closed-set
+closedby-modal
 cloud:
 cmd/tc/_sources
 cmd/tc/_sources/starter
@@ -3148,6 +3194,7 @@ component-specific
 component:
 component_props_test.go
 components:
+composition:
 compositions:
 condition:
 confirm-delete
@@ -3189,6 +3236,8 @@ content-type
 content-visibility
 content-visibility:
 content-visibility:auto
+content-visibility:hidden
+content-visibility:visible
 content:
 contents
 context-aware
@@ -3232,6 +3281,7 @@ count_badge
 counterpart:
 counterparty-relevant
 country-listbox
+country-name
 counts:
 cov-menu
 coverage-baseline.txt
@@ -3246,6 +3296,8 @@ critical-path
 cross-board
 cross-checks
 cross-cutting
+cross-document
+cross-document-transitions
 cross-engine
 cross-fade
 cross-fade/slide
@@ -3266,6 +3318,7 @@ ctx-1
 ctx-nonce
 cube:
 cubic-bezier
+current-password
 current_password
 cursor-based
 cursor-default
@@ -3284,6 +3337,7 @@ cursor:not-allowed
 cursor:pointer
 cursor:zoom-in
 cursor:zoom-out
+curve:
 custom-board
 custom-footer-class
 custom-header
@@ -3311,6 +3365,7 @@ dark:accent-blue-400
 dark:bg-[radial-gradient
 dark:bg-amber-400
 dark:bg-amber-500
+dark:bg-amber-900/20
 dark:bg-amber-900/30
 dark:bg-amber-950/40
 dark:bg-black/90
@@ -3363,7 +3418,6 @@ dark:bg-rose-900/30
 dark:bg-violet-400
 dark:bg-violet-900/30
 dark:bg-yellow-400
-dark:bg-yellow-900/20
 dark:bg-yellow-900/30
 dark:block
 dark:border-amber-800
@@ -3477,6 +3531,7 @@ dark:stroke-gray-600
 dark:stroke-gray-700
 dark:stroke-gray-800
 dark:text-amber-200
+dark:text-amber-300
 dark:text-amber-400
 dark:text-blue-200
 dark:text-blue-300
@@ -3517,7 +3572,6 @@ dark:text-violet-200
 dark:text-violet-400
 dark:text-white
 dark:text-yellow-200
-dark:text-yellow-300
 dark:text-yellow-400
 dark:to-indigo-400
 dark:via-blue-400
@@ -3545,7 +3599,6 @@ data-combobox-label
 data-combobox-list
 data-combobox-option
 data-combobox-value
-data-content
 data-controller
 data-ctx
 data-dismiss
@@ -3596,6 +3649,7 @@ data-side
 data-slider-value
 data-state
 data-table
+data-tc-accordion
 data-tc-align
 data-tc-anchor
 data-tc-attrs
@@ -3760,12 +3814,14 @@ delay:99ms
 deliberately:
 demo-card
 demo-cards
+demo-content
 demo-csrf-token-value
 demo-drawer
 demo-echarts
 demo-form-loading
 demo-grade
 demo-load-more
+demo-loading-dialog
 demo-mobile-menu
 demo-modal
 demo-nonce
@@ -3790,7 +3846,8 @@ detail-heavy
 detail-page
 detail-view
 details[data-collapsible]
-detection:
+details[data-tc-accordion]::details-content
+details[data-tc-accordion][open]::details-content
 determinism-injection
 deterministic:
 developer-facing
@@ -3810,6 +3867,8 @@ dialog.tc-modal[open]
 dialog.tc-overlay
 dialog.tc-overlay::backdrop
 dialog.tc-overlay[open]::backdrop
+dialog::backdrop
+dialog:modal
 dialog[data-tc-lightbox-dialog]
 diff-step
 diff:
@@ -3829,6 +3888,7 @@ disabled:cursor-not-allowed
 disabled:opacity-50
 disabled_cb
 dismiss:
+dismisses:
 dismissible-warning
 display-accordion
 display-avatars
@@ -3894,6 +3954,7 @@ display/empty_state.templ
 display/external_link.templ
 display/hover_card.templ
 display/list_note.templ
+display/loading_dialog.templ
 display/page_header.templ
 display/pie_chart.templ
 display/relative_time.templ
@@ -4017,6 +4078,7 @@ email:
 email_address
 embed-driven
 emerald-green
+emitted:
 empty-1
 empty-but-loaded
 empty-column
@@ -4072,6 +4134,7 @@ event-delegation
 event-key
 event-renames
 event-trigger
+event.target:
 event:
 event_date
 events:
@@ -4145,11 +4208,13 @@ fallback:
 false-positived
 false-positived.
 family-aware
+family-name
 family:
 feature-off
 feedback-alerts
 feedback-circular-progress
 feedback-inline
+feedback-loading-dialog
 feedback-loading-overlay
 feedback-neutral
 feedback-progress
@@ -4169,6 +4234,7 @@ field-sizing:content
 field:
 field_
 fields:
+fight:
 file-anchored:
 file-backed
 file-backs
@@ -4254,6 +4320,8 @@ flex-shrink:0
 flex-wrap
 flex-wrap:wrap
 flex:1
+flip-block
+flip-inline
 floating-point
 fluid-typography
 focus-first
@@ -4434,6 +4502,7 @@ gap-6
 gap-6.
 gap-8
 gap-px
+gap-r.left
 gap-x-1.5
 gap-x-4
 gap-x-6
@@ -4487,6 +4556,7 @@ github.com/larsartmann/templ-components/utils/golden
 github.com/larsartmann/templ-components/utils/svg
 github.com/larsartmann/templ-components/utils/tone
 github.com/larsartmann/templ-components/utils/wire
+given-name
 global_error_handling
 global_error_handling_custom
 globe-americas:
@@ -4629,6 +4699,7 @@ hash[:]
 hashtag:
 hatch:
 hc-1
+hc-trigger
 head-only
 head-to-head
 header-click
@@ -4756,6 +4827,7 @@ http-equiv
 http]:after
 hue-level
 hue-shade
+hue:
 human-readable
 hx-
 hx-confirm
@@ -4806,9 +4878,12 @@ if-branch
 if-ok-return
 ig-1
 ignores:
+image-only
 image:
 image_placeholder
 image_srcset
+ime-safe-enter-submit
+ime-safe-enter-submit.
 img-src
 img.shields.io/badge/version-v
 imgs.length-1
@@ -4816,6 +4891,7 @@ immediately-invoked
 import-cycle
 in-
 in-content
+in-domain
 in-flight
 in-memory
 in-package
@@ -4898,7 +4974,9 @@ inset-s-0.5
 inset-s-full
 inset-x-0
 inset-y-0
+inset:
 inset:0
+inset:auto
 inset:calc
 instead:
 int:
@@ -4910,6 +4988,7 @@ integration:
 integration_test
 intentionally:
 interactive:
+interpolate-size
 interpolate-size:
 interpolate-size:allow-keywords
 intersect-once
@@ -5005,6 +5084,7 @@ language-version
 language:
 last-seen
 last:
+layer:
 layout-primitives
 layout/meta_refresh.templ
 layout:
@@ -5148,8 +5228,11 @@ liveness:
 lm-1
 load-bearing:
 load-more
+loading-dialog
 loading_button
 loading_button.go
+loading_dialog
+loading_dialog.templ
 loading_indicator
 loading_overlay
 loadmore_wired_datastar
@@ -5167,6 +5250,7 @@ login_card_types.go
 long-form
 long-line
 long-lived
+long-term
 longform-content
 look:
 lookup-map
@@ -5224,6 +5308,7 @@ margin-inline:
 margin-inline:0
 margin-inline:auto
 margin-inline:calc
+margin-left
 margin-left:calc
 margin-right:calc
 margin-right:var
@@ -5232,8 +5317,10 @@ margin-top:auto
 margin-top:calc
 margin-top:var
 margin-trim:inline
+margin:
 margin:-1px
 margin:0
+margin:8px
 margin:calc
 markdown/articles:
 marker-z9q
@@ -5398,8 +5485,10 @@ mobile-nav
 mobile-only
 modal-
 modal-1
+modal-loading
 modal-name
 modal-with-
+modal:
 modal_go.go
 mode:
 modifiers:
@@ -5472,6 +5561,7 @@ multi-series
 multi-trigger
 multipart/form-data
 mutated:
+mutation-proven
 mutex-guarded
 mux-relative
 mx-2
@@ -5547,6 +5637,7 @@ navigation/mobile_menu.templ
 navigation/nav_link.templ
 navigation/sidebar_nav.templ
 navigation:
+navigation:auto
 navigation_test
 near-black
 nested_test
@@ -5555,6 +5646,7 @@ neutral-emphasis
 never-ship-empty
 new-card
 new-id
+new-password
 new_password
 newlines:
 newly-swapped
@@ -5574,6 +5666,7 @@ no-op:
 no-oping.
 no-ops
 no-override
+no-preference
 no-sidebar
 no-store
 no-symbol
@@ -5633,6 +5726,8 @@ non-test
 non-text
 non-types
 non-value
+non-whitespace
+non-whitespace-text
 non-zero
 nonce-123
 nonce-abc
@@ -5661,6 +5756,7 @@ normalized-compare
 normalized:
 not-a-hue
 not-a-number
+not-a-real-token
 not-a-real-value
 not-a-tone
 not-allowed
@@ -5705,6 +5801,7 @@ one-off
 one-shot
 one-shot:
 one-time
+one-time-code
 one-token
 one:
 ones:
@@ -5739,6 +5836,7 @@ opt-out
 optimistic-move
 optimistic-pending
 optimistically:
+optimize-image-priority
 option-building
 option:checked
 option:checked:where
@@ -5751,6 +5849,7 @@ original-position
 origins:
 orphan-modifier
 out-of-band
+out-of-domain
 out-of-set
 outage:
 outer-mode
@@ -5788,13 +5887,19 @@ overflow-x-auto
 overflow-x:
 overflow-x:auto
 overflow-y-auto
+overflow-y:
 overflow-y:auto
+overflow-y:clip
+overflow/z-index
 overflow:
 overflow:auto
 overflow:hidden
 overflow:visible
 overlap:
+overlay:
 override:
+overscroll-behavior
+overscroll-behavior:
 overscroll-behavior:contain
 overscroll-contain
 ovl-1
@@ -5941,6 +6046,7 @@ per-line
 per-module
 per-package
 per-path
+per-point
 per-ray
 per-render
 per-row
@@ -5974,6 +6080,7 @@ pie:
 pie_chart.go
 pie_chart_basic
 pie_chart_custom_colors
+pie_chart_default_props_labels
 pie_chart_donut
 pie_chart_donut_center
 pie_chart_empty
@@ -6007,6 +6114,7 @@ playwright-driver
 plus:
 pnpm-style
 point:
+pointer-based
 pointer-events
 pointer-events-auto
 pointer-events-none
@@ -6027,6 +6135,13 @@ polled_region_with_id
 pop-1
 popover-positioning
 popover_bottom
+position-area
+position-area:
+position-area:var
+position-try
+position-try-fallbacks
+position-try-fallbacks:
+position-try-fallbacks:flip-block
 position:
 position:absolute
 position:fixed
@@ -6039,6 +6154,7 @@ positive-value
 post-audit
 post-interaction
 post-swap
+postal-code
 pr-
 pre-2026-10
 pre-allocated
@@ -6071,6 +6187,7 @@ prefers-contrast:more
 prefers-reduced-motion
 prefers-reduced-motion.
 prefers-reduced-motion:
+prefers-reduced-motion:no-preference
 prefers-reduced-motion:reduce
 prefers-reduced-transparency
 prefers-reduced-transparency:
@@ -6080,6 +6197,8 @@ prerender:
 present:
 preset-scaffolder
 preset:
+press-and-release-outside
+prevent-page-scroll-under-modal-dialog
 price-range
 primitives:
 print:
@@ -6094,6 +6213,10 @@ product-rating
 product_score
 profile-form
 programmatically-constructed
+progress.tc-progress
+progress.tc-progress::-moz-progress-bar
+progress.tc-progress::-webkit-progress-bar
+progress.tc-progress::-webkit-progress-value
 projection-health
 promise:
 proof-of-concept
@@ -6201,6 +6324,7 @@ re-expressed
 re-fetches
 re-fire
 re-fires
+re-format
 re-implements
 re-initialization.
 re-initializes
@@ -6288,6 +6412,7 @@ request-state
 request:
 request_id
 required-ish
+requirement:
 reset:
 resize:both
 resize:vertical
@@ -6388,6 +6513,7 @@ rtl-physical:
 rtl:rotate-180
 rule-id
 rule:
+rune-safe
 runs:
 runtime-assembled
 runtime-internal
@@ -6409,6 +6535,7 @@ sample:
 sanitize:
 sans-serif
 save-btn
+save-dialog
 save-form
 save-result
 save-style
@@ -6480,6 +6607,7 @@ section-level
 section-nav
 section:
 section_heading_
+sections:
 secure-nonce
 security-form
 see:
@@ -6608,6 +6736,7 @@ sides:
 sign-in
 sign-in.
 sign-in:
+sign-up
 signal:
 silent-failure
 silently-missing
@@ -6718,6 +6847,8 @@ space-y-8
 spacing:
 span-1
 span-3
+span-inline-end
+span-inline-start
 span:
 sparkline_aria_label
 sparkline_basic
@@ -6775,7 +6906,6 @@ status-badge
 status-dot
 status-filter
 status-like
-status-to-badge
 status:
 status_badge_with_mapper
 status_dot.go
@@ -6792,6 +6922,7 @@ stick:
 sticky-capable
 sticky-footer
 still:
+street-address
 strict-origin-when-cross-origin
 string-asserted
 string-keyed
@@ -6888,6 +7019,7 @@ table_row_class_overrides_hover
 table_sortable_headers
 table_sticky_header
 tablet-first
+tabs:
 tabs_default
 tabs_pills
 tabs_wired_datastar
@@ -6988,6 +7120,7 @@ tc-palette-active
 tc-palette-hidden
 tc-popover-abcdef0123456789
 tc-primary
+tc-progress
 tc-prose
 tc-select
 tc-sidebar-w-auto
@@ -7005,6 +7138,7 @@ tc-vt-fade-out
 tc:
 tc_demo_csrf
 td:where
+tel-national
 templ-block
 templ-components
 templ-components-theme.css
@@ -7141,6 +7275,7 @@ text-rose-500
 text-rose-600
 text-rose-700
 text-rose-800
+text-selection
 text-shadow:
 text-short
 text-size
@@ -7258,6 +7393,7 @@ top:100%
 top:25%
 top:50%
 top:calc
+top][data-tc-align
 total:
 totally-bogus-component
 totally-unknown
@@ -7270,6 +7406,8 @@ tracking-tight
 tracking-tighter
 tracking-wide
 tracking-wider
+trailing-block
+transaction-currency
 transform-box:
 transform-box:fill-box
 transform-origin:
@@ -7303,12 +7441,14 @@ transition-timing-function:var
 transition-transform
 transition:
 transition:background-color
+transition:block-size
 transition:border-color
 transition:none
 transition:opacity
 transition:rotate
 transition:transform
 transition:true
+transition:width
 transition[-:]
 transitions/animations:
 transitions:
@@ -7351,6 +7491,7 @@ twitter:description
 twitter:image
 twitter:title
 two-column
+two-point
 two-track
 two_factor
 type-assertion
@@ -7461,6 +7602,7 @@ violet-600/violet-500
 visibility:collapse
 visibility:hidden
 visibility:visible
+visible-but-empty
 visual-regression
 visually-hidden
 visualtest/.gitignore:
@@ -7548,6 +7690,7 @@ width:900px
 width:auto
 width:calc
 width:fit-content
+width]:
 wire-busy-datastar-out
 wire-busy-htmx-out
 wire-cal-ds
@@ -7601,9 +7744,11 @@ wrong-icon
 wrong-value
 wsl_v5
 x-100
+x-axis
 x-circle
 x-circle:
 x-default
+x-label
 x-mark:
 x:
 xl:
@@ -7615,7 +7760,6 @@ xl:grid-cols-[var
 xl:hidden
 y-axis
 y:
-yellow-canonical
 you-have-seen-it-all
 z-10
 z-20
@@ -7628,9 +7772,11 @@ z-index:40
 z-index:50
 zero-config
 zero-config.
+zero-date
 zero-dependency
 zero-division
 zero-props
+zero-time
 zero-total
 zero-value
 zero-value-compatible
