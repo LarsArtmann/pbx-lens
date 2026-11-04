@@ -2,6 +2,7 @@ package web
 
 import (
 	"bytes"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -104,6 +105,56 @@ func TestETagMiddlewareOverflowWarns(t *testing.T) {
 
 	if len(warnedArgs) != 2 || warnedArgs[0] != "limit_bytes" || warnedArgs[1] != 1<<20 {
 		t.Errorf("overflow warning args = %v, want [limit_bytes %d] (the configured limit)", warnedArgs, 1<<20)
+	}
+}
+
+// failingAfterHeaderRecorder fails every body Write once the header has
+// committed — the client-gone-mid-flush shape net/http cannot report.
+type failingAfterHeaderRecorder struct {
+	*httptest.ResponseRecorder
+
+	committed bool
+}
+
+func (f *failingAfterHeaderRecorder) WriteHeader(code int) {
+	f.committed = true
+	f.ResponseRecorder.WriteHeader(code)
+}
+
+func (f *failingAfterHeaderRecorder) Write(p []byte) (int, error) {
+	if f.committed {
+		return 0, errors.New("client vanished")
+	}
+
+	return f.ResponseRecorder.Write(p)
+}
+
+// TestETagMiddlewareWriteErrorCounts pins the OnError wiring: a body write
+// that fails after the header committed is unreportable through net/http —
+// the writeErrors counter (surfaced on /api/ops and the ops page) is the
+// only witness, and the log hook receives the warning.
+func TestETagMiddlewareWriteErrorCounts(t *testing.T) {
+	stats := NewCacheCounters()
+
+	var loggedMsg string
+
+	handler := ETagMiddleware(stats, func(msg string, _ ...any) {
+		loggedMsg = msg
+	})(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte("etagged body"))
+	}))
+
+	rec := &failingAfterHeaderRecorder{ResponseRecorder: httptest.NewRecorder()}
+	handler.ServeHTTP(rec, httptestRequest(t, "/"))
+
+	snapshot := stats.Snapshot()
+
+	if snapshot.WriteErrors != 1 {
+		t.Errorf("WriteErrors = %d, want 1 (the post-commit flush failed)", snapshot.WriteErrors)
+	}
+
+	if loggedMsg == "" {
+		t.Error("write failure did not log")
 	}
 }
 
