@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>First-party library fleet — utilization audit — pbx-lens</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -850,9 +850,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>FLEET LIBRARY AUDIT</span>
+      <span>2026-11-04</span>
+      <span>PBX-LENS &middot; 19 LIBRARIES</span>
     </div>
 
     <div class="layout">
@@ -862,10 +862,12 @@
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
           <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
+          <a href="#fleet">Fleet table</a>
+          <a href="#used">Used (7)</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#appendix">Appendix</a>
+          <a href="#notused">Not imported (12)</a>
+          <a href="#proposal">Opportunities</a>
+          <a href="#appendix">How to verify</a>
         </nav>
       </aside>
 
@@ -873,198 +875,392 @@
       <main class="main">
         <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">FIRST-PARTY LIBRARY FLEET AUDIT &middot; 2026-11-04</div>
+          <h1>19 first-party libraries — are we using them to the max?</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            A utilization audit of every LarsArtmann library against pbx-lens:
+            seven are load-bearing (scored 33&ndash;93/100), twelve are deliberately
+            absent (nine rejections with reasons, two deferrals, one pattern-only,
+            one partial-adopt idea). The gaps concentrate in one library&rsquo;s unused
+            boundary conventions and one false doctrine that built a duplicate.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">7 used &middot; 12 not imported</span>
+            <span class="tag">Mean used-score: 71/100</span>
+            <span class="tag teal">Pins current: 7/7</span>
+            <span class="tag">Per-lib reports: 19 &times; markdown</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
-          <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
-          </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">71</div>
+            <div class="label">Mean utilization, 7 used libs</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">5 / 7</div>
+            <div class="label">Used libs at high or very high (≥70)</div>
           </div>
           <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
+            <div class="score">8</div>
+            <div class="label">Missed opportunities (all actionable)</div>
           </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Misuse / anti-patterns in prod code</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">7 / 7</div>
+            <div class="label">Pins at latest release (version currency)</div>
           </div>
         </section>
 
         <!-- Summary -->
         <section id="summary">
-          <h2><span class="num">00</span>Summary</h2>
-          <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
-          </p>
+          <h2>The bottom line</h2>
           <div class="callout callout-amber">
-            <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            <strong>Two gaps hold the whole fleet score down &mdash; both are one-day fixes.</strong>
+            <ol>
+              <li>
+                <strong>go-error-family is used at the origin but ignored at the boundaries (45/100).</strong>
+                CLI exit codes, HTTP status mapping, structured logging, and the test-assertion
+                package are all hand-rolled instead &mdash; ~7 duplication sites across
+                <code>cmd/pbx-lens/main.go:89-92</code> and 14 web call sites.
+              </li>
+              <li>
+                <strong>The hand-rolled Server-Timing middleware rests on a factually false doctrine.</strong>
+                &ldquo;No middleware constructor in any release&rdquo; is wrong &mdash;
+                <code>ServerTimingMiddleware()</code> has shipped since v1.0.1 (verified in the module
+                cache at v1.0.1, v1.0.2, v1.0.3). The claim lives in
+                <code>internal/web/timing.go:16-17</code>, <code>docs/http-stack.md:32-34</code>, and
+                AGENTS.md (corrected 2026-11-04 by this audit).
+              </li>
+            </ol>
           </div>
+          <p>
+            Everything else is health: the backbone &mdash; go-cqrs-lite runtime core (92/100) and
+            templ-components (93/100) &mdash; is at reference quality with every paid-for library
+            contract fenced by a named guard or test; the HTTP stack is current and doctrinally
+            documented; and every one of the twelve <em>not-imported</em> verdicts is a documented
+            decision (domain mismatch, a rejected prerequisite like samber/do, or the R9
+            no-SSE polling doctrine), not neglect. Notably, all seven used pins are the latest
+            releases &mdash; the 2026-10-24/25 sweep and the v1.26.0 bump left zero version debt.
+          </p>
         </section>
 
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+        <!-- Fleet table -->
+        <section id="fleet">
+          <h2>The fleet at a glance</h2>
+          <table class="compare">
+            <thead>
+              <tr><th>Library</th><th>Pin</th><th>Latest upstream</th><th>In pbx-lens</th><th>Verdict / score</th><th>Report</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>go-cqrs-lite (+12 submodules)</td><td>v4.16.0 wave</td><td>same (versions.json parity)</td><td class="yes">direct, backbone</td><td class="yes"><span class="highlight">92/100</span> core &middot; ≈81 pooled</td><td><a href="go-cqrs-lite.md">go-cqrs-lite.md</a></td></tr>
+              <tr><td>templ-components</td><td>v1.26.0</td><td>v1.26.0</td><td class="yes">direct, UI</td><td class="yes"><span class="highlight">93/100</span> (95 post-fold-in)</td><td><a href="templ-components.md">templ-components.md</a></td></tr>
+              <tr><td>go-appkit (+systemd)</td><td>v0.9.0 / v0.1.0</td><td>same</td><td class="yes">direct, service shell</td><td class="yes">73/100 high</td><td><a href="go-appkit.md">go-appkit.md</a></td></tr>
+              <tr><td>go-etag/server</td><td>v0.6.1</td><td>v0.7.0 (docs/CI only)</td><td class="yes">direct, caching</td><td class="yes">83/100 high</td><td><a href="go-etag.md">go-etag.md</a></td></tr>
+              <tr><td>httputil</td><td>v1.8.0</td><td>v1.8.0 (checkout cut)</td><td class="yes">direct, middleware</td><td class="yes">80/100 high</td><td><a href="httputil.md">httputil.md</a></td></tr>
+              <tr><td>httputil/server_timing</td><td>v1.0.3</td><td>v1.0.3</td><td class="yes">direct, timing</td><td class="no">33 direct / 50 effective</td><td><a href="httputil-server-timing.md">httputil-server-timing.md</a></td></tr>
+              <tr><td>go-error-family</td><td>v0.12.0</td><td>v0.12.0</td><td class="yes">direct, errors</td><td class="no">45/100 low</td><td><a href="go-error-family.md">go-error-family.md</a></td></tr>
+              <tr><td>cqrs-htmx</td><td>&mdash;</td><td>root v4.15.0</td><td class="no">not imported</td><td>ADOPT-PARTIAL (idea-level)</td><td><a href="cqrs-htmx.md">cqrs-htmx.md</a></td></tr>
+              <tr><td>go-atomic-write</td><td>&mdash;</td><td>v0.6.2</td><td class="no">not imported</td><td>DEFER (needs exported commit primitive)</td><td><a href="go-atomic-write.md">go-atomic-write.md</a></td></tr>
+              <tr><td>go-retry</td><td>&mdash;</td><td>v0.9.0</td><td class="no">not imported</td><td>DEFER (no retry loop exists)</td><td><a href="go-retry.md">go-retry.md</a></td></tr>
+              <tr><td>go-output</td><td>&mdash;</td><td>v0.38.7</td><td class="no">pattern-only (flake + CI)</td><td>PATTERN-ONLY</td><td><a href="go-output.md">go-output.md</a></td></tr>
+              <tr><td>go-idempotency</td><td>&mdash;</td><td>v0.3.2</td><td class="no">not imported</td><td>REJECT (natural-key idempotency by construction)</td><td><a href="go-idempotency.md">go-idempotency.md</a></td></tr>
+              <tr><td>go-codec</td><td>indirect v0.3.3</td><td>v0.3.3</td><td class="no">indirect via metaengine</td><td>REJECT direct (house event codec, already exercised)</td><td><a href="go-codec.md">go-codec.md</a></td></tr>
+              <tr><td>go-sse</td><td>indirect v0.6.2</td><td>v0.7.0</td><td class="no">indirect via metaengine</td><td>REJECT (R9: htmx polling, no push consumer)</td><td><a href="go-sse.md">go-sse.md</a></td></tr>
+              <tr><td>go-filewatcher</td><td>&mdash;</td><td>v2.4.3</td><td class="no">not imported</td><td>REJECT (SIGHUP reload is deterministic + pinned)</td><td><a href="go-filewatcher.md">go-filewatcher.md</a></td></tr>
+              <tr><td>go-daemon</td><td>&mdash;</td><td>v0.4.0</td><td class="no">not imported</td><td>REJECT (appkit/systemd owns notify + drain)</td><td><a href="go-daemon.md">go-daemon.md</a></td></tr>
+              <tr><td>go-health</td><td>&mdash;</td><td>v0.9.0</td><td class="no">not imported</td><td>REJECT (samber/do prerequisite absent)</td><td><a href="go-health.md">go-health.md</a></td></tr>
+              <tr><td>go-health-dashboard</td><td>&mdash;</td><td>v0.12.2</td><td class="no">not imported</td><td>REJECT (needs go-health + SSE, both excluded)</td><td><a href="go-health-dashboard.md">go-health-dashboard.md</a></td></tr>
+              <tr><td>go-credentials-store</td><td>&mdash;</td><td>v0.3.1</td><td class="no">not imported</td><td>REJECT (one htpasswd file; no secrets at rest)</td><td><a href="go-credentials-store.md">go-credentials-store.md</a></td></tr>
+            </tbody>
+          </table>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            Score derivation per the deep-dive rubric: applicable capabilities × (fully = 1,
+            partial = 0.5, missed = 0); every Not-Applicable row carries a one-line domain reason
+            in the per-lib report. Mean = (92+93+73+83+80+33+45)/7 ≈ 71 (server_timing counted at
+            its direct-use score; at effective coverage the mean is ≈74).
           </p>
+        </section>
 
-          <div class="strengths">
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
-              </div>
-            </div>
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
-              </div>
-            </div>
-          </div>
+        <!-- Used libraries: what's right -->
+        <section id="used">
+          <h2>The seven load-bearing libraries</h2>
+          <ul class="strengths">
+            <li class="strength">
+              <strong>go-cqrs-lite &mdash; reference-grade core usage.</strong>
+              <code>system.New</code> is the sole composition root (ADR-0123 verified clean:
+              <code>internal/app/app.go:87</code>); every hard-won contract &mdash; bare record keys
+              (<code>internal/calls/viewkey.go:10-22</code>), one-shot drain
+              (<code>internal/cli/system.go:34-40</code>), create-fold pairing
+              (<code>internal/calls/projection.go:89-93</code>) &mdash; is fenced by a named guard.
+              All 25 pins match upstream <code>versions.json</code>.
+            </li>
+            <li class="strength">
+              <strong>templ-components &mdash; 26/28 applicable capabilities, zero hand-rolled parallel UI.</strong>
+              All 7 <code>.templ</code> pages build on the library; the newest page
+              (<code>segment.templ</code>) reused dashboard cards wholesale; utils/format adopted at
+              26 sites; the v1.25.0&ndash;v1.26.0 chart/palette wave absorbed almost entirely for free.
+            </li>
+            <li class="strength">
+              <strong>HTTP stack &mdash; current and doctrinal.</strong>
+              httputil 80/100 (SecurityHeaders/Nonce/Compression wired; v1.5.0 Content-Length
+              contract pinned by <code>TestCacheSemanticsHardening</code>); go-etag 83/100 (5 knobs
+              wired + 3 observability hooks feeding <code>/api/ops</code>); the middleware chain is
+              documented in <code>docs/http-stack.md</code>.
+            </li>
+            <li class="strength">
+              <strong>go-appkit &mdash; used exactly as designed.</strong>
+              Shell + signals + drain + health + systemd notify from the library
+              (<code>cmd/pbx-lens/serve.go:150,182,212,267</code>); testkit adoption intact at 3 sites.
+            </li>
+            <li class="strength">
+              <strong>Every rejection is a decision.</strong>
+              Twelve non-adopted libs each carry a domain reason: samber/do prerequisite absent
+              (go-health), SSE excluded by R9 (go-sse, go-health-dashboard), natural-key
+              idempotency by construction (go-idempotency), systemd owns supervision (go-daemon),
+              and so on &mdash; see the fleet table and per-lib reports.
+            </li>
+          </ul>
         </section>
 
         <!-- Findings -->
         <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <h2>Findings, highest impact first</h2>
 
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
+          <div class="issue issue-critical" id="server-timing-dup">
+            <span class="severity severity-critical">Missed Opportunity &middot; false doctrine</span>
+            <h3>Hand-rolled Server-Timing middleware duplicates a constructor that has existed since v1.0.1</h3>
+            <div class="where">internal/web/timing.go:16-25 &middot; docs/http-stack.md:32-34 &middot; AGENTS.md (corrected) &middot; prior audit finding #2</div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              <code>ServerTimingMiddleware()</code> and <code>ServerTimingMiddlewareWhen(pred)</code>
+              are present in the module cache at v1.0.1 (server_timing.go:405), v1.0.2, and the pin
+              v1.0.3 (server_timing.go:400,416). The hand-rolled wrapper diverges: it does not
+              propagate <code>r.Pattern</code> and stamps headers on every route, including
+              unauthenticated runs &mdash; upstream&rsquo;s <code>When</code> variant is the
+              documented gate. Three documents assert the constructor does not exist; any future
+              session reading them will preserve or &ldquo;restore&rdquo; the duplicate.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Recommendation</strong> Swap to the library middleware and fix all three
+              stale texts in one commit; evaluate <code>...When(pred)</code> gating.
+            </div>
+            <pre><code><span class="tok-comment">// before: internal/web/timing.go (hand-rolled, divergent)</span>
+<span class="tok-keyword">func</span> <span class="tok-function">ServerTimingMiddleware</span>() httputil.Middleware { <span class="tok-comment">/* WrapServerTiming wrap */</span> }
+
+<span class="tok-comment">// after: cmd/pbx-lens/serve.go (library-owned)</span>
+ExtraMiddlewares: []func(http.Handler) http.Handler{
+    auth, securityHeaders, servertiming.<span class="tok-function">ServerTimingMiddleware</span>(), compression, etagMW,
+}</code></pre>
+          </div>
+
+          <div class="issue issue-critical" id="error-family-cli">
+            <span class="severity severity-critical">Missed Opportunity &middot; high operator value</span>
+            <h3>CLI exits 1 for everything; the library maps families to sysexits + What/Why/Fix</h3>
+            <div class="where">cmd/pbx-lens/main.go:89-92 &middot; cmd/pbx-lens/ops.go:99 &middot; internal/cli/system.go:58</div>
+            <p>
+              <code>fatal()</code> always <code>os.Exit(1)</code>. The library&rsquo;s
+              <code>ExitCode(err)</code> maps the already-constructed
+              <code>NewTransient("lens.cli.projection_timeout")</code> to exit <strong>75</strong>
+              (EX_TEMPFAIL) &mdash; scriptable &mdash; and <code>HandleError(err)</code> adds
+              What/Why/Fix messaging for free. ~10 lines deleted, operator semantics gained.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong> Route the CLI through <code>HandleError</code>/
+              <code>ExitCode</code>. Caveat: family defaults are fail-open (unknown &rarr;
+              Transient &rarr; 75) &mdash; keep the poller&rsquo;s documented reasoning comments.
+            </div>
+            <pre><code><span class="tok-comment">// before</span>
+<span class="tok-keyword">func</span> <span class="tok-function">fatal</span>(err error) { fmt.<span class="tok-function">Fprintln</span>(os.Stderr, <span class="tok-string">"pbx-lens:"</span>, err); os.<span class="tok-function">Exit</span>(<span class="tok-number">1</span>) }
+
+<span class="tok-comment">// after</span>
+errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-comment">// What/Why/Fix + os.Exit(family.ExitCode)</span></code></pre>
+          </div>
+
+          <div class="issue issue-important" id="templ-emptytext">
+            <span class="severity severity-important">Missed Opportunity &middot; blocked workarounded, unblock landed</span>
+            <h3>Ops zero-time guard is now replaceable by RelativeTimeProps.EmptyText (#52 closed upstream v1.25.0)</h3>
+            <div class="where">internal/web/ops.go:296-298 &middot; internal/web/ops.templ:205-206 &middot; ops_page_test.go:172-189</div>
+            <p>
+              The local &ldquo;never&rdquo; guard existed because upstream lacked an empty-text prop.
+              v1.25.0 shipped <code>RelativeTimeProps.EmptyText</code> (verified at the pin,
+              relative_time.templ:26,34,61,72) and its changelog names pbx-lens as the consumer who
+              can delete the guard. <code>docs/upstream-filings.md</code> is stale: #52 closed
+              2026-10-29 unrecorded. Takes templ-components from 93 to 95/100.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong> Swap to <code>EmptyText: "never"</code>, delete the
+              guard branch, slim the tests to a pin test; refresh the filings ledger + adoption map.
             </div>
           </div>
 
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+          <div class="issue issue-important" id="error-family-http">
+            <span class="severity severity-important">Missed Opportunity &middot; removes a leak surface</span>
+            <h3>Fourteen web sites hand-map families to HTTP statuses and write err.Error() inline</h3>
+            <div class="where">internal/web/server.go:182,193,354,500,507,555,618-626,632 &middot; export.go:176,192 &middot; search.go:50-55,67 &middot; freshness.go:31,43 &middot; segment_page.go:31 &middot; recording.go:111,235</div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              <code>Family.HTTPStatus</code>/<code>HTTPHandler</code> exist precisely for this and
+              deliberately gate the message body on classification; the inline sites write raw
+              <code>err.Error()</code>. Three Infrastructure-shaped 503s are entirely unclassified
+              (search.go:50-55 &ldquo;needs a sqlite index&rdquo;, server.go:618-626 &ldquo;no ops
+              counters wired&rdquo;, server.go:632 marshal failure).
             </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong> Adopt <code>errorfamily.HTTPHandler</code> for the
+              JSON/HTML error paths; classify the three bare 503s with
+              <code>WrapInfrastructure</code> (catalog.go:33 already models it).
+            </div>
           </div>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+          <div class="issue issue-important" id="etag-metrics">
+            <span class="severity severity-important">Missed Opportunity &middot; at next bump</span>
+            <h3>Hand-built CacheCounters duplicates go-etag/metrics (not in graph)</h3>
+            <div class="where">internal/web/caching.go:16-58 &middot; upstream metrics/metrics.go:11,38,72,87</div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              <code>go-etag/metrics.Attach</code> provides Counters/Snapshot/HitRatio with the same
+              preserve-and-append hook contract pbx-lens composes manually. Verified present in the
+              upstream checkout; absent from pbx-lens&rsquo; graph. Also unwired: the
+              <code>ETagConfig.OnError</code> knob (post-commit write failures invisible today).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong> Wire <code>OnError</code> now (small); adopt
+              <code>metrics.Attach</code> and delete <code>CacheCounters</code> at the next
+              go-etag bump (weighs a new module against ~40 deleted lines). Guard the hit-ratio
+              display before any handler ever sets its own tag (documented &gt;1 trap).
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="cqrs-reset">
+            <span class="severity severity-important">Missed Opportunity &middot; fits a planned TODO exactly</span>
+            <h3>projectionhost.Reset is the planned legacy-key rebuild, already built upstream</h3>
+            <div class="where">never called &middot; target: docs/gotchas.md record-key entry &middot; projectionadapter Resettable present at pin</div>
+            <p>
+              The planned one-time read-model rebuild that retires legacy marker-prefixed keys
+              currently means &ldquo;drop the file and re-poll every source&rdquo;.
+              <code>Host.Reset</code> drops the checkpoint, clears the read model, and replays from
+              zero on next <code>Start</code> &mdash; no source re-fetch. The only missed capability
+              in the cqrs-lite core (92/100).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong> Use <code>Reset</code> when executing the rebuild TODO
+              instead of drop-and-repoll.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="error-family-tests">
+            <span class="severity severity-important">Partially Used &middot; zero-cost adoption</span>
+            <h3>errorfamilytest assertions unused; three test sites re-implement them</h3>
+            <div class="where">internal/ingest/telnyx/telnyx_test.go:238-249 &middot; internal/cli/poller_test.go:478 &middot; internal/app/depth_trio_test.go:83-85</div>
+            <p>
+              The sub-package rides the same module &mdash; adoption adds no new module
+              (the promotion precedent this repo already applies).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong> Replace the three hand assertions with
+              <code>errorfamilytest.AssertFamily/AssertCode</code>.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="good-signals">
+            <span class="severity severity-nice">Fully Leveraged &middot; what is right</span>
+            <h3>Construction-site discipline, fenced contracts, current pins</h3>
+            <div class="where">internal/calls/decider.go &middot; internal/calls/viewkey.go:10-22 &middot; internal/cli/system.go:34-40 &middot; internal/web/caching.go:73-92</div>
+            <p>
+              Error construction at origin with a coherent <code>lens.*</code> code taxonomy across
+              23 files; the cross-library classification protocol pinned by tests; the ETag config
+              tuned above defaults with observability hooks feeding <code>/api/ops</code>; and all
+              seven used pins are the latest releases. The failure mode this codebase does
+              <em>not</em> have is casual library usage.
             </p>
           </div>
         </section>
 
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
-          <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
-          </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
+        <!-- Not used -->
+        <section id="notused">
+          <h2>The twelve not-imported libraries, in one breath</h2>
+          <table class="compare">
+            <thead><tr><th>Library</th><th>Verdict</th><th>One-line reason (full reasoning in per-lib report)</th></tr></thead>
+            <tbody>
+              <tr><td><a href="go-idempotency.md">go-idempotency</a></td><td class="no">REJECT</td><td>Idempotency is natural-key by construction (deterministic stream ids + ContentHash replay-to-zero); no client keys exist to dedupe.</td></tr>
+              <tr><td><a href="go-retry.md">go-retry</a></td><td>DEFER</td><td>No retry loop exists (fixed 15-min ticker is a documented F009 decision); adopt when the Telnyx client gains per-request 429/5xx handling.</td></tr>
+              <tr><td><a href="go-codec.md">go-codec</a></td><td class="no">REJECT direct</td><td>Already exercised indirectly as the cqrs-lite event codec; wire/FlexTime solves a different problem (external JSONL dialects).</td></tr>
+              <tr><td><a href="go-sse.md">go-sse</a></td><td class="no">REJECT</td><td>R9 chose htmx polling; no push consumer exists; stays correctly indirect via metaengine.</td></tr>
+              <tr><td><a href="go-atomic-write.md">go-atomic-write</a></td><td>DEFER</td><td>backup.go mirrors its discipline (~30 lines) but the library cannot own a sqlite-produced staging file &mdash; no exported rename/commit primitive; upstream ask drafted.</td></tr>
+              <tr><td><a href="go-filewatcher.md">go-filewatcher</a></td><td class="no">REJECT</td><td>SIGHUP reload is deterministic, test-pinned, keep-on-failure; watching adds inotify/debounce races for a human-scale rotation.</td></tr>
+              <tr><td><a href="go-daemon.md">go-daemon</a></td><td class="no">REJECT</td><td>sd_notify already owned by go-appkit/systemd; pbx-lens is a TCP service under a unit, not a /run socket daemon.</td></tr>
+              <tr><td><a href="go-output.md">go-output</a></td><td>PATTERN-ONLY</td><td>Flake/CI patterns adopted (flakeModule actually served by go-nix-helpers); zero Go-level use for a renderer over templ UI + streaming exports.</td></tr>
+              <tr><td><a href="go-health.md">go-health</a></td><td class="no">REJECT</td><td>Hard prerequisite: samber/do injector &mdash; pbx-lens&rsquo; only composition root is system.New (ADR-0123); appkit probes + honest ops counters already serve.</td></tr>
+              <tr><td><a href="go-health-dashboard.md">go-health-dashboard</a></td><td class="no">REJECT</td><td>Doubly inapplicable: needs go-health (rejected) and ships SSE (excluded by R9); the ops page already carries the honesty discipline.</td></tr>
+              <tr><td><a href="go-credentials-store.md">go-credentials-store</a></td><td class="no">REJECT</td><td>One bcrypt htpasswd file, operator-rotated; the index stores no secret material; KeyID rotation + reveal audit would be dead weight.</td></tr>
+              <tr><td><a href="cqrs-htmx.md">cqrs-htmx</a></td><td>ADOPT-PARTIAL</td><td>No user management to buy (single htpasswd), no command surface (read-only UI) &mdash; but its projection-readiness check is the right model for a real /ready gap.</td></tr>
+            </tbody>
+          </table>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>Pattern across the rejections</strong> Every &ldquo;no&rdquo; cites a recorded
+            architectural decision (ADR-0123 single composition root, R9 no-SSE, disposable
+            re-derivable index DB, single-operator posture) &mdash; or names the exact trigger that
+            would flip it. None is an oversight.
           </div>
+        </section>
+
+        <!-- Opportunities -->
+        <section id="proposal">
+          <h2>Top opportunities (sorted by impact &times; ease, descending)</h2>
+          <table class="compare">
+            <thead><tr><th>#</th><th>Opportunity</th><th>Impact</th><th>Ease</th><th>Priority</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Swap hand-rolled Server-Timing middleware for <code>servertiming.ServerTimingMiddleware()</code>; fix timing.go + http-stack.md + (done) AGENTS.md doctrine</td><td class="yes">5</td><td class="yes">5</td><td><span class="highlight">25</span></td></tr>
+              <tr><td>2</td><td>go-error-family CLI: <code>HandleError</code>/<code>ExitCode</code> (EX_TEMPFAIL for transient projection timeouts)</td><td class="yes">4</td><td class="yes">4</td><td><span class="highlight">16</span></td></tr>
+              <tr><td>3</td><td>templ-components: fold in #52 &mdash; <code>EmptyText: "never"</code> replaces the ops zero-guard; refresh filings ledger</td><td class="yes">3</td><td class="yes">5</td><td><span class="highlight">15</span></td></tr>
+              <tr><td>4</td><td>go-error-family web: <code>HTTPHandler</code> across ~14 status-mapping sites; classify the 3 bare 503s</td><td class="yes">4</td><td class="yes">3</td><td><span class="highlight">12</span></td></tr>
+              <tr><td>5</td><td>go-etag: wire <code>OnError</code> knob (write-failure telemetry)</td><td>2</td><td class="yes">4</td><td><span class="highlight">8</span></td></tr>
+              <tr><td>6</td><td>go-cqrs-lite: use <code>projectionhost.Reset</code> for the planned legacy-key read-model rebuild</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td></tr>
+              <tr><td>7</td><td>errorfamilytest assertions replace 3 hand-rolled test sites (no new module)</td><td>2</td><td class="yes">3</td><td><span class="highlight">6</span></td></tr>
+              <tr><td>8</td><td>/ready projection-worker readiness (modeled on cqrs-htmx&rsquo;s health bridge idea)</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td></tr>
+              <tr><td>9</td><td>go-etag: adopt <code>metrics.Attach</code>, delete CacheCounters (bundle with next bump)</td><td>2</td><td>2</td><td><span class="highlight">4</span></td></tr>
+              <tr><td>10</td><td>go-error-family: <code>WithContext</code>+<code>JSON</code> canonicalize the export error marker; <code>LogError</code> for structured logs</td><td>2</td><td>2</td><td><span class="highlight">4</span></td></tr>
+            </tbody>
+          </table>
         </section>
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
-          <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
-          </p>
-          <table class="compare">
-            <thead>
-              <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
-              </tr>
-              <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
-              </tr>
-            </tbody>
-          </table>
+          <h2>How to verify</h2>
+          <p>Every claim is re-derivable; the per-lib reports carry their own verify blocks.</p>
+          <pre><code><span class="tok-comment"># 1. the two headline gaps</span>
+rg -n <span class="tok-string">"no middleware constructor"</span> internal/web/timing.go docs/http-stack.md
+rg -n <span class="tok-string">"func ServerTimingMiddleware"</span> \
+  ~/go/pkg/mod/github.com/larsartmann/httputil/server_timing@v1.0.3/server_timing.go
+rg -n <span class="tok-string">"os.Exit(1)"</span> cmd/pbx-lens/main.go
+
+<span class="tok-comment"># 2. pin currency (used libs)</span>
+git -C /home/lars/projects/go-cqrs-lite tag --sort=-v:refname | head -3
+git -C /home/lars/projects/templ-components tag --sort=-v:refname | head -3
+git -C /home/lars/projects/go-etag tag --sort=-v:refname | head -3
+
+<span class="tok-comment"># 3. the twelve absences</span>
+for lib in go-idempotency go-retry go-codec go-sse go-atomic-write go-filewatcher \
+           go-daemon go-output go-health go-health-dashboard go-credentials-store cqrs-htmx; do
+  rg -q <span class="tok-string">"larsartmann/$lib"</span> go.mod || echo <span class="tok-string">"not imported: $lib"</span>
+done
+
+<span class="tok-comment"># 4. count the reports</span>
+ls docs/review/libs/*.md | wc -l   <span class="tok-comment"># 19</span></code></pre>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-11-04 &middot; Reviewed against pbx-lens @ main (37e30ae) &middot; Per-lib detail in the 19 sibling markdown reports
           </p>
         </footer>
       </main>

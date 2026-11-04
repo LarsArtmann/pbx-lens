@@ -36,9 +36,11 @@ read-only deep link, never a data dependency.
   precedent (bcrypt, x/time rate, templ-components/htmx, the 2026-10-12
   HTTP-stack trio httputil/server_timing/go-etag): a module ALREADY in the
   graph rides free — promoting it to direct adds no new module.
-  server_timing has NO middleware constructor in any release (wrap
-  manually); `entitytag` stays indirect (`go-etag/server` re-exports
-  everything).
+  server_timing DOES ship `ServerTimingMiddleware()`/`...When(pred)` since
+  v1.0.1 (2026-11-04 fleet audit corrected the earlier "none exists" claim —
+  pbx-lens still wraps manually at timing.go until the planned swap lands,
+  docs/review/libs/httputil-server-timing.md); `entitytag` stays indirect
+  (`go-etag/server` re-exports everything).
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
   `app.DomainConfig()`/`app.DeploymentConfig(dsn)` — never hand-roll harness
