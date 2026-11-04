@@ -67,7 +67,7 @@ func (s *server) recording(w http.ResponseWriter, r *http.Request) {
 
 	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, indexReadFailureMsg, false)
 
 		return
 	}

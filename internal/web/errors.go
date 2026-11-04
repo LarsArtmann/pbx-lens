@@ -8,6 +8,11 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 )
 
+// indexReadFailureMsg is the client-facing text for any failed index read.
+// It names the failure and where the detail lives, and never carries the
+// raw error (storage paths and SQL leak there).
+const indexReadFailureMsg = "reading the call index failed; the detail is in the server log"
+
 // writeIndexError maps one handler error onto the response through the
 // error family. Family-classified errors set the family's HTTP status (a
 // Transient scan failure surfaces as 503 — the service genuinely cannot
@@ -17,7 +22,14 @@ import (
 // the raw error goes to the server log instead. jsonBody selects the
 // /api/* shape ({"error", "family", "code"}) over the http.Error text
 // shape; family/code are empty strings for unclassified errors.
-func (s *server) writeIndexError(w http.ResponseWriter, r *http.Request, err error, fallbackStatus int, safeMsg string, jsonBody bool) {
+func (s *server) writeIndexError(
+	w http.ResponseWriter,
+	r *http.Request,
+	err error,
+	fallbackStatus int,
+	safeMsg string,
+	jsonBody bool,
+) {
 	status := fallbackStatus
 	family := ""
 	code := errorfamily.Code(err)

@@ -11,7 +11,10 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 )
 
-var errIndexBoom = errors.New("secrets: disk 3 hums at midnight")
+var (
+	errIndexBoom = errors.New("secrets: disk 3 hums at midnight")
+	errPlainBoom = errors.New("plain")
+)
 
 // TestWriteIndexErrorFamilyContract pins the classified-error-response
 // contract: family-classified errors take the family's HTTP status and a
@@ -52,7 +55,8 @@ func TestWriteIndexErrorFamilyContract(t *testing.T) {
 		t.Errorf("unclassified JSON status = %d, want fallback 500", js.Code)
 	}
 
-	if body := js.Body.String(); strings.Contains(body, "secrets") || strings.Contains(body, "midnight") {
+	if body := js.Body.String(); strings.Contains(body, "secrets") ||
+		strings.Contains(body, "midnight") {
 		t.Errorf("unclassified JSON body leaks the raw error: %q", body)
 	}
 
@@ -125,7 +129,7 @@ func TestExportErrorMarkerCarriesContext(t *testing.T) {
 		t.Errorf("marker Context = %v, want call_id conv-42", marker.Context)
 	}
 
-	plain := exportErrorMarker(errors.New("plain"))
+	plain := exportErrorMarker(errPlainBoom)
 
 	if plain.Context != nil {
 		t.Errorf("unclassified marker Context = %v, want nil", plain.Context)

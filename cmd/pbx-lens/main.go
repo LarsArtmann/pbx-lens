@@ -99,8 +99,7 @@ func fatal(err error) {
 // the registry fail-opens unclassified errors to Transient (75), and a
 // plain bug must never teach a script "will pass on retry".
 func fatalCode(err error) int {
-	var classified errorfamily.Classified
-	if errors.As(err, &classified) {
+	if _, ok := errors.AsType[errorfamily.Classified](err); ok {
 		return errorfamily.HandleError(err)
 	}
 

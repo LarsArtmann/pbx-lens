@@ -71,7 +71,8 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusBadRequest, "search failed for that query; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusBadRequest,
+			"search failed for that query; the detail is in the server log", false)
 
 		return
 	}

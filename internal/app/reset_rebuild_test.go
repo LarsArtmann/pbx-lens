@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -13,6 +14,11 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 )
+
+// errViewCount is the scenario query's mismatch sentinel; the callback wraps
+// it with the observed count so a red names the number AND stays static for
+// err113.
+var errViewCount = errors.New("read model fold count mismatch")
 
 // TestResetRebuildsReadModelFromJournal is the memory-engine dry run of the
 // legacy-key retirement runbook (docs/runbooks/reset-rebuild.md, TODO_LIST
@@ -50,7 +56,7 @@ func TestResetRebuildsReadModelFromJournal(t *testing.T) {
 		ThenNoEvents().
 		ThenQueryFunc(viewCountReader(sc.System()), func(got any) error {
 			if count, ok := got.(int); !ok || count != 2 {
-				return fmt.Errorf("after seed: views = %v, want 2", got)
+				return fmt.Errorf("%w: views = %v, want 2", errViewCount, got)
 			}
 
 			return nil

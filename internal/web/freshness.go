@@ -28,7 +28,7 @@ func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", true)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, indexReadFailureMsg, true)
 
 		return
 	}

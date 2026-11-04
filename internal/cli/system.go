@@ -122,11 +122,30 @@ func workerRoundState(states []projectionhost.WorkerState) (bool, bool) {
 // serve (scripts/verify-ui-contract.js Contract F caught it).
 func ProjectionWorkersReady(states []projectionhost.WorkerState) bool {
 	for _, state := range states {
-		switch state.Status {
-		case projectionhost.WorkerBackoff, projectionhost.WorkerFailed:
+		if workerBroken(state.Status) {
 			return false
 		}
 	}
 
 	return true
+}
+
+// workerBroken names the two failure states explicitly and lists the healthy
+// ones, so adding a state to the library forces a decision here (the
+// exhaustive linter enforces the enumeration) instead of silently inheriting
+// one. Backoff is broken because the read model is behind until the restart
+// lands; failed is broken because it never will.
+func workerBroken(status projectionhost.WorkerStatus) bool {
+	switch status {
+	case projectionhost.WorkerBackoff, projectionhost.WorkerFailed:
+		return true
+	case projectionhost.WorkerIdle,
+		projectionhost.WorkerRunning,
+		projectionhost.WorkerLive,
+		projectionhost.WorkerDraining,
+		projectionhost.WorkerStopped:
+		return false
+	}
+
+	return false
 }

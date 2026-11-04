@@ -25,6 +25,7 @@ func TestDomainConfigWiresProjectionFailureAlert(t *testing.T) {
 	}
 
 	original := slog.Default()
+
 	t.Cleanup(func() { slog.SetDefault(original) })
 
 	var captured bytes.Buffer

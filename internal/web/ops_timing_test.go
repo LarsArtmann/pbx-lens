@@ -33,6 +33,7 @@ func TestOpsAPICarriesRetentionTiming(t *testing.T) {
 	timing := rec.Header().Get("Server-Timing")
 
 	if !strings.Contains(timing, "retention") {
-		t.Errorf("Server-Timing = %q — the retention metric was dropped, the ops JSON wrote before collectRetention's stop fired", timing)
+		t.Errorf("Server-Timing = %q — the retention metric was dropped, "+
+			"the ops JSON wrote before collectRetention's stop fired", timing)
 	}
 }

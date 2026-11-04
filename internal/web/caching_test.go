@@ -2,7 +2,6 @@ package web
 
 import (
 	"bytes"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,7 +122,7 @@ func (f *failingAfterHeaderRecorder) WriteHeader(code int) {
 
 func (f *failingAfterHeaderRecorder) Write(p []byte) (int, error) {
 	if f.committed {
-		return 0, errors.New("client vanished")
+		return 0, errClientVanished
 	}
 
 	return f.ResponseRecorder.Write(p)

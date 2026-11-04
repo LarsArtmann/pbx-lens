@@ -179,10 +179,14 @@ type logFuncHandler struct {
 	log func(msg string, args ...any)
 }
 
+// attrsPerRecord is how many slice slots one slog.Attr needs: the key plus
+// its value, because the log func takes a flat key/value list.
+const attrsPerRecord = 2
+
 func (h *logFuncHandler) Enabled(context.Context, slog.Level) bool { return true }
 
 func (h *logFuncHandler) Handle(_ context.Context, r slog.Record) error {
-	args := make([]any, 0, r.NumAttrs()*2)
+	args := make([]any, 0, r.NumAttrs()*attrsPerRecord)
 
 	r.Attrs(func(a slog.Attr) bool {
 		args = append(args, a.Key, a.Value.Any())
@@ -227,7 +231,7 @@ func (s *server) queryListStaleness(w http.ResponseWriter, r *http.Request) (lis
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, indexReadFailureMsg, false)
 
 		return listStaleness{}, false
 	}
@@ -388,7 +392,7 @@ func (s *server) queryDashboardStats(w http.ResponseWriter, r *http.Request) (Da
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, indexReadFailureMsg, false)
 
 		return DashboardStats{}, "", false
 	}
@@ -534,7 +538,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	stop()
 
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusInternalServerError, "reading the call index failed; the detail is in the server log", false)
+		s.writeIndexError(w, r, err, http.StatusInternalServerError, indexReadFailureMsg, false)
 
 		return
 	}
