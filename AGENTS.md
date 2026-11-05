@@ -120,8 +120,11 @@ read-only deep link, never a data dependency.
   `internal/wire` (FlexTime + decode helpers), `internal/backup` (VACUUM INTO +
   integrity verify), `internal/retention` (Policy/OldViews/Retire behind
   `purge`; `Policy.Admits` also gates serve-poller `-max-age`, 0 = keep
-  everything). Projection record keys are BARE (`calls.RecordKey` =
-  `StreamID.Get()`) — never hand-build one, and read through `calls.LookupView`
+  everything). Read-model rebuilds go through `cli.ResetReadModel` (stop →
+  `ResetProjection` → drain; runbook: docs/runbooks/reset-rebuild.md; proof:
+  `TestHostResetRebuildsReadModel`), never a hand-picked projection name.
+  Projection record keys are BARE (`calls.RecordKey` = `StreamID.Get()`) —
+  never hand-build one, and read through `calls.LookupView`
   (its marker-prefixed fallback keeps pre-flip rows reachable; docs/gotchas.md
   has the incident). `calls.DefaultExcerptMax` (200 runes) caps every excerpt;
   source mappers select via `calls.Excerpt`. The serve htpasswd timing pad
