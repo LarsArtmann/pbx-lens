@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-codec` v0.3.3 (pin == latest; in pbx-lens' graph **INDIRECT only**, go.mod:79) · **Status:** NOT USED DIRECTLY
 **Verdict:** **REJECT direct adoption — keep indirect.** It is already exercised where it belongs: inside go-cqrs-lite's storage/event/signing stack.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

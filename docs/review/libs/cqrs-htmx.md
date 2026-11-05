@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/cqrs-htmx` root v4.15.0, usermgmt v4.18.0, setup v4.16.0 (commit pace ≈30/day; single root go.mod) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **ADOPT-PARTIAL (aspirational)** — one concrete, adoptable idea today (the health bridge's projection-readiness check for `/ready`); the rest is either N/A by doctrine or held until the UI gains an action. Pull leaf modules only, never the stack.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

@@ -994,6 +994,16 @@
             arithmetic (92+93+73+83+80+33+45)/7 ≈ 71 is kept here as the honest baseline; each
             per-lib report's delta appendix records what moved and why.
           </p>
+          <p>
+            <strong>Where these verdicts live.</strong> Not in the fleet's own
+            <code>library-policy</code> project: that one scans dependency graphs for banned
+            libraries and has no per-project utilization model (checked 2026-11-05), so pouring
+            pbx-lens-specific scores into it would invent a schema it does not have. The nineteen
+            per-lib reports beside this page are the home; the refresh rule (pin bump or
+            flip-trigger) is repeated in each of their headers and defined in
+            <a href="../../research/README.md">docs/research/README.md</a>.
+          </p>
+
         </section>
 
         <!-- Used libraries: what's right -->
@@ -1169,17 +1179,20 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
           <div class="issue issue-important" id="cqrs-reset">
             <span class="severity severity-important">Missed Opportunity &middot; fits a planned TODO exactly &middot; RESOLVED 2026-11-04</span>
             <h3>projectionhost.Reset is the planned legacy-key rebuild, already built upstream</h3>
-            <div class="where">never called &middot; target: docs/gotchas.md record-key entry &middot; projectionadapter Resettable present at pin</div>
+            <div class="where">adopted 2026-11-05 (<code>cli.ResetReadModel</code>, tested) &middot; target: docs/gotchas.md record-key entry &middot; projectionadapter Resettable present at pin</div>
             <p>
               The planned one-time read-model rebuild that retires legacy marker-prefixed keys
               currently means &ldquo;drop the file and re-poll every source&rdquo;.
               <code>Host.Reset</code> drops the checkpoint, clears the read model, and replays from
-              zero on next <code>Start</code> &mdash; no source re-fetch. The only missed capability
-              in the cqrs-lite core (92/100).
+              zero on next <code>Start</code> &mdash; no source re-fetch. It was the only missed
+              capability in the cqrs-lite core (92/100).
             </p>
             <div class="callout callout-teal">
-              <strong>Recommendation</strong> Use <code>Reset</code> when executing the rebuild TODO
-              instead of drop-and-repoll.
+              <strong>Done 2026-11-05.</strong> <code>cli.ResetReadModel</code> does stop &rarr;
+              <code>ResetProjection</code>, and <code>TestHostResetRebuildsReadModel</code> pins the
+              2&nbsp;&rarr;&nbsp;0&nbsp;&rarr;&nbsp;2 cycle; the owner runbook routes through the same
+              helper. The core score stays 92 because the one-shot run against a production database is
+              still owner-gated (go-cqrs-lite.md delta appendix).
             </div>
           </div>
 
@@ -1259,27 +1272,28 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
         <section id="notused">
           <h2>The twelve not-imported libraries, in one breath</h2>
           <table class="compare">
-            <thead><tr><th>Library</th><th>Verdict</th><th>One-line reason (full reasoning in per-lib report)</th></tr></thead>
+            <thead><tr><th>Library</th><th>Verdict</th><th>One-line reason (full reasoning in per-lib report)</th><th>Flips when (falsifiable trigger)</th></tr></thead>
             <tbody>
-              <tr><td><a href="go-idempotency.md">go-idempotency</a></td><td class="no">REJECT</td><td>Idempotency is natural-key by construction (deterministic stream ids + ContentHash replay-to-zero); no client keys exist to dedupe.</td></tr>
-              <tr><td><a href="go-retry.md">go-retry</a></td><td>DEFER</td><td>No retry loop exists (fixed 15-min ticker is a documented F009 decision); adopt when the Telnyx client gains per-request 429/5xx handling.</td></tr>
-              <tr><td><a href="go-codec.md">go-codec</a></td><td class="no">REJECT direct</td><td>Already exercised indirectly as the cqrs-lite event codec; wire/FlexTime solves a different problem (external JSONL dialects).</td></tr>
-              <tr><td><a href="go-sse.md">go-sse</a></td><td class="no">REJECT</td><td>R9 chose htmx polling; no push consumer exists; stays correctly indirect via metaengine.</td></tr>
-              <tr><td><a href="go-atomic-write.md">go-atomic-write</a></td><td>DEFER</td><td>backup.go mirrors its discipline (~30 lines) but the library cannot own a sqlite-produced staging file &mdash; no exported rename/commit primitive; upstream ask drafted.</td></tr>
-              <tr><td><a href="go-filewatcher.md">go-filewatcher</a></td><td class="no">REJECT</td><td>SIGHUP reload is deterministic, test-pinned, keep-on-failure; watching adds inotify/debounce races for a human-scale rotation.</td></tr>
-              <tr><td><a href="go-daemon.md">go-daemon</a></td><td class="no">REJECT</td><td>sd_notify already owned by go-appkit/systemd; pbx-lens is a TCP service under a unit, not a /run socket daemon.</td></tr>
-              <tr><td><a href="go-output.md">go-output</a></td><td>PATTERN-ONLY</td><td>Flake/CI patterns adopted (flakeModule actually served by go-nix-helpers); zero Go-level use for a renderer over templ UI + streaming exports.</td></tr>
-              <tr><td><a href="go-health.md">go-health</a></td><td class="no">REJECT</td><td>Hard prerequisite: samber/do injector &mdash; pbx-lens&rsquo; only composition root is system.New (ADR-0123); appkit probes + honest ops counters already serve.</td></tr>
-              <tr><td><a href="go-health-dashboard.md">go-health-dashboard</a></td><td class="no">REJECT</td><td>Doubly inapplicable: needs go-health (rejected) and ships SSE (excluded by R9); the ops page already carries the honesty discipline.</td></tr>
-              <tr><td><a href="go-credentials-store.md">go-credentials-store</a></td><td class="no">REJECT</td><td>One bcrypt htpasswd file, operator-rotated; the index stores no secret material; KeyID rotation + reveal audit would be dead weight.</td></tr>
-              <tr><td><a href="cqrs-htmx.md">cqrs-htmx</a></td><td>ADOPT-PARTIAL</td><td>No user management to buy (single htpasswd), no command surface (read-only UI) &mdash; but its projection-readiness check is the right model for a real /ready gap.</td></tr>
+              <tr><td><a href="go-idempotency.md">go-idempotency</a></td><td class="no">REJECT</td><td>Idempotency is natural-key by construction (deterministic stream ids + ContentHash replay-to-zero); no client keys exist to dedupe.</td><td>an externally-triggered ingest API appears (client-POSTed observations with client-side retries)</td></tr>
+              <tr><td><a href="go-retry.md">go-retry</a></td><td>DEFER</td><td>No retry loop exists (fixed 15-min ticker is a documented F009 decision); adopt when the Telnyx client gains per-request 429/5xx handling.</td><td>the Telnyx conversations/recordings client grows 429/5xx handling (per-request calls, unlike the JSONL scans)</td></tr>
+              <tr><td><a href="go-codec.md">go-codec</a></td><td class="no">REJECT direct</td><td>Already exercised indirectly as the cqrs-lite event codec; wire/FlexTime solves a different problem (external JSONL dialects).</td><td>a binary-encoding need appears outside event storage (a custom cache format wanting CBOR)</td></tr>
+              <tr><td><a href="go-sse.md">go-sse</a></td><td class="no">REJECT</td><td>R9 chose htmx polling; no push consumer exists; stays correctly indirect via metaengine.</td><td>a genuinely push-shaped feature appears (live multi-client dashboards) &mdash; R9 polling is the reason it has not</td></tr>
+              <tr><td><a href="go-atomic-write.md">go-atomic-write</a></td><td>DEFER</td><td>backup.go mirrors its discipline (~30 lines) but the library cannot own a sqlite-produced staging file &mdash; no exported rename/commit primitive; upstream ask drafted.</td><td>upstream exports a <code>Commit(src, dst)</code>-shaped primitive</td></tr>
+              <tr><td><a href="go-filewatcher.md">go-filewatcher</a></td><td class="no">REJECT</td><td>SIGHUP reload is deterministic, test-pinned, keep-on-failure; watching adds inotify/debounce races for a human-scale rotation.</td><td>the auth surface outgrows one operator-managed file (per-source keys rotating as files)</td></tr>
+              <tr><td><a href="go-daemon.md">go-daemon</a></td><td class="no">REJECT</td><td>sd_notify already owned by go-appkit/systemd; pbx-lens is a TCP service under a unit, not a /run socket daemon.</td><td>a second local control interface appears (a root-only admin socket for a CLI)</td></tr>
+              <tr><td><a href="go-output.md">go-output</a></td><td>PATTERN-ONLY</td><td>Flake/CI patterns adopted (flakeModule actually served by go-nix-helpers); zero Go-level use for a renderer over templ UI + streaming exports.</td><td>a static report surface appears (a generated weekly call digest)</td></tr>
+              <tr><td><a href="go-health.md">go-health</a></td><td class="no">REJECT</td><td>Hard prerequisite: samber/do injector &mdash; pbx-lens&rsquo; only composition root is system.New (ADR-0123); appkit probes + honest ops counters already serve.</td><td>probe-driven orchestration <em>and</em> a samber/do composition arrive jointly</td></tr>
+              <tr><td><a href="go-health-dashboard.md">go-health-dashboard</a></td><td class="no">REJECT</td><td>Doubly inapplicable: needs go-health (rejected) and ships SSE (excluded by R9); the ops page already carries the honesty discipline.</td><td>the lens joins a go-health federation hub as one of several reporting services</td></tr>
+              <tr><td><a href="go-credentials-store.md">go-credentials-store</a></td><td class="no">REJECT</td><td>One bcrypt htpasswd file, operator-rotated; the index stores no secret material; KeyID rotation + reveal audit would be dead weight.</td><td>ingested sources need automatically rotated, audited credentials (multi-tenant keys)</td></tr>
+              <tr><td><a href="cqrs-htmx.md">cqrs-htmx</a></td><td>ADOPT-PARTIAL</td><td>No user management to buy (single htpasswd), no command surface (read-only UI) &mdash; but its projection-readiness check is the right model for a real /ready gap.</td><td>the UI gains its first write action &mdash; leaf modules only, never the stack</td></tr>
             </tbody>
           </table>
           <div class="callout callout-teal">
             <strong>Pattern across the rejections</strong> Every &ldquo;no&rdquo; cites a recorded
             architectural decision (ADR-0123 single composition root, R9 no-SSE, disposable
             re-derivable index DB, single-operator posture) &mdash; or names the exact trigger that
-            would flip it. None is an oversight.
+            would flip it. None is an oversight, and the new column is that trigger written
+            down: a rejection without a falsifiable condition is neglect in a nicer font.
           </div>
         </section>
 

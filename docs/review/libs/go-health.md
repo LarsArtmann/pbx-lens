@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-health` v0.9.0 (checkout last commit 2026-11-04; deps: samber/do v2 + go-branded-id) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **REJECT** — hard prerequisite mismatch (samber/do injector) and the job is already done in-house with the right semantics.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

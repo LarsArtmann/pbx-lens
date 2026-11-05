@@ -123,6 +123,23 @@ revisit trigger — not commitments):
 - Screenshot corpus compression (2026-10-15): 41 PNGs per sweep → webp or
   on-demand capture, for eyeball-pass ergonomics
 
+Closeout follow-ons (2026-11-05 fleet-audit harvest; raw, each with its
+trigger — the bounded versions are TODO_LIST rows):
+
+- A `pbx-lens reset` verb wrapping `cli.ResetReadModel`, so the one-shot
+  rebuild stops being "write Go or follow a runbook". Trigger: the prod
+  deploy path exists (TODO_LIST row 114 is the gate).
+- Handler-set, data-derived ETag tags (go-etag `SkipIfPresent` is already
+  wired, the >1 display guard is in place) plus the library's
+  exact-accounting hook. Trigger: a route where body hashing costs more
+  than the tag saves.
+- A projection-failure counter on `/api/ops`. Detection is covered today
+  (ERROR log + readiness 503); a counter would make worker deaths graphable
+  and alertable. Trigger: the first real worker failure in production.
+- Family-shaped bodies on the HTML error path (the family writer is
+  text/JSON today). Trigger: an operator ever needs the code visible in the
+  page rather than only the log.
+
 Process/ops raw ideas (2026-10-17 second docs-health pass harvest; each
 rides its own trigger — the actionable bounded versions live in TODO_LIST):
 

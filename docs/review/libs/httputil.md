@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/httputil v1.8.0` (go.mod:24) · **Status:** USED
 **Adoption score:** **80/100 (high)** — 8 of 10 applicable symbols used (5 entry points incl. config structs; 4 of 4 capability areas served). Prior audit: [2026-10-12_http-stack-adoption-audit.html](../../research/2026-10-12_http-stack-adoption-audit.html) — this report supersedes its version-currency rows (pin moved v1.4.1 → v1.8.0) and resolves its "watchlist: no needed feature in the delta" disposition (the delta did deliver).
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## Verdict
 
@@ -20,6 +21,26 @@ Ground truth: module cache `~/go/pkg/mod/github.com/larsartmann/httputil@v1.8.0`
 | Chain                                                                                                                                                              | `httputil.Middleware` type only — composition owned by go-appkit `ExtraMiddlewares`                                                                                | Partially used (correct: appkit owns the chain, docs/http-stack.md)                 |
 | CSP Report-Only                                                                                                                                                    | hand-rolled at `serve.go:315-325`                                                                                                                                  | Justified hand-roll — `NonceConfig` (nonce.go:59-70) has no Report-Only mode at pin |
 | Rate limit / CSRF / Language / Decompression / MaxBodySize / Server / Health / Metrics / Timeout / CORS / ClientIP / ResponseRecorder / MiddlewareStack / httpspec | ❌                                                                                                                                                                 | Not applicable — reasons below                                                      |
+
+**Rate-limit Hold — defined, not vague (2026-11-05, plan M27.4).** "Revisit on
+abuse" was an unfalsifiable trigger. It now reopens on any ONE of these
+observations, and on nothing else:
+
+1. **One address dominates traffic.** A single client address accounts for
+   > 50% of requests in a 10-minute window and is not the loopback/operator
+   > address — the posture this Hold rests on (loopback plus htpasswd) has
+   > stopped describing reality.
+2. **An unauthenticated storm.** >20 rejected requests per minute from one
+   address that is not the operator's. The per-address auth-failure buckets
+   (`internal/web/auth.go`) already count this; no new instrument needed.
+3. **A second user exists.** The deploy gains a non-operator consumer (a
+   webphone user, a second PC), which is a posture change rather than abuse —
+   but it voids the single-operator assumption the whole Hold cites.
+
+Cheapest first instrument if (1) or (2) looks close: a per-address 4xx count
+in the `/api/ops` payload (today the ops counters are global). Adding
+`httputil.RateLimit` before that evidence exists would be the exact
+"capability without a consumer" the fleet audit scores as misuse.
 
 N/A reasons (one line each): rate limiting — doctrine Hold from the 2026-10-12 audit ("revisit on abuse"; loopback + htpasswd posture); CSRF (~20 symbols) — no unsafe methods, the UI is read-only GET; Language — single-locale tool; Decompression/MaxBodySize — no request bodies; Server/NewServerListener/Health/Metrics/Timeout — appkit v0.9.0 owns lifecycle and `WriteTimeout: NoTimeout` is the streaming contract (docs/http-stack.md:10-15); CORS/ClientIP — no cross-origin or proxy posture; ResponseRecorder/Chain/MiddlewareStack — appkit owns composition; httpspec — the library's own test harness; `DetectCapabilities` — explicitly frozen-but-unused upstream; `code.go` error classifiers — go-error-family is used directly instead (see [go-error-family.md](go-error-family.md)).
 

@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-credentials-store` v0.3.1 (checkout last commit 2026-11-04; single module; built on go-cqrs-lite system+metaengine) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **REJECT** — same pedigree, wrong problem: it manages many rotating secrets at rest; pbx-lens has exactly one auth surface and stores no secret material.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

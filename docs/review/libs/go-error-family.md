@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/go-error-family v0.12.0` (go.mod:22) · **Status:** USED
 **Adoption score:** **82/100 (high)** — 9 of 11 applicable capabilities used appropriately (fully = 1, partial = 0.5 per the deep-dive rubric); the four boundary misses (exit codes, HTTP mapping, structured logging, test assertions) all closed 2026-11-04. Registries/retry/tone surface graded Not Applicable with reasons below.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## Verdict
 

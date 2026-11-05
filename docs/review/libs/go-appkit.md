@@ -4,6 +4,9 @@
 **Adoption score:** **73/100 (high)** — 11 of 15 applicable capabilities (unchanged from the prior report; pin is still the latest release).
 **Prior report:** [2026-10-25_go-appkit-templ-deep-dive.html](../../research/2026-10-25_go-appkit-templ-deep-dive.html) (73/100 = go-appkit; the same report's 86/100 belongs to a-h/templ — score-card ambiguity resolved there). This report re-verifies the census at today's HEAD and adds one forward finding; nothing supersedes the prior scores.
 
+**Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
+
 ## Verdict
 
 pbx-lens leans on appkit exactly as designed: `NewService` → `svc.Mux` → `svc.Run` owns the HTTP shell, signals, and graceful drain; the `ExtraMiddlewares` chain carries the auth→SecurityHeaders→Server-Timing→Compression→ETag doctrine; health endpoints + `/version` + opt-in `/metrics` come from the shell; `systemd.Install` handles READY/STOPPING/WATCHDOG; and the testkit adoption (the prior report's F1 fix) is intact at all 3 sites, keeping stack tests fast. The four unwired seams are wired-out by documented decisions, not neglect. One delta worth planning: upstream `[Unreleased]` makes Server-Timing a default outermost middleware — which will make pbx-lens's own `web.ServerTimingMiddleware()` wiring redundant.

@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-daemon` v0.4.0 (checkout last commit 2026-11-04; single module) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **REJECT** — its sd_notify slice is already owned by go-appkit/systemd; its unix-socket premise contradicts the deployment shape.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

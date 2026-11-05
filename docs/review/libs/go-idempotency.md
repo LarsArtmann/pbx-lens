@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-idempotency` v0.3.2 (checkout last commit 2026-11-04; single module, dep: go-error-family) · **Status in pbx-lens:** **NOT USED** (not in go.mod, not in the graph)
 **Verdict:** **REJECT** — pbx-lens' idempotency problem is solved by construction, in a shape this library does not target.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

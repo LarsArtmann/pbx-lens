@@ -1,8 +1,11 @@
 # go-cqrs-lite — utilization audit (pbx-lens)
 
 **Date:** 2026-11-04 · **Pins:** 13 direct modules (go.mod:9-21), 12 indirect — **all 25 exactly match the checkout's `versions.json`** · **Status:** USED (the backbone)
-**Adoption score:** **92/100 (very high) for the runtime core** — 23 of 25 applicable capabilities (the missed row: `projectionhost.Reset`; partials: schema/upcaster declarations, the `record.Record` envelope). Pooled naively with the prior catalog/testing audit: **≈81/100 library-wide (high)** — and that understates today, because the prior audit's four missed findings have all since closed.
+**Adoption score:** **92/100 (very high) for the runtime core** — 23 of 25 applicable capabilities (the missed row: `projectionhost.Reset`, now PARTIALLY adopted — see the delta appendix; partials: schema/upcaster declarations, the `record.Record` envelope). Pooled naively with the prior catalog/testing audit: **≈81/100 library-wide (high)** — and that understates today, because the prior audit's four missed findings have all since closed.
 **Prior report:** [2026-10-24_go-cqrs-lite-catalog-testing-modules-deep-dive.html](../../research/2026-10-24_go-cqrs-lite-catalog-testing-modules-deep-dive.html) (58/100 — scoped ONLY catalog + scenario/systemscenario/benchkit, mid-adoption; its errata footer + `internal/cli/catalog.go:24,43` record the closures). This report covers everything that report did not: the runtime core.
+
+**Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## Verdict
 
@@ -15,8 +18,8 @@ The load-bearing half of the dependency is used at reference quality. `system.Ne
 | `system/v4@v4.16.0`                              | `New(ctx, DomainConfig, DeploymentConfig)` (ADR-0123), coeffect/safety gates, role wiring, checkpoint store, accessors (`MetaEngine`, `CommandDispatcher`, `ProjectionHost`, `EventStore`, …) | ✅ composition root: Events/Commands/Projections/ProjectionTypeDecoder + 2 Instances (`internal/app/app.go:24-87`); accessors: `MetaEngine`, `CommandDispatcher`, `ProjectionHost` (+`EventStore` in systemscenario tests only)                                                                                                                        |
 | `metaengine/v4@v4.20.0`                          | `Query[Q,R]` ADT, folds (`OnRecordTyped`, `Remove`), `Store`, `TypedReader`, ScanOptions, SSE/temporal/graph/vector/aggregations, failover, Explain                                           | ✅ `Query` decl + `Volume(100_000)` + 3 create-folds + tombstone (`projection.go:94-126`); `NewReader().Get` (`cmd/pbx-lens/ops.go:40-78`); `Scan`+`WithSort`/`WithLimit` (`internal/retention/retention.go:84-121`); keyset walk + `WithFilter` (`internal/web/queries.go:98-117,225-227`); `Count(WithLimit(0))` (`internal/web/freshness.go:37-38`) |
 | `metaengine/sqliteengine/v4@v4.6.0`              | `"sqlite"` driver: full ADT on JSON columns, FTS ADT, typed WAL, StreamLogBackend, keyset pagination                                                                                          | ✅ blank import registers the driver (`app.go:8`); EngineConfig{Driver:"sqlite",DSN} / memory (`app.go:72-74`)                                                                                                                                                                                                                                         |
-| `metaengine/projectionadapter/v4@v4.6.2`         | projectionhost bridge, bare-ID `EventWithID[P]`, `RegisterWithHost`, `NewTypeDecoder`, `Resettable`                                                                                           | ✅ (`projection.go:128-135`); `Resettable` never invoked (see missed)                                                                                                                                                                                                                                                                                  |
-| `projectionhost/v4@v4.7.1`                       | managed workers, batch-drainer default, WorkerState machine, checkpoints, DLQ, `WithMetrics`, `WithOnFailed`, `Reset`                                                                         | ✅ start/stop/status via `DrainProjections` (`system.go:41-74`); `WorkerFailed` → Transient (`system.go:79-100`)                                                                                                                                                                                                                                       |
+| `metaengine/projectionadapter/v4@v4.6.2`         | projectionhost bridge, bare-ID `EventWithID[P]`, `RegisterWithHost`, `NewTypeDecoder`, `Resettable`                                                                                           | ✅ (`projection.go:128-135`); `Resettable` INVOKED by `cli.ResetReadModel` since 2026-11-05 (delta appendix)                                                                                                                                                                                                                                           |
+| `projectionhost/v4@v4.7.1`                       | managed workers, batch-drainer default, WorkerState machine, checkpoints, DLQ, `WithMetrics`, `WithOnFailed`, `Reset`                                                                         | ✅ start/stop/status via `DrainProjections` (`system.go:41-74`); `Reset` via `cli.ResetReadModel`; `WithOnFailed` wired in `app.DomainConfig()`; `WorkerFailed` → Transient (`system.go:79-100`)                                                                                                                                                       |
 | `event/v4@v4.15.2`                               | typed CBOR events, `DecodePayloadAuto`, schema version, ISP store split                                                                                                                       | ✅ `DecodePayloadAuto` in the Apply fold (`decider.go:22-82`); `event.New(..., WithSchemaVersion(1))` (`decider.go:84-183`)                                                                                                                                                                                                                            |
 | `command/v4@v4.14.1`                             | `BasicCommand`, Dispatcher, audit store                                                                                                                                                       | ✅ `command.New` ×3 handlers (`commands.go:30,55,95`; `app.go:32-60`)                                                                                                                                                                                                                                                                                  |
 | `decider/v4@v4.8.0`                              | `Decider[State]{Initial,Apply}`, Repository, snapshots, time-travel                                                                                                                           | ✅ `Decider[calls.CallState]` via `system.RegisterDecider` (`app.go:27-30`); Repository deliberately unused (system-owned path)                                                                                                                                                                                                                        |
@@ -29,8 +32,8 @@ Never touched (with reasons — N/A): QueryDispatcher/Publisher/Bus/watermill (i
 
 ## Top findings
 
-1. **`projectionhost.Reset` (+ projectionadapter `Resettable`) is the one missed capability — and it fits a planned TODO exactly.** The planned one-time read-model rebuild that retires the legacy marker-prefixed keys (docs/gotchas.md record-key entry) is precisely Reset's job: drop checkpoint + clear read model → next `Start` replays from zero, no source re-fetch. Today's equivalent ("drop the file, re-poll") re-pays every API fetch. Small, high-fit.
-2. **`WithOnFailed` unwired:** `DrainProjections` learns of worker death only by polling `Status()`; a callback would alert mid-drain. Cosmetic (the CLI surfaces Transient either way).
+1. **`projectionhost.Reset` (+ projectionadapter `Resettable`) is the one missed capability — and it fits a planned TODO exactly.** **[CLOSED 2026-11-05: adopted as `cli.ResetReadModel`, tested; prod run owner-gated — delta appendix]** The planned one-time read-model rebuild that retires the legacy marker-prefixed keys (docs/gotchas.md record-key entry) is precisely Reset's job: drop checkpoint + clear read model → next `Start` replays from zero, no source re-fetch. Today's equivalent ("drop the file, re-poll") re-pays every API fetch. Small, high-fit.
+2. **`WithOnFailed` unwired:** `DrainProjections` learns of worker death only by polling `Status()`; a callback would alert mid-drain. Cosmetic (the CLI surfaces Transient either way). **[CLOSED 2026-11-05: wired via `app.DomainConfig().ProjectionHostOptions`, pinned by `TestDomainConfigWiresProjectionFailureAlert`]**
 3. **`DomainConfig.Schema`/upcasters unused:** events written with `WithSchemaVersion(1)`, no `schema.EventSchema` declarations — deliberate at v1 (F005: mandatory at v2; distinct from the domain-level `ObservationSchemaVersion` refresh, `events.go:24-43`).
 4. **`EngineConfig.Pragmas` unset:** sqlite runs on driver defaults; WAL/synchronous tuning is available if backup windows ever need it.
 
@@ -45,8 +48,8 @@ All 13 direct pins and all 12 indirect pins equal `versions.json` (= system/v4@v
 
 ## Recommendations
 
-1. Use `projectionhost.Reset` for the planned legacy-key rebuild instead of drop-and-repoll.
-2. On the next upstream tag wave: re-verify pins via `git tag --contains`, then consider wiring `WithOnFailed`.
+1. Use `projectionhost.Reset` for the planned legacy-key rebuild instead of drop-and-repoll. — **DONE 2026-11-05** (`cli.ResetReadModel`; runbook upgraded to the one-call path).
+2. On the next upstream tag wave: re-verify pins via `git tag --contains`, then consider wiring `WithOnFailed`. — **`WithOnFailed` DONE 2026-11-05**; the tag sweep stays a per-bump habit.
 
 ## How to verify
 
@@ -57,3 +60,27 @@ go doc github.com/larsartmann/go-cqrs-lite/projectionhost/v4 Host.Reset
 cat /home/lars/projects/go-cqrs-lite/versions.json        # pin parity
 git -C /home/lars/projects/go-cqrs-lite tag --contains system/v4.16.0 | head -2  # the verification habit (tags are module-prefixed)
 ```
+
+## Delta appendix — 2026-11-05 (usage moved; the score deliberately did not)
+
+Both top findings closed the day after the audit:
+
+- **`Reset` is now invoked.** `cli.ResetReadModel` stops the host, then calls
+  `sys.ResetProjection(ctx, app.ProjectionName)` — the host drops the
+  checkpoint and calls the projection adapter's `Resettable` (which delegates
+  to `metaengine.Store.Reset`). `TestHostResetRebuildsReadModel` proves
+  2 views → reset → 0 → drain → 2, and docs/runbooks/reset-rebuild.md now
+  routes the owner through the same helper instead of a prose sequence.
+- **`WithOnFailed` is wired** (`app.DomainConfig().ProjectionHostOptions`),
+  so a worker that exhausts its restart budget logs at ERROR when it happens
+  rather than being discovered by polling; `TestDomainConfigWiresProjectionFailureAlert`
+  pins the wiring and the log shape. The readiness probe is the second
+  witness.
+
+**Score: unchanged at 92/100 on purpose.** The rubric counts capabilities, and
+`Reset` is adopted as a tested code path but has NOT been exercised against a
+production database (the one-shot run is owner-gated on the deploy path), so
+moving the row from MISSED to FULL would score an execution nobody has done.
+Moving it to PARTIAL would be defensible (23.5 of 25 ≈ 94) — it is left where
+the audit put it, with this appendix as the reason. Re-score the row when the
+prod run happens.

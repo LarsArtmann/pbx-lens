@@ -895,6 +895,16 @@
             <span class="tag">Published: v1.24.0</span>
             <span class="tag teal">Adoption: 91/100 — very high</span>
           </div>
+          <p class="subtitle">
+            <strong>Errata, 2026-11-05.</strong> Two claims in this snapshot are
+            superseded: upstream #52 is CLOSED (2026-10-29, COMPLETED — the
+            <code>RelativeTimeProps.EmptyText</code> escape shipped), and pbx-lens
+            folded onto it the same day, deleting the local "never" guard
+            (<code>internal/web/ops.templ</code>). The component score moved 91 → 95
+            at the v1.26.0 pin. Everything else below stays as the audit-day record;
+            the live state is docs/review/libs/templ-components.md and
+            docs/templ-components-adoption.md.
+          </p>
         </header>
 
         <!-- Scorecard -->

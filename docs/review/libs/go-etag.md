@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/go-etag/server v0.6.1` (go.mod:23; `entitytag` v0.6.1 indirect — re-exported by server, `go mod why` verified) · **Status:** USED
 **Adoption score:** **95/100 (very high)** — every applicable config knob/area is now wired (5 knobs explicit, 3 defaulted, plus `OnError` and the `go-etag/metrics` module adopted 2026-11-04; `Validate` N/A, entitytag parse/match re-exports N/A). The residual 5 is the standing `go-etag/client` Hold, not an unadopted capability.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## Verdict
 

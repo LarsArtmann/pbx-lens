@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-atomic-write` v0.6.2 (checkout last commit 2026-11-04; single module) · **Status in pbx-lens:** **NOT USED** (not in the graph — but explicitly mirrored in code comments)
 **Verdict:** **DEFER** — the duplication is real but small, and the library currently _cannot own the flow_. Adopt the moment it grows an exported rename/commit primitive (upstream ask drafted).
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

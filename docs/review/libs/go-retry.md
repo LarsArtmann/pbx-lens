@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-retry` v0.9.0 (checkout last commit 2026-11-04; deps: go-error-family only) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **DEFER** — nothing in pbx-lens retries today, by decision; adopt when the Telnyx client grows per-request handling.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

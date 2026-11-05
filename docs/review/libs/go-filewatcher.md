@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-filewatcher` v2.4.3 (checkout last commit ≈2026-11-02; single module) · **Status in pbx-lens:** **NOT USED** (not in the graph; `fsnotify` v1.10.1 is already indirect via koanf/go-appkit, go.mod:57)
 **Verdict:** **REJECT** — the one watchable file already has a better, deterministic reload mechanism.
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## What the library offers
 

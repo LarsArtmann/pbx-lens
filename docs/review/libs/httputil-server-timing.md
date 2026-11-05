@@ -3,6 +3,7 @@
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/httputil/server_timing v1.0.3` (go.mod:25) · **Status:** USED
 **Adoption score:** **67/100 direct (moderate)** — 2 of 3 applicable primitives called directly (`MeasureServerTiming`, `ServerTimingMiddleware`); **67/100 effective** — every used capability rides the maintained path since the 2026-11-04 swap deleted the divergent hand-wrap (`ServerTimingMiddlewareWhen` declined by recorded decision: single-operator htpasswd surface, docs/http-stack.md).
 **Fleet report:** [index.html](index.html)
+**Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
 ## Verdict
 
@@ -27,14 +28,14 @@ pbx-lens times its queries thoroughly — 11 `MeasureServerTiming` sites across 
 
 Ground truth: v1.0.3 module cache — 15 exported symbols, stdlib-only.
 
-| Symbol                       | Used?                                                                                                                                                                                                   |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `WrapServerTiming`           | ❌ no longer called (was the hand-wrap's plumbing; wrapper deleted 2026-11-04)                                                                                                                          |
-| `MeasureServerTiming`        | ✅ 11 call sites: `timing.go:40` (firstpage); `server.go:187,348,494`; `freshness.go:25,36`; `recording.go:120,160`; `search.go:60`; `segment_page.go:24`; `ops.go:147` (12 rg lines incl. one comment) |
-| `ServerTimingMiddleware`     | ✅ `cmd/pbx-lens/serve.go` (the 2026-11-04 swap)                                                                                                                                                        |
-| `ServerTimingMiddlewareWhen` | ❌ declined by recorded decision (unconditional OK behind htpasswd; escape named in docs/http-stack.md)                                                                                                 |
-| `RecordServerTiming`         | ❌ (plain `Measure` suffices)                                                                                                                                                                           |
-| `MeasureWithDesc`            | ❌ (descriptions unused)                                                                                                                                                                                |
+| Symbol                       | Used?                                                                                                                                                                                                                                     |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WrapServerTiming`           | ❌ no longer called (was the hand-wrap's plumbing; wrapper deleted 2026-11-04)                                                                                                                                                            |
+| `MeasureServerTiming`        | ✅ 11 call sites: `timing.go:40` (firstpage); `server.go:187,348,494`; `freshness.go:25,36`; `recording.go:120,160`; `search.go:60`; `segment_page.go:24`; `ops.go:147` (12 rg lines incl. one comment)                                   |
+| `ServerTimingMiddleware`     | ✅ `cmd/pbx-lens/serve.go` (the 2026-11-04 swap)                                                                                                                                                                                          |
+| `ServerTimingMiddlewareWhen` | ❌ declined by recorded decision (unconditional OK behind htpasswd; escape named in docs/http-stack.md)                                                                                                                                   |
+| `RecordServerTiming`         | ❌ N/A: it records an ALREADY-MEASURED duration (`(ctx, name, desc, dur)`, `server_timing.go:237`); no producer here hands us one — every hop is timed inline with `Measure`, which brackets the work itself                              |
+| `MeasureWithDesc`            | ❌ N/A: descriptions ride the same header line as the name, and the header is a per-route budget (a proxy hop, a query, a first page) — a prose description per metric buys nothing a reader of this repo cannot get from the metric name |
 
 Types/aliases (`ServerTiming`, `WithServerTiming`, `ServerTimingFromContext`, `HeaderValue`, `Enabled`, `HeaderServerTiming`) are implementation plumbing — Not Applicable to a consumer.
 
@@ -45,7 +46,7 @@ Every named metric stops before the first body write (the recording proxy times 
 ## Gap analysis
 
 - **Missed opportunity (high, trivial ease):** swap `timing.go:18-25` for `servertiming.ServerTimingMiddleware()`; consider `...When(pred)` to stop leaking route internals on unauthenticated runs; fix the three stale documents in the same commit.
-- Not applicable: per-record context plumbing (`RecordServerTiming`) — 11 plain `Measure` sites cover the budget; descriptions — headers stay compact.
+- Not applicable, with the reason recorded (plan M27.1): `RecordServerTiming` takes a duration someone else measured — the library's escape for a producer that cannot bracket its own work — and every metric here IS the bracketed work (11 `Measure` sites); `MeasureWithDesc` spends header bytes on prose the metric name already carries (the budget is one line per route hop). Neither is a gap, and neither flips without a producer that reports its own timing.
 
 ## Version currency
 
