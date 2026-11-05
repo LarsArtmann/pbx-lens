@@ -88,7 +88,11 @@ func mustRecord(t *testing.T, obs calls.Observation) calls.RecordCallCmd {
 // folded (the scenario's non-vacuous guard rides this phase). Returns the
 // booted system and the pre-reset views; each test then resets its own way
 // and replays.
-func seedFoldedPair(t *testing.T, ctx context.Context, secondNativeID calls.NativeID) (*system.System, []calls.CallView) {
+func seedFoldedPair(
+	t *testing.T,
+	ctx context.Context,
+	secondNativeID calls.NativeID,
+) (*system.System, []calls.CallView) {
 	t.Helper()
 
 	sc := systemscenario.System(
