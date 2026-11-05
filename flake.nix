@@ -154,7 +154,7 @@
             # vendorHash (3I97v…) and the devshell died at the FOD;
             # restored 2026-10-26 — the FOD mismatch names this hash.
             env.GOWORK = "off";
-            vendorHash = "sha256-ECM62IKLWHw04534CMcfqkJLAOG4G3Cko6hDKCFHFOM=";
+            vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
             meta = {
               description = "cqrs-lint from go-cqrs-lite, pinned to the cmd/cqrs-lint/v4.16.0 tag";
               license = lib.licenses.unfree;
@@ -280,7 +280,7 @@
                   trap restore EXIT
                   trap 'exit 130' INT
                   trap 'exit 143' TERM HUP
-                  fake="sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE="
+                  fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
                   printf '"%s"\n' "$fake" > "$hash_file"
                   out="$(nix build "$root#default" --no-link 2>&1 || true)"
                   got="$(printf '%s' "$out" | grep -oP 'got:\s+\Ksha256-[A-Za-z0-9+/=]+' | head -1 || true)"

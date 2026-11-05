@@ -576,6 +576,32 @@ LIFECYCLE the code actually implements (here: `DrainProjections` + the
 poller) before writing assertions about lifecycle states — the enum doc
 strings describe a generic live-tail host, not this one.
 
+## A gate run can rewrite a tracked hash pin — and the cqrs-lint slot is not the root slot (paid for, 2026-11-05)
+
+Running the SOLO BuildFlow gate `nix-build` step on a CLEAN tree left a
+modified `flake.nix`: cqrs-lint's `vendorHash` had been replaced with the ROOT
+package's vendor hash (`ECM62…`), and the repair app's `fake` placeholder had
+been rewritten to the old cqrs-lint value (`jTwZn/…`). The devShell then died
+at the cqrs-lint FOD — the same failure class as 2026-10-25, whose CHANGELOG
+entry says the sweep "briefly overwrote it with this repo's vendorHash".
+
+The two hashes are DIFFERENT and must stay different: `vendorHash.nix` is THIS
+repo's module set (it moved to `ECM62…` when go.mod gained go-etag/metrics),
+while flake.nix's cqrs-lint `vendorHash` is that tool's own module set at its
+pinned rev (`jTwZn/…`). A single `nix-hash-fix`-shaped autofix that writes the
+first value into both slots breaks the devShell.
+
+How to settle it in one command instead of guessing: put one candidate in
+flake.nix and run `nix develop -c echo DEV-SHELL-OK`. `jTwZn/…` prints
+DEV-SHELL-OK; `ECM62…` fails at the cqrs-lint FOD. Then `git show <rev>:flake.nix
+
+> flake.nix`to restore the pin (do not hand-edit hashes), and re-run the gate:
+its`nix-build` receipt from the corrupted tree is worthless.
+
+Corollary for the "frozen tree" rule: frozen means frozen AND verified after.
+Check `git status` the moment a gate run ends — a step that fixes hashes is a
+step that writes tracked files.
+
 ## "That API does not exist" needs a compile, not a grep (paid for, 2026-11-05)
 
 Two sessions documented `projectionhost.Host.Reset` as missing and reached
