@@ -200,8 +200,8 @@ Concurrent sessions + daemon: docs/concurrency.md.
 
 - **docs/gotchas.md** — war stories: record keys, the one-shot drain,
   full-recompute folds, FTS5, tombstones, drain-before-enrich, `Exists`.
-- **docs/status/archived/** + **docs/planning/archived/** — every executed plan
-  (manifests in each README): CLOSED history, never harvest or re-open.
+- **docs/status/archived/** + **docs/planning/archived/** — 69 reports, every
+  executed plan (manifests in each README): CLOSED history, never re-opened.
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision;
   **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
