@@ -356,3 +356,31 @@ _Point-in-time snapshot 2026-11-05 02:47 CET. Next session: fix the `Host.Reset`
 claims (item 1), then the SOLO gate on a frozen tree (item 4), then
 CHANGELOG/FEATURES. Annotate this report non-destructively if any claim above
 is later found stale._
+
+## Decisions applied (2026-11-05, follow-up session)
+
+Written after the snapshot above; the text above is untouched.
+
+1. **Push — default applied: not yet.** The order stands: SOLO gate on a frozen
+   tree after the full browser lane before anything leaves the machine.
+2. **PNG policy — decided: keep uncompressed, in-repo, and WRITTEN DOWN.** The
+   policy now lives in `docs/research/README.md` ("Report screenshot policy"),
+   including the render-after-final-content rule and the revisit trigger
+   (~5 MB, or a lossless optimizer landing in the devShell). Rationale recorded
+   there rather than here, because that file is the artifact index.
+3. **T20 filing premise — decided: file on the divergence evidence.** The
+   `versions.json` "lies" claim is retracted (13/13 agreement after T14); the
+   surviving, verified evidence is that 12 of 13 pinned tag commits are not
+   ancestors of upstream `master`. The projection-name ergonomics ask rides the
+   same filing: `Host.Reset(ctx, name)` takes the registered worker name, which
+   this repo cannot discover from the library (see item 1 of §a), so
+   `QueryName()`-style discovery is the concrete ask.
+4. **The `Host.Reset` claims are fixed** (item 1 of "Next session"): `TODO_LIST.md`
+   row 114, the fleet review page (which now carries an explicit retraction),
+   and the runbook all describe the one-call path through
+   `cli.ResetReadModel`. The plan's M15 wording was already correct and was left
+   alone.
+5. **CHANGELOG + FEATURES landed** (item 3): the whole closeout batch is under
+   Unreleased, and the feature inventory carries the readiness probe, the
+   family-aware error responses, the ETag write-failure counter, the CLI's
+   family exit codes, and the rebuild runbook.

@@ -31,6 +31,34 @@ CLOSED upstream 2026-10-29 (COMPLETED — the EmptyText escape shipped). The
 ops zero-guard folded onto RelativeTimeProps.EmptyText ("never") the same
 day — local workaround deleted (internal/web/ops.templ).**
 
+**State check 2026-11-05 (plan T20, filings round): nothing new to FILE, and
+both open candidates are closed by evidence.**
+
+- **go-atomic-write commit primitive — absence re-verified twice.** At the
+  newest tag v0.6.2 the package exports eight functions and every one is data-
+  or writer-shaped (`Write`, `WriteWithPerm`, `WriteVerified`,
+  `WriteIfChanged`, `WriteFunc`, `WriteFuncVerified` plus the two
+  `Fingerprint*` helpers); at upstream master it has grown only
+  `WriteFuncWithPerm`. Neither has a primitive that takes an already-staged
+  file path and commits it, which is exactly what a `VACUUM INTO` producer
+  needs. The draft `docs/drafts/go-atomic-write-commit-primitive.md` stays a
+  LIVE, owner-gated draft; the ask is unchanged and needs no amendment.
+- **versions.json "lies" — RETRACTED as a filing.** It was already a
+  NON-filing since 2026-10-25 (own repo: regenerate instead — see the fold-in
+  table). Fresh sweep this session: **13/13** direct pins and **12/12**
+  indirect pins agree with upstream `versions.json` under the mapping
+  `go.mod "X/v4 vA.B.C"` ↔ `versions.json "X": "X/v4/A.B.C"`. The T14
+  observation that 12 of 13 tag commits are not ancestors of upstream master
+  is NORMAL for this repo's diverged release line, not a defect — the correct
+  receipt is annotated tag + proxy-served hash + versions.json cross-check
+  (docs/gotchas.md "versions.json lies").
+- **New candidate evaluated and REJECTED:** "`Host.Reset` cannot discover the
+  registered projection name". `projectionhost.WorkerState` carries `Name`
+  (`dlq.go:33` at v4.7.1) and `Host.Status()` returns it, so
+  `sys.ProjectionHost().Status()[0].Name` answers the question; filing it
+  would be noise. The local fix is the constant `app.ProjectionName`, used by
+  `cli.ResetReadModel` and the reset test.
+
 **Staged 2026-10-27 (erraudit, own repo — two filings waiting on owner
 go-ahead, dupe-searched clean against all 11 existing issues):**
 
