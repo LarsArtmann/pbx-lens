@@ -368,13 +368,16 @@ Written after the snapshot above; the text above is untouched.
    including the render-after-final-content rule and the revisit trigger
    (~5 MB, or a lossless optimizer landing in the devShell). Rationale recorded
    there rather than here, because that file is the artifact index.
-3. **T20 filing premise — decided: file on the divergence evidence.** The
-   `versions.json` "lies" claim is retracted (13/13 agreement after T14); the
-   surviving, verified evidence is that 12 of 13 pinned tag commits are not
-   ancestors of upstream `master`. The projection-name ergonomics ask rides the
-   same filing: `Host.Reset(ctx, name)` takes the registered worker name, which
-   this repo cannot discover from the library (see item 1 of §a), so
-   `QueryName()`-style discovery is the concrete ask.
+3. **T20 filing premise — settled, and NOTHING gets filed.** Corrected after
+   the actual verification (my first answer above was wrong): `versions.json`
+   agrees 13/13 direct + 12/12 indirect, so that filing is retracted outright,
+   and the T14 divergence observation is normal for this repo's release line
+   rather than a defect. The projection-name ask also dies: I claimed the
+   library offers no way to discover the registered name, but
+   `projectionhost.WorkerState` carries `Name` (`dlq.go:33` at v4.7.1) and
+   `Host.Status()` returns it, so `Status()[0].Name` answers it. Only the
+   go-atomic-write draft survives, still owner-gated. Ledger:
+   docs/upstream-filings.md.
 4. **The `Host.Reset` claims are fixed** (item 1 of "Next session"): `TODO_LIST.md`
    row 114, the fleet review page (which now carries an explicit retraction),
    and the runbook all describe the one-call path through
@@ -384,3 +387,41 @@ Written after the snapshot above; the text above is untouched.
    Unreleased, and the feature inventory carries the readiness probe, the
    family-aware error responses, the ETag write-failure counter, the CLI's
    family exit codes, and the rebuild runbook.
+
+## Final verification (follow-up session, T25 + T27)
+
+Every leg below ran on a frozen tree, in this order, with nothing else
+building or editing:
+
+| Leg                                                                  | Result                                                                                                                                                                                                                                                                               |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `go build ./...` + `go vet ./...`                                    | exit 0                                                                                                                                                                                                                                                                               |
+| `golangci-lint run ./...`                                            | 0 issues                                                                                                                                                                                                                                                                             |
+| `go test ./...`                                                      | green, all 15 packages                                                                                                                                                                                                                                                               |
+| `go test -race ./...`                                                | green, all 15 packages                                                                                                                                                                                                                                                               |
+| SOLO BuildFlow gate (`poll-gate.sh` + `BUILDFLOW_NO_RESULT_CACHE=1`) | ran on a frozen tree (load 17 at start); ONE failing step: `nix-build` → `checks.pre-commit`, the documented sandbox-has-no-module-resolution templ false positive in `internal/web/dashboard.templ` (a file untouched this session). Nothing else failed — no starvation this time. |
+| `bash scripts/verify-all.sh` (full)                                  | **all probes passed**, 50 PNGs written                                                                                                                                                                                                                                               |
+| `nix build`                                                          | exit 0; `./result/bin/pbx-lens version` → `pbx-lens 0.3.0`                                                                                                                                                                                                                           |
+| `nix develop -c echo ok`                                             | DEVSHELL-OK                                                                                                                                                                                                                                                                          |
+| `nix flake check`                                                    | same single `checks.pre-commit` false positive, nothing else                                                                                                                                                                                                                         |
+
+**One incident, worth the space it takes**: the FIRST gate run left a modified
+`flake.nix` on a tree that was clean when it started — cqrs-lint's `vendorHash`
+had been overwritten with this repo's vendor hash, which broke the devShell at
+the cqrs-lint FOD (the 2026-10-25 failure class repeating). Settled by probing
+the FOD with an all-zeros fake: the true value is the committed `jTwZn/…`, and
+the injected `ECM62…` is this repo's own module set. The second gate run left
+the tree clean, so the corruption is not reproducible on demand; the incident
+and the one-command proof are recorded in docs/gotchas.md. Corollary now part
+of the receipt habit: `git status` immediately after a gate run, not just
+before.
+
+T27 leftovers closed or dispatched: the `RecordServerTiming`/`MeasureWithDesc`
+N/A reasons are written into the server-timing report (with the API signature
+that justifies each), the rate-limit "revisit on abuse" Hold now has three
+falsifiable observations that reopen it (`docs/review/libs/httputil.md`), every
+not-imported library gained a "flips when" column in the fleet index, the
+Pragmas/schema-v2/retry/daemon/credentials N/A verdicts were confirmed still
+documented, and the curated-commit note is closed as "history exists as-is".
+`docs/research/README.md`'s table needed no cosmetic fix once `dprint` had
+normalized it in an earlier pass.
