@@ -79,7 +79,7 @@ func DrainProjections(ctx context.Context, sys *system.System) error {
 // DOES expose Reset, and the metaengine projection adapter implements
 // Resettable, so the host does checkpoint + read-model teardown in one call
 // instead of the "Store.Reset, then remember to clear the checkpoint by hand"
-// sequence. Proof: TestResetRebuildsReadModel.
+// sequence. Proof: TestHostResetRebuildsReadModel.
 //
 // The journal is never touched (ADR-0143): events are facts and the replay
 // source, so a reset that shares an engine with the journal loses nothing.

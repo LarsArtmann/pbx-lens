@@ -1060,7 +1060,7 @@
             the checkpoint and delegates to the projection adapter&rsquo;s
             <code>Resettable</code>, which calls the same <code>metaengine.Store.Reset</code>
             &mdash; then <code>cli.DrainProjections</code> replays. Proven by
-            <code>TestResetRebuildsReadModel</code>; &ldquo;does X exist?&rdquo; needed a
+            <code>TestHostResetRebuildsReadModel</code>; &ldquo;does X exist?&rdquo; needed a
             compile, not a grep.
           </div>
 
@@ -1231,7 +1231,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
               <tr>
                 <td>cqrs-reset</td>
                 <td>Rebuild path: <code>cli.ResetReadModel</code> (<code>host.Stop</code> &rarr; <code>sys.ResetProjection</code>, which drops the checkpoint and delegates to the adapter&rsquo;s <code>Resettable</code>) + <code>DrainProjections</code> replay</td>
-                <td><code>docs/runbooks/reset-rebuild.md</code>; <code>TestResetRebuildsReadModel</code>; <code>TestResetRebuildsReadModelFromJournal</code></td>
+                <td><code>docs/runbooks/reset-rebuild.md</code>; <code>TestHostResetRebuildsReadModel</code>; <code>TestResetRebuildsReadModelFromJournal</code></td>
               </tr>
               <tr>
                 <td>error-family-tests</td>

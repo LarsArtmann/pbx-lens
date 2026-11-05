@@ -7,6 +7,63 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-11-05 (readiness told the truth neither way; a failed projection was silent)
+
+- **`/health/ready` no longer fails a healthy serve.** The projection
+  readiness predicate required every worker to be `running`/`live`, which is
+  the live-tail model this host does not implement: the host is a batch
+  drainer whose workers exit once caught up and whose poller re-drains every
+  tick, so a healthy process answered **503 forever**. The predicate now
+  votes on failure only — `backoff` (restart pending, model behind) and
+  `failed` (budget spent) are not ready, every other state is. The browser
+  lane's Contract F caught the original error and now asserts
+  `health/ready status: 200` on a fresh index.
+- **A projection worker that exhausts its restart budget is no longer
+  silent.** `DomainConfig().ProjectionHostOptions` wires
+  `projectionhost.WithOnFailed`, which logs an ERROR (projection name plus
+  terminal error) at the moment it happens; readiness is the second witness.
+  `TestDomainConfigWiresProjectionFailureAlert` pins the wiring and the log
+  shape.
+- **The read-model rebuild no longer relies on a hand-remembered
+  checkpoint.** `cli.ResetReadModel` performs it in one call: stop the host,
+  then `ResetProjection`, which drops the checkpoint and delegates to the
+  projection adapter's `Resettable` — the safe order, where a crash between
+  the two writes replays from zero over stale state instead of skipping
+  pre-checkpoint events. `TestHostResetRebuildsReadModel` proves 2 views →
+  reset → 0 → drain → 2. Three documents had claimed the upstream reset API
+  did not exist; the retraction is in the fleet review page and the lesson in
+  `docs/gotchas.md`.
+
+### Added — 2026-11-05 (fleet-audit closeout: first-party libraries used to their design)
+
+- **Error responses carry their family.** The web layer maps handler errors
+  through `go-error-family` (a classified error sets the family's HTTP
+  status) instead of guessing 500: a transient index read answers 503, the
+  `/api/*` bodies expose `{"error","family","code"}`, and no raw
+  `err.Error()` text reaches a client — the caller's crafted message goes
+  out, the detail goes to the server log. The 503 sites that used to return a
+  bare status (`search.go`, `recording.go`, `server.go`) now carry a
+  classified family, so "the service cannot answer right now" has exactly one
+  meaning.
+- **The CLI can exit with the error family's code.** Transient projection
+  failures become `EX_TEMPFAIL` (75) instead of a flat 1, so a caller can
+  tell "retry" from "broken"; non-family errors keep the fallback exit.
+- **ETag write failures are observable.** go-etag's `OnError` knob feeds a
+  counter (surfaced as `write_errors` in the `/api/ops` payload) and a log
+  line, and the hit-ratio display refuses to print a >1 ratio — the guard
+  that had to exist before any handler sets its own tag. The hand-rolled
+  counters are gone: `CacheCounters` is now a thin façade over the library's
+  `metrics` module (`metrics.Attach`) and keeps only the `write_errors`
+  atomic the module does not cover.
+- **Test assertions use `errorfamilytest`** at the three sites that
+  hand-rolled the same family/exit-code checks (telnyx ingest, poller, depth
+  trio) — same module, no new dependency.
+- **The ops page stops guarding a zero it can now format**: templ-components
+  #52's `RelativeTimeProps.EmptyText: "never"` replaces the manual
+  empty-value branch.
+- **`docs/runbooks/reset-rebuild.md`** documents the owner-gated one-shot
+  rebuild (legacy-key retirement) with its rollback and both dry-run tests.
+
 ### Fixed — 2026-11-02 (an interrupted vendor-hash probe shipped a placeholder; three hash sites restored)
 
 - **All three hash pins are back to their real values.** `vendorHash.nix`

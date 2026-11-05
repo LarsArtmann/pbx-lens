@@ -1,6 +1,6 @@
 # Runbook: one-shot read-model rebuild (legacy-key retirement, TODO_LIST row 113)
 
-**Status:** DESIGNED + memory-engine-proven (`TestResetRebuildsReadModel` and
+**Status:** DESIGNED + memory-engine-proven (`TestHostResetRebuildsReadModel` and
 `TestResetRebuildsReadModelFromJournal`, both in `internal/app`) — the EXECUTION
 is owner-gated: it needs the prod deploy path (row 113 stays BLOCKED until Lars
 runs it). Rehearse it against a copy of the production DB with
