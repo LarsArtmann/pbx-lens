@@ -25,7 +25,7 @@ Yesterday's session landed 17/27 tasks and left one live defect (the
 closed that defect, finished its sibling (T16), paid down the lint debt that
 the unfinished gate had hidden, re-scored the fleet audit against its own
 now-closed findings, squeezed AGENTS.md back inside its line budget, and
-discovered that a *documented* API claim from yesterday was wrong.
+discovered that a _documented_ API claim from yesterday was wrong.
 
 Three receipt-grade commits are mine: `12d07c8` (readiness fix + failure
 alert), `3a905bf` (lint paydown), `c500298` (fleet re-score + AGENTS trim).
@@ -33,25 +33,25 @@ The rest are the auto-commit daemon's heuristic sweeps.
 
 ## Task ledger (plan T01–T27)
 
-| Task | State | Note |
-|---|---|---|
-| T01, T02 | done (prior session) | middleware swap + doctrine truth |
-| T03 | done | errata + re-score of server_timing (33 → 67) |
-| T04–T08 | done | error-family CLI/web/503-classify/tests/marker |
-| T09, T10 | done | #52 fold-in + ledgers |
-| T11–T13 | done | OnError, metrics.Attach, ratio guard |
-| T14 | done | 13/13 pin receipt |
-| T15 | done, **premise corrected** | runbook exists; the "Reset does not exist" premise was WRONG (see d2) |
-| T16 | **done this session** | `WithOnFailed` + log-capture test + gotchas note |
-| T17 | **done this session** | failure-based readiness predicate + rewritten tests/docs |
-| T18, T19 | done | stop-order test, watchlist rows |
-| T20 | not started | upstream filings (premise changed — g3) |
-| T21 | not started | HARVEST |
-| T22 | **partial** | Q1 audit-session policy recorded in AGENTS.md; PNG policy undecided in-repo |
-| T23 | not started | prior-report reads |
-| T24 | **done this session** | fleet index re-scored + screenshot re-rendered |
-| T25 | **failed once** | solo gate ran and starved (d1); not re-run |
-| T26, T27 | not started | cross-project verdicts, leftover batch |
+| Task     | State                       | Note                                                                        |
+| -------- | --------------------------- | --------------------------------------------------------------------------- |
+| T01, T02 | done (prior session)        | middleware swap + doctrine truth                                            |
+| T03      | done                        | errata + re-score of server_timing (33 → 67)                                |
+| T04–T08  | done                        | error-family CLI/web/503-classify/tests/marker                              |
+| T09, T10 | done                        | #52 fold-in + ledgers                                                       |
+| T11–T13  | done                        | OnError, metrics.Attach, ratio guard                                        |
+| T14      | done                        | 13/13 pin receipt                                                           |
+| T15      | done, **premise corrected** | runbook exists; the "Reset does not exist" premise was WRONG (see d2)       |
+| T16      | **done this session**       | `WithOnFailed` + log-capture test + gotchas note                            |
+| T17      | **done this session**       | failure-based readiness predicate + rewritten tests/docs                    |
+| T18, T19 | done                        | stop-order test, watchlist rows                                             |
+| T20      | not started                 | upstream filings (premise changed — g3)                                     |
+| T21      | not started                 | HARVEST                                                                     |
+| T22      | **partial**                 | Q1 audit-session policy recorded in AGENTS.md; PNG policy undecided in-repo |
+| T23      | not started                 | prior-report reads                                                          |
+| T24      | **done this session**       | fleet index re-scored + screenshot re-rendered                              |
+| T25      | **failed once**             | solo gate ran and starved (d1); not re-run                                  |
+| T26, T27 | not started                 | cross-project verdicts, leftover batch                                      |
 
 ## a) FULLY DONE (with receipts)
 
@@ -65,8 +65,8 @@ The rest are the auto-commit daemon's heuristic sweeps.
    contract's own comment corrected — Contract F now prints
    `health/ready status: 200`.
 2. **The split-brain trap that caused it is now fenced by comments.** The
-   `workerRoundState` doc (drain success *requires* `WorkerStopped`) and the
-   readiness predicate doc (*absence of failure*) explicitly cross-reference
+   `workerRoundState` doc (drain success _requires_ `WorkerStopped`) and the
+   readiness predicate doc (_absence of failure_) explicitly cross-reference
    each other, and a new `workerBroken` classifier enumerates every
    `WorkerStatus` by name — so adding a state to the library forces a decision
    here instead of silently inheriting one (the `exhaustive` linter enforces
@@ -155,7 +155,7 @@ have moved but the feature inventory and changelog have not.
    "does not exist" and that this repo "deliberately uses
    `metaengine.Store.Reset` + drain instead". Both halves are false:
    `Host.Reset(ctx, name, opts...)` exists at v4.7.1, and the projection
-   adapter *implements* `Resettable`, whose `Reset` delegates to exactly the
+   adapter _implements_ `Resettable`, whose `Reset` delegates to exactly the
    store reset the runbook calls. Yesterday's session made the same error; I
    repeated it and wrote it into a fresh report instead of testing it first.
    The test took four minutes to write and settled it immediately.
@@ -166,7 +166,7 @@ have moved but the feature inventory and changelog have not.
    archived-reports bullet dropped the literal "69 reports" phrase, and
    `check-docs-counts.sh` verifies that number against the archive — so the
    lane went red with "AGENTS.md archived reports — no claim found", a failure
-   whose message is about a *missing claim*, not a wrong count, and which I
+   whose message is about a _missing claim_, not a wrong count, and which I
    only saw because I ran the script afterwards. It is repaired, but the class
    of error (compressing prose out of a gate-verified claim) is exactly what
    the trim risked.
@@ -263,7 +263,7 @@ have moved but the feature inventory and changelog have not.
     failures also surface as honest 503s rather than raw logs.
 19. **Route `parseFilters` Rejection errors through the family writer** on the
     JSON twins for a consistent body shape.
-20. **Fix the `page_ops` golden's `  <dl` double-space artifact** (the templ
+20. **Fix the `page_ops` golden's `<dl` double-space artifact** (the templ
     if-block collapse) or record it as accepted.
 21. **Propose upstream that `metrics.Attach` cover `OnError`** — it would
     delete the local `writeErrors` atomic; bundle with the T20 filings round.
@@ -342,7 +342,7 @@ have moved but the feature inventory and changelog have not.
    demanded an in-repo proof.
 3. **The upstream filing premise (T20).** T14 proved `versions.json` now agrees
    13/13 with `go.mod`, so the "lies" evidence is gone — but it found that
-   **12 of 13** pinned tag commits are *not* ancestors of upstream `master`
+   **12 of 13** pinned tag commits are _not_ ancestors of upstream `master`
    (release-line divergence; `id/v4.7.4` is the lone exception). File the ask
    on that divergence evidence, retract the filing intent, or stage it until
    the next drift sighting? A related sub-question: should the read-model
@@ -352,7 +352,7 @@ have moved but the feature inventory and changelog have not.
 
 ---
 
-*Point-in-time snapshot 2026-11-05 02:47 CET. Next session: fix the `Host.Reset`
+_Point-in-time snapshot 2026-11-05 02:47 CET. Next session: fix the `Host.Reset`
 claims (item 1), then the SOLO gate on a frozen tree (item 4), then
 CHANGELOG/FEATURES. Annotate this report non-destructively if any claim above
-is later found stale.*
+is later found stale._

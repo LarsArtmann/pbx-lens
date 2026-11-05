@@ -12,7 +12,7 @@
 
 1. **One secret surface, human-managed:** auth is a bcrypt htpasswd file with SIGHUP rotation and keep-on-failure semantics (`internal/web/auth.go:46-61,142-176`) — operator-owned, deterministic, test-pinned. KeyID rotation and reveal-audit would be dead weight around a file that `htpasswd` manages.
 2. **The index never stores secret material:** read-only over sources (AGENTS.md north star); Telnyx API access is operator-configured, not stored in the DB. There is nothing to encrypt-at-rest.
-3. **Sibling overlap, not pbx-lens concern:** the store's own ecosystem (probing/rotation tooling) belongs to the credential-*producing* services; pbx-lens consumes nothing credential-shaped at runtime beyond the htpasswd path.
+3. **Sibling overlap, not pbx-lens concern:** the store's own ecosystem (probing/rotation tooling) belongs to the credential-_producing_ services; pbx-lens consumes nothing credential-shaped at runtime beyond the htpasswd path.
 
 ## When this verdict flips
 

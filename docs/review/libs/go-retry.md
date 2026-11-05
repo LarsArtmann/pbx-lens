@@ -12,9 +12,9 @@
 
 ## Why pbx-lens defers
 
-1. **There is no retry loop to replace.** The ingest poller is a fixed 15-minute ticker with log-and-skip per source (`internal/cli/poller.go:146-170` PollLoop) — a documented cqrs-lint F009 decision (docs/cqrs-lint-policy.md:70-83). A grep finds no `time.Sleep`/backoff loops in `internal/`; the only `Retry-After` in the repo is *server-side*, sent by the recording proxy (`internal/web/recording.go:61-62`).
+1. **There is no retry loop to replace.** The ingest poller is a fixed 15-minute ticker with log-and-skip per source (`internal/cli/poller.go:146-170` PollLoop) — a documented cqrs-lint F009 decision (docs/cqrs-lint-policy.md:70-83). A grep finds no `time.Sleep`/backoff loops in `internal/`; the only `Retry-After` in the repo is _server-side_, sent by the recording proxy (`internal/web/recording.go:61-62`).
 2. **The poll cadence already acts as the retry.** Sources are re-polled wholesale every 15 min; a transient failure costs one cycle, and the ops page surfaces it (`internal/cli/poller.go:93-113`).
-3. **It is NOT a cenkalti/backoff wrapper** (verified: no code import; backoff appears only in upstream ROADMAP comparisons) — so "it's already in the graph indirectly (cenkalti v4+v5 via watermill/go-appkit)" is *not* a promotion argument for this lib; adopting it adds a new module.
+3. **It is NOT a cenkalti/backoff wrapper** (verified: no code import; backoff appears only in upstream ROADMAP comparisons) — so "it's already in the graph indirectly (cenkalti v4+v5 via watermill/go-appkit)" is _not_ a promotion argument for this lib; adopting it adds a new module.
 4. The error-family pairing is half-wired already: the poller's fail-open Transient semantics are pinned by tests (`internal/cli/poller_test.go:458-480`) — a future `IsRetryable` gate must respect that documented reasoning (see the [go-error-family report](go-error-family.md) risks).
 
 ## When this verdict flips

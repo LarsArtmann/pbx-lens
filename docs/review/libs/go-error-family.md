@@ -12,19 +12,19 @@ pbx-lens uses go-error-family well **at the construction site** and almost not a
 
 Ground truth: `go doc -all github.com/larsartmann/go-error-family` at the v0.12.0 module-cache pin (≈141 exported identifiers, 38 capability rows).
 
-| Capability | Used? | Verdict |
-|---|---|---|
-| Family constructors (`NewRejection/NewTransient/NewCorruption`, generic `New`) | ✅ ~60 sites | Fully leveraged |
-| Family consts (`Rejection/Conflict/Transient/…`) | ✅ `Rejection`,`Transient`,`Conflict` | Partially used (`Corruption` reachable only via constructor) |
-| `Wrap` family (12 variants) | ✅ `WrapInfrastructure` only (`internal/cli/catalog.go:33,49`) | Partially used |
-| `Code(err)` / `Coded` machine codes | ✅ `internal/web/export.go:157,162` | Fully leveraged |
-| `Classify` + protocol (cross-library) | ✅ tests: `internal/cli/poller_test.go:478`, `internal/app/depth_trio_test.go:83` | Partially used |
-| `ExitCode` / `HandleError*` / message templates (CLI boundary) | ❌ | **Missed opportunity** |
-| `HTTPStatus(err)` / `HTTPHandler` (web boundary) | ❌ | **Missed opportunity** |
-| `LogError` / `LogErrorContext` (structured logging) | ❌ | **Missed opportunity** |
-| `Error` fluent API (`WithContext`, `JSON`, `Summary`) | ❌ (accessors only) | Partially used |
-| `errorfamilytest` assertions | ❌ | **Missed opportunity** |
-| Registries/classifiers, `IsRetryable`, `RetryPolicy`, tone/audience/parse surface, `WrapOnce`, `Compose` | ❌ | Not applicable (see reasons) |
+| Capability                                                                                               | Used?                                                                             | Verdict                                                      |
+| -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Family constructors (`NewRejection/NewTransient/NewCorruption`, generic `New`)                           | ✅ ~60 sites                                                                      | Fully leveraged                                              |
+| Family consts (`Rejection/Conflict/Transient/…`)                                                         | ✅ `Rejection`,`Transient`,`Conflict`                                             | Partially used (`Corruption` reachable only via constructor) |
+| `Wrap` family (12 variants)                                                                              | ✅ `WrapInfrastructure` only (`internal/cli/catalog.go:33,49`)                    | Partially used                                               |
+| `Code(err)` / `Coded` machine codes                                                                      | ✅ `internal/web/export.go:157,162`                                               | Fully leveraged                                              |
+| `Classify` + protocol (cross-library)                                                                    | ✅ tests: `internal/cli/poller_test.go:478`, `internal/app/depth_trio_test.go:83` | Partially used                                               |
+| `ExitCode` / `HandleError*` / message templates (CLI boundary)                                           | ❌                                                                                | **Missed opportunity**                                       |
+| `HTTPStatus(err)` / `HTTPHandler` (web boundary)                                                         | ❌                                                                                | **Missed opportunity**                                       |
+| `LogError` / `LogErrorContext` (structured logging)                                                      | ❌                                                                                | **Missed opportunity**                                       |
+| `Error` fluent API (`WithContext`, `JSON`, `Summary`)                                                    | ❌ (accessors only)                                                               | Partially used                                               |
+| `errorfamilytest` assertions                                                                             | ❌                                                                                | **Missed opportunity**                                       |
+| Registries/classifiers, `IsRetryable`, `RetryPolicy`, tone/audience/parse surface, `WrapOnce`, `Compose` | ❌                                                                                | Not applicable (see reasons)                                 |
 
 N/A reasons (claim, not escape hatch): registries stay deliberately unregistered — "carriers stay unclassified until a consumer needs the family" is a documented, test-commented decision (`internal/cli/poller_test.go:458-469`); `IsRetryable`/`RetryPolicy` — the poller re-ticks on a fixed schedule, there is no retry loop; tone/audience/presentation — errors surface as CLI one-liners and HTML pages, not tone-driven text; `WrapOnce` — classification happens once at origin; `Compose` — no `errors.Join` sites.
 
@@ -34,7 +34,7 @@ N/A reasons (claim, not escape hatch): registries stay deliberately unregistered
 
 ## Top findings
 
-1. **CLI exit codes + messaging hand-rolled.** `cmd/pbx-lens/main.go:89-92` — `fatal()` always `os.Exit(1)` and prints the raw error. `cmd/pbx-lens/ops.go:99` and `internal/cli/system.go:58` construct `Transient` errors (`lens.cli.projection_timeout`) that the library maps to exit **75** (EX_TEMPFAIL) via `ExitCode(err)`; `HandleError(err)` would add What/Why/Fix for free. *Impact:* operators can script around transient failures; ~10 lines of messaging logic deleted.
+1. **CLI exit codes + messaging hand-rolled.** `cmd/pbx-lens/main.go:89-92` — `fatal()` always `os.Exit(1)` and prints the raw error. `cmd/pbx-lens/ops.go:99` and `internal/cli/system.go:58` construct `Transient` errors (`lens.cli.projection_timeout`) that the library maps to exit **75** (EX_TEMPFAIL) via `ExitCode(err)`; `HandleError(err)` would add What/Why/Fix for free. _Impact:_ operators can script around transient failures; ~10 lines of messaging logic deleted.
 2. **Web layer duplicates `Family.HTTPStatus`/`HTTPHandler` wholesale.** Inline mappings: 400 for Rejection (`internal/web/server.go:182`, `internal/web/export.go:176,192`, `internal/web/search.go:67`), 500 (`server.go:193,354,500`, `internal/web/segment_page.go:31`, `internal/web/freshness.go:31,43`), 503 (`server.go:622`, `internal/web/recording.go:111,235`), 404 (`server.go:507,555`). All write `err.Error()` inline — a leak risk the library's `writeHTTPError` deliberately avoids (it gates the message on classification). `errorfamily.HTTPHandler(fn)` replaces the pattern across ~14 sites.
 3. **Infrastructure-shaped errors left unclassified.** `internal/web/search.go:50-55` ("needs a sqlite index") and `internal/web/server.go:618-626` ("no ops counters wired") are bare `http.Error` 503 strings with no family; `server.go:632` (json.Marshal failure) is unclassified Orchestration. `WrapInfrastructure` + `HTTPStatus` would classify and map them in one step (contrast: `internal/cli/catalog.go:33` already does it right).
 4. **Export error marker hand-rolls `Error.JSON()`.** `internal/web/export.go:153-169` invents `exportError{ExportIncomplete, Code, Message}`; `errorfamily.WithContext("call_id", …)` + `JSON()` makes the marker canonical while keeping `Code(err)` consumers working.

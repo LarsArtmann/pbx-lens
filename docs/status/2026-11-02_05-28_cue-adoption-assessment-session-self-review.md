@@ -121,8 +121,8 @@ unverified — flagged, not judged).
 
 ## f) Things we should get done next
 
-*Grounded strictly in what this session touched or noticed — not a fresh
-project backlog (TODO_LIST.md owns that). Deliberately not padded to 50.*
+_Grounded strictly in what this session touched or noticed — not a fresh
+project backlog (TODO_LIST.md owns that). Deliberately not padded to 50._
 
 1. Record the CUE rejection + flip triggers as a `docs/decisions/` one-pager
    (or an AGENTS.md stack-decision bullet). Cheap, closes the d) miss.
@@ -160,7 +160,7 @@ project backlog (TODO_LIST.md owns that). Deliberately not padded to 50.*
 
 ## g) Questions I can NOT figure out myself
 
-1. **Decision granularity:** is a *rejected*-dependency evaluation
+1. **Decision granularity:** is a _rejected_-dependency evaluation
    decision-grade for this repo (deserving a `docs/decisions/` one-pager),
    or is chat + this report sufficient? The dir shows one-pagers for PII and
    UI decisions — I can't derive your bar for negative decisions.
@@ -174,5 +174,5 @@ project backlog (TODO_LIST.md owns that). Deliberately not padded to 50.*
 
 ---
 
-*Point-in-time snapshot. WAITING FOR INSTRUCTIONS — no harvest, no decision
-record, no cleanup executed; all of the above awaits direction.*
+_Point-in-time snapshot. WAITING FOR INSTRUCTIONS — no harvest, no decision
+record, no cleanup executed; all of the above awaits direction._

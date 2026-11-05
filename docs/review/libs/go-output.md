@@ -1,7 +1,7 @@
 # go-output — adoption-fit report (pbx-lens)
 
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-output` root v0.38.7 (+ per-module tags; 19 sub-modules) · **Status in pbx-lens:** **NOT IMPORTED — PATTERN-ONLY adoption**
-**Verdict:** **PATTERN-ONLY** — pbx-lens copies its *engineering patterns* (flake structure, CI lane) but has no Go-level use for a rendering framework.
+**Verdict:** **PATTERN-ONLY** — pbx-lens copies its _engineering patterns_ (flake structure, CI lane) but has no Go-level use for a rendering framework.
 **Fleet report:** [index.html](index.html)
 
 ## What the library offers
@@ -10,7 +10,7 @@
 
 ## The pattern adoption (verified, with one precision fix)
 
-- **Flake:** `flake.nix:12-14` consumes `go-nix-helpers`' `flakeModules.go-standard` — the *go-standard* flakeModule. AGENTS.md phrases this as "go-standard flakeModule from go-nix-helpers (go-output's pattern)": the pattern provenance is go-output, the consuming module is go-nix-helpers'. Both true; keep the attribution precise.
+- **Flake:** `flake.nix:12-14` consumes `go-nix-helpers`' `flakeModules.go-standard` — the _go-standard_ flakeModule. AGENTS.md phrases this as "go-standard flakeModule from go-nix-helpers (go-output's pattern)": the pattern provenance is go-output, the consuming module is go-nix-helpers'. Both true; keep the attribution precise.
 - **CI:** the GitHub Actions lane (`.github/workflows/ci.yml`, build+test+lint+coverage+tidy) follows go-output's single-module pattern per AGENTS.md.
 - **What is NOT adopted:** any Go import. `rg 'go-output' go.mod go.sum` is empty; `internal/cli/catalog.go` renders the eventcatalog tree via go-cqrs-lite `catalog`, not go-output.
 
@@ -22,7 +22,7 @@
 
 ## When this verdict flips
 
-If pbx-lens grows a *static report* surface (e.g. a generated weekly call digest in markdown/graph form), go-output's build-freeze-render is exactly that tool. Until then: pattern-only, correctly.
+If pbx-lens grows a _static report_ surface (e.g. a generated weekly call digest in markdown/graph form), go-output's build-freeze-render is exactly that tool. Until then: pattern-only, correctly.
 
 ## How to verify
 

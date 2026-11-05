@@ -17,8 +17,8 @@
 
 ## What IS worth adopting
 
-- **The health bridge's ProjectionReadinessCheck idea:** `/ready` currently reflects only the appkit process; projection worker readiness is invisible to it even though every poll pass drains projections (`internal/cli/poller.go:198`, `DrainProjections` via `internal/cli/system.go:41-74`). A small in-house readiness check that reports `projectionhost.Status()` workers as ready/not-ready is the right-sized adaptation (503 until workers live) — *the idea*, not necessarily the module (the module bridges to go-health, which pbx-lens rejects).
-- **The command/query HandlerOption glue + error-family→HTTP mapping** as the reference pattern *if* the UI ever gains an action (e.g. a "trigger refresh now" button). Cross-ref: go-error-family's unused `HTTPHandler` covers the mapping half ([go-error-family.md](go-error-family.md)).
+- **The health bridge's ProjectionReadinessCheck idea:** `/ready` currently reflects only the appkit process; projection worker readiness is invisible to it even though every poll pass drains projections (`internal/cli/poller.go:198`, `DrainProjections` via `internal/cli/system.go:41-74`). A small in-house readiness check that reports `projectionhost.Status()` workers as ready/not-ready is the right-sized adaptation (503 until workers live) — _the idea_, not necessarily the module (the module bridges to go-health, which pbx-lens rejects).
+- **The command/query HandlerOption glue + error-family→HTTP mapping** as the reference pattern _if_ the UI ever gains an action (e.g. a "trigger refresh now" button). Cross-ref: go-error-family's unused `HTTPHandler` covers the mapping half ([go-error-family.md](go-error-family.md)).
 
 ## Adoption guardrails
 

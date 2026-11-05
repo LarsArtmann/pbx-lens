@@ -9,6 +9,7 @@ session's run and what it noticed — no other project state was researched.
 ## Scope line — what this report VERIFIED vs NOT
 
 **Verified this session (command/artifact):**
+
 - `rg`/`sed` spot-checks of 11 load-bearing citations in the reports
   (main.go:89-92, ops.go:99, timing.go:14-26, caching.go:16-20, ops.go:294-299,
   poller.go:146-151, backup.go:13-18, auth.go:142-147, and others) — all matched.
@@ -34,8 +35,9 @@ session's run and what it noticed — no other project state was researched.
   cqrs-lite checkout — the corrected verify command works.
 
 **NOT verified (and why):**
+
 - **Full BuildFlow gate / golangci-lint not run** — docs-only session (no Go
-  source changed); build+vet stood in. The audit's *claims* about code were
+  source changed); build+vet stood in. The audit's _claims_ about code were
   spot-checked directly instead.
 - **Prior reports' scores (91, 58, 73+86) and the 2026-10-12 audit's internal
   findings** — inherited via agent HTML extraction, not re-read by me in full.
@@ -165,7 +167,7 @@ session's run and what it noticed — no other project state was researched.
    verify block has run green once.
 2. **Fix all carriers of a false claim in one change.** Partial doctrine fixes
    create split brains (current state). If runtime behavior is out of scope,
-   at least fix the *documentation* carriers together and leave the code comment
+   at least fix the _documentation_ carriers together and leave the code comment
    for the behavior commit — explicitly tracked.
 3. **Independently re-derive load-bearing agent claims.** Two agent errors
    slipped through to my review layer (missed v0.7.0 tag; miscounted census with
@@ -183,6 +185,7 @@ session's run and what it noticed — no other project state was researched.
 ## f) Up to 50 things to get done next
 
 **Code actions (the audit's opportunities, sorted by priority):**
+
 1. Swap `web.ServerTimingMiddleware` for `servertiming.ServerTimingMiddleware()`
    (opportunity #1; consider `...When(pred)` for unauthenticated runs).
 2. Fix the false comment at `internal/web/timing.go:16-17`.
@@ -216,77 +219,77 @@ session's run and what it noticed — no other project state was researched.
 
 **Docs/doctrine hygiene:**
 19. Annotate the 2026-10-12 http-stack HTML with an errata for its finding #2
-    (non-destructive appendix).
+(non-destructive appendix).
 20. Pin the stop-before-first-write contract at `ops.go:147` with a comment
-    ordering test (the `defer stop()` reorder hazard).
+ordering test (the `defer stop()` reorder hazard).
 21. Add "filings-ledger state check" as an explicit step in the
-    templ-components bump checklist (the one skipped step this bump).
+templ-components bump checklist (the one skipped step this bump).
 22. Update the `docs/templ-components-adoption.md` map rows: EmptyText fold
-    (post-#7) + amber re-skin semantics note.
+(post-#7) + amber re-skin semantics note.
 23. Verify block re-check: run the corrected `git tag --contains
     system/v4.16.0` habit across all 13 direct cqrs-lite pins (fresh receipt).
 24. Full-read the three prior deep-dive HTMLs to retire the inherited-claim
-    caveat on 91/58/73/86.
+caveat on 91/58/73/86.
 25. Add a link to `docs/review/libs/index.html` from wherever the repo's docs
-    hub/README indexes reports, if one exists beyond docs/research/README.md.
+hub/README indexes reports, if one exists beyond docs/research/README.md.
 
 **Upstream filings (verify-before-filing applies):**
 26. File the go-atomic-write exported-commit-primitive ask (draft exists in
-    docs/drafts/; adoption deletes backup.go:54-57+70-112 when it lands).
+docs/drafts/; adoption deletes backup.go:54-57+70-112 when it lands).
 27. File the versions.json-lies ledger item upstream (gotchas watchlist owns it).
 28. Check upstream `NonceConfig` for a Report-Only mode at the next httputil
-    bump; if present, delete the serve.go:315-325 hand-roll.
+bump; if present, delete the serve.go:315-325 hand-roll.
 
 **Watch items (named triggers, no action until they fire):**
 29. templ-components ≥ v1.27.0 requires templ ≥ v0.3.1100 — plan the two-module
-    bump (goldens + codegen re-baseline; dependabot stays banned for templ).
+bump (goldens + codegen re-baseline; dependabot stays banned for templ).
 30. appkit v0.10.0: default outermost Server-Timing middleware → likely delete
-    `serve.go:328` wiring; adopt testkit `WaitForRunning`/`FreeAddr`.
+`serve.go:328` wiring; adopt testkit `WaitForRunning`/`FreeAddr`.
 31. cqrs-lite next tag wave: cache pseudo-versions show untagged master brewing;
-    re-run pin verification then (and the v5 watchlist: single call site
-    app.go:87).
+re-run pin verification then (and the v5 watchlist: single call site
+app.go:87).
 32. go-retry: adopt only if the Telnyx client gains per-request 429/5xx handling.
 33. go-atomic-write: adopt when the exported primitive lands (its verdict's
-    flip-trigger).
+flip-trigger).
 34. Rate-limit doctrine Hold: define what evidence counts as "abuse" that would
-    reopen the 2026-10-12 rejection.
+reopen the 2026-10-12 rejection.
 35. `EngineConfig.Pragmas` (WAL/synchronous): revisit only if backup windows
-    need tuning.
+need tuning.
 36. `DomainConfig.Schema`/upcasters: declare at event payload v2 (F005 trigger).
 
 **Process/report maintenance:**
 37. HARVEST this report's (f) into TODO_LIST.md (awaiting your go — question 2).
 38. Decide the audit-session execution policy (question 1): report-only vs
-    auto-execute trivial opportunities.
+auto-execute trivial opportunities.
 39. Decide the binary-proof policy (question 3): 1.4 MB PNG in-repo vs
-    compressed/out-of-git.
+compressed/out-of-git.
 40. Re-render `index-screenshot.png` whenever the index content changes (rule,
-    not memory).
+not memory).
 41. Consider compressing the PNG (or capping capture height) if kept in-repo.
 42. After items 1-3 land, re-run the fleet mean in index.html (71 will move).
 43. Re-run `art-dupl` gate after the middleware swap deletes code (lane is
-    zero-group; deletions can shift the suppressed bucket audit).
+zero-group; deletions can shift the suppressed bucket audit).
 44. Add a guard test asserting the Server-Timing header appears post-swap (the
-    swap changes middleware provenance; the perf_test pollHash rail already
-    exists as the pattern).
+swap changes middleware provenance; the perf_test pollHash rail already
+exists as the pattern).
 45. When trimming AGENTS.md later: once items 1-3 land, the corrected
-    server_timing note can shrink to a pointer at docs/http-stack.md.
+server_timing note can shrink to a pointer at docs/http-stack.md.
 46. Record the fleet verdicts in the cross-project library-policy home if that
-    inventory exists (noticed /home/lars/projects/library-policy; unverified —
-    check before writing).
+inventory exists (noticed /home/lars/projects/library-policy; unverified —
+check before writing).
 47. Keep `docs/review/libs/` refresh rule visible: re-audit a lib on pin bump or
-    flip-trigger (already in AGENTS.md; add a one-line pointer in each report's
-    header — 6 of 19 have it only in the fleet report).
+flip-trigger (already in AGENTS.md; add a one-line pointer in each report's
+header — 6 of 19 have it only in the fleet report).
 
 **Leftover observations (not urgent, noticed in passing):**
 48. `docs/research/README.md` table column widths drifted (markdown renders
-    fine; cosmetic only).
+fine; cosmetic only).
 49. The e48697b/386bd59 auto-commits split this session's files across two
-    heuristic commits — receipts are intact, but a "receipt-grade" single commit
-    for report sets would read cleaner if you ever want curated history.
+heuristic commits — receipts are intact, but a "receipt-grade" single commit
+for report sets would read cleaner if you ever want curated history.
 50. The unused `server_timing` `RecordServerTiming`/`MeasureWithDesc` surface:
-    revisit only if per-record context timing ever becomes a need (kept N/A for
-    now — listed so the N/A stays a decision, not a memory hole).
+revisit only if per-record context timing ever becomes a need (kept N/A for
+now — listed so the N/A stays a decision, not a memory hole).
 
 ## g) Questions I cannot figure out myself
 
@@ -307,6 +310,6 @@ session's run and what it noticed — no other project state was researched.
 
 ---
 
-*Point-in-time snapshot 2026-11-04 18:32 CET. Next session: run docs-health
+_Point-in-time snapshot 2026-11-04 18:32 CET. Next session: run docs-health
 HARVEST on (f) after question 2 is answered; annotate this report non-
-destructively if any claim above is later found stale.*
+destructively if any claim above is later found stale._

@@ -297,7 +297,7 @@ close-out).
 21. Route parseFilters Rejection errors through the writer on the JSON
     twins for family-shaped bodies (today: crafted text, safe, 400 —
     consistency candidate).
-22. templ whitespace: the collapsed WriteErrors `if` block left a "  <dl"
+22. templ whitespace: the collapsed WriteErrors `if` block left a " <dl"
     double-space artifact in the golden — tidy with an if/else structure or
     accept + note.
 23. Propose upstream `Attach` covering `OnError` (would delete the local

@@ -12,14 +12,14 @@ The four middleware this read-only UI needs — SecurityHeaders, Nonce/CSP, Comp
 
 Ground truth: module cache `~/go/pkg/mod/github.com/larsartmann/httputil@v1.8.0` (~130 exported identifiers across security, nonce, compression, rate-limit, CSRF, server, observability, language, misc).
 
-| Area | Used by pbx-lens | Verdict |
-|---|---|---|
-| Security headers | `SecurityHeaders(+SecurityHeadersConfig)` — `cmd/pbx-lens/serve.go:284` | Fully leveraged |
-| CSP nonce | `Nonce(+NonceConfig)` — `serve.go:300`; `NonceFromRequest` — `internal/web/server.go` consumers (`internal/web/search.go:20`), `internal/web/nonce_csp_test.go:49` | Fully leveraged |
-| Compression | `Compression(DefaultCompressionConfig())` — `serve.go:329` | Fully leveraged (v1.5.0 semantics load-bearing) |
-| Chain | `httputil.Middleware` type only — composition owned by go-appkit `ExtraMiddlewares` | Partially used (correct: appkit owns the chain, docs/http-stack.md) |
-| CSP Report-Only | hand-rolled at `serve.go:315-325` | Justified hand-roll — `NonceConfig` (nonce.go:59-70) has no Report-Only mode at pin |
-| Rate limit / CSRF / Language / Decompression / MaxBodySize / Server / Health / Metrics / Timeout / CORS / ClientIP / ResponseRecorder / MiddlewareStack / httpspec | ❌ | Not applicable — reasons below |
+| Area                                                                                                                                                               | Used by pbx-lens                                                                                                                                                   | Verdict                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| Security headers                                                                                                                                                   | `SecurityHeaders(+SecurityHeadersConfig)` — `cmd/pbx-lens/serve.go:284`                                                                                            | Fully leveraged                                                                     |
+| CSP nonce                                                                                                                                                          | `Nonce(+NonceConfig)` — `serve.go:300`; `NonceFromRequest` — `internal/web/server.go` consumers (`internal/web/search.go:20`), `internal/web/nonce_csp_test.go:49` | Fully leveraged                                                                     |
+| Compression                                                                                                                                                        | `Compression(DefaultCompressionConfig())` — `serve.go:329`                                                                                                         | Fully leveraged (v1.5.0 semantics load-bearing)                                     |
+| Chain                                                                                                                                                              | `httputil.Middleware` type only — composition owned by go-appkit `ExtraMiddlewares`                                                                                | Partially used (correct: appkit owns the chain, docs/http-stack.md)                 |
+| CSP Report-Only                                                                                                                                                    | hand-rolled at `serve.go:315-325`                                                                                                                                  | Justified hand-roll — `NonceConfig` (nonce.go:59-70) has no Report-Only mode at pin |
+| Rate limit / CSRF / Language / Decompression / MaxBodySize / Server / Health / Metrics / Timeout / CORS / ClientIP / ResponseRecorder / MiddlewareStack / httpspec | ❌                                                                                                                                                                 | Not applicable — reasons below                                                      |
 
 N/A reasons (one line each): rate limiting — doctrine Hold from the 2026-10-12 audit ("revisit on abuse"; loopback + htpasswd posture); CSRF (~20 symbols) — no unsafe methods, the UI is read-only GET; Language — single-locale tool; Decompression/MaxBodySize — no request bodies; Server/NewServerListener/Health/Metrics/Timeout — appkit v0.9.0 owns lifecycle and `WriteTimeout: NoTimeout` is the streaming contract (docs/http-stack.md:10-15); CORS/ClientIP — no cross-origin or proxy posture; ResponseRecorder/Chain/MiddlewareStack — appkit owns composition; httpspec — the library's own test harness; `DetectCapabilities` — explicitly frozen-but-unused upstream; `code.go` error classifiers — go-error-family is used directly instead (see [go-error-family.md](go-error-family.md)).
 
@@ -29,19 +29,19 @@ N/A reasons (one line each): rate limiting — doctrine Hold from the 2026-10-12
 
 ## Version currency (delta since the 2026-10-12 audit pin v1.4.1)
 
-| Version | Notable change | Relevance |
-|---|---|---|
-| v1.8.0 | process/CI only (apidiff gate, policy-vet CI) | None — zero API change |
-| v1.7.0 | `NewServerListener`, Shutdown-before-Start no-op | None (appkit owns lifecycle) |
-| v1.6.0 | **Range-aware compression guard**; Language; trusted-proxy keying; `Recovery.OnPanic` | **High** — protects `/recording` Range seeking through the compression middleware (`internal/web/recording.go:156-158`) |
-| v1.5.0 | **Compression Content-Length delete/preserve semantics** | **Load-bearing** — the ETag/cache doctrine depends on it; pinned by `TestCacheSemanticsHardening` (docs/http-stack.md:102-108) |
+| Version | Notable change                                                                        | Relevance                                                                                                                      |
+| ------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| v1.8.0  | process/CI only (apidiff gate, policy-vet CI)                                         | None — zero API change                                                                                                         |
+| v1.7.0  | `NewServerListener`, Shutdown-before-Start no-op                                      | None (appkit owns lifecycle)                                                                                                   |
+| v1.6.0  | **Range-aware compression guard**; Language; trusted-proxy keying; `Recovery.OnPanic` | **High** — protects `/recording` Range seeking through the compression middleware (`internal/web/recording.go:156-158`)        |
+| v1.5.0  | **Compression Content-Length delete/preserve semantics**                              | **Load-bearing** — the ETag/cache doctrine depends on it; pinned by `TestCacheSemanticsHardening` (docs/http-stack.md:102-108) |
 
 Pin v1.8.0 == the checkout's pending release cut (its `[Unreleased]` freezes exactly the v1.8.0 content). **Current.**
 
 ## Risks
 
 - CSP Report-Only stays a hand-roll until upstream adds a Report-Only mode to `NonceConfig` — revisit on the next httputil minor.
-- Rate-limiting doctrine Hold is a *decision*, not an omission — re-litigate only on abuse evidence.
+- Rate-limiting doctrine Hold is a _decision_, not an omission — re-litigate only on abuse evidence.
 
 ## Recommendations
 

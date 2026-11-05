@@ -12,20 +12,20 @@ The ETag middleware is configured with above-default care: five `ETagConfig` kno
 
 Ground truth: module cache `~/go/pkg/mod/github.com/larsartmann/go-etag/server@v0.6.1` (`etag.go:28-89` for the config struct) + checkout `/home/lars/projects/go-etag` for the metrics/client modules.
 
-| Capability | Used? |
-|---|---|
-| `etag.New(ETagConfig)` body-hash + If-None-Match 304 | ✅ `internal/web/caching.go:92` |
-| `MaxBufferSize` (default 1 MiB) | ✅ defaulted; overflow observable |
-| `HashFunc` | ✅ defaulted (FNV-64a); perf rail mirrors it (`internal/web/perf_test.go:171-176`) |
-| `SkipIfPresent` | ✅ `caching.go:74` |
-| `Skip` (streaming pages opt out) | ✅ `caching.go:75` (`skipBodyCaching`) |
-| `OnETagGenerated` / `On304` / `OnBufferOverflow` | ✅ `caching.go:78-88` → `CacheCounters` + `/api/ops` "streamed without an ETag" card (`ops_templ.go:539-540`) |
-| `OnError` | ❌ **Missed** — post-commit write failures are invisible (TODO_LIST row per docs/http-stack.md:56-58) |
-| `Validate` | N/A — config from defaults, not user input |
-| `DefaultETagConfig` | ✅ `caching.go:73` |
-| entitytag re-exports `ParseETag`/`ParseETagList`/`MatchesIfNoneMatch`/`MatchesIfMatch` | N/A — no handler-set tags, no If-Match preconditions (GET-only UI) |
-| `go-etag/client` module | N/A — standing Hold (Telnyx ETag emission unverified; window 2027-01) |
-| `go-etag/metrics` module | ❌ **Missed** — see below |
+| Capability                                                                             | Used?                                                                                                         |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `etag.New(ETagConfig)` body-hash + If-None-Match 304                                   | ✅ `internal/web/caching.go:92`                                                                               |
+| `MaxBufferSize` (default 1 MiB)                                                        | ✅ defaulted; overflow observable                                                                             |
+| `HashFunc`                                                                             | ✅ defaulted (FNV-64a); perf rail mirrors it (`internal/web/perf_test.go:171-176`)                            |
+| `SkipIfPresent`                                                                        | ✅ `caching.go:74`                                                                                            |
+| `Skip` (streaming pages opt out)                                                       | ✅ `caching.go:75` (`skipBodyCaching`)                                                                        |
+| `OnETagGenerated` / `On304` / `OnBufferOverflow`                                       | ✅ `caching.go:78-88` → `CacheCounters` + `/api/ops` "streamed without an ETag" card (`ops_templ.go:539-540`) |
+| `OnError`                                                                              | ❌ **Missed** — post-commit write failures are invisible (TODO_LIST row per docs/http-stack.md:56-58)         |
+| `Validate`                                                                             | N/A — config from defaults, not user input                                                                    |
+| `DefaultETagConfig`                                                                    | ✅ `caching.go:73`                                                                                            |
+| entitytag re-exports `ParseETag`/`ParseETagList`/`MatchesIfNoneMatch`/`MatchesIfMatch` | N/A — no handler-set tags, no If-Match preconditions (GET-only UI)                                            |
+| `go-etag/client` module                                                                | N/A — standing Hold (Telnyx ETag emission unverified; window 2027-01)                                         |
+| `go-etag/metrics` module                                                               | ❌ **Missed** — see below                                                                                     |
 
 ## The metrics duplication
 

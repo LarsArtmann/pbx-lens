@@ -18,16 +18,17 @@ pbx-lens leans on appkit exactly as designed: `NewService` → `svc.Mux` → `sv
 
 ## Capability disposition (unchanged where the prior report ruled)
 
-| Capability | Verdict |
-|---|---|
-| Shell, default stack, health, `/metrics` opt-in, `/version`, NoTimeout, testkit, systemd | Fully leveraged (census above) |
-| `ReadyCheck` / `OuterMiddlewares` / `StartHooks` / `DrainHooks` / `ShutdownHooks` | Unwired by design — deps open pre-bind; teardown rides `defer` (prior report F2 "not scheduled") |
-| `InitLogger`, error re-exports | Deliberate non-adoptions (documented) |
-| errorpages / security / realtime / cqrs / docs / otel / flightrecorder sibling modules | REJECTED 2026-10-12 with recorded dispositions — still stand; realtime/SSE exclusion re-affirmed by the R9 polling decision |
+| Capability                                                                               | Verdict                                                                                                                     |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Shell, default stack, health, `/metrics` opt-in, `/version`, NoTimeout, testkit, systemd | Fully leveraged (census above)                                                                                              |
+| `ReadyCheck` / `OuterMiddlewares` / `StartHooks` / `DrainHooks` / `ShutdownHooks`        | Unwired by design — deps open pre-bind; teardown rides `defer` (prior report F2 "not scheduled")                            |
+| `InitLogger`, error re-exports                                                           | Deliberate non-adoptions (documented)                                                                                       |
+| errorpages / security / realtime / cqrs / docs / otel / flightrecorder sibling modules   | REJECTED 2026-10-12 with recorded dispositions — still stand; realtime/SSE exclusion re-affirmed by the R9 polling decision |
 
 ## Forward finding (D4)
 
 Upstream `[Unreleased]` (checkout CHANGELOG 3-67, master `a14337bc`): **Server-Timing becomes the default outermost middleware**, plus testkit `HTTPGetURL`/`WaitForRunning`/`FreeAddr`. When v0.10.0 ships:
+
 1. `serve.go:328` (`web.ServerTimingMiddleware()` in ExtraMiddlewares) likely becomes deletable — verify semantics (header stamped at commit; SSE-safe) before deleting.
 2. `serve_test.go` can upgrade to `WaitForRunning`/`FreeAddr` for free.
 

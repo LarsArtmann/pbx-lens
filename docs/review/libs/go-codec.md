@@ -11,7 +11,7 @@
 ## Why pbx-lens should not import it directly
 
 1. **It is the event-payload serialization contract of the cqrs-lite stack.** `go mod why` traces it: `cmd/pbx-lens → go-cqrs-lite/metaengine/v4 → go-codec`. Every event pbx-lens writes is already CBOR-encoded through it (`event/v4` typed payloads) — pbx-lens benefits from it without touching it, exactly as designed.
-2. **pbx-lens' hand-rolled decode layer solves a different problem.** `internal/wire/flextime.go:17-45` (FlexTime + shared decode helpers) handles *external* JSONL dialects — Telnyx timestamps in ns/µs/offset-less variants — a multi-layout tolerant-decode problem go-codec has no API for. Replacing wire with go-codec would be a worse fit, not a dedup.
+2. **pbx-lens' hand-rolled decode layer solves a different problem.** `internal/wire/flextime.go:17-45` (FlexTime + shared decode helpers) handles _external_ JSONL dialects — Telnyx timestamps in ns/µs/offset-less variants — a multi-layout tolerant-decode problem go-codec has no API for. Replacing wire with go-codec would be a worse fit, not a dedup.
 3. Direct import would add a version-pinning obligation (hermetic nix, vendorHash) for zero new capability.
 
 ## When this verdict flips
