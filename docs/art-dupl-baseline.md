@@ -131,3 +131,19 @@ change deserves eyes, then a reviewed refresh.
   Self-Tests), and the stale-dev-binary trap above was documented the hard
   way. Pinned-binary verification: pristine tree reproduces CI's exact
   group; fixed tree reports 0 groups; CI run 40221643859 green.
+- 2026-11-05: a user-run `-t 7` scan (no `--min-lines` — so the 1-line
+  signature class was visible) triggered a full re-audit. Every actionable
+  group was the documented signature-coincidence remainder, but
+  body-by-body reading found two REAL drift risks no threshold setting
+  names: the typed-filter walk was copy-pasted 3× in calls.templ
+  (`recentViewFiltersJSON`, `listPageHref`, `filtersQueryString`) and
+  `hasFilters` re-spelled `hasTypedFilters`' five-term disjunction; and the
+  two reset proofs (host_reset/reset_rebuild) duplicated a 42-line
+  seed-and-prove block. Extracted `eachTypedFilter` (one wire-key
+  vocabulary; `url.Values.Set` consumes it directly), `hasFilters` now
+  composes `hasTypedFilters || walk cursors` (the relationship the
+  staleness comment already documented), and `seedFoldedPair` (internal/app)
+  carries the shared reset precondition. After: gate still 0 groups, the
+  t-10 sweep holds only the two accepted signature pairs, and the t-4
+  `--show-suppressed` audit shows multi-line spans only in test files (the
+  spot-checked scaffolding class).

@@ -30,48 +30,7 @@ func TestResetRebuildsReadModelFromJournal(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sc := systemscenario.System(
-		t,
-		ctx,
-		app.DomainConfig(),
-		systemscenario.Memory(),
-		systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
-	)
-
-	first := sampleObservation()
-	second := sampleObservation()
-	second.NativeID = "conv-second"
-	second.StartedAt = first.StartedAt.Add(time.Minute)
-
-	// Seed both streams (the multi-seed Given pattern), then pin the
-	// idempotent re-offer on the same act: the replay decides to ZERO
-	// events (same ContentHash) and the terminal query proves both views
-	// folded — the scenario's non-vacuous guard rides this phase.
-	sc.Given(
-		sc.Event(calls.EventObserved, streamRefOf(mustRecord(t, first)), calls.CallObserved{Observation: first}),
-		sc.Event(calls.EventObserved, streamRefOf(mustRecord(t, second)), calls.CallObserved{Observation: second}),
-	)
-
-	sc.When(mustRecord(t, second)).
-		ThenNoEvents().
-		ThenQueryFunc(viewCountReader(sc.System()), func(got any) error {
-			if count, ok := got.(int); !ok || count != 2 {
-				return fmt.Errorf("%w: views = %v, want 2", errViewCount, got)
-			}
-
-			return nil
-		})
-
-	sys := sc.System()
-
-	before, err := readAllViewsForTest(ctx, sys)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(before) != 2 {
-		t.Fatalf("pre-reset views = %d, want 2", len(before))
-	}
+	sys, before := seedFoldedPair(t, ctx, "conv-second")
 
 	result, err := sys.MetaEngine().Reset(ctx)
 	if err != nil {
@@ -120,6 +79,59 @@ func mustRecord(t *testing.T, obs calls.Observation) calls.RecordCallCmd {
 	}
 
 	return cmd
+}
+
+// seedFoldedPair is the shared precondition of both reset proofs: two
+// observations on their own streams (the second a minute later), both views
+// folded, and the idempotent re-offer pinned on the same act — it decides to
+// ZERO events (same ContentHash), and the terminal query proves both views
+// folded (the scenario's non-vacuous guard rides this phase). Returns the
+// booted system and the pre-reset views; each test then resets its own way
+// and replays.
+func seedFoldedPair(t *testing.T, ctx context.Context, secondNativeID calls.NativeID) (*system.System, []calls.CallView) {
+	t.Helper()
+
+	sc := systemscenario.System(
+		t,
+		ctx,
+		app.DomainConfig(),
+		systemscenario.Memory(),
+		systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
+	)
+
+	first := sampleObservation()
+
+	second := sampleObservation()
+	second.NativeID = secondNativeID
+	second.StartedAt = first.StartedAt.Add(time.Minute)
+
+	sc.Given(
+		sc.Event(calls.EventObserved, streamRefOf(mustRecord(t, first)), calls.CallObserved{Observation: first}),
+		sc.Event(calls.EventObserved, streamRefOf(mustRecord(t, second)), calls.CallObserved{Observation: second}),
+	)
+
+	sc.When(mustRecord(t, second)).
+		ThenNoEvents().
+		ThenQueryFunc(viewCountReader(sc.System()), func(got any) error {
+			if count, ok := got.(int); !ok || count != 2 {
+				return fmt.Errorf("%w: views = %v, want 2", errViewCount, got)
+			}
+
+			return nil
+		})
+
+	sys := sc.System()
+
+	before, err := readAllViewsForTest(ctx, sys)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(before) != 2 {
+		t.Fatalf("pre-reset views = %d, want 2", len(before))
+	}
+
+	return sys, before
 }
 
 // viewCountReader is the ThenQuery-shaped fn over the view count.

@@ -2,13 +2,10 @@ package app_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
-	"github.com/larsartmann/go-cqrs-lite/systemscenario/v4"
 	"github.com/larsartmann/pbx-lens/internal/app"
-	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 )
 
@@ -27,45 +24,7 @@ func TestHostResetRebuildsReadModel(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	sc := systemscenario.System(
-		t,
-		ctx,
-		app.DomainConfig(),
-		systemscenario.Memory(),
-		systemscenario.WithAwaitTimeout(scenarioAwaitTimeout),
-	)
-
-	first := sampleObservation()
-
-	second := sampleObservation()
-	second.NativeID = "conv-host-reset"
-	second.StartedAt = first.StartedAt.Add(time.Minute)
-
-	sc.Given(
-		sc.Event(calls.EventObserved, streamRefOf(mustRecord(t, first)), calls.CallObserved{Observation: first}),
-		sc.Event(calls.EventObserved, streamRefOf(mustRecord(t, second)), calls.CallObserved{Observation: second}),
-	)
-
-	sc.When(mustRecord(t, second)).
-		ThenNoEvents().
-		ThenQueryFunc(viewCountReader(sc.System()), func(got any) error {
-			if count, ok := got.(int); !ok || count != 2 {
-				return fmt.Errorf("%w: views = %v, want 2", errViewCount, got)
-			}
-
-			return nil
-		})
-
-	sys := sc.System()
-
-	before, err := readAllViewsForTest(ctx, sys)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if len(before) != 2 {
-		t.Fatalf("pre-reset views = %d, want 2", len(before))
-	}
+	sys, before := seedFoldedPair(t, ctx, "conv-host-reset")
 
 	// Host.Reset refuses while the host is running ("cannot reset while host
 	// is running — Stop first"), so the sequence is Stop → Reset → drain.
