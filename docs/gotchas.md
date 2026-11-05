@@ -591,12 +591,16 @@ while flake.nix's cqrs-lint `vendorHash` is that tool's own module set at its
 pinned rev (`jTwZn/…`). A single `nix-hash-fix`-shaped autofix that writes the
 first value into both slots breaks the devShell.
 
-How to settle it in one command instead of guessing: put one candidate in
-flake.nix and run `nix develop -c echo DEV-SHELL-OK`. `jTwZn/…` prints
-DEV-SHELL-OK; `ECM62…` fails at the cqrs-lint FOD. Then `git show <rev>:flake.nix
-
-> flake.nix`to restore the pin (do not hand-edit hashes), and re-run the gate:
-its`nix-build` receipt from the corrupted tree is worthless.
+How to settle it instead of guessing — and why the obvious test lies: put the
+ALL-ZEROS fake in the slot and run `nix develop -c true`. Nix answers with
+`specified: sha256-AAAA… got: sha256-jTwZn/…`, which is the FOD's true content
+hash. Do NOT trust "the devShell builds with value X": a store path realised by
+an earlier correct build is reused without re-checking, so a stale-but-once-
+correct hash greens a machine that already had it. Measured 2026-11-05:
+`jTwZn/…` is the real cqrs-lint module set, `ECM62…` is this repo's, and the
+latter fails that same FOD. Restore the pin with `git show <rev>:flake.nix`
+redirected into the file — never hand-edit a hash — and re-run the gate: its
+`nix-build` receipt from the corrupted tree is worthless.
 
 Corollary for the "frozen tree" rule: frozen means frozen AND verified after.
 Check `git status` the moment a gate run ends — a step that fixes hashes is a
