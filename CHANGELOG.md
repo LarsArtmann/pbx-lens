@@ -41,10 +41,12 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   status) instead of guessing 500: a transient index read answers 503, the
   `/api/*` bodies expose `{"error","family","code"}`, and no raw
   `err.Error()` text reaches a client — the caller's crafted message goes
-  out, the detail goes to the server log. The 503 sites that used to return a
-  bare status (`search.go`, `recording.go`, `server.go`) now carry a
-  classified family, so "the service cannot answer right now" has exactly one
-  meaning.
+  out, the detail goes to the server log. The 503s that exist because a
+  dependency was never wired (`search.go` without an index, `/api/ops` without
+  counters) are now classified rather than bare, so "the service cannot answer
+  right now" has one meaning; the two recording-proxy configuration errors keep
+  their plain text on purpose (no error value exists to classify, and the
+  message already names the flag that fixes it).
 - **The CLI can exit with the error family's code.** Transient projection
   failures become `EX_TEMPFAIL` (75) instead of a flat 1, so a caller can
   tell "retry" from "broken"; non-family errors keep the fallback exit.
