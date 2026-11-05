@@ -12,7 +12,17 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-const primaryEngine = "primary"
+const (
+	primaryEngine = "primary"
+
+	// ProjectionName is the projection host's registered worker name. The
+	// system constructor auto-wires exactly one projection under the literal
+	// "projections" (projectionhost refuses any other name), so a read-model
+	// rebuild — Host.Reset or System.ResetProjection — must pass this string.
+	// Named here so the runbook, the reset test, and any future CLI command
+	// share one constant instead of three copies of a magic literal.
+	ProjectionName = "projections"
+)
 
 // DomainConfig declares the lens domain: the four event types, the decider
 // and its three commands, and the call_views projection with its typed

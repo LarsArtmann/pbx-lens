@@ -69,14 +69,10 @@ func TestHostResetRebuildsReadModel(t *testing.T) {
 
 	// Host.Reset refuses while the host is running ("cannot reset while host
 	// is running — Stop first"), so the sequence is Stop → Reset → drain.
-	// DrainProjections opens with its own idempotent Stop, so the replay
-	// needs no extra ceremony.
-	if err := sys.ProjectionHost().Stop(); err != nil {
-		t.Fatalf("stop before reset: %v", err)
-	}
-
-	if err := sys.ProjectionHost().Reset(ctx, "projections"); err != nil {
-		t.Fatalf("host reset %q: %v", calls.Collection, err)
+	// cli.ResetReadModel owns the first two steps; DrainProjections opens with
+	// its own idempotent Stop, so the replay needs no extra ceremony.
+	if err := cli.ResetReadModel(ctx, sys); err != nil {
+		t.Fatalf("reset read model %q: %v", app.ProjectionName, err)
 	}
 
 	after, err := readAllViewsForTest(ctx, sys)

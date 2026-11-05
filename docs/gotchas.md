@@ -575,3 +575,26 @@ Reading discipline that would have prevented the detour: read the
 LIFECYCLE the code actually implements (here: `DrainProjections` + the
 poller) before writing assertions about lifecycle states — the enum doc
 strings describe a generic live-tail host, not this one.
+
+## "That API does not exist" needs a compile, not a grep (paid for, 2026-11-05)
+
+Two sessions documented `projectionhost.Host.Reset` as missing and reached
+for `metaengine.Store.Reset` by hand; the claim reached `TODO_LIST.md`, the
+fleet review page, and a runbook. It was false. `Host.Reset(ctx, name string,
+opts ...ResetOption) error` sits at `host_reset.go:76` in the pinned v4.7.1,
+rejects `projectionhost.reset_while_running` unless the host is stopped, and
+the metaengine projection adapter implements `Resettable`, so one call does
+checkpoint + read-model teardown in the right order (checkpoint FIRST — dying
+between the two writes replays from zero over stale state, which idempotent
+handlers absorb).
+
+The cheap test that settles this class of question every time: write a
+scenario test that CALLS the API and asserts the observable effect
+(`TestHostResetRebuildsReadModel`: 2 views → reset → 0 → drain → 2). It costs
+a few minutes and it cannot lie. A `grep` over the module cache can: file
+names change between minor versions, methods land on embedded types, and a
+search for "Reset" hits the `Resettable` interface long before the method.
+
+Corollary: an owner-facing runbook must point at a helper in this repo
+(`cli.ResetReadModel`) rather than a prose sequence of SDK calls, so the
+runbook and the tested code path cannot drift apart again.

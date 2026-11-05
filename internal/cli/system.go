@@ -73,6 +73,29 @@ func DrainProjections(ctx context.Context, sys *system.System) error {
 	}
 }
 
+// ResetReadModel wipes the call_views read model and replays the journal into
+// it — the one-call rebuild behind docs/runbooks/reset-rebuild.md. It is the
+// short path whose existence an earlier session denied: projectionhost.Host
+// DOES expose Reset, and the metaengine projection adapter implements
+// Resettable, so the host does checkpoint + read-model teardown in one call
+// instead of the "Store.Reset, then remember to clear the checkpoint by hand"
+// sequence. Proof: TestResetRebuildsReadModel.
+//
+// The journal is never touched (ADR-0143): events are facts and the replay
+// source, so a reset that shares an engine with the journal loses nothing.
+// Host.Reset refuses while the host runs, hence the Stop first; DrainProjections
+// opens with its own idempotent Stop, so the replay needs no extra ceremony.
+//
+// The caller owns serving state: run this with the writer stopped, or a poll
+// landing mid-rebuild re-folds onto partially cleared engines.
+func ResetReadModel(ctx context.Context, sys *system.System) error {
+	if err := sys.ProjectionHost().Stop(); err != nil {
+		return err
+	}
+
+	return sys.ResetProjection(ctx, app.ProjectionName)
+}
+
 // drainPollInterval is the status-poll cadence while awaiting drain workers.
 const drainPollInterval = 2 * time.Millisecond
 

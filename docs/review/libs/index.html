@@ -1047,13 +1047,21 @@
           <div class="callout callout-teal">
             <strong>Closeout 2026-11-04 (plan T01&ndash;T19): every finding below is RESOLVED.</strong>
             Each block keeps its audit-day text as the record of what was wrong; the
-            resolution receipts are in the table below them. Two corrections to the
-            original text are marked inline: the <code>timing.go</code> line numbers
-            moved, and the code it described is now deleted; the
-            <code>projectionhost.Reset</code> signature the reset finding assumed
-            (<code>Reset()</code>, no projection name) does not exist &mdash;
-            <code>Host.Reset(ctx, name)</code> does, and this repo&rsquo;s rebuild path
-            deliberately uses <code>metaengine.Store.Reset</code> + drain instead.
+            resolution receipts are in the table below them. One correction to the
+            original text is marked inline: the <code>timing.go</code> line numbers moved,
+            and the code it described is now deleted.
+            <strong>Retraction (2026-11-05):</strong> this page briefly claimed
+            <code>projectionhost.Host.Reset</code> did not exist. That was wrong &mdash;
+            <code>Host.Reset(ctx, name string, opts ...ResetOption) error</code> has been
+            present at the pin since v4.7.1 (<code>host_reset.go:76</code>), which is why
+            the audit-day finding below was right the first time. The rebuild now runs
+            through it: <code>cli.ResetReadModel</code> stops the host, then calls
+            <code>sys.ResetProjection(ctx, app.ProjectionName)</code> &mdash; the host drops
+            the checkpoint and delegates to the projection adapter&rsquo;s
+            <code>Resettable</code>, which calls the same <code>metaengine.Store.Reset</code>
+            &mdash; then <code>cli.DrainProjections</code> replays. Proven by
+            <code>TestResetRebuildsReadModel</code>; &ldquo;does X exist?&rdquo; needed a
+            compile, not a grep.
           </div>
 
           <div class="issue issue-critical" id="server-timing-dup">
@@ -1222,8 +1230,8 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
               </tr>
               <tr>
                 <td>cqrs-reset</td>
-                <td>Rebuild path chosen: <code>metaengine.Store.Reset</code> + <code>DrainProjections</code> replay</td>
-                <td><code>docs/runbooks/reset-rebuild.md</code>; <code>TestResetRebuildsReadModelFromJournal</code></td>
+                <td>Rebuild path: <code>cli.ResetReadModel</code> (<code>host.Stop</code> &rarr; <code>sys.ResetProjection</code>, which drops the checkpoint and delegates to the adapter&rsquo;s <code>Resettable</code>) + <code>DrainProjections</code> replay</td>
+                <td><code>docs/runbooks/reset-rebuild.md</code>; <code>TestResetRebuildsReadModel</code>; <code>TestResetRebuildsReadModelFromJournal</code></td>
               </tr>
               <tr>
                 <td>error-family-tests</td>
@@ -1286,7 +1294,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
               <tr><td>3</td><td>templ-components: fold in #52 &mdash; <code>EmptyText: "never"</code> replaces the ops zero-guard; refresh filings ledger</td><td class="yes">3</td><td class="yes">5</td><td><span class="highlight">15</span></td><td class="yes">landed &mdash; T09/T10</td></tr>
               <tr><td>4</td><td>go-error-family web: family-aware writer across the status-mapping sites; classify the 3 bare 503s</td><td class="yes">4</td><td class="yes">3</td><td><span class="highlight">12</span></td><td class="yes">landed &mdash; T05/T06</td></tr>
               <tr><td>5</td><td>go-etag: wire <code>OnError</code> knob (write-failure telemetry)</td><td>2</td><td class="yes">4</td><td><span class="highlight">8</span></td><td class="yes">landed &mdash; T11</td></tr>
-              <tr><td>6</td><td>go-cqrs-lite: rebuild the read model for the legacy-key retirement (Reset + drain)</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td><td class="yes">landed &mdash; T15 (Store.Reset, not Host.Reset)</td></tr>
+              <tr><td>6</td><td>go-cqrs-lite: rebuild the read model for the legacy-key retirement (Reset + drain)</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td><td class="yes">landed &mdash; T15, upgraded 2026-11-05 to the one-call path</td></tr>
               <tr><td>7</td><td>errorfamilytest assertions replace 3 hand-rolled test sites (no new module)</td><td>2</td><td class="yes">3</td><td><span class="highlight">6</span></td><td class="yes">landed &mdash; T07</td></tr>
               <tr><td>8</td><td>/ready projection-worker readiness (modeled on cqrs-htmx&rsquo;s health bridge idea)</td><td class="yes">3</td><td>2</td><td><span class="highlight">6</span></td><td class="yes">landed &mdash; T17 (failure-based predicate)</td></tr>
               <tr><td>9</td><td>go-etag: adopt <code>metrics.Attach</code>, delete CacheCounters</td><td>2</td><td>2</td><td><span class="highlight">4</span></td><td class="yes">landed &mdash; T12/T13</td></tr>
