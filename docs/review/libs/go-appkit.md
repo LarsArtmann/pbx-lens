@@ -1,6 +1,9 @@
 # go-appkit — utilization audit (pbx-lens)
 
 **Date:** 2026-11-04 · **Pins:** `github.com/larsartmann/go-appkit v0.9.0` + `go-appkit/systemd v0.1.0` (go.mod:7-8) · **Status:** USED
+>
+> **Refreshed 2026-11-06:** lib latest root tag is now **v0.10.0**; the v0.9.0 pins above predate the bump
+> wave. Facts above keep the 2026-11-04 snapshot basis.
 **Adoption score:** **73/100 (high)** — 11 of 15 applicable capabilities (unchanged from the prior report; pin is still the latest release).
 **Prior report:** [2026-10-25_go-appkit-templ-deep-dive.html](../../research/2026-10-25_go-appkit-templ-deep-dive.html) (73/100 = go-appkit; the same report's 86/100 belongs to a-h/templ — score-card ambiguity resolved there). This report re-verifies the census at today's HEAD and adds one forward finding; nothing supersedes the prior scores.
 
