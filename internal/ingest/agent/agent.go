@@ -15,7 +15,7 @@
 package agent
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"os"

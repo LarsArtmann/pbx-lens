@@ -3,7 +3,9 @@ package web
 import (
 	"context"
 	"encoding/csv"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -105,14 +107,14 @@ func TestExportJSONLParsesAsConsumer(t *testing.T) {
 		t.Fatalf("jsonl status = %d, want 200", rec.Code)
 	}
 
-	decoder := json.NewDecoder(rec.Body)
+	decoder := jsontext.NewDecoder(rec.Body)
 	objects := 0
 	sawMarker := false
 
 	for {
 		var obj map[string]any
-		if err := decoder.Decode(&obj); err != nil {
-			if err == io.EOF {
+		if err := json.UnmarshalDecode(decoder, &obj); err != nil {
+			if errors.Is(err, io.EOF) {
 				break
 			}
 
