@@ -72,7 +72,11 @@ require (
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-playground/form/v4 v4.5.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
+	github.com/go-webauthn/webauthn v0.18.2 // indirect
+	github.com/go-webauthn/x v0.3.1 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
+	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
+	github.com/google/go-tpm v0.9.8 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/justinas/nosurf v1.2.0 // indirect
 	github.com/knadh/koanf/maps v0.1.3 // indirect
@@ -85,6 +89,7 @@ require (
 	github.com/larsartmann/cqrs-htmx/identity-model/v4 v4.17.0 // indirect
 	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.18.0 // indirect
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.20.0 // indirect
+	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0 // indirect
 	github.com/larsartmann/cqrs-htmx/v4 v4.18.1 // indirect
 	github.com/larsartmann/go-branded-id v0.7.1 // indirect
 	github.com/larsartmann/go-codec v0.3.3 // indirect
@@ -127,6 +132,7 @@ require (
 	github.com/ncruces/go-strftime v1.1.0 // indirect
 	github.com/oklog/ulid v1.3.1 // indirect
 	github.com/oklog/ulid/v2 v2.1.2 // indirect
+	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -138,6 +144,7 @@ require (
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.2 // indirect
 	github.com/tidwall/sjson v1.2.6 // indirect
+	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xo/terminfo v1.3.1 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

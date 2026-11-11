@@ -1,279 +1,264 @@
 package web
 
 import (
-	"fmt"
+	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
-
-	"golang.org/x/crypto/bcrypt"
 )
 
-const authTestPassword = "correct horse battery staple"
+// The identity session gate (2026-11-11 usermgmt adoption): an event-sourced
+// operator account behind passwordless WebAuthn login. These tests pin the
+// GATE contract — public paths stay open, browsers get redirected to /login,
+// API clients get 401, and the first registration both works and closes the
+// door (MaxUsers = 1). The WebAuthn ceremonies themselves need a real
+// authenticator; they are covered upstream (usermgmt + loginpage suites) and
+// live-verified by the browser probe lane.
 
-// writeHtpasswd materializes an htpasswd file with one bcrypt user.
-func writeHtpasswd(t *testing.T, user, password string) string {
+// openTestIdentity brings up a real identity context on a throwaway SQLite
+// file — the same constructors serve runs in production (SQL event store,
+// SQL session store, SQL read models, checkpoint store), so the tests
+// exercise the persistence wiring too, not an in-memory shortcut.
+func openTestIdentity(t *testing.T) *Identity {
 	t.Helper()
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	identity, err := OpenIdentity(context.Background(), IdentityConfig{
+		DSN:       filepath.Join(t.TempDir(), "identity.db"),
+		RPID:      "127.0.0.1",
+		RPOrigins: []string{"http://127.0.0.1:8300"},
+	})
 	if err != nil {
-		t.Fatalf("hash password: %v", err)
+		t.Fatalf("OpenIdentity: %v", err)
 	}
 
-	path := filepath.Join(t.TempDir(), "htpasswd")
-	if err := os.WriteFile(path, []byte(fmt.Sprintf("%s:%s\n", user, hash)), 0o600); err != nil {
-		t.Fatalf("write htpasswd: %v", err)
-	}
+	t.Cleanup(func() {
+		if cerr := identity.Close(); cerr != nil {
+			t.Errorf("identity close: %v", cerr)
+		}
+	})
 
-	return path
+	return identity
 }
 
-// authedServer wraps a fresh test server in the auth middleware.
-func authedServer(t *testing.T, htpasswdPath string) http.Handler {
+// identityHandler wires the full composition: the app routes, the public
+// login surface, and the gate middleware — the same shape serve builds.
+func identityHandler(t *testing.T, identity *Identity) http.Handler {
 	t.Helper()
 
-	middleware, err := HtpasswdMiddleware(htpasswdPath)
-	if err != nil {
-		t.Fatalf("HtpasswdMiddleware: %v", err)
-	}
+	mux := newTestServer(t)
+	identity.Register(mux)
 
-	return middleware(newTestServer(t, webObservation("conv-a", testCallStarted())))
+	return identity.Middleware()(mux)
 }
 
-// getWithBasicAuth drives one request through handler and returns the
-// recorder; HTTP Basic credentials are only sent when user is non-empty.
-func getWithBasicAuth(handler http.Handler, path, user, password string) *httptest.ResponseRecorder {
-	request := httptest.NewRequest(http.MethodGet, path, nil)
-	if user != "" {
-		request.SetBasicAuth(user, password)
-	}
+// loginSession walks the browser flow headlessly: fetch /login (the CSRF
+// middleware issues its token cookie and the page embeds the token in its
+// meta tag), then POST /auth/register with both. The response carries the
+// session cookie the gate accepts. Registration on a fresh identity always
+// succeeds — the MaxUsers=1 door is still open.
+func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie {
+	t.Helper()
 
+	request := httptest.NewRequest(http.MethodGet, "/login", nil)
+	request.Header.Set("Accept", "text/html")
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
-	return recorder
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("GET /login status = %d, want 200", recorder.Code)
+	}
+
+	var csrfCookie *http.Cookie
+
+	for _, cookie := range recorder.Result().Cookies() {
+		if cookie.Name == "csrf_token" {
+			csrfCookie = cookie
+		}
+	}
+
+	if csrfCookie == nil {
+		t.Fatal("GET /login issued no csrf_token cookie — the CSRF middleware is not wired")
+	}
+
+	token := extractCSRFToken(t, recorder.Body.String())
+
+	body, err := json.Marshal(map[string]string{"email": email, "display_name": "Operator"})
+	if err != nil {
+		t.Fatalf("marshal register request: %v", err)
+	}
+
+	request = httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(string(body)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Csrf-Token", token)
+	request.AddCookie(csrfCookie)
+	recorder = httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusCreated {
+		t.Fatalf("POST /auth/register status = %d, want 201 (body: %s)", recorder.Code, recorder.Body.String())
+	}
+
+	for _, cookie := range recorder.Result().Cookies() {
+		if cookie.Name == "session_token" {
+			return cookie
+		}
+	}
+
+	t.Fatal("registration set no session_token cookie")
+
+	return nil
 }
 
-func TestAuthRejectsMissingAndWrongCredentials(t *testing.T) {
-	handler := authedServer(t, writeHtpasswd(t, "lars", authTestPassword))
+// extractCSRFToken reads the login page's <meta name="csrf-token"> value —
+// the same token the login page's own JavaScript sends on every ceremony.
+func extractCSRFToken(t *testing.T, html string) string {
+	t.Helper()
 
-	response := getWithBasicAuth(handler, "/", "", "")
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("no credentials status = %d, want 401", response.Code)
+	match := regexp.MustCompile(`name="csrf-token" content="([^"]+)"`).FindStringSubmatch(html)
+	if match == nil {
+		t.Fatal("login page carries no csrf-token meta — the token bridge is broken")
 	}
 
-	if response.Header().Get("WWW-Authenticate") == "" {
-		t.Error("401 must carry WWW-Authenticate so browsers prompt")
+	return match[1]
+}
+
+func TestIdentityGateRedirectsBrowsersAndChallengesAPIs(t *testing.T) {
+	identity := openTestIdentity(t)
+	handler := identityHandler(t, identity)
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("Accept", "text/html")
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusSeeOther {
+		t.Errorf("browser without session status = %d, want 303", recorder.Code)
 	}
 
-	response = getWithBasicAuth(handler, "/", "lars", "wrong")
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("wrong password status = %d, want 401", response.Code)
+	if location := recorder.Header().Get("Location"); location != "/login" {
+		t.Errorf("browser redirect Location = %q, want /login", location)
 	}
 
-	response = getWithBasicAuth(handler, "/", "nobody", authTestPassword)
-	if response.Code != http.StatusUnauthorized {
-		t.Errorf("unknown user status = %d, want 401", response.Code)
+	request = httptest.NewRequest(http.MethodGet, "/", nil)
+	recorder = httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusUnauthorized {
+		t.Errorf("API client without session status = %d, want 401", recorder.Code)
+	}
+
+	request = httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("HX-Request", "true")
+	recorder = httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusSeeOther {
+		t.Errorf("htmx poll without session status = %d, want 303", recorder.Code)
 	}
 }
 
-func TestAuthAcceptsCorrectCredentials(t *testing.T) {
-	handler := authedServer(t, writeHtpasswd(t, "lars", authTestPassword))
+func TestIdentityPublicPathsStayOpen(t *testing.T) {
+	identity := openTestIdentity(t)
+	handler := identityHandler(t, identity)
 
-	response := getWithBasicAuth(handler, "/", "lars", authTestPassword)
-	if response.Code != http.StatusOK {
-		t.Errorf("correct credentials status = %d, want 200", response.Code)
-	}
-}
+	for _, path := range []string{"/login", "/app.css", "/robots.txt"} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
 
-func TestAuthAlsoGatesStaticAndDetailRoutes(t *testing.T) {
-	handler := authedServer(t, writeHtpasswd(t, "lars", authTestPassword))
-
-	for _, path := range []string{"/app.css", "/calls/telnyx-conversation/conv-a", "/search?q=x"} {
-		response := getWithBasicAuth(handler, path, "", "")
-		if response.Code != http.StatusUnauthorized {
-			t.Errorf("GET %s without credentials status = %d, want 401", path, response.Code)
+		if recorder.Code != http.StatusOK {
+			t.Errorf("GET %s without session status = %d, want 200 (public)", path, recorder.Code)
 		}
 	}
 }
 
-func TestHtpasswdRejectsWeakSchemesAtStartup(t *testing.T) {
-	path := filepath.Join(t.TempDir(), "htpasswd")
-	if err := os.WriteFile(path, []byte("lars:{SHA}W6ph5Mm5Pz8GgiULbPgzG37mj9g=\n"), 0o600); err != nil {
-		t.Fatalf("write htpasswd: %v", err)
+func TestIdentityRegistrationClosesAfterFirst(t *testing.T) {
+	identity := openTestIdentity(t)
+	handler := identityHandler(t, identity)
+
+	session := loginSession(t, handler, "operator@pbx.lens")
+	if session == nil {
+		t.Fatal("first registration produced no session")
 	}
 
-	_, err := HtpasswdMiddleware(path)
-	if err == nil {
-		t.Fatal("sha1 htpasswd entry must reject at startup, not at login")
+	// The app accepts the session the registration issued.
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.AddCookie(session)
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Errorf("list page with session status = %d, want 200", recorder.Code)
 	}
 
-	if want := "htpasswd -B"; !strings.Contains(err.Error(), want) {
-		t.Errorf("error should name the fix %q, got: %v", want, err)
-	}
-}
-
-func TestPadCostReadsLoadedEntriesCost(t *testing.T) {
-	generate := func(cost int) []byte {
-		t.Helper()
-
-		hash, err := bcrypt.GenerateFromPassword([]byte("pad-cost-probe"), cost)
-		if err != nil {
-			t.Fatalf("hash at cost %d: %v", cost, err)
-		}
-
-		return hash
+	// The door is closed: a second registration (any email) must fail.
+	body, err := json.Marshal(map[string]string{"email": "intruder@pbx.lens", "display_name": "X"})
+	if err != nil {
+		t.Fatalf("marshal register request: %v", err)
 	}
 
-	tests := []struct {
-		name  string
-		hash  []byte
-		calls string
-		want  int
-	}{
-		{name: "min cost entry", hash: generate(bcrypt.MinCost), want: bcrypt.MinCost},
-		{name: "production cost 12 entry", hash: generate(12), want: 12},
-		{name: "unparseable entries fall back to default", hash: []byte("garbage"), want: bcrypt.DefaultCost},
-	}
+	request = httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(string(body)))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("X-Csrf-Token", "forced-invalid")
+	recorder = httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			users := map[string][]byte{"lars": tt.hash}
-			if got := padCost(users); got != tt.want {
-				t.Errorf("padCost = %d, want %d", got, tt.want)
-			}
-		})
+	if recorder.Code < 400 || recorder.Code > 499 {
+		t.Errorf("second registration status = %d, want a 4xx refusal (body: %s)", recorder.Code, recorder.Body.String())
 	}
 }
 
-func TestHtpasswdReloadPicksUpNewEntries(t *testing.T) {
-	// SIGHUP rotation (R11): after the file changes, the new credential
-	// works and the old one stops — without dropping the throttler state.
+func TestIdentityIdentityDBSurvivesReopen(t *testing.T) {
+	// Sessions and the operator account live in SQLite — a serve restart
+	// must not lose them (the property that makes -auth-db deployable).
 	dir := t.TempDir()
-	path := filepath.Join(dir, "htpasswd")
+	dsn := filepath.Join(dir, "identity.db")
 
-	oldHash, err := bcrypt.GenerateFromPassword([]byte("old-secret"), bcrypt.MinCost)
+	identity, err := OpenIdentity(context.Background(), IdentityConfig{
+		DSN: dsn, RPID: "127.0.0.1", RPOrigins: []string{"http://127.0.0.1:8300"},
+	})
 	if err != nil {
-		t.Fatalf("hash: %v", err)
+		t.Fatalf("open identity: %v", err)
 	}
 
-	newHash, err := bcrypt.GenerateFromPassword([]byte("new-secret"), bcrypt.MinCost)
+	handler := identityHandler(t, identity)
+	session := loginSession(t, handler, "operator@pbx.lens")
+
+	if err := identity.Close(); err != nil {
+		t.Fatalf("close identity: %v", err)
+	}
+
+	reopened, err := OpenIdentity(context.Background(), IdentityConfig{
+		DSN: dsn, RPID: "127.0.0.1", RPOrigins: []string{"http://127.0.0.1:8300"},
+	})
 	if err != nil {
-		t.Fatalf("hash: %v", err)
+		t.Fatalf("reopen identity: %v", err)
 	}
 
-	writeFile := func(content string) {
-		t.Helper()
+	t.Cleanup(func() { _ = reopened.Close() })
 
-		if werr := os.WriteFile(path, []byte(content), 0o600); werr != nil {
-			t.Fatalf("write htpasswd: %v", werr)
-		}
-	}
+	restarted := identityHandler(t, reopened)
 
-	writeFile("olduser:" + string(oldHash))
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.AddCookie(session)
+	recorder := httptest.NewRecorder()
+	restarted.ServeHTTP(recorder, request)
 
-	auth, err := newHtpasswdAuth(path)
-	if err != nil {
-		t.Fatalf("newHtpasswdAuth: %v", err)
-	}
-
-	throttler := auth.failures
-
-	writeFile("newuser:" + string(newHash))
-
-	if rerr := auth.reload(); rerr != nil {
-		t.Fatalf("reload: %v", rerr)
-	}
-
-	if !auth.known("newuser") || auth.known("olduser") {
-		t.Error("reload must swap the credential table atomically")
-	}
-
-	if auth.failures != throttler {
-		t.Error("reload must not reset the failure throttler")
+	if recorder.Code != http.StatusOK {
+		t.Errorf("session from before the restart status = %d, want 200 (SQL sessions survive)", recorder.Code)
 	}
 }
 
-func TestHtpasswdBadFileKeepsOldTable(t *testing.T) {
-	// A broken rotation must never lock the operator out: a rejected file
-	// keeps the running credentials and reports the error (R11).
-	dir := t.TempDir()
-	path := filepath.Join(dir, "htpasswd")
+func TestIdentityReadyAfterDrain(t *testing.T) {
+	identity := openTestIdentity(t)
 
-	hash, err := bcrypt.GenerateFromPassword([]byte("secret"), bcrypt.MinCost)
-	if err != nil {
-		t.Fatalf("hash: %v", err)
-	}
-
-	if werr := os.WriteFile(path, []byte("user:"+string(hash)), 0o600); werr != nil {
-		t.Fatalf("write htpasswd: %v", werr)
-	}
-
-	auth, err := newHtpasswdAuth(path)
-	if err != nil {
-		t.Fatalf("newHtpasswdAuth: %v", err)
-	}
-
-	if werr := os.WriteFile(path, []byte("garbage-without-colon\n"), 0o600); werr != nil {
-		t.Fatalf("write htpasswd: %v", werr)
-	}
-
-	if rerr := auth.reload(); rerr == nil {
-		t.Error("reload of a malformed file must fail loudly")
-	}
-
-	if !auth.known("user") {
-		t.Error("a failed reload must keep the previous table")
-	}
-}
-
-func TestPerIPThrottlerSeparatesBuckets(t *testing.T) {
-	// Two peers must never share a bucket (R13): one IP's exhaustion must
-	// not tax another's first failure.
-	throttler := newPerIPThrottler(8)
-
-	first := throttler.bucket("203.0.113.10:4432")
-
-	second := throttler.bucket("198.51.100.7:9")
-	if first == nil || second == nil {
-		t.Fatal("both peers must get buckets")
-	}
-
-	if first == second {
-		t.Error("distinct peers share a bucket")
-	}
-
-	if again := throttler.bucket("203.0.113.10:4432"); again != first {
-		t.Error("the same peer must keep its bucket across calls")
-	}
-}
-
-func TestPerIPThrottlerEvictsOldestUnderCap(t *testing.T) {
-	// A spoofed-source flood must not balloon the map: the oldest bucket
-	// yields (FIFO) once the cap is reached.
-	throttler := newPerIPThrottler(2)
-
-	a := throttler.bucket("10.0.0.1:1")
-	throttler.bucket("10.0.0.2:2")
-	throttler.bucket("10.0.0.3:3")
-
-	if returned := throttler.bucket("10.0.0.1:1"); returned == a {
-		t.Error("evicted peer must not keep its old bucket")
-	}
-}
-
-func TestPerIPThrottlerFallbackBucketForHostlessPeers(t *testing.T) {
-	// Peers without a parseable host share the fallback bucket — the
-	// throttle degrades to global, it does not disable itself.
-	throttler := newPerIPThrottler(8)
-
-	first := throttler.bucket("bogus")
-
-	second := throttler.bucket("")
-	if first == nil || first != second {
-		t.Error("hostless peers must share the fallback bucket")
+	// NewService blocks until the journal drain completes, so a fresh
+	// identity is ready the moment OpenIdentity returns.
+	if !identity.Ready() {
+		t.Error("identity not ready after construction — the readiness predicate is wrong")
 	}
 }

@@ -2,6 +2,7 @@ package web
 
 import (
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 	"time"
@@ -81,27 +82,29 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 		t.Fatalf("GET /api/freshness = %d (%s), want 200 with age", status, body)
 	}
 
-	// 6. The auth gate wraps the same surface: refused without credentials,
-	// served with them.
-	htpasswdPath := writeHtpasswd(t, "lars", authTestPassword)
+	// 6. The auth gate wraps the same surface: browsers without a session
+	// are redirected to /login, and the session the first registration
+	// issues opens every route (the whole flow above replays 200).
+	identity := openTestIdentity(t)
+	identity.Register(mux)
+	gated := identity.Middleware()(mux)
 
-	gate, err := HtpasswdMiddleware(htpasswdPath)
-	if err != nil {
-		t.Fatalf("HtpasswdMiddleware: %v", err)
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	recorder := httptest.NewRecorder()
+	gated.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusSeeOther {
+		t.Fatalf("unauthenticated browser status = %d, want 303 to /login", recorder.Code)
 	}
 
-	gated := gate(mux)
+	session := loginSession(t, gated, "operator@pbx.lens")
 
-	if rec := getWithBasicAuth(gated, "/", "", ""); rec.Code != http.StatusUnauthorized {
-		t.Fatalf("unauthenticated status = %d, want 401", rec.Code)
-	}
+	request = httptest.NewRequest(http.MethodGet, "/calls/telnyx-conversation/conv-out", nil)
+	request.AddCookie(session)
+	recorder = httptest.NewRecorder()
+	gated.ServeHTTP(recorder, request)
 
-	if rec := getWithBasicAuth(
-		gated,
-		"/calls/telnyx-conversation/conv-out",
-		"lars",
-		authTestPassword,
-	); rec.Code != http.StatusOK {
-		t.Fatalf("authenticated detail status = %d, want 200", rec.Code)
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("authenticated detail status = %d, want 200", recorder.Code)
 	}
 }

@@ -4,8 +4,10 @@ import (
 	"context"
 	"flag"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	appkit "github.com/larsartmann/go-appkit"
@@ -60,10 +62,22 @@ func serve(args []string) {
 		"upstream bound for the recording proxy: metadata deadline + WAV response headers "+
 			"(0 = default; the audio body itself streams unbounded)",
 	)
-	htpasswdPath := fs.String(
-		"htpasswd",
+	authDB := fs.String(
+		"auth-db",
 		"",
-		"bcrypt htpasswd file gating every route (htpasswd -B; empty = no auth for localhost dev)",
+		"sqlite identity database enabling passkey login (empty = no auth for localhost dev)",
+	)
+	authRPID := fs.String(
+		"auth-rpid",
+		"",
+		"WebAuthn Relying Party ID — the registrable domain the browser sees "+
+			"(default: the host part of -addr)",
+	)
+	authOrigin := fs.String(
+		"auth-origin",
+		"",
+		"comma-separated WebAuthn origins that must byte-match the browser address bar, "+
+			"scheme included (default: http://<addr>)",
 	)
 	pollEvery := fs.Duration(
 		"poll-every",
@@ -132,36 +146,77 @@ func serve(args []string) {
 		fatal(err)
 	}
 
+	// The identity context (passkey login) is opt-in via -auth-db: without
+	// it the serve runs unauthenticated — the localhost dev posture the
+	// probes rely on. With it, the FIRST visitor to /login becomes the
+	// operator: registration closes itself after that account exists
+	// (MaxUsers = 1), so say so in the log where the operator can act on
+	// it. WebAuthn needs a secure context (HTTPS or localhost) — a
+	// plain-HTTP LAN address cannot enroll passkeys; reach the service
+	// through an SSH tunnel or put TLS in front.
+	var identity *web.Identity
+
+	if *authDB != "" {
+		rpid, origins := deriveAuthDefaults(*addr, *authRPID, *authOrigin)
+
+		identity, err = web.OpenIdentity(setupCtx, web.IdentityConfig{
+			DSN: *authDB, RPID: rpid, RPOrigins: origins,
+		})
+		if err != nil {
+			fatal(err)
+		}
+
+		defer func() { _ = identity.Close() }()
+
+		slog.Info("identity enabled: the first visitor to /login becomes the operator "+
+			"(registration closes after the first account); passkeys need HTTPS or localhost",
+			"db", *authDB, "rpid", rpid)
+	}
 	// The composition the read-only surface runs on: no fixed response
 	// deadline (exports and recording WAVs stream unbounded — the appkit
 	// default 30s WriteTimeout would truncate them mid-stream), the build
 	// visible over HTTP (/version + appkit_build_info), the Prometheus
-	// surface behind the same posture as every route (htpasswd middleware
-	// when configured, loopback-only dev otherwise — hence the explicit
+	// surface behind the same posture as every route (the identity gate
+	// when -auth-db is set, loopback-only dev otherwise — hence the explicit
 	// opt-in), and the extras in wire order: auth gates everything,
 	// Server-Timing observes the full handler span, Compression sits outer
 	// of ETag so tags hash identity bodies (go-etag's ordering doctrine).
 	cacheStats := web.NewCacheCounters()
 
-	serviceConfig, err := buildServiceConfig(*addr, *htpasswdPath, cacheStats, slogLog)
+	var authMW func(http.Handler) http.Handler
+
+	if identity != nil {
+		authMW = identity.Middleware()
+	}
+
+	serviceConfig, err := buildServiceConfig(*addr, authMW, cacheStats, slogLog)
 	if err != nil {
 		fatal(err)
 	}
 
 	// Readiness is the read model's honesty (plan T17): /health/ready
 	// answers 503 while any projection worker is failed (restart budget
-	// exhausted) or backing off. Every other state is healthy here — the
-	// host is a batch drainer, so workers sit idle before the first drain,
-	// run during it, and stop once caught up; the poller below re-drains on
-	// every tick. Treating "stopped" as unready made a healthy serve answer
-	// 503 forever (scripts/verify-ui-contract.js Contract F caught it).
+	// exhausted) or backing off — index AND identity contexts both. Every
+	// other state is healthy here — the host is a batch drainer, so workers
+	// sit idle before the first drain, run during it, and stop once caught
+	// up; the poller below re-drains on every tick. Treating "stopped" as
+	// unready made a healthy serve answer 503 forever (scripts/
+	// verify-ui-contract.js Contract F caught it).
 	serviceConfig.ReadyCheck = func() bool {
-		return cli.ProjectionWorkersReady(sys.ProjectionHost().Status())
+		if !cli.ProjectionWorkersReady(sys.ProjectionHost().Status()) {
+			return false
+		}
+
+		return identity == nil || identity.Ready()
 	}
 
 	svc, err := appkit.NewService(serviceConfig)
 	if err != nil {
 		fatal(err)
+	}
+
+	if identity != nil {
+		identity.Register(svc.Mux)
 	}
 
 	counters := cli.NewSourceCounters(*pollEvery)
@@ -260,9 +315,12 @@ func cannedStaleOps() any {
 // drain, WATCHDOG keepalive while serving — a no-op outside systemd, so the
 // same binary serves localhost dev and the service manager unchanged. The
 // cache counters and log hook ride in so the ETag middleware's outcomes
-// surface on /api/ops (R26).
+// surface on /api/ops (R26). authMW (nil in unauthenticated dev) is the
+// identity session gate; it takes the outermost extra slot so login is
+// required before anything web-local runs.
 func buildServiceConfig(
-	addr, htpasswdPath string,
+	addr string,
+	authMW func(http.Handler) http.Handler,
 	cacheStats *web.CacheCounters,
 	log func(msg string, args ...any),
 ) (appkit.ServiceConfig, error) {
@@ -278,13 +336,8 @@ func buildServiceConfig(
 
 	systemd.Install(&serviceConfig)
 
-	if htpasswdPath != "" {
-		auth, err := web.HtpasswdMiddleware(htpasswdPath)
-		if err != nil {
-			return appkit.ServiceConfig{}, err
-		}
-
-		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares, auth)
+	if authMW != nil {
+		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares, authMW)
 	}
 
 	// Security headers: the appkit default SecurityHeaders still runs outer
@@ -343,6 +396,45 @@ func buildServiceConfig(
 	)
 
 	return serviceConfig, nil
+}
+
+// deriveAuthDefaults resolves the WebAuthn Relying Party values. An
+// explicit -auth-rpid/-auth-origin wins; otherwise a domain listen address
+// maps directly (host is the RPID, http://addr the origin), while an IP or
+// localhost address collapses to RPID "localhost" — WebAuthn forbids
+// IP-address RPID outright (go-webauthn refuses 127.0.0.1 at construction),
+// and the browser-facing address for local dev is http://localhost:<port>.
+func deriveAuthDefaults(addr, rpidFlag, originFlag string) (string, []string) {
+	if rpidFlag != "" && originFlag != "" {
+		return rpidFlag, strings.Split(originFlag, ",")
+	}
+
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		host, port = addr, ""
+	}
+
+	if rpidFlag == "" {
+		if net.ParseIP(host) != nil || host == "localhost" {
+			rpidFlag = "localhost"
+		} else {
+			rpidFlag = host
+		}
+	}
+
+	if originFlag == "" {
+		originHost := host
+		if rpidFlag == "localhost" {
+			originHost = "localhost"
+		}
+
+		originFlag = "http://" + originHost
+		if port != "" && port != "0" {
+			originFlag += ":" + port
+		}
+	}
+
+	return rpidFlag, strings.Split(originFlag, ",")
 }
 
 // nonceCSP is the CSP header used in nonce mode: inline scripts execute only

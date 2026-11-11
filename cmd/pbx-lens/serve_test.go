@@ -6,8 +6,6 @@ import (
 	"maps"
 	"net/http"
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -20,7 +18,6 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/web"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // noAutoGzip returns a client that does not add Accept-Encoding itself, so
@@ -45,7 +42,7 @@ func serveTestStack(tb testing.TB) (string, *http.Client) {
 
 	tb.Cleanup(cleanup)
 
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 	if err != nil {
 		tb.Fatalf("build service config: %v", err)
 	}
@@ -179,7 +176,7 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("build service config: %v", err)
 	}
@@ -290,7 +287,7 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	serviceConfig, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("build service config: %v", err)
 	}
@@ -580,10 +577,10 @@ func assertGzip(t *testing.T, client *http.Client, base, path string) {
 // TestBuildServiceConfigWiring locks the composition decisions: no fixed
 // write deadline (unbounded export/recording streams), the build stamped
 // for /version and build_info, the metrics surface opted into the explicit
-// unauthenticated mode (auth is the htpasswd middleware or loopback-only
+// unauthenticated mode (auth is the identity session gate or loopback-only
 // dev), and the middleware stack grows by auth + the three web middlewares.
 func TestBuildServiceConfigWiring(t *testing.T) {
-	plain, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	plain, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("build plain config: %v", err)
 	}
@@ -610,7 +607,9 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		)
 	}
 
-	authed, err := buildServiceConfig("127.0.0.1:0", writeTempHtpasswd(t), nil, nil)
+	authed, err := buildServiceConfig("127.0.0.1:0", func(next http.Handler) http.Handler {
+		return next
+	}, nil, nil)
 	if err != nil {
 		t.Fatalf("build authed config: %v", err)
 	}
@@ -630,7 +629,7 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 	t.Setenv("CSP_NONCE", "1")
 
-	nonced, err := buildServiceConfig("127.0.0.1:0", "", nil, nil)
+	nonced, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 	if err != nil {
 		t.Fatalf("build nonced config: %v", err)
 	}
@@ -648,15 +647,6 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 		if !strings.Contains(csp, want) {
 			t.Errorf("nonceCSP output missing %q: %s", want, csp)
 		}
-	}
-
-	if _, err := buildServiceConfig(
-		"127.0.0.1:0",
-		t.TempDir()+"/absent-htpasswd",
-		nil,
-		nil,
-	); err == nil {
-		t.Error("buildServiceConfig with a missing htpasswd file must fail, want load error")
 	}
 }
 
@@ -916,22 +906,4 @@ func BenchmarkConcurrentPoll(b *testing.B) {
 			})
 		})
 	}
-}
-
-// writeTempHtpasswd materializes a one-user bcrypt htpasswd file (the
-// middleware loads entries eagerly at construction).
-func writeTempHtpasswd(t *testing.T) string {
-	t.Helper()
-
-	hash, err := bcrypt.GenerateFromPassword([]byte("test-secret"), bcrypt.MinCost)
-	if err != nil {
-		t.Fatalf("hash password: %v", err)
-	}
-
-	path := filepath.Join(t.TempDir(), "htpasswd")
-	if err := os.WriteFile(path, []byte("tester:"+string(hash)+"\n"), 0o600); err != nil {
-		t.Fatalf("write htpasswd: %v", err)
-	}
-
-	return path
 }
