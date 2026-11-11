@@ -41,17 +41,40 @@ read-only deep link, never a data dependency.
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
   `app.DomainConfig()`/`app.DeploymentConfig(dsn)`, never hand-rolled harness bookkeeping; committed rapid `.fail` seeds are regression pins (docs/gotchas.md).
+- **cqrs-htmx (ADOPTED 2026-11-11, the flip-trigger fired):** usermgmt
+  v4.20.0 + loginpage v4.18.0 + usermgmt/webauthn v4.13.0 own the identity
+  context (PATH B manual wiring — NO setup bundle: it would collide with
+  pbx-lens's own /dashboard and drag adminui/dashboardui in). `internal/web/
+  userauth.go` composes session → CSRF → gate; `/login` + `/auth/*` +
+  `/app.css` + `/robots.txt` public; browsers 303 to /login, APIs 401.
+  Identity persistence = ONE sqlite file: `OptimizeSQLiteDB` +
+  `NewSQLEventStore` + `NewSQLSessionStore` + `ReadModelDB`+dialect +
+  `storage.NewSQLiteCheckpointStore` (its schema SQL is applied BY HAND —
+  no self-migration; `NewSQLiteEventSourcedSetup` is a //go:build ignore
+  template, not compiled). `MaxUsers: 1` = the first /login visitor becomes
+  the operator, registration closes after (the library's single-operator
+  posture); session = authority (no roles/Casbin gating). Sessions survive
+  restarts (SQL store); identity.db is NOT disposable — the sibling NixOS
+  module stages its backup beside the index's. WebAuthn refuses an IP RPID
+  at construction (`deriveAuthDefaults` maps 127.0.0.1 → `localhost`);
+  passkeys need HTTPS or localhost. The gate's CSRF dance in tests needs
+  Host+Origin+Referer like a browser (nosurf same-origin attestation).
 - **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
   sweep budgeted; versions.json lies — verify with `git tag --contains`).
-- **UI trio (2026-10-11, F3/F4; bumped by the 2026-10-15 sweep + v1.26.0):
-  `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run owns
-  SIGINT/SIGTERM + graceful drain; v0.10 WATCH: Server-Timing becomes the
-  default outermost middleware — delete the serve.go wiring on bump,
-  docs/review/libs/go-appkit.md), `templ-components` v1.26.0
-  (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1070 (codegen;
+- **UI trio (2026-10-11, F3/F4; coordinated bump 2026-11-11 → tc v1.27.0 +
+  templ v0.3.1100, checklist step 8 landed; v1.27's tcValidity bridge needs
+  `Nonce` on EVERY forms.Form — the three filter/search/range forms thread
+  it): `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
+  owns SIGINT/SIGTERM + graceful drain; v0.10 WATCH: Server-Timing becomes
+  the default outermost middleware — delete the serve.go wiring on bump,
+  docs/review/libs/go-appkit.md), `templ-components` v1.27.0
+  (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1100 (codegen;
   manual bumps only — a dependabot templ PR mangles this go.mod; ≥v1.27
-  templ-components needs templ ≥v0.3.1100 — one coordinated bump, adoption-map
-  checklist step 8). Stay on the PUBLISHED templ-components version — no local
+  templ-components needs templ ≥v0.3.1100 — ONE coordinated bump). templ
+  ≥v0.3.1100 codegen emits the icon→text separator space inside anchors (the
+  old `>Text</a>` test matches broke) and a duplicate `</script>` after
+  singleton scripts (orphan close tag — browsers ignore it; upstream-filing
+  candidate). Stay on the PUBLISHED templ-components version — no local
   replace (breaks hermetic nix); hand-roll missing thin pieces.
 - **UI theme — signal palette (2026-10-12; heatmap bridge 2026-10-15):**
   app.css overrides the `--color-tc-primary`/`-hover`/`--color-tc-info` trio to
@@ -127,18 +150,19 @@ read-only deep link, never a data dependency.
   never hand-build one, and read through `calls.LookupView`
   (its marker-prefixed fallback keeps pre-flip rows reachable; docs/gotchas.md
   has the incident). `calls.DefaultExcerptMax` (200 runes) caps every excerpt;
-  source mappers select via `calls.Excerpt`. The serve htpasswd timing pad
-  hashes at the LOADED entries' bcrypt cost (`padCost`), not MinCost — keep that
-  property when touching auth.go; SIGHUP reloads the file (a broken reload keeps
-  the running table) and auth-failure throttling is PER CLIENT ADDRESS (bounded
-  FIFO bucket map, shared fallback for hostless peers; X-Forwarded-For is
-  deliberately not honored).
+  source mappers select via `calls.Excerpt`. Auth (2026-11-11): the identity
+  session gate (`internal/web/userauth.go`) replaced htpasswd — the bcrypt
+  timing pad, SIGHUP reload, and per-IP throttle blocks are GONE from the
+  tree; brute-force defense is now usermgmt's lockout (5 fails/15 min) +
+  the per-IP ceremony rate limits in `Identity.Register`.
 - **serve/UI:** `serve` composes appkit around `web.Register`:
   ServiceConfig{Addr, `Version` → `/version`, `Metrics` → `/metrics` (explicit
   `AllowUnauthenticated` opt-in; both beside the appkit `/health{,/live,/ready}`
   routes), `WriteTimeout: NoTimeout` — exports and the recording audio stream
   (WAV, else MP3 fallback) are unbounded and the former 30 s deadline truncated
-  both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`) + htpasswd auth.
+  both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`) + the identity
+  session gate when `-auth-db` is set (empty = unauthenticated localhost
+  dev; `-auth-rpid`/`-auth-origin` override the derived WebAuthn values).
   The ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
   Compression → ETag; ordering doctrine, ETag skip policy, render-buffering
   trap, `Cache-Control: no-cache` revalidation contract) lives in

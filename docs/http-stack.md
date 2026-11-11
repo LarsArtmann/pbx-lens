@@ -16,8 +16,27 @@ builds its upstream request on `r.Context()`).
 
 ExtraMiddlewares, in strict order:
 
-1. **auth** (htpasswd middleware when `-htpasswd` is set) — innermost of the
-   three additions but outer of everything web-local.
+1. **auth** — the identity session gate when `-auth-db` is set (2026-11-11
+   usermgmt adoption; the htpasswd middleware it replaced is gone from the
+   tree): session enrichment → CSRF → public-path bypass + session
+   requirement, composed ONCE in `internal/web/userauth.go`. `/login`,
+   `/auth/*`, `/app.css`, and `/robots.txt` stay public; browsers (Accept:
+   text/html or HX-Request) get 303 to `/login`, API clients 401. Sessions
+   are SQL-backed (`session_token` cookie, SameSite=Strict, Secure) in the
+   identity DB — they survive restarts. Registration closes itself after
+   the first account (`MaxUsers: 1`): the first `/login` visitor on a
+   trusted LAN becomes the operator. WebAuthn needs a secure context
+   (HTTPS or localhost); `-auth-rpid`/`-auth-origin` override the derived
+   RPID/origin (IP/localhost listen addresses derive `localhost`, since
+   go-webauthn refuses an IP RPID at construction). Identity projections
+   join `/health/ready` (live/stopped ready; backoff/draining/failed not).
+   Without `-auth-db` the serve runs unauthenticated — the localhost dev
+   posture the probes rely on. CSRF (httputil/nosurf, `X-Csrf-Token`
+   header, `csrf_token` cookie) guards the only mutations, the `/auth/*`
+   ceremonies; the loginpage's JS carries the token from its meta tag.
+   NOTE: nosurf requires same-origin attestation (Origin/Referer) on
+   secure-classified POSTs — tests must send Host+Origin+Referer like a
+   browser.
 2. **`httputil.SecurityHeaders`** (Pareto P1-T5/T6, 2026-10-17) — tightens the
    appkit default for an internal single-operator tool: `Referrer-Policy:
    no-referrer` (the internal host + query strings must not leak to the
