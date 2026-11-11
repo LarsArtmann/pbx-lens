@@ -16,7 +16,12 @@ import (
 // CSS gate just stops knowing the classes the UI actually renders — so this
 // test fails instead, at the place the staleness becomes checkable: the
 // corpus's OWN pin stamp versus go.mod.
-var corpusStamp = regexp.MustCompile(`(?m)^# templ-components@(v\S+)\s*$`)
+var corpusStamp = regexp.MustCompile(`(?m)^# (?:github\.com/larsartmann/)?templ-components@(v\S+)\s*$`)
+
+// loginpageStamp pins the login page module the same way: its lp-* classes
+// ride the same corpus since the 2026-11-11 usermgmt adoption, and a stale
+// scan would strip them from app.css exactly like the templ-components drop.
+var loginpageStamp = regexp.MustCompile(`(?m)^# github\.com/larsartmann/cqrs-htmx/loginpage/v4@(v\S+)\s*$`)
 
 // goModPin matches the module's own requirement line — leading tab allowed
 // (require blocks indent), anchored so the /htmx, /icons and /utils
@@ -52,6 +57,26 @@ func TestTailwindCorpusMatchesPinnedVersion(t *testing.T) {
 			"Tailwind class corpus is stale: stamped %s but go.mod pins %s — regenerate with "+
 				"`node scripts/gen-tc-classes.js` (docs/templ-components-adoption.md carries the bump watchlist)",
 			stamp[1], pin[1],
+		)
+	}
+
+	loginGoModPin := regexp.MustCompile(`(?m)^[	 ]*github\.com/larsartmann/cqrs-htmx/loginpage/v4 (v\S+)$`)
+	loginPin := loginGoModPin.FindStringSubmatch(string(goMod))
+	if loginPin == nil {
+		t.Fatalf("loginpage requirement line not found in go.mod — is the module renamed?")
+	}
+
+	loginStamp := loginpageStamp.FindStringSubmatch(string(raw))
+	if loginStamp == nil {
+		t.Fatalf(
+			"corpus lost the loginpage pin stamp (`# github.com/larsartmann/cqrs-htmx/loginpage/v4@vX.Y.Z`) — " +
+				"regenerate with `node scripts/gen-tc-classes.js`")
+	}
+
+	if loginStamp[1] != loginPin[1] {
+		t.Errorf(
+			"loginpage corpus stamp is stale: stamped %s but go.mod pins %s — regenerate with `node scripts/gen-tc-classes.js`",
+			loginStamp[1], loginPin[1],
 		)
 	}
 }

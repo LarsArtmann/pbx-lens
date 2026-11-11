@@ -1,4 +1,5 @@
-# templ-components@v1.27.0
+# github.com/larsartmann/templ-components@v1.27.0
+# github.com/larsartmann/cqrs-htmx/loginpage/v4@v4.18.0
 #283a:
 #bar-results
 #consumer-override
@@ -14,6 +15,7 @@
 #kanban-demo-datastar
 #kanban-demo-htmx
 #kb-htmx
+#lp-error
 #main-content
 #my-id
 #oob-target
@@ -85,6 +87,7 @@
 --blur-xl:24px
 --blur-xs
 --blur-xs:4px
+--brand-accent
 --build-mode
 --color-amber-100
 --color-amber-100:
@@ -770,6 +773,9 @@
 --tc-slider-value
 --tc-slider-value:
 --tc-slider-value:attr
+--test
+--test-reporter
+--test:
 --text-2xl
 --text-2xl--line-height
 --text-2xl--line-height:calc
@@ -1791,6 +1797,7 @@
 /api/wire/remove-region
 /api/wire/swap-line
 /avatar-placeholder.png
+/color-mix
 /definitely-not-a-demo-page
 /demo/api/wire/remove-region
 /demo/api/wire/swap-line
@@ -2021,6 +2028,7 @@
 30-day
 30-day-fallback
 300ms:
+302-ing
 39-vs-122
 3v2.25m6.364.386l-1.591
 4-4m6
@@ -2185,6 +2193,7 @@
 [--out
 [--rtl]
 [aria-disabled
+[cqrs-htmx/usermgmt/v4]
 [data-combobox-input
 [data-combobox-input]
 [data-combobox-list
@@ -2305,6 +2314,7 @@ a:hover
 a:hover:where
 a:where
 abbr:where
+abc123_-
 abc:
 about:invalid
 about:invalid.
@@ -2380,6 +2390,8 @@ allow-discrete
 allow-keywords
 allow-list
 allow:
+already-authenticated
+already-sanitized
 always-below-trigger
 always-on
 always-visible
@@ -2524,6 +2536,7 @@ attributes:
 attrs:
 auth-class
 auth-id
+auth-method
 auth_layout
 auth_layout.templ
 auth_layout_types.go
@@ -2534,6 +2547,9 @@ auto-connects
 auto-derivation
 auto-derive
 auto-derived
+auto-detect
+auto-detect:
+auto-detected
 auto-detection
 auto-detects
 auto-dismiss
@@ -2560,6 +2576,7 @@ auto-mirror
 auto-mirrors
 auto-open
 auto-placement
+auto-populate
 auto-prevents
 auto-refresh
 auto-refreshes
@@ -2691,6 +2708,7 @@ bar_chart_empty
 bar_chart_horizontal
 bar_chart_vertical
 bar_chart_with_href
+bare-relative
 bars-3
 bars-3:
 base-path
@@ -2706,6 +2724,7 @@ bdd-modal
 bdd-modal-open
 beaker:
 beforeend:#toast-container
+begin-login
 behavior-driven
 behavior:
 bell-slash
@@ -2965,6 +2984,7 @@ box-shadow:var
 box-sizing:border-box
 branch-heavy
 branch:
+brand-initial
 brand:
 break-after-avoid
 break-after:avoid
@@ -2974,6 +2994,7 @@ breakpoint-gated
 breakpoint-keyed
 browser-level
 browser-proven
+browser-unsupported
 browser-verified
 btn-
 btn-both
@@ -3089,6 +3110,7 @@ cc-name
 cc-number
 cdn.jsdelivr.net:
 ceiling_pct
+ceremonies:
 chain:
 change:
 chart-bar:
@@ -3147,11 +3169,13 @@ click-outside
 click-toggle
 click:
 clickable-row
+client-config
 client-controlled
 client-initiated
 client-refreshed
 client-side
 client-side.
+client-side:
 client:
 clip-path:inset
 clip-path:none
@@ -3258,6 +3282,7 @@ components:
 composition:
 compositions:
 condition:
+config:
 confirm-delete
 confirm-modal
 confirm_delete
@@ -3267,6 +3292,7 @@ constants:
 construction:
 constructors:
 consumer-audit
+consumer-compiled
 consumer-facing
 consumer-graph
 consumer-integration
@@ -3312,6 +3338,7 @@ contextmenu_basic
 contract-vs-counterparty
 contract:
 contracts:
+contradictory:
 control-button
 control-level
 controls-bio
@@ -3322,6 +3349,7 @@ controls-terms
 convention:
 conventions_test.go
 converted:
+cookie-driven
 copied:
 copy-and-default
 copy-as-link
@@ -3363,6 +3391,7 @@ create-account
 create-btn
 created-at
 created_at
+credential_name
 critical-path
 cross-board
 cross-check
@@ -3374,6 +3403,7 @@ cross-engine
 cross-fade
 cross-fade/slide
 cross-fades
+cross-field
 cross-module
 cross-origin
 cross-package
@@ -3625,6 +3655,7 @@ dark:text-gray-100
 dark:text-gray-200
 dark:text-gray-300
 dark:text-gray-400
+dark:text-gray-50
 dark:text-gray-500
 dark:text-gray-600
 dark:text-gray-700
@@ -3813,6 +3844,7 @@ data-track
 data-x
 data.parse_failed
 data:
+data:text/html
 data_state.go
 data_state_custom_icon
 data_state_disabled
@@ -4060,6 +4092,7 @@ display:none
 display:none.
 display:table
 display:table-row
+display_name
 display_test
 divide-gray-100
 divide-gray-200
@@ -4129,6 +4162,7 @@ drawer-1
 drawer_go.go
 drift-guard
 drift:
+drifted:
 drives:
 dropdown_basic
 ds-row-hover
@@ -4216,6 +4250,7 @@ errorpage-standalone
 errorpage/constructors.go:
 errs:
 escaped:
+escaping:
 etl-hook
 eu-central
 eu-central-1
@@ -4279,6 +4314,7 @@ external_link_custom_class
 external_link_no_icon
 external_link_text
 extra-class
+extra-section-test
 extra-wrap
 extras:
 eye-off
@@ -4525,6 +4561,7 @@ foo-bar-baz-
 footer_basic
 footgun:
 for:
+force-hides
 forced-colors
 forced-colors:
 forced-colors:active
@@ -4631,6 +4668,8 @@ git-tracked.
 github.com/a-h/templ
 github.com/a-h/templ/runtime
 github.com/a-h/templ@
+github.com/larsartmann/cqrs-htmx/usermgmt/v4
+github.com/larsartmann/cqrs-htmx/v4
 github.com/larsartmann/go-datastar
 github.com/larsartmann/go-datastar/static
 github.com/larsartmann/go-error-family
@@ -4766,11 +4805,13 @@ h-[50px]
 h-auto
 h-fit
 h-full
+h-px
 h1-h6
 h2_center
 h3_left_subtitle
 half-circle
 hamburger-breakpoint
+hand-built
 hand-copied
 hand-edit
 hand-edited
@@ -4848,6 +4889,7 @@ heroicons-animated-inspired
 heuristic:
 hidden
 hidden-input
+highlights:
 history_page.templ:105
 hit-box
 holds:
@@ -5029,6 +5071,7 @@ initial-value:100%
 initial-value:50%
 initial-value:proximity
 initial-value:solid
+initial:
 initials-avatar
 injection-safe
 injection:
@@ -5183,6 +5226,7 @@ keyboard-scrollable
 keys:
 kind:
 kit:
+know:
 label-above-input
 label-for
 label:
@@ -5220,6 +5264,7 @@ left]:not
 legacy:
 legal:
 legend-less
+length-capped
 lesson:
 letter-spacing:
 letter-spacing:-.025em
@@ -5361,6 +5406,8 @@ lockstep-tag
 logic:
 logical-property
 login_card_types.go
+loginpage-config
+loginpage:
 long-form
 long-line
 long-lived
@@ -5373,6 +5420,23 @@ low-coverage
 lower-cased
 lower-saturation
 lower-value
+lp-divider
+lp-email
+lp-error
+lp-login-btn
+lp-login-form
+lp-login-section
+lp-no-webauthn
+lp-reg-email
+lp-reg-name
+lp-register-btn
+lp-register-form
+lp-register-section
+lp-section
+lp-section/lp-divider
+lp-show-login
+lp-show-register
+lp-spinner
 ls-files
 m-0
 machine-independent.
@@ -5389,6 +5453,7 @@ main-wrap
 major.minor-normalized
 major.minor:
 malformed-value
+manifest:
 manual-toast
 map-pin
 map-pin:
@@ -5490,6 +5555,7 @@ mb-2
 mb-3
 mb-4
 mb-6
+mb-8
 mb-auto
 md:
 md:/xl:
@@ -5517,6 +5583,7 @@ menu:
 meta_refresh_redirect
 meta_refresh_reload
 method-promotion
+method-specific
 method:
 methods:
 micro-interactions
@@ -5580,6 +5647,7 @@ minus:
 mirror:
 mis-judged
 mis-judged.
+mis-resolve
 misdiagnosis:
 missing-in-source
 missing-surface
@@ -5688,6 +5756,7 @@ mx-4
 mx-auto
 my-2
 my-4
+my-6
 my-8
 my-alert
 my-auto
@@ -5733,6 +5802,7 @@ n-instant
 name-help
 name-with-
 name:
+names:
 native-dialog
 native-pop
 native-pop-content
@@ -5778,6 +5848,7 @@ nil:
 nix-side
 nixpkgs#playwright-driver.version
 nl-dashboard
+no-auth
 no-cache
 no-icon
 no-id
@@ -5835,6 +5906,7 @@ non-matching
 non-mutation
 non-negative
 non-negative.
+non-nil
 non-numeric
 non-page
 non-path
@@ -5853,7 +5925,9 @@ non-whitespace
 non-whitespace-text
 non-zero
 nonce-123
+nonce-123script
 nonce-abc
+nonce-based
 nonce-carrying
 nonce-cb
 nonce-consumers.md
@@ -5907,6 +5981,7 @@ object-src
 object:
 off-screen
 off-site
+off-site.
 off-track.
 off:
 og:description
@@ -5953,6 +6028,7 @@ opacity:attr
 opacity:progress
 open-modal
 open-modal-a11y
+open-redirect
 open-restore
 open:
 opt-
@@ -5970,6 +6046,7 @@ option:checked:where
 option:focus
 option:hover
 option:where
+optional:
 order:
 ordering:
 original-position
@@ -6111,6 +6188,7 @@ parseable:
 parser:
 part:
 partial-page
+passkey-only
 password-reset
 patch-elements
 patch-scoped
@@ -6179,6 +6257,7 @@ per-path
 per-point
 per-ray
 per-render
+per-request
 per-row
 per-run
 per-series
@@ -6190,6 +6269,7 @@ per-test
 per-toast
 per-tone
 per-visitor
+percent-encoded
 percent:
 percentage-based
 percentages:
@@ -6296,6 +6376,7 @@ pre-computed
 pre-configured
 pre-filled
 pre-fills
+pre-fix
 pre-opened
 pre-restart
 pre-selected
@@ -6361,6 +6442,8 @@ prose_large
 prose_props
 prose_small
 protocol-relative
+provider[1:]
+provider[:1]
 ps-
 ps-1
 ps-10
@@ -6443,6 +6526,7 @@ re-arm
 re-arms
 re-asserts
 re-audit
+re-authenticate
 re-baseline
 re-bind-window
 re-binding
@@ -6498,6 +6582,7 @@ read-only
 read:
 readable:
 readonly-field
+ready-made
 real-time
 real:
 receiver:
@@ -6509,10 +6594,13 @@ recipes/settings_layout.templ
 recipes_test
 recorded_at
 recorded_commit
+red-400
+redirect:
 reduced-motion
 region-merge
 region:
 registry-driven
+rejected:
 rejection:
 relative-time
 relative_time
@@ -6712,6 +6800,7 @@ screen:
 script-context
 script-driven
 script-emitting
+script-safe
 script-src
 script-src:
 script:
@@ -6833,7 +6922,9 @@ server-driven
 server-issued
 server-owned
 server-patched
+server-render
 server-rendered
+server-resolved
 server-round-trip
 server-side
 server-side-validation
@@ -6842,6 +6933,8 @@ server-sorted
 server-time
 server-validation
 server:
+service-level
+session-agnostic
 session-scoped
 session-token
 session:
@@ -6872,6 +6965,7 @@ shape-compatible
 shape:
 share:
 shared-element
+shared-service
 shared-token
 shared:
 shell:
@@ -6896,6 +6990,7 @@ sign-in.
 sign-in:
 sign-up
 signal:
+signed-in
 silent-failure
 silently-missing
 simple-1
@@ -6927,6 +7022,7 @@ single-type
 single-value
 singleton-guarded
 site-footer
+site-root
 site:
 size-
 size-only
@@ -6968,6 +7064,7 @@ sm:max-w-lg
 sm:min-w-40
 sm:ms-6
 sm:p-6
+sm:p-8
 sm:px-10
 sm:px-5
 sm:px-6
@@ -7324,6 +7421,7 @@ test-class
 test-count
 test-coverage-library-gate.sh
 test-csp-nonce-12345
+test-csrf-123
 test-csrf-token
 test-drawer
 test-file
@@ -7514,6 +7612,7 @@ tip-btn
 tip-btn-tooltip
 tip-link
 tip-link-tooltip
+title-cased
 title-less
 title:
 titled-modal
@@ -7532,6 +7631,7 @@ toggle_off
 toggle_on
 tok-1
 tok-123
+token-abc
 token-bucket
 token-driven
 token-exact
@@ -7716,6 +7816,7 @@ user-button
 user-circle
 user-circle:
 user-controlled
+user-friendly
 user-grid
 user-menu
 user-plus
