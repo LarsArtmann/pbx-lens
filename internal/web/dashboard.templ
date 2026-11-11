@@ -64,7 +64,7 @@ templ dashboardRoute(nonce string, stats DashboardStats, now time.Time, fragURL 
 			Action:   copyLinkAction(nonce, "Copy a shareable link to this dashboard view", canonicalDashboardPath(stats)),
 		})
 		@windowPresets(stats)
-		@rangeForm(stats)
+		@rangeForm(nonce, stats)
 		@dashboardLive(nonce, stats, now, fragURL)
 	}
 }
@@ -92,12 +92,13 @@ templ windowPresets(stats DashboardStats) {
 // rangeForm narrows the whole dashboard to a date range (R8/M20.1).
 // Library Form in inline layout: GET submits server-side; the noscript
 // world submits it like the list filters.
-templ rangeForm(stats DashboardStats) {
+templ rangeForm(nonce string, stats DashboardStats) {
 	@forms.Form(forms.FormProps{
 		Action: "/dashboard",
 		Method: forms.FormGet,
 		Layout: forms.FormLayoutInline,
 		Class:  "mb-6",
+		Nonce:  nonce,
 	}) {
 		@forms.DatePicker(forms.DatePickerProps{
 			Name:      "from",

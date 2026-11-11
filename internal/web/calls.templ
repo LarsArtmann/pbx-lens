@@ -72,7 +72,7 @@ templ listPage(nonce string, page CallListPage, filters ListCallsQuery) {
 		Subtitle: "Every call the PBX ever saw",
 		Action:   exportAction(),
 	})
-	@filterForm(filters, "/")
+	@filterForm(nonce, filters, "/")
 	@recentViewsCard(filters)
 	if len(page.Rows) == 0 {
 		@display.EmptyState(display.EmptyStateProps{
@@ -206,12 +206,13 @@ templ exportAction() {
 
 // filterForm is the shared filter row (library Form, inline layout): GET
 // submits server-side; the noscript world gets the Apply button.
-templ filterForm(filters ListCallsQuery, action string) {
+templ filterForm(nonce string, filters ListCallsQuery, action string) {
 	@forms.Form(forms.FormProps{
 		Action: action,
 		Method: forms.FormGet,
 		Layout: forms.FormLayoutInline,
 		Class:  "mb-6",
+		Nonce:  nonce,
 	}) {
 		@forms.Select(forms.SelectProps{
 			Name:  "direction",

@@ -26,6 +26,7 @@ templ searchRoute(nonce string, query string, hits []search.Hit, turnHits []sear
 			Method: forms.FormGet,
 			Layout: forms.FormLayoutInline,
 			Class:  "mb-3 max-w-xl",
+			Nonce:  nonce,
 		}) {
 			@forms.Input(forms.InputProps{
 				Type:         forms.InputSearch,
