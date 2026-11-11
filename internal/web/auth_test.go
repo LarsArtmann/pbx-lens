@@ -85,6 +85,42 @@ func loginChallenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
 	return csrfCookie, extractCSRFToken(t, recorder.Body.String())
 }
 
+// postAuthJSON drives an auth ceremony POST the way a real browser does:
+// same-origin attestation (Host + Origin + Referer — nosurf requires them on
+// secure-classified requests), the CSRF cookie/token pair, and the cookie
+// jar. Returns the recorder for status/cookie assertions.
+func postAuthJSON(
+	t *testing.T,
+	handler http.Handler,
+	path string,
+	payload map[string]string,
+	cookie *http.Cookie,
+	token string,
+) *httptest.ResponseRecorder {
+	t.Helper()
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		t.Fatalf("marshal %s request: %v", path, err)
+	}
+
+	request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(string(body)))
+	request.Host = "localhost:8300"
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Origin", "http://localhost:8300")
+	request.Header.Set("Referer", "http://localhost:8300/login")
+	request.Header.Set("X-Csrf-Token", token)
+
+	if cookie != nil {
+		request.AddCookie(cookie)
+	}
+
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, request)
+
+	return recorder
+}
+
 // loginSession walks the browser flow headlessly: fetch /login (the CSRF
 // middleware issues its token cookie and the page embeds the token in its
 // meta tag), then POST /auth/register with both. The response carries the
@@ -95,17 +131,9 @@ func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie
 
 	csrfCookie, token := loginChallenge(t, handler)
 
-	body, err := json.Marshal(map[string]string{"email": email, "display_name": "Operator"})
-	if err != nil {
-		t.Fatalf("marshal register request: %v", err)
-	}
-
-	request := httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(string(body)))
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Csrf-Token", token)
-	request.AddCookie(csrfCookie)
-	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, request)
+	recorder := postAuthJSON(t, handler, "/auth/register", map[string]string{
+		"email": email, "display_name": "Operator",
+	}, csrfCookie, token)
 
 	if recorder.Code != http.StatusCreated {
 		t.Fatalf("POST /auth/register status = %d, want 201 (body: %s)", recorder.Code, recorder.Body.String())
@@ -209,17 +237,9 @@ func TestIdentityRegistrationClosesAfterFirst(t *testing.T) {
 	// CSRF wall itself is not the behavior under test here.
 	csrfCookie, token := loginChallenge(t, handler)
 
-	body, err := json.Marshal(map[string]string{"email": "intruder@pbx.lens", "display_name": "X"})
-	if err != nil {
-		t.Fatalf("marshal register request: %v", err)
-	}
-
-	request = httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(string(body)))
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Csrf-Token", token)
-	request.AddCookie(csrfCookie)
-	recorder = httptest.NewRecorder()
-	handler.ServeHTTP(recorder, request)
+	recorder = postAuthJSON(t, handler, "/auth/register", map[string]string{
+		"email": "intruder@pbx.lens", "display_name": "X",
+	}, csrfCookie, token)
 
 	if recorder.Code < 400 || recorder.Code > 499 {
 		t.Errorf("second registration status = %d, want a 4xx refusal (body: %s)", recorder.Code, recorder.Body.String())
@@ -253,7 +273,7 @@ func TestIdentityIdentityDBSurvivesReopen(t *testing.T) {
 	}
 
 	reopened, err := OpenIdentity(context.Background(), IdentityConfig{
-		DSN: dsn, RPID: "127.0.0.1", RPOrigins: []string{"http://localhost:8300"},
+		DSN: dsn, RPID: "localhost", RPOrigins: []string{"http://localhost:8300"},
 	})
 	if err != nil {
 		t.Fatalf("reopen identity: %v", err)
