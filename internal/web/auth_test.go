@@ -28,8 +28,8 @@ func openTestIdentity(t *testing.T) *Identity {
 
 	identity, err := OpenIdentity(context.Background(), IdentityConfig{
 		DSN:       filepath.Join(t.TempDir(), "identity.db"),
-		RPID:      "127.0.0.1",
-		RPOrigins: []string{"http://127.0.0.1:8300"},
+		RPID:      "localhost",
+		RPOrigins: []string{"http://localhost:8300"},
 	})
 	if err != nil {
 		t.Fatalf("OpenIdentity: %v", err)
@@ -55,12 +55,10 @@ func identityHandler(t *testing.T, identity *Identity) http.Handler {
 	return identity.Middleware()(mux)
 }
 
-// loginSession walks the browser flow headlessly: fetch /login (the CSRF
-// middleware issues its token cookie and the page embeds the token in its
-// meta tag), then POST /auth/register with both. The response carries the
-// session cookie the gate accepts. Registration on a fresh identity always
-// succeeds — the MaxUsers=1 door is still open.
-func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie {
+// loginChallenge walks the CSRF half of the browser flow: fetch /login (the
+// middleware issues its token cookie, the page embeds the token in its meta
+// tag) and return both — the pair every auth ceremony POST must present.
+func loginChallenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
 	t.Helper()
 
 	request := httptest.NewRequest(http.MethodGet, "/login", nil)
@@ -84,18 +82,29 @@ func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie
 		t.Fatal("GET /login issued no csrf_token cookie — the CSRF middleware is not wired")
 	}
 
-	token := extractCSRFToken(t, recorder.Body.String())
+	return csrfCookie, extractCSRFToken(t, recorder.Body.String())
+}
+
+// loginSession walks the browser flow headlessly: fetch /login (the CSRF
+// middleware issues its token cookie and the page embeds the token in its
+// meta tag), then POST /auth/register with both. The response carries the
+// session cookie the gate accepts. Registration on a fresh identity always
+// succeeds — the MaxUsers=1 door is still open.
+func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie {
+	t.Helper()
+
+	csrfCookie, token := loginChallenge(t, handler)
 
 	body, err := json.Marshal(map[string]string{"email": email, "display_name": "Operator"})
 	if err != nil {
 		t.Fatalf("marshal register request: %v", err)
 	}
 
-	request = httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(string(body)))
+	request := httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(string(body)))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("X-Csrf-Token", token)
 	request.AddCookie(csrfCookie)
-	recorder = httptest.NewRecorder()
+	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
 	if recorder.Code != http.StatusCreated {
@@ -195,7 +204,11 @@ func TestIdentityRegistrationClosesAfterFirst(t *testing.T) {
 		t.Errorf("list page with session status = %d, want 200", recorder.Code)
 	}
 
-	// The door is closed: a second registration (any email) must fail.
+	// The door is closed: a second registration (any email) must fail at
+	// the service — reaching it through a VALID CSRF ceremony, since the
+	// CSRF wall itself is not the behavior under test here.
+	csrfCookie, token := loginChallenge(t, handler)
+
 	body, err := json.Marshal(map[string]string{"email": "intruder@pbx.lens", "display_name": "X"})
 	if err != nil {
 		t.Fatalf("marshal register request: %v", err)
@@ -203,12 +216,19 @@ func TestIdentityRegistrationClosesAfterFirst(t *testing.T) {
 
 	request = httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(string(body)))
 	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("X-Csrf-Token", "forced-invalid")
+	request.Header.Set("X-Csrf-Token", token)
+	request.AddCookie(csrfCookie)
 	recorder = httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
 	if recorder.Code < 400 || recorder.Code > 499 {
 		t.Errorf("second registration status = %d, want a 4xx refusal (body: %s)", recorder.Code, recorder.Body.String())
+	}
+
+	for _, cookie := range recorder.Result().Cookies() {
+		if cookie.Name == "session_token" {
+			t.Error("a closed registration must not issue a session")
+		}
 	}
 }
 
@@ -219,7 +239,7 @@ func TestIdentityIdentityDBSurvivesReopen(t *testing.T) {
 	dsn := filepath.Join(dir, "identity.db")
 
 	identity, err := OpenIdentity(context.Background(), IdentityConfig{
-		DSN: dsn, RPID: "127.0.0.1", RPOrigins: []string{"http://127.0.0.1:8300"},
+		DSN: dsn, RPID: "localhost", RPOrigins: []string{"http://localhost:8300"},
 	})
 	if err != nil {
 		t.Fatalf("open identity: %v", err)
@@ -233,7 +253,7 @@ func TestIdentityIdentityDBSurvivesReopen(t *testing.T) {
 	}
 
 	reopened, err := OpenIdentity(context.Background(), IdentityConfig{
-		DSN: dsn, RPID: "127.0.0.1", RPOrigins: []string{"http://127.0.0.1:8300"},
+		DSN: dsn, RPID: "127.0.0.1", RPOrigins: []string{"http://localhost:8300"},
 	})
 	if err != nil {
 		t.Fatalf("reopen identity: %v", err)

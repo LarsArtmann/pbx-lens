@@ -90,6 +90,7 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 	gated := identity.Middleware()(mux)
 
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Header.Set("Accept", "text/html")
 	recorder := httptest.NewRecorder()
 	gated.ServeHTTP(recorder, request)
 
