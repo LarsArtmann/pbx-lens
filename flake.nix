@@ -85,7 +85,14 @@
         extraBuildAttrs = pkgs: {
           nativeBuildInputs = [ pkgs.tailwindcss_4 ];
           preBuild = ''
-            templ generate ./internal/web/
+            # Codegen through the MODULE-pinned templ (go tool), never the
+            # bare `templ` binary go-standard injects (pkgs.templ): the
+            # nixpkgs templ drifts ahead of the go.mod pin and a newer
+            # codegen emits calls (templ.ResolveAttributeValue, 2026-11-11)
+            # the pinned runtime does not have — the package build died at
+            # compile. The tool directive pins codegen and runtime to the
+            # same version (the CI lane runs the same command).
+            GOEXPERIMENT=jsonv2 go tool templ generate ./internal/web/
             tailwindcss -i internal/web/static/app.css -o internal/web/static/styles.css --minify
           '';
         };
@@ -138,7 +145,7 @@
               owner = "LarsArtmann";
               repo = "go-cqrs-lite";
               rev = "5a08b0ead55cd923b3b08cd45aba07d425aa193e";
-              hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+              hash = "sha256-BH3IGPqOie1RLaxATrWtnsbCpXVv3iEgKLHRR5Tlv+Y=";
             };
             sourceRoot = "source/cmd/cqrs-lint";
             # cqrs-lint's own tests run fixture projects through `go`, which
@@ -154,7 +161,7 @@
             # vendorHash (3I97v…) and the devshell died at the FOD;
             # restored 2026-10-26 — the FOD mismatch names this hash.
             env.GOWORK = "off";
-            vendorHash = "sha256-BVxzTkszzzRFIJPIJb/tvxiiJPMYWGyEnxozOyTC+fg=";
+            vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
             meta = {
               description = "cqrs-lint from go-cqrs-lite, pinned to the cmd/cqrs-lint/v4.16.0 tag";
               license = lib.licenses.unfree;
