@@ -24,11 +24,14 @@ func seedCalls(n int, base time.Time) []calls.Observation {
 }
 
 // extractHref returns the href value of the first anchor whose text matches
-// (the pager buttons render as anchors with visible text).
+// (the pager buttons render as anchors with visible text). The match is on
+// `text</a>` without a leading delimiter: templ ≥ v0.3.1100 emits the
+// icon-text separator space inside the anchor, so the character before the
+// text is a space, not `>`.
 func extractHref(t *testing.T, body, text string) string {
 	t.Helper()
 
-	anchor := fmt.Sprintf(`>%s</a>`, text)
+	anchor := fmt.Sprintf(`%s</a>`, text)
 
 	before, _, ok := strings.CutLast(body, anchor)
 	if !ok {
