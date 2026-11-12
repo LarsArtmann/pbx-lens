@@ -3,7 +3,10 @@
 <!-- Living doc extracted from AGENTS.md 2026-10-12 (220-line budget).
      The WHY behind the middleware chain, the ETag skip policy, and the
      render-buffering fix. Adoption history and considered-but-not-adopted
-     alternatives: docs/planning/archived/2026-10-12_12-47_SUPERB-*.md. -->
+     alternatives: docs/planning/archived/2026-10-12_12-47_SUPERB-*.md.
+     Post-adoption gate receipt (2026-11-12 run 9: 65/0/0, exit 0, tree
+     114a54d): docs/buildflow-dev-gate.md — this exact stack passed the
+     formal calm-window gate. -->
 
 ## Middleware chain
 
