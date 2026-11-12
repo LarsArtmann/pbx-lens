@@ -112,6 +112,36 @@ func allOriginsHTTPS(origins []string) bool {
 	return true
 }
 
+// oauthButtons renders the login page's OAuth2 button row for the OIDC
+// lane: the configured provider name, or the library default when unset.
+// A nil config keeps passkey-only and the row stays empty.
+func oauthButtons(cfg *oidclogin.Config) []loginpage.OAuth2Button {
+	if cfg == nil {
+		return nil
+	}
+
+	name := cfg.Name
+	if name == "" {
+		name = oidclogin.DefaultProviderName
+	}
+
+	return []loginpage.OAuth2Button{{
+		Provider: name,
+		Label:    "Sign in with Pocket ID",
+	}}
+}
+
+// logOIDCLane announces the enabled OIDC lane once the identity surface is
+// fully constructed.
+func logOIDCLane(cfg *oidclogin.Config) {
+	if cfg == nil {
+		return
+	}
+
+	slog.Info("identity oidc enabled: Pocket ID sign-in rides /auth/oauth/pocketid/* beside the passkey panel",
+		"issuer", cfg.Issuer, "redirect", cfg.RedirectURL)
+}
+
 // OpenIdentity brings up the identity bounded context: one SQLite database
 // holding the event journal, the SQL read models, and the SQL session store;
 // a WebAuthn provider for passkey ceremonies; and the loginpage panel. The
@@ -207,17 +237,7 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		NonceFromRequest: httputil.NonceFromRequest,
 	}
 
-	if oauthProvider != nil {
-		name := cfg.OIDC.Name
-		if name == "" {
-			name = oidclogin.DefaultProviderName
-		}
-
-		pageCfg.OAuth2Buttons = []loginpage.OAuth2Button{{
-			Provider: name,
-			Label:    "Sign in with Pocket ID",
-		}}
-	}
+	pageCfg.OAuth2Buttons = oauthButtons(cfg.OIDC)
 
 	panel, err := loginpage.New(pageCfg)
 	if err != nil {
@@ -230,10 +250,7 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		)
 	}
 
-	if oauthProvider != nil {
-		slog.Info("identity oidc enabled: Pocket ID sign-in rides /auth/oauth/pocketid/* beside the passkey panel",
-			"issuer", cfg.OIDC.Issuer, "redirect", cfg.OIDC.RedirectURL)
-	}
+	logOIDCLane(cfg.OIDC)
 
 	// Session enrichment first (reads the cookie into the context), then
 	// CSRF (the /auth/* ceremonies are the only mutations), then the gate.
