@@ -94,3 +94,48 @@ at peak). That is the operating condition, not an incident.
 - Find the squash point fast: `git log --oneline origin/main..HEAD`
   after a `git fetch origin` — everything above the last non-`chore:`
   commit is yours to squash.
+
+## Norm upgrades from the 2026-11-12 double-dispatch (plan A17)
+
+Tonight ran TWO sessions on one repo through a whole plan execution
+again — one report rewrite wasted, one gate receipt voided by a
+mid-flight edit, one shared file nearly mangled. Three rules tighten:
+
+1. **The claims roster: `.claims/ACTIVE.md`.** Every session opens its
+   working stint by writing `.claims/ACTIVE.md` (overwrite freely —
+   last writer wins, it is a roster not a lock) with: session name,
+   start time, the FILE SCOPE it intends to touch, and the plan/report
+   it is executing. Before claiming an individual file, READ the
+   roster: if another session's scope covers your target, switch to a
+   non-overlapping task instead of "claiming harder". Individual
+   `.claims/<file>.<session>.claim` files stay the per-file signal;
+   the roster is the at-a-glance scope map that makes collisions
+   visible BEFORE the first wasted write. Delete your roster entry on
+   exit (stale entries are notes, not locks — same as file claims).
+2. **Leave HEAD green, or tag the commit `[red]`.** A session that must
+   step away mid-task commits its work in a state it has verified
+   (build + the touched package's tests, minimum). If a commit lands
+   KNOWN-red (mid-refactor, half a migration), the message's first
+   line ends with the literal tag ` [red]` and the body names the
+   failing lane. Every other session (and the gate) can then trust
+   untagged HEADs and treat `[red]` heads as expected-construction,
+   not a regression to bisect. Never push a `[red]` head to origin
+   without the tag; never leave `[red]` standing for more than one
+   working stint.
+3. **Dual-session protocol (STUB — pending the owner's Q1 answer).**
+   The open question: when the owner dispatches two sessions, do they
+   get DISJOINT plan halves (session A takes A1-A12, session B takes
+   A13-A24) or live CLAIM-based arbitration on the full plan? Tonight
+   ran full-plan arbitration and paid ~1 report + 1 gate receipt in
+   collisions. Until the owner answers: sessions SHOULD partition by
+   plan-task range when a shared plan file exists, and both sessions
+   record the partition in their ACTIVE.md roster entries. This stub
+   becomes a ratified rule or gets deleted on the answer.
+
+### Receipts (2026-11-12)
+
+- One gate receipt voided by a concurrent userauth.go edit mid-run
+  (rule 2 applied, re-run queued) — the void is recorded in the gate
+  log, not silently re-rolled.
+- One wasted report rewrite (the 2026-11-12 audit session, §d.1 of its
+  own report) — the collision the roster would have prevented.
