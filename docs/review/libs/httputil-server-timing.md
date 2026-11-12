@@ -100,7 +100,8 @@ numbers that doc owns.
 
 ```console
 rg -n "func ServerTimingMiddleware" ~/go/pkg/mod/github.com/larsartmann/httputil/server_timing@v1.0.3/server_timing.go
-rg -n "ServerTimingMiddleware" cmd/pbx-lens/serve.go
+rg -n "ServerTimingMiddleware" cmd/pbx-lens/serve.go   # zero hits — appkit's default owns the middleware since the v0.12 bump
+rg -n "ServerTimingMiddleware" $(go env GOMODCACHE)/github.com/larsartmann/go-appkit@v0.12.0/middleware.go   # the default stack entry
 rg -n "MeasureServerTiming" internal/web -g '!*_templ.go' | wc -l   # 11
 rg -in "middleware constructor" internal/web/timing.go docs/http-stack.md   # zero hits
 GOEXPERIMENT=jsonv2 go test ./internal/web/ -run TestServerTimingHeaderOnPlainRoute
