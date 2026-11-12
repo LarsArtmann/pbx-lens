@@ -92,6 +92,10 @@ and the header observes the full span including the identity gate. The
 library constructor's `MeasureServerTiming`/`When` surface is unchanged —
 11 call sites untouched, the pre-first-write stop rule unchanged.
 
+Bench receipts (A/B library-vs-handwrap 2026-11-04; the per-route budgets)
+live in docs/http-stack.md — this report deliberately does not duplicate
+numbers that doc owns.
+
 ## How to verify
 
 ```console
