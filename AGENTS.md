@@ -101,11 +101,22 @@ read-only deep link, never a data dependency.
   (BuildFlow owns Go formatting); DevShell sets GOTOOLCHAIN=local +
   GOEXPERIMENT=jsonv2 (package list: the `nix develop` command line). UI codegen
   is a package preBuild (`templGenerationPolicy = "preBuild"`), and styles.css
-  is COMMITTED (CI embeds it); *_templ.go stays gitignored. `vendorHash.nix`
+  is COMMITTED (CI embeds it); *_templ.go stays gitignored. THE PREBUILD HOOK
+  MUST RUN `go tool templ generate` (module-pinned), never the bare `templ`
+  go-standard injects: pkgs.templ drifts ahead of the go.mod pin and its
+  codegen can emit calls the pinned runtime lacks (the 2026-11-11
+  `templ.ResolveAttributeValue` compile break — the same doctrine the treefmt
+  comment already carried). `vendorHash.nix`
   holds the landed hash: repair via `nix run .#update-vendor-hash` on a CLEAN
   tree (never nix-hash-fix, BuildFlow#55) and verify ANY touch against root AND
   devShell (`nix develop -c echo ok`) — `nix flake check` never builds
-  devShells, and its green masked the 2026-10-25 devshell break.
+  devShells, and its green masked the 2026-10-25 devshell break. cqrs-lint's
+  fetchFromGitHub source hash + its OWN vendorHash (both in flake.nix, NOT
+  vendorHash.nix) went stale simultaneously with that break's fix wave and
+  were re-landed 2026-11-11 (BH3IGPq… source / jTwZn/T… modules) — the
+  devShell build order is: cqrs-lint source FOD → cqrs-lint vendor FOD →
+  devshell; a mismatch at either surfaces as `hash mismatch … -source.drv` /
+  `-go-modules.drv` and is repaired with the surfaced `got:` value.
   `scripts/cut-release.sh` guards version-const parity (v0.3.0 shipped printing
   0.2.0). Hardening (2026-10-28 nix-review): extraMeta.license = unfree (this
   repo is PROPRIETARY; extraMeta merges OVER the module meta), allowUnfree pkgs
@@ -236,11 +247,13 @@ Concurrent sessions + daemon: docs/concurrency.md.
 - **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware
   chain, component map), **docs/research/README.md** (the deep-dive index).
 - **docs/review/libs/** (2026-11-04 fleet utilization audit; every finding
-  closed the same day) — per-lib reports + index.html for ALL 19 first-party
-  libs. Post-closeout scores: cqrs-lite core 92 (pooled ≈81), templ-components
-  95, go-etag 95, go-error-family 82, httputil 80, appkit 73, server_timing 67;
-  12 not imported, each with a documented reason or a named flip-trigger (REJECT
-  ×9, DEFER ×2: go-retry/go-atomic-write, PATTERN-ONLY ×1: go-output,
-  ADOPT-PARTIAL ×1: cqrs-htmx readiness). Refresh a report on its pin bump or
-  when its flip-trigger fires. Audit sessions default to report-then-wait and
-  execute only on the operator's explicit order (both happened 2026-11-04).
+  closed the same day; REFRESHED 2026-11-11 when the cqrs-htmx flip-trigger
+  fired and the usermgmt adoption landed) — per-lib reports + index.html for
+  ALL 22 first-party libs. Post-refresh scores: cqrs-lite core 92 (pooled
+  ≈81), templ-components 95, go-etag 95, go-error-family 82, httputil 80,
+  appkit 73, server_timing 67, cqrs-htmx ADOPTED (usermgmt/loginpage);
+  11 not imported, each with a documented reason or a named flip-trigger
+  (REJECT ×8, DEFER ×2: go-retry/go-atomic-write, PATTERN-ONLY ×1:
+  go-output). Refresh a report on its pin bump or when its flip-trigger
+  fires. Audit sessions default to report-then-wait and execute only on the
+  operator's explicit order (2026-11-04 and again 2026-11-11).
