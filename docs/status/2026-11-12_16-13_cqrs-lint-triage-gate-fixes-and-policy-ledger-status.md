@@ -163,7 +163,7 @@ Code claims were RE-VERIFIED against source: every flagged site was read (F031's
 17. CHANGELOG entry for the lint fixes + ledger growth.
 18. HARVEST this section into TODO_LIST.md.
 19. Document the ledger convention (rule + file + rationale, NO line numbers as keys — they drift) in the policy doc header.
-20. Verify the live-report count in `check-docs-counts.sh` picks up this file (37 → 38) and still passes.
+20. Verify the live-report count in `check-docs-counts.sh` picks up this file (37 → 38) and still passes. → **done same-session**: the gate failed exactly as predicted (row not indexed), the row was minted in `docs/status/README.md` (38 live rows, this report at top), and all three docs gates re-ran green (docs-counts / doc-links / nolint-ledger). Note for the record: the first indexing edit accidentally REPLACED the 15-31 row instead of inserting above it — caught by the row-count check (37≠38 would have hidden it; here `grep -c` + per-file uniqueness proved both rows present) and restored in the next edit.
 
 **BuildFlow-side (route to the BuildFlow repo's tracker)**
 
