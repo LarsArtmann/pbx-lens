@@ -198,9 +198,13 @@ jobs:
     env:
       # Pinned to the nixpkgs tailwindcss_4 version the flake builds with;
       # cross-builder byte-determinism proven 2026-10-17 (npm 4.3.3 ==
-      # nixpkgs 4.3.3, byte-identical, twice-run stable). When the flake
-      # lock moves the nix version, bump this pin in the same change.
-      TAILWIND_VERSION: "4.3.3"
+      # nixpkgs 4.3.3, byte-identical, twice-run stable) and re-proven by
+      # this guard itself on the 2026-11-12 4.3.4 bump (the nixpkgs
+      # coordinate bump had moved the committed styles.css to 4.3.4 while
+      # this pin stayed behind — the guard's exact designed alarm). When
+      # the flake lock moves the nix version, bump this pin in the same
+      # change.
+      TAILWIND_VERSION: "4.3.4"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

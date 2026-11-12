@@ -176,6 +176,36 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   now ratcheted in `.docs-gates.json` / `.buildflow.yml`. Full ledger:
   docs/buildflow-dev-gate.md § "The post-adoption calm-window receipt".
 
+### Added — 2026-11-12 d (OIDC sign-in: Pocket ID beside the passkey — Track A of the nginx exit)
+
+- **The lens owns its login end to end.**
+  `internal/oidclogin` speaks the full authorization-code + PKCE-S256
+  dance against Pocket ID: lazy discovery (10 s bounded timeout,
+  failures uncached — an IdP outage costs a login, never the boot),
+  RS256 id_token verification (signature/issuer/audience/expiry/nonce),
+  the userinfo fallback for access tokens without profile claims (the
+  Stalwart doctrine; Pocket ID tokens carry none), the verified-email
+  gate, and an in-app group allowlist that is fail-closed BOTH ways
+  (no groups claim never passes a non-empty allowlist; an empty
+  configured allowlist disables the check). Five serve flags wire it
+  (`-auth-oidc-issuer`, `-auth-oidc-client-id`,
+  `-auth-oidc-secret-file`, `-auth-oidc-redirect`,
+  `-auth-oidc-group`); the secret file is read per login, so rotation
+  takes effect on the next sign-in. The login panel mounts the
+  "Sign in with Pocket ID" button beside the passkey form; the routes
+  auto-mount at `/auth/oauth/pocketid/begin|callback` (library route
+  law — the registered callback URL is
+  `https://<host>/auth/oauth/pocketid/callback`). Every failure is a
+  classification-carrying `lens.oidc.*` rejection with actionable
+  journal text; the usermgmt provider contract is pinned by
+  `internal/oidclogin` tests + the stub IdP
+  (`internal/oidclogin/oidctest`) + `internal/web/auth_oidc_test.go`
+  (login redirect, callback, wrong-group deny, unverified-email deny).
+- **Deps:** `github.com/coreos/go-oidc/v3 v3.21.0` +
+  `golang.org/x/oauth2 v0.37.0` (the fleet pins; x/oauth2 deliberately
+  held below v0.38.0). `go mod tidy` after the wave dropped two stale
+  oauth2-graph entries.
+
 ### Fixed — 2026-11-05 (readiness told the truth neither way; a failed projection was silent)
 
 - **`/health/ready` no longer fails a healthy serve.** The projection

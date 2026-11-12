@@ -6,17 +6,17 @@
 
 **Verified this session, with the command that proved it:**
 
-| Claim | Proof |
-| --- | --- |
-| 26 buildflow findings, 17 pre-decided / 9 new | `buildflow -s cqrs-lint --format finding` diffed against `docs/cqrs-lint-policy.md` line by line |
-| DevShell cqrs-lint: exit 0, **27 findings (16 WARNING / 11 INFO), 0 ERROR** | `nix develop -c cqrs-lint .` → `/tmp/cqrs-lint-full.txt` (severity histogram + rule census) |
-| All 9 new finding sites read, not assumed | `view` on `internal/calls/viewkey.go`, `internal/web/queries.go:214-240`, `internal/web/userauth.go` (full), `cmd/pbx-lens/serve.go:445-495`, `internal/cli/system.go` |
-| Repo-wide golangci-lint green | `nix develop -c golangci-lint run ./...` → `0 issues.` |
-| Build + vet clean | `GOEXPERIMENT=jsonv2 go build ./... && go vet ./...` |
-| Full unit suite green | `GOEXPERIMENT=jsonv2 go test ./...` (exit 0) |
-| Nolint ledger gate green (was RED) | `bash scripts/check-nolint-ledger.sh` → `OK` (before: 3 `MISSING LEDGER ROW`, exit 1) |
-| Docs gates green | `check-docs-counts.sh` (69/10/37) + `check-doc-links.sh` (90 links, 0 broken) |
-| BuildFlow single-step green | `buildflow -s cqrs-lint --format finding` → exit 0 |
+| Claim                                                                       | Proof                                                                                                                                                                  |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 26 buildflow findings, 17 pre-decided / 9 new                               | `buildflow -s cqrs-lint --format finding` diffed against `docs/cqrs-lint-policy.md` line by line                                                                       |
+| DevShell cqrs-lint: exit 0, **27 findings (16 WARNING / 11 INFO), 0 ERROR** | `nix develop -c cqrs-lint .` → `/tmp/cqrs-lint-full.txt` (severity histogram + rule census)                                                                            |
+| All 9 new finding sites read, not assumed                                   | `view` on `internal/calls/viewkey.go`, `internal/web/queries.go:214-240`, `internal/web/userauth.go` (full), `cmd/pbx-lens/serve.go:445-495`, `internal/cli/system.go` |
+| Repo-wide golangci-lint green                                               | `nix develop -c golangci-lint run ./...` → `0 issues.`                                                                                                                 |
+| Build + vet clean                                                           | `GOEXPERIMENT=jsonv2 go build ./... && go vet ./...`                                                                                                                   |
+| Full unit suite green                                                       | `GOEXPERIMENT=jsonv2 go test ./...` (exit 0)                                                                                                                           |
+| Nolint ledger gate green (was RED)                                          | `bash scripts/check-nolint-ledger.sh` → `OK` (before: 3 `MISSING LEDGER ROW`, exit 1)                                                                                  |
+| Docs gates green                                                            | `check-docs-counts.sh` (69/10/37) + `check-doc-links.sh` (90 links, 0 broken)                                                                                          |
+| BuildFlow single-step green                                                 | `buildflow -s cqrs-lint --format finding` → exit 0                                                                                                                     |
 
 **NOT verified, and why:**
 
@@ -55,6 +55,7 @@ The operator ran `buildflow -s cqrs-lint --format finding` (exit 0, 26 findings:
 The heavier verification lanes: browser probes (`verify-all.sh`), race suite, `nix build` receipt, CI trigger, art-dupl gate — none run; the claims above rest on unit+lint+vet only. No CHANGELOG entry. No TODO_LIST harvest. Two old status reports (2026-10-25_08-53 f40, 2026-10-25_06-51 f36) carry C023 items this session RESOLVED — not annotated. The stale policy line "the flat domain has only two commands" (there are three: Record/Enrich/Retire) was noticed while re-reading and NOT fixed. I did not verify the makezero mechanism at source — the nolint comment asserts "fleet-wide false positive" on fleet precedent alone.
 
 **2. What is something stupid that we do anyway?**
+
 - cqrs-lint under two different binaries — every triage pass pays a reconciliation tax, and the two censuses can never match. Toolchain split brain.
 - BuildFlow preflight emits ~12 lines of known WARN (templ treefmt mapping ×12, binary freshness, DB size, dprint remote fetches, fingerprint drift) on EVERY run — warning fatigue; the operator will start pattern-matching past real warnings.
 - The nolint ledger gate matches by FILE BASENAME — one row per file satisfies it even if the file grows new nolints. Weaker than its stated spirit ("every nolint ... with its why").
