@@ -17,6 +17,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/storage/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
+	"github.com/larsartmann/pbx-lens/internal/oidclogin"
 	_ "modernc.org/sqlite"
 )
 
@@ -45,14 +46,21 @@ type Identity struct {
 	rpidValue string
 }
 
+// OIDCConfig re-exports the OIDC lane's configuration so cmd/ wires it
+// through web's vocabulary (alias, not a second type).
+type OIDCConfig = oidclogin.Config
+
 // IdentityConfig carries everything OpenIdentity needs. DSN is a SQLite
 // path (the file is created on first open); RPID/RPOrigins are the WebAuthn
 // Relying Party values and must match the browser-facing host exactly.
+// OIDC, when non-nil, enables the Pocket ID sign-in lane beside the passkey
+// panel (the group-gated SSO entrance; nil keeps passkey-only).
 type IdentityConfig struct {
 	DSN        string
 	RPID       string
 	RPOrigins  []string
 	CookieName string
+	OIDC       *oidclogin.Config
 	Logger     *slog.Logger
 }
 
@@ -153,7 +161,18 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		cookieName = defaultSessionCookie
 	}
 
-	service, err := usermgmt.NewService(usermgmt.ServiceConfig{
+	var oauthProvider *oidclogin.Provider
+
+	if cfg.OIDC != nil {
+		oauthProvider, err = oidclogin.New(*cfg.OIDC)
+		if err != nil {
+			_ = db.Close()
+
+			return nil, err
+		}
+	}
+
+	serviceCfg := usermgmt.ServiceConfig{
 		EventStore:       stores.events,
 		SessionStore:     stores.sessions,
 		CheckpointStore:  stores.checkpoint,
@@ -164,7 +183,12 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		AuditLog:         usermgmt.NewAuditLog(),
 		MaxUsers:         1,
 		Logger:           logger,
-	})
+	}
+	if oauthProvider != nil {
+		serviceCfg.OAuth2 = oauthProvider
+	}
+
+	service, err := usermgmt.NewService(serviceCfg)
 	if err != nil {
 		_ = db.Close()
 
@@ -174,14 +198,27 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		)
 	}
 
-	panel, err := loginpage.New(loginpage.Config{
+	pageCfg := loginpage.Config{
 		Service:          service,
 		Title:            "Sign in — pbx-lens",
 		Brand:            "pbx-lens",
 		Redirect:         "/",
 		CSSPath:          "/app.css",
 		NonceFromRequest: httputil.NonceFromRequest,
-	})
+	}
+	if oauthProvider != nil {
+		name := cfg.OIDC.Name
+		if name == "" {
+			name = oidclogin.DefaultProviderName
+		}
+
+		pageCfg.OAuth2Buttons = []loginpage.OAuth2Button{{
+			Provider: name,
+			Label:    "Sign in with Pocket ID",
+		}}
+	}
+
+	panel, err := loginpage.New(pageCfg)
 	if err != nil {
 		_ = service.Close()
 		_ = db.Close()
@@ -190,6 +227,11 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 			"lens.web.identity_loginpage",
 			"building the login page: "+err.Error(),
 		)
+	}
+
+	if oauthProvider != nil {
+		slog.Info("identity oidc enabled: Pocket ID sign-in rides /auth/oauth/pocketid/* beside the passkey panel",
+			"issuer", cfg.OIDC.Issuer, "redirect", cfg.OIDC.RedirectURL)
 	}
 
 	// Session enrichment first (reads the cookie into the context), then
@@ -363,15 +405,20 @@ func (i *Identity) Register(mux *http.ServeMux) {
 		WebAuthnRateLimit: usermgmt.RateLimitConfig{
 			Enabled: true, MaxRequests: webauthnRateLimitMax, Window: minuteWindow,
 		},
+		OAuthRateLimit: usermgmt.RateLimitConfig{
+			Enabled: true, MaxRequests: oauthRateLimitMax, Window: minuteWindow,
+		},
 	})
 	auth.RegisterRoutes(mux)
+	auth.RegisterOAuth2Routes(mux)
 }
 
 // Named auth-surface constants (mnd): the session cookie the gate and the
 // AuthHandler must agree on, the SQLite dialect string, the journal handle
 // cap, and the per-IP ceremony rate limits (registration 10/min — the door
 // is closed after one account anyway; WebAuthn 30/min — ceremonies are
-// 2 requests each, so 15 logins/min per peer is generous).
+// 2 requests each, so 15 logins/min per peer is generous; OAuth 30/min —
+// begin+callback is 2 requests, matching the WebAuthn cadence).
 const (
 	defaultSessionCookie = "session_token"
 	sqliteDialect        = "sqlite"
@@ -379,6 +426,7 @@ const (
 	identityMaxOpenConns  = 1
 	registrationRateLimit = 10
 	webauthnRateLimitMax  = 30
+	oauthRateLimitMax     = 30
 	minuteWindow          = time.Minute
 )
 

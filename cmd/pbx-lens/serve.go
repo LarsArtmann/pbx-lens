@@ -80,6 +80,34 @@ func serve(args []string) {
 		"comma-separated WebAuthn origins that must byte-match the browser address bar, "+
 			"scheme included (default: http://<addr>)",
 	)
+	authOIDCIssuer := fs.String(
+		"auth-oidc-issuer",
+		"",
+		"OIDC issuer base URL enabling the Pocket ID sign-in lane beside passkeys "+
+			"(empty = passkey-only; discovery is lazy — an IdP outage costs a login, never the boot)",
+	)
+	authOIDCClientID := fs.String(
+		"auth-oidc-client-id",
+		"",
+		"OIDC client id registered in the IdP (required with -auth-oidc-issuer)",
+	)
+	authOIDCSecretFile := fs.String(
+		"auth-oidc-secret-file",
+		"",
+		"OIDC client secret file, read per login (required with -auth-oidc-issuer; "+
+			"rotation takes effect on the next sign-in)",
+	)
+	authOIDCRedirect := fs.String(
+		"auth-oidc-redirect",
+		"",
+		"registered OIDC callback URL: https://<public-host>/auth/oauth/pocketid/callback",
+	)
+	authOIDCGroup := fs.String(
+		"auth-oidc-group",
+		"",
+		"comma-separated IdP groups allowed to sign in (fail-closed: a token claiming "+
+			"none of them is denied before any user matching)",
+	)
 	pollEvery := fs.Duration(
 		"poll-every",
 		cli.DefaultPollEvery,
@@ -143,7 +171,23 @@ func serve(args []string) {
 	var identity *web.Identity
 
 	if *authDB != "" {
-		identity, err = openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin)
+		var oidcCfg *web.OIDCConfig
+
+		if *authOIDCIssuer != "" {
+			oidcCfg = &web.OIDCConfig{
+				Issuer:           *authOIDCIssuer,
+				ClientID:         *authOIDCClientID,
+				ClientSecretFile: *authOIDCSecretFile,
+				RedirectURL:      *authOIDCRedirect,
+			}
+			for _, group := range strings.Split(*authOIDCGroup, ",") {
+				if group = strings.TrimSpace(group); group != "" {
+					oidcCfg.AllowedGroups = append(oidcCfg.AllowedGroups, group)
+				}
+			}
+		}
+
+		identity, err = openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin, oidcCfg)
 		if err != nil {
 			fatal(err)
 		}
@@ -430,15 +474,18 @@ func openServeIndex(
 }
 
 // openServeIdentity brings the identity context up. The caller checks the
-// -auth-db flag first, so an empty DSN never reaches here.
+// -auth-db flag first, so an empty DSN never reaches here. A non-nil oidc
+// enables the Pocket ID sign-in lane (validated by oidclogin.New — no
+// network at boot).
 func openServeIdentity(
 	ctx context.Context,
 	addr, authDB, authRPID, authOrigin string,
+	oidc *web.OIDCConfig,
 ) (*web.Identity, error) {
 	rpid, origins := deriveAuthDefaults(addr, authRPID, authOrigin)
 
 	identity, err := web.OpenIdentity(ctx, web.IdentityConfig{
-		DSN: authDB, RPID: rpid, RPOrigins: origins,
+		DSN: authDB, RPID: rpid, RPOrigins: origins, OIDC: oidc,
 	})
 	if err != nil {
 		return nil, err
@@ -446,7 +493,7 @@ func openServeIdentity(
 
 	slog.Info("identity enabled: the first visitor to /login becomes the operator "+
 		"(registration closes after the first account); passkeys need HTTPS or localhost",
-		"db", authDB, "rpid", rpid)
+		"db", authDB, "rpid", rpid, "oidc", oidc != nil)
 
 	return identity, nil
 }

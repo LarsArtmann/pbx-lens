@@ -153,6 +153,10 @@ func New(cfg Config) (*Provider, error) {
 	}, nil
 }
 
+// Names implements the usermgmt providerNamer capability so the loginpage
+// panel auto-detects the sign-in button from the service.
+func (p *Provider) Names() []string { return []string{p.cfg.providerName()} }
+
 // BeginLogin implements the nonce-less baseline of the OAuth2Provider
 // contract. The usermgmt service prefers the nonce-capable pair when the
 // state store supports it (its default does), so this pair is the fallback.
