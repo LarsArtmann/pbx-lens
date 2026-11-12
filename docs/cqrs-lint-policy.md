@@ -35,6 +35,25 @@ DECISION.
   one-shot CLI processes close the system at exit; a close error there has
   no recovery path and the event log is already durable. The serve process
   owns a stricter shutdown.
+- **C023 identity boot-failure cleanup (deliberate, 2026-11-12)**: the six
+  `_ = db.Close()` / `_ = service.Close()` sites in `internal/web/userauth.go`
+  (`OpenIdentity` + `openIdentityStores`) are all construction-failure
+  paths: a later wiring step failed, so the partially-opened handle closes
+  before returning the specific `lens.web.*` rejection that names the root
+  cause. The Close error has no channel there — the handle was opened in
+  the same call and nothing this process wrote needs a flush a Close error
+  could reveal (the documented contract: the caller never sees a half-open
+  database). Runtime shutdown IS strict: `Identity.Close` joins and returns
+  both errors and the tests assert it. Non-fix, same doctrine as P-class.
+- **C023 serve-side cleanup closures (deliberate, 2026-11-12)**: the two
+  `_ = index.Close()` sites in `cmd/pbx-lens/serve.go` (`openServeIndex`)
+  are the rebuild-failure path (the rebuild error is the actionable one; a
+  close error would only mask it) and `closeAll`, the documented one-unit
+  teardown whose contract is ORDER — the FTS handle flushes before the
+  journal closes — not an error check. `search.Index.Close` checks its own
+  `db.Close` for callers that can act on it. Same exit-path doctrine as
+  P-class; the `system.go:30` site in this run's census IS the covered
+  P-class site (`cli.OpenSystem`'s cleanup closure, now shared by serve).
 - **E003 (flat domain, DECIDED 2026-10-11: HOLD, seam pre-agreed)**: `internal/calls`
   mixes command/event/fold by design — the domain is one aggregate
   (Observation) with one projection; a split today would be ceremony, not
@@ -119,6 +138,30 @@ DECISION.
   the E003 trigger (a second aggregate), where registration count stops
   being trivial. The 2026-10-26 pass found the census UNCHANGED at 19
   findings (this B010 row was the only code missing a disposition).
+
+- **C044 LegacyRecordKey (deliberate, 2026-11-12)**: the rule exists to
+  catch accidental branded-ID `.String()` keys, and `calls.RecordKey`
+  (bare `.Get()`) is the canonical form everywhere else. `LegacyRecordKey`
+  is the documented exception: pre-v4.6.0 rows are keyed by the
+  marker-prefixed display form, so "fixing" it to `.Get()` would orphan
+  every historical call — `LookupView`'s fallback exists precisely so
+  those rows stay reachable (docs/gotchas.md record-key story). Non-fix.
+- **E023 identity satellite (deliberate, 2026-11-12)**: `internal/web`
+  mixes go-cqrs-lite usage with `database/sql` because the identity
+  context is the upstream cqrs-htmx usermgmt SQL recipe verbatim — event,
+  session, and checkpoint stores over one shared `*sql.DB`, the checkpoint
+  schema applied by hand (no self-migration). identity.db is not an
+  engine-tier store, and routing it through metaengine would fork the
+  upstream wiring this repo deliberately copies. The rule's own
+  suggestion text dismisses non-CQRS tables. Non-fix.
+- **Census 2026-11-12, two binaries**: the devShell gate (`nix develop -c
+  cqrs-lint .`, source-pinned, version "dev") reports 27 findings
+  (16 WARNING / 11 INFO, 0 ERROR) — everything dispositioned above plus
+  E005 ×3 and F026, whose entries predate this pass; it predates the
+  C044/E023 rules. BuildFlow's bundled cqrs-lint step reports 26
+  (14 WARNING / 12 INFO): its newer engine adds C044 + E023 and no longer
+  fires E005/F026. Both exit 0; every finding on either side carries a
+  disposition in this file.
 
 ## E003 verdict on the identity context (2026-11-12, post-adoption plan A15): NO TRIP
 
