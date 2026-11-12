@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -61,7 +62,12 @@ func IngestCoverageQuery(ctx context.Context, sys *system.System, now time.Time)
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		// Family-wrapped at construction (plan A18): the ops page logs this
+		// scan failure on every 30 s poll, so the record carries the scan
+		// name and the retryable family instead of a bare engine error.
+		return nil, errorfamily.WrapTransient(
+			err, "lens.web.coverage_scan_failed", "ingest coverage walk failed",
+		).WithContext("scan", "ingest-coverage")
 	}
 
 	rows := make([]CoverageRow, 0, len(byKind))
