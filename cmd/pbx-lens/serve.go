@@ -472,7 +472,8 @@ func deriveAuthDefaults(addr, rpidFlag, originFlag string) (string, []string) {
 	}
 
 	if rpidFlag == "" && originFlag != "" {
-		if u, parseErr := url.Parse(strings.TrimSpace(originFlag)); parseErr == nil && u.Hostname() != "" {
+		origins := strings.Split(originFlag, ",")
+		if u, parseErr := url.Parse(strings.TrimSpace(origins[0])); parseErr == nil && u.Hostname() != "" {
 			rpidFlag = u.Hostname()
 		}
 	}

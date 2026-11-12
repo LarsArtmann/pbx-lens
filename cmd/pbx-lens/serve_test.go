@@ -619,6 +619,92 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 	}
 }
 
+func TestDeriveAuthDefaults(t *testing.T) {
+	tests := []struct {
+		name       string
+		addr       string
+		rpidFlag   string
+		originFlag string
+		wantRPID   string
+		wantOrigin string
+	}{
+		{
+			name:       "both flags explicit win untouched",
+			addr:       "0.0.0.0:8300",
+			rpidFlag:   "pbx.example.com",
+			originFlag: "https://lens.example.com,https://alt.example.com",
+			wantRPID:   "pbx.example.com",
+			wantOrigin: "https://lens.example.com,https://alt.example.com",
+		},
+		{
+			name:       "origin without rpid takes the origin host",
+			addr:       "0.0.0.0:8300",
+			originFlag: "https://lens.example.com",
+			wantRPID:   "lens.example.com",
+			wantOrigin: "https://lens.example.com",
+		},
+		{
+			name:       "origin host wins over the ip listen address (deploy posture)",
+			addr:       "192.168.1.10:8300",
+			originFlag: "https://pbx.artmann.tech",
+			wantRPID:   "pbx.artmann.tech",
+			wantOrigin: "https://pbx.artmann.tech",
+		},
+		{
+			name:       "first origin of many seeds the rpid",
+			addr:       "127.0.0.1:8300",
+			originFlag: "https://a.example.com,https://b.example.com",
+			wantRPID:   "a.example.com",
+			wantOrigin: "https://a.example.com,https://b.example.com",
+		},
+		{
+			name:       "bare domain listen address maps directly",
+			addr:       "lens.example.com:8300",
+			wantRPID:   "lens.example.com",
+			wantOrigin: "http://lens.example.com:8300",
+		},
+		{
+			name:       "ip listen address collapses to localhost (dev posture)",
+			addr:       "192.168.1.10:8300",
+			wantRPID:   "localhost",
+			wantOrigin: "http://localhost:8300",
+		},
+		{
+			name:       "localhost listen address keeps localhost",
+			addr:       "localhost:8300",
+			wantRPID:   "localhost",
+			wantOrigin: "http://localhost:8300",
+		},
+		{
+			name:       "portless addr drops the origin port",
+			addr:       "localhost",
+			wantRPID:   "localhost",
+			wantOrigin: "http://localhost",
+		},
+		{
+			name:       "explicit rpid with bare addr keeps the listen-address origin",
+			addr:       "lens.example.com:8300",
+			rpidFlag:   "pbx.example.com",
+			wantRPID:   "pbx.example.com",
+			wantOrigin: "http://lens.example.com:8300",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotRPID, gotOrigins := deriveAuthDefaults(tt.addr, tt.rpidFlag, tt.originFlag)
+
+			if gotRPID != tt.wantRPID {
+				t.Errorf("RPID = %q, want %q", gotRPID, tt.wantRPID)
+			}
+
+			if got := strings.Join(gotOrigins, ","); got != tt.wantOrigin {
+				t.Errorf("origins = %q, want %q", got, tt.wantOrigin)
+			}
+		})
+	}
+}
+
 // TestBuildServiceConfigCSPNonceWiring covers the env-gated half of the CSP
 // rollout: with CSP_NONCE=1 the nonce middleware joins the chain (the
 // middleware's own behavior is pinned in internal/web), and the builder's
