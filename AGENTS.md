@@ -29,11 +29,11 @@ read-only deep link, never a data dependency.
 - **Language level:** go 1.27.3 in go.mod + `GOEXPERIMENT=jsonv2` (fleet
   house style; becomes load-bearing when a surface needs it).
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
-  + `templ-components/htmx`. No testify (banned; stdlib table-driven tests),
-  no cobra, no ORM. Promotion precedent: a module ALREADY in the graph rides
-  free. server_timing's mount is appkit's default since v0.12 (pbx-lens wires
-  no explicit timing middleware; `MeasureServerTiming` call sites are the
-  used surface); `entitytag` stays indirect (`go-etag/server` re-exports).
+  - `templ-components/htmx`. No testify (banned; stdlib table-driven tests),
+    no cobra, no ORM. Promotion precedent: a module ALREADY in the graph rides
+    free. server_timing's mount is appkit's default since v0.12 (pbx-lens wires
+    no explicit timing middleware; `MeasureServerTiming` call sites are the
+    used surface); `entitytag` stays indirect (`go-etag/server` re-exports).
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps). Tests boot through
   `app.DomainConfig()`/`app.DeploymentConfig(dsn)`; committed rapid `.fail`
@@ -126,22 +126,22 @@ read-only deep link, never a data dependency.
   (explicit `AllowUnauthenticated` opt-in; both beside the appkit
   `/health{,/live,/ready}` routes), `WriteTimeout: NoTimeout` — exports and
   the recording audio stream are unbounded by contract} + `systemd.Install`
-  + the identity session gate when `-auth-db` is set (empty = unauthenticated
-  localhost dev). The ExtraMiddlewares chain + ordering/ETag/no-cache
-  doctrine lives in docs/http-stack.md — read it before touching caching,
-  timing, or the recording route. Every UI route is a query or a proxy,
-  never a write. Exports and the dashboard STREAM via keyset pagination
-  (`StreamExportCalls`, 5k-row pages, memory-bounded); day buckets resolve
-  in Europe/Berlin (bare date filters too). htmx polling (R9):
-  `/frag/dashboard` 30 s, `/frag/staleness` 60 s, runtime self-hosted —
-  no CDN. `/api/ops` (R15) serves per-source + identity + age counters and
-  answers 503 with `scan_failures` when a scan fails (never a silent
-  partial 200). Detail page = READ-TIME join (rules in
-  docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List + dashboard
-  collapse duplicate source rows onto the representative row (CDR first;
-  `internal/web/representative.go`), export stays per-source. Analytics:
-  spend, "who calls what" segments (`?number=` drill-through), "how calls
-  end" rates — every figure carries its own denominator.
+  - the identity session gate when `-auth-db` is set (empty = unauthenticated
+    localhost dev). The ExtraMiddlewares chain + ordering/ETag/no-cache
+    doctrine lives in docs/http-stack.md — read it before touching caching,
+    timing, or the recording route. Every UI route is a query or a proxy,
+    never a write. Exports and the dashboard STREAM via keyset pagination
+    (`StreamExportCalls`, 5k-row pages, memory-bounded); day buckets resolve
+    in Europe/Berlin (bare date filters too). htmx polling (R9):
+    `/frag/dashboard` 30 s, `/frag/staleness` 60 s, runtime self-hosted —
+    no CDN. `/api/ops` (R15) serves per-source + identity + age counters and
+    answers 503 with `scan_failures` when a scan fails (never a silent
+    partial 200). Detail page = READ-TIME join (rules in
+    docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List + dashboard
+    collapse duplicate source rows onto the representative row (CDR first;
+    `internal/web/representative.go`), export stays per-source. Analytics:
+    spend, "who calls what" segments (`?number=` drill-through), "how calls
+    end" rates — every figure carries its own denominator.
 
 ## Domain
 
