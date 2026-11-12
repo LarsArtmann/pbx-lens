@@ -193,7 +193,7 @@ window.__ceremony = { prepareLoginOptions, prepareRegOptions, serializeAssertion
     );
 
     // --- BOOTSTRAP: first visitor becomes operator (P05.2) ----------------
-    await page.goto(`${BASE}/login`, { waitUntil: "networkidle0" });
+    await page.goto(`${LB}/login`, { waitUntil: "networkidle0" });
     await page.evaluate(CEREMONY_JS);
 
     async function pageFetch(url, opts) {

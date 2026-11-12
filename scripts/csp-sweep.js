@@ -17,6 +17,7 @@
 "use strict";
 
 const probe = require("./lib/ui-probe");
+const path = require("path");
 
 (async () => {
   const {
@@ -27,7 +28,7 @@ const probe = require("./lib/ui-probe");
   } = await probe.probeSession("/tmp/lens-csp");
   console.log("port:", PORT);
 
-  const { serve, browser } = await probe.launchProbe({
+  const { serve, browser, bin } = await probe.launchProbe({
     outDir: OUT,
     dbPath: DB,
     port: PORT,
@@ -116,6 +117,43 @@ const probe = require("./lib/ui-probe");
       }
     } else {
       console.log("detail page: no /calls/ link found in the seeded corpus — skipped");
+    }
+
+    // --- Login surface (2026-11-12 identity plan P05.9): the auth page
+    // sweeps under the same report-only policy on its own auth-enabled
+    // boot — the rest of the sweep is auth-free by design. The loginpage
+    // panel is nonce-stamped by construction (NonceFromRequest); this
+    // proves it in the reporting browser.
+    const loginPort = await probe.findFreePort();
+    const loginServe = await probe.serveProbe(
+      bin,
+      path.join(OUT, "login-index.db"),
+      loginPort,
+      ["-auth-db", path.join(OUT, "login-identity.db")],
+      { CSP_NONCE: "1", CSP_REPORT_ONLY: "1" },
+    );
+    try {
+      consoleSurface = "/login (auth boot)";
+      surfaces++;
+      const loginResp = await page.goto(`http://127.0.0.1:${loginPort}/login`, {
+        waitUntil: "networkidle2",
+      });
+      const reportOnly = loginResp.headers()["content-security-policy-report-only"];
+      console.log(
+        `/login (auth boot) -> ${loginResp.status()} report-only=${reportOnly ? "present" : "MISSING"}`,
+      );
+      if (!reportOnly) {
+        violations.push({ surface: "/login", text: "Content-Security-Policy-Report-Only header MISSING" });
+      }
+      const found = await page.evaluate(() => window.__cspViolations || []);
+      for (const v of found) {
+        violations.push({
+          surface: "/login",
+          text: `${v.directive} blocked=${v.blocked} sample=${JSON.stringify(v.sample)}`,
+        });
+      }
+    } finally {
+      probe.stopProbe(loginServe);
     }
   } finally {
     await browser.close();
