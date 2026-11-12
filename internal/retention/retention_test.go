@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/retention"
@@ -207,5 +208,28 @@ func observation(nativeID string, started time.Time) calls.Observation {
 		DurationSecs: 42,
 		FromNumber:   "+17287289311",
 		ToNumber:     "+15555550123",
+	}
+}
+
+func TestScanFailuresCarryFamilyCodes(t *testing.T) {
+	// The /api/ops 503-honest contract names a failed scan by its family
+	// code, so the retention scans wrap their engine errors at source:
+	// the code must survive the wrap, on both scans, against a dead store.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "retention-scan-failure.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	cleanup()
+
+	if _, _, err := retention.OldestView(ctx, sys); errorfamily.Code(err) != "lens.retention.oldest_scan_failed" {
+		t.Fatalf("OldestView on a closed store: code %q, want lens.retention.oldest_scan_failed (err: %v)", errorfamily.Code(err), err)
+	}
+
+	if _, err := retention.OldViews(ctx, sys, retention.Policy{MaxAge: time.Hour}, time.Now()); errorfamily.Code(err) != "lens.retention.overage_scan_failed" {
+		t.Fatalf("OldViews on a closed store: code %q, want lens.retention.overage_scan_failed (err: %v)", errorfamily.Code(err), err)
 	}
 }

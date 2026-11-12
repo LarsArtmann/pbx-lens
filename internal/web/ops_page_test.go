@@ -576,3 +576,42 @@ func TestOpsPayloadIdentitySection(t *testing.T) {
 		t.Errorf("auth-free payload = %v, want nil (no identity key, no empty card)", bare)
 	}
 }
+
+func TestOpsAPISurfacesScanFailures503Honest(t *testing.T) {
+	// The 503-honest contract: when a scan fails, /api/ops answers 503,
+	// names each failed scan by its family code, and KEEPS serving every
+	// section that stayed healthy — never a silent partial 200. A closed
+	// store fails all three ops scans at once, which is exactly the
+	// degraded posture the contract exists for.
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	t.Cleanup(cancel)
+
+	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "ops-scan-failure.db"))
+	if err != nil {
+		t.Fatalf("OpenSystem: %v", err)
+	}
+
+	mux := http.NewServeMux()
+	Register(mux, sys, Options{Ops: opsPollerPayload(), RetentionMaxAge: 24 * time.Hour})
+
+	cleanup()
+
+	status, body := getBody(t, mux, "/api/ops")
+	if status != http.StatusServiceUnavailable {
+		t.Fatalf("GET /api/ops status = %d, want 503 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{
+		`"scan_failures":[`,
+		`"scan":"retention-oldest","code":"lens.retention.oldest_scan_failed"`,
+		`"scan":"retention-over-age","code":"lens.retention.overage_scan_failed"`,
+		`"scan":"ingest-coverage","code":"lens.web.coverage_scan_failed"`,
+		// The sections that stayed alive keep serving beside the failures.
+		`"retention":{"max_age_seconds":86400,"active":true`,
+		`"sources"`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/api/ops scan-failure payload missing %s (body: %s)", want, body)
+		}
+	}
+}
