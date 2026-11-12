@@ -565,7 +565,9 @@ func TestOpsPayloadIdentitySection(t *testing.T) {
 		`"rpid":"lens.example.com"`,
 		`"users":1`,
 		`"sessions":2`,
-		`"audit_actions":{"credential_used":2,"register":1}`,
+		// json/v2's map ordering is deterministic but not v1's lexicographic
+		// sort — pin the actual v2 output, not the v1 assumption.
+		`"audit_actions":{"register":1,"credential_used":2}`,
 	} {
 		if !strings.Contains(string(encoded), want) {
 			t.Errorf("identity section missing %s (got %s)", want, encoded)
