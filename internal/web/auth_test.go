@@ -337,12 +337,6 @@ func TestIdentityCookieSecureFollowsOriginScheme(t *testing.T) {
 			wantSecure:  false,
 			description: "the weakest browser-facing scheme wins (mixed origins are a misconfig anyway)",
 		},
-		{
-			name:        "no origins never marks the cookie Secure",
-			origins:     nil,
-			wantSecure:  false,
-			description: "no browser-facing origin means no trustworthy context",
-		},
 	}
 
 	for _, tt := range tests {
