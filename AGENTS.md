@@ -248,12 +248,17 @@ Concurrent sessions + daemon: docs/concurrency.md.
   chain, component map), **docs/research/README.md** (the deep-dive index).
 - **docs/review/libs/** (2026-11-04 fleet utilization audit; every finding
   closed the same day; REFRESHED 2026-11-11 when the cqrs-htmx flip-trigger
-  fired and the usermgmt adoption landed) — per-lib reports + index.html for
+  fired and the usermgmt adoption landed; RE-VERIFIED 2026-11-12 — every
+  report re-checked against fetched tags, cqrs-htmx.md rewritten to ADOPTED,
+  the missing cmdguard.md + httputil-endpoints.md landed, index re-shot) —
+  per-lib reports + index.html for
   ALL 22 first-party libs. Post-refresh scores: cqrs-lite core 92 (pooled
   ≈81), templ-components 95, go-etag 95, go-error-family 82, httputil 80,
-  appkit 73, server_timing 67, cqrs-htmx ADOPTED (usermgmt/loginpage);
-  11 not imported, each with a documented reason or a named flip-trigger
-  (REJECT ×8, DEFER ×2: go-retry/go-atomic-write, PATTERN-ONLY ×1:
+  appkit 73, server_timing 67, cqrs-htmx 78 (ADOPTED, usermgmt/loginpage/
+  webauthn leaf modules; root stays indirect);
+  14 not imported directly, each with a documented reason or a named flip-trigger
+  (REJECT ×11, DEFER ×2: go-retry/go-atomic-write — both indirect riders with
+  zero pbx-lens imports, PATTERN-ONLY ×1:
   go-output). Refresh a report on its pin bump or when its flip-trigger
   fires. Audit sessions default to report-then-wait and execute only on the
-  operator's explicit order (2026-11-04 and again 2026-11-11).
+  operator's explicit order (2026-11-04, 2026-11-11, and again 2026-11-12).

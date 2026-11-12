@@ -26,7 +26,7 @@ re-score had already replaced every second-hand note with a verified one:
 | 2026-10-24 templ-components  | 91/100 at the v1.23.0 pin        | "Delta appendix" records the 2026-10-25 re-run; the per-component truth moved to docs/templ-components-adoption.md, and the fleet score is 95 at v1.26.0 |
 | 2026-10-25 appkit + templ    | 73/100 + 86/100                  | appkit still 73 (v0.10 watch open); the 86 is the templ CODEGEN score, not the components score — the index keeps them distinct                          |
 
-**Fleet-wide audit (2026-11-04, re-scored 2026-11-05):** [docs/review/libs/index.html](../review/libs/index.html) scores ALL 19 first-party libraries against pbx-lens — 7 used (cqrs-lite core 92 pooled ≈81, templ-components 95, go-etag 95, go-error-family 82, httputil 80, appkit 73, server_timing 67; mean 83, every finding closed) and 12 not imported, each with a documented reason or a named flip-trigger (REJECT ×9, DEFER ×2, PATTERN-ONLY ×1, ADOPT-PARTIAL ×1). Scores in the index are POST-closeout; the audit-day numbers (mean 71) stay in the derivation paragraph so the delta is visible. Per-lib detail lives beside that index as 19 markdown reports. Refresh a lib's report on its pin bump or when its flip-trigger fires.
+**Fleet-wide audit (2026-11-04; re-scored 2026-11-05; refreshed 2026-11-11 — cqrs-htmx flip — and 2026-11-12 — full re-verification pass):** [docs/review/libs/index.html](../review/libs/index.html) scores ALL 22 first-party libraries against pbx-lens — 8 used (cqrs-lite core 92 pooled ≈81, templ-components 95, go-etag 95, go-error-family 82, httputil 80, cqrs-htmx 78 adopted surface, appkit 73, server_timing 67; mean 83, every finding closed) and 14 not imported directly, each with a documented reason or a named flip-trigger (REJECT ×11, DEFER ×2 — go-retry/go-atomic-write; both ride the graph indirectly with zero pbx-lens imports, PATTERN-ONLY ×1: go-output). Scores in the index are POST-closeout; the audit-day numbers (mean 71) stay in the derivation paragraph so the delta is visible. Per-lib detail lives beside that index as 22 markdown reports. Refresh a lib's report on its pin bump or when its flip-trigger fires.
 
 Refresh policy: a deep-dive is a snapshot. Re-run the census + score after
 major actions on its subject (the templ-components report's delta appendix
@@ -34,8 +34,8 @@ records its 2026-10-25 re-run) or on the next pin bump; append deltas
 non-destructively to the existing report.
 
 Report screenshot policy (decided 2026-11-05): the fleet index's proof render
-(`docs/review/libs/index-screenshot.png`) is COMMITTED uncompressed — ≈1.6 MB
-at 1280×11026. It is the only visual evidence for a report that nobody can
+(`docs/review/libs/index-screenshot.png`) is COMMITTED uncompressed — ≈2.3 MB
+at 1440×full-page (re-shot 2026-11-12; the 2026-11-05 shot was ≈1.6 MB at 1280×11026). It is the only visual evidence for a report that nobody can
 eyeball from a diff, this host ships no PNG optimizer (`oxipng`, `pngquant`,
 `optipng`, `zopflipng` all absent), and a lossy quantizer would degrade the
 exact text the screenshot exists to prove. Rules: render AFTER the final
