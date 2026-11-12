@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
@@ -141,7 +143,7 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 				"lens.web.list_cursor_stalled",
 				"more than one batch of calls share started_at "+rfc3339Nano(cursor)+
 					"; narrow the list with from/to filters",
-			)
+			).WithContextMap(stallContext(cursor, batch))
 		}
 
 		cursor = next
@@ -335,7 +337,7 @@ func streamViews(
 				"lens.web.export_cursor_stalled",
 				"more than one page of calls share started_at "+rfc3339Nano(cursor)+
 					"; narrow the export with from/to filters",
-			)
+			).WithContextMap(stallContext(cursor, views))
 		}
 
 		cursor = advanceCursor(cursor, views, seen)
@@ -365,6 +367,24 @@ func streamPageOptions(cursor time.Time, query ListCallsQuery) []metaengine.Scan
 // dedupeKey identifies a stream across the page boundary tie set.
 func dedupeKey(view calls.CallView) string {
 	return string(view.Kind) + "\x00" + string(view.NativeID)
+}
+
+// stallContext is the errorfamily context a stalled keyset walk attaches at
+// construction (plan A18): the cursor plus the colliding page's stream ids —
+// the export error marker and LogErrorContext both consume the map, so a
+// stalled walk says WHICH calls share the timestamp, not just that one does.
+func stallContext(cursor time.Time, views []calls.CallView) map[string]string {
+	keys := make([]string, 0, len(views))
+	for _, view := range views {
+		keys = append(keys, string(view.Kind)+":"+string(view.NativeID))
+	}
+
+	sort.Strings(keys)
+
+	return map[string]string{
+		"cursor":     rfc3339Nano(cursor),
+		"stream_ids": strings.Join(keys, ","),
+	}
 }
 
 // advanceCursor moves the keyset to the page's last (oldest) row and
