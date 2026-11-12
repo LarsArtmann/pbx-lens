@@ -8,9 +8,42 @@ usermgm via cqrs-htmx"** — execute the cqrs-htmx flip-trigger that the
 
 **Headline: the identity integration is LANDED and green end-to-end (build,
 full test suite, lint 0, cqrs-lint 0, dedup gate 0, nix package build green
-after vendor-hash repair, devshell repaired and green). The audit-refresh
+after vendor-hash repair, devshell repaired and green). ~~The audit-refresh
 half of the session is NOT started beyond research — the reports still say
-2026-11-04.**
+2026-11-04.~~ **RESOLVED in the 2026-11-12 continuation pass — see §R.**
+
+---
+
+## R) RESOLVED 2026-11-12 (continuation pass, receipts inline)
+
+The audit-refresh half of the order is DONE, and every §b/§c item it covers
+is closed:
+
+- **All 22 per-lib reports at docs/review/libs/ are current** (fetched-tag
+  verified per repo, fetch succeeded everywhere): cqrs-htmx.md REWRITTEN to
+  **ADOPTED, 78/100 adopted surface** (§c1); the 2026-11-04 snapshots got
+  verified Refreshed-2026-11-12 lines (go-appkit: D4 shipped in v0.10.0,
+  de-dup actionable on bump, v0.11.0 needs go ≥1.27.3 — matches; go-etag:
+  v0.7.0 is root-only, server@v0.7.0 not on the proxy, filing #2 OPEN;
+  templ-components: 95/100 stands, six filings closed post-pin, duplicate
+  `</script>` already fixed on master — no filing needed; go-cqrs-lite:
+  92/100 stands, versions.json parity obsolete 17/30 all toward latest;
+  go-retry + go-idempotency: now INDIRECT riders with zero imports, verdicts
+  stand; the missing cmdguard.md + httputil-endpoints.md landed) (§c2).
+- **index.html rebuilt**: 22-lib fleet table (8 used / 14 not imported),
+  counts, sidebar, scorecard labels, verify block; **index-screenshot.png
+  re-rendered** full-page 1440w via the ui-probe chromium path (§c2).
+- **docs/research/README.md fleet row updated to the 22/8/14 state** (§c3);
+  **DOMAIN_LANGUAGE.md gained "Identity and access"** (§c4); **TODO_LIST
+  gained the logout-affordance row** + the identity-posture decision row
+  (§c5); **CHANGELOG gained the 2026-11-12 Added + Fixed entries** (§c7);
+  **nix flake check EXIT 0** after the flake edits (§c8); AGENTS.md fleet
+  line re-synced (22 libs, 78/100 cqrs-htmx, 14-not-imported counts).
+- **Verification ladder green:** build/vet/full test suite, golangci-lint 0
+  issues, cqrs-lint exit 0, dedup gate 0 groups, nix build + devshell
+  `echo ok` both EXIT 0, docs-counts + doc-links gates green (the lane
+  caught the unindexed status report + two dead httputil links — both fixed).
+  Still open from §b: the login-page render check (§b4) and §c6/§c9/§c10.
 
 ---
 
@@ -98,7 +131,7 @@ half of the session is NOT started beyond research — the reports still say
 
 ## b) PARTIALLY DONE
 
-1. **The fleet-audit refresh (half the original order) — reports untouched.**
+1. **The fleet-audit refresh (half the original order) — reports untouched.** **[DONE 2026-11-12 evening — §R; all 22 reports verified current, cqrs-htmx.md ADOPTED 78/100, index + screenshot rebuilt]**
    Version-currency sweep DONE (22 repos, latest tags recorded); the
    research is in hand; the WRITING is not started. In detail:
    - `docs/review/libs/cqrs-htmx.md` still says **NOT USED /
@@ -108,7 +141,7 @@ half of the session is NOT started beyond research — the reports still say
      stale in the reports: go-etag v0.7.0, go-sse v0.7.0, appkit v0.12.0,
      templ-components v1.27.0 — all now current or MVS-landed).
    - `index.html` not rebuilt; `index-screenshot.png` not re-rendered.
-2. **templ-components adoption map** (`docs/templ-components-adoption.md`):
+2. **templ-components adoption map** (`docs/templ-components-adoption.md`): **[DONE 2026-11-12 evening — steps 2/3/4/7 executed (all six filings CLOSED upstream post-pin, verified in the v1.27.0 module cache; workarounds stay until the next release), the three new rows written (icon-text space, nonce-less validity bridge, duplicate `</script>` — the last verified ALREADY FIXED on master, no filing needed)]**
    checklist steps 1/5/6/8 executed; steps 2 (re-audit ABSENT/rejected
    rows against the new module cache), 3 (hand-rolled thin pieces
    re-check), 4 (open filings #48–#51 re-read), 7 (filings-ledger state
