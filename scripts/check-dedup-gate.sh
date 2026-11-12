@@ -28,10 +28,16 @@ if ! command -v art-dupl >/dev/null 2>&1; then
 	exit 0
 fi
 
-if ! art-dupl version 2>/dev/null | grep -q "$pin"; then
+# Capture before matching: under `set -o pipefail`, `art-dupl version |
+# grep -q` races — grep exits at the first match, art-dupl can eat a
+# SIGPIPE mid-write, and the pipeline then fails even though the pin
+# matched (paid 2026-11-12: the gate refused a correctly-pinned binary).
+dupl_version="$(art-dupl version 2>/dev/null | head -1)"
+
+if ! grep -q "$pin" <<<"$dupl_version"; then
 	echo "check-dedup-gate: art-dupl on PATH is not the CI pin (${pin}); refusing an unverifiable verdict." >&2
 	echo "  fix: nix develop -c go install github.com/LarsArtmann/art-dupl/cmd/art-dupl@${pin}" >&2
-	echo "  on PATH now: $(art-dupl version 2>/dev/null | head -1)" >&2
+	echo "  on PATH now: ${dupl_version:-<no output>}" >&2
 	exit 1
 fi
 

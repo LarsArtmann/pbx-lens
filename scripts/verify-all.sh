@@ -31,10 +31,15 @@ cd "$(git rev-parse --show-toplevel)"
 # screenshot-probe untouched.
 FAST=0
 BASELINE_FLAG=""
+REPLAY=0
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 	--fast)
 		FAST=1
+		shift
+		;;
+	--replay)
+		REPLAY=1
 		shift
 		;;
 	--baseline)
@@ -113,6 +118,15 @@ pass check-doc-links
 echo "=== check-doc-test-claims ==="
 bash scripts/check-doc-test-claims.sh
 pass check-doc-test-claims
+
+# Report-command replay (plan A21, opt-in): every ```console block in the
+# review reports re-derives live — a doc command that no longer runs is a
+# FAIL. Opt-in because it shells out ~80 commands (subsecond each, but it
+# reads the module cache and the producer checkouts).
+if [ "$REPLAY" -eq 1 ]; then
+	echo "=== replay-report-verify ==="
+	bash scripts/replay-report-verify.sh && pass "replay-report-verify"
+fi
 
 echo "=== verify-ui-contract ==="
 node scripts/verify-ui-contract.js
