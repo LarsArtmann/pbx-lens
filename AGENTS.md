@@ -256,9 +256,9 @@ Concurrent sessions + daemon: docs/concurrency.md.
   ≈81), templ-components 95, go-etag 95, go-error-family 82, httputil 80,
   appkit 73, server_timing 67, cqrs-htmx 78 (ADOPTED, usermgmt/loginpage/
   webauthn leaf modules; root stays indirect);
-  14 not imported directly, each with a documented reason or a named flip-trigger
-  (REJECT ×11, DEFER ×2: go-retry/go-atomic-write — both indirect riders with
-  zero pbx-lens imports, PATTERN-ONLY ×1:
-  go-output). Refresh a report on its pin bump or when its flip-trigger
+  14 not imported directly (4 of them indirect-only riders with zero pbx-lens
+  imports: codec/sse/idempotency/retry), each with a documented reason or a
+  named flip-trigger (REJECT ×11, DEFER ×2: go-retry/go-atomic-write,
+  PATTERN-ONLY ×1: go-output). Refresh a report on its pin bump or when its flip-trigger
   fires. Audit sessions default to report-then-wait and execute only on the
   operator's explicit order (2026-11-04, 2026-11-11, and again 2026-11-12).

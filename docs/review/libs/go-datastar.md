@@ -33,7 +33,7 @@ v0.7.0 == proxy latest (2026-11-11); upstream pace healthy (last commit 2026-10-
 
 ```console
 rg -n "go-datastar" go.mod go.sum                        # zero hits
-rg -rn "datastar" internal/ cmd/ --type go               # zero imports
+rg -n "datastar" internal/ cmd/ --type go               # zero imports
 rg -n "text/event-stream" internal/ --type go            # zero SSE surfaces (the R9 proof)
 rg -n "R9" AGENTS.md | head -3                           # the recorded doctrine
 ```
