@@ -71,9 +71,9 @@ All three recommendations executed the day of this audit:
    (`timing.go:18-25`) and its false justifying comment are deleted. A/B
    bench: allocs/op identical (1216–1218 both trees), ns/op inside box
    noise — performance-neutral.
-2. Gating decision recorded: UNCONDITIONAL (single-operator htpasswd;
-   `ServerTimingMiddlewareWhen` is the named escape for any future public
-   route) — docs/http-stack.md middleware item 3.
+2. Gating decision recorded: UNCONDITIONAL (single-operator, behind the identity
+   session gate since 2026-11-11; `ServerTimingMiddlewareWhen` is the named escape
+   for any future public route) — docs/http-stack.md middleware item 3.
 3. All false-claim carriers corrected (timing.go comment deleted with the
    wrapper, http-stack.md rewritten, AGENTS.md shrunk to a pointer, the
    2026-10-12 HTML carries an errata on finding #2). A guard test pins
@@ -82,6 +82,15 @@ All three recommendations executed the day of this audit:
 Score movement: 33/50 → 67/67 (the wrapper-divergence penalty is gone;
 the remaining gap is the two never-applicable plumbing primitives and the
 recorded When-decline).
+
+## 2026-11-12 postscript — the last explicit wiring is gone (plan A10)
+
+The appkit v0.12 bump deleted `serve.go`'s explicit `ServerTimingMiddleware()`
+append entirely: appkit mounts the library middleware OUTERMOST by default
+(since v0.10), so pbx-lens now configures the timing stack with zero wiring
+and the header observes the full span including the identity gate. The
+library constructor's `MeasureServerTiming`/`When` surface is unchanged —
+11 call sites untouched, the pre-first-write stop rule unchanged.
 
 ## How to verify
 

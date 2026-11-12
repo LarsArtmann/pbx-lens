@@ -204,6 +204,7 @@ func serve(args []string) {
 			Recordings: recordings, Search: index, Log: slogLog,
 			Ops: opsProvider, Cache: cacheStats,
 			RetentionMaxAge: *maxAge, AuthEnabled: identity != nil,
+			Identity: identity,
 		},
 	)
 

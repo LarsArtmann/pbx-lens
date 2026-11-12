@@ -1,7 +1,9 @@
 package web
 
 import (
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
@@ -31,6 +33,9 @@ templ opsRoute(nonce string, csrf string, authed bool, snap opsSnapshot) {
 			@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 				@opsRetentionCard(snap.Retention)
 				@opsCoverageCard(snap.Coverage, snap.CoverageNow)
+				if snap.Identity != nil {
+					@opsIdentityCard(*snap.Identity)
+				}
 				if snap.Poller != nil {
 					@opsPollerCard(*snap.Poller)
 				}
@@ -40,6 +45,62 @@ templ opsRoute(nonce string, csrf string, authed bool, snap opsSnapshot) {
 			}
 		}
 	}
+}
+
+// opsIdentityCard is the native-login card (plan P08): the counts the one
+// operator account generates — live sessions, the audit ring's action
+// mix, and how much of the ring already rolled over. Absent entirely on
+// an auth-free boot (no identity, no card, no fake zeros).
+templ opsIdentityCard(identity IdentityOps) {
+	@display.Card(display.CardProps{Title: "Login & sessions", TitleTag: display.HeadingTagH2, Class: "lens-ops-card"}) {
+		@display.DefinitionList(display.DefinitionListProps{Items: []display.DefinitionItem{
+			{Term: "Relying Party ID", Detail: identity.RPID},
+			{Term: "Operator accounts", Detail: strconv.Itoa(identity.Users)},
+			{Term: "Live sessions", Detail: opsSessionsText(identity.Sessions)},
+			{Term: "Audit events", Detail: strconv.Itoa(identity.AuditTotal) + opsDroppedText(identity.AuditDropped)},
+		}})
+		if len(identity.AuditActions) > 0 {
+			@display.DefinitionList(display.DefinitionListProps{Items: auditActionItems(identity.AuditActions)})
+		}
+	}
+}
+
+// opsSessionsText keeps the unknown state honest: a failed COUNT renders
+// "unknown", never zero.
+func opsSessionsText(sessions *int) string {
+	if sessions == nil {
+		return "unknown (session count query failed)"
+	}
+
+	return strconv.Itoa(*sessions)
+}
+
+// opsDroppedText names the ring rollover only when it happened.
+func opsDroppedText(dropped int) string {
+	if dropped == 0 {
+		return ""
+	}
+
+	return " (" + strconv.Itoa(dropped) + " older evicted)"
+}
+
+// auditActionItems renders the per-action counts, largest first — the
+// login story (credential_used) surfaces before ceremony noise.
+func auditActionItems(actions map[string]int) []display.DefinitionItem {
+	items := make([]display.DefinitionItem, 0, len(actions))
+
+	for action, count := range actions {
+		items = append(items, display.DefinitionItem{
+			Term:   "Audit · " + action,
+			Detail: strconv.Itoa(count),
+		})
+	}
+
+	slices.SortStableFunc(items, func(a, b display.DefinitionItem) int {
+		return strings.Compare(a.Term, b.Term)
+	})
+
+	return items
 }
 
 // opsCoverageCard answers "is the index drying up" (plan P17): what each

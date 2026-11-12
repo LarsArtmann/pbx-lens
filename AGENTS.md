@@ -64,10 +64,11 @@ read-only deep link, never a data dependency.
 - **UI trio (2026-10-11, F3/F4; coordinated bump 2026-11-11 → tc v1.27.0 +
   templ v0.3.1100, checklist step 8 landed; v1.27's tcValidity bridge needs
   `Nonce` on EVERY forms.Form — the three filter/search/range forms thread
-  it): `go-appkit` v0.9.0 (HTTP service shell: NewService → svc.Mux, svc.Run
-  owns SIGINT/SIGTERM + graceful drain; v0.10 WATCH: Server-Timing becomes
-  the default outermost middleware — delete the serve.go wiring on bump,
-  docs/review/libs/go-appkit.md), `templ-components` v1.27.0
+  it): `go-appkit` v0.12.0 (HTTP service shell: NewService → svc.Mux, svc.Run
+  owns SIGINT/SIGTERM + graceful drain; bumped 2026-11-12 from v0.9.0 — the
+  v0.10+ Server-Timing-default watch EXECUTED: the serve.go wiring is deleted,
+  the header is appkit's default outermost; `RegisterClassifications()` wired
+  at boot, docs/review/libs/go-appkit.md), `templ-components` v1.27.0
   (display/forms/feedback/layout/navigation), `a-h/templ` v0.3.1100 (codegen;
   manual bumps only — a dependabot templ PR mangles this go.mod; ≥v1.27
   templ-components needs templ ≥v0.3.1100 — ONE coordinated bump). templ

@@ -7,14 +7,17 @@
 
 ## Middleware chain
 
-appkit defaults: Recovery → RequestID → Logging → Timeout(30s) →
-SecurityHeaders; `ExtraMiddlewares` are appended inner of the defaults.
+appkit defaults (since the v0.12 bump, 2026-11-12): **Server-Timing → Recovery
+→ RequestID → Logging → [Timeout(30s)] → SecurityHeaders** — Server-Timing is
+the appkit default OUTERMOST middleware (v0.10+), so the header observes the
+full span including auth; pbx-lens wires NO explicit timing middleware.
 `WriteTimeout: appkit.NoTimeout` drops the Timeout middleware — exports and
 the recording WAV stream are unbounded by contract, and the former 30 s
 deadline truncated both (`StreamExportCalls` honors ctx; the WAV proxy
 builds its upstream request on `r.Context()`).
 
-ExtraMiddlewares, in strict order:
+ExtraMiddlewares, in strict order (Server-Timing left this list on the
+appkit v0.12 bump — it is the default stack's outermost entry, ABOVE these):
 
 1. **auth** — the identity session gate when `-auth-db` is set (2026-11-11
    usermgmt adoption; the htpasswd middleware it replaced is gone from the
@@ -51,10 +54,13 @@ ExtraMiddlewares, in strict order:
    are ours while the default's `X-Frame-Options: DENY` survives untouched.
    Header-only and set before the first write, so every value rides into
    304 revalidations. Pinned by `TestSecurityHeadersContract`.
-3. **`servertiming.ServerTimingMiddleware()`** (library constructor since
-   v1.0.1; the pre-constructor hand-wrap around `WrapServerTiming` was
-   deleted by the 2026-11-04 swap — one wrapper, the library's). Gating
-   decision: UNCONDITIONAL — the serve UI is single-operator behind the
+3. **Server-Timing** — NO explicit wiring since the appkit v0.12 bump
+   (2026-11-12): the library middleware is appkit's default OUTERMOST stack
+   entry (v0.10+; the explicit `servertiming.ServerTimingMiddleware()` append
+   that sat here between CSP and Compression was deleted on the bump). The
+   library constructor was adopted 2026-11-04 (the pre-constructor hand-wrap
+   around `WrapServerTiming` was deleted then — one wrapper, the library's).
+   Gating decision: UNCONDITIONAL — the serve UI is single-operator behind the
    identity session gate (login is the operator's own passkey), the header's
    timing detail is accepted leak surface, and the
    probes pin header presence; if a public route ever appears,

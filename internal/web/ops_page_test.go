@@ -2,6 +2,7 @@ package web
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -485,5 +486,92 @@ func TestOpsPageAndAPICarryCoverage(t *testing.T) {
 		if !strings.Contains(body, want) {
 			t.Errorf("/api/ops missing coverage key %q", want)
 		}
+	}
+}
+
+// TestIdentityOpsSnapshot pins the /api/ops identity section (plan P08):
+// the counts are the real reads (users from the read model, sessions from
+// the shared handle), the audit ring aggregates per-action, and the RPID
+// is the configured one. Sessions stays a pointer — null on a failed
+// COUNT, never a fake zero.
+func TestIdentityOpsSnapshot(t *testing.T) {
+	identity := openTestIdentity(t)
+
+	handler := identityHandler(t, identity)
+	loginSession(t, handler, "operator@pbx.lens")
+
+	snapshot := identity.OpsSnapshot()
+
+	if !snapshot.Enabled {
+		t.Error("identity snapshot Enabled = false, want true")
+	}
+
+	if snapshot.RPID != "localhost" {
+		t.Errorf("snapshot RPID = %q, want localhost (the test fixture's RPID)", snapshot.RPID)
+	}
+
+	if snapshot.Users != 1 {
+		t.Errorf("snapshot Users = %d, want 1 (the registered operator)", snapshot.Users)
+	}
+
+	if snapshot.Sessions == nil || *snapshot.Sessions != 1 {
+		t.Errorf("snapshot Sessions = %v, want 1 live session", snapshot.Sessions)
+	}
+
+	if snapshot.AuditTotal == 0 {
+		t.Error("audit ring recorded nothing — the register ceremony must land in the audit log")
+	}
+
+	if snapshot.AuditActions["register"] != 1 {
+		t.Errorf("audit register count = %d, want 1", snapshot.AuditActions["register"])
+	}
+}
+
+// TestOpsPayloadIdentitySection pins the /api/ops wire shape for the
+// native-login section (plan P08.3): the identity key rides as a sibling
+// of cache/coverage/retention, absent entirely when identity is unwired
+// (no empty card on auth-free boots).
+func TestOpsPayloadIdentitySection(t *testing.T) {
+	sessions := 2
+	identity := IdentityOps{
+		Enabled:      true,
+		RPID:         "lens.example.com",
+		Users:        1,
+		Sessions:     &sessions,
+		AuditTotal:   3,
+		AuditDropped: 0,
+		AuditActions: map[string]int{"register": 1, "credential_used": 2},
+	}
+
+	payload := composeOpsPayload(nil, nil, nil, nil, &identity)
+	wire, ok := payload.(map[string]any)
+	if !ok {
+		t.Fatalf("payload type %T, want map with an identity section", payload)
+	}
+
+	section, present := wire["identity"]
+	if !present {
+		t.Fatal("identity section missing from the ops payload")
+	}
+
+	encoded, err := json.Marshal(section)
+	if err != nil {
+		t.Fatalf("marshal identity section: %v", err)
+	}
+
+	for _, want := range []string{
+		`"enabled":true`,
+		`"rpid":"lens.example.com"`,
+		`"users":1`,
+		`"sessions":2`,
+		`"audit_actions":{"credential_used":2,"register":1}`,
+	} {
+		if !strings.Contains(string(encoded), want) {
+			t.Errorf("identity section missing %s (got %s)", want, encoded)
+		}
+	}
+
+	if bare := composeOpsPayload(nil, nil, nil, nil, nil); bare != nil {
+		t.Errorf("auth-free payload = %v, want nil (no identity key, no empty card)", bare)
 	}
 }
