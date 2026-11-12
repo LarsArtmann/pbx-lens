@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -450,11 +451,16 @@ func openServeIdentity(
 }
 
 // deriveAuthDefaults resolves the WebAuthn Relying Party values. An
-// explicit -auth-rpid/-auth-origin wins; otherwise a domain listen address
-// maps directly (host is the RPID, http://addr the origin), while an IP or
-// localhost address collapses to RPID "localhost" — WebAuthn forbids
-// IP-address RPID outright (go-webauthn refuses 127.0.0.1 at construction),
-// and the browser-facing address for local dev is http://localhost:<port>.
+// explicit -auth-rpid/-auth-origin wins; an origin without an RPID takes
+// the origin's host (WebAuthn needs the RPID to be a registrable suffix
+// of the origin host, and the origin host itself is always valid — while
+// the listen address on a deployed host is an IP or loopback name no
+// browser-facing origin shares). Only a bare address falls back to the
+// listen-address mapping: a domain listen address maps directly (host is
+// the RPID, http://addr the origin), while an IP or localhost address
+// collapses to RPID "localhost" — WebAuthn forbids IP-address RPID
+// outright (go-webauthn refuses 127.0.0.1 at construction), and the
+// browser-facing address for local dev is http://localhost:<port>.
 func deriveAuthDefaults(addr, rpidFlag, originFlag string) (string, []string) {
 	if rpidFlag != "" && originFlag != "" {
 		return rpidFlag, strings.Split(originFlag, ",")
@@ -463,6 +469,12 @@ func deriveAuthDefaults(addr, rpidFlag, originFlag string) (string, []string) {
 	host, port, err := net.SplitHostPort(addr)
 	if err != nil {
 		host, port = addr, ""
+	}
+
+	if rpidFlag == "" && originFlag != "" {
+		if u, parseErr := url.Parse(strings.TrimSpace(originFlag)); parseErr == nil && u.Hostname() != "" {
+			rpidFlag = u.Hostname()
+		}
 	}
 
 	if rpidFlag == "" {
