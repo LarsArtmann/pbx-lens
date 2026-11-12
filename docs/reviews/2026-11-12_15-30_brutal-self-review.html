@@ -840,8 +840,8 @@
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
           <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#issues">Process Failures</a>
+          <a href="#proposal">On the Record</a>
           <a href="#plan">Plan</a>
         </nav>
       </aside>
@@ -871,8 +871,8 @@
           <ul>
             <li><a href="#summary">Summary</a></li>
             <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
+            <li><a href="#issues">Process Failures</a></li>
+            <li><a href="#proposal">On the Record</a></li>
             <li><a href="#plan">Plan</a></li>
           </ul>
         </nav>
@@ -881,91 +881,205 @@
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
+            <div class="stat-value">12</div>
+            <div class="stat-label">Findings</div>
           </div>
           <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
+            <div class="stat-value">2</div>
+            <div class="stat-label">Critical (untriaged)</div>
           </div>
           <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">5</div>
+            <div class="stat-label">Process failures</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">6</div>
+            <div class="stat-label">Things done right (keep)</div>
           </div>
         </div>
+        <p>
+          <strong>Scope line.</strong> This report VERIFIED: golangci-lint over the
+          full module (today), <code>grep</code> against the exact files and lines
+          it cites, the gate logs /tmp/poll-gate-2026-11-12-run3..9.log, git
+          history for every commit it names, and the coverage of every AGENTS.md
+          clause the re-curation dropped. It did NOT verify: the full browser lane
+          (verify-all) tonight — the "green end-to-end" claim in my final message
+          refers to the earlier session's <code>--replay --fast</code> run, not a
+          fresh one — and the two inherited bench figures in docs/http-stack.md
+          (≈82/≈101 µs), which were not re-measured. No prior brutal-self-review
+          exists (this is episode 01), so there is no series ledger to reconcile.
+        </p>
 
         <!-- Findings as Cards -->
         <h2 id="findings"><span class="num">01</span>Findings</h2>
 
         <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <h4>The 3 GitHub dependabot vulnerabilities (1 HIGH) were never triaged</h4>
+          <p>
+            GitHub flagged them on my push (14:25). I typed one sentence about
+            them in the final report and moved on. govulncheck reported 13 and
+            vulnix 21 findings in the gate — all below the error threshold, so
+            nothing forced the question, and I did not ask it myself. A HIGH
+            severity advisory sitting unexamined under an identity stack is not
+            a footnote, it is the top of the next work list.
+          </p>
         </div>
 
-        <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+        <div class="card card-problem">
+          <h4>The BuildFlow hash-fixer defect: repaired twice, documented twice, filed zero times</h4>
+          <p>
+            The gate's stale-hash fixer wrote pbx-lens's vendor hash into
+            cqrs-lint's source and vendor hash slots — the SECOND occurrence of
+            this exact class (flake.nix's own comment records 2026-10-25). I
+            repaired locally, wrote the story into the receipt, and stopped
+            there. The BuildFlow skill's close-the-loop rule allows exactly
+            three end states: fixed upstream, filed upstream, or a documented
+            deliberate non-fix. "Documented in the consumer repo" is none of
+            them. With two reproducible occurrences the filing is half-written
+            already — not doing it was laziness wearing a process costume.
+          </p>
         </div>
 
         <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <h2 id="issues"><span class="num">02</span>Process failures (the stupid things I did anyway)</h2>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <span class="severity severity-critical">Repeated</span>
+          <h3>Launched two gate runs while the foreign session was demonstrably live</h3>
+          <div class="where">docs/concurrency.md rule 2 · runs 3 and 4</div>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            The day before, attempt 1 of this same receipt was VOIDED by a
+            foreign mid-flight edit, and the lesson was codified: check claims
+            and commit recency before any gate. On 2026-11-12 I launched run 3
+            while the foreign session was minutes from committing, and run 4
+            while its oidclogin dependency wave had stale-dated vendorHash.nix
+            — the gate's hash-fixer then re-faked hashes mid-run and the daemon
+            swept the placeholders into history. Roughly 40 minutes of gate
+            time burned on a violation of a rule I helped codify the previous
+            day. The 15-minute load policy saved the receipts; luck and policy
+            are not a process.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
-            State the concrete recommended action.
+            A 10-second pre-gate checklist, mechanical not mnemonic: git log
+            recency of non-daemon commits, .claims/ freshness, and
+            go.mod/go.sum mtime vs vendorHash.nix. Script it
+            (scripts/pre-gate-check.sh) so the check cannot be skipped by
+            being inconvenient.
           </div>
         </div>
 
         <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
+          <span class="severity severity-important">n=2 is not determinism</span>
+          <h3>"Fixed" the json/v2 order flake with a still-exact assertion</h3>
+          <div class="where">internal/web/ops_page_test.go:568 · run 6</div>
           <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
+            TestOpsPayloadIdentitySection failed twice with the same map order;
+            I pinned that new exact order after two observations and called it
+            deterministic (a /tmp probe "confirmed" it — two runs, same
+            process-ish conditions). Gate run 6 failed again under -race. The
+            correct fix — assert the entries, never their order — was available
+            the first time; the second failure was fully priced in and paid
+            anyway.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Authored the norm, did not practice it</span>
+          <h3>The .claims/ACTIVE.md roster convention was never used by its author</h3>
+          <div class="where">docs/concurrency.md:104 · .claims/ (no ACTIVE.md all day)</div>
+          <p>
+            My session wrote the roster convention (A17/F050) and then never
+            opened a roster entry — all day, neither concurrent session
+            published one. Shared-surface edits went out with partial or late
+            per-file claims. A convention its author does not follow on day one
+            is a ghost process; it will be ignored by the next session too.
+          </p>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">Close-the-loop by proxy</span>
+          <h3>Left "their" lint findings for the foreign session, never verified they landed</h3>
+          <div class="where">internal/web/userauth.go:209 · auth_oidc_test.go ×5 · serve() cyclop 14</div>
+          <p>
+            I consciously left warning findings in files the foreign session
+            was live-editing — defensible mid-flight, but I never circled back
+            to verify they got fixed. Current full-module golangci still
+            carries ~20 warnings (wsl_v5 ×17, cyclop on serve():49, nlreturn,
+            perfsprint). Warn-level findings never gate, so they will sit
+            forever unless someone owns them. Proxy-close is not close.
           </p>
         </div>
 
         <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
+          <span class="severity severity-nice">Ratcheted, not paid</span>
+          <h3>Three docs-gates skips in one day moved the yardstick that makes the gate green</h3>
+          <div class="where">.docs-gates.json · .buildflow.yml · 36 unarchived reports</div>
           <p>
-            Minor documentation gaps or future-proofing suggestions go here.
+            Each skip is individually justified (a verb the fleet binary does
+            not have; an archive backlog with an owner row; annotate's
+            pre-existing ratchet). Collectively: the formal gate is now green
+            partly because three checks stopped counting. The trend is the risk
+            — this is how gates rot while staying green. The archive ritual
+            (36 → ≤15) is bounded, scripted, and simply not done.
           </p>
         </div>
 
         <!-- Strengths -->
-        <h2>Strengths</h2>
+        <h2>What was done right (preserve these)</h2>
         <div class="strengths">
           <div class="strength">
             <div class="check">+</div>
             <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
+              <strong>Verify-what-exists before implementing</strong>
+              <span>Five plan items were already landed by the parallel session; all were adopted via verified commits, never reverted or re-done. Zero foreign work was destroyed all day.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>The receipt ledger tells the truth</strong>
+              <span>All eight failed gate runs are in docs/buildflow-dev-gate.md with causes and fixes — nothing absorbed, nothing laundered into a green story.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Fixed at source, not at the symptom</strong>
+              <span>The retention scans wrap their engine errors inside internal/retention with family codes; /api/ops answers 503 with scan_failures while healthy sections keep serving. Goldens untouched.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Used the sanctioned repair path under pressure</strong>
+              <span>After the placeholder-hash mess, the vendor hash was regenerated via nix run .#update-vendor-hash on a clean tree — its captured value matched the failed run's got-hash exactly. No hand-pasting.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>The AGENTS.md re-curation extracted, it did not delete</strong>
+              <span>Every dropped clause was grepped for a living home before cutting (E003 verdict → cqrs-lint-policy.md; flake hardening → gotchas.md; idle-index → dashboard.go:223; no-row-cap → FEATURES.md). 292 → 210 lines with zero fact loss.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Re-verified an inherited claim before writing it down twice</strong>
+              <span>The stale LSP diagnostic contradicted the "cyclop clean" summary claim; golangci (truth) confirmed the split DID work — and surfaced that the summary's real omission was the new cyclop-14 on serve(). Recorded both ways.</span>
             </div>
           </div>
         </div>
 
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <!-- Findings Table -->
+        <h2>Findings Table</h2>
         <table>
           <thead>
             <tr>
               <th>#</th>
               <th>Severity</th>
-              <th>Issue</th>
+              <th>Finding</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -973,63 +1087,181 @@
             <tr>
               <td>1</td>
               <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>3 dependabot vulns (1 HIGH) untriaged</td>
+              <td><span class="badge badge-high">Open</span></td>
             </tr>
             <tr>
               <td>2</td>
+              <td><span class="badge badge-critical">Critical</span></td>
+              <td>BuildFlow hash-fixer defect never filed upstream</td>
+              <td><span class="badge badge-high">Open</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
               <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
+              <td>Two gate runs launched against a live foreign session</td>
+              <td><span class="badge badge-low">Lesson re-paid</span></td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>json/v2 order flake "fixed" with an exact pin first</td>
+              <td><span class="badge badge-fixed">Fixed (late)</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="badge badge-high">High</span></td>
+              <td>ACTIVE.md roster norm authored, never practiced</td>
               <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>~20 standing golangci warnings, ownership unclear</td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>3 docs-gates skips: yardstick moved, archive debt 36</td>
+              <td><span class="badge badge-low">Owner row exists</span></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td>scripts/README noise floor (≤81 px) contradicted by today's 44-alert diff</td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>Commit 114a54d message says 211/219; actual 210</td>
+              <td><span class="badge badge-fixed">Corrected here</span></td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>scanCode "unclassified" fallback untested; 503 untested through the full middleware chain</td>
+              <td><span class="badge badge-low">Open</span></td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>opsSnapshot.failures field added then removed within the hour (churn)</td>
+              <td><span class="badge badge-fixed">Self-corrected</span></td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>/api/ops 503 row was scope creep mid-gate-window (defensible, unplaned)</td>
+              <td><span class="badge badge-fixed">Shipped + tested</span></td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
+        <!-- Inaccuracies on the record -->
+        <h2 id="proposal">Inaccuracies I already shipped (corrected here)</h2>
         <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
+          <div class="compare-before">What I said</div>
+          <div class="compare-after">What is true</div>
         </div>
         <div class="compare-row">
           <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
+            <pre><code>Commit 114a54d message:
+"AGENTS.md ... at 211/219 by
+the wc -l guard"</code></pre>
           </div>
           <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
+            <pre><code><span class="tok-comment">// Actual, then and now:</span>
+<span class="tok-keyword">210</span>/219 — the daemon moved the
+file between measure and commit.</code></pre>
           </div>
         </div>
-
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <div class="compare-row">
+          <div>
+            <pre><code>Final report:
+"verify-all green end-to-end
+(incl. the full WebAuthn
+browser lane)"</code></pre>
+          </div>
+          <div>
+            <pre><code><span class="tok-comment">// True of the earlier session's</span>
+<span class="tok-comment">// --replay --fast run. Tonight</span>
+<span class="tok-keyword">only unit suites + the gate ran</span>
+— the browser lane was not re-run.</code></pre>
+          </div>
         </div>
 
         <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <h2 id="plan"><span class="num">03</span>Improvement plan (impact-sorted)</h2>
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>Triage the 3 dependabot advisories (1 HIGH) — today</h4>
+            <p>Identify the affected module(s), check whether the identity/passkey path reaches the vulnerable code, bump or document the non-exposure. The gate's govulncheck/vulnix warning mass gets its verdict from the same pass.</p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>Verify-before-filing, then file the BuildFlow hash-fixer defect</h4>
+            <p>Two occurrences (2026-10-25, 2026-11-12), both with logs and repairs. Reproduce against BuildFlow HEAD first (the binary here is behind the repo — the freshness advisory says so), then file with both receipts as evidence.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>Script the pre-gate checklist</h4>
+            <p>scripts/pre-gate-check.sh: non-daemon commit recency, .claims/ freshness, go.mod/go.sum vs vendorHash.nix mtime parity, load averages. poll-gate covers load only; this covers the moving-tree half of rule 2.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>Run the docs-health archive ritual to retire the cadence ratchet</h4>
+            <p>36 unarchived reports → verify struck/routed → git mv to docs/status/archived/ with live-remainder banners → drop the cadence skip from .docs-gates.json. Bounded, scripted, and the only way the ratchet comes back off.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">5</div>
+          <div class="migration-content">
+            <h4>Re-practice the pixel noise floor and fix the README sentence</h4>
+            <p>The corpus grew (ops/login/print surfaces carry live time-text); the 2026-10-17 "≤81 px, only stamp churn" claim no longer describes a same-session diff (44 alerts today). Measure same-binary back-to-back, re-state the floor or widen the budget, correct scripts/README.md.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">6</div>
+          <div class="migration-content">
+            <h4>Take ownership of the ~20 standing lint warnings</h4>
+            <p>Assign or fix: wsl_v5 ×17, cyclop-14 on serve() (extract the oidc wiring block like deriveAuthDefaults was), nlreturn, perfsprint. "Their live files" stopped being an excuse when their session went quiet.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">7</div>
+          <div class="migration-content">
+            <h4>Close the two test gaps the 503 work left</h4>
+            <p>scanCode's "unclassified" fallback branch, and the 503 path through the full middleware chain (ETag/Server-Timing interplay), not just the bare mux.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">8</div>
+          <div class="migration-content">
+            <h4>Practice or simplify the ACTIVE.md roster norm</h4>
+            <p>Either write the roster at every session start (including this one, retroactively) or shrink the norm to per-file claims only. A convention practiced zero times in its first 24h is already dead; make the practice real or cut the text.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">9</div>
+          <div class="migration-content">
+            <h4>Never pin ordering-sensitive output in tests — as a written rule</h4>
+            <p>The json/v2 flake cost a gate run and a lesson that was already known. Add one line to docs/gotchas.md: map/JSON key order is asserted as a set, never as a string, regardless of how many observations "confirmed" it.</p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-11-12 15:30 &middot; Episode 01, no prior series ledger &middot;
+          Every claim re-verified against source today; the two shipped inaccuracies
+          are corrected in place above
         </footer>
       </main>
     </div>
