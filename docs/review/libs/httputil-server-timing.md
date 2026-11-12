@@ -2,7 +2,6 @@
 
 **Date:** 2026-11-04 (refreshed **2026-11-11** — pin unchanged, still proxy latest) · **Pin:** `github.com/larsartmann/httputil/server_timing v1.0.3` (go.mod:25) · **Status:** USED
 **Refreshed 2026-11-12:** pin still v1.0.3 (go.mod:30) == latest `server_timing/v1.0.3` tag — server_timing versions live in their OWN tag namespace inside the httputil repo (not shared with the root v1.x tags), verified via `git fetch --tags` + `git tag --sort=-v:refname` plus an empty commit log on `server_timing/` after the tag. Zero drift; verdict and both scores unchanged (**67/100 direct / 67/100 effective**).
-
 **Adoption score:** **67/100 direct (moderate)** — 2 of 3 applicable primitives called directly (`MeasureServerTiming`, `ServerTimingMiddleware`); **67/100 effective** — every used capability rides the maintained path since the 2026-11-04 swap deleted the divergent hand-wrap (`ServerTimingMiddlewareWhen` declined by recorded decision: single-operator gated surface — htpasswd then, the cqrs-htmx identity session gate now; escape named in docs/http-stack.md).
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).

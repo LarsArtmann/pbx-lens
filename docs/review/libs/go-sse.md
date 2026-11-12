@@ -2,7 +2,6 @@
 
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-sse` v0.7.0 (+ `ssetest` v0.5.0, `sseparse` v0.2.1; checkout last commit 2026-11-04) · **Status:** **INDIRECT only** via `go-cqrs-lite/metaengine/v4 v4.20.0` (go.mod:94, `go mod why` verified) · **Status in UI:** NOT USED
 **Refreshed 2026-11-12:** pin still v0.7.0 indirect (go.mod:119) == latest tag, verified via `git fetch --tags` + `git tag --sort=-v:refname` in `/home/lars/projects/go-sse` (only two chore commits after v0.7.0). `rg "text/event-stream" internal/ --type go` still returns zero surfaces → verdict **REJECT/INDIRECT** stands (R9 htmx-polling doctrine unchanged); no score impact.
-
 **Verdict:** **REJECT** — a well-built library whose premise (server push) this project deliberately declined.
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).

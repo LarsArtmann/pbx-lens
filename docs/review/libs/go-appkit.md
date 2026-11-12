@@ -19,7 +19,6 @@
 > fail `Start` and a deadline-less `Close` inherits `ShutdownTimeout`; systemd v0.2.0's
 > `Install` returns the wired `Hooks` (source-compatible). Verdict and score unchanged —
 > **73/100** stands.
-
 > **Adoption score:** **73/100 (high)** — 11 of 15 applicable capabilities (unchanged from the prior report; pin is still v0.9.0, the adoption didn't move).
 > **Prior report:** [2026-10-25_go-appkit-templ-deep-dive.html](../../research/2026-10-25_go-appkit-templ-deep-dive.html) (73/100 = go-appkit; the same report's 86/100 belongs to a-h/templ — score-card ambiguity resolved there). This report re-verifies the census at today's HEAD and adds one forward finding; nothing supersedes the prior scores.
 
