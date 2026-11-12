@@ -2,6 +2,8 @@
 
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-output` root v0.38.7 (+ per-module tags; 19 sub-modules) · **Status in pbx-lens:** **NOT IMPORTED — PATTERN-ONLY adoption**
 **Verdict:** **PATTERN-ONLY** — pbx-lens copies its _engineering patterns_ (flake structure, CI lane) but has no Go-level use for a rendering framework.
+> **Refreshed 2026-11-12:** re-verified: still not imported — `rg 'go-output' go.mod go.sum internal cmd` is empty; latest tag re-verified **v0.38.7** (tags fetched). PATTERN-ONLY verdict stands.
+
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 

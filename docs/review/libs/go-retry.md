@@ -1,7 +1,9 @@
 # go-retry — adoption-fit report (pbx-lens)
 
-**Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-retry` v0.9.0 (checkout last commit 2026-11-04; deps: go-error-family only) · **Status in pbx-lens:** **NOT USED** (not in the graph)
+**Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-retry` v0.9.0 (checkout last commit 2026-11-04; deps: go-error-family only) · **Status in pbx-lens:** **IN GRAPH (INDIRECT only, zero imports)** — `go-retry v0.9.0 // indirect` (go.mod:117); was NOT USED at the 2026-11-04 snapshot
 **Verdict:** **DEFER** — nothing in pbx-lens retries today, by decision; adopt when the Telnyx client grows per-request handling.
+> **Refreshed 2026-11-12:** status delta — now **IN GRAPH (INDIRECT only)**: `go-retry v0.9.0 // indirect` (go.mod:117) rode in via `internal/web → cqrs-htmx/usermgmt/v4 → go-cqrs-lite/middleware/v4 → go-retry` (`GOEXPERIMENT=jsonv2 go mod why`); `rg "go-retry" --type go internal cmd` returns zero hits. v0.9.0 == latest tag (tags fetched). A ride-along dependency is not adoption: **DEFER verdict and the Telnyx-client adopt trigger stand unchanged.**
+
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 

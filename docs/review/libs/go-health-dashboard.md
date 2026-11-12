@@ -2,6 +2,8 @@
 
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-health-dashboard` v0.12.2 (checkout last commit 2026-11-04; pulls go-health + templ-components + go-sse/datastar) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **REJECT** — doubly inapplicable: needs go-health (which itself is rejected, see [go-health.md](go-health.md)) and its real-time transport is SSE, excluded by the R9 polling decision.
+> **Refreshed 2026-11-12:** re-verified: still not imported (absent from go.mod/go.sum); latest tag now **v0.13.2** (tags fetched; report's v0.12.2 snapshot predates the bumps). REJECT verdict stands.
+
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
