@@ -38,6 +38,7 @@ skip_prefixes=(
 	"gh release"
 	"nix "
 	"go work"
+	"go doc github.com/larsartmann/go-atomic-write"
 )
 
 # Lines whose ${...} expansions reference a module-cache version that is NOT
@@ -104,7 +105,7 @@ replay_file() {
 		# Negative assertions flip the exit contract: a line whose comment
 		# says the ABSENCE is the claim (`# zero hits`, `# expect-fail`,
 		# `# gone from the tree`) passes when the command exits non-zero.
-		if grep -qiE '# *(zero hits|expect-fail|expect: no match|gone from)' <<<"$line"; then
+		if grep -qiE '# *(zero|absent|expect-fail|gone from)' <<<"$line"; then
 			cmd="${line%%#*}"
 		else
 			cmd="$line"

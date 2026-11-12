@@ -68,7 +68,7 @@ Pin v0.12.0 **is the latest release** (checkout `/home/lars/projects/go-error-fa
 ```console
 rg -c "errorfamily\." --type go -g '!*_templ.go' internal cmd   # 23 files
 go doc github.com/larsartmann/go-error-family ExitCode           # the missed CLI mapping
-rg -nF "os.Exit(1)" cmd/pbx-lens/main.go                         # finding 1
+rg -nF "os.Exit(1)" cmd/pbx-lens/main.go                         # zero hits — finding 1 fixed: fatal() takes the family-mapped fatalCode(err)
 rg -n "http.Error" internal/web                                  # finding 2/3 sites
 git -C /home/lars/projects/go-error-family tag --sort=-v:refname | head -3
 ```

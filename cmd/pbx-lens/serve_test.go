@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -1023,19 +1022,9 @@ func BenchmarkConcurrentPollIdentity(b *testing.B) {
 	web.Register(svc.Mux, sys, web.Options{AuthEnabled: true, Identity: identity})
 	ts := testkit.Serve(b, svc)
 
-	// Mint the operator session through the real ceremony. ONE /login
-	// fetch supplies both halves (the nosurf cookie and its meta token) —
-	// two fetches land in two nosurf sessions and the ceremony 403s.
-	client := noAutoGzip()
-	csrfCookie, token := loginChallengeHTTP(b, ts.FullChainURL, client)
-
-	sessionCookie, err := registerOperatorHTTP(b, ts.FullChainURL, client, csrfCookie, token)
-	if err != nil {
-		b.Fatal(err)
-	}
-
-	// Warm the fragment and grab its ETag through the gated chain.
-	base, authedClient := ts.FullChainURL, noAutoGzip()
+	// The ceremony setup (mint the operator, keep ONE nosurf session) and
+	// the warm-up live in identityBenchSession.
+	base, authedClient, sessionCookie := identityBenchSession(b, ts.FullChainURL)
 
 	warm, err := http.NewRequestWithContext(b.Context(), http.MethodGet, base+"/frag/dashboard", nil)
 	if err != nil {
@@ -1091,6 +1080,24 @@ func BenchmarkConcurrentPollIdentity(b *testing.B) {
 	}
 }
 
+// identityBenchSession mints the operator identity the benchmark polls
+// through: ONE /login fetch supplies both nosurf halves (two fetches land
+// in two sessions and every ceremony 403s), the register ceremony issues
+// the session, and the gated client carries it from then on.
+func identityBenchSession(b *testing.B, base string) (string, *http.Client, *http.Cookie) {
+	b.Helper()
+
+	client := noAutoGzip()
+	csrfCookie, token := loginChallengeHTTP(b, base, client)
+
+	sessionCookie, status := registerOperatorHTTP(b, base, client, csrfCookie, token)
+	if status != http.StatusCreated {
+		b.Fatalf("register status = %d, want 201", status)
+	}
+
+	return base, client, sessionCookie
+}
+
 // loginChallengeHTTP is the benchmark-side twin of auth_test's
 // loginChallenge: ONE /login fetch returns both ceremony halves — the
 // nosurf cookie AND the meta token it encodes (two fetches land in two
@@ -1140,7 +1147,7 @@ func registerOperatorHTTP(
 	client *http.Client,
 	csrfCookie *http.Cookie,
 	token string,
-) (*http.Cookie, error) {
+) (*http.Cookie, int) {
 	tb.Helper()
 
 	reg, err := http.NewRequestWithContext(
@@ -1167,15 +1174,13 @@ func registerOperatorHTTP(
 
 	defer func() { _ = regResp.Body.Close() }()
 
-	if regResp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("register status = %d, want 201", regResp.StatusCode)
-	}
-
 	for _, cookie := range regResp.Cookies() {
 		if cookie.Name == "session_token" {
-			return cookie, nil
+			return cookie, regResp.StatusCode
 		}
 	}
 
-	return nil, errors.New("registration issued no session cookie")
+	tb.Fatalf("registration issued no session cookie (status %d)", regResp.StatusCode)
+
+	return nil, regResp.StatusCode
 }

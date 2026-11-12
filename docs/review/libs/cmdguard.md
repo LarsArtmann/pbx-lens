@@ -28,7 +28,7 @@ v5.1.0 == latest tag (2026-11-11; v5 line is current, v4 frozen). Upstream moves
 
 ```console
 rg -n "cmdguard" go.mod go.sum internal/ cmd/   # zero hits
-rg -c "flag.NewFlagSet" internal/cli            # the stdlib stack, per command
-rg -n "requireDB|requireOneArg" internal/cli | head -4
+rg -c "flag.NewFlagSet" cmd/pbx-lens            # the stdlib stack, per command (the command layer lives in cmd/pbx-lens)
+rg -n "requireDB|requireOneArg" cmd/pbx-lens | head -4
 rg -n "no cobra" AGENTS.md                      # the policy
 ```
