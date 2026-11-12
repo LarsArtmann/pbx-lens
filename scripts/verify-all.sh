@@ -112,6 +112,9 @@ node scripts/verify-staleness-live.js
 echo "=== verify-ops-verdict ==="
 node scripts/verify-ops-verdict.js
 
+echo "=== verify-identity-e2e ==="
+node scripts/verify-identity-e2e.js
+
 if [ "$FAST" -eq 1 ]; then
 	echo "verify-all: contracts passed (--fast: screenshot sweep skipped)"
 	exit 0
