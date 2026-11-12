@@ -72,9 +72,11 @@ becomes the operator").
   mode (~a package of work), and a live identity DB migration if you
   flip AFTER the first production deploy.
 
-**Recommendation: A** for the first deploy (trusted LAN, single
-operator, door-closing already tested and logged), with B as a named
-flip-trigger: any second human needing access, or any deploy on a
+**Recommendation: A** for the first deploy (TLS vhost first per Q1, then
+register immediately through it — the bootstrap risk lives in the
+registration window, not the login: a fresh DB that registers BEFORE the
+secure context exists owns an account that can never log in), with B as a
+named flip-trigger: any second human needing access, or any deploy on a
 network you don't fully trust. Switching after production is possible
 but means migrating a live identity DB — cheap today, expensive later,
 so decide BEFORE the first real deploy.
