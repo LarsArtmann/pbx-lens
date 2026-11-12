@@ -92,9 +92,11 @@ the remaining follow-on idea:
 ### 2. Autonomy and operations (plan phase 3 — hardening)
 
 Shipped: in-process poller, freshness banner, sd_notify, NixOS module,
-nightly backup staging, purge timers — and 2026-10-12: htpasswd SIGHUP
-reload, per-IP failure throttling, the `/api/ops` counters endpoint,
-structured slog records, the restore-drill test. Remaining raw ideas:
+nightly backup staging, purge timers — and the 2026-10-12 hardening wave
+(htpasswd SIGHUP reload + per-IP failure throttling, SUPERSEDED 2026-11-11
+by the native identity gate; the survivors are the `/api/ops` counters
+endpoint, structured slog records, the restore-drill test). Remaining raw
+ideas:
 
 - Backup rotation/shipping policy (host backup tool owns it today; the
   app's opinion is recorded in docs/backup-rotation-opinion.md; folding it

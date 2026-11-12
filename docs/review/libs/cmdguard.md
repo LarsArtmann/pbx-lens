@@ -1,6 +1,6 @@
 # cmdguard — adoption-fit report (pbx-lens)
 
-**Date:** 2026-11-11 · **Upstream:** `github.com/larsartmann/cmdguard/v5` v5.1.0 (checkout last commit 2026-11-11; == proxy latest for the /v5 module path; v4 line retired at v4.3.1, wraps Cobra) · **Status in pbx-lens:** **NOT USED** (not in the graph — `go.sum` carries zero entries)
+**Date:** 2026-11-11 · **Refreshed 2026-11-12** (tag re-verified current: nothing stale, stamp-completeness only — plan P09.3) · **Upstream:** `github.com/larsartmann/cmdguard/v5` v5.1.0 (checkout last commit 2026-11-11; == proxy latest for the /v5 module path; v4 line retired at v4.3.1, wraps Cobra) · **Status in pbx-lens:** **NOT USED** (not in the graph — `go.sum` carries zero entries)
 **Verdict:** **REJECT** — the dependency policy bans Cobra (`AGENTS.md` stack decisions: "no cobra"), cmdguard wraps Cobra, and pbx-lens' CLI is too small for cmdguard's value to clear the dependency bar. The stdlib flag stack stays.
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).

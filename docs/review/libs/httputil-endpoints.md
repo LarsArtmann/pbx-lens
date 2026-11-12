@@ -1,6 +1,6 @@
 # httputil/endpoints — adoption-fit report (pbx-lens)
 
-**Date:** 2026-11-11 · **Upstream:** `github.com/larsartmann/httputil/endpoints` v0.1.0 (first release 2026-11-06, tagged from the endpoints sub-module; == proxy latest; stdlib-only, zero external deps; owner ruling: pre-1.0 iteration tier — 0.x semantics govern) · **Status in pbx-lens:** **NOT USED** (not in the graph — `go.sum` carries zero entries)
+**Date:** 2026-11-11 · **Refreshed 2026-11-12** (tag re-verified current: nothing stale, stamp-completeness only — plan P09.3) · **Upstream:** `github.com/larsartmann/httputil/endpoints` v0.1.0 (first release 2026-11-06, tagged from the endpoints sub-module; == proxy latest; stdlib-only, zero external deps; owner ruling: pre-1.0 iteration tier — 0.x semantics govern) · **Status in pbx-lens:** **NOT USED** (not in the graph — `go.sum` carries zero entries)
 **Verdict:** **REJECT** — a good answer to a question pbx-lens does not have: its route surface is small, static, and documented; a self-describing runtime listing would be new public surface with no consumer.
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).

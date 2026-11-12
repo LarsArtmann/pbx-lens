@@ -42,6 +42,13 @@ pinned nav id + TestNavIDIsDeterministic (#55), the no-CopyButton-in-htmx-
 fragment rule (#63) — all queued for the next coordinated bump (watchlist
 steps 2-4+7 again; adoption map rows updated this day).**
 
+**State check 2026-11-12 b (gh, plan P09.4 — the #60 gap in the sweep
+above): templ-components#60 (Sparkline fixed-size attrs + min/max
+normalization hiding a series' sign) CLOSED upstream 2026-11-07 (COMPLETED)
+— also after the v1.27.0 tag, so any changed Sparkline behavior rides the
+same NEXT coordinated bump; pbx-lens uses Sparkline in the spend card, so
+its render joins the P07 re-verification list (dashboard pixel probe).**
+
 **State check 2026-11-05 (plan T20, filings round): nothing new to FILE, and
 both open candidates are closed by evidence.**
 

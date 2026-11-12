@@ -1,6 +1,6 @@
 # go-datastar — adoption-fit report (pbx-lens)
 
-**Date:** 2026-11-11 · **Upstream:** `github.com/larsartmann/go-datastar` v0.7.0 (checkout last commit 2026-11-10; == proxy latest; single module + `broadcast` submodule; built on go-sse; embedded DataStar JS client v1.0.4) · **Status in pbx-lens:** **NOT USED** (not in the graph — `go.sum` carries zero entries)
+**Date:** 2026-11-11 · **Refreshed 2026-11-12** (tag re-verified current: nothing stale, stamp-completeness only — plan P09.3) · **Upstream:** `github.com/larsartmann/go-datastar` v0.7.0 (checkout last commit 2026-11-10; == proxy latest; single module + `broadcast` submodule; built on go-sse; embedded DataStar JS client v1.0.4) · **Status in pbx-lens:** **NOT USED** (not in the graph — `go.sum` carries zero entries)
 **Verdict:** **REJECT** — the same recorded decision as [go-sse.md](go-sse.md), one layer up: its entire premise (server push over SSE) is what R9 deliberately declined.
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
