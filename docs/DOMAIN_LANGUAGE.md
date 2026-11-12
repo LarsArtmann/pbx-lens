@@ -156,6 +156,16 @@ the htpasswd file; every term here is code truth:
   database holding user events, sessions, read models, and checkpoints over
   ONE shared handle. NOT the index DB: the index is re-derivable, the
   identity DB is not — it rides the nightly backup beside it.
+- **Identity durability (2026-11-12, plan A5)** — `pbx-lens backup -db
+  <identity.db> -out …` snapshots it with the same VACUUM INTO + verify
+  chain as the index (`internal/backup` is DSN-agnostic; the nightly job
+  backs up BOTH files). Retention and purge CANNOT touch it — structurally:
+  `retention.Retire` dispatches only through the index `*system.System`, so
+  the identity store is unreachable from that API; operationally: never
+  point `-db` of ingest/refresh/purge at the identity file (those commands
+  create index tables wherever `-db` points — see the lockout runbook).
+  Pinned by `TestIdentityDBSnapshotRoundTripWhileLive` /
+  `TestIdentityDBSnapshotCarriesSessionRows` (internal/web).
 - **Operator bootstrap** — first-visitor becomes operator: `MaxUsers: 1`
   closes registration after the first completed signup; every later
   /auth/register is refused. There is no pre-provisioned account.

@@ -267,4 +267,10 @@ pairs in `internal/cli/system.go` now cross-link the predicate with
 `workerRoundState`, which reads the SAME states the opposite way (drain
 success requires `stopped`). (Idea attribution: the readiness bridge pattern
 is cqrs-htmx's health-bridge idea — docs/review/libs/cqrs-htmx.md — built
-here on appkit's `ReadyCheck` plus projectionhost worker states.)
+here on appkit's `ReadyCheck` plus projectionhost worker states.) The
+identity context (2026-11-12) joins the SAME gate: `Identity.Ready()`
+reports its projection workers by the same live/stopped-ready rule, and
+the serve wiring ANDs the two verdicts — /ready answers only when both
+bounded contexts' read models are servable. `/live` stays process-only by
+design: a restarting projection worker is a readiness fact, not a liveness
+one — killing the process over it would only prolong the outage.
