@@ -17,8 +17,10 @@
 > row LANDED (503-honest scan_failures — CHANGELOG 2026-11-12 c) and is
 > deleted, the archived-annotate debt got its owner row under Blocked, and
 > the pixel baseline re-cut to v6 (machine-local, ~/lens-baselines/v6). The
-> plan's last in-flight item is the formal calm-window gate receipt (A1:
-> fixes in — ci.yml permissions, docs-gates ratchet, cue-vet green).
+> formal calm-window gate receipt (A1) LANDED the same day — run 9:
+> 65/0/0, exit 0, tree 114a54d (docs/buildflow-dev-gate.md); getting there
+> unclogged four findings families (format drift, the docs-gates ratchet
+> family, the file-size skip, and the AGENTS.md re-curation to 210/219).
 >
 > Refreshed 2026-11-05 (fleet-audit closeout HARVEST, plan
 > docs/planning/2026-11-04_18-41_SUPERB-fleet-audit-closeout.md): the T21 pass
