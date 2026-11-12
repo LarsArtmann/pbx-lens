@@ -371,6 +371,104 @@ func TestIdentityCookieSecureFollowsOriginScheme(t *testing.T) {
 	}
 }
 
+// TestIdentityLogoutEndsTheSessionEverywhere walks the full sign-out
+// contract: the authed nav renders the logout form (and only then),
+// POST /auth/logout invalidates the session SERVER-SIDE (the same cookie
+// value never works again), and the logged-out gate bounces the browser
+// to /login.
+func TestIdentityLogoutEndsTheSessionEverywhere(t *testing.T) {
+	identity := openTestIdentity(t)
+
+	mux := newTestServerWith(t, Options{AuthEnabled: true})
+	identity.Register(mux)
+	handler := identity.Middleware()(mux)
+
+	csrfCookie, token := loginChallenge(t, handler)
+	session := loginSession(t, handler, "operator@pbx.lens")
+
+	authed := func() *httptest.ResponseRecorder {
+		request := httptest.NewRequest(http.MethodGet, "/", nil)
+		request.Host = "localhost:8300"
+		request.Header.Set("Accept", "text/html")
+		request.Header.Set("Origin", "http://localhost:8300")
+		request.AddCookie(csrfCookie)
+		request.AddCookie(session)
+
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, request)
+
+		return recorder
+	}
+
+	// The authed nav is honest: the logout form renders.
+	first := authed()
+	if first.Code != http.StatusOK {
+		t.Fatalf("authed GET / status = %d, want 200 (body: %.200s)", first.Code, first.Body.String())
+	}
+
+	if !strings.Contains(first.Body.String(), `id="logout-form"`) {
+		t.Error("authed page renders no logout form — the nav cannot end a session")
+	}
+
+	if !strings.Contains(first.Body.String(), `name="csrf_token"`) {
+		t.Error("logout form carries no CSRF token — the ceremony would 403")
+	}
+
+	// POST /auth/logout with the browser ceremony posture.
+	logout := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)
+	logout.Host = "localhost:8300"
+	logout.Header.Set("Origin", "http://localhost:8300")
+	logout.Header.Set("Referer", "http://localhost:8300/")
+	logout.Header.Set("X-Csrf-Token", token)
+	logout.AddCookie(csrfCookie)
+	logout.AddCookie(session)
+
+	recorder := httptest.NewRecorder()
+	handler.ServeHTTP(recorder, logout)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("POST /auth/logout status = %d, want 200 (body: %.200s)", recorder.Code, recorder.Body.String())
+	}
+
+	cleared := false
+
+	for _, cookie := range recorder.Result().Cookies() {
+		if cookie.Name == defaultSessionCookie && cookie.MaxAge < 0 {
+			cleared = true
+		}
+	}
+
+	if !cleared {
+		t.Error("logout did not clear the session cookie (want Max-Age < 0)")
+	}
+
+	// The SAME cookie value is dead: the gate bounces the browser to /login.
+	after := authed()
+	if after.Code != http.StatusSeeOther {
+		t.Errorf(
+			"logged-out GET / status = %d, want 303 (the session must be invalidated server-side)",
+			after.Code,
+		)
+	}
+
+	if location := after.Header().Get("Location"); location != "/login" {
+		t.Errorf("logged-out redirect Location = %q, want /login", location)
+	}
+
+	// The logged-out nav must NOT render the logout form.
+	bounce := httptest.NewRequest(http.MethodGet, "/login", nil)
+	bounce.Host = "localhost:8300"
+	bounce.Header.Set("Accept", "text/html")
+	bounce.AddCookie(csrfCookie)
+
+	loginPage := httptest.NewRecorder()
+	handler.ServeHTTP(loginPage, bounce)
+
+	if strings.Contains(loginPage.Body.String(), `id="logout-form"`) {
+		t.Error("the logged-out login page renders a logout form")
+	}
+}
+
 func TestAllOriginsHTTPS(t *testing.T) {
 	tests := []struct {
 		name    string

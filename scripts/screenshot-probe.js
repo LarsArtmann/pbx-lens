@@ -55,6 +55,7 @@ const KNOWN_SURFACES = [
   "empty-ops",
   "ops-wired",
   "long-excerpt",
+  "login",
 ];
 const ONLY = args.includes("--only")
   ? arg("--only", "")
@@ -367,6 +368,56 @@ const NEEDS_DISCOVERY =
         }
       } finally {
         probe.stopProbe(wiredServe);
+      }
+    }
+
+    // --- Login phase (2026-11-12 identity plan P03): the auth surface
+    // joins the corpus. Own serve booting -auth-db — the rest of the
+    // corpus is auth-free by design, so the gate would 303 every other
+    // page. Fresh identity DB on every run: the /login capture shows the
+    // FIRST-VISITOR registration posture the docs promise.
+    if (wanted("login")) {
+      await probe.stopProbe(serve);
+      const loginIndex = path.join(OUT, "login-index.db");
+      const authDB = path.join(OUT, "login-identity.db");
+      for (const db of [loginIndex, authDB]) {
+        for (const suffix of ["", "-shm", "-wal"]) {
+          if (fs.existsSync(db + suffix)) fs.rmSync(db + suffix);
+        }
+      }
+      const loginPort = await probe.findFreePort();
+      const loginServe = await probe.serveProbe(bin, loginIndex, loginPort, [
+        "-auth-db",
+        authDB,
+      ]);
+      const loginBase = `http://127.0.0.1:${loginPort}`;
+      try {
+        for (const theme of themes) {
+          const ctx = await browser.createBrowserContext();
+          const page = await ctx.newPage();
+          await page.emulateMediaFeatures([{ name: "prefers-color-scheme", value: theme }]);
+          for (const vp of viewports) {
+            await page.setViewport({ width: vp.w, height: vp.h });
+            const resp = await page.goto(`${loginBase}/login`, {
+              waitUntil: "networkidle0",
+              timeout: 20000,
+            });
+            const file = path.join(OUT, `${theme}-${vp.tag}-login.png`);
+            await page.screenshot({ path: file, fullPage: true });
+            n++;
+            console.log("captured", file, `status=${resp.status()}`);
+            if (resp.status() !== 200) fail(`login render status ${resp.status()}, want 200`);
+            // The stylesheet must actually apply — a broken CSS path
+            // renders an unstyled panel the PNG would silently show.
+            const styled = await page.evaluate(
+              () => getComputedStyle(document.body).fontFamily,
+            );
+            if (!styled) fail("login page computed no body font — styles did not load");
+          }
+          await ctx.close();
+        }
+      } finally {
+        probe.stopProbe(loginServe);
       }
     }
 
