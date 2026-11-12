@@ -161,18 +161,26 @@ the htpasswd file; every term here is code truth:
   /auth/register is refused. There is no pre-provisioned account.
 - **Session** — a server-side session row (SQL session store) addressed by
   the signed cookie (`CookieName`, default from loginpage). The session —
-  not the password — is what the gate checks; CSRF token rides the session.
+  not any long-lived credential — is what the gate checks; CSRF token
+  rides the session.
 - **The gate** — middleware after session+CSRF: public paths (`/login`,
   `/auth/*`, `/app.css`, `/robots.txt`) pass; browsers (HTML Accept or
   `Hx-Request`) get 303 to /login, everything else 401. Public paths are
   code, not config (`publicAuthPath`).
-- **Passkey / WebAuthn** — the second factor, keyed by RPID + origins
-  (`-auth-rpid`/`-auth-origin`). WebAuthn REQUIRES a secure context: over
-  plain http it works only on localhost — on the LAN the operator logs in
-  with the password factor and passkeys activate once TLS fronts the lens.
-- **Lockout** — five consecutive failures lock the account for 15 minutes
-  (per account, upstream default); distinct from the serve auth-failure
-  throttle, which is per client address.
+- **Passkey / WebAuthn — the ONLY factor** (correction 2026-11-12, found
+  while wiring the deploy receipts): registration is email-only and login
+  is WebAuthn-only — usermgmt ships no password login at all. Ceremonies
+  are keyed by RPID + origins (`-auth-rpid`/`-auth-origin`; an explicit
+  origin seeds the RPID from its host, `deriveAuthDefaults`). WebAuthn
+  REQUIRES a secure context: over plain http the ceremony can run ONLY on
+  localhost — on the LAN there is NO working login until TLS fronts the
+  lens, so a fresh identity DB that registers before TLS exists owns an
+  account that cannot log in (and the registration door is already
+  closed). TLS-first is deploy doctrine, not a nice-to-have.
+- **Lockout** — five consecutive FAILED WEBAUTHN LOGIN CEREMONIES lock the
+  account for 15 minutes (per account, upstream default; there are no
+  passwords to mistype); distinct from the serve auth-failure throttle,
+  which is per client address.
 
 ## Typed error carriers (2026-10-27)
 

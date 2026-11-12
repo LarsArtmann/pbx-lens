@@ -19,31 +19,36 @@
 
 ## 1. TLS for passkeys → ANSWER:
 
-**Current truth:** the lens serves plain http on the LAN. The password
-factor works everywhere; **WebAuthn (passkeys) stays dormant** — it needs
-a secure context (localhost, or TLS). `deriveAuthDefaults` collapses an
-IP listen address to RPID `localhost` precisely because go-webauthn
-refuses IP RPID outright. The session cookie is not flagged `Secure`
-(it cannot be over http).
+**Current truth (corrected 2026-11-12 during the deploy-receipt wiring):**
+the lens serves plain http on the LAN, and **login is PASSKEY-ONLY** —
+registration is email-only and usermgmt ships no password login at all.
+WebAuthn needs a secure context (localhost, or TLS): over plain LAN http
+the login ceremony CANNOT run, so after the first registration the
+operator account exists but nobody can log into it — and `MaxUsers: 1`
+has already closed the door. The session cookie follows the origin
+scheme (`allOriginsHTTPS`): non-Secure over http, Secure once TLS fronts
+the lens.
 
 **Options:**
-- **A — hold http, password-only** (zero infra now). Lockout (5 fails →
-  15 min) + per-IP rate limits still guard the account; passkeys wait.
-  Risk: password-only on a shared LAN; no HSTS story.
+- **A — hold http** is NOT VIABLE for production: it means an instance
+  nobody can log into (registration closes on the first signup, whose
+  only login path is a ceremony the insecure context refuses). Fine only
+  for localhost development.
 - **B — TLS reverse proxy in front** (caddy/nginx on the NixOS host).
   Lens stays plain http behind the proxy; the proxy owns certs + HSTS.
-  Unlocks: passkey enrollment, `Secure` cookie flag, `-auth-origin
-  https://lens.<domain>`. The vhost snippet belongs in the sibling
-  module (`nix-international-telephony` `modules/telephony/lens.nix`).
+  Unlocks: the login ceremony, `Secure` cookie, `-auth-origin
+  https://lens.<domain>` (which also seeds the RPID). The vhost snippet
+  belongs in the sibling module (`nix-international-telephony`
+  `modules/telephony/lens.nix`). Deploy order matters: proxy FIRST, then
+  the first registration.
 - **C — Go TLS termination in the lens process** (`-cert`/`-key` flags,
   new config surface in serve). No proxy dependency, but cert renewal,
   key handling, and port 443 privileges move into the unit — more ops
   surface for no user-visible gain over B.
 
-**Recommendation: B** — the standard posture, least lens-side code, and
-the sibling module can grow the vhost in one commit when you say go.
-Deploy order matters: proxy first, then `-auth-origin https://…`, then
-passkey enrollment. P05's CDP ceremony (P05.6/P05.7) runs on the
+**Recommendation: B — REQUIRED, not optional.** The standard posture,
+least lens-side code, and the sibling module can grow the vhost in one
+commit when you say go. P05's CDP ceremony (P05.6/P05.7) runs on the
 localhost posture and is answer-independent.
 
 ## 2. Bootstrap posture → ANSWER:

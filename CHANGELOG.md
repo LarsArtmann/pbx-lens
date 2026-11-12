@@ -20,10 +20,14 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   the index DB — the identity journal is NOT re-derivable).
 - **First visitor becomes operator.** `MaxUsers: 1` closes registration the
   moment the first account completes; there is no pre-provisioned account
-  and every later `/auth/register` is refused without a session. WebAuthn
-  passkeys are wired (`-auth-rpid`/`-auth-origin`; IP/localhost deployments
-  derive RPID `localhost` — go-webauthn refuses an IP RPID) but over plain
-  LAN http only the password factor is active until TLS fronts the lens.
+  and every later `/auth/register` is refused without a session. Login is
+  PASSKEY-ONLY (usermgmt ships no password login): WebAuthn ceremonies are
+  wired (`-auth-rpid`/`-auth-origin`; an explicit origin seeds the RPID
+  from its host, IP/localhost boots derive `localhost` — go-webauthn
+  refuses an IP RPID) and need a secure context — over plain LAN http
+  there is NO working login until TLS fronts the lens (correction
+  2026-11-12: an earlier line here claimed a LAN password factor that
+  does not exist).
 - **The gate is explicit, not ambient.** Session → CSRF → gate middleware in
   front of every UI route: public paths (`/login`, `/auth/*`, `/app.css`,
   `/robots.txt`) pass; browsers get 303 to /login, non-browsers 401.
