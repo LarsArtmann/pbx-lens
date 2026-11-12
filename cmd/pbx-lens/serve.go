@@ -12,6 +12,7 @@ import (
 
 	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-appkit/systemd"
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/cli"
@@ -124,37 +125,24 @@ func serve(args []string) {
 	setupCtx, cancel := context.WithTimeout(context.Background(), serveTimeout)
 	defer cancel()
 
-	sys, cleanup, err := cli.OpenSystem(setupCtx, *db)
+	sys, index, closeAll, err := openServeIndex(setupCtx, *db)
 	if err != nil {
 		fatal(err)
 	}
 
-	defer cleanup()
-
-	if err := cli.DrainProjections(setupCtx, sys); err != nil {
-		fatal(err)
-	}
-
-	index, err := search.Open(setupCtx, *db)
-	if err != nil {
-		fatal(err)
-	}
-
-	defer func() { _ = index.Close() }()
-
-	if err := cli.RebuildOpenIndex(setupCtx, sys, index); err != nil {
-		fatal(err)
-	}
+	defer closeAll()
 
 	// The identity context (passkey login) is opt-in via -auth-db: without
 	// it the serve runs unauthenticated — the localhost dev posture the
 	// probes rely on.
-	identity, err := openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin)
-	if err != nil {
-		fatal(err)
-	}
+	var identity *web.Identity
 
-	if identity != nil {
+	if *authDB != "" {
+		identity, err = openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin)
+		if err != nil {
+			fatal(err)
+		}
+
 		defer func() { _ = identity.Close() }()
 	}
 	// The composition the read-only surface runs on: no fixed response
@@ -203,29 +191,9 @@ func serve(args []string) {
 
 	counters := cli.NewSourceCounters(*pollEvery)
 
-	// The probe fixture (T20): a canned STALE verdict (2h-old pass, past two
-	// poll intervals) so the browser probes can assert the stale alert
-	// renders without waiting on real poll cadences. Dev-only — a production
-	// serve must never flip it, the /ops page would cry wolf forever.
-	opsProvider := counters.SnapshotAny
-
-	if *wiredOps {
-		opsProvider = cannedStaleOps
-	}
-
-	recordings := web.RecordingOptions{RecordingsDir: *recordingsDir, UpstreamTimeout: *recTimeout}
-
-	var telnyxClient *telnyx.Client
-
-	if *keyFile != "" {
-		key, err := cli.ResolveKey(*keyFile)
-		if err != nil {
-			fatal(err)
-		}
-
-		telnyxClient = telnyx.NewClient(key, "")
-		recordings.Telnyx = telnyxClient
-	}
+	opsProvider, recordings, telnyxClient := wireServeSources(
+		counters, *wiredOps, *recordingsDir, *recTimeout, *keyFile,
+	)
 
 	web.Register(
 		svc.Mux,
@@ -261,6 +229,41 @@ func serve(args []string) {
 	if err := svc.Run(context.Background()); err != nil {
 		fatal(err)
 	}
+}
+
+// wireServeSources resolves the poller-adjacent wiring: the ops snapshot
+// provider (the -wired-ops probe fixture swaps in a canned STALE verdict so
+// the browser probes can assert the stale alert renders without waiting on
+// real poll cadences — dev-only, a production serve would cry wolf
+// forever), the recording proxy options, and the Telnyx client when a key
+// file is configured.
+func wireServeSources(
+	counters *cli.SourceCounters,
+	wiredOps bool,
+	recordingsDir string,
+	recTimeout time.Duration,
+	keyFile string,
+) (func() any, web.RecordingOptions, *telnyx.Client) {
+	opsProvider := counters.SnapshotAny
+	if wiredOps {
+		opsProvider = cannedStaleOps
+	}
+
+	recordings := web.RecordingOptions{RecordingsDir: recordingsDir, UpstreamTimeout: recTimeout}
+
+	var telnyxClient *telnyx.Client
+
+	if keyFile != "" {
+		key, err := cli.ResolveKey(keyFile)
+		if err != nil {
+			fatal(err)
+		}
+
+		telnyxClient = telnyx.NewClient(key, "")
+		recordings.Telnyx = telnyxClient
+	}
+
+	return opsProvider, recordings, telnyxClient
 }
 
 // cannedStaleOps is the -wired-ops fixture payload: the wire shape /api/ops
@@ -380,20 +383,56 @@ func buildServiceConfig(
 	return serviceConfig
 }
 
-// openServeIdentity brings the identity context up when -auth-db is set.
-// With it, the FIRST visitor to /login becomes the operator: registration
-// closes itself after that account exists (MaxUsers = 1), so say so in the
-// log where the operator can act on it. WebAuthn needs a secure context
-// (HTTPS or localhost) — a plain-HTTP LAN address cannot enroll passkeys;
-// reach the service through an SSH tunnel or put TLS in front.
+// openServeIndex boots the index side of serve: the CQRS system, the
+// projection drain that catches the read model up with whatever ingest
+// left unprojected, the FTS index, and the startup rebuild. closeAll
+// releases the FTS handle and then the system — defer it as one unit so
+// the journal stays readable until the index has flushed.
+func openServeIndex(
+	ctx context.Context,
+	dsn string,
+) (*system.System, *search.Index, func(), error) {
+	sys, cleanup, err := cli.OpenSystem(ctx, dsn)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	if err := cli.DrainProjections(ctx, sys); err != nil {
+		cleanup()
+
+		return nil, nil, nil, err
+	}
+
+	index, err := search.Open(ctx, dsn)
+	if err != nil {
+		cleanup()
+
+		return nil, nil, nil, err
+	}
+
+	if err := cli.RebuildOpenIndex(ctx, sys, index); err != nil {
+		_ = index.Close()
+
+		cleanup()
+
+		return nil, nil, nil, err
+	}
+
+	closeAll := func() {
+		_ = index.Close()
+
+		cleanup()
+	}
+
+	return sys, index, closeAll, nil
+}
+
+// openServeIdentity brings the identity context up. The caller checks the
+// -auth-db flag first, so an empty DSN never reaches here.
 func openServeIdentity(
 	ctx context.Context,
 	addr, authDB, authRPID, authOrigin string,
 ) (*web.Identity, error) {
-	if authDB == "" {
-		return nil, nil
-	}
-
 	rpid, origins := deriveAuthDefaults(addr, authRPID, authOrigin)
 
 	identity, err := web.OpenIdentity(ctx, web.IdentityConfig{
