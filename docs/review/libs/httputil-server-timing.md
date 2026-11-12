@@ -1,7 +1,9 @@
 # httputil/server_timing — utilization audit (pbx-lens)
 
-**Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/httputil/server_timing v1.0.3` (go.mod:25) · **Status:** USED
-**Adoption score:** **67/100 direct (moderate)** — 2 of 3 applicable primitives called directly (`MeasureServerTiming`, `ServerTimingMiddleware`); **67/100 effective** — every used capability rides the maintained path since the 2026-11-04 swap deleted the divergent hand-wrap (`ServerTimingMiddlewareWhen` declined by recorded decision: single-operator htpasswd surface, docs/http-stack.md).
+**Date:** 2026-11-04 (refreshed **2026-11-11** — pin unchanged, still proxy latest) · **Pin:** `github.com/larsartmann/httputil/server_timing v1.0.3` (go.mod:25) · **Status:** USED
+**Refreshed 2026-11-12:** pin still v1.0.3 (go.mod:30) == latest `server_timing/v1.0.3` tag — server_timing versions live in their OWN tag namespace inside the httputil repo (not shared with the root v1.x tags), verified via `git fetch --tags` + `git tag --sort=-v:refname` plus an empty commit log on `server_timing/` after the tag. Zero drift; verdict and both scores unchanged (**67/100 direct / 67/100 effective**).
+
+**Adoption score:** **67/100 direct (moderate)** — 2 of 3 applicable primitives called directly (`MeasureServerTiming`, `ServerTimingMiddleware`); **67/100 effective** — every used capability rides the maintained path since the 2026-11-04 swap deleted the divergent hand-wrap (`ServerTimingMiddlewareWhen` declined by recorded decision: single-operator gated surface — htpasswd then, the cqrs-htmx identity session gate now; escape named in docs/http-stack.md).
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
 
@@ -33,7 +35,7 @@ Ground truth: v1.0.3 module cache — 15 exported symbols, stdlib-only.
 | `WrapServerTiming`           | ❌ no longer called (was the hand-wrap's plumbing; wrapper deleted 2026-11-04)                                                                                                                                                            |
 | `MeasureServerTiming`        | ✅ 11 call sites: `timing.go:40` (firstpage); `server.go:187,348,494`; `freshness.go:25,36`; `recording.go:120,160`; `search.go:60`; `segment_page.go:24`; `ops.go:147` (12 rg lines incl. one comment)                                   |
 | `ServerTimingMiddleware`     | ✅ `cmd/pbx-lens/serve.go` (the 2026-11-04 swap)                                                                                                                                                                                          |
-| `ServerTimingMiddlewareWhen` | ❌ declined by recorded decision (unconditional OK behind htpasswd; escape named in docs/http-stack.md)                                                                                                                                   |
+| `ServerTimingMiddlewareWhen` | ❌ declined by recorded decision (unconditional OK behind the single-operator gate — htpasswd at the 2026-11-04 decision, the identity session gate since 2026-11-11; escape named in docs/http-stack.md)                                                                                           |
 | `RecordServerTiming`         | ❌ N/A: it records an ALREADY-MEASURED duration (`(ctx, name, desc, dur)`, `server_timing.go:237`); no producer here hands us one — every hop is timed inline with `Measure`, which brackets the work itself                              |
 | `MeasureWithDesc`            | ❌ N/A: descriptions ride the same header line as the name, and the header is a per-route budget (a proxy hop, a query, a first page) — a prose description per metric buys nothing a reader of this repo cannot get from the metric name |
 

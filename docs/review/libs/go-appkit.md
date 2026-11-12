@@ -3,6 +3,23 @@
 **Date:** 2026-11-04 · **Pins:** `github.com/larsartmann/go-appkit v0.9.0` + `go-appkit/systemd v0.1.0` (go.mod:7-8) · **Status:** USED
 
 > **Refreshed 2026-11-11:** lib latest root tag is now **v0.12.0** (2026-11-07) — three minors ahead of the pin. v0.10.0 (2026-11-06) RELEASED the D4 flip-trigger (Server-Timing default outermost); v0.11.0 raised the go floor to 1.27.3 (pbx-lens matched, `539a136`); v0.12.0 recomposed `Service` on `httputil.Server`. Facts below keep the 2026-11-04 snapshot basis; the v0.10-v0.12 deltas live in the forward-finding and version-currency sections.
+> **Refreshed 2026-11-12:** pin still **v0.9.0** + **systemd v0.1.0** (go.mod:10-11); latest
+> tags now **v0.12.0** (root, 2026-11-07) and **systemd/v0.2.0** (2026-11-08), verified via
+> `git fetch --tags` + `git tag --sort=-v:refname` in `/home/lars/projects/go-appkit`. The D4
+> items shipped in **v0.10.0** (2026-11-06): Server-Timing is now the default outermost
+> middleware and testkit gained `HTTPGetURL`/`WaitForRunning`/`FreeAddr` — so the `serve.go`
+> de-dup and the testkit-helper adoption are **ACTIONABLE ON BUMP**; no code change made now,
+> and the pin stays v0.9.0 (the bump is an owner decision, already flagged in TODO_LIST
+> Blocked "four stale pins"). Re-verified pbx-lens still wires `servertiming.ServerTimingMiddleware()`
+> (serve.go:378) and testkit ×3 (serve_test.go:57,186,298). Other window deltas, none
+> load-bearing for the used surface: v0.11.0 raises the go floor to 1.27.3 (pbx-lens's
+> directive is already `go 1.27.3`) and adds errorfamily hook-failure classification (the
+> hook families are unwired by design here); v0.12.0 delegates the server loop to
+> `httputil.Server` — public API unchanged, but configs the delegated server rejects now
+> fail `Start` and a deadline-less `Close` inherits `ShutdownTimeout`; systemd v0.2.0's
+> `Install` returns the wired `Hooks` (source-compatible). Verdict and score unchanged —
+> **73/100** stands.
+
 > **Adoption score:** **73/100 (high)** — 11 of 15 applicable capabilities (unchanged from the prior report; pin is still v0.9.0, the adoption didn't move).
 > **Prior report:** [2026-10-25_go-appkit-templ-deep-dive.html](../../research/2026-10-25_go-appkit-templ-deep-dive.html) (73/100 = go-appkit; the same report's 86/100 belongs to a-h/templ — score-card ambiguity resolved there). This report re-verifies the census at today's HEAD and adds one forward finding; nothing supersedes the prior scores.
 

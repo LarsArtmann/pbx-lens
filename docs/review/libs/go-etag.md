@@ -1,6 +1,8 @@
 # go-etag — utilization audit (pbx-lens)
 
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/go-etag/server v0.6.1` (go.mod:23; `entitytag` v0.6.1 indirect — re-exported by server, `go mod why` verified) · **Status:** USED
+**Refreshed 2026-11-12:** pin still v0.6.1 (server + metrics, go.mod:27-28; entitytag v0.6.1 indirect, go.mod:114); latest tag **v0.7.0**, verified via `git fetch --tags` + `git tag --sort=-v:refname` in `/home/lars/projects/go-etag`. The v0.6.1→v0.7.0 delta is dependency go.mod/go.sum bumps, the doc-snippet CI gate and lint-config convergence only — `git diff --stat v0.6.1..v0.7.0 -- server entitytag metrics` shows zero `.go` changes — so no delta to the used surface, verdict/score unchanged (**95/100**), and the bump alone is not needed. Upstream issue #2 ("server: handler Flush abandons ETag generation silently — no hook, no log") re-checked via `gh issue view 2 -R LarsArtmann/go-etag`: **OPEN**.
+
 **Adoption score:** **95/100 (very high)** — every applicable config knob/area is now wired (5 knobs explicit, 3 defaulted, plus `OnError` and the `go-etag/metrics` module adopted 2026-11-04; `Validate` N/A, entitytag parse/match re-exports N/A). The residual 5 is the standing `go-etag/client` Hold, not an unadopted capability.
 **Fleet report:** [index.html](index.html)
 **Refresh rule:** re-run the census and the score on this library's next pin bump or when its flip-trigger fires (policy + prior-report reconciliation: [docs/research/README.md](../../research/README.md)).
@@ -38,7 +40,7 @@ Ground truth: module cache `~/go/pkg/mod/github.com/larsartmann/go-etag/server@v
 
 ## Version currency
 
-Pin v0.6.1. Upstream has since tagged **v0.7.0** — commit range v0.6.1..v0.7.0 is dependency chores + the doc-snippet gate + config convergence: **no API change** to server/entitytag. Checkout `[Unreleased]` adds a metrics glossary (documents the hit-ratio >1 case below) — worth reading, not worth a bump alone.
+Pin v0.6.1 == the latest CONSUMABLE release (re-verified 2026-11-11: proxy serves server v0.6.1; the checkout's root tag `v0.7.0` (2026-11-03) is content-only — this multi-module repo releases via `server/vX.Y.Z`-style submodule tags (`server/v0.6.1`, `metrics/v0.6.1`), no `server/v0.7.0` exists, and the proxy correctly rejects `server@v0.7.0`). The v0.7.0-tagged content (dependency chores, doc-snippet gate, config convergence, the metrics glossary that documents the hit-ratio >1 case) rides the NEXT `server/vX` tag — worth reading in the checkout, nothing to bump today. The constructor predates the pin; the pin is current.
 
 ## Risks
 
