@@ -49,6 +49,32 @@ normalization hiding a series' sign) CLOSED upstream 2026-11-07 (COMPLETED)
 same NEXT coordinated bump; pbx-lens uses Sparkline in the spend card, so
 its render joins the P07 re-verification list (dashboard pixel probe).**
 
+**Added 2026-11-12 c (plan A14 — the two templ candidate rows + one filing):**
+
+- **templ duplicate `</script>` after singleton scripts — NO FILING
+  (fixed on master, verified before filing).** templ v0.3.1100 codegen
+  emits a second closing tag behind library singleton scripts mounted at
+  page level; golden evidence captured 2026-11-12, and the same-day
+  master check found the codegen output ALREADY corrected upstream —
+  filing would be noise. Fold-in rides the templ bump watchlist (the
+  first tag carrying the fix retires the local golden workaround).
+  Evidence row: docs/templ-components-adoption.md (the duplicate-tag
+  row), 2026-11-12_04-43 session status.
+- **templ-components icon→text separator space — STAGED, unfiled
+  (owner go-ahead per the filings norm).** Icons rendered with a text
+  label carry no separator space, which breaks exact-match consumers
+  (golden evidence in the 2026-11-12_04-43 session's hands, adoption-map
+  row written the same day). Dupe search owed before filing.
+- **go-etag#6 — FILED 2026-11-12 (this plan's one sanctioned filing).**
+  "Submodule tags missing from the v0.7.0 wave: server/metrics/entitytag
+  stranded at v0.6.1" — root serves v0.7.0 on the proxy while all three
+  submodules stop at v0.6.1 (verified live: `go list -m -versions` on
+  root vs server/metrics/entitytag, plus `git diff --stat v0.6.1..v0.7.0`
+  showing submodule go.mod changes); asks for the missing submodule tags
+  + a wave rule that every touched submodule manifest gets its tag in the
+  same pass (go-cqrs-lite's batch-release pattern). Related instance: #5
+  (same wave's release-workflow failure). State: OPEN.
+
 **State check 2026-11-05 (plan T20, filings round): nothing new to FILE, and
 both open candidates are closed by evidence.**
 
