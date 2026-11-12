@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"maps"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -986,4 +988,191 @@ func BenchmarkConcurrentPoll(b *testing.B) {
 			})
 		})
 	}
+}
+
+// BenchmarkConcurrentPollIdentity is the P08.7 generation: the same poll
+// ceiling as BenchmarkConcurrentPoll, measured through the LIVE identity
+// chain (session enrichment → CSRF → gate, the production ExtraMiddlewares
+// posture with -auth-db set). The 304 arm carries a real session cookie;
+// the gate's public-path short-circuit stays out of the hot path because
+// /frag/dashboard is gated. Pair the numbers with the auth-free
+// generation in docs/http-stack.md — the delta is the identity tax.
+func BenchmarkConcurrentPollIdentity(b *testing.B) {
+	dsn := filepath.Join(b.TempDir(), "identity-bench.db")
+
+	identity, err := web.OpenIdentity(context.Background(), web.IdentityConfig{
+		DSN: dsn, RPID: "localhost", RPOrigins: []string{"http://localhost:8300"},
+	})
+	if err != nil {
+		b.Fatalf("open identity: %v", err)
+	}
+
+	defer func() { _ = identity.Close() }()
+
+	sys, cleanup, err := cli.OpenSystem(b.Context(), "")
+	if err != nil {
+		b.Fatalf("open memory index: %v", err)
+	}
+
+	defer cleanup()
+
+	serviceConfig := buildServiceConfig("127.0.0.1:0", identity.Middleware(), nil, nil)
+	svc := testkit.NewService(b, serviceConfig)
+	identity.Register(svc.Mux)
+	web.Register(svc.Mux, sys, web.Options{AuthEnabled: true, Identity: identity})
+	ts := testkit.Serve(b, svc)
+
+	// Mint the operator session through the real ceremony. ONE /login
+	// fetch supplies both halves (the nosurf cookie and its meta token) —
+	// two fetches land in two nosurf sessions and the ceremony 403s.
+	client := noAutoGzip()
+	csrfCookie, token := loginChallengeHTTP(b, ts.FullChainURL, client)
+	sessionCookie, err := registerOperatorHTTP(b, ts.FullChainURL, client, csrfCookie, token)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	// Warm the fragment and grab its ETag through the gated chain.
+	base, authedClient := ts.FullChainURL, noAutoGzip()
+
+	warm, err := http.NewRequestWithContext(b.Context(), http.MethodGet, base+"/frag/dashboard", nil)
+	if err != nil {
+		b.Fatalf("build warm request: %v", err)
+	}
+
+	warm.AddCookie(sessionCookie)
+
+	warmResp, err := authedClient.Do(warm)
+	if err != nil {
+		b.Fatalf("warm GET: %v", err)
+	}
+
+	tag := warmResp.Header.Get("ETag")
+	_, _ = io.Copy(io.Discard, warmResp.Body)
+	_ = warmResp.Body.Close()
+
+	if tag == "" {
+		b.Fatal("gated fragment served without an ETag")
+	}
+
+	for _, bb := range []struct {
+		name string
+		etag string
+	}{
+		{name: "revalidate-304", etag: tag},
+		{name: "changed-full-200", etag: ""},
+	} {
+		b.Run(bb.name, func(b *testing.B) {
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					req, err := http.NewRequestWithContext(b.Context(), http.MethodGet, base+"/frag/dashboard", nil)
+					if err != nil {
+						b.Fatal(err)
+					}
+
+					req.AddCookie(sessionCookie)
+					if bb.etag != "" {
+						req.Header.Set("If-None-Match", bb.etag)
+					}
+
+					resp, err := authedClient.Do(req)
+					if err != nil {
+						b.Fatal(err)
+					}
+
+					_, _ = io.Copy(io.Discard, resp.Body)
+					_ = resp.Body.Close()
+				}
+			})
+		})
+	}
+}
+
+// loginChallengeHTTP is the benchmark-side twin of auth_test's
+// loginChallenge: ONE /login fetch returns both ceremony halves — the
+// nosurf cookie AND the meta token it encodes (two fetches land in two
+// nosurf sessions and every ceremony 403s).
+func loginChallengeHTTP(tb testing.TB, base string, client *http.Client) (*http.Cookie, string) {
+	tb.Helper()
+
+	req, err := http.NewRequestWithContext(tb.Context(), http.MethodGet, base+"/login", nil)
+	if err != nil {
+		tb.Fatalf("build login fetch: %v", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		tb.Fatalf("GET /login: %v", err)
+	}
+
+	defer func() { _ = resp.Body.Close() }()
+
+	page, err := io.ReadAll(resp.Body)
+	if err != nil {
+		tb.Fatalf("read login page: %v", err)
+	}
+
+	match := regexp.MustCompile(`name="csrf-token" content="([^"]+)"`).FindSubmatch(page)
+	if match == nil {
+		tb.Fatal("login page carries no csrf-token meta")
+	}
+
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "csrf_token" {
+			return cookie, string(match[1])
+		}
+	}
+
+	tb.Fatal("GET /login issued no csrf_token cookie")
+
+	return nil, ""
+}
+
+// registerOperatorHTTP drives POST /auth/register with the full ceremony
+// posture (same-origin attestation, CSRF cookie+token pair) and returns
+// the issued session cookie.
+func registerOperatorHTTP(
+	tb testing.TB,
+	base string,
+	client *http.Client,
+	csrfCookie *http.Cookie,
+	token string,
+) (*http.Cookie, error) {
+	tb.Helper()
+
+	reg, err := http.NewRequestWithContext(
+		tb.Context(),
+		http.MethodPost,
+		base+"/auth/register",
+		strings.NewReader(`{"email":"operator@pbx.lens","display_name":"Operator"}`),
+	)
+	if err != nil {
+		tb.Fatalf("build register: %v", err)
+	}
+
+	reg.Host = "localhost:8300"
+	reg.Header.Set("Content-Type", "application/json")
+	reg.Header.Set("Origin", "http://localhost:8300")
+	reg.Header.Set("Referer", "http://localhost:8300/login")
+	reg.Header.Set("X-Csrf-Token", token)
+	reg.AddCookie(csrfCookie)
+
+	regResp, err := client.Do(reg)
+	if err != nil {
+		tb.Fatalf("POST /auth/register: %v", err)
+	}
+
+	defer func() { _ = regResp.Body.Close() }()
+
+	if regResp.StatusCode != http.StatusCreated {
+		return nil, fmt.Errorf("register status = %d, want 201", regResp.StatusCode)
+	}
+
+	for _, cookie := range regResp.Cookies() {
+		if cookie.Name == "session_token" {
+			return cookie, nil
+		}
+	}
+
+	return nil, fmt.Errorf("registration issued no session cookie")
 }

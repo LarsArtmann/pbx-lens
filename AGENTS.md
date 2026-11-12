@@ -20,6 +20,14 @@ read-only deep link, never a data dependency.
     layering. Revisit triggers: a second aggregate (E003: hold flat,
     write/read seam pre-agreed — docs/cqrs-lint-policy.md), an external Go
     consumer, or measurable CI cost.
+  - **E003 verdict on the identity context (2026-11-12, plan A15): NO
+    TRIP.** usermgmt's aggregates (User/Session/Tenant/Bot) live UPSTREAM
+    in cqrs-htmx, on their own DB, behind their own write/read seam —
+    pbx-lens owns zero new aggregates and one composition call
+    (`web.OpenIdentity`). The trigger reads "a second aggregate in the
+    LENS domain"; the lens domain still has exactly one (Call). The
+    decision stays falsifiable: a pbx-lens-internal second aggregate (not
+    a library adoption) is what re-opens it.
   - sqliteengine (blank import registers the "sqlite" driver), pinned to the
     vetted set from go-cqrs-lite `example/getting-started/go.mod` (exact
     versions live in go.mod — never re-enumerate). ADR-0123: system.New is
