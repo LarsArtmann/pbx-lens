@@ -34,6 +34,11 @@ read-only deep link, never a data dependency.
     free. server_timing's mount is appkit's default since v0.12 (pbx-lens wires
     no explicit timing middleware; `MeasureServerTiming` call sites are the
     used surface); `entitytag` stays indirect (`go-etag/server` re-exports).
+  - `coreos/go-oidc/v3` v3.21.0 + `golang.org/x/oauth2` v0.37.0 (2026-11-12,
+    the OIDC lane — fleet pins, x/oauth2 held below v0.38.0): code + PKCE-S256,
+    lazy discovery, RS256 verify + nonce, userinfo fallback for claim-less
+    access tokens. Routes auto-mount at `/auth/oauth/<provider>/*`; the
+    registered callback is `https://<host>/auth/oauth/pocketid/callback`.
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps). Tests boot through
   `app.DomainConfig()`/`app.DeploymentConfig(dsn)`; committed rapid `.fail`
