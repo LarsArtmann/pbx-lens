@@ -7,6 +7,63 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-11-12 (native identity: login replaces the htpasswd file; cqrs-htmx flips to ADOPTED)
+
+- **The lens has a real login.** `internal/web/userauth.go` brings up the
+  cqrs-htmx usermgmt identity bounded context over one SQLite identity DB
+  (`-auth-db`; event store + SQL session store + SQL read models + hand-applied
+  checkpoint schema, one shared handle, `OptimizeSQLiteDB`, a single
+  connection serializing the identity journal). The htpasswd middleware and
+  the `-htpasswd` flag are gone (`internal/web/auth.go` deleted with its ten
+  tests; the sibling NixOS module option became `auth.enable` +
+  `auth.publicOrigin`, and the nightly backup stages the identity DB beside
+  the index DB — the identity journal is NOT re-derivable).
+- **First visitor becomes operator.** `MaxUsers: 1` closes registration the
+  moment the first account completes; there is no pre-provisioned account
+  and every later `/auth/register` is refused without a session. WebAuthn
+  passkeys are wired (`-auth-rpid`/`-auth-origin`; IP/localhost deployments
+  derive RPID `localhost` — go-webauthn refuses an IP RPID) but over plain
+  LAN http only the password factor is active until TLS fronts the lens.
+- **The gate is explicit, not ambient.** Session → CSRF → gate middleware in
+  front of every UI route: public paths (`/login`, `/auth/*`, `/app.css`,
+  `/robots.txt`) pass; browsers get 303 to /login, non-browsers 401.
+  Identity readiness (`Ready()` over projection statuses) ANDs into the
+  serve readiness check; per-IP registration (10/min) and WebAuthn (30/min)
+  rate limits ride the AuthHandler routes; account lockout is 5 fails/15
+  minutes. Auth tests rewritten against a real SQLite identity DB including
+  the browser CSRF dance (Host + Origin + Referer + `X-Csrf-Token` +
+  cookie), gate 303/401/Hx behavior, registration door-closing, and
+  identity-DB reopen survival.
+- **Coordinated UI bump rode the adoption:** a-h/templ v0.3.1070 → v0.3.1100
+  and templ-components v1.26.0 → v1.27.0 (root + htmx + icons + utils) in
+  ONE change per the two-module gate, plus the Go floor 1.27.2 → 1.27.3 and
+  the new direct deps cqrs-htmx/usermgmt v4.20.0, loginpage v4.18.0,
+  usermgmt/webauthn v4.13.0, go-cqrs-lite/storage v4.11.1. Two codegen
+  behavior changes were absorbed: the templ v0.3.1100 icon→text separator
+  space (pagination `extractHref` no longer matches on a leading `>`), and
+  the new tc validity-bridge singleton script renders WITHOUT a nonce under
+  the enforcing CSP — `Nonce` is now threaded into `forms.Form` at all
+  three call sites (calls filter form, dashboard range form, search).
+  `scripts/gen-tc-classes.js` scans the loginpage module too (dual pin
+  stamps); corpus freshness test extended. Goldens refreshed and reviewed;
+  `nix run .#update-styles` re-run.
+
+### Fixed — 2026-11-12 (the nix chain was broken in two places before this session)
+
+- **The package preBuild ran bare `templ`** — the nixpkgs binary, drifted
+  ahead of the pinned a-h/templ — so the generated code called
+  `templ.ResolveAttributeValue`, which the pinned runtime does not export,
+  and the build died. The preBuild now runs
+  `GOEXPERIMENT=jsonv2 go tool templ generate ./internal/web/` (the
+  go.mod-pinned codegen).
+- **cqrs-lint's devshell input carried an all-zeros hash** (fetchFromGitHub
+  sha256 and its own vendorHash were placeholders) — the devshell could not
+  enter before this session. Real hashes pinned; the cqrs-lint binary is
+  verified in the devshell and its check runs green again.
+- `vendorHash.nix` regenerated on a clean tree via
+  `nix run .#update-vendor-hash` after the dependency wave; package build
+  and devshell (`nix develop -c echo ok`) both verified green.
+
 ### Fixed — 2026-11-05 (readiness told the truth neither way; a failed projection was silent)
 
 - **`/health/ready` no longer fails a healthy serve.** The projection
