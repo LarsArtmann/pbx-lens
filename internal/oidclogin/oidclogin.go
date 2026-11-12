@@ -479,8 +479,13 @@ func (p *Provider) checkName(providerName string) error {
 	return nil
 }
 
+// randomTokenBytes sizes the state-token entropy buffer. crypto/rand.Read
+// fills the fixed-length slice in place; makezero misreads that as an
+// append-growth slice, hence the scoped nolint (fleet-wide false positive).
+const randomTokenBytes = 32
+
 func randomToken() (string, error) {
-	buf := make([]byte, 32)
+	buf := make([]byte, randomTokenBytes) //nolint:makezero // fixed-length buffer filled by rand.Read
 	if _, err := rand.Read(buf); err != nil {
 		return "", errorfamily.WrapInfrastructure(err, "lens.oidc.random_token",
 			"crypto/rand entropy read failed (kernel CSPRNG unavailable)")

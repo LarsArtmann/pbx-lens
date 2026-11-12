@@ -38,9 +38,13 @@ type StubIdP struct {
 	lastForm       url.Values
 }
 
+// rsaKeyBits is the stub's RS256 signing-key size: 2048, the minimum
+// modern RSA size, which is plenty for an in-process IdP.
+const rsaKeyBits = 2048
+
 // NewStub starts the stub provider; Close stops it.
 func NewStub(claims map[string]any) *StubIdP {
-	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	key, _ := rsa.GenerateKey(rand.Reader, rsaKeyBits)
 
 	idp := &StubIdP{key: key, tokenClaims: claims}
 	mux := http.NewServeMux()
@@ -191,6 +195,10 @@ func writeJSONError(w http.ResponseWriter, status int, msg string) {
 	writeJSON(w, map[string]string{"error": msg})
 }
 
+// protocolClaimCount is the ID-token protocol claims signIDToken merges in
+// (iss, aud, iat, exp, and the nonce when present) — map-sizing headroom.
+const protocolClaimCount = 5
+
 // signIDToken issues a compact RS256 JWS whose payload merges the base
 // claims with the protocol claims an ID token verifier requires.
 func signIDToken(
@@ -198,7 +206,7 @@ func signIDToken(
 ) (string, error) {
 	now := time.Now()
 
-	payload := make(map[string]any, len(claims)+5)
+	payload := make(map[string]any, len(claims)+protocolClaimCount)
 	maps.Copy(payload, claims)
 
 	payload["iss"] = issuer
