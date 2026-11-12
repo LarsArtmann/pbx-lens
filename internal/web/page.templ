@@ -12,10 +12,13 @@ import (
 // (library gutter + width defaults) plus a restrained footer.
 // nonce is the per-request CSP nonce (httputil.NonceFromRequest); empty
 // means nonce mode is off and the library helpers omit the attribute.
-templ shell(nonce string, title string, currentPath string) {
+// csrf is the per-request CSRF token (httputil.CSRFTokenFromRequest) the
+// nav's logout form posts; authed gates that form — on an auth-free boot
+// there is no session to end and the button must not render.
+templ shell(nonce string, csrf string, authed bool, title string, currentPath string) {
 	@layout.Base(pageProps(nonce, title)) {
 		@feedback.ToastContainer(nonce)
-		@nav(nonce, currentPath)
+		@nav(nonce, csrf, authed, currentPath)
 		@layout.Container(layout.ContainerProps{Class: "flex-1 py-8"}) {
 			{ children... }
 		}

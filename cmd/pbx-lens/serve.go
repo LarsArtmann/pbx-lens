@@ -202,7 +202,7 @@ func serve(args []string) {
 		web.Options{
 			Recordings: recordings, Search: index, Log: slogLog,
 			Ops: opsProvider, Cache: cacheStats,
-			RetentionMaxAge: *maxAge,
+			RetentionMaxAge: *maxAge, AuthEnabled: identity != nil,
 		},
 	)
 

@@ -38,7 +38,7 @@ func pageProps(nonce string, title string) layout.PageProps {
 	return props
 }
 
-func nav(nonce string, currentPath string) templ.Component {
+func nav(nonce string, csrf string, authed bool, currentPath string) templ.Component {
 	return navigation.SimpleNav(navigation.SimpleNavProps{
 		BaseProps: utils.BaseProps{
 			Nonce: nonce,
@@ -50,9 +50,50 @@ func nav(nonce string, currentPath string) templ.Component {
 		},
 		BrandText:   "pbx-lens",
 		Links:       navLinks(),
-		RightItems:  layout.ThemeToggle("Toggle theme", nonce),
+		RightItems:  navRight(nonce, csrf, authed),
 		CurrentPath: currentPath,
 	})
+}
+
+// navRight renders the nav's right-side cluster: the logout form (only
+// when auth is live — on an auth-free boot there is no session to end)
+// plus the theme toggle. The form POSTs the usermgmt logout ceremony with
+// the CSRF token; the nonced script lands the browser on /login either
+// way (upstream answers JSON), and the gate bounces a still-authed
+// session back to the app.
+templ navRight(nonce string, csrf string, authed bool) {
+	<div class="flex items-center gap-2">
+		if authed {
+			<form id="logout-form" method="post" action="/auth/logout">
+				<input type="hidden" name="csrf_token" value={ csrf }/>
+				<button
+					type="submit"
+					class="cursor-pointer rounded-md px-2 py-1 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+				>
+					Sign out
+				</button>
+			</form>
+			@utils.ScriptComponent(nonce, logoutScript(), "logout redirect")
+		}
+		@layout.ThemeToggle("Toggle theme", nonce)
+	</div>
+}
+
+// logoutScript posts the form (fetch keeps the JSON answer off the
+// screen), then navigates to /login — the only destination that makes
+// sense after a sign-out, failed or not.
+func logoutScript() string {
+	return `document.getElementById('logout-form')?.addEventListener('submit', (event) => {
+	event.preventDefault();
+	const form = event.target;
+	const token = form.querySelector('input[name=csrf_token]')?.value ?? '';
+	fetch(form.action, {
+		method: 'POST',
+		headers: { 'X-Csrf-Token': token },
+		body: new FormData(form),
+		credentials: 'same-origin',
+	}).finally(() => { window.location.href = '/login'; });
+});`
 }
 
 func navLinks() []navigation.NavLinkProps {

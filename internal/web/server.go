@@ -62,6 +62,12 @@ type Options struct {
 	// today-count and day-bucket position are wall-clock-relative, so the
 	// golden test pins them with a frozen clock; nil uses time.Now).
 	Now func() time.Time
+
+	// AuthEnabled reports whether the identity surface is live (serve
+	// passes identity != nil). It gates the nav's logout form: on an
+	// auth-free boot the button would be a lie — there is no session to
+	// end. False is the zero value, so auth-free probes need no change.
+	AuthEnabled bool
 }
 
 // Searcher is the content-query surface the web UI needs: the call view
@@ -84,6 +90,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		ops:               opts.Ops,
 		cache:             opts.Cache,
 		retention:         opts.RetentionMaxAge,
+		authEnabled:       opts.AuthEnabled,
 		recTimeout:        timeout,
 		upstream:          newUpstreamClient(timeout),
 		now:               opts.Now,
@@ -151,6 +158,7 @@ type server struct {
 	upstream          *http.Client
 	now               func() time.Time
 	recordingThrottle recordingThrottle
+	authEnabled       bool
 }
 
 // logf reports a failure that surfaces after the response body started —

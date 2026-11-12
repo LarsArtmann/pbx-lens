@@ -21,6 +21,14 @@ func nonce(r *http.Request) string {
 	return httputil.NonceFromRequest(r)
 }
 
+// csrfToken pulls the per-request CSRF token for template rendering: the
+// CSRF middleware injects it into the request context. Empty when no token
+// exists — auth-free boots (which render no logout form anyway) and any
+// route reached outside the middleware.
+func csrfToken(r *http.Request) string {
+	return httputil.CSRFTokenFromRequest(r)
+}
+
 // searchModeTranscript selects the per-turn result view (?mode=transcript):
 // "what was SAID" — one ranked hit per matching turn, anchored.
 const searchModeTranscript = "transcript"
