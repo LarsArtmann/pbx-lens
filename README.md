@@ -163,7 +163,8 @@ whole index (keyset-paginated, bounded memory — no row cap). The response's
 `X-PII-Mode` header names what left: `?pii=hash` swaps participant numbers
 for their salted hashes before anything leaves the server.
 
-For machine checks, `GET /api/ops` (same basic auth) serves the latest poll
+For machine checks, `GET /api/ops` (behind the login when one is
+configured) serves the latest poll
 pass's per-source offered/recorded/corrected/rejected counters plus the
 response-cache section (`etag_generated`, `not_modified`, `hit_ratio`,
 `buffer_overflows`) — the numbers the serve log prints, without grepping
@@ -173,7 +174,7 @@ counter source is wired.
 
 Other operational surfaces, all behind the same auth unless noted:
 `GET /version` reports the build; `GET /metrics` serves Prometheus text
-exposition (without basic auth by deliberate opt-in — the perimeter is the
+exposition (unauthenticated by deliberate opt-in — the perimeter is the
 bind address or firewall, see SECURITY.md); `/health`, `/health/live`, and
 `/health/ready` are appkit-owned readiness probes. Every surface answers
 conditional GETs with `ETag` → `304 Not Modified`, so htmx polls and

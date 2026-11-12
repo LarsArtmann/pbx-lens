@@ -22,8 +22,11 @@ ExtraMiddlewares, in strict order:
    requirement, composed ONCE in `internal/web/userauth.go`. `/login`,
    `/auth/*`, `/app.css`, and `/robots.txt` stay public; browsers (Accept:
    text/html or HX-Request) get 303 to `/login`, API clients 401. Sessions
-   are SQL-backed (`session_token` cookie, SameSite=Strict, Secure) in the
-   identity DB — they survive restarts. Registration closes itself after
+   are SQL-backed (`session_token` cookie, SameSite=Strict; the `Secure` flag
+   follows the WebAuthn origins' scheme — all-HTTPS origins set it
+   (`allOriginsHTTPS`), plain-http origins omit it, because browsers drop
+   Secure cookies on plain http and localhost is the exempt dev posture) in
+   the identity DB — they survive restarts. Registration closes itself after
    the first account (`MaxUsers: 1`): the first `/login` visitor on a
    trusted LAN becomes the operator. WebAuthn needs a secure context
    (HTTPS or localhost); `-auth-rpid`/`-auth-origin` override the derived
@@ -51,8 +54,9 @@ ExtraMiddlewares, in strict order:
 3. **`servertiming.ServerTimingMiddleware()`** (library constructor since
    v1.0.1; the pre-constructor hand-wrap around `WrapServerTiming` was
    deleted by the 2026-11-04 swap — one wrapper, the library's). Gating
-   decision: UNCONDITIONAL — the serve UI is single-operator behind
-   htpasswd, the header's timing detail is accepted leak surface, and the
+   decision: UNCONDITIONAL — the serve UI is single-operator behind the
+   identity session gate (login is the operator's own passkey), the header's
+   timing detail is accepted leak surface, and the
    probes pin header presence; if a public route ever appears,
    `ServerTimingMiddlewareWhen(pred)` gates it per request at zero
    overhead when the predicate fails. The library constructor also
@@ -105,6 +109,22 @@ no body metric) and by the fast-fail pair
 upstream fails fast without stretching the header budget. (2026-10-25:
 the doc previously named a `TestRecordingProxySlowUpstreamStaysBounded`
 that never existed; the claims are now pinned under their real names.)
+
+Auth adds no third hop (2026-11-12): the identity gate answers from the
+LOCAL session store — one indexed SQL read of the cookie's session row —
+before the first upstream hop, so the two-hop budget is unchanged under
+`-auth-db`; an unauthenticated request never reaches the recording
+handler at all (303 to `/login` for browsers, 401 for API clients), and
+the per-client-address recording throttle (429 + `Retry-After`, loopback
+exempt) sits behind the gate, so only authenticated peers can spend it.
+
+Auth adds no third hop (2026-11-12): the identity gate answers from the
+LOCAL session store — one indexed SQL read of the cookie's session row —
+before the first upstream hop, so the two-hop budget is unchanged under
+`-auth-db`; an unauthenticated request never reaches the recording
+handler at all (303 to `/login` for browsers, 401 for API clients), and
+the per-client-address recording throttle (429 + `Retry-After`, loopback
+exempt) sits behind the gate, so only authenticated peers can spend it.
 
 ## Export streams: the firstpage metric (plan P13, 2026-10-25)
 
@@ -227,7 +247,7 @@ re-offering already-indexed rows is priced just above the parse floor.
 `ServiceConfig.Version` → `GET /version` + `appkit_build_info`; `Metrics`
 with the explicit `AllowUnauthenticated` opt-in → `GET /metrics` (Prometheus
 text). Both exist beside the appkit `/health{,/live,/ready}` routes; auth
-posture is the htpasswd middleware or loopback-only dev.
+posture is the identity session gate (`-auth-db`) or loopback-only dev.
 
 `/health/ready` is projection-worker readiness (2026-11-04, plan T17): the
 serve wiring sets `ReadyCheck` to `cli.ProjectionWorkersReady` over
