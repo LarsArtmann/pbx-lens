@@ -186,12 +186,19 @@ Transcripts, excerpts, and insight summaries stay raw in every mode — see
 the field-coverage matrix in FEATURES.md. If you need free text scrubbed
 too, that is a separate feature; do not assume hash mode covers it.
 
-Protect it with bcrypt basic auth for anything beyond loopback:
+Protect it with the built-in login for anything beyond loopback:
 
 ```console
-htpasswd -B -c /etc/pbx-lens/htpasswd operator
-pbx-lens serve -db calls.db -htpasswd /etc/pbx-lens/htpasswd
+pbx-lens serve -db calls.db -auth-db /var/lib/pbx-lens/identity.db -auth-origin https://lens.example.com
 ```
+
+The first person to complete `/login` on a fresh identity DB becomes the
+operator (registration closes after that one account). Login is
+PASSKEY-ONLY and WebAuthn needs a secure context — over plain http only
+localhost can log in, so front the lens with TLS and pass `-auth-origin
+https://…` (its host seeds the WebAuthn RPID; `-auth-rpid` overrides).
+Full deploy runbook: docs/runbooks/identity-first-deploy.md; the security
+posture (lockout, rate limits, recovery): SECURITY.md.
 
 `/health` style readiness is appkit-owned; under systemd (`Type=notify`,
 see `deploy/systemd/pbx-lens.service`) the binary sends `READY=1` after the
