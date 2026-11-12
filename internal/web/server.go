@@ -787,19 +787,43 @@ func composeOpsPayload(
 		return poller
 	}
 
+	pollerMap := ensureOpsPayloadMap(poller)
+	mergeOpsSections(pollerMap, cache, coverage, retention, identity, failures)
+
+	return pollerMap
+}
+
+// ensureOpsPayloadMap stages the merged payload's base map: a raw poller
+// payload wraps under "poller", an existing map is copied (never mutated —
+// the payload may alias the poller's own state).
+func ensureOpsPayloadMap(poller any) map[string]any {
 	pollerMap, merged := poller.(map[string]any)
 	if !merged {
-		pollerMap = make(map[string]any, opsPayloadSections)
+		out := make(map[string]any, opsPayloadSections)
 
 		if poller != nil {
-			pollerMap["poller"] = poller
+			out["poller"] = poller
 		}
-	} else {
-		copied := make(map[string]any, len(pollerMap)+opsPayloadSections)
-		maps.Copy(copied, pollerMap)
-		pollerMap = copied
+
+		return out
 	}
 
+	copied := make(map[string]any, len(pollerMap)+opsPayloadSections)
+	maps.Copy(copied, pollerMap)
+
+	return copied
+}
+
+// mergeOpsSections writes each wired section into the payload map under
+// its stable wire key; absent sections stay absent, never zeroed.
+func mergeOpsSections(
+	pollerMap map[string]any,
+	cache *CacheStats,
+	coverage []coverageWire,
+	retention *retentionWire,
+	identity *IdentityOps,
+	failures []opsScanFailure,
+) {
 	if cache != nil {
 		pollerMap["cache"] = *cache
 	}
@@ -819,6 +843,4 @@ func composeOpsPayload(
 	if len(failures) > 0 {
 		pollerMap["scan_failures"] = failures
 	}
-
-	return pollerMap
 }

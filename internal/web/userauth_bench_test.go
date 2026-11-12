@@ -115,7 +115,7 @@ func benchIdentity(b *testing.B) (http.Handler, *http.Cookie) {
 	return handler, session
 }
 
-func benchRequest(handler http.Handler, b *testing.B, build func() *http.Request) {
+func benchRequest(b *testing.B, handler http.Handler, build func() *http.Request) {
 	b.Helper()
 
 	b.ReportAllocs()
@@ -138,7 +138,7 @@ func BenchmarkIdentityGatePublicPath(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	benchRequest(handler, b, build)
+	benchRequest(b, handler, build)
 }
 
 func BenchmarkIdentityGateSessionless(b *testing.B) {
@@ -178,5 +178,5 @@ func BenchmarkIdentityGateValidSession(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	benchRequest(handler, b, build)
+	benchRequest(b, handler, build)
 }

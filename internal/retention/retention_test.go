@@ -226,10 +226,13 @@ func TestScanFailuresCarryFamilyCodes(t *testing.T) {
 	cleanup()
 
 	if _, _, err := retention.OldestView(ctx, sys); errorfamily.Code(err) != "lens.retention.oldest_scan_failed" {
-		t.Fatalf("OldestView on a closed store: code %q, want lens.retention.oldest_scan_failed (err: %v)", errorfamily.Code(err), err)
+		t.Fatalf("OldestView on a closed store: code %q, want lens.retention.oldest_scan_failed (err: %v)",
+			errorfamily.Code(err), err)
 	}
 
-	if _, err := retention.OldViews(ctx, sys, retention.Policy{MaxAge: time.Hour}, time.Now()); errorfamily.Code(err) != "lens.retention.overage_scan_failed" {
-		t.Fatalf("OldViews on a closed store: code %q, want lens.retention.overage_scan_failed (err: %v)", errorfamily.Code(err), err)
+	_, overErr := retention.OldViews(ctx, sys, retention.Policy{MaxAge: time.Hour}, time.Now())
+	if errorfamily.Code(overErr) != "lens.retention.overage_scan_failed" {
+		t.Fatalf("OldViews on a closed store: code %q, want lens.retention.overage_scan_failed (err: %v)",
+			errorfamily.Code(overErr), overErr)
 	}
 }
