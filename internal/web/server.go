@@ -255,7 +255,7 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, listRoute(nonce(r), view.page, view.filters, view.staleFor, view.stale))
+	render(w, r, listRoute(nonce(r), csrfToken(r), s.authEnabled, view.page, view.filters, view.staleFor, view.stale))
 }
 
 // parseFilters turns query parameters into the typed query; garbage values
@@ -416,7 +416,7 @@ func (s *server) dashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, dashboardRoute(nonce(r), stats, s.now(), fragURL))
+	render(w, r, dashboardRoute(nonce(r), csrfToken(r), s.authEnabled, stats, s.now(), fragURL))
 }
 
 // dashboardFragment is the polled region payload (R9): the same live cards
@@ -555,7 +555,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
 
-		render(w, r, notFoundPage(nonce(r), "No indexed call with that id."))
+		render(w, r, notFoundPage(nonce(r), csrfToken(r), s.authEnabled, "No indexed call with that id."))
 
 		return
 	}
@@ -585,7 +585,7 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	render(w, r, detailRoute(nonce(r), page, query))
+	render(w, r, detailRoute(nonce(r), csrfToken(r), s.authEnabled, page, query))
 }
 
 // staticAsset is one embedded build artifact served verbatim: a missing

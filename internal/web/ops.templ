@@ -15,8 +15,8 @@ import (
 // counters rendered for a glance — poller pass health with the staleness
 // verdict up top, per-source ingest counters, and the response-cache
 // section. Read-only like every page; the machine view stays at /api/ops.
-templ opsRoute(nonce string, snap opsSnapshot) {
-	@shell(nonce, "Ops — pbx-lens", "/ops") {
+templ opsRoute(nonce string, csrf string, authed bool, snap opsSnapshot) {
+	@shell(nonce, csrf, authed, "Ops — pbx-lens", "/ops") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Ops",
 			Subtitle: "Ingest and cache health for this index",

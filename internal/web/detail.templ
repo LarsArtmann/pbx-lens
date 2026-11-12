@@ -20,8 +20,8 @@ import (
 // calls table. The banner lives in a polled region (R9): with htmx running
 // it re-checks itself every minute and disappears on recovery; without JS
 // the server-rendered fallback stands unchanged.
-templ listRoute(nonce string, page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
-	@shell(nonce, "Calls — pbx-lens", "/") {
+templ listRoute(nonce string, csrf string, authed bool, page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
+	@shell(nonce, csrf, authed, "Calls — pbx-lens", "/") {
 		@staleLive(filters, staleFor, stale)
 		@listPage(nonce, page, filters)
 	}
@@ -49,8 +49,8 @@ templ staleLive(filters ListCallsQuery, staleFor time.Duration, stale bool) {
 // operator opened the page tells the whole story. query carries the search
 // deep link (?q=, plan T21): it turns the transcript into a match-marked log
 // with per-turn anchors.
-templ detailRoute(nonce string, page DetailPage, query string) {
-	@shell(nonce, callTitle(page.CallView), "/") {
+templ detailRoute(nonce string, csrf string, authed bool, page DetailPage, query string) {
+	@shell(nonce, csrf, authed, callTitle(page.CallView), "/") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:             callTitle(page.CallView),
 			SubtitleComponent: sourceBadge(page.Kind),
@@ -555,8 +555,8 @@ func localRecordingKind(kind calls.SourceKind) bool {
 	return kind == calls.SourceFreeSwitchCDR || kind == calls.SourceAgentTranscript
 }
 
-templ notFoundPage(nonce string, message string) {
-	@shell(nonce, "Not found — pbx-lens", "/") {
+templ notFoundPage(nonce string, csrf string, authed bool, message string) {
+	@shell(nonce, csrf, authed, "Not found — pbx-lens", "/") {
 		@display.EmptyState(display.EmptyStateProps{
 			Title:       "Not found",
 			Description: message,

@@ -284,7 +284,7 @@ func decodeOpsPoller(poller any) *opsPoller {
 // opsPage serves the human /ops page: the same counters /api/ops serves,
 // rendered for a glance instead of a scrape.
 func (s *server) opsPage(w http.ResponseWriter, r *http.Request) {
-	render(w, r, opsRoute(nonce(r), s.collectOps(r.Context())))
+	render(w, r, opsRoute(nonce(r), csrfToken(r), s.authEnabled, s.collectOps(r.Context())))
 }
 
 // totalRejected sums a source row's rejection reasons for the table cell.

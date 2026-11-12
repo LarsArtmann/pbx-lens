@@ -33,5 +33,5 @@ func (s *server) segmentPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, segmentRoute(nonce(r), number, stats, s.now()))
+	render(w, r, segmentRoute(nonce(r), csrfToken(r), s.authEnabled, number, stats, s.now()))
 }

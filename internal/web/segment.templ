@@ -13,8 +13,8 @@ import (
 // to every call involving the number on either side. Reusing the dashboard
 // components keeps one rendering of each aggregate, so the segment page can
 // never drift from the dashboard table that linked here.
-templ segmentRoute(nonce string, number string, stats DashboardStats, now time.Time) {
-	@shell(nonce, "Segment "+number+" — pbx-lens", "/segments") {
+templ segmentRoute(nonce string, csrf string, authed bool, number string, stats DashboardStats, now time.Time) {
+	@shell(nonce, csrf, authed, "Segment "+number+" — pbx-lens", "/segments") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    number,
 			Subtitle: "Every call involving this number on either side, last 30 days",

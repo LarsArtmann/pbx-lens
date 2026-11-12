@@ -51,7 +51,7 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 	mode := searchModeOf(r)
 
 	if query == "" {
-		render(w, r, searchRoute(nonce(r), "", nil, nil, "", mode))
+		render(w, r, searchRoute(nonce(r), csrfToken(r), s.authEnabled, "", nil, nil, "", mode))
 
 		return
 	}
@@ -85,7 +85,7 @@ func (s *server) searchPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, searchRoute(nonce(r), query, hits, turnHits, "", mode))
+	render(w, r, searchRoute(nonce(r), csrfToken(r), s.authEnabled, query, hits, turnHits, "", mode))
 }
 
 // runSearch dispatches by mode: the call view (with the substring-number

@@ -15,8 +15,8 @@ import (
 // mode selects the result shape: call hits (default) or per-turn hits
 // (?mode=transcript — "what was SAID"). Exactly one of hits/turnHits is
 // non-nil; the empty-query page passes both nil.
-templ searchRoute(nonce string, query string, hits []search.Hit, turnHits []search.TurnHit, errMessage string, mode string) {
-	@shell(nonce, "Search — pbx-lens", "/search") {
+templ searchRoute(nonce string, csrf string, authed bool, query string, hits []search.Hit, turnHits []search.TurnHit, errMessage string, mode string) {
+	@shell(nonce, csrf, authed, "Search — pbx-lens", "/search") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Search",
 			Subtitle: "Find any conversation by content",
