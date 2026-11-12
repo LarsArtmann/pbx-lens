@@ -28,7 +28,7 @@ from it and supported until the next tag supersedes them.
 - The index DB is disposable: delete and rebuild from sources at any time.
 - Participant hashes (sha256-truncated) exist for the future PII policy;
   raw numbers are stored locally only, never exported.
-- `/metrics` answers WITHOUT basic auth by deliberate opt-in
+- `/metrics` answers WITHOUT auth by deliberate opt-in
   (`AllowUnauthenticated` in `cmd/pbx-lens/serve.go`): appkit mounts the
   scrape endpoint outside the pbx-lens auth middleware chain and refuses
   to start unless auth comes from somewhere — so the deployment provides
