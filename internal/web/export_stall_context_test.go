@@ -35,6 +35,7 @@ func TestExportStallMarkerCarriesStreamContext(t *testing.T) {
 	}
 
 	markerLine := ""
+
 	for line := range strings.SplitSeq(strings.TrimSpace(body), "\n") {
 		if strings.Contains(line, exportIncompleteCode) {
 			markerLine = line

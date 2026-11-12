@@ -4,6 +4,7 @@ go 1.27.3
 
 require (
 	github.com/a-h/templ v0.3.1100
+	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.18.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.20.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
@@ -32,6 +33,7 @@ require (
 	github.com/larsartmann/templ-components/htmx v1.27.0
 	github.com/larsartmann/templ-components/icons v1.27.0
 	github.com/larsartmann/templ-components/utils v1.27.0
+	golang.org/x/oauth2 v0.38.0
 	golang.org/x/time v0.16.0
 	modernc.org/sqlite v1.61.1
 	pgregory.net/rapid v1.3.0
@@ -70,6 +72,7 @@ require (
 	github.com/go-faster/errors v0.8.0 // indirect
 	github.com/go-faster/jx v1.2.0 // indirect
 	github.com/go-faster/yaml v0.4.6 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect

@@ -10,6 +10,9 @@ on:
   pull_request:
     branches: [main, master]
 
+permissions:
+  contents: read
+
 # Cancel superseded runs: grouped by COMMIT SHA, so a release tag sharing
 # main's HEAD reuses one run slot instead of racing a twin (the 2026-10-26
 # double-run note) — the later trigger cancels the earlier on the same tree.
