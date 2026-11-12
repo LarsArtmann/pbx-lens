@@ -24,6 +24,10 @@ import (
 type opsSnapshot struct {
 	Poller *opsPoller
 	Cache  *CacheStats
+	// Identity is the native-login card (plan P08): enabled/RPID/users/
+	// sessions + the audit action ring. Nil on an auth-free boot — the
+	// card is absent, not zeroed.
+	Identity *IdentityOps
 	// Retention is the age-posture card: always present — "off" is a fact
 	// the operator should see, not an absence to guess at.
 	Retention retentionSnapshot
@@ -111,6 +115,10 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 	snap := opsSnapshot{
 		Wired:     s.ops != nil || s.cache != nil,
 		Retention: s.collectRetention(ctx),
+	}
+
+	if s.identity != nil {
+		snap.Identity = ptrIdentityOps(s.identity.OpsSnapshot())
 	}
 
 	if s.ops != nil {
@@ -363,4 +371,10 @@ func cacheRatioText(stats CacheStats) string {
 	default:
 		return format.Percent(stats.HitRatio)
 	}
+}
+
+// ptrIdentityOps is the snapshot → pointer adapter collectOps uses (the
+// card is nil on auth-free boots, present and real otherwise).
+func ptrIdentityOps(snapshot IdentityOps) *IdentityOps {
+	return &snapshot
 }

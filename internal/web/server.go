@@ -68,6 +68,11 @@ type Options struct {
 	// auth-free boot the button would be a lie — there is no session to
 	// end. False is the zero value, so auth-free probes need no change.
 	AuthEnabled bool
+
+	// Identity is the live identity surface (serve passes it when -auth-db
+	// is set). The ops page/api read their native-login section from it;
+	// nil leaves the section out (auth-free boots show no identity card).
+	Identity *Identity
 }
 
 // Searcher is the content-query surface the web UI needs: the call view
@@ -91,6 +96,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		cache:             opts.Cache,
 		retention:         opts.RetentionMaxAge,
 		authEnabled:       opts.AuthEnabled,
+		identity:          opts.Identity,
 		recTimeout:        timeout,
 		upstream:          newUpstreamClient(timeout),
 		now:               opts.Now,
@@ -159,6 +165,7 @@ type server struct {
 	now               func() time.Time
 	recordingThrottle recordingThrottle
 	authEnabled       bool
+	identity         *Identity
 }
 
 // logf reports a failure that surfaces after the response body started —
@@ -682,7 +689,14 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 
 	retention := s.retentionWireView(r.Context())
 
-	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context()), retention))
+	var identity *IdentityOps
+
+	if s.identity != nil {
+		snapshot := s.identity.OpsSnapshot()
+		identity = &snapshot
+	}
+
+	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context()), retention, identity))
 	if err != nil {
 		s.writeIndexError(w, r, err, http.StatusInternalServerError, "encoding ops counters failed", true)
 
@@ -736,16 +750,16 @@ func (s *server) coverageWire(ctx context.Context) []coverageWire {
 // composeOpsPayload merges the independent counter sources into one
 // top-level payload: the poller section keeps the keys it always had
 // (sources, last_pass) and the cache section joins as a sibling, so R15
-// consumers parse unchanged. Coverage (plan P17) and the retention
-// age-posture section (plan P16) ride as their own keys for the same
-// reason. A non-map poller payload (custom embeds) gets wrapped under
-// "poller" rather than merged.
+// consumers parse unchanged. Coverage (plan P17), the retention
+// age-posture section (plan P16), and the native-login section (plan P08)
+// ride as their own keys for the same reason. A non-map poller payload
+// (custom embeds) gets wrapped under "poller" rather than merged.
 // opsPayloadSections sizes the merged payload map: poller wrap + cache +
-// coverage + retention at most beyond an existing map.
-const opsPayloadSections = 4
+// coverage + retention + identity at most beyond an existing map.
+const opsPayloadSections = 5
 
-func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire, retention *retentionWire) any {
-	if cache == nil && len(coverage) == 0 && retention == nil {
+func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire, retention *retentionWire, identity *IdentityOps) any {
+	if cache == nil && len(coverage) == 0 && retention == nil && identity == nil {
 		return poller
 	}
 
@@ -772,6 +786,10 @@ func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire, r
 
 	if retention != nil {
 		pollerMap["retention"] = retention
+	}
+
+	if identity != nil {
+		pollerMap["identity"] = *identity
 	}
 
 	return pollerMap

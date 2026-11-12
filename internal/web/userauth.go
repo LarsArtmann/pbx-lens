@@ -40,6 +40,9 @@ type Identity struct {
 	// always-true default would break the password factor over LAN http —
 	// the stack's documented posture until a proxy fronts the lens.
 	secureCookie bool
+	// rpidValue is the derived WebAuthn Relying Party ID (/api/ops
+	// surfaces it; the ceremonies read it through the webauthn provider).
+	rpidValue string
 }
 
 // IdentityConfig carries everything OpenIdentity needs. DSN is a SQLite
@@ -158,6 +161,7 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		ReadModelDialect: "sqlite",
 		WebAuthn:         provider,
 		Lockout:          usermgmt.NewAccountLockout(),
+		AuditLog:         usermgmt.NewAuditLog(),
 		MaxUsers:         1,
 		Logger:           logger,
 	})
@@ -202,6 +206,7 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		session:      session,
 		csrf:         csrf,
 		secureCookie: allOriginsHTTPS(cfg.RPOrigins),
+		rpidValue:    cfg.RPID,
 	}
 
 	identity.gate = identity.buildGate()
@@ -391,6 +396,58 @@ func (i *Identity) Ready() bool {
 	}
 
 	return true
+}
+
+// IdentityOps is the identity section of /api/ops (plan P08): the counts
+// the single operator's health page deserves. Numbers are real or the
+// section is absent — no fake zeros: RPID is the derived Relying Party ID,
+// Users/Sessions are live COUNT reads over the shared handle, and the
+// audit block aggregates usermgmt's in-memory ring (total, dropped, and
+// per-action counts — register/credential_used are the login story).
+type IdentityOps struct {
+	Enabled      bool           `json:"enabled"`
+	RPID         string         `json:"rpid"`
+	Users        int            `json:"users"`
+	Sessions     *int           `json:"sessions"`
+	AuditTotal   int            `json:"audit_total"`
+	AuditDropped int            `json:"audit_dropped"`
+	AuditActions map[string]int `json:"audit_actions"`
+}
+
+// rpid reports the configured WebAuthn Relying Party ID ("" when the
+// identity surface is unwired — the field is only meaningful then).
+func (i *Identity) rpid() string {
+	return i.rpidValue
+}
+
+// OpsSnapshot reads the identity section for /api/ops. The queries run on
+// the ONE shared identity handle (identityMaxOpenConns is deliberate), so
+// they are single cheap COUNTs — fine at operator-page cadence. Sessions
+// is a pointer on purpose: null means the COUNT failed (unknown), never a
+// fake zero.
+func (i *Identity) OpsSnapshot() IdentityOps {
+	snapshot := IdentityOps{
+		Enabled: true,
+		RPID:    i.rpid(),
+		Users:   i.service.ReadModel().Count(),
+	}
+
+	var sessions int
+
+	if err := i.db.QueryRow("SELECT COUNT(*) FROM user_sessions").Scan(&sessions); err == nil {
+		snapshot.Sessions = &sessions
+	}
+
+	if audit := i.service.AuditLog(); audit != nil {
+		snapshot.AuditTotal = audit.Count()
+		snapshot.AuditDropped = audit.Dropped()
+		snapshot.AuditActions = make(map[string]int)
+		for _, entry := range audit.Entries() {
+			snapshot.AuditActions[entry.Action]++
+		}
+	}
+
+	return snapshot
 }
 
 // Close stops the identity service (projection host, event bus, eviction
