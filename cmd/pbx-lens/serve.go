@@ -171,22 +171,9 @@ func serve(args []string) {
 	var identity *web.Identity
 
 	if *authDB != "" {
-		var oidcCfg *web.OIDCConfig
-
-		if *authOIDCIssuer != "" {
-			oidcCfg = &web.OIDCConfig{
-				Issuer:           *authOIDCIssuer,
-				ClientID:         *authOIDCClientID,
-				ClientSecretFile: *authOIDCSecretFile,
-				RedirectURL:      *authOIDCRedirect,
-			}
-
-			for group := range strings.SplitSeq(*authOIDCGroup, ",") {
-				if group = strings.TrimSpace(group); group != "" {
-					oidcCfg.AllowedGroups = append(oidcCfg.AllowedGroups, group)
-				}
-			}
-		}
+		oidcCfg := oidcConfigFromFlags(
+			*authOIDCIssuer, *authOIDCClientID, *authOIDCSecretFile, *authOIDCRedirect, *authOIDCGroup,
+		)
 
 		identity, err = openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin, oidcCfg)
 		if err != nil {
@@ -277,6 +264,30 @@ func serve(args []string) {
 	if err := svc.Run(context.Background()); err != nil {
 		fatal(err)
 	}
+}
+
+// oidcConfigFromFlags folds the five -auth-oidc-* flags into the identity
+// lane's provider config: empty issuer = passkey-only (nil), and the
+// comma-separated group allowlist is trimmed with blanks dropped.
+func oidcConfigFromFlags(issuer, clientID, secretFile, redirect, group string) *web.OIDCConfig {
+	if issuer == "" {
+		return nil
+	}
+
+	cfg := &web.OIDCConfig{
+		Issuer:           issuer,
+		ClientID:         clientID,
+		ClientSecretFile: secretFile,
+		RedirectURL:      redirect,
+	}
+
+	for g := range strings.SplitSeq(group, ",") {
+		if g = strings.TrimSpace(g); g != "" {
+			cfg.AllowedGroups = append(cfg.AllowedGroups, g)
+		}
+	}
+
+	return cfg
 }
 
 // wireServeSources resolves the poller-adjacent wiring: the ops snapshot

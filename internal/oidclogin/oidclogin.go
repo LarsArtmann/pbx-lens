@@ -255,28 +255,9 @@ func (p *Provider) finish(
 		return nil, err
 	}
 
-	oc := p.oauthConfig(provider.Endpoint(), secret)
-
-	token, err := oc.Exchange(ctx, code, oauth2.SetAuthURLParam("code_verifier", pkceVerifier))
+	token, idToken, err := p.exchangeAndVerify(ctx, provider, secret, code, pkceVerifier, nonce)
 	if err != nil {
-		return nil, errorfamily.WrapRejection(err, "lens.oidc.exchange",
-			"exchange the authorization code with the IdP (check the registered callback URL and the client secret)")
-	}
-
-	rawIDToken, _ := token.Extra("id_token").(string)
-	if rawIDToken == "" {
-		return nil, errorfamily.NewRejection("lens.oidc.id_token",
-			"the IdP's token response carried no id_token (is the openid scope enabled?)")
-	}
-
-	idToken, err := provider.Verifier(&oidc.Config{ClientID: p.cfg.ClientID}).Verify(ctx, rawIDToken)
-	if err != nil {
-		return nil, errorfamily.WrapRejection(err, "lens.oidc.id_token.verify", "verify the IdP's ID token")
-	}
-
-	if nonce != "" && idToken.Nonce != nonce {
-		return nil, errorfamily.NewRejection("lens.oidc.nonce_mismatch",
-			"the ID token nonce does not match this sign-in attempt — restart the sign-in from this browser")
+		return nil, err
 	}
 
 	claims, err := p.claims(ctx, provider, token, idToken)
@@ -284,6 +265,47 @@ func (p *Provider) finish(
 		return nil, err
 	}
 
+	return p.gateAndMarshal(idToken, claims)
+}
+
+// exchangeAndVerify runs the token half of the dance: the PKCE code
+// exchange, the id_token presence + signature/audience/expiry
+// verification, and the nonce binding. Every failure names the exact wire
+// step that failed.
+func (p *Provider) exchangeAndVerify(
+	ctx context.Context, provider *oidc.Provider, secret, code, pkceVerifier, nonce string,
+) (*oauth2.Token, *oidc.IDToken, error) {
+	oc := p.oauthConfig(provider.Endpoint(), secret)
+
+	token, err := oc.Exchange(ctx, code, oauth2.SetAuthURLParam("code_verifier", pkceVerifier))
+	if err != nil {
+		return nil, nil, errorfamily.WrapRejection(err, "lens.oidc.exchange",
+			"exchange the authorization code with the IdP (check the registered callback URL and the client secret)")
+	}
+
+	rawIDToken, _ := token.Extra("id_token").(string)
+	if rawIDToken == "" {
+		return nil, nil, errorfamily.NewRejection("lens.oidc.id_token",
+			"the IdP's token response carried no id_token (is the openid scope enabled?)")
+	}
+
+	idToken, err := provider.Verifier(&oidc.Config{ClientID: p.cfg.ClientID}).Verify(ctx, rawIDToken)
+	if err != nil {
+		return nil, nil, errorfamily.WrapRejection(err, "lens.oidc.id_token.verify", "verify the IdP's ID token")
+	}
+
+	if nonce != "" && idToken.Nonce != nonce {
+		return nil, nil, errorfamily.NewRejection("lens.oidc.nonce_mismatch",
+			"the ID token nonce does not match this sign-in attempt — restart the sign-in from this browser")
+	}
+
+	return token, idToken, nil
+}
+
+// gateAndMarshal is the policy half: the verified-email gate, the group
+// allowlist (fail-closed both ways, see groupAllowed), and the normalized
+// user-info JSON the identity layer persists.
+func (p *Provider) gateAndMarshal(idToken *oidc.IDToken, claims idClaims) ([]byte, error) {
 	slog.Info("lens: oidc login claims",
 		"email", claims.Email,
 		"username", claims.PreferredUsername,
