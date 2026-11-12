@@ -233,7 +233,12 @@ GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1
                                       # via `nix run .#update-styles` (docs/gotchas.md: MIME trap)
 nix develop                           # go, golangci-lint, gopls, govulncheck, dprint, templ,
                                       # tailwindcss_4, cqrs-lint, vulnix, oxlint, prettier, shellcheck
-bash scripts/verify-all.sh            # THE browser lane: four probe suites, sequential, first-red-wins
+bash scripts/verify-all.sh            # THE browser lane: five probe suites, sequential, first-red-wins;
+                                      # every gate prints `verify-all: PASS <gate>` (greppable receipts)
+bash scripts/check-docs-counts.sh && bash scripts/check-doc-links.sh
+                                      # docs gates IN THE WRITING LOOP (2026-11-12 convention): run after
+                                      # EVERY docs batch, not only pre-push — a drifted count or dead link
+                                      # is fixed while the batch is still open (scripts/README.md)
 GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/  # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
 GOEXPERIMENT=jsonv2 go test -bench BenchmarkIngestCDR -benchmem ./internal/cli/  # ingest per-row, quiet box 2026-10-25: parse ≈8.7 µs, fresh-stream dispatch ≈6.1 µs (docs/http-stack.md has both generations)
 node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd   # alert-only pixel diff (scripts/README.md)

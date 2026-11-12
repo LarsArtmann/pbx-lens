@@ -4,8 +4,16 @@ import (
 	"bytes"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 	"testing"
 )
+
+// routePattern extracts the literal method+path patterns from Register's
+// mux.HandleFunc calls (the drift-guard parse).
+var routePattern = regexp.MustCompile(`mux\.HandleFunc\("([^"]+)"`) 
 
 // TestETagMiddlewareCounters proves the hooks observe every outcome the
 // middleware can produce: a fresh tag on the first response, a 304 on the
@@ -195,6 +203,73 @@ func httptestRequest(t *testing.T, path string) *http.Request {
 	t.Helper()
 
 	return httptest.NewRequest(http.MethodGet, path, nil)
+}
+
+// TestSkipBodyCachingCoversTheRouteTable pins the skip predicate against
+// ROUTE-TABLE drift (plan P10.4, the U2 hazard): every pattern Register
+// mounts that streams unbounded (export/recording) or embeds a
+// per-response age (staleness/freshness) MUST satisfy skipBodyCaching —
+// a new streaming route without a skip rule would be body-hashed by the
+// ETag middleware (buffering a stream or minting a 304 that can never
+// revalidate). The test parses the mux.HandleFunc string literals out of
+// server.go, so a refactor away from literal patterns fails loudly
+// instead of passing vacuously.
+func TestSkipBodyCachingCoversTheRouteTable(t *testing.T) {
+	source, err := os.ReadFile(filepath.Join("server.go"))
+	if err != nil {
+		t.Fatalf("read server.go: %v", err)
+	}
+
+	patternMatches := routePattern.FindAllStringSubmatch(string(source), -1)
+	if len(patternMatches) < 10 {
+		t.Fatalf(
+			"route-table parse went vacuous (%d patterns) — Register no longer uses literal mux.HandleFunc patterns; rework this guard",
+			len(patternMatches),
+		)
+	}
+
+	wildcard := regexp.MustCompile(`\{[^}]+\}`)
+	streamingShape := func(pattern string) bool {
+		path, isRoute := strings.CutPrefix(pattern, "GET ")
+		if !isRoute {
+			return false
+		}
+		path = wildcard.ReplaceAllString(path, "x")
+
+		return strings.HasPrefix(path, "/api/export.") ||
+			strings.HasSuffix(path, "/recording") ||
+			path == "/frag/staleness" ||
+			path == "/api/freshness"
+	}
+
+	streaming := 0
+
+	for _, match := range patternMatches {
+		pattern := match[1]
+		if !streamingShape(pattern) {
+			continue
+		}
+
+		path, _ := strings.CutPrefix(pattern, "GET ")
+		path = wildcard.ReplaceAllString(path, "x")
+		streaming++
+
+		r := httptestRequest(t, path)
+		if !skipBodyCaching(r) {
+			t.Errorf(
+				"route %q streams or carries per-response age but skipBodyCaching(%q) = false — add it to the skip predicate",
+				pattern,
+				path,
+			)
+		}
+	}
+
+	if streaming != 5 {
+		t.Errorf(
+			"parsed %d streaming/age routes, want 5 (staleness, freshness, 2 exports, recording) — the route table changed; review the skip predicate",
+			streaming,
+		)
+	}
 }
 
 // TestCacheRatioTextHonestStates pins the hit-ratio display guard (plan
