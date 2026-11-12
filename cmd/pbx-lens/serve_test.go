@@ -42,7 +42,8 @@ func serveTestStack(tb testing.TB) (string, *http.Client) {
 
 	tb.Cleanup(cleanup)
 
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+	serviceConfig := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+
 	if err != nil {
 		tb.Fatalf("build service config: %v", err)
 	}
@@ -176,7 +177,8 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+	serviceConfig := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+
 	if err != nil {
 		t.Fatalf("build service config: %v", err)
 	}
@@ -287,7 +289,8 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	serviceConfig, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+	serviceConfig := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+
 	if err != nil {
 		t.Fatalf("build service config: %v", err)
 	}
@@ -580,10 +583,7 @@ func assertGzip(t *testing.T, client *http.Client, base, path string) {
 // unauthenticated mode (auth is the identity session gate or loopback-only
 // dev), and the middleware stack grows by auth + the three web middlewares.
 func TestBuildServiceConfigWiring(t *testing.T) {
-	plain, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
-	if err != nil {
-		t.Fatalf("build plain config: %v", err)
-	}
+	plain := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 
 	if plain.WriteTimeout != appkit.NoTimeout {
 		t.Errorf(
@@ -607,12 +607,9 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		)
 	}
 
-	authed, err := buildServiceConfig("127.0.0.1:0", func(next http.Handler) http.Handler {
+	authed := buildServiceConfig("127.0.0.1:0", func(next http.Handler) http.Handler {
 		return next
 	}, nil, nil)
-	if err != nil {
-		t.Fatalf("build authed config: %v", err)
-	}
 
 	if got := len(authed.ExtraMiddlewares); got != 5 {
 		t.Errorf(
@@ -629,10 +626,7 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 	t.Setenv("CSP_NONCE", "1")
 
-	nonced, err := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
-	if err != nil {
-		t.Fatalf("build nonced config: %v", err)
-	}
+	nonced := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 
 	if got := len(nonced.ExtraMiddlewares); got != 5 {
 		t.Errorf(

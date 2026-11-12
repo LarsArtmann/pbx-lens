@@ -31,7 +31,7 @@ func seedCalls(n int, base time.Time) []calls.Observation {
 func extractHref(t *testing.T, body, text string) string {
 	t.Helper()
 
-	anchor := fmt.Sprintf(`%s</a>`, text)
+	anchor := text + "</a>"
 
 	before, _, ok := strings.CutLast(body, anchor)
 	if !ok {

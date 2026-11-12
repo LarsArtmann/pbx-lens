@@ -61,6 +61,7 @@ func TestTailwindCorpusMatchesPinnedVersion(t *testing.T) {
 	}
 
 	loginGoModPin := regexp.MustCompile(`(?m)^[	 ]*github\.com/larsartmann/cqrs-htmx/loginpage/v4 (v\S+)$`)
+
 	loginPin := loginGoModPin.FindStringSubmatch(string(goMod))
 	if loginPin == nil {
 		t.Fatalf("loginpage requirement line not found in go.mod — is the module renamed?")
@@ -76,7 +77,8 @@ func TestTailwindCorpusMatchesPinnedVersion(t *testing.T) {
 	if loginStamp[1] != loginPin[1] {
 		t.Errorf(
 			"loginpage corpus stamp is stale: stamped %s but go.mod pins %s — regenerate with `node scripts/gen-tc-classes.js`",
-			loginStamp[1], loginPin[1],
+			loginStamp[1],
+			loginPin[1],
 		)
 	}
 }

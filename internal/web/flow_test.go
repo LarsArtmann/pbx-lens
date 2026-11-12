@@ -91,6 +91,7 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	request.Header.Set("Accept", "text/html")
+
 	recorder := httptest.NewRecorder()
 	gated.ServeHTTP(recorder, request)
 
@@ -102,6 +103,7 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 
 	request = httptest.NewRequest(http.MethodGet, "/calls/telnyx-conversation/conv-out", nil)
 	request.AddCookie(session)
+
 	recorder = httptest.NewRecorder()
 	gated.ServeHTTP(recorder, request)
 

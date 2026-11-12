@@ -148,29 +148,14 @@ func serve(args []string) {
 
 	// The identity context (passkey login) is opt-in via -auth-db: without
 	// it the serve runs unauthenticated — the localhost dev posture the
-	// probes rely on. With it, the FIRST visitor to /login becomes the
-	// operator: registration closes itself after that account exists
-	// (MaxUsers = 1), so say so in the log where the operator can act on
-	// it. WebAuthn needs a secure context (HTTPS or localhost) — a
-	// plain-HTTP LAN address cannot enroll passkeys; reach the service
-	// through an SSH tunnel or put TLS in front.
-	var identity *web.Identity
+	// probes rely on.
+	identity, err := openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin)
+	if err != nil {
+		fatal(err)
+	}
 
-	if *authDB != "" {
-		rpid, origins := deriveAuthDefaults(*addr, *authRPID, *authOrigin)
-
-		identity, err = web.OpenIdentity(setupCtx, web.IdentityConfig{
-			DSN: *authDB, RPID: rpid, RPOrigins: origins,
-		})
-		if err != nil {
-			fatal(err)
-		}
-
+	if identity != nil {
 		defer func() { _ = identity.Close() }()
-
-		slog.Info("identity enabled: the first visitor to /login becomes the operator "+
-			"(registration closes after the first account); passkeys need HTTPS or localhost",
-			"db", *authDB, "rpid", rpid)
 	}
 	// The composition the read-only surface runs on: no fixed response
 	// deadline (exports and recording WAVs stream unbounded — the appkit
@@ -189,10 +174,7 @@ func serve(args []string) {
 		authMW = identity.Middleware()
 	}
 
-	serviceConfig, err := buildServiceConfig(*addr, authMW, cacheStats, slogLog)
-	if err != nil {
-		fatal(err)
-	}
+	serviceConfig := buildServiceConfig(*addr, authMW, cacheStats, slogLog)
 
 	// Readiness is the read model's honesty (plan T17): /health/ready
 	// answers 503 while any projection worker is failed (restart budget
@@ -323,7 +305,7 @@ func buildServiceConfig(
 	authMW func(http.Handler) http.Handler,
 	cacheStats *web.CacheCounters,
 	log func(msg string, args ...any),
-) (appkit.ServiceConfig, error) {
+) appkit.ServiceConfig {
 	serviceConfig := appkit.ServiceConfig{
 		Addr:    addr,
 		Version: version,
@@ -395,7 +377,37 @@ func buildServiceConfig(
 		web.ETagMiddleware(cacheStats, log),
 	)
 
-	return serviceConfig, nil
+	return serviceConfig
+}
+
+// openServeIdentity brings the identity context up when -auth-db is set.
+// With it, the FIRST visitor to /login becomes the operator: registration
+// closes itself after that account exists (MaxUsers = 1), so say so in the
+// log where the operator can act on it. WebAuthn needs a secure context
+// (HTTPS or localhost) — a plain-HTTP LAN address cannot enroll passkeys;
+// reach the service through an SSH tunnel or put TLS in front.
+func openServeIdentity(
+	ctx context.Context,
+	addr, authDB, authRPID, authOrigin string,
+) (*web.Identity, error) {
+	if authDB == "" {
+		return nil, nil
+	}
+
+	rpid, origins := deriveAuthDefaults(addr, authRPID, authOrigin)
+
+	identity, err := web.OpenIdentity(ctx, web.IdentityConfig{
+		DSN: authDB, RPID: rpid, RPOrigins: origins,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	slog.Info("identity enabled: the first visitor to /login becomes the operator "+
+		"(registration closes after the first account); passkeys need HTTPS or localhost",
+		"db", authDB, "rpid", rpid)
+
+	return identity, nil
 }
 
 // deriveAuthDefaults resolves the WebAuthn Relying Party values. An

@@ -63,6 +63,7 @@ func loginChallenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
 
 	request := httptest.NewRequest(http.MethodGet, "/login", nil)
 	request.Header.Set("Accept", "text/html")
+
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
@@ -169,6 +170,7 @@ func TestIdentityGateRedirectsBrowsersAndChallengesAPIs(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	request.Header.Set("Accept", "text/html")
+
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
@@ -189,7 +191,8 @@ func TestIdentityGateRedirectsBrowsersAndChallengesAPIs(t *testing.T) {
 	}
 
 	request = httptest.NewRequest(http.MethodGet, "/", nil)
-	request.Header.Set("HX-Request", "true")
+	request.Header.Set("Hx-Request", "true")
+
 	recorder = httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
@@ -225,6 +228,7 @@ func TestIdentityRegistrationClosesAfterFirst(t *testing.T) {
 	// The app accepts the session the registration issued.
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	request.AddCookie(session)
+
 	recorder := httptest.NewRecorder()
 	handler.ServeHTTP(recorder, request)
 
@@ -242,7 +246,11 @@ func TestIdentityRegistrationClosesAfterFirst(t *testing.T) {
 	}, csrfCookie, token)
 
 	if recorder.Code < 400 || recorder.Code > 499 {
-		t.Errorf("second registration status = %d, want a 4xx refusal (body: %s)", recorder.Code, recorder.Body.String())
+		t.Errorf(
+			"second registration status = %d, want a 4xx refusal (body: %s)",
+			recorder.Code,
+			recorder.Body.String(),
+		)
 	}
 
 	for _, cookie := range recorder.Result().Cookies() {
@@ -285,6 +293,7 @@ func TestIdentityIdentityDBSurvivesReopen(t *testing.T) {
 
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
 	request.AddCookie(session)
+
 	recorder := httptest.NewRecorder()
 	restarted.ServeHTTP(recorder, request)
 

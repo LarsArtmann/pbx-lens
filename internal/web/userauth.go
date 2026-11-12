@@ -3,7 +3,7 @@ package web
 import (
 	"context"
 	"database/sql"
-	"fmt"
+	"errors"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -12,10 +12,10 @@ import (
 	"github.com/larsartmann/cqrs-htmx/loginpage/v4"
 	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	webauthn "github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4"
+	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/storage/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
-
 	_ "modernc.org/sqlite"
 )
 
@@ -47,24 +47,14 @@ type IdentityConfig struct {
 	Logger     *slog.Logger
 }
 
-// publicAuthPaths lists the routes reachable WITHOUT a session. /login and
-// the /auth/* ceremonies are the login flow itself; app.css styles the login
-// page (it renders Tailwind classes from the same stylesheet as the app);
+// publicAuthPath reports whether the request path bypasses the session
+// gate: /login and the /auth/* ceremonies are the login flow itself
+// (they gate themselves — ADR-0055 posture upstream — and registration
+// closes after the first user via MaxUsers); app.css styles the login page
+// (it renders Tailwind classes from the same stylesheet as the app);
 // robots.txt must stay fetchable to be honored (M15/F46).
-var publicAuthPaths = []string{
-	"/login",
-	"/auth/",
-	"/app.css",
-	"/robots.txt",
-}
-
-// isPublicAuthPath reports whether the request path bypasses the session
-// gate. Everything under /auth/ is public by design: the login ceremonies
-// gate themselves (enrollment answers 401/403 without the right session —
-// ADR-0055 posture upstream), and registration is closed after the first
-// user by the service's MaxUsers cap.
-func isPublicAuthPath(path string) bool {
-	for _, p := range publicAuthPaths {
+func publicAuthPath(path string) bool {
+	for _, p := range []string{"/login", "/auth/", "/app.css", "/robots.txt"} {
 		if p == path || (strings.HasSuffix(p, "/") && strings.HasPrefix(path, p)) {
 			return true
 		}
@@ -78,7 +68,7 @@ func isPublicAuthPath(path string) bool {
 // /login; API callers (curl exports, scripts) get a plain 401 they can
 // script against.
 func wantsBrowser(r *http.Request) bool {
-	if r.Header.Get("HX-Request") != "" {
+	if r.Header.Get("Hx-Request") != "" {
 		return true
 	}
 
@@ -110,62 +100,9 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		logger = slog.Default()
 	}
 
-	db, err := sql.Open("sqlite", cfg.DSN)
+	db, stores, err := openIdentityStores(ctx, cfg.DSN)
 	if err != nil {
-		return nil, errorfamily.NewRejection(
-			"lens.web.identity_db_open",
-			"opening identity database: "+err.Error(),
-		)
-	}
-
-	// One connection serializes writers on the identity journal — the
-	// upstream persistence contract test runs the same setting, and SQLite
-	// under WAL still serves reads concurrently through it.
-	db.SetMaxOpenConns(1)
-
-	if err := optimizeIdentityDB(ctx, db); err != nil {
-		_ = db.Close()
-
 		return nil, err
-	}
-
-	if _, err := db.ExecContext(ctx, storage.SQLiteCheckpointSchema()); err != nil {
-		_ = db.Close()
-
-		return nil, errorfamily.NewRejection(
-			"lens.web.identity_checkpoint_schema",
-			"applying the checkpoint schema: "+err.Error(),
-		)
-	}
-
-	checkpoint, err := storage.NewSQLiteCheckpointStore(db)
-	if err != nil {
-		_ = db.Close()
-
-		return nil, errorfamily.NewRejection(
-			"lens.web.identity_checkpoint_store",
-			"opening the checkpoint store: "+err.Error(),
-		)
-	}
-
-	events, err := usermgmt.NewSQLEventStore(ctx, db, "sqlite")
-	if err != nil {
-		_ = db.Close()
-
-		return nil, errorfamily.NewRejection(
-			"lens.web.identity_event_store",
-			"opening the identity event store: "+err.Error(),
-		)
-	}
-
-	sessions, err := usermgmt.NewSQLSessionStore(ctx, db, "sqlite")
-	if err != nil {
-		_ = db.Close()
-
-		return nil, errorfamily.NewRejection(
-			"lens.web.identity_session_store",
-			"opening the identity session store: "+err.Error(),
-		)
 	}
 
 	provider, err := webauthn.New(webauthn.Config{
@@ -184,13 +121,13 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 
 	cookieName := cfg.CookieName
 	if cookieName == "" {
-		cookieName = "session_token"
+		cookieName = defaultSessionCookie
 	}
 
 	service, err := usermgmt.NewService(usermgmt.ServiceConfig{
-		EventStore:       events,
-		SessionStore:     sessions,
-		CheckpointStore:  checkpoint,
+		EventStore:       stores.events,
+		SessionStore:     stores.sessions,
+		CheckpointStore:  stores.checkpoint,
 		ReadModelDB:      db,
 		ReadModelDialect: "sqlite",
 		WebAuthn:         provider,
@@ -262,12 +199,86 @@ func optimizeIdentityDB(ctx context.Context, db *sql.DB) error {
 	return nil
 }
 
+// identityStores bundles the three SQL stores over the shared handle.
+type identityStores struct {
+	checkpoint event.CheckpointStore
+	events     event.Store
+	sessions   usermgmt.SessionStore
+}
+
+// openIdentityStores opens the shared identity SQLite handle and every
+// store over it. The store constructors self-migrate their own tables; the
+// checkpoint schema is the one exception and is applied here by hand. Any
+// failure closes the handle before returning — the caller never sees a
+// half-open database.
+func openIdentityStores(ctx context.Context, dsn string) (*sql.DB, identityStores, error) {
+	db, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return nil, identityStores{}, errorfamily.NewRejection(
+			"lens.web.identity_db_open",
+			"opening identity database: "+err.Error(),
+		)
+	}
+
+	// One connection serializes writers on the identity journal — the
+	// upstream persistence contract test runs the same setting, and SQLite
+	// under WAL still serves reads concurrently through it.
+	db.SetMaxOpenConns(identityMaxOpenConns)
+
+	fail := func(err error) (*sql.DB, identityStores, error) {
+		_ = db.Close()
+
+		return nil, identityStores{}, err
+	}
+
+	if err := optimizeIdentityDB(ctx, db); err != nil {
+		return fail(err)
+	}
+
+	if _, err := db.ExecContext(ctx, storage.SQLiteCheckpointSchema()); err != nil {
+		return fail(errorfamily.NewRejection(
+			"lens.web.identity_checkpoint_schema",
+			"applying the checkpoint schema: "+err.Error(),
+		))
+	}
+
+	checkpoint, err := storage.NewSQLiteCheckpointStore(db)
+	if err != nil {
+		return fail(errorfamily.NewRejection(
+			"lens.web.identity_checkpoint_store",
+			"opening the checkpoint store: "+err.Error(),
+		))
+	}
+
+	events, err := usermgmt.NewSQLEventStore(ctx, db, sqliteDialect)
+	if err != nil {
+		return fail(errorfamily.NewRejection(
+			"lens.web.identity_event_store",
+			"opening the identity event store: "+err.Error(),
+		))
+	}
+
+	sessions, err := usermgmt.NewSQLSessionStore(ctx, db, sqliteDialect)
+	if err != nil {
+		return fail(errorfamily.NewRejection(
+			"lens.web.identity_session_store",
+			"opening the identity session store: "+err.Error(),
+		))
+	}
+
+	return db, identityStores{
+		checkpoint: checkpoint,
+		events:     events,
+		sessions:   sessions,
+	}, nil
+}
+
 // buildGate composes the request path: session enrichment, CSRF, then the
 // public-path bypass and the session requirement.
 func (i *Identity) buildGate() func(http.Handler) http.Handler {
 	gated := func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if isPublicAuthPath(r.URL.Path) {
+			if publicAuthPath(r.URL.Path) {
 				next.ServeHTTP(w, r)
 
 				return
@@ -312,19 +323,31 @@ func (i *Identity) Register(mux *http.ServeMux) {
 	i.panel.Mount(mux, "GET /login")
 
 	auth := usermgmt.NewAuthHandler(i.service, usermgmt.HandlerConfig{
-		CookieName: "session_token",
+		CookieName: defaultSessionCookie,
 		RegistrationRateLimit: usermgmt.RateLimitConfig{
-			Enabled: true, MaxRequests: 10, Window: minuteWindow,
+			Enabled: true, MaxRequests: registrationRateLimit, Window: minuteWindow,
 		},
 		WebAuthnRateLimit: usermgmt.RateLimitConfig{
-			Enabled: true, MaxRequests: 30, Window: minuteWindow,
+			Enabled: true, MaxRequests: webauthnRateLimitMax, Window: minuteWindow,
 		},
 	})
 	auth.RegisterRoutes(mux)
 }
 
-// minuteWindow bounds the per-IP auth rate limits.
-const minuteWindow = time.Minute
+// Named auth-surface constants (mnd): the session cookie the gate and the
+// AuthHandler must agree on, the SQLite dialect string, the journal handle
+// cap, and the per-IP ceremony rate limits (registration 10/min — the door
+// is closed after one account anyway; WebAuthn 30/min — ceremonies are
+// 2 requests each, so 15 logins/min per peer is generous).
+const (
+	defaultSessionCookie = "session_token"
+	sqliteDialect        = "sqlite"
+
+	identityMaxOpenConns  = 1
+	registrationRateLimit = 10
+	webauthnRateLimitMax  = 30
+	minuteWindow          = time.Minute
+)
 
 // Ready reports whether the identity projections are serving: live workers
 // (or cleanly stopped ones) are ready; backoff/draining/failed are not.
@@ -347,11 +370,7 @@ func (i *Identity) Ready() bool {
 // drains before the handle drops. The service never closes the shared DB
 // itself; this is the single owner of both lifecycles.
 func (i *Identity) Close() error {
-	svcErr := i.service.Close()
-
-	if dbErr := i.db.Close(); dbErr != nil {
-		return fmt.Errorf("closing the identity database: %w (service close: %v)", dbErr, svcErr)
-	}
-
-	return svcErr
+	// The service stops first (journal drains), then the handle drops;
+	// Join reports BOTH failures and passes a clean nil through.
+	return errors.Join(i.service.Close(), i.db.Close())
 }
