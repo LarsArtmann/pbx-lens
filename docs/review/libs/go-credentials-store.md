@@ -13,7 +13,7 @@
 
 ## Why pbx-lens rejects it
 
-1. **One secret surface, human-managed:** auth is a bcrypt htpasswd file with SIGHUP rotation and keep-on-failure semantics (`internal/web/auth.go:46-61,142-176`) — operator-owned, deterministic, test-pinned. KeyID rotation and reveal-audit would be dead weight around a file that `htpasswd` manages.
+1. **One secret surface, WAS human-managed htpasswd (target GONE since the 2026-11-11 identity adoption — see the verify block).** The bcrypt htpasswd file with SIGHUP rotation and keep-on-failure semantics (`internal/web/auth.go:46-61,142-176`, deleted) was operator-owned, deterministic, test-pinned; login is now the identity stack's passkeys (`internal/web/userauth.go`), whose secrets (passkeys, session rows) live in the identity DB. KeyID rotation and reveal-audit would be dead weight around secrets that never leave server-side rows.
 2. **The index never stores secret material:** read-only over sources (AGENTS.md north star); Telnyx API access is operator-configured, not stored in the DB. There is nothing to encrypt-at-rest.
 3. **Sibling overlap, not pbx-lens concern:** the store's own ecosystem (probing/rotation tooling) belongs to the credential-_producing_ services; pbx-lens consumes nothing credential-shaped at runtime beyond the htpasswd path.
 
@@ -25,6 +25,6 @@ If the lens ever ingests authenticated sources whose credentials must rotate aut
 
 ```console
 rg -n "go-credentials-store" go.mod go.sum   # absent
-rg -n "bcrypt|htpasswd" internal/web/auth.go | head -5
-rg -n "SIGHUP" internal/web/auth.go | head -2
+rg -n 'bcrypt\.|htpasswd' internal/ cmd/ --glob '*.go' | grep -v '//'   # zero CODE hits — the credential path died with the identity adoption; comment mentions of the old gate stay
+rg -n "SIGHUP" internal/ cmd/ --glob '*.go'   # zero hits
 ```
