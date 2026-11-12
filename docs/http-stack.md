@@ -240,7 +240,12 @@ that loaded box (sibling nix build + a concurrent session running) was
 noise (358–443 µs vs 346–420 µs, the 304 arm "slower" and the 200 arm
 "faster" simultaneously). Quiet-box ns comparisons await the next
 poll-gate-verified window; the allocs say the identity chain is a fixed
-~14% allocation overhead per poll, not a scaling hazard.
+~14% allocation overhead per poll, not a scaling hazard. The gate chain
+alone (`BenchmarkIdentityGate*`, plan A19, session minted through the real
+/auth/register ceremony): public-path bypass ≈ 7.4 µs (32 allocs),
+sessionless 401 fast path ≈ 10.4 µs (38 allocs), valid session ≈ 47 µs
+(150 allocs) — the operator's steady-state per-request auth cost is ~47 µs
+(moderate-load box, 2026-11-12).
 
 Ingest per-row cost (re-measured 2026-10-25 on the same quiet box,
 `BenchmarkIngestCDR{Parse,Dispatch}`; the 2026-10-25 numbers taken under
