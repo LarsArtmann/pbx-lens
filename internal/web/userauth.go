@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -34,6 +35,11 @@ type Identity struct {
 	session func(http.Handler) http.Handler
 	csrf    func(http.Handler) http.Handler
 	gate    func(http.Handler) http.Handler
+	// secureCookie follows the WebAuthn origins' scheme: browsers drop
+	// Secure cookies on plain http (localhost exempt), so upstream's
+	// always-true default would break the password factor over LAN http —
+	// the stack's documented posture until a proxy fronts the lens.
+	secureCookie bool
 }
 
 // IdentityConfig carries everything OpenIdentity needs. DSN is a SQLite
@@ -73,6 +79,26 @@ func wantsBrowser(r *http.Request) bool {
 	}
 
 	return strings.Contains(r.Header.Get("Accept"), "text/html")
+}
+
+// allOriginsHTTPS reports whether every configured WebAuthn origin fronts
+// TLS. The session cookie's Secure flag follows this verdict: browsers
+// silently drop Secure cookies on plain http (only localhost is exempt),
+// so the flag must match the browser-facing scheme rather than upstream's
+// always-true default.
+func allOriginsHTTPS(origins []string) bool {
+	if len(origins) == 0 {
+		return false
+	}
+
+	for _, origin := range origins {
+		parsed, err := url.Parse(strings.TrimSpace(origin))
+		if err != nil || parsed.Scheme != "https" {
+			return false
+		}
+	}
+
+	return true
 }
 
 // OpenIdentity brings up the identity bounded context: one SQLite database
@@ -170,11 +196,12 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 	csrf := httputil.CSRFMiddleware(httputil.CSRFConfig{})
 
 	identity := &Identity{
-		service: service,
-		db:      db,
-		panel:   panel,
-		session: session,
-		csrf:    csrf,
+		service:      service,
+		db:           db,
+		panel:        panel,
+		session:      session,
+		csrf:         csrf,
+		secureCookie: allOriginsHTTPS(cfg.RPOrigins),
 	}
 
 	identity.gate = identity.buildGate()
@@ -324,6 +351,7 @@ func (i *Identity) Register(mux *http.ServeMux) {
 
 	auth := usermgmt.NewAuthHandler(i.service, usermgmt.HandlerConfig{
 		CookieName: defaultSessionCookie,
+		Secure:     &i.secureCookie,
 		RegistrationRateLimit: usermgmt.RateLimitConfig{
 			Enabled: true, MaxRequests: registrationRateLimit, Window: minuteWindow,
 		},

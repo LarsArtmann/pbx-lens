@@ -311,3 +311,91 @@ func TestIdentityReadyAfterDrain(t *testing.T) {
 		t.Error("identity not ready after construction — the readiness predicate is wrong")
 	}
 }
+
+func TestIdentityCookieSecureFollowsOriginScheme(t *testing.T) {
+	tests := []struct {
+		name        string
+		origins     []string
+		wantSecure  bool
+		description string
+	}{
+		{
+			name:        "http origin keeps the cookie non-Secure (LAN http posture)",
+			origins:     []string{"http://localhost:8300"},
+			wantSecure:  false,
+			description: "browsers drop Secure cookies on plain http outside localhost",
+		},
+		{
+			name:        "https origin marks the cookie Secure (proxy posture)",
+			origins:     []string{"https://lens.example.com"},
+			wantSecure:  true,
+			description: "Secure must ride once TLS fronts the lens",
+		},
+		{
+			name:        "one http origin among https keeps the cookie non-Secure",
+			origins:     []string{"https://lens.example.com", "http://localhost:8300"},
+			wantSecure:  false,
+			description: "the weakest browser-facing scheme wins (mixed origins are a misconfig anyway)",
+		},
+		{
+			name:        "no origins never marks the cookie Secure",
+			origins:     nil,
+			wantSecure:  false,
+			description: "no browser-facing origin means no trustworthy context",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			identity, err := OpenIdentity(context.Background(), IdentityConfig{
+				DSN:       filepath.Join(t.TempDir(), "identity.db"),
+				RPID:      "localhost",
+				RPOrigins: tt.origins,
+			})
+			if err != nil {
+				t.Fatalf("OpenIdentity: %v", err)
+			}
+
+			t.Cleanup(func() {
+				if cerr := identity.Close(); cerr != nil {
+					t.Errorf("identity close: %v", cerr)
+				}
+			})
+
+			handler := identityHandler(t, identity)
+			cookie := loginSession(t, handler, "operator@pbx.lens")
+
+			if cookie.Secure != tt.wantSecure {
+				t.Errorf(
+					"session cookie Secure = %v, want %v (%s)",
+					cookie.Secure,
+					tt.wantSecure,
+					tt.description,
+				)
+			}
+		})
+	}
+}
+
+func TestAllOriginsHTTPS(t *testing.T) {
+	tests := []struct {
+		name    string
+		origins []string
+		want    bool
+	}{
+		{name: "nil origins", origins: nil, want: false},
+		{name: "single http origin", origins: []string{"http://localhost:8300"}, want: false},
+		{name: "single https origin", origins: []string{"https://pbx.artmann.tech"}, want: true},
+		{name: "all https", origins: []string{"https://a.example.com", "https://b.example.com"}, want: true},
+		{name: "mixed schemes", origins: []string{"https://a.example.com", "http://b.example.com"}, want: false},
+		{name: "padded https origin", origins: []string{" https://padded.example.com "}, want: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := allOriginsHTTPS(tt.origins); got != tt.want {
+				t.Errorf("allOriginsHTTPS(%v) = %v, want %v", tt.origins, got, tt.want)
+			}
+		})
+	}
+}
