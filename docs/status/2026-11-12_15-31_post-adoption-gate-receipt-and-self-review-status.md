@@ -52,8 +52,8 @@ investigated); the foreign session's in-flight oidclogin/serve.go edits
    identity hardening, decisions, ledgers); docs/research/README.md carries
    the fleet-audit refresh + replay sentence.
 6. **F021 pixel baseline v6** — 54 PNGs captured (corpus grew: login surface
-   + empty-ops + print sheets), saved machine-local, diff against it ran
-   alert-only green.
+   - empty-ops + print sheets), saved machine-local, diff against it ran
+     alert-only green.
 7. **devShell verification** — `nix develop -c echo ok` green after every
    hash-touching event, both root build and devShell (the 2026-10-25 lesson:
    `nix flake check` never builds devShells).
@@ -289,7 +289,7 @@ sweep (b2b050d, corrected by two subsequent pushed commits).
    demands it, or does every archive pass wait for your explicit order
    like the audit sessions do?**
 
-*Harvest note: items 3, 4, 8, 9, 10, 11 above are TODO_LIST-bound candidates;
+_Harvest note: items 3, 4, 8, 9, 10, 11 above are TODO_LIST-bound candidates;
 the owner rows (29–35) already live there. Run docs-health HARVEST on this
 report before the next session treats section (f) as committed backlog —
-it is a brainstorm, not a promise.*
+it is a brainstorm, not a promise._
