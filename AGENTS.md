@@ -198,7 +198,10 @@ Concurrent sessions + daemon: docs/concurrency.md.
   never re-opened.
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision
-  (incl. the E003 hold + the 2026-11-12 identity verdict);
+  (incl. the E003 hold + the 2026-11-12 identity verdict); the census there
+  covers the TWO-BINARY drift (devShell's source-pinned engine reports 27
+  incl. E005/F026; buildflow's bundled newer engine reports 26 with C044/
+  E023 instead — never reconcile one against the other);
   **docs/buildflow-dev-gate.md** — gate traps + the zero-findings receipt rule.
 - **docs/upstream-filings.md** — every filing ledger and its upstream state.
 - **docs/http-stack.md**, **docs/templ-components-adoption.md** (middleware
