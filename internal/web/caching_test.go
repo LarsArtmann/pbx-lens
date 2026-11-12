@@ -13,7 +13,7 @@ import (
 
 // routePattern extracts the literal method+path patterns from Register's
 // mux.HandleFunc calls (the drift-guard parse).
-var routePattern = regexp.MustCompile(`mux\.HandleFunc\("([^"]+)"`) 
+var routePattern = regexp.MustCompile(`mux\.HandleFunc\("([^"]+)"`)
 
 // TestETagMiddlewareCounters proves the hooks observe every outcome the
 // middleware can produce: a fresh tag on the first response, a 304 on the
@@ -234,6 +234,7 @@ func TestSkipBodyCachingCoversTheRouteTable(t *testing.T) {
 		if !isRoute {
 			return false
 		}
+
 		path = wildcard.ReplaceAllString(path, "x")
 
 		return strings.HasPrefix(path, "/api/export.") ||

@@ -425,7 +425,7 @@ func (i *Identity) rpid() string {
 // they are single cheap COUNTs — fine at operator-page cadence. Sessions
 // is a pointer on purpose: null means the COUNT failed (unknown), never a
 // fake zero.
-func (i *Identity) OpsSnapshot() IdentityOps {
+func (i *Identity) OpsSnapshot(ctx context.Context) IdentityOps {
 	snapshot := IdentityOps{
 		Enabled: true,
 		RPID:    i.rpid(),
@@ -434,13 +434,14 @@ func (i *Identity) OpsSnapshot() IdentityOps {
 
 	var sessions int
 
-	if err := i.db.QueryRow("SELECT COUNT(*) FROM user_sessions").Scan(&sessions); err == nil {
+	if err := i.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_sessions").Scan(&sessions); err == nil {
 		snapshot.Sessions = &sessions
 	}
 
 	if audit := i.service.AuditLog(); audit != nil {
 		snapshot.AuditTotal = audit.Count()
 		snapshot.AuditDropped = audit.Dropped()
+
 		snapshot.AuditActions = make(map[string]int)
 		for _, entry := range audit.Entries() {
 			snapshot.AuditActions[entry.Action]++

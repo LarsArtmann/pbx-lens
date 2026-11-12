@@ -500,7 +500,7 @@ func TestIdentityOpsSnapshot(t *testing.T) {
 	handler := identityHandler(t, identity)
 	loginSession(t, handler, "operator@pbx.lens")
 
-	snapshot := identity.OpsSnapshot()
+	snapshot := identity.OpsSnapshot(context.Background())
 
 	if !snapshot.Enabled {
 		t.Error("identity snapshot Enabled = false, want true")
@@ -544,6 +544,7 @@ func TestOpsPayloadIdentitySection(t *testing.T) {
 	}
 
 	payload := composeOpsPayload(nil, nil, nil, nil, &identity)
+
 	wire, ok := payload.(map[string]any)
 	if !ok {
 		t.Fatalf("payload type %T, want map with an identity section", payload)

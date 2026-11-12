@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
@@ -1027,6 +1028,7 @@ func BenchmarkConcurrentPollIdentity(b *testing.B) {
 	// two fetches land in two nosurf sessions and the ceremony 403s.
 	client := noAutoGzip()
 	csrfCookie, token := loginChallengeHTTP(b, ts.FullChainURL, client)
+
 	sessionCookie, err := registerOperatorHTTP(b, ts.FullChainURL, client, csrfCookie, token)
 	if err != nil {
 		b.Fatal(err)
@@ -1071,6 +1073,7 @@ func BenchmarkConcurrentPollIdentity(b *testing.B) {
 					}
 
 					req.AddCookie(sessionCookie)
+
 					if bb.etag != "" {
 						req.Header.Set("If-None-Match", bb.etag)
 					}
@@ -1174,5 +1177,5 @@ func registerOperatorHTTP(
 		}
 	}
 
-	return nil, fmt.Errorf("registration issued no session cookie")
+	return nil, errors.New("registration issued no session cookie")
 }

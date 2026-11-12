@@ -105,7 +105,7 @@ func TestIdentityDBSnapshotRoundTripWhileLive(t *testing.T) {
 	snapshotTables := identityTableNames(t, out)
 
 	if !slices.Equal(snapshotTables, sourceTables) {
-		t.Fatalf("snapshot tables diverge from source:\n source:  %v\n snapshot: %v", sourceTables, snapshotTables)
+		t.Fatalf("snapshot tables diverge from source:\n %v\n snapshot: %v", sourceTables, snapshotTables)
 	}
 
 	if !slices.Contains(snapshotTables, "user_sessions") {

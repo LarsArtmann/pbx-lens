@@ -165,7 +165,7 @@ type server struct {
 	now               func() time.Time
 	recordingThrottle recordingThrottle
 	authEnabled       bool
-	identity         *Identity
+	identity          *Identity
 }
 
 // logf reports a failure that surfaces after the response body started —
@@ -692,7 +692,7 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 	var identity *IdentityOps
 
 	if s.identity != nil {
-		snapshot := s.identity.OpsSnapshot()
+		snapshot := s.identity.OpsSnapshot(r.Context())
 		identity = &snapshot
 	}
 
@@ -758,7 +758,13 @@ func (s *server) coverageWire(ctx context.Context) []coverageWire {
 // coverage + retention + identity at most beyond an existing map.
 const opsPayloadSections = 5
 
-func composeOpsPayload(poller any, cache *CacheStats, coverage []coverageWire, retention *retentionWire, identity *IdentityOps) any {
+func composeOpsPayload(
+	poller any,
+	cache *CacheStats,
+	coverage []coverageWire,
+	retention *retentionWire,
+	identity *IdentityOps,
+) any {
 	if cache == nil && len(coverage) == 0 && retention == nil && identity == nil {
 		return poller
 	}

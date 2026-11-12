@@ -118,7 +118,7 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 	}
 
 	if s.identity != nil {
-		snap.Identity = ptrIdentityOps(s.identity.OpsSnapshot())
+		snap.Identity = new(s.identity.OpsSnapshot(ctx))
 	}
 
 	if s.ops != nil {
@@ -371,10 +371,4 @@ func cacheRatioText(stats CacheStats) string {
 	default:
 		return format.Percent(stats.HitRatio)
 	}
-}
-
-// ptrIdentityOps is the snapshot → pointer adapter collectOps uses (the
-// card is nil on auth-free boots, present and real otherwise).
-func ptrIdentityOps(snapshot IdentityOps) *IdentityOps {
-	return &snapshot
 }
