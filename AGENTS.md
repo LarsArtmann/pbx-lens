@@ -193,8 +193,9 @@ Concurrent sessions + daemon: docs/concurrency.md.
 - **docs/gotchas.md** — war stories: record keys, the one-shot drain,
   full-recompute folds, FTS5, tombstones, drain-before-enrich, `Exists`,
   the flake hardening contract.
-- **docs/status/archived/** + **docs/planning/archived/** — closed history,
-  every executed plan (manifests in each README): never re-opened.
+- **docs/status/archived/** (69 reports) + **docs/planning/archived/** (10
+  plans) — closed history, every executed plan (manifests in each README):
+  never re-opened.
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision
   (incl. the E003 hold + the 2026-11-12 identity verdict);
