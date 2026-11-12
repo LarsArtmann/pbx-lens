@@ -30,8 +30,6 @@ require (
 	github.com/larsartmann/httputil v1.8.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
 	github.com/larsartmann/templ-components v1.27.0
-	github.com/larsartmann/templ-components/htmx v1.27.0
-	github.com/larsartmann/templ-components/icons v1.27.0
 	github.com/larsartmann/templ-components/utils v1.27.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/time v0.16.0
@@ -72,7 +70,7 @@ require (
 	github.com/go-faster/errors v0.8.0 // indirect
 	github.com/go-faster/jx v1.2.0 // indirect
 	github.com/go-faster/yaml v0.4.6 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-logfmt/logfmt v0.6.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -120,6 +118,8 @@ require (
 	github.com/larsartmann/go-retry v0.9.0 // indirect
 	github.com/larsartmann/go-sqlitestore v0.1.1 // indirect
 	github.com/larsartmann/go-sse v0.7.0 // indirect
+	github.com/larsartmann/templ-components/htmx v1.27.0 // indirect
+	github.com/larsartmann/templ-components/icons v1.27.0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/maruel/natural v1.3.0 // indirect
