@@ -8,11 +8,13 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/pbx-lens/internal/oidclogin/oidctest"
 )
 
 // testConfig builds a Config whose issuer is the stub and whose secret file
 // lives in a temp dir.
-func testConfig(t *testing.T, idp *stubIdP, mutate ...func(*Config)) Config {
+func testConfig(t *testing.T, idp *oidctest.StubIdP, mutate ...func(*Config)) Config {
 	t.Helper()
 
 	secretFile := filepath.Join(t.TempDir(), "client-secret")
@@ -21,7 +23,7 @@ func testConfig(t *testing.T, idp *stubIdP, mutate ...func(*Config)) Config {
 	}
 
 	cfg := Config{
-		Issuer:           idp.server.URL,
+		Issuer:           idp.URL(),
 		ClientID:         "lens-test",
 		ClientSecretFile: secretFile,
 		RedirectURL:      "https://lens.example.org/auth/oauth/pocketid/callback",
@@ -75,7 +77,7 @@ func TestBeginLoginBuildsPKCEAuthorizeURL(t *testing.T) {
 		t.Fatalf("BeginLoginWithNonce: %v", err)
 	}
 
-	if !strings.HasPrefix(redirectURL, idp.server.URL+"/authorize?") {
+	if !strings.HasPrefix(redirectURL, idp.URL()+"/authorize?") {
 		t.Fatalf("authorize URL must target the IdP: %s", redirectURL)
 	}
 
@@ -140,11 +142,11 @@ func TestFinishLoginWithNonceHappyPath(t *testing.T) {
 		t.Errorf("display_name = %q, want lars", info.DisplayName)
 	}
 
-	if idp.exchanges != 1 {
-		t.Errorf("exchanges = %d, want 1", idp.exchanges)
+	if idp.Exchanges() != 1 {
+		t.Errorf("exchanges = %d, want 1", idp.Exchanges())
 	}
 
-	if idp.lastForm.Get("code_verifier") == "" {
+	if idp.LastForm().Get("code_verifier") == "" {
 		t.Error("the exchange must carry the PKCE verifier")
 	}
 }
@@ -172,7 +174,7 @@ func TestFinishLoginGroupGateFailsClosed(t *testing.T) {
 				t.Fatalf("begin: %v", err)
 			}
 
-			idp.nonce = nonce
+			idp.SetNonce(nonce)
 
 			_, err = provider.FinishLoginWithNonce(context.Background(), "pocketid", "code-1", verifier, nonce)
 			if err == nil {
@@ -203,7 +205,7 @@ func TestFinishLoginUnverifiedEmailDenied(t *testing.T) {
 		t.Fatalf("begin: %v", err)
 	}
 
-	idp.nonce = nonce
+	idp.SetNonce(nonce)
 
 	if _, err := provider.FinishLoginWithNonce(context.Background(), "pocketid", "code-1", verifier, nonce); err == nil {
 		t.Fatal("an unverified email must be denied")
@@ -222,7 +224,7 @@ func TestFinishLoginNonceMismatchDenied(t *testing.T) {
 		t.Fatalf("New: %v", err)
 	}
 
-	idp.nonce = "nonce-in-token"
+	idp.SetNonce("nonce-in-token")
 
 	if _, err := provider.FinishLoginWithNonce(context.Background(), "pocketid", "code-1", "verifier", "different-nonce"); err == nil {
 		t.Fatal("a mismatched nonce must be denied")
@@ -327,7 +329,7 @@ func TestDiscoveryFailureNotCachedAndNeverAtBoot(t *testing.T) {
 
 	// Point back at the live stub: the next attempt must succeed (the
 	// failure was not cached).
-	provider.cfg.Issuer = idp.server.URL
+	provider.cfg.Issuer = idp.URL()
 	if _, err := provider.providerFor(context.Background()); err != nil {
 		t.Fatalf("a recovered IdP must be discovered on the next login: %v", err)
 	}
@@ -341,10 +343,10 @@ func TestUserInfoFallbackWhenIDTokenLacksEmail(t *testing.T) {
 	idp := newStubIdP(t, map[string]any{
 		"sub": "user-2", "preferred_username": "lars", "groups": []string{"pbx-history"},
 	})
-	idp.userinfoClaims = map[string]any{
+	idp.SetUserinfoClaims(map[string]any{
 		"sub": "user-2", "preferred_username": "lars", "groups": []string{"pbx-history"},
 		"email": "lars@example.org", "email_verified": true,
-	}
+	})
 
 	provider, err := New(testConfig(t, idp))
 	if err != nil {
@@ -365,7 +367,7 @@ func TestUserInfoFallbackWhenIDTokenLacksEmail(t *testing.T) {
 // runLogin drives one full begin→finish cycle through the stub IdP and
 // returns the normalized user info. The stub's nonce is set from the
 // begin step so the issued ID token carries it.
-func runLogin(t *testing.T, provider *Provider, idp *stubIdP) userInfo {
+func runLogin(t *testing.T, provider *Provider, idp *oidctest.StubIdP) userInfo {
 	t.Helper()
 
 	_, verifier, nonce, err := provider.BeginLoginWithNonce(context.Background(), "pocketid", "state-run")
@@ -373,7 +375,7 @@ func runLogin(t *testing.T, provider *Provider, idp *stubIdP) userInfo {
 		t.Fatalf("begin: %v", err)
 	}
 
-	idp.nonce = nonce
+	idp.SetNonce(nonce)
 
 	raw, err := provider.FinishLoginWithNonce(context.Background(), "pocketid", "code-1", verifier, nonce)
 	if err != nil {

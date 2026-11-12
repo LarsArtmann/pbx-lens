@@ -408,9 +408,15 @@ func (i *Identity) Register(mux *http.ServeMux) {
 		OAuthRateLimit: usermgmt.RateLimitConfig{
 			Enabled: true, MaxRequests: oauthRateLimitMax, Window: minuteWindow,
 		},
+		// The OAuth dance is browser-facing: success lands on the app root,
+		// failures bounce back to the login page with the friendly message
+		// riding the query (never a bare JSON reply to a navigation).
+		// RegisterRoutes mounts the /auth/oauth/* endpoints itself whenever
+		// the service carries an OAuth2 provider.
+		OAuth2SuccessURL: "/",
+		OAuth2ErrorURL:   "/login",
 	})
 	auth.RegisterRoutes(mux)
-	auth.RegisterOAuth2Routes(mux)
 }
 
 // Named auth-surface constants (mnd): the session cookie the gate and the
