@@ -70,8 +70,10 @@ func TestOIDCLoginMintsSessionAndOpensGate(t *testing.T) {
 	// The login page renders the Pocket ID button.
 	page := httptest.NewRequest(http.MethodGet, "/login", nil)
 	page.Header.Set("Accept", "text/html")
+
 	pageRecorder := httptest.NewRecorder()
 	handler.ServeHTTP(pageRecorder, page)
+
 	if pageRecorder.Code != http.StatusOK {
 		t.Fatalf("GET /login status = %d, want 200", pageRecorder.Code)
 	}
@@ -87,6 +89,7 @@ func TestOIDCLoginMintsSessionAndOpensGate(t *testing.T) {
 	gated := httptest.NewRequest(http.MethodGet, "/", nil)
 	gated.AddCookie(session)
 	gated.Header.Set("Accept", "text/html")
+
 	gatedRecorder := httptest.NewRecorder()
 	handler.ServeHTTP(gatedRecorder, gated)
 
@@ -110,6 +113,7 @@ func TestOIDCLoginWrongGroupDenied(t *testing.T) {
 	begin := httptest.NewRequest(http.MethodGet, "/auth/oauth/pocketid/begin", nil)
 	beginRecorder := httptest.NewRecorder()
 	handler.ServeHTTP(beginRecorder, begin)
+
 	if beginRecorder.Code != http.StatusFound {
 		t.Fatalf("begin status = %d, want 302", beginRecorder.Code)
 	}
@@ -161,6 +165,7 @@ func TestOIDCFirstLoginProvisionsOperatorSecondEmailClosed(t *testing.T) {
 	begin := httptest.NewRequest(http.MethodGet, "/auth/oauth/pocketid/begin", nil)
 	beginRecorder := httptest.NewRecorder()
 	handler.ServeHTTP(beginRecorder, begin)
+
 	if beginRecorder.Code != http.StatusFound {
 		t.Fatalf("begin status = %d, want 302", beginRecorder.Code)
 	}

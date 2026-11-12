@@ -67,6 +67,7 @@ func TestBeginLoginBuildsPKCEAuthorizeURL(t *testing.T) {
 	t.Parallel()
 
 	idp := newStubIdP(t, map[string]any{"email": "lars@example.org"})
+
 	provider, err := New(testConfig(t, idp))
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -119,6 +120,7 @@ func TestFinishLoginWithNonceHappyPath(t *testing.T) {
 		"preferred_username": "lars",
 		"groups":             []string{"pbx-history", "pbx-phone"},
 	})
+
 	provider, err := New(testConfig(t, idp))
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -155,8 +157,10 @@ func TestFinishLoginGroupGateFailsClosed(t *testing.T) {
 	t.Parallel()
 
 	cases := map[string]map[string]any{
-		"wrong group": {"sub": "u", "email": "lars@example.org", "email_verified": true,
-			"groups": []string{"pbx-phone"}},
+		"wrong group": {
+			"sub": "u", "email": "lars@example.org", "email_verified": true,
+			"groups": []string{"pbx-phone"},
+		},
 		"no groups claim": {"sub": "u", "email": "lars@example.org", "email_verified": true},
 	}
 	for name, claims := range cases {
@@ -164,6 +168,7 @@ func TestFinishLoginGroupGateFailsClosed(t *testing.T) {
 			t.Parallel()
 
 			idp := newStubIdP(t, claims)
+
 			provider, err := New(testConfig(t, idp))
 			if err != nil {
 				t.Fatalf("New: %v", err)
@@ -195,6 +200,7 @@ func TestFinishLoginUnverifiedEmailDenied(t *testing.T) {
 		"sub": "user-1", "email": "lars@example.org", "email_verified": false,
 		"groups": []string{"pbx-history"},
 	})
+
 	provider, err := New(testConfig(t, idp))
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -207,7 +213,13 @@ func TestFinishLoginUnverifiedEmailDenied(t *testing.T) {
 
 	idp.SetNonce(nonce)
 
-	if _, err := provider.FinishLoginWithNonce(context.Background(), "pocketid", "code-1", verifier, nonce); err == nil {
+	if _, err := provider.FinishLoginWithNonce(
+		context.Background(),
+		"pocketid",
+		"code-1",
+		verifier,
+		nonce,
+	); err == nil {
 		t.Fatal("an unverified email must be denied")
 	}
 }
@@ -219,6 +231,7 @@ func TestFinishLoginNonceMismatchDenied(t *testing.T) {
 		"sub": "user-1", "email": "lars@example.org", "email_verified": true,
 		"groups": []string{"pbx-history"},
 	})
+
 	provider, err := New(testConfig(t, idp))
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -226,7 +239,13 @@ func TestFinishLoginNonceMismatchDenied(t *testing.T) {
 
 	idp.SetNonce("nonce-in-token")
 
-	if _, err := provider.FinishLoginWithNonce(context.Background(), "pocketid", "code-1", "verifier", "different-nonce"); err == nil {
+	if _, err := provider.FinishLoginWithNonce(
+		context.Background(),
+		"pocketid",
+		"code-1",
+		"verifier",
+		"different-nonce",
+	); err == nil {
 		t.Fatal("a mismatched nonce must be denied")
 	}
 }
@@ -235,6 +254,7 @@ func TestFinishLoginWrongProviderNameRejected(t *testing.T) {
 	t.Parallel()
 
 	idp := newStubIdP(t, map[string]any{"email": "lars@example.org"})
+
 	provider, err := New(testConfig(t, idp))
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -260,6 +280,7 @@ func TestClientSecretFailClosed(t *testing.T) {
 		t.Parallel()
 
 		cfg := testConfig(t, idp, func(c *Config) { c.ClientSecretFile = filepath.Join(t.TempDir(), "absent") })
+
 		provider, err := New(cfg)
 		if err != nil {
 			t.Fatalf("New: %v", err)
@@ -316,6 +337,7 @@ func TestDiscoveryFailureNotCachedAndNeverAtBoot(t *testing.T) {
 	t.Parallel()
 
 	idp := newStubIdP(t, map[string]any{"email": "lars@example.org"})
+
 	provider, err := New(testConfig(t, idp))
 	if err != nil {
 		t.Fatalf("New: %v", err)

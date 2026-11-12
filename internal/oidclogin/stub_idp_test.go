@@ -32,5 +32,6 @@ func parseQuery(t *testing.T, rawURL string) url.Values {
 
 func sha256Sum(s string) []byte {
 	sum := sha256.Sum256([]byte(s))
+
 	return sum[:]
 }

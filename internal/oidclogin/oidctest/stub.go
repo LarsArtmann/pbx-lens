@@ -12,10 +12,11 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json/v2"
-	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -29,12 +30,12 @@ type StubIdP struct {
 	server *httptest.Server
 	key    *rsa.PrivateKey
 
-	mu              sync.Mutex
-	tokenClaims     map[string]any
-	userinfoClaims  map[string]any // nil = serve tokenClaims
-	nonce           string
-	exchanges       int
-	lastForm        url.Values
+	mu             sync.Mutex
+	tokenClaims    map[string]any
+	userinfoClaims map[string]any // nil = serve tokenClaims
+	nonce          string
+	exchanges      int
+	lastForm       url.Values
 }
 
 // NewStub starts the stub provider; Close stops it.
@@ -102,7 +103,7 @@ func NewStub(claims map[string]any) *StubIdP {
 		}
 
 		writeJSON(w, map[string]any{
-			"access_token": "at_" + fmt.Sprint(idp.exchanges),
+			"access_token": "at_" + strconv.Itoa(idp.exchanges),
 			"token_type":   "Bearer",
 			"id_token":     idToken,
 		})
@@ -116,6 +117,7 @@ func NewStub(claims map[string]any) *StubIdP {
 		}
 
 		idp.mu.Lock()
+
 		claims := idp.userinfoClaims
 		if claims == nil {
 			claims = idp.tokenClaims
@@ -195,14 +197,14 @@ func signIDToken(
 	key *rsa.PrivateKey, issuer, audience string, claims map[string]any, nonce string,
 ) (string, error) {
 	now := time.Now()
+
 	payload := make(map[string]any, len(claims)+5)
-	for k, v := range claims {
-		payload[k] = v
-	}
+	maps.Copy(payload, claims)
 
 	payload["iss"] = issuer
 	payload["aud"] = audience
 	payload["iat"] = now.Unix()
+
 	payload["exp"] = now.Add(time.Hour).Unix()
 	if nonce != "" {
 		payload["nonce"] = nonce
@@ -222,6 +224,7 @@ func signIDToken(
 		base64.RawURLEncoding.EncodeToString(body)
 
 	sum := sha256.Sum256([]byte(signingInput))
+
 	signature, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA256, sum[:])
 	if err != nil {
 		return "", err

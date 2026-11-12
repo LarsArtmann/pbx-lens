@@ -206,6 +206,7 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		CSSPath:          "/app.css",
 		NonceFromRequest: httputil.NonceFromRequest,
 	}
+
 	if oauthProvider != nil {
 		name := cfg.OIDC.Name
 		if name == "" {

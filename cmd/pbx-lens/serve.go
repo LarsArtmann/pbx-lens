@@ -180,7 +180,8 @@ func serve(args []string) {
 				ClientSecretFile: *authOIDCSecretFile,
 				RedirectURL:      *authOIDCRedirect,
 			}
-			for _, group := range strings.Split(*authOIDCGroup, ",") {
+
+			for group := range strings.SplitSeq(*authOIDCGroup, ",") {
 				if group = strings.TrimSpace(group); group != "" {
 					oidcCfg.AllowedGroups = append(oidcCfg.AllowedGroups, group)
 				}
