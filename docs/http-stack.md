@@ -232,7 +232,15 @@ body: ≈22 µs @ 25 KB, ≈104 µs @ 122 KB — measured 2026-10-15.) The
 2026-11-04 swap to the library `ServerTimingMiddleware` constructor was
 verified performance-neutral: identical allocs/op (1216–1218 both trees)
 and ns/op inside run noise on the loaded audit box (quiet-box ceiling
-stands).
+stands). The 2026-11-12 identity generation (`BenchmarkConcurrentPollIdentity`,
+plan P08.7) adds the native-login tax: the same gated fragment through
+session → CSRF → gate measured **+165 allocs/op (1223 → 1388) and +10.5
+KB/op** against the auth-free chain — the stable signal, because ns/op on
+that loaded box (sibling nix build + a concurrent session running) was
+noise (358–443 µs vs 346–420 µs, the 304 arm "slower" and the 200 arm
+"faster" simultaneously). Quiet-box ns comparisons await the next
+poll-gate-verified window; the allocs say the identity chain is a fixed
+~14% allocation overhead per poll, not a scaling hazard.
 
 Ingest per-row cost (re-measured 2026-10-25 on the same quiet box,
 `BenchmarkIngestCDR{Parse,Dispatch}`; the 2026-10-25 numbers taken under

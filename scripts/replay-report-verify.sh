@@ -118,7 +118,11 @@ replay_file() {
 			continue
 		fi
 
-		if bash -c "$cmd" >/dev/null 2>&1; then
+		# pipefail: a `rg … | head` pipeline must NOT pass just because
+		# head ran — the rg half is the claim (paid 2026-11-12: a replay
+		# passed lines grepping a file deleted from the tree because head
+		# still exited 0).
+		if bash -o pipefail -c "$cmd" >/dev/null 2>&1; then
 			if [[ "$cmd" != "$line" ]]; then
 				fail=$((fail + 1))
 				printf '  FAIL  %s   # claimed absent, but it MATCHES\n' "$line"

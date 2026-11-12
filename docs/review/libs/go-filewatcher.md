@@ -13,7 +13,7 @@
 
 ## Why pbx-lens rejects it
 
-1. **The watch target is the htpasswd file, and SIGHUP already owns it.** `internal/web/auth.go:142-151` (`watchSIGHUP` → `reload`) is operator-driven, deterministic, and test-pinned; a broken reload **keeps the running table** (design note `auth.go:49-51`) — a safety property that must survive any reload mechanism.
+1. **The watch target WAS the htpasswd file, and SIGHUP already owned it** (the target is GONE since the 2026-11-11 identity adoption — see the verify-block postscript). `internal/web/auth.go:142-151` (`watchSIGHUP` → `reload`) was operator-driven, deterministic, and test-pinned; a broken reload **kept the running table** (design note `auth.go:49-51`) — a safety property that must survive any future reload mechanism.
 2. **File-watching adds failure modes for zero operator value:** inotify limit edges, a debounce race against atomic-rename credential rotations (the exact pattern an operator's `htpasswd`/deploy tooling uses), and NFS edge cases — all to replace a one-line `systemctl kill -s HUP`.
 3. **fsnotify rides the graph already** (koanf config watching inside go-appkit) — but that is go-appkit's business, not pbx-lens'.
 4. Rotation frequency here is human-scale (rare); hot-reload latency requirements are seconds, which SIGHUP meets.
@@ -25,7 +25,12 @@ Only if the auth surface grows beyond one operator-managed file (e.g. per-source
 ## How to verify
 
 ```console
-rg -n "SIGHUP|reload" internal/web/auth.go | head -6
+rg -n "SIGHUP|reload" internal/web/ cmd/   # zero hits — the htpasswd SIGHUP watch died with the identity adoption (2026-11-11)
 rg -n "go-filewatcher" go.mod go.sum   # absent
 rg -n "fsnotify" go.mod
 ```
+
+Post-identity note (2026-11-12): finding #1's watch target (`auth.go`'s
+SIGHUP-driven reload) is GONE from the tree — the flip-trigger is moot
+until a new file-watch need appears; this report stands as the record
+of why the library was rejected.
