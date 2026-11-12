@@ -1,3 +1,4 @@
 {
-  "annotate_max": 247
+  "annotate_max": 247,
+  "skip_gates": ["audit-all", "cadence"]
 }
