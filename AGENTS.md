@@ -36,7 +36,9 @@ read-only deep link, never a data dependency.
   x/time rate, templ-components/htmx, the 2026-10-12 HTTP-stack trio
   httputil/server_timing/go-etag): a module ALREADY in the graph rides free.
   server_timing ships `ServerTimingMiddleware()`/`...When(pred)` since v1.0.1
-  (the serve wiring uses it; doctrine in docs/http-stack.md); `entitytag` stays
+  (appkit mounts it by default since the v0.12 bump — pbx-lens wires no
+  explicit timing middleware; the `MeasureServerTiming` call sites are the
+  used surface; doctrine in docs/http-stack.md); `entitytag` stays
   indirect (`go-etag/server` re-exports everything).
 - **Test-only modules (operator-approved 2026-10-24):** systemscenario/v4 +
   scenario/v4 + rapid (+ go-snaps, rides systemscenario). Tests boot through
