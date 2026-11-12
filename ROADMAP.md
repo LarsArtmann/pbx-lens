@@ -202,6 +202,19 @@ Remaining raw idea:
   R22) — the mapping rule and its ingestion plug-point are sketched there
   as a TODO_LIST row
 
+Operator identity raw ideas (2026-11-12, the native login stack is LANDED;
+both park on the identity answer sheet,
+docs/decisions/2026-11-12_identity-posture-answer-sheet.md):
+
+- Passkey activation (TLS posture B): a reverse-proxy vhost in the sibling
+  module flips WebAuthn on — `Secure` cookie, `-auth-origin https://…`,
+  enrollment surfacing. Today the password factor works everywhere and
+  passkeys stay dormant over LAN http.
+- Provision CLI (bootstrap posture B): `pbx-lens auth provision` creating
+  the operator before first /login with registration closed, replacing
+  first-visitor-becomes-operator on deployments whose LAN is not fully
+  trusted. Flip-trigger: any second human, any untrusted network.
+
 UI long-tail raw ideas (2026-10-15 UI-contract plan M11/M17/M19 harvest;
 each parked on its own trigger — the rows in TODO_LIST carry the actionable
 versions):
