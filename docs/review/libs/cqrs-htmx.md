@@ -1,7 +1,7 @@
 # cqrs-htmx — utilization report (pbx-lens)
 
 **Date:** 2026-11-04 (audit) · **Refreshed 2026-11-12: FLIP-TRIGGER EXECUTED — the 2026-11-11 operator order adopted the identity stack; verdict below is post-adoption.**
-**Upstream/pins (go.mod:6-9,92-93):** direct `usermgmt/v4 v4.20.0`, `loginpage/v4 v4.18.0`, `usermgmt/webauthn/v4 v4.13.0`; indirect riders `v4 (root) v4.18.1`, `identity-model/v4 v4.17.0` (MVS via usermgmt). Latest upstream at refresh: root v4.18.1, usermgmt v4.20.0, loginpage v4.18.0, setup v4.17.0 — **pins current**.
+**Upstream/pins (go.mod:7-9,92-93):** direct `usermgmt/v4 v4.20.0`, `loginpage/v4 v4.18.0`, `usermgmt/webauthn/v4 v4.13.0`; indirect riders `v4 (root) v4.18.1`, `identity-model/v4 v4.17.0` (MVS via usermgmt). Latest upstream at refresh: root v4.18.1, usermgmt v4.20.0, loginpage v4.18.0, setup v4.17.0 — **pins current**.
 **Status in pbx-lens:** **ADOPTED (leaf modules only, exactly as the 2026-11-04 guardrails demanded)** — identity/login only; root stack, adminui, dashboardui, datastar, offline-sync, OpenAPI, health-bridge, security middleware all NOT imported (verified: `rg "cqrs-htmx" internal/ cmd/` hits only usermgmt/loginpage/webauthn paths).
 **Verdict:** **ADOPTED for identity; the rest stays REJECT/N-A** with unchanged reasons. Score: **78/100 (high)** for the adopted surface (see breakdown below).
 **Fleet report:** [index.html](index.html)

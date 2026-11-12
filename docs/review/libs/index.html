@@ -852,7 +852,7 @@
     <div class="top-bar">
       <span>FLEET LIBRARY AUDIT</span>
       <span>2026-11-04</span>
-      <span>PBX-LENS &middot; 19 LIBRARIES</span>
+      <span>PBX-LENS &middot; 22 LIBRARIES</span>
     </div>
 
     <div class="layout">
@@ -863,9 +863,9 @@
           <a href="#summary">Summary</a>
           <a href="#scorecard">Scorecard</a>
           <a href="#fleet">Fleet table</a>
-          <a href="#used">Used (7)</a>
+          <a href="#used">Used (8)</a>
           <a href="#findings">Findings</a>
-          <a href="#notused">Not imported (12)</a>
+          <a href="#notused">Not imported (14)</a>
           <a href="#proposal">Opportunities</a>
           <a href="#appendix">How to verify</a>
         </nav>
@@ -881,7 +881,7 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">FIRST-PARTY LIBRARY FLEET AUDIT &middot; 2026-11-04 &middot; REFRESHED 2026-11-11</div>
+          <div class="eyebrow">FIRST-PARTY LIBRARY FLEET AUDIT &middot; 2026-11-04 &middot; REFRESHED 2026-11-11 &middot; 2026-11-12</div>
           <h1>22 first-party libraries — are we using them to the max?</h1>
           <p class="subtitle">
             A utilization audit of every LarsArtmann library against pbx-lens:
@@ -1299,8 +1299,9 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
             <p>
               Error construction at origin with a coherent <code>lens.*</code> code taxonomy across
               23 files; the cross-library classification protocol pinned by tests; the ETag config
-              tuned above defaults with observability hooks feeding <code>/api/ops</code>; and all
-              seven used pins are the latest releases. The failure mode this codebase does
+              tuned above defaults with observability hooks feeding <code>/api/ops</code>; and six
+              of the eight used pins are at latest (cqrs-lite's four trailing modules and
+              appkit's Server-Timing fold-in are documented holds). The failure mode this codebase does
               <em>not</em> have is casual library usage.
             </p>
           </div>
@@ -1326,7 +1327,6 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
               <tr><td><a href="go-datastar.md">go-datastar</a></td><td class="no">REJECT</td><td>Patches-as-values pay off only when a server pushes; R9 chose htmx polling, and not even a transitive entry exists in the graph.</td><td>a genuinely push-shaped feature appears (live call-event streaming into the dashboard) &mdash; the templ-components Datastar builders are the pairing to watch</td></tr>
               <tr><td><a href="cmdguard.md">cmdguard</a></td><td class="no">REJECT</td><td>Wraps Cobra (policy-banned); pbx-lens' eight stdlib-flag commands are too small for construction-time validation, DI, and lifecycle to clear the dependency bar.</td><td>a second binary appears, or per-command flag structs / DI needs duplicate across ≥3 commands</td></tr>
               <tr><td><a href="httputil-endpoints.md">httputil/endpoints</a></td><td class="no">REJECT</td><td>Self-describing /endpoints listing = new public surface with no consumer; route truth already lives in one <code>web.Register</code> file + docs/http-stack.md; module is pre-1.0 by ruling.</td><td>docs and mux disagree for the first time, or a machine consumer needs route discovery</td></tr>
-              <tr><td><a href="cqrs-htmx.md">cqrs-htmx</a></td><td>ADOPT-PARTIAL</td><td>No user management to buy (single htpasswd), no command surface (read-only UI) &mdash; but its projection-readiness check is the right model for a real /ready gap.</td><td>the UI gains its first write action &mdash; leaf modules only, never the stack</td></tr>
             </tbody>
           </table>
           <div class="callout callout-teal">
@@ -1362,7 +1362,7 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
         <section id="appendix">
           <h2>How to verify</h2>
           <p>Every claim is re-derivable; the per-lib reports carry their own verify blocks.
-          Rendered proof (headless chromium, 2026-11-04): <a href="index-screenshot.png">index-screenshot.png</a>.</p>
+          Rendered proof (headless chromium, 2026-11-04 audit; re-shot 2026-11-12): <a href="index-screenshot.png">index-screenshot.png</a>.</p>
           <pre><code><span class="tok-comment"># 1. the two headline gaps</span>
 rg -in <span class="tok-string">"middleware constructor"</span> internal/web/timing.go docs/http-stack.md
 rg -n <span class="tok-string">"func ServerTimingMiddleware"</span> \
@@ -1374,20 +1374,29 @@ git -C /home/lars/projects/go-cqrs-lite tag --sort=-v:refname -l "system/v4.*" |
 git -C /home/lars/projects/templ-components tag --sort=-v:refname | head -3
 git -C /home/lars/projects/go-etag tag --sort=-v:refname | head -3
 
-<span class="tok-comment"># 3. the twelve absences</span>
-for lib in go-idempotency go-retry go-codec go-sse go-atomic-write go-filewatcher \
-           go-daemon go-output go-health go-health-dashboard go-credentials-store cqrs-htmx; do
-  rg -q <span class="tok-string">"larsartmann/$lib"</span> go.mod || echo <span class="tok-string">"not imported: $lib"</span>
+<span class="tok-comment"># 3. the absences (never in the graph)</span>
+for lib in go-atomic-write go-filewatcher go-daemon go-output go-health \
+           go-health-dashboard go-credentials-store go-datastar cmdguard httputil/endpoints; do
+  rg -q <span class="tok-string">"larsartmann/$lib"</span> go.sum || echo <span class="tok-string">"absent: $lib"</span>
 done
 
-<span class="tok-comment"># 4. count the reports</span>
-ls docs/review/libs/*.md | wc -l   <span class="tok-comment"># 19</span></code></pre>
+<span class="tok-comment"># 3b. indirect-only riders (in go.sum, zero pbx-lens imports)</span>
+for lib in go-codec go-sse go-idempotency go-retry; do
+  rg -q <span class="tok-string">"larsartmann/$lib"</span> go.sum && ! rg -q <span class="tok-string">"larsartmann/$lib"</span> --type go internal cmd \
+    && echo <span class="tok-string">"indirect-only: $lib"</span>
+done
+
+<span class="tok-comment"># 4. the adopted identity stack</span>
+rg -n <span class="tok-string">'cqrs-htmx'</span> go.mod | head -5   # 3 direct leaves + root/identity-model indirect
+
+<span class="tok-comment"># 5. count the reports</span>
+ls docs/review/libs/*.md | wc -l   <span class="tok-comment"># 22</span></code></pre>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated 2026-11-04 &middot; Reviewed against pbx-lens @ main (37e30ae) &middot; Per-lib detail in the 19 sibling markdown reports
+            Generated 2026-11-04 &middot; Refreshed 2026-11-11 (cqrs-htmx flip-trigger executed; all pins re-verified against the module proxy; +3 libraries) &middot; Reviewed against pbx-lens @ main &middot; Per-lib detail in the 22 sibling markdown reports
           </p>
         </footer>
       </main>
