@@ -8,6 +8,18 @@
 > Long-term vision and unrefined ideas live in ROADMAP.md; shipped features in
 > FEATURES.md. Items are ranked by impact. Status is verified, not assumed.
 >
+> Refreshed 2026-11-12 (post-adoption trust-currency HARVEST, plan
+> docs/planning/2026-11-12_05-54_SUPERB-post-adoption-trust-currency-and-polish-plan.md,
+> concurrent with the identity-hardening pass): the plan's A1–A24 executed —
+> the identity pass annotated the five Unblocked rows it landed DONE inline,
+> the T14 receipt row stays PARTIAL (httputil + go-etag ride the next deps
+> train), and this harvest routed the survivors: the /api/ops family-wrap
+> row LANDED (503-honest scan_failures — CHANGELOG 2026-11-12 c) and is
+> deleted, the archived-annotate debt got its owner row under Blocked, and
+> the pixel baseline re-cut to v6 (machine-local, ~/lens-baselines/v6). The
+> plan's last in-flight item is the formal calm-window gate receipt (A1:
+> fixes in — ci.yml permissions, docs-gates ratchet, cue-vet green).
+>
 > Refreshed 2026-11-05 (fleet-audit closeout HARVEST, plan
 > docs/planning/2026-11-04_18-41_SUPERB-fleet-audit-closeout.md): the T21 pass
 > routed the still-open audit-day items into the two tables below (8

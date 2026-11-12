@@ -31,7 +31,10 @@ re-score had already replaced every second-hand note with a verified one:
 Refresh policy: a deep-dive is a snapshot. Re-run the census + score after
 major actions on its subject (the templ-components report's delta appendix
 records its 2026-10-25 re-run) or on the next pin bump; append deltas
-non-destructively to the existing report.
+non-destructively to the existing report. The mechanical half arrived
+2026-11-12: every console block in the 22 markdown reports re-derives via
+`scripts/replay-report-verify.sh` (the verify-all `--replay` lane), so a
+report's commands stay executable claims, not prose.
 
 Report screenshot policy (decided 2026-11-05): the fleet index's proof render
 (`docs/review/libs/index-screenshot.png`) is COMMITTED uncompressed — ≈2.3 MB

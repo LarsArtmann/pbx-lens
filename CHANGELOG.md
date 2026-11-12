@@ -123,6 +123,50 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   `nix run .#update-vendor-hash` after the dependency wave; package build
   and devshell (`nix develop -c echo ok`) both verified green.
 
+### Added — 2026-11-12 c (post-adoption trust currency: receipts, replay-true docs, the bumped stack verified)
+
+- **Docs claims became mechanically re-derivable.**
+  `scripts/replay-report-verify.sh` extracts and runs every console block in
+  the docs/review/libs reports — a skip-list for host-only commands, explicit
+  `negative` flags for zero-hits/absent assertions (never string-difference
+  inference), head-strip before run, pipefail — wired as the verify-all
+  `--replay` opt-in lane. Its first runs caught and fixed real drift in ten
+  lib reports. The dedup-gate script's SIGPIPE race is fixed too (the old
+  `art-dupl version | grep -q` refused correctly-pinned binaries).
+- **The dependency wave landed verified.** go-cqrs-lite system v4.18.0 +
+  metaengine v4.23.0 + sqliteengine v4.8.0 + systemscenario v4.3.0 and
+  go-appkit v0.12.0: appkit's v0.10 default makes Server-Timing the
+  outermost middleware, so the manual wiring is DELETED from serve.go;
+  `RegisterClassifications()` is wired at boot; docs/http-stack.md's chain
+  doctrine, the conditional Secure-cookie and CSRF zero-config rows, the
+  two-hop auth budget row, and the 2026-11-12 quiet-box bench re-measure all
+  reflect the new stack.
+- **A failed ops scan is no longer a silent partial 200.** The retention
+  scans family-wrap their engine errors at source
+  (`lens.retention.oldest_scan_failed` / `lens.retention.overage_scan_failed`)
+  and /api/ops answers 503 with a `scan_failures` array naming each failed
+  scan while every section that stayed healthy keeps serving; the /ops page
+  keeps its honest cards (goldens untouched).
+- **Identity edges hardened.** Snapshot-roundtrip tests pin the identity-DB
+  backup carrying session rows while live; the gate chain gained three
+  micro-benchmarks (public 7.4 µs/32 allocs, sessionless 10.4 µs/38,
+  valid-session 47 µs/150 — docs/http-stack.md); the rate-limit arithmetic
+  verdict is recorded in the new docs/runbooks/lockout-recovery.md; error
+  context (cursor + stream_ids, scan names) rides the export stall guards
+  and the coverage scan; call_id/stream_id attach at the three
+  highest-traffic error construction sites.
+- **Decisions and ledgers.** The module-boundary E003 verdict: the identity
+  context on its own DB does NOT trip the second-aggregate trigger (AGENTS.md
+  revisit triggers unchanged); the `Policy.Admits` identity review and the
+  webphone deep-link UX verdicts are recorded; go-etag#6 and two templ
+  candidates are staged in docs/upstream-filings.md; the concurrency norms
+  grew the `.claims/ACTIVE.md` roster, the leave-HEAD-green/`[red]`
+  commit-tag rule, and the dual-session protocol stub; docs-gates carries an
+  annotate ratchet (`.docs-gates.json`, `annotate_max: 247`) over the
+  archived-status corpus until the owner picks a debt policy; the CI
+  workflow pins least-privilege `permissions: contents: read` per the fleet
+  CUE policy.
+
 ### Fixed — 2026-11-05 (readiness told the truth neither way; a failed projection was silent)
 
 - **`/health/ready` no longer fails a healthy serve.** The projection
