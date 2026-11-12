@@ -82,6 +82,59 @@ Total ≈ 22.5 h. Coverage check: all 50 items in section (f) map to exactly one
 task (listed above); nothing dropped, nothing duplicated (row 113/124 overlaps
 handled by reference).
 
+### Execution receipts (ANNOTATE pass, 2026-11-12 — plan P10.7/U1)
+
+Executed T01–T19 + T24 across the 2026-11-04 closeout session and the
+2026-11-11/12 audit refresh. Row-by-row receipts (artifact = code truth):
+
+- **T01** ✅ `internal/web/timing.go` carries the servertiming swap; the
+  explicit middleware wiring lives in `cmd/pbx-lens/serve.go`
+  (`ExtraMiddlewares`), bench generations in docs/http-stack.md.
+- **T02** ✅ docs/http-stack.md owns the Server-Timing doctrine (the
+  ordering section names the two-hop budget); timing.go's comment states
+  the truth; docs/http-stack.md:79 cites the 2026-10-12 errata.
+- **T03** ✅ docs/review/libs/httputil-server-timing.md:24 carries the
+  finding-#2 correction ("already wrong at its own pin") + re-score.
+- **T04** ✅ `cmd/pbx-lens/main.go` uses `errorfamily.HandleError`/
+  `ExitCode` (EX_TEMPFAIL for projection timeouts).
+- **T05** ✅ error-family web mapping landed (`internal/web/errors.go`
+  classifies via `errorfamily.Code`/`AsType[errorfamily.Classified]`).
+- **T06** ✅ the bare-503 sites are classified rejections
+  (`lens.web.search_unwired`, `lens.web.ops_unwired` — visible in the
+  serve error logs with family/code/exit_code).
+- **T07** ✅ `errorfamilytest` adopted in `internal/app/depth_trio_test.go`,
+  `internal/cli/poller_test.go`, `internal/ingest/telnyx/telnyx_test.go`.
+- **T08** ✅ export path carries the canonical error markers via
+  errorfamily (`internal/web/export.go` + errors.go classification).
+- **T09** ✅ `internal/web/ops.templ:204` — `EmptyText: "never"` (the #52
+  workaround is gone).
+- **T10** ✅ docs/upstream-filings.md #52 closure rows + adoption-map
+  entries (docs/templ-components-adoption.md).
+- **T11** ✅ `internal/web/caching.go:105` — `etagmetrics.Attach` with
+  `OnError` → counter + log.
+- **T12** ✅ `NewCacheCounters` wraps the attached counters (caching.go);
+  vendor hash landed via `nix run .#update-vendor-hash` (commit 51777b6).
+- **T13** ✅ `TestCacheRatioTextHonestStates` (internal/web/caching_test.go)
+  pins the >1 ratio honesty display.
+- **T14** ✅ docs/gotchas.md:365 "versions.json lies; git tags are the
+  truth" — the receipt shape every later pin receipt follows.
+- **T15** ✅ docs/runbooks/reset-rebuild.md (execution stays owner-gated,
+  TODO_LIST row for the run).
+- **T16** ✅ `internal/app/app.go:81` — `projectionhost.WithOnFailed(
+  OnProjectionFailed)` wired in the drain path.
+- **T17** ✅ identity readiness ANDed into serve (`identity.Ready()` in
+  the readiness predicate, cmd/pbx-lens/serve.go) on top of the
+  projection-worker readiness; probes assert /health/ready (the UI
+  contract + the P10.6 staleness-live parity).
+- **T18** ✅ `internal/web/ops.go:147` — "The deferred stop is an ORDERING
+  CONTRACT" comment + the retention span test.
+- **T19** ✅ watchlist rows in docs/templ-components-adoption.md (tc
+  v1.27/templ ≥v0.3.1100 coordinated bump) + docs/review/libs/go-appkit.md
+  (v0.10–v0.12 deltas); both fired and executed 2026-11-11/12.
+- **T24** ✅ docs/review/libs/index.html recomputed to the 22-lib table +
+  index-screenshot.png re-rendered (2026-11-12, fullPage).
+
+
 ## Detailed breakdown — 109 micro-tasks, max 12 min each (ALL TODOs)
 
 Sorted in execution order within the same Pareto tiers. "→ Src n" = status item.

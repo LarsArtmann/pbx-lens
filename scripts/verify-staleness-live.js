@@ -56,6 +56,16 @@ async function forceStalenessPoll(page) {
   });
 
   try {
+    // Readiness parity (plan P10.6, the U4 gap): this probe boots serve,
+    // so it asserts the SAME readiness semantics every booting probe
+    // does — /health/ready must be 200 BEFORE any page assertion, so a
+    // lane never "passes" against a serve that fails its own gate.
+    const ready = await page.goto(`${BASE}/health/ready`, { waitUntil: "load" });
+    console.log("health/ready status:", ready.status());
+    if (![200, 304].includes(ready.status())) {
+      fail(`health/ready status ${ready.status()}, want 200 (parity with verify-ui-contract Contract F)`);
+    }
+
     await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
 
     const staleBefore = await page.evaluate(() =>
