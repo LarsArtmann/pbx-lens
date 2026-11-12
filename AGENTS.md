@@ -27,7 +27,7 @@ read-only deep link, never a data dependency.
 - **Engines:** sqlite (`EngineConfig{Driver: "sqlite", DSN}`) via pure-Go
   modernc.org/sqlite, memory for tests; `app.New(ctx, dsn)` with dsn == ""
   selecting memory is the one deploy knob.
-- **Language level:** go 1.27.2 in go.mod (the go-appkit v0.9.0 floor) +
+- **Language level:** go 1.27.3 in go.mod (the go-appkit v0.11.0 floor) +
   `GOEXPERIMENT=jsonv2` (fleet house style; nothing imports encoding/json/v2
   yet — the env var becomes load-bearing when a surface needs it).
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio

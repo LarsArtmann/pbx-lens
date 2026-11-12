@@ -179,8 +179,10 @@ the htpasswd file; every term here is code truth:
   closed). TLS-first is deploy doctrine, not a nice-to-have.
 - **Lockout** — five consecutive FAILED WEBAUTHN LOGIN CEREMONIES lock the
   account for 15 minutes (per account, upstream default; there are no
-  passwords to mistype); distinct from the serve auth-failure throttle,
-  which is per client address.
+  passwords to mistype); the htpasswd-era serve auth-failure throttle
+  (per client address) is GONE from the tree — brute-force defense is the
+  lockout plus the per-IP ceremony rate limits in `Identity.Register`
+  (registration 10/min, WebAuthn 30/min).
 - **Session lifetime (2026-11-12, recorded as chosen-for-now)** — the
   session TTL is usermgmt's upstream default: a FIXED 24h from issuance
   (`defaultSessionTTL = 24 * time.Hour`), no sliding refresh and no idle
