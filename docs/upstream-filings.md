@@ -31,6 +31,17 @@ CLOSED upstream 2026-10-29 (COMPLETED — the EmptyText escape shipped). The
 ops zero-guard folded onto RelativeTimeProps.EmptyText ("never") the same
 day — local workaround deleted (internal/web/ops.templ).**
 
+**State check 2026-11-12 (gh, templ-components v1.27.0 bump watchlist step 7):
+templ-components#48/#49/#50/#51/#55/#63 ALL CLOSED upstream 2026-11-06/07
+(COMPLETED; #49 fixed in 2e16bcaf, #51 in 41321644, #55 in 2e16bcaf). BUT
+every fix merged AFTER the v1.27.0 tag (2026-11-04) — verified in the pin's
+module cache (ScrollbackLine still lacks ID/Class; no CopyButton page-level
+mount). None of the local workarounds retire yet: `!items-stretch` (#48), the
+TableRow focus ring workaround (#49), the hand-rolled match log (#51), the
+pinned nav id + TestNavIDIsDeterministic (#55), the no-CopyButton-in-htmx-
+fragment rule (#63) — all queued for the next coordinated bump (watchlist
+steps 2-4+7 again; adoption map rows updated this day).**
+
 **State check 2026-11-05 (plan T20, filings round): nothing new to FILE, and
 both open candidates are closed by evidence.**
 

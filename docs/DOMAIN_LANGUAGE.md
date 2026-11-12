@@ -146,6 +146,34 @@ source row is completed from its sibling row that observed the same call.
   line). The export deliberately stays per-source — a forensic dump carries
   every row under its own identity (`internal/web/representative.go`).
 
+## Identity and access (2026-11-12)
+
+The lens serves ONE human — the pbx.artmann.tech operator. The identity
+bounded context (cqrs-htmx usermgmt, `internal/web/userauth.go`) replaced
+the htpasswd file; every term here is code truth:
+
+- **Identity DB** (`-auth-db`, default `<state>/identity.db`) — the SQLite
+  database holding user events, sessions, read models, and checkpoints over
+  ONE shared handle. NOT the index DB: the index is re-derivable, the
+  identity DB is not — it rides the nightly backup beside it.
+- **Operator bootstrap** — first-visitor becomes operator: `MaxUsers: 1`
+  closes registration after the first completed signup; every later
+  /auth/register is refused. There is no pre-provisioned account.
+- **Session** — a server-side session row (SQL session store) addressed by
+  the signed cookie (`CookieName`, default from loginpage). The session —
+  not the password — is what the gate checks; CSRF token rides the session.
+- **The gate** — middleware after session+CSRF: public paths (`/login`,
+  `/auth/*`, `/app.css`, `/robots.txt`) pass; browsers (HTML Accept or
+  `Hx-Request`) get 303 to /login, everything else 401. Public paths are
+  code, not config (`publicAuthPath`).
+- **Passkey / WebAuthn** — the second factor, keyed by RPID + origins
+  (`-auth-rpid`/`-auth-origin`). WebAuthn REQUIRES a secure context: over
+  plain http it works only on localhost — on the LAN the operator logs in
+  with the password factor and passkeys activate once TLS fronts the lens.
+- **Lockout** — five consecutive failures lock the account for 15 minutes
+  (per account, upstream default); distinct from the serve auth-failure
+  throttle, which is per client address.
+
 ## Typed error carriers (2026-10-27)
 
 A function that creates an error internally keeps the idiomatic `error`
