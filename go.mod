@@ -9,7 +9,7 @@ require (
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.20.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
 	github.com/larsartmann/go-appkit v0.12.0
-	github.com/larsartmann/go-appkit/systemd v0.1.0
+	github.com/larsartmann/go-appkit/systemd v0.2.0
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.14.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0
@@ -30,12 +30,10 @@ require (
 	github.com/larsartmann/httputil v1.8.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
 	github.com/larsartmann/templ-components v1.27.0
-	github.com/larsartmann/templ-components/htmx v1.27.0
-	github.com/larsartmann/templ-components/icons v1.27.0
 	github.com/larsartmann/templ-components/utils v1.27.0
 	golang.org/x/oauth2 v0.38.0
 	golang.org/x/time v0.16.0
-	modernc.org/sqlite v1.61.1
+	modernc.org/sqlite v1.62.0
 	pgregory.net/rapid v1.3.0
 )
 
@@ -120,6 +118,8 @@ require (
 	github.com/larsartmann/go-retry v0.9.0 // indirect
 	github.com/larsartmann/go-sqlitestore v0.1.1 // indirect
 	github.com/larsartmann/go-sse v0.7.0 // indirect
+	github.com/larsartmann/templ-components/htmx v1.27.0 // indirect
+	github.com/larsartmann/templ-components/icons v1.27.0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/maruel/natural v1.3.0 // indirect
