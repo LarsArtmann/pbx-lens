@@ -195,6 +195,12 @@ func PollOnce(
 		telnyxStats,
 	)
 
+	// ORDERING CONTRACT (the T18 sibling hazard, pinned 2026-11-12): the
+	// drain MUST complete before the FTS rebuild, and both before the
+	// next poll's ingest — a projection fold that lands after the search
+	// rebuild serves yesterday's read model from / and /search, and an
+	// ingest racing the drain can fold onto cleared engines. Reorder only
+	// with a test that pins the observed sequence.
 	if err := DrainProjections(ctx, sys); err != nil {
 		log("poll drain", "err", err)
 
