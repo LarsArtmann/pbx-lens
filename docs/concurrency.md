@@ -63,6 +63,16 @@ at peak). That is the operating condition, not an incident.
    by the refusal it prints (assert the string), never by a non-zero
    exit alone — pipelines hide exit codes (`git commit … | tail` faked a
    pass in the first hook proof).
+7. **Re-stat before any create/overwrite (added 2026-11-12, paid for
+   twice the same morning).** The plan said "draft report X" and another
+   session had created X minutes earlier — twice. The rule: before
+   WRITING any file (report, doc, new module), `ls`/`git status` the
+   exact path FIRST; if it exists, READ it and reconcile (a better
+   foreign version is kept and credited, not overwritten). Drafting
+   from a stale mental map is never cheaper than one `ls`. The paired
+   rule: re-check `git log --oneline -3` before a receipt commit — the
+   daemon or the interleaved session may have landed work that changes
+   what the commit should say.
 
 ## Where this is enforced
 

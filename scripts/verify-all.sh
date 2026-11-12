@@ -75,7 +75,17 @@ statix_tripwire() {
 	esac
 	echo "statix-tripwire: config parses (no-op tripwire green)"
 }
+# Machine-readable per-gate verdicts (2026-11-12 plan P10.2): every gate
+# that exits 0 prints `verify-all: PASS <gate>` — greppable by tooling and
+# by the "prove the lane ran" receipts. Failures never print PASS (set -e
+# aborts before the line), so the LAST PASS line names the frontier where
+# the lane stopped.
+pass() {
+	echo "verify-all: PASS $1"
+}
+
 statix_tripwire
+pass statix-tripwire
 
 # Duplication gate at the head (2026-10-26): three consecutive pushes went
 # red on CI's Code Duplication Gate because nothing local ran it before
@@ -85,6 +95,7 @@ statix_tripwire
 # non-pin binary, so a green line here is a verdict from CI's exact tool.
 echo "=== check-dedup-gate ==="
 bash scripts/check-dedup-gate.sh
+pass check-dedup-gate
 
 # Docs-truth gates (plan T12, 2026-10-23): the corpus counts the living docs
 # state, every relative link between them, and every backticked test name a
@@ -93,27 +104,35 @@ bash scripts/check-dedup-gate.sh
 # no longer resolves, or a promised test that was never written.
 echo "=== check-docs-counts ==="
 bash scripts/check-docs-counts.sh
+pass check-docs-counts
 
 echo "=== check-doc-links ==="
 bash scripts/check-doc-links.sh
+pass check-doc-links
 
 echo "=== check-doc-test-claims ==="
 bash scripts/check-doc-test-claims.sh
+pass check-doc-test-claims
 
 echo "=== verify-ui-contract ==="
 node scripts/verify-ui-contract.js
+pass verify-ui-contract
 
 echo "=== verify-style-contract ==="
 node scripts/verify-style-contract.js
+pass verify-style-contract
 
 echo "=== verify-staleness-live ==="
 node scripts/verify-staleness-live.js
+pass verify-staleness-live
 
 echo "=== verify-ops-verdict ==="
 node scripts/verify-ops-verdict.js
+pass verify-ops-verdict
 
 echo "=== verify-identity-e2e ==="
 node scripts/verify-identity-e2e.js
+pass verify-identity-e2e
 
 if [ "$FAST" -eq 1 ]; then
 	echo "verify-all: contracts passed (--fast: screenshot sweep skipped)"
@@ -146,5 +165,6 @@ if [ -n "$BASELINE_FLAG" ]; then
 	set -- "$@" --diff "$BASELINE_FLAG"
 fi
 node scripts/screenshot-probe.js "$@"
+pass screenshot-probe
 
 echo "verify-all: all probes passed"

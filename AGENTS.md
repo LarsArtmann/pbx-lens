@@ -161,11 +161,19 @@ read-only deep link, never a data dependency.
   never hand-build one, and read through `calls.LookupView`
   (its marker-prefixed fallback keeps pre-flip rows reachable; docs/gotchas.md
   has the incident). `calls.DefaultExcerptMax` (200 runes) caps every excerpt;
-  source mappers select via `calls.Excerpt`. Auth (2026-11-11): the identity
-  session gate (`internal/web/userauth.go`) replaced htpasswd — the bcrypt
-  timing pad, SIGHUP reload, and per-IP throttle blocks are GONE from the
-  tree; brute-force defense is now usermgmt's lockout (5 fails/15 min) +
-  the per-IP ceremony rate limits in `Identity.Register`.
+  source mappers select via `calls.Excerpt`. Auth (2026-11-11, corrected
+  2026-11-12): the identity session gate (`internal/web/userauth.go`)
+  replaced htpasswd — the bcrypt timing pad, SIGHUP reload, and per-IP
+  throttle blocks are GONE from the tree; login is PASSKEY-ONLY (usermgmt
+  ships no password login — over plain LAN http NOBODY can log in until
+  TLS fronts the lens), brute-force defense is usermgmt's lockout (5
+  failed WebAuthn ceremonies → 15 min) + the per-IP ceremony rate limits
+  in `Identity.Register`, and the session cookie rides `Secure` exactly
+  when the RPOrigin fronts TLS (`allOriginsHTTPS` — upstream's
+  always-true default would break non-localhost http boots). Browser-lane
+  receipts: `scripts/verify-identity-e2e.js` (gate/bootstrap/ceremony/
+  lockout contracts) + screenshot-probe's `login` surface; deploy
+  runbook: docs/runbooks/identity-first-deploy.md.
 - **serve/UI:** `serve` composes appkit around `web.Register`:
   ServiceConfig{Addr, `Version` → `/version`, `Metrics` → `/metrics` (explicit
   `AllowUnauthenticated` opt-in; both beside the appkit `/health{,/live,/ready}`
@@ -173,7 +181,10 @@ read-only deep link, never a data dependency.
   (WAV, else MP3 fallback) are unbounded and the former 30 s deadline truncated
   both} + `systemd.Install` (no-op without `NOTIFY_SOCKET`) + the identity
   session gate when `-auth-db` is set (empty = unauthenticated localhost
-  dev; `-auth-rpid`/`-auth-origin` override the derived WebAuthn values).
+  dev; `-auth-rpid`/`-auth-origin` override the derived WebAuthn values —
+  an explicit origin seeds the RPID from its host, IP/localhost binds
+  derive `localhost`; `AuthEnabled` in web.Options gates the nav logout
+  form).
   The ExtraMiddlewares chain (auth → SecurityHeaders → Server-Timing →
   Compression → ETag; ordering doctrine, ETag skip policy, render-buffering
   trap, `Cache-Control: no-cache` revalidation contract) lives in

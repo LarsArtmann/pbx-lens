@@ -182,14 +182,14 @@ the htpasswd file; every term here is code truth:
   passwords to mistype); distinct from the serve auth-failure throttle,
   which is per client address.
 - **Session lifetime (2026-11-12, recorded as chosen-for-now)** — the
-  session TTL is usermgmt's upstream default: 24h sliding NOTHING — the
-  cookie carries Max-Age 86400 at issuance and the server-side session row
-  expires on the same TTL (`defaultSessionTTL = 24 * time.Hour`); there is
-  no idle timeout and no refresh-on-activity. pbx-lens sets no
-  `SessionMaxAge`, so what ships is exactly the library default; a
-  shorter/longer operator window is one `HandlerConfig` field away
-  (identity deployment answer, not a code change). Logout kills the row
-  immediately (`service.Logout`), so the nav's Sign out is a real
+  session TTL is usermgmt's upstream default: a FIXED 24h from issuance
+  (`defaultSessionTTL = 24 * time.Hour`), no sliding refresh and no idle
+  timeout — the cookie carries Max-Age 86400 and the server-side row
+  expires on the same clock (`sessionValid` = `now.After(ExpiresAt)`).
+  pbx-lens sets no `SessionMaxAge`, so what ships is exactly the library
+  default; a shorter/longer operator window is one `HandlerConfig` field
+  away (an identity deployment answer, not a code change). Logout kills
+  the row immediately (`service.Logout`), so the nav's Sign out is a real
   server-side invalidation, not a cookie deletion.
 
 ## Typed error carriers (2026-10-27)
