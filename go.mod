@@ -7,7 +7,7 @@ require (
 	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.18.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.20.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
-	github.com/larsartmann/go-appkit v0.9.0
+	github.com/larsartmann/go-appkit v0.12.0
 	github.com/larsartmann/go-appkit/systemd v0.1.0
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.14.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1
@@ -15,14 +15,14 @@ require (
 	github.com/larsartmann/go-cqrs-lite/event/v4 v4.15.2
 	github.com/larsartmann/go-cqrs-lite/id/v4 v4.7.5
 	github.com/larsartmann/go-cqrs-lite/metaengine/projectionadapter/v4 v4.6.2
-	github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4 v4.6.0
-	github.com/larsartmann/go-cqrs-lite/metaengine/v4 v4.22.0
+	github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4 v4.8.0
+	github.com/larsartmann/go-cqrs-lite/metaengine/v4 v4.23.0
 	github.com/larsartmann/go-cqrs-lite/projectionhost/v4 v4.7.1
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.6.2
 	github.com/larsartmann/go-cqrs-lite/scenario/v4 v4.4.3
 	github.com/larsartmann/go-cqrs-lite/storage/v4 v4.11.1
-	github.com/larsartmann/go-cqrs-lite/system/v4 v4.16.0
-	github.com/larsartmann/go-cqrs-lite/systemscenario/v4 v4.2.1
+	github.com/larsartmann/go-cqrs-lite/system/v4 v4.18.0
+	github.com/larsartmann/go-cqrs-lite/systemscenario/v4 v4.3.0
 	github.com/larsartmann/go-error-family v0.12.0
 	github.com/larsartmann/go-etag/metrics v0.6.1
 	github.com/larsartmann/go-etag/server v0.6.1

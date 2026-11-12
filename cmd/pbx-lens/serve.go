@@ -15,7 +15,6 @@ import (
 	"github.com/larsartmann/go-appkit/systemd"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/httputil"
-	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/search"
@@ -126,6 +125,11 @@ func serve(args []string) {
 	setupCtx, cancel := context.WithTimeout(context.Background(), serveTimeout)
 	defer cancel()
 
+	// The fleet-standard error-family classifications register once at boot
+	// (appkit v0.10+ exposes the same registry appkit's own middlewares use;
+	// re-registration is idempotent).
+	appkit.RegisterClassifications()
+
 	sys, index, closeAll, err := openServeIndex(setupCtx, *db)
 	if err != nil {
 		fatal(err)
@@ -146,15 +150,12 @@ func serve(args []string) {
 
 		defer func() { _ = identity.Close() }()
 	}
-	// The composition the read-only surface runs on: no fixed response
-	// deadline (exports and recording WAVs stream unbounded — the appkit
-	// default 30s WriteTimeout would truncate them mid-stream), the build
-	// visible over HTTP (/version + appkit_build_info), the Prometheus
-	// surface behind the same posture as every route (the identity gate
-	// when -auth-db is set, loopback-only dev otherwise — hence the explicit
-	// opt-in), and the extras in wire order: auth gates everything,
-	// Server-Timing observes the full handler span, Compression sits outer
-	// of ETag so tags hash identity bodies (go-etag's ordering doctrine).
+	// The extras in wire order: auth gates everything, Compression sits
+	// outer of ETag so tags hash identity bodies (go-etag's ordering
+	// doctrine). Server-Timing needs NO wiring here since appkit v0.10: it
+	// is the default OUTERMOST middleware (deleted from this chain on the
+	// v0.12 bump), so the header observes the full request span including
+	// auth.
 	cacheStats := web.NewCacheCounters()
 
 	var authMW func(http.Handler) http.Handler
@@ -376,7 +377,6 @@ func buildServiceConfig(
 	}
 
 	serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
-		servertiming.ServerTimingMiddleware(),
 		httputil.Compression(httputil.DefaultCompressionConfig()),
 		web.ETagMiddleware(cacheStats, log),
 	)
@@ -471,34 +471,52 @@ func deriveAuthDefaults(addr, rpidFlag, originFlag string) (string, []string) {
 		host, port = addr, ""
 	}
 
-	if rpidFlag == "" && originFlag != "" {
-		origins := strings.Split(originFlag, ",")
-		if u, parseErr := url.Parse(strings.TrimSpace(origins[0])); parseErr == nil && u.Hostname() != "" {
-			rpidFlag = u.Hostname()
-		}
-	}
-
 	if rpidFlag == "" {
-		if net.ParseIP(host) != nil || host == "localhost" {
-			rpidFlag = "localhost"
-		} else {
-			rpidFlag = host
-		}
+		rpidFlag = deriveRPID(originFlag, host)
 	}
 
 	if originFlag == "" {
-		originHost := host
-		if rpidFlag == "localhost" {
-			originHost = "localhost"
-		}
-
-		originFlag = "http://" + originHost
-		if port != "" && port != "0" {
-			originFlag += ":" + port
-		}
+		originFlag = deriveOrigin(rpidFlag, host, port)
 	}
 
 	return rpidFlag, strings.Split(originFlag, ",")
+}
+
+// deriveRPID picks the WebAuthn RPID: an origin's host when only origins
+// are configured (the RPID must be a registrable suffix of the origin
+// host), else the listen host's browser-facing form — an IP or literal
+// "localhost" collapses to "localhost" (WebAuthn forbids IP RPIDs).
+func deriveRPID(originFlag, host string) string {
+	if originFlag != "" {
+		origins := strings.Split(originFlag, ",")
+
+		if u, parseErr := url.Parse(strings.TrimSpace(origins[0])); parseErr == nil && u.Hostname() != "" {
+			return u.Hostname()
+		}
+	}
+
+	if net.ParseIP(host) != nil || host == "localhost" {
+		return "localhost"
+	}
+
+	return host
+}
+
+// deriveOrigin picks the default WebAuthn origin: the listen host (or
+// "localhost" when the RPID collapsed an IP/loopback address), scheme
+// http, on the listen port when one is bound.
+func deriveOrigin(rpidFlag, host, port string) string {
+	originHost := host
+	if rpidFlag == "localhost" {
+		originHost = "localhost"
+	}
+
+	origin := "http://" + originHost
+	if port != "" && port != "0" {
+		origin += ":" + port
+	}
+
+	return origin
 }
 
 // nonceCSP is the CSP header used in nonce mode: inline scripts execute only

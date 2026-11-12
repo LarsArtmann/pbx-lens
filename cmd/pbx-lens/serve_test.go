@@ -600,9 +600,9 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		t.Error("Metrics must be enabled with the explicit unauthenticated opt-in")
 	}
 
-	if got := len(plain.ExtraMiddlewares); got != 4 {
+	if got := len(plain.ExtraMiddlewares); got != 3 {
 		t.Fatalf(
-			"plain ExtraMiddlewares = %d, want 4 (security headers, timing, compression, etag)",
+			"plain ExtraMiddlewares = %d, want 3 (security headers, compression, etag — timing is appkit's default outermost since v0.10)",
 			got,
 		)
 	}
@@ -611,9 +611,9 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		return next
 	}, nil, nil)
 
-	if got := len(authed.ExtraMiddlewares); got != 5 {
+	if got := len(authed.ExtraMiddlewares); got != 4 {
 		t.Errorf(
-			"authed ExtraMiddlewares = %d, want 5 (auth first, then security headers, timing, compression, etag)",
+			"authed ExtraMiddlewares = %d, want 4 (auth first, then security headers, compression, etag — timing is appkit's default outermost)",
 			got,
 		)
 	}
@@ -714,9 +714,9 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 
 	nonced := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
 
-	if got := len(nonced.ExtraMiddlewares); got != 5 {
+	if got := len(nonced.ExtraMiddlewares); got != 4 {
 		t.Errorf(
-			"CSP_NONCE=1 ExtraMiddlewares = %d, want 5 (nonce first, then security headers, timing, compression, etag)",
+			"CSP_NONCE=1 ExtraMiddlewares = %d, want 4 (nonce first, then security headers, compression, etag — timing is appkit's default outermost)",
 			got,
 		)
 	}
