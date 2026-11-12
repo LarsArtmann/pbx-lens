@@ -77,6 +77,6 @@ GOEXPERIMENT=jsonv2 go test ./internal/web/ -run TestTailwindCorpus -count=1   #
 rg -n "tcValidityAttached" ~/.cache/go-mod/github.com/larsartmann/templ-components@v1.27.0/forms/form.templ   # validity bridge at the pin
 rg -o "</script></script>" internal/web/testdata/*.golden | wc -l   # duplicated toast-script close tag — fixed on master, not in the pin
 rg -n "Nonce" internal/web/calls.templ internal/web/dashboard.templ internal/web/search.templ   # nonce threaded at the three forms.Form call sites
-rg -n "type ScrollbackLine" -A 6 ~/.cache/go-mod/github.com/larsartmann/templ-components@v1.27.0/display/scrollback.templ   # ID/Class still absent (#51 fix is post-pin)
+rg -n "type ScrollbackLine" -A 6 ~/.cache/go-mod/github.com/larsartmann/templ-components@v1.27.0/display/scrollback.templ   # ID/Class still missing from it (#51 fix is post-pin)
 git -C ~/projects/templ-components rev-list --count v1.27.0..master   # master ahead of the pin
 ```

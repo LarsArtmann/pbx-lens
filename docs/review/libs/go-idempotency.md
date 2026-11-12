@@ -27,7 +27,7 @@ If pbx-lens ever grows an externally-triggered ingest API (a client POSTing obse
 ## How to verify
 
 ```console
-rg -n "go-idempotency" go.mod go.sum   # absent
+rg -n "go-idempotency" internal cmd --type go   # zero direct imports (indirect cqrs-htmx rider in go.mod since the v4.20 wave)
 rg -n "ContentHash" internal/calls/commands.go | head -3
 rg -n "dedup/v4" go.mod
 ```

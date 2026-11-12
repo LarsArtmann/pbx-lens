@@ -27,7 +27,7 @@ The Telnyx conversations/recordings client (per-request API calls, unlike the JS
 ## How to verify
 
 ```console
-rg -n "go-retry" go.mod go.sum                    # absent
+rg -n "go-retry" internal cmd --type go           # zero direct imports (indirect rider in go.mod since the cqrs-htmx wave)
 rg -n "time.Sleep|backoff" internal/ --type go    # no retry loops
 rg -n "Retry-After" internal/web/recording.go
 ```

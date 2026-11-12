@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -215,7 +214,7 @@ func httptestRequest(t *testing.T, path string) *http.Request {
 // server.go, so a refactor away from literal patterns fails loudly
 // instead of passing vacuously.
 func TestSkipBodyCachingCoversTheRouteTable(t *testing.T) {
-	source, err := os.ReadFile(filepath.Join("server.go"))
+	source, err := os.ReadFile("server.go")
 	if err != nil {
 		t.Fatalf("read server.go: %v", err)
 	}

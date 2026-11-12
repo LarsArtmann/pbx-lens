@@ -105,7 +105,7 @@ replay_file() {
 		# Negative assertions flip the exit contract: a line whose comment
 		# says the ABSENCE is the claim (`# zero hits`, `# expect-fail`,
 		# `# gone from the tree`) passes when the command exits non-zero.
-		if grep -qiE '# *(zero|absent|expect-fail|gone from)' <<<"$line"; then
+		if grep -qiE '#.*\b(zero|absent|expect-fail|gone from)\b' <<<"$line"; then
 			cmd="${line%%#*}"
 		else
 			cmd="$line"
