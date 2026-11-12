@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	servertiming "github.com/larsartmann/httputil/server_timing"
 	errorfamily "github.com/larsartmann/go-error-family"
+	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/retention"
 	"github.com/larsartmann/templ-components/utils/format"
 )
@@ -40,10 +40,6 @@ type opsSnapshot struct {
 	Coverage    []CoverageRow
 	CoverageNow time.Time
 	Wired       bool
-	// failures aggregates this composition's scan failures (retention +
-	// coverage) for the JSON twin's 503-honest contract; the page path
-	// does not render it (the cards already say what failed).
-	failures []opsScanFailure
 }
 
 // opsScanFailure names one failed ops scan in the /api/ops payload: which
@@ -151,7 +147,6 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 	coverage, err := IngestCoverageQuery(ctx, s.sys, s.now())
 	if err != nil {
 		s.logf("ingest coverage walk failed: %v", err)
-		snap.failures = append(snap.Retention.failures, opsScanFailure{Scan: "ingest-coverage", Code: scanCode(err)})
 	} else {
 		snap.Coverage = coverage
 		snap.CoverageNow = s.now()
