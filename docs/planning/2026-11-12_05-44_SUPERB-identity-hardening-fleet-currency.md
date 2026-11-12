@@ -5,6 +5,12 @@ adoption + the 22-lib fleet audit refresh both landed green; break it into
 30–100min packages and ≤12min tasks; execute gate-free work; commit and
 push with detailed messages.
 
+**EXECUTION STATUS (2026-11-12 07:4X):** P01–P05 + P08–P10 executed
+and verified (see docs/status/2026-11-12_07-43_identity-hardening-execution-pass-status.md);
+P06 executed by the concurrent session (appkit v0.12, its nix legs
+verified here); P01.3 + P06 residual docs + P07 stay on their named
+gates. Both repos pushed.
+
 **Companion docs:**
 [status 05-33](../status/2026-11-12_05-33_fleet-audit-refresh-continuation-pass-status.md) ·
 [status 05-26 (interleaved lane)](../status/2026-11-12_05-26_fleet-audit-refresh-22-libs_session-status.md) ·
