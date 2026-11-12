@@ -543,7 +543,7 @@ func TestOpsPayloadIdentitySection(t *testing.T) {
 		AuditActions: map[string]int{"register": 1, "credential_used": 2},
 	}
 
-	payload := composeOpsPayload(nil, nil, nil, nil, &identity)
+	payload := composeOpsPayload(nil, nil, nil, nil, &identity, nil)
 
 	wire, ok := payload.(map[string]any)
 	if !ok {
@@ -572,7 +572,7 @@ func TestOpsPayloadIdentitySection(t *testing.T) {
 		}
 	}
 
-	if bare := composeOpsPayload(nil, nil, nil, nil, nil); bare != nil {
+	if bare := composeOpsPayload(nil, nil, nil, nil, nil, nil); bare != nil {
 		t.Errorf("auth-free payload = %v, want nil (no identity key, no empty card)", bare)
 	}
 }

@@ -687,7 +687,7 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	retention := s.retentionWireView(r.Context())
+	retention, retentionFailures := s.retentionWireView(r.Context())
 
 	var identity *IdentityOps
 
@@ -696,7 +696,13 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 		identity = &snapshot
 	}
 
-	payload, err := json.Marshal(composeOpsPayload(poller, cache, s.coverageWire(r.Context()), retention, identity))
+	coverage, coverageFailures := s.coverageWire(r.Context())
+
+	failures := make([]opsScanFailure, 0, len(coverageFailures)+len(retentionFailures))
+	failures = append(failures, coverageFailures...)
+	failures = append(failures, retentionFailures...)
+
+	payload, err := json.Marshal(composeOpsPayload(poller, cache, coverage, retention, identity, failures))
 	if err != nil {
 		s.writeIndexError(w, r, err, http.StatusInternalServerError, "encoding ops counters failed", true)
 
@@ -704,6 +710,13 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+
+	// 503-honest scan failures: the status says the endpoint could not do
+	// its whole job, the payload keeps every section that stayed healthy,
+	// and scan_failures names what is missing (never a silent partial 200).
+	if len(failures) > 0 {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}
 
 	_, _ = w.Write(append(payload, '\n'))
 }
@@ -722,13 +735,14 @@ type coverageWire struct {
 
 // coverageWire computes the JSON coverage section; nil when the walk fails
 // (the key is simply absent — consumers treat absence as unknown, never as
-// an empty index).
-func (s *server) coverageWire(ctx context.Context) []coverageWire {
+// an empty index). The failure itself rides out as an opsScanFailure so
+// the 503-honest contract can name what is missing.
+func (s *server) coverageWire(ctx context.Context) ([]coverageWire, []opsScanFailure) {
 	rows, err := IngestCoverageQuery(ctx, s.sys, s.now())
 	if err != nil {
 		s.logf("ingest coverage walk failed: %v", err)
 
-		return nil
+		return nil, []opsScanFailure{{Scan: "ingest-coverage", Code: scanCode(err)}}
 	}
 
 	wire := make([]coverageWire, 0, len(rows))
@@ -744,7 +758,7 @@ func (s *server) coverageWire(ctx context.Context) []coverageWire {
 		})
 	}
 
-	return wire
+	return wire, nil
 }
 
 // composeOpsPayload merges the independent counter sources into one
@@ -752,11 +766,14 @@ func (s *server) coverageWire(ctx context.Context) []coverageWire {
 // (sources, last_pass) and the cache section joins as a sibling, so R15
 // consumers parse unchanged. Coverage (plan P17), the retention
 // age-posture section (plan P16), and the native-login section (plan P08)
-// ride as their own keys for the same reason. A non-map poller payload
-// (custom embeds) gets wrapped under "poller" rather than merged.
+// ride as their own keys for the same reason. scan_failures (the
+// 503-honest contract) joins the same way — absent, never empty. A
+// non-map poller payload (custom embeds) gets wrapped under "poller"
+// rather than merged.
 // opsPayloadSections sizes the merged payload map: poller wrap + cache +
-// coverage + retention + identity at most beyond an existing map.
-const opsPayloadSections = 5
+// coverage + retention + identity + scan_failures at most beyond an
+// existing map.
+const opsPayloadSections = 6
 
 func composeOpsPayload(
 	poller any,
@@ -764,8 +781,9 @@ func composeOpsPayload(
 	coverage []coverageWire,
 	retention *retentionWire,
 	identity *IdentityOps,
+	failures []opsScanFailure,
 ) any {
-	if cache == nil && len(coverage) == 0 && retention == nil && identity == nil {
+	if cache == nil && len(coverage) == 0 && retention == nil && identity == nil && len(failures) == 0 {
 		return poller
 	}
 
@@ -796,6 +814,10 @@ func composeOpsPayload(
 
 	if identity != nil {
 		pollerMap["identity"] = *identity
+	}
+
+	if len(failures) > 0 {
+		pollerMap["scan_failures"] = failures
 	}
 
 	return pollerMap

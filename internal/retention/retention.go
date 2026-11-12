@@ -15,6 +15,7 @@ import (
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -88,7 +89,12 @@ func OldViews(ctx context.Context, sys *system.System, policy Policy, now time.T
 		metaengine.WithLimit(maxScan),
 	)
 	if err != nil {
-		return nil, err
+		// Family-wrapped at source: the /api/ops 503-honest contract names
+		// the failed scan by its code, so the record carries the scan name
+		// and the retryable family instead of a bare engine error.
+		return nil, errorfamily.WrapTransient(
+			err, "lens.retention.overage_scan_failed", "over-age scan failed",
+		).WithContext("scan", "retention-over-age")
 	}
 
 	overAge := make([]calls.CallView, 0)
@@ -114,8 +120,16 @@ func OldestView(ctx context.Context, sys *system.System) (calls.CallView, bool, 
 		metaengine.WithSort("started_at", false),
 		metaengine.WithLimit(1),
 	)
-	if err != nil || len(views) == 0 {
-		return calls.CallView{}, false, err
+	if err != nil {
+		// Family-wrapped at source — see OldViews above; the code is what
+		// the ops payload's scan_failures entry carries.
+		return calls.CallView{}, false, errorfamily.WrapTransient(
+			err, "lens.retention.oldest_scan_failed", "oldest-view scan failed",
+		).WithContext("scan", "retention-oldest")
+	}
+
+	if len(views) == 0 {
+		return calls.CallView{}, false, nil
 	}
 
 	return views[0], true, nil

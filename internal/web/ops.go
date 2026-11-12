@@ -10,6 +10,7 @@ import (
 	"time"
 
 	servertiming "github.com/larsartmann/httputil/server_timing"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/retention"
 	"github.com/larsartmann/templ-components/utils/format"
 )
@@ -39,6 +40,20 @@ type opsSnapshot struct {
 	Coverage    []CoverageRow
 	CoverageNow time.Time
 	Wired       bool
+	// failures aggregates this composition's scan failures (retention +
+	// coverage) for the JSON twin's 503-honest contract; the page path
+	// does not render it (the cards already say what failed).
+	failures []opsScanFailure
+}
+
+// opsScanFailure names one failed ops scan in the /api/ops payload: which
+// scan failed and the family code its error carried. The JSON twin answers
+// 503 while the sections that stayed healthy keep serving — a monitor must
+// never mistake a silent partial payload for health, and the code is the
+// grep-able fact (the same strings the logs carry).
+type opsScanFailure struct {
+	Scan string `json:"scan"`
+	Code string `json:"code"`
 }
 
 // retentionSnapshot is the /ops retention card's view: the configured
@@ -68,6 +83,9 @@ type retentionSnapshot struct {
 	// scan-failure word.
 	OldestEmpty bool
 	PurgeLag    time.Duration
+	// failures records scan-level errors for the JSON twin's 503-honest
+	// contract; the page path ignores it (the cards already say so).
+	failures []opsScanFailure
 }
 
 // opsPoller is the decoded poller section: per-source counters plus the
@@ -133,12 +151,23 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 	coverage, err := IngestCoverageQuery(ctx, s.sys, s.now())
 	if err != nil {
 		s.logf("ingest coverage walk failed: %v", err)
+		snap.failures = append(snap.Retention.failures, opsScanFailure{Scan: "ingest-coverage", Code: scanCode(err)})
 	} else {
 		snap.Coverage = coverage
 		snap.CoverageNow = s.now()
 	}
 
 	return snap
+}
+
+// scanCode extracts the family code from a wrapped scan error; the empty
+// fallback keeps the wire shape stable even for an unwrapped cause.
+func scanCode(err error) string {
+	if code := errorfamily.Code(err); code != "" {
+		return code
+	}
+
+	return "unclassified"
 }
 
 // collectRetention gathers the age-posture facts: the oldest view still
@@ -164,6 +193,7 @@ func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
 	oldest, ok, err := retention.OldestView(ctx, s.sys)
 	if err != nil {
 		s.logf("retention oldest-view scan failed: %v", err)
+		snap.failures = append(snap.failures, opsScanFailure{Scan: "retention-oldest", Code: scanCode(err)})
 	} else if ok {
 		snap.Oldest = oldest.StartedAt
 		snap.OldestAge = now.Sub(oldest.StartedAt)
@@ -181,6 +211,7 @@ func (s *server) collectRetention(ctx context.Context) retentionSnapshot {
 	views, err := retention.OldViews(ctx, s.sys, policy, now)
 	if err != nil {
 		s.logf("retention over-age count failed: %v", err)
+		snap.failures = append(snap.failures, opsScanFailure{Scan: "retention-over-age", Code: scanCode(err)})
 
 		return snap
 	}
@@ -212,8 +243,9 @@ type retentionWire struct {
 
 // retentionWireView maps the page-path snapshot onto the wire section; the
 // two surfaces read the SAME scans, so the human card and the machine
-// section cannot disagree.
-func (s *server) retentionWireView(ctx context.Context) *retentionWire {
+// section cannot disagree. The failures ride along for the JSON twin's
+// 503-honest contract.
+func (s *server) retentionWireView(ctx context.Context) (*retentionWire, []opsScanFailure) {
 	snap := s.collectRetention(ctx)
 
 	wire := retentionWire{
@@ -236,7 +268,7 @@ func (s *server) retentionWireView(ctx context.Context) *retentionWire {
 		}
 	}
 
-	return &wire
+	return &wire, snap.failures
 }
 
 // decodeOpsPoller round-trips the poller payload through its wire shape.
