@@ -628,3 +628,15 @@ search for "Reset" hits the `Resettable` interface long before the method.
 Corollary: an owner-facing runbook must point at a helper in this repo
 (`cli.ResetReadModel`) rather than a prose sequence of SDK calls, so the
 runbook and the tested code path cannot drift apart again.
+
+## The flake hardening contract (2026-10-28 nix-review; touches flake.nix read this first)
+
+- `extraMeta.license = unfree` — this repo is PROPRIETARY; extraMeta merges
+  OVER the module meta.
+- allowUnfree pkgs are re-instantiated per-system from the LOCKED nixpkgs
+  via `_module.args.pkgs` (hashes unchanged by construction).
+- `enableLockGuards` pins the follows pairs + the nixpkgs lock node.
+- ONE `goAttr` feeds both goPkgAttr and the perSystem `go` binding — split
+  them and sandbox and devShell toolchains drift.
+- the update-vendor-hash app declares coreutils+gnugrep; cqrs-lint carries
+  meta (description + unfree license).

@@ -119,3 +119,12 @@ DECISION.
   the E003 trigger (a second aggregate), where registration count stops
   being trivial. The 2026-10-26 pass found the census UNCHANGED at 19
   findings (this B010 row was the only code missing a disposition).
+
+## E003 verdict on the identity context (2026-11-12, post-adoption plan A15): NO TRIP
+
+usermgmt's aggregates (User/Session/Tenant/Bot) live UPSTREAM in cqrs-htmx,
+on their own DB, behind their own write/read seam — pbx-lens owns zero new
+aggregates and one composition call (`web.OpenIdentity`). The trigger reads
+"a second aggregate in the LENS domain"; the lens domain still has exactly
+one (Call). The decision stays falsifiable: a pbx-lens-internal second
+aggregate (not a library adoption) is what re-opens it.
