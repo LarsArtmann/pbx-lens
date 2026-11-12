@@ -184,9 +184,9 @@ templ qualityCard(stats DashboardStats) {
 					if stats.Quality.UnansweredTop.Calls > 0 {
 						<p class="dark:text-gray-400 mt-2 text-gray-500 text-xs">
 							{ strconv.Itoa(stats.Quality.DurationReported - stats.Quality.Answered) }
-							 unanswered (0 billed seconds); most ended
-							 "{ stats.Quality.UnansweredTop.Cause }"
-							 ({ strconv.Itoa(stats.Quality.UnansweredTop.Calls) }).
+							unanswered (0 billed seconds); most ended
+							"{ stats.Quality.UnansweredTop.Cause }"
+							({ strconv.Itoa(stats.Quality.UnansweredTop.Calls) }).
 						</p>
 					}
 				</div>
