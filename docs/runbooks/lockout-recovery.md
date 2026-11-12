@@ -7,6 +7,18 @@ back on, so a lockout has exactly three exits, in escalating order. All
 of them are safe for the index: the identity DB is a separate file
 (`-auth-db`), and nothing in this runbook touches call data.
 
+## Rate-limit arithmetic (reviewed 2026-11-12, plan A20/F058)
+
+The numbers hold against real ceremony traffic. Login ceremonies are two
+requests each (begin + finish), so the per-IP WebAuthn limit of 30/min
+allows 15 full logins per minute per peer — two orders of magnitude above
+any human's cadence, tight enough to make ceremony spam pointless.
+Brute-force bounding is the LOCKOUT's job (5 failed ceremonies / 15 min
+per account), not the limiter's; the per-IP registration limit of 10/min
+is generous on purpose because the door closes permanently after the
+first account anyway. Nothing to tune until a deployment shows real
+traffic the numbers misprice.
+
 ## Symptoms
 
 - Login ceremonies refused with the account-locked message after five
