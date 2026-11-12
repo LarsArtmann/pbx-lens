@@ -881,20 +881,24 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">FIRST-PARTY LIBRARY FLEET AUDIT &middot; 2026-11-04</div>
-          <h1>19 first-party libraries — are we using them to the max?</h1>
+          <div class="eyebrow">FIRST-PARTY LIBRARY FLEET AUDIT &middot; 2026-11-04 &middot; REFRESHED 2026-11-11</div>
+          <h1>22 first-party libraries — are we using them to the max?</h1>
           <p class="subtitle">
             A utilization audit of every LarsArtmann library against pbx-lens:
-            seven are load-bearing (scored 67&ndash;95/100), twelve are deliberately
-            absent (nine rejections with reasons, two deferrals, one pattern-only,
-            one partial-adopt idea). Every gap this audit found in a used library was
-            closed on 2026-11-04 &mdash; the scores below are post-closeout.
+            eight are load-bearing (scored 67&ndash;95/100), fourteen are deliberately
+            absent (eleven rejections with reasons, two deferrals, one pattern-only;
+            four of them ride the graph indirectly with zero pbx-lens imports). Every gap
+            the audit found in a used library was closed on 2026-11-04 &mdash; the scores
+            below are post-closeout, and the 2026-11-11 refresh re-verified every pin
+            against the module proxy, re-ran the census on the cqrs-htmx identity adoption,
+            and added the three previously-unlisted libraries (go-datastar, cmdguard,
+            httputil/endpoints).
           </p>
           <div class="meta">
-            <span class="tag amber">7 used &middot; 12 not imported</span>
+            <span class="tag amber">8 used &middot; 14 not imported directly</span>
             <span class="tag">Mean used-score: 83/100</span>
-            <span class="tag teal">Pins current: 6/7 (+1 docs-only)</span>
-            <span class="tag">Per-lib reports: 19 &times; markdown</span>
+            <span class="tag teal">Pins current: 6/8 (cqrs-lite 4 modules + appkit 3 minors behind, both benign holds)</span>
+            <span class="tag">Per-lib reports: 22 &times; markdown</span>
           </div>
         </header>
 
@@ -902,23 +906,23 @@
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
             <div class="score">83</div>
-            <div class="label">Mean utilization, 7 used libs (was 71)</div>
+            <div class="label">Mean utilization, 8 used libs (was 71; unchanged by the 11-11 refresh — no score moved)</div>
           </div>
           <div class="score-card score-good">
-            <div class="score">6 / 7</div>
-            <div class="label">Used libs at high or very high (≥70)</div>
+            <div class="score">7 / 8</div>
+            <div class="label">Used libs at high or very high (≥70; server_timing 67 is the one below)</div>
           </div>
           <div class="score-card score-good">
             <div class="score">0</div>
-            <div class="label">Open missed opportunities (9 found, 9 closed)</div>
+            <div class="label">Open missed opportunities (9 found, 9 closed; the 11-11 refresh found zero new)</div>
           </div>
           <div class="score-card score-good">
             <div class="score">0</div>
             <div class="label">Misuse / anti-patterns in prod code</div>
           </div>
           <div class="score-card score-good">
-            <div class="score">6 / 7</div>
-            <div class="label">Pins at latest (go-etag: one docs-only release behind)</div>
+            <div class="score">6 / 8</div>
+            <div class="label">Pins at latest (cqrs-lite: system/metaengine/sqliteengine/systemscenario waves pending; appkit: v0.10&ndash;v0.12 held for the Server-Timing fold-in)</div>
           </div>
         </section>
 
@@ -944,16 +948,33 @@
               </li>
             </ol>
           </div>
+          <div class="callout callout-teal">
+            <strong>Refresh 2026-11-11: the cqrs-htmx flip-trigger FIRED — the fleet's first verdict upgrade.</strong>
+            The 2026-11-11 operator order replaced the htpasswd gate with the cqrs-htmx identity stack
+            (usermgmt + loginpage + webauthn, leaf modules only, root stays indirect): an event-sourced
+            operator account, passwordless WebAuthn login, SQL sessions, and <code>MaxUsers = 1</code>
+            single-operator registration — exactly the adoption shape the original report's guardrails
+            demanded. Verdict: ADOPT-PARTIAL (idea-level) &rarr; <strong>ADOPTED, 78/100 for the adopted
+            surface</strong> (<a href="cqrs-htmx.md">cqrs-htmx.md</a>). The same refresh: re-verified every
+            pin against the module proxy (go-etag's &ldquo;v0.7.0 upstream&rdquo; claim corrected — the root
+            tag is not a submodule release; v0.6.1 is current), recorded go-cqrs-lite's four trailing
+            modules and appkit's v0.10&ndash;v0.12 deltas, expanded the go-error-family/httputil censuses
+            for the adoption (10 new bootstrap Rejection sites; CSRFMiddleware now wired), and wrote the
+            three missing reports (go-datastar, cmdguard, httputil/endpoints — all REJECT with reasons).
+          </div>
           <p>
             Everything else is health: the backbone &mdash; go-cqrs-lite runtime core (92/100) and
-            templ-components (95/100 after the #52 fold-in) &mdash; is at reference quality with
-            every paid-for library contract fenced by a named guard or test; go-etag rose to 95/100
+            templ-components (95/100 after the #52 fold-in, now at v1.27.0 with the paired templ
+            v0.3.1100 gate bump executed) &mdash; is at reference quality with every paid-for library
+            contract fenced by a named guard or test; go-etag rose to 95/100
             once <code>OnError</code> and the <code>metrics</code> module landed; the HTTP stack is
-            current and doctrinally documented; and every one of the twelve
-            <em>not-imported</em> verdicts is a documented decision (domain mismatch, a rejected
+            current and doctrinally documented; and every one of the fourteen
+            <em>not-imported-directly</em> verdicts is a documented decision (domain mismatch, a rejected
             prerequisite like samber/do, or the R9 no-SSE polling doctrine), not neglect.
-            Notably, all seven used pins are the latest releases &mdash; the 2026-10-24/25 sweep
-            and the v1.26.0 bump left zero version debt.
+            Used-pin currency at refresh: 6 of 8 &mdash; go-cqrs-lite holds four modules back
+            (single-writer CLI needs none of the concurrency fixes in the pending waves) and go-appkit
+            holds three minors (the bump carries the Server-Timing de-duplication); both are scheduled
+            holds in their reports, not drift.
           </p>
         </section>
 
@@ -965,32 +986,37 @@
               <tr><th>Library</th><th>Pin</th><th>Latest upstream</th><th>In pbx-lens</th><th>Verdict / score</th><th>Report</th></tr>
             </thead>
             <tbody>
-              <tr><td>go-cqrs-lite (+12 submodules)</td><td>v4.16.0 wave</td><td>same (versions.json parity)</td><td class="yes">direct, backbone</td><td class="yes"><span class="highlight">92/100</span> core &middot; ≈81 pooled</td><td><a href="go-cqrs-lite.md">go-cqrs-lite.md</a></td></tr>
-              <tr><td>templ-components</td><td>v1.26.0</td><td>v1.26.0</td><td class="yes">direct, UI</td><td class="yes"><span class="highlight">95/100</span> very high</td><td><a href="templ-components.md">templ-components.md</a></td></tr>
-              <tr><td>go-appkit (+systemd)</td><td>v0.9.0 / v0.1.0</td><td>same</td><td class="yes">direct, service shell</td><td class="yes">73/100 high</td><td><a href="go-appkit.md">go-appkit.md</a></td></tr>
-              <tr><td>go-etag/server</td><td>v0.6.1</td><td>v0.7.0 (docs/CI only)</td><td class="yes">direct, caching</td><td class="yes"><span class="highlight">95/100</span> very high</td><td><a href="go-etag.md">go-etag.md</a></td></tr>
-              <tr><td>httputil</td><td>v1.8.0</td><td>v1.8.0 (checkout cut)</td><td class="yes">direct, middleware</td><td class="yes">80/100 high</td><td><a href="httputil.md">httputil.md</a></td></tr>
+              <tr><td>go-cqrs-lite (+18 submodules)</td><td>mixed wave (14 direct)</td><td>system v4.18.0 &middot; metaengine v4.23.0 &middot; sqliteengine v4.8.0 &middot; systemscenario v4.3.0 (4 behind; rest current)</td><td class="yes">direct, backbone</td><td class="yes"><span class="highlight">92/100</span> core &middot; ≈81 pooled</td><td><a href="go-cqrs-lite.md">go-cqrs-lite.md</a></td></tr>
+              <tr><td>templ-components (+ a-h/templ)</td><td>v1.27.0 / templ v0.3.1100</td><td>same (coordinated gate bump executed 2026-11-07/11)</td><td class="yes">direct, UI</td><td class="yes"><span class="highlight">95/100</span> very high</td><td><a href="templ-components.md">templ-components.md</a></td></tr>
+              <tr><td>go-appkit (+systemd)</td><td>v0.9.0 / v0.1.0</td><td>v0.12.0 (3 minors ahead; Server-Timing-default flip-trigger released)</td><td class="yes">direct, service shell</td><td class="yes">73/100 high</td><td><a href="go-appkit.md">go-appkit.md</a></td></tr>
+              <tr><td>go-etag/server</td><td>v0.6.1</td><td>v0.6.1 (root v0.7.0 tag is not a submodule release — proxy rejects server@v0.7.0)</td><td class="yes">direct, caching</td><td class="yes"><span class="highlight">95/100</span> very high</td><td><a href="go-etag.md">go-etag.md</a></td></tr>
+              <tr><td>httputil</td><td>v1.8.0</td><td>v1.8.0 current (+ new endpoints sub-module v0.1.0)</td><td class="yes">direct, middleware</td><td class="yes">80/100 high</td><td><a href="httputil.md">httputil.md</a></td></tr>
               <tr><td>httputil/server_timing</td><td>v1.0.3</td><td>v1.0.3</td><td class="yes">direct, timing</td><td class="yes">67/100 (was 33)</td><td><a href="httputil-server-timing.md">httputil-server-timing.md</a></td></tr>
-              <tr><td>go-error-family</td><td>v0.12.0</td><td>v0.12.0</td><td class="yes">direct, errors</td><td class="yes"><span class="highlight">82/100</span> high (was 45)</td><td><a href="go-error-family.md">go-error-family.md</a></td></tr>
-              <tr><td>cqrs-htmx</td><td>&mdash;</td><td>root v4.15.0</td><td class="no">not imported</td><td>ADOPT-PARTIAL (idea-level)</td><td><a href="cqrs-htmx.md">cqrs-htmx.md</a></td></tr>
+              <tr><td>go-error-family</td><td>v0.12.0</td><td>v0.12.0</td><td class="yes">direct, errors</td><td class="yes"><span class="highlight">82/100</span> high (was 45; census +identity bootstrap 11-11)</td><td><a href="go-error-family.md">go-error-family.md</a></td></tr>
+              <tr><td>cqrs-htmx (3 leaf modules)</td><td>loginpage v4.18.0 &middot; usermgmt v4.20.0 &middot; webauthn v4.13.0</td><td>same (root v4.18.1 + identity-model v4.17.0 indirect, current)</td><td class="yes">direct, identity auth (adopted 2026-11-11)</td><td class="yes"><span class="highlight">78/100</span> adopted surface &middot; was ADOPT-PARTIAL</td><td><a href="cqrs-htmx.md">cqrs-htmx.md</a></td></tr>
               <tr><td>go-atomic-write</td><td>&mdash;</td><td>v0.6.2</td><td class="no">not imported</td><td>DEFER (needs exported commit primitive)</td><td><a href="go-atomic-write.md">go-atomic-write.md</a></td></tr>
-              <tr><td>go-retry</td><td>&mdash;</td><td>v0.9.0</td><td class="no">not imported</td><td>DEFER (no retry loop exists)</td><td><a href="go-retry.md">go-retry.md</a></td></tr>
+              <tr><td>go-retry</td><td>indirect v0.9.0</td><td>v0.9.0</td><td class="no">indirect via usermgmt&rarr;middleware (zero imports)</td><td>DEFER (no retry loop exists)</td><td><a href="go-retry.md">go-retry.md</a></td></tr>
               <tr><td>go-output</td><td>&mdash;</td><td>v0.38.7</td><td class="no">pattern-only (flake + CI)</td><td>PATTERN-ONLY</td><td><a href="go-output.md">go-output.md</a></td></tr>
-              <tr><td>go-idempotency</td><td>&mdash;</td><td>v0.3.2</td><td class="no">not imported</td><td>REJECT (natural-key idempotency by construction)</td><td><a href="go-idempotency.md">go-idempotency.md</a></td></tr>
+              <tr><td>go-idempotency</td><td>indirect v0.3.2</td><td>v0.3.2</td><td class="no">indirect via loginpage&rarr;root (zero imports)</td><td>REJECT (natural-key idempotency by construction)</td><td><a href="go-idempotency.md">go-idempotency.md</a></td></tr>
               <tr><td>go-codec</td><td>indirect v0.3.3</td><td>v0.3.3</td><td class="no">indirect via metaengine</td><td>REJECT direct (house event codec, already exercised)</td><td><a href="go-codec.md">go-codec.md</a></td></tr>
-              <tr><td>go-sse</td><td>indirect v0.6.2</td><td>v0.7.0</td><td class="no">indirect via metaengine</td><td>REJECT (R9: htmx polling, no push consumer)</td><td><a href="go-sse.md">go-sse.md</a></td></tr>
-              <tr><td>go-filewatcher</td><td>&mdash;</td><td>v2.4.3</td><td class="no">not imported</td><td>REJECT (SIGHUP reload is deterministic + pinned)</td><td><a href="go-filewatcher.md">go-filewatcher.md</a></td></tr>
+              <tr><td>go-sse</td><td>indirect v0.7.0</td><td>v0.7.0</td><td class="no">indirect via metaengine</td><td>REJECT (R9: htmx polling, no push consumer)</td><td><a href="go-sse.md">go-sse.md</a></td></tr>
+              <tr><td>go-datastar</td><td>&mdash;</td><td>v0.7.0</td><td class="no">not imported</td><td>REJECT (R9: patches-as-values pay off only when a server pushes)</td><td><a href="go-datastar.md">go-datastar.md</a></td></tr>
+              <tr><td>go-filewatcher</td><td>&mdash;</td><td>v2.5.0 (health check + circuit breaker)</td><td class="no">not imported</td><td>REJECT (SIGHUP reload was deterministic + pinned; htpasswd file gone 2026-11-11)</td><td><a href="go-filewatcher.md">go-filewatcher.md</a></td></tr>
               <tr><td>go-daemon</td><td>&mdash;</td><td>v0.4.0</td><td class="no">not imported</td><td>REJECT (appkit/systemd owns notify + drain)</td><td><a href="go-daemon.md">go-daemon.md</a></td></tr>
-              <tr><td>go-health</td><td>&mdash;</td><td>v0.9.0</td><td class="no">not imported</td><td>REJECT (samber/do prerequisite absent)</td><td><a href="go-health.md">go-health.md</a></td></tr>
-              <tr><td>go-health-dashboard</td><td>&mdash;</td><td>v0.12.2</td><td class="no">not imported</td><td>REJECT (needs go-health + SSE, both excluded)</td><td><a href="go-health-dashboard.md">go-health-dashboard.md</a></td></tr>
-              <tr><td>go-credentials-store</td><td>&mdash;</td><td>v0.3.1</td><td class="no">not imported</td><td>REJECT (one htpasswd file; no secrets at rest)</td><td><a href="go-credentials-store.md">go-credentials-store.md</a></td></tr>
+              <tr><td>go-health</td><td>&mdash;</td><td>v0.10.0 (routes wave; breaking 0.x)</td><td class="no">not imported</td><td>REJECT (samber/do prerequisite absent)</td><td><a href="go-health.md">go-health.md</a></td></tr>
+              <tr><td>go-health-dashboard</td><td>&mdash;</td><td>v0.13.2</td><td class="no">not imported</td><td>REJECT (needs go-health + SSE, both excluded)</td><td><a href="go-health-dashboard.md">go-health-dashboard.md</a></td></tr>
+              <tr><td>go-credentials-store</td><td>&mdash;</td><td>v0.4.2 (templ-pair gate scripts)</td><td class="no">not imported</td><td>REJECT (identity stack owns the one credential surface; no secrets at rest)</td><td><a href="go-credentials-store.md">go-credentials-store.md</a></td></tr>
+              <tr><td>cmdguard</td><td>&mdash;</td><td>v5.1.0</td><td class="no">not imported</td><td>REJECT (no-cobra policy; stdlib flags at this CLI's scale)</td><td><a href="cmdguard.md">cmdguard.md</a></td></tr>
+              <tr><td>httputil/endpoints</td><td>&mdash;</td><td>v0.1.0 (first release 2026-11-06)</td><td class="no">not imported</td><td>REJECT (route inventory served by docs + /api/ops; new public surface buys nothing)</td><td><a href="httputil-endpoints.md">httputil-endpoints.md</a></td></tr>
             </tbody>
           </table>
           <p>
             Score derivation per the deep-dive rubric: applicable capabilities × (fully = 1,
             partial = 0.5, missed = 0); every Not-Applicable row carries a one-line domain reason
-            in the per-lib report. Post-closeout mean =
-            (92+95+73+95+80+67+82)/7 ≈ 83 &mdash; up from ≈71 at audit time. The audit-day
+            in the per-lib report. Post-closeout mean (now incl. cqrs-htmx's adopted-surface 78) =
+            (92+95+73+95+80+67+82+78)/8 ≈ 83 &mdash; up from ≈71 at audit time, and exactly where
+            the 2026-11-04 closeout left it: the 2026-11-11 refresh moved a verdict (cqrs-htmx
+            ADOPTED) without moving any score. The audit-day
             arithmetic (92+93+73+83+80+33+45)/7 ≈ 71 is kept here as the honest baseline; each
             per-lib report's delta appendix records what moved and why.
           </p>
@@ -998,7 +1024,7 @@
             <strong>Where these verdicts live.</strong> Not in the fleet's own
             <code>library-policy</code> project: that one scans dependency graphs for banned
             libraries and has no per-project utilization model (checked 2026-11-05), so pouring
-            pbx-lens-specific scores into it would invent a schema it does not have. The nineteen
+            pbx-lens-specific scores into it would invent a schema it does not have. The twenty-two
             per-lib reports beside this page are the home; the refresh rule (pin bump or
             flip-trigger) is repeated in each of their headers and defined in
             <a href="../../research/README.md">docs/research/README.md</a>.
@@ -1008,7 +1034,7 @@
 
         <!-- Used libraries: what's right -->
         <section id="used">
-          <h2>The seven load-bearing libraries</h2>
+          <h2>The eight load-bearing libraries</h2>
           <ul class="strengths">
             <li class="strength">
               <strong>go-cqrs-lite &mdash; reference-grade core usage.</strong>
@@ -1017,7 +1043,18 @@
               (<code>internal/calls/viewkey.go:10-22</code>), one-shot drain
               (<code>internal/cli/system.go:34-40</code>), create-fold pairing
               (<code>internal/calls/projection.go:89-93</code>) &mdash; is fenced by a named guard.
-              All 25 pins match upstream <code>versions.json</code>.
+              All 25 pins matched upstream <code>versions.json</code> at audit time; the
+              2026-11-11 refresh moved the truth source to the module proxy (10 of 14 direct
+              pins current, 4 benign-wave modules behind) and added <code>storage/v4</code>
+              as a direct require via the identity adoption's checkpoint store.
+            </li>
+            <li class="strength">
+              <strong>cqrs-htmx &mdash; the flip-trigger fired; the guardrails held.</strong>
+              The 2026-11-11 identity adoption took exactly the leaf modules the original report
+              named (usermgmt + loginpage + webauthn; root stays indirect), composed in one file
+              (<code>internal/web/userauth.go</code>) with no second composition root, and scored
+              78/100 for the adopted surface. The projection-readiness idea remains the one
+              standing borrow.
             </li>
             <li class="strength">
               <strong>templ-components &mdash; 26.5/28 applicable capabilities, zero hand-rolled parallel UI.</strong>
@@ -1042,9 +1079,10 @@
             </li>
             <li class="strength">
               <strong>Every rejection is a decision.</strong>
-              Twelve non-adopted libs each carry a domain reason: samber/do prerequisite absent
-              (go-health), SSE excluded by R9 (go-sse, go-health-dashboard), natural-key
-              idempotency by construction (go-idempotency), systemd owns supervision (go-daemon),
+              Fourteen non-adopted libs each carry a domain reason: samber/do prerequisite absent
+              (go-health), SSE excluded by R9 (go-sse, go-datastar, go-health-dashboard),
+              natural-key idempotency by construction (go-idempotency), systemd owns supervision
+              (go-daemon), the no-cobra policy at this CLI's scale (cmdguard),
               and so on &mdash; see the fleet table and per-lib reports.
             </li>
           </ul>
@@ -1270,21 +1308,24 @@ errorfamily.<span class="tok-function">HandleError</span>(err) <span class="tok-
 
         <!-- Not used -->
         <section id="notused">
-          <h2>The twelve not-imported libraries, in one breath</h2>
+          <h2>The fourteen not-imported-directly libraries, in one breath</h2>
           <table class="compare">
             <thead><tr><th>Library</th><th>Verdict</th><th>One-line reason (full reasoning in per-lib report)</th><th>Flips when (falsifiable trigger)</th></tr></thead>
             <tbody>
-              <tr><td><a href="go-idempotency.md">go-idempotency</a></td><td class="no">REJECT</td><td>Idempotency is natural-key by construction (deterministic stream ids + ContentHash replay-to-zero); no client keys exist to dedupe.</td><td>an externally-triggered ingest API appears (client-POSTed observations with client-side retries)</td></tr>
-              <tr><td><a href="go-retry.md">go-retry</a></td><td>DEFER</td><td>No retry loop exists (fixed 15-min ticker is a documented F009 decision); adopt when the Telnyx client gains per-request 429/5xx handling.</td><td>the Telnyx conversations/recordings client grows 429/5xx handling (per-request calls, unlike the JSONL scans)</td></tr>
+              <tr><td><a href="go-idempotency.md">go-idempotency</a></td><td class="no">REJECT direct (indirect via loginpage since 2026-11-11, zero imports)</td><td>Idempotency is natural-key by construction (deterministic stream ids + ContentHash replay-to-zero); no client keys exist to dedupe.</td><td>an externally-triggered ingest API appears (client-POSTed observations with client-side retries)</td></tr>
+              <tr><td><a href="go-retry.md">go-retry</a></td><td>DEFER direct (indirect via usermgmt since 2026-11-11, zero imports)</td><td>No retry loop exists (fixed 15-min ticker is a documented F009 decision); adopt when the Telnyx client gains per-request 429/5xx handling.</td><td>the Telnyx conversations/recordings client grows 429/5xx handling (per-request calls, unlike the JSONL scans)</td></tr>
               <tr><td><a href="go-codec.md">go-codec</a></td><td class="no">REJECT direct</td><td>Already exercised indirectly as the cqrs-lite event codec; wire/FlexTime solves a different problem (external JSONL dialects).</td><td>a binary-encoding need appears outside event storage (a custom cache format wanting CBOR)</td></tr>
-              <tr><td><a href="go-sse.md">go-sse</a></td><td class="no">REJECT</td><td>R9 chose htmx polling; no push consumer exists; stays correctly indirect via metaengine.</td><td>a genuinely push-shaped feature appears (live multi-client dashboards) &mdash; R9 polling is the reason it has not</td></tr>
+              <tr><td><a href="go-sse.md">go-sse</a></td><td class="no">REJECT (stays indirect via metaengine, now v0.7.0)</td><td>R9 chose htmx polling; no push consumer exists; stays correctly indirect via metaengine.</td><td>a genuinely push-shaped feature appears (live multi-client dashboards) &mdash; R9 polling is the reason it has not</td></tr>
               <tr><td><a href="go-atomic-write.md">go-atomic-write</a></td><td>DEFER</td><td>backup.go mirrors its discipline (~30 lines) but the library cannot own a sqlite-produced staging file &mdash; no exported rename/commit primitive; upstream ask drafted.</td><td>upstream exports a <code>Commit(src, dst)</code>-shaped primitive</td></tr>
-              <tr><td><a href="go-filewatcher.md">go-filewatcher</a></td><td class="no">REJECT</td><td>SIGHUP reload is deterministic, test-pinned, keep-on-failure; watching adds inotify/debounce races for a human-scale rotation.</td><td>the auth surface outgrows one operator-managed file (per-source keys rotating as files)</td></tr>
+              <tr><td><a href="go-filewatcher.md">go-filewatcher</a></td><td class="no">REJECT</td><td>SIGHUP reload was deterministic, test-pinned, keep-on-failure; the htpasswd file it watched is gone (2026-11-11 identity adoption) &mdash; watching now has no file at all.</td><td>credentials return to a file-managed posture (per-source keys rotating as files)</td></tr>
               <tr><td><a href="go-daemon.md">go-daemon</a></td><td class="no">REJECT</td><td>sd_notify already owned by go-appkit/systemd; pbx-lens is a TCP service under a unit, not a /run socket daemon.</td><td>a second local control interface appears (a root-only admin socket for a CLI)</td></tr>
               <tr><td><a href="go-output.md">go-output</a></td><td>PATTERN-ONLY</td><td>Flake/CI patterns adopted (flakeModule actually served by go-nix-helpers); zero Go-level use for a renderer over templ UI + streaming exports.</td><td>a static report surface appears (a generated weekly call digest)</td></tr>
               <tr><td><a href="go-health.md">go-health</a></td><td class="no">REJECT</td><td>Hard prerequisite: samber/do injector &mdash; pbx-lens&rsquo; only composition root is system.New (ADR-0123); appkit probes + honest ops counters already serve.</td><td>probe-driven orchestration <em>and</em> a samber/do composition arrive jointly</td></tr>
               <tr><td><a href="go-health-dashboard.md">go-health-dashboard</a></td><td class="no">REJECT</td><td>Doubly inapplicable: needs go-health (rejected) and ships SSE (excluded by R9); the ops page already carries the honesty discipline.</td><td>the lens joins a go-health federation hub as one of several reporting services</td></tr>
-              <tr><td><a href="go-credentials-store.md">go-credentials-store</a></td><td class="no">REJECT</td><td>One bcrypt htpasswd file, operator-rotated; the index stores no secret material; KeyID rotation + reveal audit would be dead weight.</td><td>ingested sources need automatically rotated, audited credentials (multi-tenant keys)</td></tr>
+              <tr><td><a href="go-credentials-store.md">go-credentials-store</a></td><td class="no">REJECT</td><td>Was: one bcrypt htpasswd file. Now: the cqrs-htmx identity stack owns the one credential surface (WebAuthn credentials in the identity DB); the index stores no secret material.</td><td>ingested sources need automatically rotated, audited credentials (multi-tenant keys)</td></tr>
+              <tr><td><a href="go-datastar.md">go-datastar</a></td><td class="no">REJECT</td><td>Patches-as-values pay off only when a server pushes; R9 chose htmx polling, and not even a transitive entry exists in the graph.</td><td>a genuinely push-shaped feature appears (live call-event streaming into the dashboard) &mdash; the templ-components Datastar builders are the pairing to watch</td></tr>
+              <tr><td><a href="cmdguard.md">cmdguard</a></td><td class="no">REJECT</td><td>Wraps Cobra (policy-banned); pbx-lens' eight stdlib-flag commands are too small for construction-time validation, DI, and lifecycle to clear the dependency bar.</td><td>a second binary appears, or per-command flag structs / DI needs duplicate across ≥3 commands</td></tr>
+              <tr><td><a href="httputil-endpoints.md">httputil/endpoints</a></td><td class="no">REJECT</td><td>Self-describing /endpoints listing = new public surface with no consumer; route truth already lives in one <code>web.Register</code> file + docs/http-stack.md; module is pre-1.0 by ruling.</td><td>docs and mux disagree for the first time, or a machine consumer needs route discovery</td></tr>
               <tr><td><a href="cqrs-htmx.md">cqrs-htmx</a></td><td>ADOPT-PARTIAL</td><td>No user management to buy (single htpasswd), no command surface (read-only UI) &mdash; but its projection-readiness check is the right model for a real /ready gap.</td><td>the UI gains its first write action &mdash; leaf modules only, never the stack</td></tr>
             </tbody>
           </table>
