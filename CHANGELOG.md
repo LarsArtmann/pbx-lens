@@ -166,6 +166,15 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   archived-status corpus until the owner picks a debt policy; the CI
   workflow pins least-privilege `permissions: contents: read` per the fleet
   CUE policy.
+- **The formal calm-window gate receipt is back.** Run 9 (2026-11-12
+  14:42): 65/0/0, exit 0, frozen tree — the first green receipt since the
+  identity adoption + dependency wave. The eight runs before it caught real
+  work: a placeholder vendor hash the gate's own fixer cross-overwrote,
+  true templ alignment drift, a json/v2 map-order flake, AGENTS.md at
+  292/219 (re-curated to 210/219, narratives extracted into
+  docs/cqrs-lint-policy.md + docs/gotchas.md), and the findings families
+  now ratcheted in `.docs-gates.json` / `.buildflow.yml`. Full ledger:
+  docs/buildflow-dev-gate.md § "The post-adoption calm-window receipt".
 
 ### Fixed — 2026-11-05 (readiness told the truth neither way; a failed projection was silent)
 
