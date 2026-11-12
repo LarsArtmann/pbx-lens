@@ -28,6 +28,6 @@ If pbx-lens ever grows an externally-triggered ingest API (a client POSTing obse
 
 ```console
 rg -n "go-idempotency" internal cmd --type go   # zero direct imports (indirect cqrs-htmx rider in go.mod since the v4.20 wave)
-rg -n "ContentHash" internal/calls/commands.go | head -3
+rg -n "ContentHash" internal/calls/decider.go internal/calls/events.go | head -3   # the natural key lives in the decider (commands.go split since the audit)
 rg -n "dedup/v4" go.mod
 ```

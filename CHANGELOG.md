@@ -52,6 +52,61 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   stamps); corpus freshness test extended. Goldens refreshed and reviewed;
   `nix run .#update-styles` re-run.
 
+### Added — 2026-11-12 b (identity hardening: the auth surface becomes usable, provable, and observable)
+
+- **Logout exists.** The nav carries a Sign out form (`navRight` in
+  `internal/web/calls.templ`): CSRF token in a hidden field, nonced fetch
+  posting `/auth/logout`, then a redirect to /login — and the form renders
+  ONLY when auth is live (`web.Options.AuthEnabled`), so auth-free boots
+  never show a dead button. `TestIdentityLogoutEndsTheSessionEverywhere`
+  pins server-side invalidation (the same cookie never works again).
+- **The identity contracts are browser-pinned.** New lane probe
+  `scripts/verify-identity-e2e.js` (wired into verify-all): gate 303/401 +
+  public paths, first-visitor bootstrap, the FULL WebAuthn enrollment and
+  login ceremonies through a CDP virtual authenticator (the exact
+  loginpage panel sequence), the five-failed-ceremonies lockout and its
+  message, `Cache-Control: no-store` on /login, and the non-Secure cookie
+  posture on http origins. screenshot-probe gained the `login` surface
+  (own `-auth-db` boot; light/dark × mobile/desktop PNGs in the corpus).
+  The CSP sweep now covers /login too (zero violations, 7 surfaces).
+- **Identity is observable.** `/api/ops` gained an `identity` section
+  (absent on auth-free boots, never zero-faked): enabled, derived RPID,
+  operator count, live sessions (null when the COUNT fails), and the
+  audit ring's per-action counts (usermgmt `AuditLog` wired at
+  construction). The /ops page renders the matching "Login & sessions"
+  card. Coverage for the identity stack measured 72.5% package-total
+  (floor 70).
+- **Two deploy-blocking bugs fixed during verification:** (1) the session
+  cookie rode upstream's always-true `Secure` default — browsers drop
+  Secure cookies on plain http, which would have silently broken every
+  login on the LAN; the flag now follows the RPOrigins' scheme
+  (`allOriginsHTTPS`); (2) an explicit `-auth-origin` now seeds the RPID
+  from its host (`deriveAuthDefaults`), matching the sibling module's
+  documented contract — previously an IP/loopback listen address forced
+  RPID `localhost` against a TLS origin and broke every ceremony. Table
+  tests pin both (`TestDeriveAuthDefaults`,
+  `TestIdentityCookieSecureFollowsOriginScheme`,
+  `TestAllOriginsHTTPS`).
+- **Deploy-facing truth:** SECURITY.md identity + threat-model sections
+  (first-visitor-owns-the-instance warning, lockout/rate-limit facts, the
+  recovery path); README's auth recipe replaced the htpasswd commands;
+  docs/runbooks/identity-first-deploy.md (TLS-first doctrine — register
+  BEFORE the secure context exists and the account can never log in);
+  docs/decisions/2026-11-12_identity-posture-answer-sheet.md (the three
+  owner decisions with defaults, consequences, and recommendations).
+- **Process receipts:** verify-all prints `verify-all: PASS <gate>` per
+  green gate; the docs gates moved into the writing loop (AGENTS.md
+  commands); docs/concurrency.md rule 7 (re-stat before create/overwrite —
+  paid for twice this session); the drain → rebuild ordering contract is
+  commented in PollOnce; `skipBodyCaching` is pinned against route-table
+  drift (`TestSkipBodyCachingCoversTheRouteTable`); staleness-live
+  asserts /health/ready like every booting probe; the 2026-11-04 fleet
+  plan carries its ANNOTATE receipts block; the sibling NixOS module
+  gained lens-auth eval guards (auth args + the publicOrigin rejection +
+  identity.db in the stack-backup registration — the eval check caught
+  the missing registration) and `BenchmarkConcurrentPollIdentity` starts
+  the identity bench generation (+165 allocs/op through the gate chain).
+
 ### Fixed — 2026-11-12 (the nix chain was broken in two places before this session)
 
 - **The package preBuild ran bare `templ`** — the nixpkgs binary, drifted

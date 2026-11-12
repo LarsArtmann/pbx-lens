@@ -27,5 +27,5 @@ Only if a genuinely push-shaped feature appears (e.g. live multi-client dashboar
 ```console
 go mod why github.com/larsartmann/go-sse   # → metaengine/v4 → go-sse
 rg -n "text/event-stream" internal/ --type go   # zero SSE surfaces
-rg -n "PollLoop|poll" internal/web/freshness.go | head -3
+rg -n "poll" internal/web/dashboard.templ internal/web/ops.templ | head -3   # the htmx poll surfaces (the freshness handler reads the poller counters directly)
 ```

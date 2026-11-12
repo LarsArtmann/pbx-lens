@@ -25,7 +25,7 @@ Only if the auth surface grows beyond one operator-managed file (e.g. per-source
 ## How to verify
 
 ```console
-rg -n "SIGHUP|reload" internal/web/ cmd/   # zero hits — the htpasswd SIGHUP watch died with the identity adoption (2026-11-11)
+rg -n "SIGHUP" internal/ cmd/ --glob '*.go'   # zero hits — the htpasswd SIGHUP watch died with the identity adoption (2026-11-11)
 rg -n "go-filewatcher" go.mod go.sum   # absent
 rg -n "fsnotify" go.mod
 ```

@@ -88,7 +88,7 @@ extract_blocks() {
 }
 
 replay_file() {
-	local file="$1" pass=0 skip=0 fail=0 line block_has_content=0
+local file="$1" pass=0 skip=0 fail=0 line block_has_content=0 negative=0
 
 	while IFS= read -r line; do
 		if [[ "$line" == "---BLOCK-END---" ]]; then
@@ -105,10 +105,12 @@ replay_file() {
 		# Negative assertions flip the exit contract: a line whose comment
 		# says the ABSENCE is the claim (`# zero hits`, `# expect-fail`,
 		# `# gone from the tree`) passes when the command exits non-zero.
+		negative=0
+		cmd="$line"
+
 		if grep -qiE '#.*\b(zero|absent|expect-fail|gone from)\b' <<<"$line"; then
+			negative=1
 			cmd="${line%%#*}"
-		else
-			cmd="$line"
 		fi
 
 		if is_skippable "$cmd"; then
@@ -118,12 +120,19 @@ replay_file() {
 			continue
 		fi
 
-		# pipefail: a `rg … | head` pipeline must NOT pass just because
-		# head ran — the rg half is the claim (paid 2026-11-12: a replay
+		# Strip truncation pipes before running: `| head` closes the pipe
+		# early, the producer eats SIGPIPE, and pipefail (rightly) fails
+		# the pipeline — truncation is display-only here, never part of
+		# the claim's exit contract.
+		cmd="${cmd%| head*}"
+		cmd="${cmd%|head*}"
+
+		# pipefail: a `rg … | wc -l` pipeline must NOT pass just because
+		# wc ran — the rg half is the claim (paid 2026-11-12: a replay
 		# passed lines grepping a file deleted from the tree because head
 		# still exited 0).
 		if bash -o pipefail -c "$cmd" >/dev/null 2>&1; then
-			if [[ "$cmd" != "$line" ]]; then
+			if [[ $negative -eq 1 ]]; then
 				fail=$((fail + 1))
 				printf '  FAIL  %s   # claimed absent, but it MATCHES\n' "$line"
 			else
@@ -131,7 +140,7 @@ replay_file() {
 				printf '  PASS  %s\n' "$line"
 			fi
 		else
-			if [[ "$cmd" != "$line" ]]; then
+			if [[ $negative -eq 1 ]]; then
 				pass=$((pass + 1))
 				printf '  PASS  %s   # absence confirmed\n' "$line"
 			else
