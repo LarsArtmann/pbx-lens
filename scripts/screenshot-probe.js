@@ -386,10 +386,7 @@ const NEEDS_DISCOVERY =
         }
       }
       const loginPort = await probe.findFreePort();
-      const loginServe = await probe.serveProbe(bin, loginIndex, loginPort, [
-        "-auth-db",
-        authDB,
-      ]);
+      const loginServe = await probe.serveProbe(bin, loginIndex, loginPort, ["-auth-db", authDB]);
       const loginBase = `http://127.0.0.1:${loginPort}`;
       try {
         for (const theme of themes) {
@@ -409,9 +406,7 @@ const NEEDS_DISCOVERY =
             if (resp.status() !== 200) fail(`login render status ${resp.status()}, want 200`);
             // The stylesheet must actually apply — a broken CSS path
             // renders an unstyled panel the PNG would silently show.
-            const styled = await page.evaluate(
-              () => getComputedStyle(document.body).fontFamily,
-            );
+            const styled = await page.evaluate(() => getComputedStyle(document.body).fontFamily);
             if (!styled) fail("login page computed no body font — styles did not load");
           }
           await ctx.close();

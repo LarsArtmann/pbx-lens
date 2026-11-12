@@ -143,7 +143,10 @@ const path = require("path");
         `/login (auth boot) -> ${loginResp.status()} report-only=${reportOnly ? "present" : "MISSING"}`,
       );
       if (!reportOnly) {
-        violations.push({ surface: "/login", text: "Content-Security-Policy-Report-Only header MISSING" });
+        violations.push({
+          surface: "/login",
+          text: "Content-Security-Policy-Report-Only header MISSING",
+        });
       }
       const found = await page.evaluate(() => window.__cspViolations || []);
       for (const v of found) {

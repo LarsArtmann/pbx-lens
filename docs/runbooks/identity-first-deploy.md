@@ -39,8 +39,8 @@ optional extra.
    (localhost is a secure context too).
 
 3. **Deploy.** The unit boots with `-auth-db /var/lib/pbx-lens/identity.db`
-   and logs the bootstrap witness: *"the first visitor to /login becomes
-   the operator (registration closes after the first account)"*.
+   and logs the bootstrap witness: _"the first visitor to /login becomes
+   the operator (registration closes after the first account)"_.
 
 4. **Register through the TLS vhost, immediately.** Open
    `<publicOrigin>/login` in YOUR browser, click "Create one", and

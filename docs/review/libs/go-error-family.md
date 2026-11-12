@@ -2,6 +2,7 @@
 
 **Date:** 2026-11-04 · **Pin:** `github.com/larsartmann/go-error-family v0.12.0` (go.mod:22) · **Status:** USED
 **Adoption score:** **82/100 (high)** — 9 of 11 applicable capabilities used appropriately (fully = 1, partial = 0.5 per the deep-dive rubric); the four boundary misses (exit codes, HTTP mapping, structured logging, test assertions) all closed 2026-11-04. Registries/retry/tone surface graded Not Applicable with reasons below.
+
 > **Refreshed 2026-11-12:** pin `go-error-family v0.12.0` unchanged and still the latest tag (tags fetched).
 > Census spot-checks pass at today's HEAD: `HandleError` (cmd/pbx-lens/main.go:103), `writeIndexError` (internal/web/errors.go:25), `errorfamilytest` sites intact (poller_test.go:481, depth_trio_test.go). **Score stands at 82/100.**
 > **2026-11-11 identity adoption expanded the census** (score-neutral): `internal/web/userauth.go` is a new import file with 10 `errorfamily.NewRejection` construction sites (the cqrs-htmx identity bootstrap classifies its config/store failures at origin — exactly the audit's recommended posture), taking the importing-file count from 23 to 29 (22 prod, 7 test). No capability row moved: construction-at-origin was already Fully Leveraged; the breadth gaps (single wrap variant, fluent JSON/Summary, `Classify` in tests only) are unchanged.

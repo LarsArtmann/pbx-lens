@@ -93,8 +93,8 @@ is closed:
    issued on the refusal), **identity DB survives reopen** (SQL sessions),
    readiness after drain, and the full flow test re-authored on the new
    gate. The CSRF dance required replicating a real browser: Host + Origin
-   + Referer + `X-Csrf-Token` + cookie pair (nosurf same-origin
-   attestation) — pinned in helpers for future tests.
+   - Referer + `X-Csrf-Token` + cookie pair (nosurf same-origin
+     attestation) — pinned in helpers for future tests.
 8. **Sibling deploy contract updated in lockstep.**
    `nix-international-telephony/modules/telephony/lens.nix`:
    `htpasswdFile` option → `auth.enable` + `auth.publicOrigin` (eval-time
@@ -233,6 +233,7 @@ is closed:
 ## f) NEXT 50 (ordered by leverage)
 
 **Finish the ordered work (1–10)**
+
 1. Rewrite `docs/review/libs/cqrs-htmx.md` → ADOPTED (usermgmt/loginpage/
    webauthn wiring, scores, gotchas, verify blocks).
 2. Refresh the remaining 21 lib reports (versions, deltas, watchlists).
@@ -259,54 +260,54 @@ is closed:
 
 **Fleet-audit follow-ups (21–30)**
 21. go-appkit v0.9.0→v0.12.0 bump (the v0.10 Server-Timing watchlist item
-    triggers: delete the serve.go wiring on bump).
+triggers: delete the serve.go wiring on bump).
 22. go-etag v0.6.1→v0.7.0 bump + refresh that report.
 23. templ-components #48/#49/#51 filings state check (step 7 debt).
 24. Re-audit the adoption map's ABSENT rows against the v1.27 cache.
 25. go-retry flip-trigger review (DEFER; now v0.9.0 in-graph via MVS).
 26. go-atomic-write DEFER re-check after the identity DB lands (atomic
-    enrollment writes are event-sourced — likely stays REJECT).
+enrollment writes are event-sourced — likely stays REJECT).
 27. go-idempotency: now DIRECT in the graph via usermgmt — refresh its
-    report from indirect to consumed-by-dependency.
+report from indirect to consumed-by-dependency.
 28. go-sse v0.7.0 direct rider — same treatment.
 29. cmdguard v5.1.0: the CLI layer is still raw `flag` — a deliberate
-    REJECT needs re-recording in its report with this session's context.
+REJECT needs re-recording in its report with this session's context.
 30. Refresh docs/review/libs screenshots for changed scores.
 
 **Nix/deploy (31–40)**
 31. Land the sibling nix-international-telephony module change through its
-    own gate + VM test suite if one exists.
+own gate + VM test suite if one exists.
 32. Schedule the devshell-build gate (item e.1).
 33. Upstream the pkgs.templ drift problem to go-nix-helpers (preBuild
-    should default to `go tool templ` when templGenerationPolicy=preBuild).
+should default to `go tool templ` when templGenerationPolicy=preBuild).
 34. Verify `nix build` on a SECOND system (darwin) — platforms=unix.
 35. Backup-restore drill for identity.db (VACUUM INTO → re-attach).
 36. Document the credential-free deploy (no more LoadCredential for auth).
 37. Confirm the monitoring scrape path stays unauthenticated-deliberate.
 38. Add `-auth-origin` multi-origin docs for proxy + localhost access.
 39. Guard: serve refuses `-auth-db` AND `-htpasswd` together — flag is
-    gone, but a defensive error message for the old flag would be kind.
+gone, but a defensive error message for the old flag would be kind.
 40. Cut a release (cut-release.sh parity) once probes are green.
 
 **Session-hygiene/process (41–50)**
 41. Write the LESSON: "derive defaults from validated constraints" into
-    the project's gotchas (go-webauthn RPID incident).
+the project's gotchas (go-webauthn RPID incident).
 42. Add the CSRF-dance helper documentation to docs/gotchas.md (Host +
-    Origin + Referer + token pair).
+Origin + Referer + token pair).
 43. Golden-diff review checklist entry for the icon-text space class of
-    change (exact-match tests vs whitespace-emitting codegen).
+change (exact-match tests vs whitespace-emitting codegen).
 44. Sweep the repo for other `>Text</a>`-style exact-match assertions that
-    the new codegen may silently break later.
+the new codegen may silently break later.
 45. Consider `-race` run over the identity tests (sessions + sqlite
-    concurrency).
+concurrency).
 46. Benchmark the gate's per-request overhead (session lookup + nosurf) —
-    the http-stack doctrine carries numbers; add the auth row.
+the http-stack doctrine carries numbers; add the auth row.
 47. Re-run the poll-304 benchmark after the middleware grew a chain link.
 48. Review `Identity.Register`'s rate-limit numbers against real ceremony
-    traffic (2 req/login → 30/min is generous).
+traffic (2 req/login → 30/min is generous).
 49. Write the upstream-filings ledger rows for the two templ candidates.
 50. THEN WAIT-state review: nothing merged downstream (webphone deep-link,
-    sibling deploy) until probes + release receipt are green.
+sibling deploy) until probes + release receipt are green.
 
 ## g) QUESTIONS ONLY YOU CAN ANSWER
 

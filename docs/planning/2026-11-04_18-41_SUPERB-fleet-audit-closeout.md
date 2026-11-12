@@ -134,7 +134,6 @@ Executed T01–T19 + T24 across the 2026-11-04 closeout session and the
 - **T24** ✅ docs/review/libs/index.html recomputed to the 22-lib table +
   index-screenshot.png re-rendered (2026-11-12, fullPage).
 
-
 ## Detailed breakdown — 109 micro-tasks, max 12 min each (ALL TODOs)
 
 Sorted in execution order within the same Pareto tiers. "→ Src n" = status item.

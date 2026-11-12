@@ -2,6 +2,7 @@
 
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-health` v0.9.0 (checkout last commit 2026-11-04; deps: samber/do v2 + go-branded-id) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **REJECT** — hard prerequisite mismatch (samber/do injector) and the job is already done in-house with the right semantics.
+
 > **Refreshed 2026-11-12:** re-verified: still not imported (absent from go.mod/go.sum); latest tag now **v0.10.0** (tags fetched; report's v0.9.0 snapshot predates the bump). REJECT verdict stands.
 
 **Fleet report:** [index.html](index.html)

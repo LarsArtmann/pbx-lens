@@ -2,6 +2,7 @@
 
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-daemon` v0.4.0 (checkout last commit 2026-11-04; single module) · **Status in pbx-lens:** **NOT USED** (not in the graph)
 **Verdict:** **REJECT** — its sd_notify slice is already owned by go-appkit/systemd; its unix-socket premise contradicts the deployment shape.
+
 > **Refreshed 2026-11-12:** re-verified: still not imported (absent from go.mod/go.sum); latest tag re-verified **v0.4.0** (tags fetched). REJECT verdict stands.
 
 **Fleet report:** [index.html](index.html)

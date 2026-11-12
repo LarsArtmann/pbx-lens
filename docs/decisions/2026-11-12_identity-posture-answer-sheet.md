@@ -30,6 +30,7 @@ scheme (`allOriginsHTTPS`): non-Secure over http, Secure once TLS fronts
 the lens.
 
 **Options:**
+
 - **A — hold http** is NOT VIABLE for production: it means an instance
   nobody can log into (registration closes on the first signup, whose
   only login path is a ceremony the insecure context refuses). Fine only
@@ -61,6 +62,7 @@ the open door (`openServeIdentity` logs "the first visitor to /login
 becomes the operator").
 
 **Options:**
+
 - **A — keep first-visitor** (implemented, zero new code). Mitigation is
   procedural: register immediately after first deploy, before the
   listener is broadly reachable. Risk: on a shared LAN, whoever hits
@@ -95,6 +97,7 @@ is not a pbx-lens dependency. Full migration steps:
 docs/review/libs/go-appkit.md (forward findings 1–5), plan package P06.
 
 **Options:**
+
 - **A — hold, one variable at a time on the deploy path:** let the
   identity stack run in production ~1 week, THEN bump appkit + the
   cqrs-lite wave together on the next deps train. Cost: fold-in work

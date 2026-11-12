@@ -71,9 +71,9 @@ its render joins the P07 re-verification list (dashboard pixel probe).**
   submodules stop at v0.6.1 (verified live: `go list -m -versions` on
   root vs server/metrics/entitytag, plus `git diff --stat v0.6.1..v0.7.0`
   showing submodule go.mod changes); asks for the missing submodule tags
-  + a wave rule that every touched submodule manifest gets its tag in the
-  same pass (go-cqrs-lite's batch-release pattern). Related instance: #5
-  (same wave's release-workflow failure). State: OPEN.
+  - a wave rule that every touched submodule manifest gets its tag in the
+    same pass (go-cqrs-lite's batch-release pattern). Related instance: #5
+    (same wave's release-workflow failure). State: OPEN.
 
 **State check 2026-11-05 (plan T20, filings round): nothing new to FILE, and
 both open candidates are closed by evidence.**

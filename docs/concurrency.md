@@ -116,7 +116,7 @@ mid-flight edit, one shared file nearly mangled. Three rules tighten:
    step away mid-task commits its work in a state it has verified
    (build + the touched package's tests, minimum). If a commit lands
    KNOWN-red (mid-refactor, half a migration), the message's first
-   line ends with the literal tag ` [red]` and the body names the
+   line ends with the literal tag `[red]` and the body names the
    failing lane. Every other session (and the gate) can then trust
    untagged HEADs and treat `[red]` heads as expected-construction,
    not a regression to bisect. Never push a `[red]` head to origin

@@ -55,13 +55,10 @@ const STAMP_MODULES = [
   "github.com/larsartmann/cqrs-htmx/loginpage/v4",
 ];
 const PINS = STAMP_MODULES.map(
-  (mod) =>
-    `# ${mod}@` +
-    execSync(`go list -m -f {{.Version}} ${mod}`, { encoding: "utf8" }).trim(),
+  (mod) => `# ${mod}@` + execSync(`go list -m -f {{.Version}} ${mod}`, { encoding: "utf8" }).trim(),
 );
-const PIN = STAMP_MODULES.map(
-  (mod) =>
-    execSync(`go list -m -f {{.Version}} ${mod}`, { encoding: "utf8" }).trim(),
+const PIN = STAMP_MODULES.map((mod) =>
+  execSync(`go list -m -f {{.Version}} ${mod}`, { encoding: "utf8" }).trim(),
 ).join(",");
 
 // Tailwind-ish token: letters/digits plus the punctuation utilities and

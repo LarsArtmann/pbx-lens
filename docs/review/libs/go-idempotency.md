@@ -2,6 +2,7 @@
 
 **Date:** 2026-11-04 · **Upstream:** `github.com/larsartmann/go-idempotency` v0.3.2 (checkout last commit 2026-11-04; single module, dep: go-error-family) · **Status in pbx-lens:** **IN GRAPH (INDIRECT only, zero imports)** — `go-idempotency v0.3.2 // indirect`; was NOT USED at the 2026-11-04 snapshot
 **Verdict:** **REJECT** — pbx-lens' idempotency problem is solved by construction, in a shape this library does not target.
+
 > **Refreshed 2026-11-12:** status delta — now **IN GRAPH (INDIRECT only)**: `go-idempotency v0.3.2 // indirect` rode in via `cqrs-htmx/loginpage/v4 → cqrs-htmx/v4 → go-idempotency` (`go mod why`); zero direct imports in `internal`/`cmd`. v0.3.2 == latest tag (tags fetched). Ride-along ≠ adoption: REJECT-direct verdict stands.
 
 **Fleet report:** [index.html](index.html)

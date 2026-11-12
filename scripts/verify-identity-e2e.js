@@ -174,7 +174,11 @@ window.__ceremony = { prepareLoginOptions, prepareRegOptions, serializeAssertion
     );
 
     const apiResp = await fetch(`${BASE}/`, { redirect: "manual" });
-    check("gate: API caller gets 401 (no redirect)", apiResp.status === 401, `status=${apiResp.status}`);
+    check(
+      "gate: API caller gets 401 (no redirect)",
+      apiResp.status === 401,
+      `status=${apiResp.status}`,
+    );
 
     const robots = await fetch(`${BASE}/robots.txt`);
     const css = await fetch(`${BASE}/app.css`);
@@ -199,8 +203,7 @@ window.__ceremony = { prepareLoginOptions, prepareRegOptions, serializeAssertion
     async function pageFetch(url, opts) {
       return page.evaluate(
         async (url, opts) => {
-          const token =
-            document.querySelector('meta[name="csrf-token"]')?.content || "";
+          const token = document.querySelector('meta[name="csrf-token"]')?.content || "";
           const res = await fetch(url, {
             credentials: "same-origin",
             headers: { "X-Csrf-Token": token, "Content-Type": "application/json" },
@@ -272,29 +275,28 @@ window.__ceremony = { prepareLoginOptions, prepareRegOptions, serializeAssertion
       method: "POST",
       body: JSON.stringify({ user_id: userID }),
     });
-    const enrolled = await page.evaluate(
-      async (begin, uid) => {
-        const token = document.querySelector('meta[name="csrf-token"]')?.content || "";
-        const credential = await navigator.credentials.create({
-          publicKey: window.__ceremony.prepareRegOptions(begin.body.options),
-        });
-        const finishURL = new URL(
-          "/auth/webauthn/register/finish",
-          window.location.href,
-        );
-        finishURL.searchParams.set("user_id", uid);
-        finishURL.searchParams.set("credential_name", "Probe Passkey");
-        const res = await fetch(finishURL, {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "X-Csrf-Token": token, "Content-Type": "application/json" },
-          body: JSON.stringify(window.__ceremony.serializeAttestation(credential)),
-        });
-        return res.status;
-      },
-      beginReg,
-      userID,
-    ).catch((err) => `crash: ${err.message}`);
+    const enrolled = await page
+      .evaluate(
+        async (begin, uid) => {
+          const token = document.querySelector('meta[name="csrf-token"]')?.content || "";
+          const credential = await navigator.credentials.create({
+            publicKey: window.__ceremony.prepareRegOptions(begin.body.options),
+          });
+          const finishURL = new URL("/auth/webauthn/register/finish", window.location.href);
+          finishURL.searchParams.set("user_id", uid);
+          finishURL.searchParams.set("credential_name", "Probe Passkey");
+          const res = await fetch(finishURL, {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "X-Csrf-Token": token, "Content-Type": "application/json" },
+            body: JSON.stringify(window.__ceremony.serializeAttestation(credential)),
+          });
+          return res.status;
+        },
+        beginReg,
+        userID,
+      )
+      .catch((err) => `crash: ${err.message}`);
     check(
       "passkey: enrollment ceremony completes through the virtual authenticator",
       enrolled === 200,
@@ -320,8 +322,8 @@ window.__ceremony = { prepareLoginOptions, prepareRegOptions, serializeAssertion
       method: "POST",
       body: JSON.stringify({ email: "operator@pbx.lens" }),
     });
-    const loggedIn = await page.evaluate(
-      async (begin) => {
+    const loggedIn = await page
+      .evaluate(async (begin) => {
         const token = document.querySelector('meta[name="csrf-token"]')?.content || "";
         const assertion = await navigator.credentials.get({
           publicKey: window.__ceremony.prepareLoginOptions(begin.body.options),
@@ -335,9 +337,8 @@ window.__ceremony = { prepareLoginOptions, prepareRegOptions, serializeAssertion
           body: JSON.stringify(window.__ceremony.serializeAssertion(assertion)),
         });
         return res.status;
-      },
-      beginLogin,
-    ).catch((err) => `crash: ${err.message}`);
+      }, beginLogin)
+      .catch((err) => `crash: ${err.message}`);
     check(
       "passkey: login ceremony mints a session through the virtual authenticator",
       loggedIn === 200,

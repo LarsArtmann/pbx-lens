@@ -61,7 +61,7 @@
 
 ## f) Up to 50 things to get done next
 
-*(Brainstorm inventory — routing rigor per docs-health HARVEST applies; most of the tail belongs in ROADMAP, the head in TODO_LIST.)*
+_(Brainstorm inventory — routing rigor per docs-health HARVEST applies; most of the tail belongs in ROADMAP, the head in TODO_LIST.)_
 
 1. Run the canonical BuildFlow poll-gate on a still tree; single-HEAD receipt for the 22-lib refresh.
 2. Bump go-cqrs-lite's 4 trailing modules (system v4.18.0, metaengine v4.23.0, sqliteengine v4.8.0, systemscenario v4.3.0); re-run the fence tests + corpus.

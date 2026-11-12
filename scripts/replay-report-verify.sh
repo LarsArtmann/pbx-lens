@@ -54,7 +54,7 @@ is_skippable() {
 
 	for prefix in "${skip_prefixes[@]}"; do
 		case "$line" in
-			"$prefix"*) return 0 ;;
+		"$prefix"*) return 0 ;;
 		esac
 	done
 
@@ -84,11 +84,11 @@ extract_blocks() {
 		if [[ $in_block -eq 1 ]]; then
 			echo "$line"
 		fi
-	done < "$file"
+	done <"$file"
 }
 
 replay_file() {
-local file="$1" pass=0 skip=0 fail=0 line block_has_content=0 negative=0
+	local file="$1" pass=0 skip=0 fail=0 line block_has_content=0 negative=0
 
 	while IFS= read -r line; do
 		if [[ "$line" == "---BLOCK-END---" ]]; then
@@ -170,7 +170,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
 	tmp="$(mktemp -d)"
 	trap 'rm -rf "$tmp"' EXIT
 
-	cat > "$tmp/seed.md" <<'SEED'
+	cat >"$tmp/seed.md" <<'SEED'
 # seed
 
 ```console
@@ -184,9 +184,9 @@ SEED
 	status=$?
 	echo "$out"
 
-	if [[ $status -ne 0 ]] && grep -q 'PASS  echo replay-self-test-pass' <<<"$out" \
-		&& grep -q 'SKIP  sudo rm -rf' <<<"$out" \
-		&& grep -q 'FAIL  false' <<<"$out"; then
+	if [[ $status -ne 0 ]] && grep -q 'PASS  echo replay-self-test-pass' <<<"$out" &&
+		grep -q 'SKIP  sudo rm -rf' <<<"$out" &&
+		grep -q 'FAIL  false' <<<"$out"; then
 		echo "replay: self-test green (pass+skip+fail all classified)"
 
 		exit 0

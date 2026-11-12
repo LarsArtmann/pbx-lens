@@ -63,7 +63,9 @@ async function forceStalenessPoll(page) {
     const ready = await page.goto(`${BASE}/health/ready`, { waitUntil: "load" });
     console.log("health/ready status:", ready.status());
     if (![200, 304].includes(ready.status())) {
-      fail(`health/ready status ${ready.status()}, want 200 (parity with verify-ui-contract Contract F)`);
+      fail(
+        `health/ready status ${ready.status()}, want 200 (parity with verify-ui-contract Contract F)`,
+      );
     }
 
     await page.goto(`${BASE}/`, { waitUntil: "networkidle0" });
