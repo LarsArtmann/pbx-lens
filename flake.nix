@@ -161,7 +161,7 @@
             # vendorHash (3I97v…) and the devshell died at the FOD;
             # restored 2026-10-26 — the FOD mismatch names this hash.
             env.GOWORK = "off";
-            vendorHash = "sha256-O9fkHequoMt1fCIKHjsklOqz+LKerDnep9r+0vxxGak=";
+            vendorHash = "sha256-jTwZn/TZJZ22iSwmLRHG/Hc9lE6L9O6fncmKxkiriNE=";
             meta = {
               description = "cqrs-lint from go-cqrs-lite, pinned to the cmd/cqrs-lint/v4.16.0 tag";
               license = lib.licenses.unfree;
