@@ -146,6 +146,15 @@ func New(cfg Config) (*Provider, error) {
 	if len(cfg.Scopes) == 0 {
 		cfg.Scopes = []string{oidc.ScopeOpenID, "email", "profile"}
 	}
+	// The groups claim is scope-gated: Pocket ID's built-in claim policy
+	// releases it only under the "groups" scope (bootstrap.go), so an
+	// allowlist without the scope silently denies every user
+	// (lens.oidc.groups_denied on a token that carries no groups at
+	// all). Auto-append it when an allowlist is set — the same doctrine
+	// oauth2-proxy applies for --allowed-group.
+	if len(cfg.AllowedGroups) > 0 && !slices.Contains(cfg.Scopes, "groups") {
+		cfg.Scopes = append(cfg.Scopes, "groups")
+	}
 
 	return &Provider{ //nolint:exhaustruct // zero-value cache fields are the lazy state
 		cfg:  cfg,

@@ -6,6 +6,7 @@ import (
 	"encoding/json/v2"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -86,7 +87,7 @@ func TestBeginLoginBuildsPKCEAuthorizeURL(t *testing.T) {
 	for name, want := range map[string]string{
 		"client_id":             "lens-test",
 		"response_type":         "code",
-		"scope":                 "openid email profile",
+		"scope":                 "openid email profile groups",
 		"state":                 "state-1",
 		"nonce":                 nonce,
 		"code_challenge_method": "S256",
@@ -107,6 +108,77 @@ func TestBeginLoginBuildsPKCEAuthorizeURL(t *testing.T) {
 
 	if got := q.Get("code_verifier"); got != "" {
 		t.Errorf("the verifier must never ride the URL (got %q)", got)
+	}
+}
+
+// The groups claim is scope-gated at the IdP (Pocket ID's built-in claim
+// policy releases it only under the "groups" scope), so an allowlist
+// without the scope denies every user on a token that carries no groups
+// at all. The auto-append mirrors the oauth2-proxy --allowed-group
+// doctrine this login ported.
+func TestScopesAutoAppendGroupsForAllowlist(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		name        string
+		allowed     []string
+		scopes      []string
+		wantAllowed bool
+		want        []string
+	}{
+		{
+			name:        "default scopes gain groups when an allowlist is set",
+			allowed:     []string{"pbx-history"},
+			scopes:      nil,
+			wantAllowed: true,
+			want:        []string{"openid", "email", "profile", "groups"},
+		},
+		{
+			name:        "no allowlist keeps the default scopes without groups",
+			allowed:     nil,
+			scopes:      nil,
+			wantAllowed: false,
+			want:        []string{"openid", "email", "profile"},
+		},
+		{
+			name:        "caller scopes already carrying groups are not duplicated",
+			allowed:     []string{"pbx-history"},
+			scopes:      []string{"openid", "groups"},
+			wantAllowed: true,
+			want:        []string{"openid", "groups"},
+		},
+		{
+			name:        "caller scopes gain groups alongside their own entries",
+			allowed:     []string{"pbx-history"},
+			scopes:      []string{"openid", "email"},
+			wantAllowed: true,
+			want:        []string{"openid", "email", "groups"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			idp := newStubIdP(t, map[string]any{"email": "lars@example.org"})
+			provider, err := New(testConfig(t, idp, func(cfg *Config) {
+				cfg.AllowedGroups = tc.allowed
+				cfg.Scopes = tc.scopes
+			}))
+			if err != nil {
+				t.Fatalf("New: %v", err)
+			}
+
+			redirectURL, _, _, err := provider.BeginLoginWithNonce(context.Background(), "pocketid", "state-1")
+			if err != nil {
+				t.Fatalf("BeginLoginWithNonce: %v", err)
+			}
+
+			got := strings.Fields(parseQuery(t, redirectURL).Get("scope"))
+			if !slices.Equal(got, tc.want) {
+				t.Errorf("scope = %v, want %v", got, tc.want)
+			}
+		})
 	}
 }
 
