@@ -161,6 +161,7 @@ func TestScopesAutoAppendGroupsForAllowlist(t *testing.T) {
 			t.Parallel()
 
 			idp := newStubIdP(t, map[string]any{"email": "lars@example.org"})
+
 			provider, err := New(testConfig(t, idp, func(cfg *Config) {
 				cfg.AllowedGroups = tc.allowed
 				cfg.Scopes = tc.scopes
