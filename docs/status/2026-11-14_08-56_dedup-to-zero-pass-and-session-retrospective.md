@@ -198,8 +198,8 @@ skill, a list this long is a brainstorm, not a commitment).
 2. **Run CI**: push and watch the duplication lane + Guard Self-Tests go
    green on the pin (nothing has proven this change in CI yet).
 3. **Add `--report` mode to `scripts/check-dedup-gate.sh`** (pin-enforced
-   + `--html`) so ad-hoc `-t N` sweeps can never again run on a stale
-   binary — the exact trap this session hit.
+   - `--html`) so ad-hoc `-t N` sweeps can never again run on a stale
+     binary — the exact trap this session hit.
 4. **Unit-test `fillZero`'s epoch edge**: a `time.Unix(0,0)` source must
    keep routing through `fillStartedAt` semantics (empty), proving the
    documented `==` vs `IsZero` rationale.
@@ -316,7 +316,7 @@ skill, a list this long is a brainstorm, not a commitment).
 45. **Fill** `TestDashboardMOSSummaryAndTrend`-style coverage for
     `costPerMinute`'s `billedSecs <= 0` path via Segment (likely already
     covered by dashboard_cost_test.go — verify, then close the item).
-46. **Decide the fill* family's final shape**: fillTranscript stays
+46. __Decide the fill_ family's final shape_*: fillTranscript stays
     domain-named by design; note that decision inline so nobody
     genericizes it later by accident.
 47. **scripts/README.md**: document the verify-all codegen hook's
@@ -358,5 +358,5 @@ skill, a list this long is a brainstorm, not a commitment).
 
 ---
 
-*Point-in-time snapshot; goes stale. Section (f) is HARVEST input for
-TODO_LIST.md/ROADMAP.md. Waiting for instructions.*
+_Point-in-time snapshot; goes stale. Section (f) is HARVEST input for
+TODO_LIST.md/ROADMAP.md. Waiting for instructions._
