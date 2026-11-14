@@ -147,3 +147,30 @@ change deserves eyes, then a reviewed refresh.
   t-10 sweep holds only the two accepted signature pairs, and the t-4
   `--show-suppressed` audit shows multi-line spans only in test files (the
   spot-checked scaffolding class).
+- 2026-11-14: a user-run `-t 2` scan (the most aggressive token threshold,
+  no `--min-lines`, so every statement idiom is visible — 27 actionable
+  groups) triggered the third full body-by-body audit. Nine REAL clones
+  extracted: `cdr.ParseAIDestinations`/`telnyx.ParseAIDIDs` (verbatim
+  10-line twins) → `ingest.ParseCommaSet`; the CLI
+  `_ = fs.Parse(args)` + `requireDB` prologue ×5 → `parseAndRequireDB`;
+  `fillString`/`fillDuration`/`fillFlag` → the `fillZero[T comparable]`
+  generic (`fillStartedAt` stays separate: `IsZero` is not `==` — an epoch
+  timestamp is empty without comparing equal to the zero struct);
+  `syncFile`/`syncDir` close+Sync tails → `syncAndClose` (internal/backup);
+  `AvgMOS` on DayVolume and DashboardStats → `mosAvg`;
+  `CostPerMinute` on DashboardStats and Segment → `costPerMinute`;
+  `weekDelta`/`costWeekDelta` identical WeekDelta tails → `newWeekDelta`;
+  detail.templ's matched/unmatched turn-line content →
+  `transcriptLineInner`; dashboard.templ's Our numbers/Counterparties
+  heading+table pair → `segmentSection`. What deliberately remains at
+  `-t 2`, why: loop-control idioms (`Skipped++`/`continue` — a `continue`
+  cannot be extracted), cleanup-on-error ladders (each branch releases a
+  different handle), guard-return pairs, alert+definition-list card shapes
+  with disjoint business facts (templ-components already carries the
+  reusable pieces), the empty-state-else-table UI idiom, secret-file
+  readers with distinct rejection identities, keyset-walker inits, the two
+  pre-image hashes (`writeHashedField` already carries the shared
+  mechanism; the hashes protect different identities), and the smoke
+  command's double dispatch (the idempotency exercise itself — now
+  commented in place so nobody "fixes" it). After: gate still 0 groups at
+  `-t 4 --min-lines 2`.

@@ -63,6 +63,9 @@ func smoke(args []string) {
 		fatal(err)
 	}
 
+	// The duplicate dispatch exercises the idempotency contract end-to-end:
+	// the same stream id and ContentHash must replay without error and
+	// converge to one view below.
 	if err := sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
 		fatal(err)
 	}
