@@ -10,6 +10,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 	"github.com/larsartmann/pbx-lens/internal/ingest/cdr"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/ingest/webhook"
@@ -35,7 +36,7 @@ func ingestCDR(args []string) {
 		fatal(err)
 	}
 
-	parsed, err := cdr.ParseWithOptions(file, cdr.ParseOptions{AIDestinations: cdr.ParseAIDestinations(*aiDest)})
+	parsed, err := cdr.ParseWithOptions(file, cdr.ParseOptions{AIDestinations: ingest.ParseCommaSet(*aiDest)})
 	closeErr := file.Close()
 
 	if err != nil {
@@ -121,7 +122,7 @@ func ingestTelnyx(args []string) {
 	opts := cli.TelnyxOptions{
 		Since:     sinceAt,
 		Direction: dir,
-		AIDIDs:    telnyx.ParseAIDIDs(*aiDID),
+		AIDIDs:    ingest.ParseCommaSet(*aiDID),
 		Limit:     *limit,
 	}
 
@@ -213,9 +214,8 @@ func ingestWebhook(args []string) {
 	fs := flag.NewFlagSet("ingest-webhook", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
 	webhookMaxAge := fs.Duration("max-age", 0, "refuse observations older than this (0 = keep everything)")
-	_ = fs.Parse(args)
+	parseAndRequireDB(fs, db, args)
 
-	requireDB(fs, *db)
 	requireOneArg(fs, "inbound.jsonl path")
 
 	file, err := os.Open(fs.Arg(0))
@@ -259,9 +259,7 @@ func ingestAgent(args []string) {
 		"transcripts directory ({call-uuid}.jsonl files)",
 	)
 	agentMaxAge := fs.Duration("max-age", 0, "refuse transcripts older than this (0 = keep everything)")
-	_ = fs.Parse(args)
-
-	requireDB(fs, *db)
+	parseAndRequireDB(fs, db, args)
 
 	// The fetch needs the live session (the parser joins the CDR view by
 	// call uuid), so the agent verb rides gateAndFinalize's fetch hook;

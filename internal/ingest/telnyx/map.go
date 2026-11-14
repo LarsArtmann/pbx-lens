@@ -47,21 +47,6 @@ func DIDDirectionResolver(
 	}
 }
 
-// ParseAIDIDs turns a comma-separated -ai-did flag value into the lookup
-// set, trimming whitespace and dropping empties (same shape as cdr's
-// ParseAIDestinations).
-func ParseAIDIDs(flag string) map[string]bool {
-	out := map[string]bool{}
-
-	for part := range strings.SplitSeq(flag, ",") {
-		if trimmed := strings.TrimSpace(part); trimmed != "" {
-			out[trimmed] = true
-		}
-	}
-
-	return out
-}
-
 func MapConversation(conv Conversation, msgs []Message, rec *Recording, opts MapOptions) (calls.Observation, error) {
 	if opts.ExcerptMax <= 0 {
 		opts.ExcerptMax = DefaultExcerptMax

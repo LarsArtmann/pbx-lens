@@ -109,9 +109,7 @@ func backupCmd(args []string) {
 	fs := flag.NewFlagSet("backup", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
 	out := fs.String("out", "", "snapshot output path (required)")
-	_ = fs.Parse(args)
-
-	requireDB(fs, *db)
+	parseAndRequireDB(fs, db, args)
 
 	if *out == "" {
 		fatal(errorfamily.NewRejection("lens.cli.missing_out", "backup needs -out <path>"))
@@ -141,9 +139,7 @@ func purgeCmd(args []string) {
 	)
 	dryRun := fs.Bool("dry-run", false, "list what would be retired without changing anything")
 	jsonOut := fs.Bool("json", false, "emit the report as JSON (works for both -dry-run and a real purge)")
-	_ = fs.Parse(args)
-
-	requireDB(fs, *db)
+	parseAndRequireDB(fs, db, args)
 
 	if *maxAge == "" {
 		fatal(errorfamily.NewRejection(

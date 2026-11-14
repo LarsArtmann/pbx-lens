@@ -81,20 +81,6 @@ func (o ParseOptions) isAI(destination string) bool {
 	return o.AIDestinations[destination]
 }
 
-// ParseAIDestinations turns a comma-separated -ai-dest flag value into the
-// lookup set, trimming whitespace and dropping empties.
-func ParseAIDestinations(flag string) map[string]bool {
-	out := map[string]bool{}
-
-	for part := range strings.SplitSeq(flag, ",") {
-		if trimmed := strings.TrimSpace(part); trimmed != "" {
-			out[trimmed] = true
-		}
-	}
-
-	return out
-}
-
 func Parse(r io.Reader) (ingest.Result, error) {
 	return ParseWithOptions(r, ParseOptions{})
 }

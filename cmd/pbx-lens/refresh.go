@@ -10,6 +10,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 )
 
@@ -86,7 +87,7 @@ func runRefresh(args []string, out io.Writer) error {
 		cli.TelnyxOptions{
 			Since:     sinceAt,
 			Direction: dir,
-			AIDIDs:    telnyx.ParseAIDIDs(*aiDID),
+			AIDIDs:    ingest.ParseCommaSet(*aiDID),
 			Limit:     *limit,
 		},
 	)

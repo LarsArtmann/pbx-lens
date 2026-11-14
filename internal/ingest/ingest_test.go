@@ -1,6 +1,7 @@
 package ingest
 
 import (
+	"maps"
 	"strings"
 	"testing"
 )
@@ -49,5 +50,14 @@ func TestEachLineRefusesOverCeiling(t *testing.T) {
 func TestNewScannerBufferPolicyConstants(t *testing.T) {
 	if scannerInitialBuf != 64*1024 || scannerMaxLine != 1024*1024 {
 		t.Fatalf("buffer policy drifted: initial=%d max=%d", scannerInitialBuf, scannerMaxLine)
+	}
+}
+
+func TestParseCommaSetTrimsAndDropsEmpties(t *testing.T) {
+	got := ParseCommaSet(" +17287289311 , ,+14084757593,")
+	want := map[string]bool{"+17287289311": true, "+14084757593": true}
+
+	if !maps.Equal(got, want) {
+		t.Fatalf("parse wrong: %v", got)
 	}
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/httputil"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/search"
 	"github.com/larsartmann/pbx-lens/internal/web"
@@ -141,9 +142,7 @@ func serve(args []string) {
 		false,
 		"dev probe fixture: serve a canned STALE poller snapshot on /ops and /api/ops instead of the live counters",
 	)
-	_ = fs.Parse(args)
-
-	requireDB(fs, *db)
+	parseAndRequireDB(fs, db, args)
 
 	pollDir, err := cli.ParseDirection(*pollDirection)
 	if err != nil {
@@ -251,7 +250,7 @@ func serve(args []string) {
 		Telnyx:         telnyxClient,
 		SinceAgo:       *pollSince,
 		Direction:      pollDir,
-		AIDIDs:         telnyx.ParseAIDIDs(*aiDID),
+		AIDIDs:         ingest.ParseCommaSet(*aiDID),
 		CDRFile:        *cdrFile,
 		WebhookLog:     *webhookLog,
 		TranscriptsDir: *transcriptsDir,

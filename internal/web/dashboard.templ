@@ -275,20 +275,21 @@ templ segmentsCard(nonce string, stats DashboardStats) {
 		if len(stats.TopNumbers) == 0 && len(stats.TopPeers) == 0 {
 			@display.SimpleEmptyState("No numbers in the window yet.")
 		} else {
-			<h3 class="break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm">
-				Our numbers
-			</h3>
-			<div class="mt-2">
-				@segmentTable(nonce, stats.TopNumbers)
-			</div>
-			<h3 class="break-after-avoid dark:text-white font-medium leading-6 mt-6 text-gray-900 text-sm">
-				Counterparties
-			</h3>
-			<div class="mt-2">
-				@segmentTable(nonce, stats.TopPeers)
-			</div>
+			@segmentSection("Our numbers", false, nonce, stats.TopNumbers)
+			@segmentSection("Counterparties", true, nonce, stats.TopPeers)
 		}
 	}
+}
+
+// segmentSection is one breakdown: heading + table. spaced adds the mt-6
+// beat for sections after the card's first.
+templ segmentSection(title string, spaced bool, nonce string, segments []Segment) {
+	<h3 class={ "break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm", templ.KV("mt-6", spaced) }>
+		{ title }
+	</h3>
+	<div class="mt-2">
+		@segmentTable(nonce, segments)
+	</div>
 }
 
 // segmentTable renders one breakdown. Rows carry the number filter as their

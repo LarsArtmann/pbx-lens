@@ -427,17 +427,22 @@ templ transcriptMatchLog(turns []calls.TranscriptTurn, query string) {
 		for _, line := range transcriptMatchViews(turns, query) {
 			if line.Matched {
 				<div id={ "turn-" + strconv.Itoa(line.Index) } class="tc-log-line tc-log-line-still rounded bg-amber-100 dark:bg-amber-900/40">
-					<span class={ turnTagClass(line.Role) }>{ string(line.Role) }</span>
-					{ line.Text }
+					@transcriptLineInner(line.Role, line.Text)
 				</div>
 			} else {
 				<div class="tc-log-line tc-log-line-still">
-					<span class={ turnTagClass(line.Role) }>{ string(line.Role) }</span>
-					{ line.Text }
+					@transcriptLineInner(line.Role, line.Text)
 				</div>
 			}
 		}
 	</div>
+}
+
+// transcriptLineInner is one scrollback line's content (role tag + verbatim
+// text), shared by the matched and unmatched branches of transcriptMatchLog.
+templ transcriptLineInner(role calls.TurnRole, text string) {
+	<span class={ turnTagClass(role) }>{ string(role) }</span>
+	{ text }
 }
 
 // transcriptLines maps conversation turns onto scrollback lines. The role

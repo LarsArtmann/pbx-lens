@@ -659,12 +659,12 @@ func CallDetailPage(
 // requested row is the authority for what it observed.
 func mergeCall(primary, sibling calls.CallView) (calls.CallView, bool) {
 	transcriptJoined := fillTranscript(&primary, sibling)
-	fromJoined := fillString(&primary.FromNumber, sibling.FromNumber)
-	toJoined := fillString(&primary.ToNumber, sibling.ToNumber)
-	causeJoined := fillString(&primary.HangupCause, sibling.HangupCause)
-	durationJoined := fillDuration(&primary.DurationSecs, sibling.DurationSecs)
+	fromJoined := fillZero(&primary.FromNumber, sibling.FromNumber)
+	toJoined := fillZero(&primary.ToNumber, sibling.ToNumber)
+	causeJoined := fillZero(&primary.HangupCause, sibling.HangupCause)
+	durationJoined := fillZero(&primary.DurationSecs, sibling.DurationSecs)
 	startJoined := fillStartedAt(&primary.StartedAt, sibling.StartedAt)
-	aiJoined := fillFlag(&primary.IsAI, sibling.IsAI)
+	aiJoined := fillZero(&primary.IsAI, sibling.IsAI)
 
 	return primary, transcriptJoined || fromJoined || toJoined || causeJoined ||
 		durationJoined || startJoined || aiJoined
@@ -684,18 +684,15 @@ func fillTranscript(primary *calls.CallView, sibling calls.CallView) bool {
 	return true
 }
 
-func fillString(destination *string, source string) bool {
-	if *destination != "" || source == "" {
-		return false
-	}
+// fillZero copies source into destination iff destination holds T's zero
+// value and source does not — "first source wins" for the comparable join
+// fields. fillStartedAt stays separate: a time.Time's emptiness is IsZero
+// (an epoch timestamp is empty without comparing equal to the zero struct),
+// which plain comparability cannot express.
+func fillZero[T comparable](destination *T, source T) bool {
+	var zero T
 
-	*destination = source
-
-	return true
-}
-
-func fillDuration(destination *int, source int) bool {
-	if *destination != 0 || source == 0 {
+	if *destination != zero || source == zero {
 		return false
 	}
 
@@ -706,16 +703,6 @@ func fillDuration(destination *int, source int) bool {
 
 func fillStartedAt(destination *time.Time, source time.Time) bool {
 	if !destination.IsZero() || source.IsZero() {
-		return false
-	}
-
-	*destination = source
-
-	return true
-}
-
-func fillFlag(destination *bool, source bool) bool {
-	if *destination || !source {
 		return false
 	}
 

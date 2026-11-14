@@ -47,3 +47,18 @@ func EachLine(r io.Reader, fn func(line string)) error {
 
 	return sc.Err()
 }
+
+// ParseCommaSet turns a comma-separated list value into the lookup set,
+// trimming whitespace and dropping empties ("" parses to the empty set).
+// The per-source AI-destination flags (-ai-dest, -ai-did) parse through it.
+func ParseCommaSet(value string) map[string]bool {
+	out := map[string]bool{}
+
+	for part := range strings.SplitSeq(value, ",") {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			out[trimmed] = true
+		}
+	}
+
+	return out
+}

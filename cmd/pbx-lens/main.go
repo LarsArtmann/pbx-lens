@@ -73,6 +73,14 @@ func requireDB(fs *flag.FlagSet, db string) {
 	}
 }
 
+// parseAndRequireDB is the index-opening subcommand prologue: parse args,
+// then enforce the mandatory -db flag.
+func parseAndRequireDB(fs *flag.FlagSet, db *string, args []string) {
+	_ = fs.Parse(args)
+
+	requireDB(fs, *db)
+}
+
 // requireOneArg enforces the single positional argument of the file-ingesting
 // subcommands.
 func requireOneArg(fs *flag.FlagSet, what string) {

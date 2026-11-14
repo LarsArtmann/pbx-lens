@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"maps"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/ingest"
 	"github.com/larsartmann/pbx-lens/internal/wire"
 )
 
@@ -416,7 +416,7 @@ func TestMapConversationDIDDirection(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := MapOptions{Direction: tt.declared}
 
-			if dids := ParseAIDIDs(tt.aiDIDs); len(dids) > 0 {
+			if dids := ingest.ParseCommaSet(tt.aiDIDs); len(dids) > 0 {
 				opts.ResolveDirection = DIDDirectionResolver(dids, tt.declared)
 			}
 
@@ -437,15 +437,6 @@ func TestDIDDirectionResolverEmptySetKeepsDeclared(t *testing.T) {
 
 	if got := resolve("+17287289311", "+14084757593"); got != calls.DirectionOutbound {
 		t.Fatalf("empty DID set must keep the declared direction, got %s", got)
-	}
-}
-
-func TestParseAIDIDsTrimsAndDropsEmpties(t *testing.T) {
-	got := ParseAIDIDs(" +17287289311 , ,+14084757593,")
-	want := map[string]bool{"+17287289311": true, "+14084757593": true}
-
-	if !maps.Equal(got, want) {
-		t.Fatalf("parse wrong: %v", got)
 	}
 }
 

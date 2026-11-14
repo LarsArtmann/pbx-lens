@@ -59,13 +59,7 @@ func (s Segment) HasRate() bool { return s.PricedSecs > 0 }
 // (DashboardStats.CostPerMinute), so a partially priced segment states the
 // rate its priced calls actually earned.
 func (s Segment) CostPerMinute() float64 {
-	if s.PricedSecs <= 0 {
-		return 0
-	}
-
-	units := float64(s.CostMicros) / calls.MicrosPerUnit
-
-	return units / (float64(s.PricedSecs) / secondsPerMinute)
+	return costPerMinute(s.CostMicros, s.PricedSecs)
 }
 
 // Href is the drill-through into the number's own trend page

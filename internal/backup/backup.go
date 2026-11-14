@@ -86,6 +86,14 @@ func Snapshot(ctx context.Context, dsn, out string) error {
 	return nil
 }
 
+// syncAndClose flushes one open handle to stable storage, then closes it
+// (the close error is not the sync verdict).
+func syncAndClose(file *os.File) error {
+	defer func() { _ = file.Close() }()
+
+	return file.Sync()
+}
+
 // syncFile flushes one file's contents to stable storage.
 func syncFile(path string) error {
 	file, err := os.OpenFile(path, os.O_RDWR, 0)
@@ -93,9 +101,7 @@ func syncFile(path string) error {
 		return err
 	}
 
-	defer func() { _ = file.Close() }()
-
-	return file.Sync()
+	return syncAndClose(file)
 }
 
 // syncDir flushes a directory's entries (e.g. a just-renamed file) to
@@ -106,9 +112,7 @@ func syncDir(path string) error {
 		return err
 	}
 
-	defer func() { _ = dir.Close() }()
-
-	return dir.Sync()
+	return syncAndClose(dir)
 }
 
 // Verify opens the snapshot and confirms it is a readable sqlite database

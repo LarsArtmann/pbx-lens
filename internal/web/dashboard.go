@@ -82,11 +82,17 @@ type DayVolume struct {
 // AvgMOS is the day's mean MOS, or 0 when no call that day reported one;
 // the renderer treats 0-known as "no data", never as a 0.0 measurement.
 func (d DayVolume) AvgMOS() float64 {
-	if d.MOSKnown == 0 {
+	return mosAvg(d.MOSKnown, d.MOSSum)
+}
+
+// mosAvg is the shared mean-of-scored-calls: 0-known reads as "no data"
+// (zero), never as a 0.0 measurement.
+func mosAvg(known int, sum float64) float64 {
+	if known == 0 {
 		return 0
 	}
 
-	return d.MOSSum / float64(d.MOSKnown)
+	return sum / float64(known)
 }
 
 // DurationBucket is one histogram slot of call durations.
@@ -170,11 +176,7 @@ type DashboardStats struct {
 // AvgMOS is the mean MOS across every scored call in the index, or 0 when
 // nothing has reported a score yet.
 func (s DashboardStats) AvgMOS() float64 {
-	if s.MOSKnown == 0 {
-		return 0
-	}
-
-	return s.MOSSum / float64(s.MOSKnown)
+	return mosAvg(s.MOSKnown, s.MOSSum)
 }
 
 // AIRatio is the AI share of all calls in [0,1]. Zero calls → zero value
@@ -196,13 +198,21 @@ func (s DashboardStats) HasCostData() bool { return s.CostKnown > 0 }
 // second). Dividing by the priced calls' own seconds keeps a partially
 // priced window honest.
 func (s DashboardStats) CostPerMinute() float64 {
-	if s.CostSeconds <= 0 {
+	return costPerMinute(s.CostMicros, s.CostSeconds)
+}
+
+// costPerMinute is the shared per-minute rate across priced calls only;
+// billedSecs <= 0 means nothing billed a second, so the rate reads "no
+// data" (0), never a confident zero. The denominator discipline matches
+// Segment.CostPerMinute (segments.go).
+func costPerMinute(micros int64, billedSecs int) float64 {
+	if billedSecs <= 0 {
 		return 0
 	}
 
-	units := float64(s.CostMicros) / calls.MicrosPerUnit
+	units := float64(micros) / calls.MicrosPerUnit
 
-	return units / (float64(s.CostSeconds) / secondsPerMinute)
+	return units / (float64(billedSecs) / secondsPerMinute)
 }
 
 // DailyCost is the per-day spend series for the window, in currency units
@@ -359,14 +369,7 @@ func costWeekDelta(days []DayVolume) WeekDelta {
 		lastWeek += day.CostMicros
 	}
 
-	if lastWeek == 0 {
-		return WeekDelta{HasBaseline: false}
-	}
-
-	return WeekDelta{
-		Pct:         float64(thisWeek-lastWeek) / float64(lastWeek) * percentScale,
-		HasBaseline: true,
-	}
+	return newWeekDelta(thisWeek, lastWeek)
 }
 
 // unanimousCurrency reports the currency every priced call used, or "" when
@@ -390,16 +393,23 @@ func weekDelta(days []DayVolume) WeekDelta {
 		return WeekDelta{}
 	}
 
-	thisWeek, lastWeek := 0, 0
+	var thisWeek, lastWeek int64
 
 	for _, day := range days[len(days)-weekDays:] {
-		thisWeek += day.Calls
+		thisWeek += int64(day.Calls)
 	}
 
 	for _, day := range days[len(days)-2*weekDays : len(days)-weekDays] {
-		lastWeek += day.Calls
+		lastWeek += int64(day.Calls)
 	}
 
+	return newWeekDelta(thisWeek, lastWeek)
+}
+
+// newWeekDelta is the shared volume/spend week comparison: no baseline (a
+// quiet first week, or a currency that only exists in the newer week) reads
+// as HasBaseline false, never as a 0% change.
+func newWeekDelta(thisWeek, lastWeek int64) WeekDelta {
 	if lastWeek == 0 {
 		return WeekDelta{HasBaseline: false}
 	}
