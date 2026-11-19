@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>ARCHITECTURE DEEPENING</span>
+      <span>2026-11-20</span>
+      <span>PBX-LENS SCAN</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Candidates</div>
+          <a href="#recommendation">Recommendation</a>
+          <a href="#candidate-ops-snapshot">Poller-health snapshot</a>
+          <a href="#candidate-page-chrome">Page chrome</a>
+          <a href="#candidate-serve-boot">Serve boot</a>
+          <a href="#candidate-identity-seam">Identity package seam</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">ARCHITECTURE DEEPENING &middot; 2026-11-20</div>
+          <h1>Deepening candidates: pbx-lens</h1>
+          <p class="subtitle">
+            Scanned the serve + identity + ops surface at commit
+            <code>8ac47dd</code>: the paths the last 100 commits touched most
+            (<code>cmd/pbx-lens/serve.go</code> &times;8,
+            <code>internal/web/userauth.go</code> &times;7,
+            <code>internal/web/server.go</code> &times;6,
+            <code>internal/web/ops.go</code> &times;5,
+            <code>internal/oidclogin</code> &times;5 &mdash; the identity
+            hardening and OIDC lane). Not scanned: ingest parsers, the
+            <code>calls</code> domain, dashboard analytics.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: serve + identity + ops</span>
+            <span class="tag">Commit: 8ac47dd</span>
+            <span class="tag teal">Verdict: deepen one, stop</span>
+          </div>
+        </header>
+
+        <!-- Legend -->
+        <section id="legend">
+          <h2><span class="num">00</span>Legend</h2>
+          <div class="diagram">
+            <div class="node">solid box = module</div>
+            <div class="node" style="border-style: dashed">dashed box = seam</div>
+            <div class="node node-problem">red = leakage / drift</div>
+            <div class="node node-good">thick blue = deep module</div>
+          </div>
+        </section>
+
+        <!-- Top recommendation -->
+        <section id="recommendation">
+          <h2><span class="num">&#9670;</span>Top recommendation</h2>
+          <div class="callout callout-teal">
+            <strong><a href="#candidate-ops-snapshot">Type the poller-health snapshot at the ops seam</a></strong>
+            The ops surface is the interface this window changed most (identity
+            card, coverage card, scan-failure 503 all just crossed it), and every
+            future ops card pays today&rsquo;s five-copy tax on one untyped
+            shape &mdash; the cheapest depth to buy and the first one future
+            change will spend.
+          </div>
+        </section>
+
+        <!-- Candidate 1 -->
+        <section id="candidate-ops-snapshot">
+          <h2><span class="num">01</span>Candidate &middot; Poller-health snapshot</h2>
+
+          <article class="card">
+            <h3>Type the poller-health snapshot at the ops seam</h3>
+            <p>
+              <span class="badge badge-critical">Strong</span>
+              <span class="badge">in-process</span>
+            </p>
+            <div class="where">
+              internal/cli/poller.go:434-455 &middot; internal/web/ops.go:47,109-125,275-317 &middot;
+              cmd/pbx-lens/serve.go:305,329-354 &middot; internal/web/ops_page_test.go:49-61,126-178 &middot;
+              scripts/verify-ops-verdict.js
+            </div>
+
+            <div class="compare-header">
+              <div class="compare-before">Before &middot; one shape, five copies</div>
+              <div class="compare-after">After &middot; typed at the seam</div>
+            </div>
+            <div class="compare-row">
+              <div class="diagram" style="flex-direction: column; align-items: stretch">
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">cli SourceCounters.SnapshotAny</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node node-problem">map[string]any &middot; 4 keys</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">serve cannedStaleOps</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node node-problem">map[string]any &middot; same keys</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">ops_page_test fixtures</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node node-problem">map[string]any &middot; same keys</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node node-problem">web Options.Ops func() any</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node node-problem">json.Marshal &rarr; Unmarshal</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node">opsWirePoller &rarr; /ops page</div>
+                </div>
+              </div>
+              <div class="diagram" style="flex-direction: column; align-items: stretch">
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node node-good" style="border-width: 3px">poller-health snapshot (typed)</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">cli SourceCounters</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node" style="border-style: dashed">seam</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node">web /ops page</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">serve fixture (typed value)</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node" style="border-style: dashed">same seam</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node">tests (typed value)</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">/api/ops</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node">JSON &mdash; the only encoding left</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node">probe scripts</div>
+                </div>
+              </div>
+            </div>
+
+            <p>
+              <strong>Problem.</strong> The poller&rsquo;s health verdict crosses
+              an in-process seam as <code>func() any</code>, so one untyped wire
+              shape is hand-maintained in five places (cli producer, web decoder,
+              serve fixture, page tests, probe script) and is only ever checked
+              by a same-process JSON round-trip (ops.go:275-284).
+            </p>
+            <p>
+              <strong>Solution.</strong> Give the snapshot one typed interface at
+              the seam so cli and web speak the same value; JSON encoding
+              survives only where a network actually is &mdash; the
+              <code>/api/ops</code> route.
+            </p>
+            <ul>
+              <li>Shape lives in one place</li>
+              <li>Tests build typed fixtures</li>
+              <li>Page and JSON cannot drift</li>
+              <li>Round-trip adapter deleted</li>
+              <li>Fixture stops mirroring keys</li>
+              <li>Leverage: next ops card cheapens</li>
+            </ul>
+            <div class="callout callout-amber">
+              <strong>Recorded rationale to respect</strong>
+              ops.go:269-272 documents why the round-trip exists (&ldquo;the
+              wire format is the contract &hellip; keeps web decoupled from
+              cli&rdquo;). The decoupling goal stands; only the representation
+              changes &mdash; the seam stays, the accidental JSON adapter goes.
+            </div>
+          </article>
+        </section>
+
+        <!-- Candidate 2 -->
+        <section id="candidate-page-chrome">
+          <h2><span class="num">02</span>Candidate &middot; Page chrome</h2>
+
+          <article class="card">
+            <h3>Name the page chrome as one value</h3>
+            <p>
+              <span class="badge badge-high">Worth exploring</span>
+              <span class="badge">in-process</span>
+            </p>
+            <div class="where">
+              internal/web/page.templ:18 &middot; detail.templ:23,52,563 &middot; dashboard.templ:59 &middot;
+              ops.templ:20 &middot; search.templ:18 &middot; segment.templ:16 &middot;
+              server.go:70-76,265,426,565,595 &middot; ops.go:322 &middot; segment_page.go:36 &middot;
+              search.go:54,88 &middot; cmd/pbx-lens/serve.go:237-238 &middot; auth_test.go:382
+            </div>
+
+            <div class="compare-header">
+              <div class="compare-before">Before &middot; three parameters everywhere</div>
+              <div class="compare-after">After &middot; one named value</div>
+            </div>
+            <div class="compare-row">
+              <div class="diagram" style="flex-direction: column; align-items: stretch">
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">serve</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node node-problem">Options{AuthEnabled, Identity}</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">8 handlers</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node node-problem">(nonce, csrf, authed)</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node">7 page functions + shell + nav</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node node-problem">authed copies: Options field &middot; server field &middot; render argument</div>
+                </div>
+              </div>
+              <div class="diagram" style="flex-direction: column; align-items: stretch">
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node node-good" style="border-width: 3px">page context (nonce, csrf, authed, &hellip;)</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">request</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node" style="border-style: dashed">built once</div>
+                  <div class="arrow">&rarr;</div>
+                  <div class="node">every page function</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">authed derived from Identity &ne; nil</div>
+                </div>
+              </div>
+            </div>
+
+            <p>
+              <strong>Problem.</strong> The per-request page chrome travels as
+              three positional parameters through eight handler call sites and
+              seven page functions, and its <code>authed</code> bit duplicates a
+              fact <code>Options</code> already carries
+              (<code>AuthEnabled</code> beside <code>Identity</code> &mdash;
+              auth_test.go:382 even relies on them diverging).
+            </p>
+            <p>
+              <strong>Solution.</strong> Build one named page-context value once
+              per request; every route function and the shell take it as their
+              single chrome parameter, and <code>AuthEnabled</code> collapses
+              into <code>Identity &ne; nil</code>.
+            </p>
+            <ul>
+              <li>Chrome facts grow one place</li>
+              <li>Fifteen surfaces shrink</li>
+              <li>Double auth fact collapses</li>
+              <li>Locality: logout truth once</li>
+            </ul>
+          </article>
+        </section>
+
+        <!-- Candidate 3 -->
+        <section id="candidate-serve-boot">
+          <h2><span class="num">03</span>Candidate &middot; Serve boot</h2>
+
+          <article class="card">
+            <h3>Deepen the serve boot so tests stop re-assembling it</h3>
+            <p>
+              <span class="badge badge-high">Worth exploring</span>
+              <span class="badge">in-process</span>
+            </p>
+            <div class="where">
+              cmd/pbx-lens/serve.go:50-266,364-441,443-510 &middot;
+              cmd/pbx-lens/serve_test.go:47,182-199,294,588,612,717,1019-1022 &middot;
+              scripts/verify-identity-e2e.js (422 lines)
+            </div>
+
+            <div class="compare-header">
+              <div class="compare-before">Before &middot; internals re-assembled per test</div>
+              <div class="compare-after">After &middot; one boot, three callers</div>
+            </div>
+            <div class="compare-row">
+              <div class="diagram" style="flex-direction: column; align-items: stretch">
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node node-problem">8 &times; test: OpenSystem + Ingest + drain + buildServiceConfig + web.Register + Serve</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node node-problem">dead err checks at serve_test.go:184,296 &mdash; assembly drift</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">browser lane (JS) re-proves the composed serve</div>
+                </div>
+              </div>
+              <div class="diagram" style="flex-direction: column; align-items: stretch">
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node node-good" style="border-width: 3px">serve boot module</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">serve cmd</div>
+                  <div class="node">Go tests</div>
+                  <div class="node">browser lane</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node" style="border-style: dashed">seam: one boot interface</div>
+                </div>
+                <div class="diagram" style="border: none; margin: 0; padding: 0.25rem">
+                  <div class="node">middleware order + readiness invariants inside</div>
+                </div>
+              </div>
+            </div>
+
+            <p>
+              <strong>Problem.</strong> serve&rsquo;s composition &mdash; index
+              boot, identity boot, middleware order, readiness &mdash; is
+              reachable only by re-assembling its internals, so eight test call
+              sites hand-wire the same chain and already drift
+              (serve_test.go:184,296 still check an error
+              <code>buildServiceConfig</code> no longer returns), while the
+              ordering contract lives in comments and docs/http-stack.md.
+            </p>
+            <p>
+              <strong>Solution.</strong> Put the boot behind one interface that
+              the command, the Go tests, and the identity browser lane all cross,
+              with the middleware ordering and readiness invariants inside it.
+            </p>
+            <ul>
+              <li>Boot invariants gain one home</li>
+              <li>Middleware order testable directly</li>
+              <li>Deletes drifted test residue</li>
+              <li>Lanes boot identical stack</li>
+            </ul>
+            <div class="callout callout-amber">
+              <strong>ADR-0123 to respect</strong>
+              system.New stays the only composition root for the CQRS system
+              (AGENTS.md stack decisions): the boot module shapes inputs to
+              <code>app.New</code>; it must not hand-wire event, command,
+              decider, or storage.
+            </div>
+          </article>
+        </section>
+
+        <!-- Candidate 4 -->
+        <section id="candidate-identity-seam">
+          <h2><span class="num">04</span>Candidate &middot; Identity package seam</h2>
+
+          <article class="card">
+            <h3>Place the named Identity context at a package seam</h3>
+            <p>
+              <span class="badge badge-low">Speculative</span>
+              <span class="badge">in-process</span>
+            </p>
+            <div class="where">
+              internal/web/userauth.go:24-47,157-275,405-438 &middot;
+              internal/web/ops.go:134-136,500-524 &middot; internal/web/server.go:72-76 &middot;
+              docs/DOMAIN_LANGUAGE.md &sect; Identity and access
+            </div>
+
+            <div class="compare-header">
+              <div class="compare-before">Before &middot; identity inside web</div>
+              <div class="compare-after">After &middot; own module, small interface</div>
+            </div>
+            <div class="compare-row">
+              <div class="diagram" style="flex-direction: column; align-items: stretch; gap: 0.35rem">
+                <div class="node" style="width: 100%; text-align: center">web interface: wide &mdash; read model + identity</div>
+                <div class="node" style="width: 100%; text-align: center; height: 46px">UI queries, pages, cache, export</div>
+                <div class="node node-problem" style="width: 100%; text-align: center; height: 64px">userauth.go (534 lines): usermgmt + loginpage + webauthn + oidclogin adapters</div>
+              </div>
+              <div class="diagram" style="flex-direction: column; align-items: stretch; gap: 0.35rem">
+                <div class="node" style="width: 100%; text-align: center">web interface: read-only UI + authed fact + ops snapshot</div>
+                <div class="node" style="width: 100%; text-align: center; height: 46px">UI queries, pages, cache, export</div>
+                <div class="node" style="border-style: dashed; width: 100%; text-align: center">seam</div>
+                <div class="node node-good" style="border-width: 3px; width: 100%; text-align: center; height: 64px">identity module (usermgmt + loginpage + webauthn + oidclogin absorbed)</div>
+              </div>
+            </div>
+
+            <p>
+              <strong>Problem.</strong> The glossary already names an Identity
+              context, but its adapter (userauth.go) is compiled into the web
+              package, so the read-only UI module&rsquo;s interface now includes
+              the whole cqrs-htmx identity stack it never calls.
+            </p>
+            <p>
+              <strong>Solution.</strong> Move the identity adapter to its own
+              package; web keeps a small interface (the authed fact and the ops
+              snapshot) and stops importing usermgmt, loginpage, and webauthn.
+            </p>
+            <ul>
+              <li>web stops compiling identity stack</li>
+              <li>UI depends on small interface</li>
+              <li>Named concept gets a home</li>
+            </ul>
+            <div class="callout callout-amber">
+              <strong>Adoption decision to respect</strong>
+              The cqrs-htmx PATH B wiring is manual by decision (AGENTS.md: no
+              setup bundle &mdash; it collides with /dashboard and drags adminui
+              in); a package move must keep the manual wiring, not reintroduce a
+              bundle.
+            </div>
+            <p>
+              <em>Honest YAGNI note:</em> the identity changes of this window
+              landed inside userauth.go and oidclogin, not across a would-be
+              package seam &mdash; this card is depth insurance, not current
+              friction, which is why it ranks last.
+            </p>
+          </article>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-11-20 &middot; Reviewed against 8ac47dd &middot;
+            Friction scan of the serve + identity + ops surface; deletion test
+            applied to every suspected shallow module
+          </p>
+          <p>
+            Glossary terms this scan surfaced (add when a candidate is chosen):
+            <em>poller health</em> &mdash; the pass-age/staleness verdict behind
+            /api/ops; <em>page chrome</em> &mdash; the per-request facts every
+            page function renders with (nonce, CSRF token, authed).
+          </p>
+        </footer>
+      </main>
+    </div>

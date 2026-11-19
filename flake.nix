@@ -272,6 +272,13 @@
                   set -euo pipefail
                   root="$(git rev-parse --show-toplevel)"
                   hash_file="$root/vendorHash.nix"
+                  # AGENTS.md hard rule, now enforced: probing a dirty tree
+                  # lands a hash for the working tree, not the committed one
+                  # (the 2026-10-25 / 2026-11-01 incident class).
+                  if [ -n "$(git -C "$root" status --porcelain -- go.mod go.sum vendorHash.nix)" ]; then
+                    echo "ERROR: uncommitted go.mod/go.sum/vendorHash.nix — commit or stash first (AGENTS.md: CLEAN tree only)" >&2
+                    exit 1
+                  fi
                   cp "$hash_file" "$hash_file.bak"
                   # Restore on ANY exit, signals included. A probe interrupted
                   # by Ctrl-C, a session/desktop logout (SIGTERM) or a killed

@@ -20,7 +20,7 @@
 #   bash scripts/replay-report-verify.sh --self-test     # seeded pass+skip+fail proof
 set -uo pipefail
 
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 # Skip prefixes (exact leading match). Ordered by the failure they prevent:
 # host mutation first, then network writes, then heavy builds, then
