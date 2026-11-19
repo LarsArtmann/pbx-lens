@@ -1,0 +1,1922 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pbx-lens Data Model Review — Second Edition (2026-11-20)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>Data model review</span>
+      <span>2026-11-20</span>
+      <span>pbx-lens &middot; second edition</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (sticky; hidden below 1024px, inline TOC below covers it) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#current-state">Current State</a>
+          <a href="#problem-catalog">Problem Catalog</a>
+          <a href="#vision">The Vision</a>
+          <a href="#go-model">Go Data Model</a>
+          <a href="#composition">Composition in Action</a>
+          <a href="#validation">Validation Layer</a>
+          <a href="#decision-log">Decision Log</a>
+          <a href="#anti-patterns">Anti-Patterns</a>
+          <a href="#roadmap">Migration Roadmap</a>
+          <a href="#conclusion">Conclusion</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- 1. Hero -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">Data model review &middot; architecture deep-dive &middot; 2026-11-20</div>
+          <h1>pbx-lens Data Model Review &mdash; Second Edition</h1>
+          <p class="subtitle">
+            The domain, wire, and read-model types re-read from first
+            principles, six weeks after the
+            <a href="2026-10-11_data-model-review.html">first edition</a>.
+            Its roadmap landed: the hash pre-image is length-prefixed at
+            schema&nbsp;2, TurnRole exists byte-identically, and the module
+            hold was re-affirmed. What remains is structural, not cosmetic:
+            one hand-maintained mirror, an implicit lifecycle, and an
+            identity that never got its own type.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: domain &middot; wire &middot; ingest &middot; read model</span>
+            <span class="tag">Go 1.27.3 &middot; GOEXPERIMENT=jsonv2</span>
+            <span class="tag teal">Graded against documented doctrine</span>
+          </div>
+
+          <div class="toc">
+            <h3>Contents</h3>
+            <ul>
+              <li><a href="#current-state">00 &mdash; Current State</a></li>
+              <li><a href="#problem-catalog">01 &mdash; Problem Catalog (10 findings)</a></li>
+              <li><a href="#vision">02 &mdash; The Vision</a></li>
+              <li><a href="#go-model">03 &mdash; Go Data Model</a></li>
+              <li><a href="#composition">04 &mdash; Composition in Action</a></li>
+              <li><a href="#validation">05 &mdash; Validation Layer</a></li>
+              <li><a href="#decision-log">06 &mdash; Decision Log</a></li>
+              <li><a href="#anti-patterns">07 &mdash; Anti-Patterns</a></li>
+              <li><a href="#roadmap">08 &mdash; Migration Roadmap</a></li>
+              <li><a href="#conclusion">09 &mdash; Conclusion</a></li>
+            </ul>
+          </div>
+        </header>
+
+        <!-- 3. Current State -->
+        <section id="current-state" class="scorecard">
+          <div class="stat-card">
+            <div class="stat-value">~66</div>
+            <div class="stat-label">Types inventoried &middot; 12 packages</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">1</div>
+            <div class="stat-label">High severity</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Medium severity</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">5</div>
+            <div class="stat-label">Low severity</div>
+          </div>
+        </section>
+
+        <section id="current-state-notes">
+          <p>
+            Every type-defining file in scope was read this session:
+            <code>internal/calls</code> (domain, events, decider, commands,
+            projection, viewkey), <code>internal/wire</code>,
+            <code>internal/ingest</code> and its four mappers,
+            <code>internal/cli</code> (gate, seeds, refresh, enrich, poller),
+            <code>internal/retention</code>, and the web read-time join
+            (queries, representative, export, quality). Severity is graded
+            against the project's own documented doctrines &mdash;
+            zero-means-not-reported, TurnRole byte-stability, ContentHash as
+            identity, append-only history, single-operator scale &mdash; so a
+            generic review's "critical" often lands here as "verified
+            doctrine, not a finding."
+          </p>
+          <div class="callout callout-solution">
+            <strong>Series continuity</strong>
+            The 2026-10-11 first edition left a four-step roadmap. Two items
+            landed: the canonical length-prefixed hash encoding shipped
+            2026-10-23 as <code>ObservationSchemaVersion&nbsp;2</code>, and
+            <code>TurnRole</code> now exists with byte-identical constants
+            (hash-preserving, exactly as prescribed). The module hold was
+            re-affirmed by the 2026-11-12 identity verdict (NO TRIP). The
+            search-hit identity fix from that edition is verified still in
+            place (<code>internal/search/search.go:67</code>).
+          </div>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The pointer-free doctrine held</strong>
+                <span
+                  >Domain rows carry no pointer fields: MOS, CostMicros, and
+                  DurationSecs mean "not reported" at zero, and every
+                  dashboard denominator (QualityRollup) encodes that
+                  convention instead of fighting it.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Identity is deterministic and centralized</strong>
+                <span
+                  >StreamID is built in exactly one method, RecordKey owns
+                  the row-key form, and LookupView carries the legacy
+                  key-generation fallback &mdash; history stays reachable
+                  after the v4.6.0 key change.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Typed error carriers everywhere it matters</strong>
+                <span
+                  >errorfamily codes (call.record.*, call.enrich.after_retired),
+                  RefreshReadError / pollFileError with Unwrap, and a
+                  documented erraudit exemption census &mdash; no string
+                  matching on control-flow errors.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Hash discipline is engineered, not hoped for</strong>
+                <span
+                  >Length-prefixed named fields, conditional MOS inclusion,
+                  whole-second truncation at every mapper, schema versions
+                  riding the pre-image, and a refresh classifier that sizes
+                  correction waves before writing.</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 4. Problem Catalog -->
+        <section id="problem-catalog">
+          <h2><span class="num">01</span>Problem Catalog</h2>
+          <p>
+            Ten findings, ordered by impact. Each is graded for severity and
+            systemicity, and each fix is classified by its blast radius:
+            <span class="badge badge-fixed">hash-safe</span> (no change to
+            any hash pre-image),
+            <span class="badge badge-medium">schema bump</span> (moves
+            ContentHash &mdash; needs ObservationSchemaVersion 3 plus one
+            backfill), or
+            <span class="badge badge-critical">event-frozen</span> (would
+            break append-only history &mdash; forbidden).
+          </p>
+
+          <!-- PC-1 -->
+          <div class="issue issue-critical" id="pc-1">
+            <span class="severity severity-critical">High &middot; systemic</span>
+            <h3>PC-1 &middot; The read model is a hand-maintained mirror, not a composition</h3>
+            <div class="where">
+              internal/calls/projection.go:20&ndash;86 &middot;
+              internal/cli/enrich.go:196&ndash;201 &middot; internal/cli/refresh.go:179&ndash;191
+            </div>
+            <p>
+              <code>CallView</code> re-declares all 14 Observation fields and
+              all 3 Enrichment fields, flattened by hand.
+              <code>ViewFrom</code> copies them field-by-field;
+              <code>CallView.Observation()</code> copies them back;
+              <code>cli.enrichmentOf</code> copies the enrichment out a third
+              time. Adding one Observation field means touching four places,
+              and the codebase <em>built tooling to police that drift</em>:
+              the round-trip invariant tests, the additive-only refresh
+              detector, and the schema-version bump procedure all exist
+              largely because a mirror can silently lose a field. The
+              enrich pass even depends on the mirror's exactness for
+              correctness &mdash; <code>dispatchEnrich</code> addresses the
+              command through <code>view.Observation()</code>, so a missed
+              field would emit an event carrying a wrong snapshot.
+            </p>
+            <pre><code><span class="tok-comment">// today: three hand-synced projections of one shape</span>
+<span class="tok-keyword">func</span> <span class="tok-func">ViewFrom</span>(obs <span class="tok-type">Observation</span>, enr <span class="tok-type">Enrichment</span>) <span class="tok-type">CallView</span> { <span class="tok-comment">// 17 assignments</span> }
+<span class="tok-keyword">func</span> (v <span class="tok-type">CallView</span>) <span class="tok-func">Observation</span>() <span class="tok-type">Observation</span> { <span class="tok-comment">// 14 assignments back</span> }
+<span class="tok-keyword">func</span> <span class="tok-func">enrichmentOf</span>(view <span class="tok-type">CallView</span>) <span class="tok-type">Enrichment</span> { <span class="tok-comment">// 3 more</span> }</code></pre>
+            <div class="callout callout-teal">
+              <strong>Fix: embed, don't mirror <span class="badge badge-fixed">hash-safe</span></strong>
+              <code>type CallView struct { Observation; Enrichment; ContentHash string }</code>
+              &mdash; Go's embedding promotes fields, so the stored JSON is
+              byte-identical (tags already match exactly), metaengine's
+              top-level column addressing (started_at, direction, from_number&hellip;)
+              keeps working, and ViewFrom / Observation() / enrichmentOf
+              collapse into one-line constructors. The index is disposable:
+              one <code>cli.ResetReadModel</code> rebuild after landing.
+              ContentHash itself is untouched &mdash; it hashes Observation,
+              not the view.
+            </div>
+          </div>
+
+          <!-- PC-2 -->
+          <div class="issue issue-important" id="pc-2">
+            <span class="severity severity-important">Medium &middot; systemic</span>
+            <h3>PC-2 &middot; The stream lifecycle is parallel booleans, not a state</h3>
+            <div class="where">internal/calls/decider.go:12&ndash;20, 84&ndash;216</div>
+            <p>
+              <code>CallState</code> encodes a three-state lifecycle
+              (unobserved &rarr; observed &rarr; retired) as two independent
+              booleans plus free-form hashes. The domain's hardest invariant
+              &mdash; <em>a retired stream accepts no appends</em> &mdash; is
+              enforced by three separate runtime guards
+              (<code>call.corrected.after_retired</code>,
+              <code>call.enrich.after_retired</code>, the retire no-op), each
+              of which must remember to check. Invalid intermediates
+              (<code>Observed=false, Retired=true</code>) are representable.
+              One implicit assumption is load-bearing:
+              <code>Apply</code> on <code>call.observed</code> does not reset
+              <code>EnrichHash</code>, which is only safe because Observed is
+              structurally always the first event &mdash; nothing in the type
+              says so.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: closed union over fold state <span class="badge badge-fixed">hash-safe</span></strong>
+              Model the states as a sum type (see Go Data Model below): the
+              Retired variant simply has no slot for a new snapshot or
+              enrichment, so the guards become a type switch and the illegal
+              append stops compiling. Fold state is never persisted &mdash;
+              events are untouched, history replays identically.
+            </div>
+          </div>
+
+          <!-- PC-3 -->
+          <div class="issue issue-important" id="pc-3">
+            <span class="severity severity-important">Medium &middot; systemic</span>
+            <h3>PC-3 &middot; Stream identity never got its own type</h3>
+            <div class="where">
+              domain.go:105&ndash;114 &middot; representative.go:43 &middot; queries.go:622 &middot;
+              commands.go:88 &middot; retention.go:171 &middot; cli/ingest.go:70 &middot; cli/telnyx.go:49&ndash;53
+            </div>
+            <p>
+              <code>Observation.StreamID()</code> builds identity by string
+              concatenation inside a method of the observation itself, so
+              every caller that holds only a kind and a native id constructs
+              a <em>zombie observation</em> to compute a stream id &mdash;
+              the representative join, the detail-page join, and
+              <code>NewRetireCommand</code> all do it. Meanwhile five sites
+              re-derive the <code>kind:id</code> display form by hand
+              (streamLabel &times;2, stallContext, dedupeKey with a
+              different separator), and <code>EnrichmentSeed.StreamKey</code>
+              is a bare string whose zero value is silently dropped by
+              SeedsFor.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: a branded StreamKey with one constructor <span class="badge badge-fixed">hash-safe</span></strong>
+              <code>calls.StreamKeyOf(kind, nativeID) (StreamKey, error)</code>
+              owning build/parse/render; Observation.StreamID and the zombie
+              call sites delegate to it; EnrichmentSeed carries the branded
+              type; labels derive from its String(). Pure code motion
+              &mdash; no payload, no hash, no event changes.
+            </div>
+          </div>
+
+          <!-- PC-4 -->
+          <div class="issue issue-important" id="pc-4">
+            <span class="severity severity-important">Medium &middot; localized</span>
+            <h3>PC-4 &middot; Enrichment's one structural invariant is unvalidated</h3>
+            <div class="where">domain.go:237&ndash;267 &middot; decider.go:146&ndash;183</div>
+            <p>
+              An <code>Enrichment</code> with
+              <code>CostMicros&nbsp;&gt;&nbsp;0</code> and an empty
+              <code>CostCurrency</code> compiles, validates nowhere, and
+              dispatches: <code>NewEnrichCommand</code> validates the
+              observation but not the enrichment, and
+              <code>telnyx.CostOf</code> bounds the parsed value without
+              pairing it. The dashboard's mixed-currency refusal would later
+              sum it wrongly rather than refuse early. The pairing
+              &mdash; micros are meaningless without their unit &mdash; is
+              the type's only real invariant and nothing checks it.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: validate at the command boundary <span class="badge badge-fixed">hash-safe</span></strong>
+              <code>Enrichment.Validate()</code> (micros &gt; 0 &iff; currency
+              non-empty; currency is uppercase ISO-4217 when present),
+              called from <code>NewEnrichCommand</code> and the decider's
+              <code>Enrich</code> &mdash; same pattern as
+              <code>Observation.Validate</code> at
+              <code>NewRecordCommand</code>. The hash pre-image is value-driven,
+              so validation changes nothing until a bad value appears.
+            </div>
+          </div>
+
+          <!-- PC-5 -->
+          <div class="issue issue-important" id="pc-5">
+            <span class="severity severity-important">Medium &middot; localized</span>
+            <h3>PC-5 &middot; Two public types for one retention window</h3>
+            <div class="where">cli/ingest.go:81&ndash;108 &middot; retention/retention.go:39&ndash;63</div>
+            <p>
+              <code>cli.AgeGate{MaxAge}</code> and
+              <code>retention.Policy{MaxAge}</code> are the same type: the
+              same field, the same zero-keeps-everything contract, and
+              AgeGate.Apply literally constructs a Policy to delegate to
+              Admits. The ingest half and the purge half of one doctrine
+              (DOMAIN_LANGUAGE: age gate) are two names for one concept, so
+              the "shared by serve poller and one-shot commands" guarantee
+              rests on convention, not on the type.
+            </p>
+          </div>
+            <div class="callout callout-teal">
+              <strong>Fix: keep Policy, delete AgeGate <span class="badge badge-fixed">hash-safe</span></strong>
+              The CLI already imports retention; GateIngest takes a
+              <code>retention.Policy</code> and calls
+              <code>Admits</code> directly. One type, one contract, one
+              place to change the boundary semantics (inclusive cutoff).
+            </div>
+          </div>
+
+          <!-- PC-6 -->
+          <div class="issue issue-nice" id="pc-6">
+            <span class="severity severity-nice">Low &middot; localized</span>
+            <h3>PC-6 &middot; Hash digests are interchangeable bare strings</h3>
+            <div class="where">decider.go:12&ndash;20 &middot; projection.go:38</div>
+            <p>
+              <code>CallState.ContentHash</code>,
+              <code>CallState.EnrichHash</code>, and
+              <code>CallView.ContentHash</code> are all plain
+              <code>string</code>, so comparing an enrichment hash against a
+              content hash compiles. Equality of digests is identity in this
+              domain &mdash; the two digest spaces should not mix silently.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: two alias brands <span class="badge badge-fixed">hash-safe</span></strong>
+              <code>type ContentDigest string</code> and
+              <code>type EnrichDigest string</code> over the state and view
+              fields. Aliases keep JSON, sqlite storage, and the hash
+              computation itself byte-identical.
+            </div>
+          </div>
+
+          <!-- PC-7 -->
+          <div class="issue issue-nice" id="pc-7">
+            <span class="severity severity-nice">Low &middot; localized</span>
+            <h3>PC-7 &middot; The agent transcript line decodes as a fat union</h3>
+            <div class="where">internal/ingest/agent/agent.go:37&ndash;45</div>
+            <p>
+              <code>line</code> is one struct for all three JSONL variants
+              (start/turn/end): the discriminator is a string compared in a
+              switch, and every variant's fields are visible to every other
+              (a <code>turn</code> carrying a <code>uuid</code> is
+              representable and ignored). Tolerant wire decoding is the
+              right call here &mdash; the writer is a sibling Python module
+              &mdash; so this is recorded as an accepted cost, with the
+              observation that <code>normalizeTurn</code> already closes the
+              vocabulary that matters (caller/agent &rarr; user/assistant).
+            </p>
+          </div>
+            <div class="callout callout-amber">
+              <strong>Verdict: accept, with a note</strong>
+              A tagged-union decode (three structs behind a small interface)
+              would type the variants, but the file format is owned by the
+              same operator and the fat struct is 9 lines. Revisit only if
+              the writer grows discriminators.
+            </div>
+          </div>
+
+          <!-- PC-8 -->
+          <div class="issue issue-nice" id="pc-8">
+            <span class="severity severity-nice">Low &middot; localized</span>
+            <h3>PC-8 &middot; Direction has a hidden third value</h3>
+            <div class="where">cdr/cdr.go:229&ndash;257 &middot; domain.go:80&ndash;89</div>
+            <p>
+              The type declares two values and <code>Valid()</code> denies
+              everything else, yet the CDR pipeline speaks a third:
+              <code>Direction("")</code> as "no dialplan verdict" flows
+              through <code>classifyExtras</code> and
+              <code>parseDeclaredDirection</code> before the heuristic
+              derivation resolves it. It is never persisted (direction()
+              always falls through to a verdict), so this is a pipeline-internal
+              tri-state the type does not name &mdash; the classic
+              enum-with-undocumented-sentinel.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: name the intermediate <span class="badge badge-fixed">hash-safe</span></strong>
+              <code>type declaredDirection struct{ v Direction; ok bool }</code>
+              (or <code>(Direction, bool)</code> returns, matching
+              parseDeclaredDirection's existing shape) inside the cdr
+              package. Persisted Direction stays exactly two-valued.
+            </div>
+          </div>
+
+          <!-- PC-9 -->
+          <div class="issue issue-nice" id="pc-9">
+            <span class="severity severity-nice">Low &middot; localized</span>
+            <h3>PC-9 &middot; Rejection lists flatten error class to strings</h3>
+            <div class="where">cli/ingest.go:15&ndash;27 &middot; cli/enrich.go:14&ndash;29 &middot; retention/retention.go:68&ndash;72</div>
+            <p>
+              IngestStats.Rejected, EnrichStats.Rejected, and
+              retention.Report.Rejections are
+              <code>[]string</code>. For operator display that is the right
+              shape &mdash; but terminal refusals
+              (<code>call.enrich.after_retired</code>: never retried, by
+              design) and retriable ones (a lagging projection counting
+              Missing) are indistinguishable without string matching, and
+              the poller surfaces these counters to ops.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: classify at append time <span class="badge badge-fixed">hash-safe</span></strong>
+              A tiny <code>Rejection{Stream, Err error, Terminal bool}</code>
+              (or errorfamily classification) behind the same String()
+              rendering keeps the operator output identical while making the
+              poller's retry math honest.
+            </div>
+          </div>
+
+          <!-- PC-10 -->
+          <div class="issue issue-nice" id="pc-10">
+            <span class="severity severity-nice">Low &middot; cosmetic</span>
+            <h3>PC-10 &middot; nil/empty inconsistency in the over-age scan</h3>
+            <div class="where">retention/retention.go:79&ndash;109</div>
+            <p>
+              OldViews returns <code>nil, nil</code> when the policy is
+              unbounded but a non-nil empty slice otherwise; Retire iterates,
+              so behavior is identical. The mappers, by contrast, build
+              non-nil empty slices for stable JSON. Cheap to align, zero
+              urgency.
+            </p>
+          </div>
+        </section>
+
+        <!-- 5. The Vision -->
+        <section id="vision">
+          <h2><span class="num">02</span>The Vision</h2>
+          <p>
+            What the model looks like when the three structural findings are
+            paid down &mdash; judged against this project's scale, not an
+            enterprise checklist:
+          </p>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>One shape, stated once</strong>
+                <span
+                  >Observation and Enrichment are each declared exactly
+                  once; the read model composes them by embedding, so a new
+                  field lands in the view the day it lands in the domain
+                  &mdash; no mirror to update, no drift detector needed for
+                  the mirror class.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Lifecycle invariants that stop compiling when broken</strong>
+                <span
+                  >"A retired stream accepts no appends" is carried by the
+                  state's shape (the Retired variant has no slots to fill),
+                  with the decider's runtime guards reduced to the genuinely
+                  dynamic checks (hash equality).</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Identity as a first-class type</strong>
+                <span
+                  >StreamKey owns build, parse, and render; no zombie
+                  Observations, no hand-typed kind:id labels, no silently
+                  empty seed keys.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Zero-value doctrine kept, not pointerified</strong>
+                <span
+                  >MOS&nbsp;0, CostMicros&nbsp;0, agent DurationSecs&nbsp;0
+                  keep meaning "not reported"; the redesign adds zero
+                  pointer fields to domain rows and removes none of the
+                  doctrine's guarantees.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Every change labeled by blast radius</strong>
+                <span
+                  >Each improvement is hash-safe, schema-bumping, or
+                  event-frozen &mdash; and everything in this edition's
+                  roadmap is hash-safe, because the identity machinery
+                  earned stability and nothing proposed here needs to spend
+                  it.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Ceremony proportionate to one operator</strong>
+                <span
+                  >No version columns, no CreatedAt/UpdatedAt on view rows,
+                  no repository generics &mdash; the versioning that exists
+                  (schema constants riding the hash, event envelope version,
+                  dual-generation key fallback) is exactly the load-bearing
+                  subset.</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. Go Data Model -->
+        <section id="go-model">
+          <h2><span class="num">03</span>Go Data Model</h2>
+          <p>
+            The proposed types. Every declaration below is
+            <span class="badge badge-fixed">hash-safe</span>: none changes a
+            hash pre-image, an event payload, or a stored byte; the view
+            change is byte-identical under JSON embedding.
+          </p>
+
+          <h3>1 &middot; The composed read model (fixes PC-1)</h3>
+          <pre><code><span class="tok-comment">// CallView keeps its exact JSON shape (embedding promotes fields flat):
+// native_id, kind, &hellip;, mos, cost_micros, cost_currency, insight_summary,
+// content_hash &mdash; identical keys, identical omitempty, zero migration
+// beyond a re-derivable rebuild.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">CallView</span> <span class="tok-keyword">struct</span> {
+    <span class="tok-type">Observation</span>            <span class="tok-comment">// embedded: the 14 source facts</span>
+    <span class="tok-type">Enrichment</span>             <span class="tok-comment">// embedded: cost + insight</span>
+
+    ContentHash <span class="tok-type">ContentDigest</span> `json:<span class="tok-string">"content_hash"</span>`
+}
+
+<span class="tok-keyword">func</span> <span class="tok-func">ViewFrom</span>(obs <span class="tok-type">Observation</span>, enr <span class="tok-type">Enrichment</span>) <span class="tok-type">CallView</span> {
+    <span class="tok-keyword">return</span> <span class="tok-type">CallView</span>{
+        <span class="tok-type">Observation</span>:  obs,
+        <span class="tok-type">Enrichment</span>:   enr,
+        ContentHash: obs.<span class="tok-func">ContentHash</span>(),
+    }
+}
+
+<span class="tok-comment">// ViewFrom is now lossless by construction: there is no second
+// field list to forget a field on. v.Observation and v.Enrichment
+// replace Observation() and enrichmentOf outright.</span></code></pre>
+
+          <h3>2 &middot; The closed lifecycle (fixes PC-2)</h3>
+          <pre><code><span class="tok-comment">// CallState becomes a sum of the three legal states. The zero value
+// is Unobserved &mdash; the fold's starting point &mdash; and the illegal
+// combinations (retired-but-unobserved, enrichment without an
+// observation) stop existing.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">CallState</span> <span class="tok-keyword">struct</span> {
+    state <span class="tok-keyword">interface{</span> callState<span class="tok-keyword">() }</span> <span class="tok-comment">// nil == unobserved</span>
+}
+
+<span class="tok-keyword">type</span> <span class="tok-type">Unobserved</span> <span class="tok-keyword">struct</span>{}
+<span class="tok-keyword">func</span> (<span class="tok-type">Unobserved</span>) <span class="tok-func">callState</span>() {}
+
+<span class="tok-keyword">type</span> <span class="tok-type">Live</span> <span class="tok-keyword">struct</span> {
+    Current          <span class="tok-type">Observation</span>
+    CurrentEnrichment <span class="tok-type">Enrichment</span>
+    ContentHash      <span class="tok-type">ContentDigest</span>
+    EnrichHash       <span class="tok-type">EnrichDigest</span> <span class="tok-comment">// "" until first enrichment</span>
+}
+<span class="tok-keyword">func</span> (<span class="tok-type">Live</span>) <span class="tok-func">callState</span>() {}
+
+<span class="tok-keyword">type</span> <span class="tok-type">Retired</span> <span class="tok-keyword">struct</span> {
+    Prior <span class="tok-type">Live</span>          <span class="tok-comment">// audit context, read-only from here on</span>
+    Reason <span class="tok-type">string</span>        <span class="tok-comment">// matches the stored payload field</span>
+}
+<span class="tok-keyword">func</span> (<span class="tok-type">Retired</span>) <span class="tok-func">callState</span>() {}
+
+<span class="tok-comment">// Record's guards become a type switch; the after-retired branch
+// is the Retired case itself, and Enrich on Retired has no field
+// to write &mdash; the rejection is structural.</span></code></pre>
+
+          <h3>3 &middot; Stream identity as a type (fixes PC-3)</h3>
+          <pre><code><span class="tok-keyword">type</span> <span class="tok-type">StreamKey</span> <span class="tok-keyword">struct</span>{ kind <span class="tok-type">SourceKind</span>; native <span class="tok-type">NativeID</span> }
+
+<span class="tok-comment">// StreamKeyOf is the only constructor; every path that today builds
+// "kind:native" delegates here.</span>
+<span class="tok-keyword">func</span> <span class="tok-func">StreamKeyOf</span>(kind <span class="tok-type">SourceKind</span>, native <span class="tok-type">NativeID</span>) (<span class="tok-type">StreamKey</span>, <span class="tok-type">error</span>) {
+    <span class="tok-keyword">if</span> native == <span class="tok-string">""</span> || !kind.<span class="tok-func">Valid</span>() {
+        <span class="tok-keyword">return</span> <span class="tok-type">StreamKey</span>{}, <span class="tok-func">newStreamKeyError</span>(kind, native)
+    }
+    <span class="tok-keyword">return</span> <span class="tok-type">StreamKey</span>{kind, native}, <span class="tok-builtin">nil</span>
+}
+
+<span class="tok-keyword">func</span> (k <span class="tok-type">StreamKey</span>) <span class="tok-func">ID</span>() (id.<span class="tok-type">StreamID</span>, <span class="tok-type">error</span>)   <span class="tok-comment">// &lt;kind&gt;:&lt;native&gt; via id.ParseStreamID</span>
+<span class="tok-keyword">func</span> (k <span class="tok-type">StreamKey</span>) <span class="tok-func">String</span>() <span class="tok-type">string</span>      <span class="tok-comment">// the display form: 5 hand-typed labels retire</span>
+<span class="tok-keyword">func</span> (k <span class="tok-type">StreamKey</span>) <span class="tok-func">IsZero</span>() <span class="tok-type">bool</span>      <span class="tok-comment">// SeedsFor rejects instead of dropping</span>
+
+<span class="tok-keyword">func</span> (o <span class="tok-type">Observation</span>) <span class="tok-func">StreamID</span>() (id.<span class="tok-type">StreamID</span>, <span class="tok-type">error</span>) {
+    key, err := <span class="tok-func">StreamKeyOf</span>(o.Kind, o.NativeID)  <span class="tok-comment">// delegates</span>
+    <span class="tok-keyword">if</span> err != <span class="tok-builtin">nil</span> { <span class="tok-keyword">return</span> id.<span class="tok-type">StreamID</span>{}, err }
+    <span class="tok-keyword">return</span> key.<span class="tok-func">ID</span>()
+}
+
+<span class="tok-keyword">type</span> <span class="tok-type">EnrichmentSeed</span> <span class="tok-keyword">struct</span> {
+    ConversationID <span class="tok-type">string</span>
+    CallControlID  <span class="tok-type">string</span>
+    Stream         <span class="tok-type">StreamKey</span>   <span class="tok-comment">// was StreamKey string &mdash; brandable now</span>
+}</code></pre>
+
+          <h3>4 &middot; Validation where values are born (fixes PC-4)</h3>
+          <pre><code><span class="tok-keyword">func</span> (e <span class="tok-type">Enrichment</span>) <span class="tok-func">Validate</span>() <span class="tok-type">error</span> {
+    <span class="tok-keyword">if</span> (e.CostMicros &gt; <span class="tok-number">0</span>) != (e.CostCurrency != <span class="tok-string">""</span>) {
+        <span class="tok-keyword">return</span> <span class="tok-func">newInvalidEnrichmentError</span>(e) <span class="tok-comment">// cost pairs with its unit</span>
+    }
+    <span class="tok-keyword">if</span> e.CostMicros &lt; <span class="tok-number">0</span> {
+        <span class="tok-keyword">return</span> <span class="tok-func">newInvalidEnrichmentError</span>(e) <span class="tok-comment">// detail records never bill negative</span>
+    }
+    <span class="tok-keyword">return</span> <span class="tok-builtin">nil</span>
+}
+
+<span class="tok-comment">// Wired exactly where Observation.Validate already sits:</span>
+<span class="tok-comment">// NewEnrichCommand and the decider's Enrich &mdash; one line each.</span></code></pre>
+        </section>
+
+        <!-- 7. Composition in Action -->
+        <section id="composition">
+          <h2><span class="num">04</span>Composition in Action</h2>
+          <p>
+            The before/after of the two highest-leverage changes. Both are
+            <span class="badge badge-fixed">hash-safe</span> and
+            <span class="badge badge-fixed">read-model-safe</span> (the
+            index is disposable; <code>cli.ResetReadModel</code> rebuilds).
+          </p>
+
+          <div class="compare-header">
+            <div class="compare-before">Before &mdash; the mirror (17 fields, 3 copies)</div>
+            <div class="compare-after">After &mdash; the composition (0 copies)</div>
+          </div>
+          <div class="compare-row">
+            <pre><code><span class="tok-keyword">type</span> <span class="tok-type">CallView</span> <span class="tok-keyword">struct</span> {
+    NativeID   <span class="tok-type">NativeID</span>
+    Kind       <span class="tok-type">SourceKind</span>
+    Direction  <span class="tok-type">Direction</span>
+    StartedAt  time.<span class="tok-type">Time</span>
+    <span class="tok-comment">// &hellip; 10 more observation fields</span>
+    CostMicros   <span class="tok-type">int64</span>
+    CostCurrency <span class="tok-type">string</span>
+    InsightSummary <span class="tok-type">string</span>
+    MOS         <span class="tok-type">float64</span>
+    ContentHash <span class="tok-type">string</span>
+}
+<span class="tok-comment">// + ViewFrom (17 assignments)</span>
+<span class="tok-comment">// + Observation() (14 back)</span>
+<span class="tok-comment">// + enrichmentOf (3 more, cli)</span>
+<span class="tok-comment">// + round-trip test pinning it all</span></code></pre>
+            <pre><code><span class="tok-keyword">type</span> <span class="tok-type">CallView</span> <span class="tok-keyword">struct</span> {
+    <span class="tok-type">Observation</span>            <span class="tok-comment">// embedded</span>
+    <span class="tok-type">Enrichment</span>             <span class="tok-comment">// embedded</span>
+    ContentHash <span class="tok-type">ContentDigest</span>
+}
+<span class="tok-comment">// ViewFrom: 3 lines. Done.</span>
+<span class="tok-comment">// v.Observation / v.Enrichment</span>
+<span class="tok-comment">//   replace 3 hand-synced functions.</span>
+<span class="tok-comment">// JSON keys byte-identical (fields</span>
+<span class="tok-comment">//   promote flat through embedding).</span>
+<span class="tok-comment">// Round-trip is by construction.</span></code></pre>
+          </div>
+
+          <div class="compare-header">
+            <div class="compare-before">Before &mdash; zombie observation as an ID builder</div>
+            <div class="compare-after">After &mdash; the key type</div>
+          </div>
+          <div class="compare-row">
+            <pre><code><span class="tok-comment">// web/representative.go &amp; queries.go &amp; commands.go</span>
+obs := calls.<span class="tok-type">Observation</span>{
+    NativeID: view.NativeID,
+    Kind:     kind,  <span class="tok-comment">// not a real observation</span>
+}
+sid, err := obs.<span class="tok-func">StreamID</span>()
+<span class="tok-comment">// five more sites hand-build "kind:id"</span>
+<span class="tok-comment">// for labels, dedupe keys, stall context</span></code></pre>
+            <pre><code>key, err := calls.<span class="tok-func">StreamKeyOf</span>(kind, view.NativeID)
+sid, err := key.<span class="tok-func">ID</span>()       <span class="tok-comment">// addressing</span>
+label := key.<span class="tok-func">String</span>()   <span class="tok-comment">// display</span>
+<span class="tok-comment">// one constructor, one renderer,</span>
+<span class="tok-comment">// zero pretend-observations</span></code></pre>
+          </div>
+        </section>
+
+        <!-- 8. Validation Layer -->
+        <section id="validation">
+          <h2><span class="num">05</span>Validation Layer</h2>
+          <p>
+            Where invalid states become unrepresentable &mdash; and where
+            they deliberately stay runtime-checked, because the value must
+            survive a JSON round-trip through append-only history.
+          </p>
+          <div class="card card-solution">
+            <h3>Enforced at construction (compile-time or first breath)</h3>
+            <p>
+              <strong>StreamKeyOf</strong> rejects empty kinds and native ids
+              &mdash; a key that cannot address a stream cannot exist.
+              <strong>Enrichment.Validate</strong> (new) makes the
+              cost-without-currency enrichment unrepresentable at the only
+              ingress (<code>NewEnrichCommand</code>). The closed
+              <strong>CallState</strong> union makes retired-appends and
+              enrich-without-observe unrepresentable in the fold. Commands
+              already validate observations at construction
+              (<code>NewRecordCommand</code> &rarr;
+              <code>Validate</code> &rarr; <code>StreamID</code>), so this
+              layer extends an existing seam rather than adding one.
+            </p>
+          </div>
+          <div class="card card-warning">
+            <h3>Deliberately still runtime: event payload decode</h3>
+            <p>
+              Fold state and payloads are reconstructed from stored JSON on
+              every replay; struct types must stay constructible and
+              zero-valued there, and history must never be re-validated
+              (old events are trusted bytes &mdash; a
+              <code>call.fold.unknown_event</code> corruption answer is the
+              only guard the fold needs). Validation lives at ingress: the
+              four mappers plus the command constructors. That split
+              &mdash; validate on the way in, trust on replay &mdash; is
+              the correct shape for an append-only log and is preserved
+              untouched.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h3>Still hash-gated: identity itself</h3>
+            <p>
+              ContentHash equality remains the decider's no-op answer, and
+              nothing in this redesign touches the pre-image: schema token,
+              field names, length prefixes, conditional MOS, whole-second
+              turn times are all unchanged. The
+              <code>contentHash(schema int)</code> test seam keeps proving
+              that a bump moves the hash.
+            </p>
+          </div>
+        </section>
+
+        <!-- 9. Decision Log -->
+        <section id="decision-log">
+          <h2><span class="num">06</span>Decision Log</h2>
+          <p>
+            Each design choice, the rejected alternative, and the blast-radius
+            class that decided it.
+          </p>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>Choice</th>
+                  <th>Rejected alternative</th>
+                  <th>Why / safety class</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Compose CallView by embedding Observation + Enrichment</td>
+                  <td>Keep the flat mirror; keep hardening it with round-trip tests</td>
+                  <td class="yes">Byte-identical JSON; deletes 3 hand-synced copies and the drift class they spawn &mdash; hash-safe</td>
+                </tr>
+                <tr>
+                  <td>Closed CallState union in the decider fold</td>
+                  <td>Keep booleans; add a state-validity assert helper</td>
+                  <td class="yes">Fold state is never persisted, so the union is invisible to history &mdash; hash-safe, history-safe</td>
+                </tr>
+                <tr>
+                  <td>Branded StreamKey with one constructor</td>
+                  <td>Export a BuildStreamID(kind, id) function returning the library type</td>
+                  <td class="yes">The key also owns rendering (5 label sites) and zero-ness (seeds); a bare function answers none of that &mdash; hash-safe</td>
+                </tr>
+                <tr>
+                  <td>Enrichment.Validate at the command boundary</td>
+                  <td>Constructor-only Enrichment with unexported fields</td>
+                  <td class="yes">Payloads decode from stored JSON &mdash; unexported fields break replay; Validate matches the Observation pattern &mdash; hash-safe</td>
+                </tr>
+                <tr>
+                  <td>Retention.Policy everywhere; AgeGate deleted</td>
+                  <td>Keep both as documented halves of one doctrine</td>
+                  <td class="yes">Two names for one invariant invites drift between the ingest gate and the purge &mdash; hash-safe</td>
+                </tr>
+                <tr>
+                  <td>Alias brands for the two digests</td>
+                  <td>Struct-wrapped digest with IsZero</td>
+                  <td class="yes">Aliases ride JSON/sqlite unchanged; the wrapper buys nothing the state union doesn't &mdash; hash-safe</td>
+                </tr>
+                <tr>
+                  <td>TurnRole stays a string-aliased closed set</td>
+                  <td>iota enum with String()</td>
+                  <td class="no">Event-frozen: constants are byte-identical to the pre-enum strings so ContentHash is unchanged &mdash; renaming or re-numbering forks identity</td>
+                </tr>
+                <tr>
+                  <td>MOS stays float64 with zero-means-not-reported</td>
+                  <td>Optional-score wrapper type (*MOS or struct{v, ok})</td>
+                  <td class="no">Schema bump territory for zero benefit; the only producer (CDR) already clamps to (0,5]; the hash omits zero &mdash; convention, not flaw</td>
+                </tr>
+                <tr>
+                  <td>FromNumber/ToNumber stay raw strings</td>
+                  <td>Brand as E164 at the domain boundary</td>
+                  <td class="no">Raw-as-observed doctrine: extensions ("9100"), garbled caller-IDs, and source formatting would fail E.164; E164 exists as a derived view (export PII hashing)</td>
+                </tr>
+                <tr>
+                  <td>No CreatedAt/UpdatedAt/Version on rows</td>
+                  <td>P8-style lifecycle columns</td>
+                  <td class="no">Single operator, disposable index; schema versions riding the hash + event envelope version + legacy key fallback are the load-bearing subset</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 10. Anti-Patterns -->
+        <section id="anti-patterns">
+          <h2><span class="num">07</span>Anti-Patterns</h2>
+          <p>Traps to avoid while adopting this model.</p>
+          <div class="card card-problem">
+            <h3>Don't "fix" zero-means-not-reported with pointers</h3>
+            <p>
+              Replacing MOS/CostMicros/DurationSecs zero-sentinel semantics
+              with *float64 / optional structs would change JSON, change the
+              hash pre-image story, and break every dashboard denominator
+              that exists to interpret the convention
+              (QualityRollup.DurationReported). The convention is the
+              contract.
+            </p>
+          </div>
+          <div class="card card-problem">
+            <h3>Don't re-type event payload fields</h3>
+            <p>
+              History is append-only: CallRetired.Reason stays a plain
+              string even though the command side brands RetentionReason;
+              TurnRole constants must never be re-numbered or renamed. New
+              payload fields may be added (they decode as zero in old
+              events &mdash; that is how SourceEvents landed); existing
+              names, types, and bytes are frozen. Hashed additions need the
+              ObservationSchemaVersion bump plus one refresh backfill,
+              never a silent edit.
+            </p>
+          </div>
+          <div class="card card-problem">
+            <h3>Don't validate replayed events</h3>
+            <p>
+              The fold trusts stored bytes; validation belongs to ingress
+              (mappers, command constructors). A Validate call inside Apply
+              would turn one corrupt-but-historical event into a permanent
+              replay failure &mdash; the corruption family answer
+              (<code>call.fold.unknown_event</code>) is the fold's only
+              contract.
+            </p>
+          </div>
+          <div class="card card-problem">
+            <h3>Don't rebuild the mirror inside the union</h3>
+            <p>
+              When composing CallView, embed &mdash; do not redeclare
+              promoted fields "for clarity." A single redeclared field
+              (shadowing the embedded one) silently reintroduces the
+              two-lists-to-update problem this edition exists to retire.
+            </p>
+          </div>
+          <div class="card card-problem">
+            <h3>Don't hand-type a sixth kind:id label</h3>
+            <p>
+              Every new diagnostic that needs to name a stream must go
+              through StreamKey.String(); the &quot;\x00&quot; dedupe
+              separator variant is the one legitimate divergence (it is a
+              key, not a label) and should be built from the same StreamKey
+              value.
+            </p>
+          </div>
+        </section>
+
+        <!-- 11. Migration Roadmap -->
+        <section id="roadmap">
+          <h2><span class="num">08</span>Migration Roadmap</h2>
+          <p>
+            Ordered smallest-blast-radius first. Every step is
+            <span class="badge badge-fixed">hash-safe</span> and
+            history-safe; none needs a schema bump or an event migration.
+          </p>
+
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>StreamKey type + StreamKeyOf constructor</h4>
+              <p>
+                internal/calls: introduce the type, delegate
+                Observation.StreamID through it, migrate the three zombie
+                sites (representative, detail join, retire command) and the
+                five label sites. EnrichmentSeed.Stream becomes branded;
+                SeedsFor rejects a zero key loudly instead of dropping it.
+                Pure code motion; no behavior change.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>Compose CallView; delete the mirror</h4>
+              <p>
+                Embed Observation + Enrichment, delete ViewFrom's and
+                Observation()'s field lists and cli.enrichmentOf, keep the
+                round-trip test (it becomes a proof of embedding, not a
+                guard of labor). Verify stored JSON is byte-identical with
+                a fixture assertion, then rebuild the disposable index via
+                cli.ResetReadModel per the runbook. The additive-only
+                refresh detector stays &mdash; it polices hashed-vs-unhashed
+                drift, which embedding does not remove.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>Enrichment.Validate wired into NewEnrichCommand and Enrich</h4>
+              <p>
+                One new validation plus one call site pair; the enrich
+                pass's targetEnrichment is the natural place to also assert
+                the pairing before dispatch. Zero effect on existing
+                streams (all stored enrichments already pair correctly).
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>Closed lifecycle union in the decider</h4>
+              <p>
+                Rewrite CallState as the three-variant sum, port Record /
+                Enrich / Retire to type switches, keep every rejection code
+                and the no-op semantics identical (the scenario and rapid
+                tests pin them). Fold state only &mdash; events, hashes,
+                and replay behavior unchanged.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>AgeGate retires into retention.Policy</h4>
+              <p>
+                GateIngest takes a Policy; AgeGate is deleted; the
+                serve-poller flag wires Policy{MaxAge} directly. Update
+                DOMAIN_LANGUAGE's age-gate row to name the single type.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">&ndash;</div>
+            <div class="migration-content">
+              <h4>Explicitly not on the roadmap</h4>
+              <p>
+                ObservationSchemaVersion 3 (nothing proposed needs it);
+                TurnRole re-typing (event-frozen); pointer-ifying
+                zero-means fields (doctrine); version/timestamp columns
+                (ceremony at this scale); generics across the stats types
+                (no shared shape). Recorded here so the next review can
+                check this restraint against fresh evidence.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 12. Conclusion -->
+        <section id="conclusion">
+          <h2><span class="num">09</span>Conclusion</h2>
+          <div class="callout callout-solution">
+            <strong>&ldquo;The identity machinery is finished &mdash; the
+            remaining debt is that the read model still writes the domain
+            out by hand.&rdquo;</strong>
+            Six weeks after the first edition, every hash-level promise
+            held: pre-image encoding is canonical, roles are typed without
+            moving a byte, and history replays unchanged through two schema
+            generations of row keys. What this pass found is older and
+            simpler &mdash; a mirror that tooling was built to tolerate, a
+            lifecycle the guards remember so the types don't have to, and an
+            identity that works but was never named. All three can be paid
+            down without touching a single hashed byte, which is exactly
+            the standard the first edition set.
+          </div>
+          <p>
+            Companion reports in the series: the
+            <a href="2026-10-11_data-model-review.html">2026-10-11 first
+            edition</a> (whose roadmap items 2 and 3 this edition verifies
+            as landed), the
+            <a href="2026-10-11_naming-review-companion.html">naming
+            review</a>, and the
+            <a href="2026-11-12_15-30_brutal-self-review.html">2026-11-12
+            brutal self-review</a> (module-hold verdict). A full-code-review
+            shell dated 2026-11-20 exists in this directory but carries no
+            findings yet; nothing here depends on it.
+          </p>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-11-20 &middot; data-model-review skill, second
+            edition &middot; every claim verified against source this
+            session (Go 1.27.3, GOEXPERIMENT=jsonv2) &middot; graded
+            against docs/DOMAIN_LANGUAGE.md and AGENTS.md doctrine
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

@@ -1003,11 +1003,11 @@
               <div class="check">+</div>
               <div class="text">
                 <strong>utils/format is the single formatting dialect</strong>
-                <span>50 call sites across the pages &mdash;
-                <code>StringOrDash</code> &times;14,
-                <code>CompactDuration</code> &times;13,
-                <code>ClockDuration</code> &times;12,
-                <code>Percent</code> &times;11. The AGENTS.md rule
+                <span>26 source call sites (24 in the .templ pages + 2 in ops.go) &mdash;
+                <code>StringOrDash</code> &times;7,
+                <code>CompactDuration</code> &times;7,
+                <code>ClockDuration</code> &times;6,
+                <code>Percent</code> &times;6. The AGENTS.md rule
                 (&ldquo;never hand-roll duration/percent/dash&rdquo;) holds;
                 <code>mosGaugePercent</code> stays a domain mapping, correctly
                 outside the library.</span>
@@ -1441,7 +1441,7 @@ Class: "!items-stretch",
               <tr><td>41</td><td>htmx.GlobalErrorHandling</td><td class="yes">Fully</td><td>page.templ:5 + ErrorHandlingConfig</td></tr>
               <tr><td>42</td><td>htmx rest (ConfirmDelete, CSRFToken, SwapOOB, ViewTransitions, LoadingButton/Indicator, InlineLoadingOverlay)</td><td class="na">N/A</td><td>read-only UI: no POST surface outside auth ceremonies (nosurf handles those), no deletes, no view transitions demand</td></tr>
               <tr><td>43</td><td>icons (150 names)</td><td class="yes">Fully</td><td>10 names used (Phone, Search, Microphone, Calendar, Clock, Inbox, Question, Server, &hellip;); corpus keeps classes fresh</td></tr>
-              <tr><td>44</td><td>utils/format (6 funcs)</td><td class="yes">Fully</td><td>50 sites over 4 funcs; Bytes/CompactCount unused &mdash; no byte/count-heavy surface</td></tr>
+              <tr><td>44</td><td>utils/format (6 funcs)</td><td class="yes">Fully</td><td>26 source sites (24 .templ + 2 ops.go) over 4 funcs; Bytes/CompactCount unused &mdash; no byte/count-heavy surface</td></tr>
               <tr><td>45</td><td>utils core (BaseProps, Ternary, ScriptComponent)</td><td class="yes">Fully</td><td>ScriptComponent wraps the logout script (calls.templ:76)</td></tr>
               <tr><td>46</td><td>utils/golden test kit</td><td class="yes">Fully</td><td>golden_pages_test.go:11; golden suite pins all 9 page renders</td></tr>
               <tr><td>47</td><td>errorpage module</td><td class="na">N/A</td><td>not imported; appkit shell + hand-rolled error responses cover it (adoption map)</td></tr>
