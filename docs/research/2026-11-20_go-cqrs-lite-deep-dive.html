@@ -1,0 +1,1566 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>go-cqrs-lite &mdash; Adoption &amp; Utilization Audit (pbx-lens, 2026-11-20)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>Library deep dive</span>
+      <span>2026-11-20</span>
+      <span>pbx-lens &middot; audit session</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#current">Current usage</a>
+          <a href="#findings">Findings</a>
+          <a href="#versions">Version currency</a>
+          <a href="#opportunities">Opportunities</a>
+          <a href="#inventory">Capability inventory</a>
+          <a href="#verify">How to verify</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-11-20</div>
+          <h1>go-cqrs-lite &mdash; Adoption &amp; Utilization Audit</h1>
+          <p class="subtitle">
+            The event-sourcing backbone of pbx-lens (14 direct modules, led by
+            system/v4, metaengine/v4 and metaengine/projectionadapter/v4), audited
+            at the exact go.mod pins against the module-cache source. The library
+            is used at reference quality on its canonical surface; the residual
+            gaps are one engine-native pagination path the codebase hand-rolls
+            and a four-module pin wave that has fallen behind upstream.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Pins: system v4.18.0 &middot; metaengine v4.23.0 &middot; projectionadapter v4.6.2 (+11)</span>
+            <span class="tag">Latest: system v4.19.0 &middot; metaengine v4.26.0</span>
+            <span class="tag teal">Adoption score: 91/100 (very high)</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">91</div>
+            <div class="label">Adoption score (/100, very high)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">22</div>
+            <div class="label">Fully leveraged (of 27 applicable)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">5</div>
+            <div class="label">Partially used</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Missed &middot; Misused</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">10/14</div>
+            <div class="label">Direct pins at proxy latest</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            go-cqrs-lite is the load-bearing half of pbx-lens' dependency graph:
+            14 direct modules spanning the composition root (system/v4), the read
+            model (metaengine/v4 + sqliteengine + projectionadapter), the write
+            side (event, command, decider, id, record), the projection workers
+            (projectionhost, storage), the test harness (scenario,
+            systemscenario) and the docs renderers (catalog). This audit
+            re-verified every import site at HEAD (2026-11-20), read the pinned
+            source in the module cache, and graded 49 capability rows &mdash; 27
+            applicable, 22 fully leveraged, 5 partially used, zero missed or
+            misused. The prior fleet report scored the runtime core 92/100
+            (23 of 25); this report's 91 is the same posture re-derived under a
+            narrower census that adds two rows the fleet did not grade
+            (engine-native cursor pagination; the system health surface).
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Adoption is reference-quality and needs no corrective work. The two
+            highest-leverage moves are both additive: take the four-module pin
+            wave (system, metaengine, sqliteengine, catalog &mdash; verified to
+            carry no used-surface change), and evaluate
+            <code>TypedReader.ScanPage</code>'s compound cursor as a replacement
+            for the ~95 lines of hand-rolled keyset-pagination machinery in
+            <code>internal/web/queries.go</code>.
+          </div>
+          <p>
+            <strong>Prior reports this one supersedes</strong> (newer and
+            narrower wins): the runtime-core half of
+            <code>docs/review/libs/go-cqrs-lite.md</code> (2026-11-04 fleet
+            audit, refreshed 2026-11-11/12; score 92/100, all findings since
+            closed) is superseded here &mdash; its census was re-verified at
+            today's HEAD and its closed findings are carried as history. The
+            catalog + testing-modules half remains owned by
+            <code>docs/research/2026-10-24_go-cqrs-lite-catalog-testing-modules-deep-dive.html</code>
+            (58/100 at its pin; execution errata record the closures). The
+            fleet index (<code>docs/review/libs/index.html</code>) keeps the
+            pooled library-wide view.
+          </p>
+        </section>
+
+        <!-- Strengths -->
+        <section id="current">
+          <h2><span class="num">&#9670;</span>Current usage &mdash; the verified baseline</h2>
+          <p>
+            Every import of every go-cqrs-lite module was re-grepped at HEAD
+            (47 files; the full census replays in the
+            <a href="#verify">verify appendix</a>). The touched surface, by
+            module, with the load-bearing call sites:
+          </p>
+
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>system.New is the only composition root (ADR-0123)</strong>
+                <span>Exactly one call site &mdash; internal/app/app.go:112 &mdash; behind
+                DomainConfig() (events + decider + 3 commands + projection, app.go:33-84)
+                and DeploymentConfig(dsn) (memory-or-sqlite engine, 2 instances,
+                app.go:96-108). Zero hand-wiring of event/command/decider/storage/
+                stack/kv anywhere (verified by grep, see appendix); the sqliteengine
+                blank import lives exactly once (app.go:9).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Canonical folds only</strong>
+                <span>metaengine.OnRecordTyped &times;4 incl. the Remove-tombstone
+                retirement fold (internal/calls/projection.go:94-126), decoded via
+                projectionadapter.NewTypeDecoder + Register (projection.go:128-133).
+                Deprecated On/OnTyped/Delta/Infer constructors: zero uses
+                (verified by grep).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Sanctioned read path</strong>
+                <span>metaengine.NewReader + TypedReader Get/Scan/Count with
+                WithFilter/FilterEq-Ge-Le-Gt-Lt/WithOr/WithSort/WithLimit across
+                internal/web/queries.go:99-530, freshness.go:25-38,
+                retention.go:84-121, cmd/pbx-lens/ops.go:81-85 (list, keyset walk,\n                detail joins, filters: queries.go:99-712) &mdash; always
+                through calls.RecordKey/LookupView for the bare-key contract
+                (internal/calls/viewkey.go:16-40).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Batch-drainer projection lifecycle, fenced by tests</strong>
+                <span>projectionhost Start/Stop/Status with the full WorkerState
+                machine in internal/cli/system.go:41-174 &mdash; one-shot drains for
+                the CLI, the serve poller re-draining on tick,
+                ProjectionWorkersReady as the /health/ready predicate, and
+                ResetProjection + the adapter's Resettable behind
+                cli.ResetReadModel (system.go:91-97; TestHostResetRebuildsReadModel).
+                WithOnFailed is wired in app.DomainConfig (app.go:80-82).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Write side and identity stack</strong>
+                <span>event.New + WithSchemaVersion(1) + DecodePayloadAuto in the
+                decider fold (internal/calls/decider.go:22-183);
+                command.New &times;3 (internal/calls/commands.go);
+                storage.SQLiteCheckpointSchema + NewSQLiteCheckpointStore for the
+                cqrs-htmx identity DB (internal/web/userauth.go:330,337).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Tests boot the production wiring</strong>
+                <span>systemscenario (Adopt/Memory/Scenario/WithAwaitTimeout/
+                DelayedDriver/AssertJournalEquivalence) + scenario.Given + rapid,
+                all through app.DomainConfig()/app.DeploymentConfig(dsn) &mdash;
+                operator-approved test-only modules, zero parallel test wiring.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Catalog renderers</strong>
+                <span>eventcatalog.NewExporter (WithPlainRefIDs,
+                WithSkipBootstrapFiles) + architecture.NewExporter (WithTitle)
+                behind the DB-free <code>catalog</code> command
+                (internal/cli/catalog.go:24,40-45).</span>
+              </div>
+            </div>
+          </div>
+
+          <p>
+            Configuration posture: <code>EngineConfig</code> sets only
+            Driver+DSN (Pragmas, MaxOpenConns, MaterializedViews, Priority left
+            at defaults &mdash; the serialized MaxOpenConns(1) default is the
+            deliberate single-writer stance); <code>DomainConfig</code> leaves
+            Schema, Timers, Queries, Evolutions, Middleware and
+            ShutdownDependencies empty, each for a recorded reason (inventory
+            below); <code>Volume(100_000)</code> is declared on the query
+            (projection.go:95) while cap enforcement stays domain-owned
+            (internal/retention), a split the cap API itself documents as the
+            maintenance-call contract.
+          </p>
+        </section>
+
+        <!-- Findings -->
+        <section id="findings">
+          <h2><span class="num">01</span>Findings</h2>
+          <p>
+            Ordered by impact. There are no Misused or high-impact Missed
+            findings in this audit: the known trap classes were checked
+            explicitly and came back clean (canonical folds, zero ADR-0123
+            hand-wiring, zero deprecated constructors). The findings below are
+            the five Partially-Used rows plus the version-currency gap.
+          </p>
+
+          <div class="issue issue-important" id="finding-scanpage">
+            <span class="severity severity-important">Partially Used &middot; Medium impact</span>
+            <h3>Engine-native keyset pagination unused &mdash; the export/list walk hand-rolls tie handling</h3>
+            <div class="where">
+              internal/web/queries.go:214-241, 296-410 &middot; library:
+              metaengine/v4@v4.23.0 typed_reader_cursor.go:30-67, cursor.go
+            </div>
+            <p>
+              What the library offers: <code>TypedReader.ScanPage</code> returns
+              a <code>*Cursor</code> alongside each page. When the engine issues
+              a compound <code>SortKeyCursor</code> (sort value + byte key of
+              the last row) it is returned as-is, so
+              <em>tie-heavy datasets paginate with neither drops nor
+              duplicates</em> &mdash; and the sqliteengine at the pinned v4.8.0
+              does issue compound cursors (engine.go:499, planned.go:313).
+              <code>Cursor.Encode()</code> is a URL-safe opaque string built for
+              exactly the HTTP-pagination case.
+            </p>
+            <p>
+              What the project does instead: ~95 lines of machinery &mdash;
+              <code>newerPageCursor</code> probe scan (queries.go:214-241), the
+              <code>seen</code>-map tie set, <code>advanceCursor</code>, and a
+              loud <code>lens.web.export_cursor_stalled</code> rejection for the
+              pathological one-nanosecond-group case (queries.go:296-345). The
+              hand-rolled walk also binds time cursors as RFC3339Nano strings
+              to dodge the known sqlite time-binding divergence
+              (queries.go:439-448; upstream issue pending) &mdash; a compound
+              cursor binds the engine's own sort value, sidestepping that class
+              for the cursor itself (user from/to filters still need the string
+              binding).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Prototype <code>ScanPage</code> + <code>WithCursor</code> for
+              <code>streamViews</code>; the per-source export contract and the
+              representative collapse wrap the walk and are unaffected. Verify
+              one behavioral nuance first: the stall error currently names the
+              colliding stream ids (stallContext), which the library path would
+              replace with a no-drops guarantee instead of a loud failure &mdash;
+              decide whether that diagnostic is worth keeping.
+            </div>
+            <pre><code>// Today: hand-rolled inclusive-cursor page + seen-set dedupe
+opts := append([]metaengine.ScanOption{
+    metaengine.WithSort("started_at", true),
+    metaengine.WithLimit(exportBatchSize),
+}, ...)
+opts = append(opts, metaengine.WithFilter("started_at",
+    metaengine.FilterLe, rfc3339Nano(cursor)))
+
+// Library path: engine-issued compound cursor, ties guaranteed safe
+views, next, err := reader.ScanPage(ctx,
+    metaengine.WithSort("started_at", true),
+    metaengine.WithLimit(exportBatchSize))
+// next pass: metaengine.WithCursor(next.Value) (or WithCursorString(next.Encode()))</code></pre>
+          </div>
+
+          <div class="issue issue-important" id="finding-pins">
+            <span class="severity severity-important">Version currency &middot; Medium impact</span>
+            <h3>Four of fourteen direct pins behind upstream since the 2026-11-12 bump</h3>
+            <div class="where">
+              go.mod:13,19,20,25 &middot; proxy truth via go list -m -versions (2026-11-20)
+            </div>
+            <p>
+              system v4.18.0 &rarr; v4.19.0, metaengine v4.23.0 &rarr; v4.26.0,
+              sqliteengine v4.8.0 &rarr; v4.9.1, catalog v4.14.0 &rarr; v4.15.0.
+              Verified from tag-range diffs: sqliteengine v4.9.x and catalog
+              v4.15.0 are /v4 module-move republishes (zero consumer-visible
+              change); metaengine v4.25/v4.26 add PlannedTableSweeper +
+              TrimPlannedBefore and the Typed fold family (additive, unused
+              here); system v4.19.0 carries the M45 RawQuery-mixed-decoder
+              fix &mdash; which cannot bite pbx-lens (it sets an explicit
+              ProjectionTypeDecoder, the highest-priority decoder, and is a
+              RawQuery-only domain), but the fence tests should meet it
+              anyway. The json/v2 determinism wave (M52) and projectionhost
+              WithClock remain upstream [Unreleased] &mdash; no tag to pin yet.
+              Details in the <a href="#versions">version table</a>.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Take all four in one coordinated <code>go get</code> on the next
+              deps train (vendorHash repair + devShell verify per the flake
+              contract). Zero used-surface change expected; re-run the fence
+              tests and the D6 time-binding workaround check on the new pins.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="finding-health">
+            <span class="severity severity-nice">Partially Used &middot; Low impact (deliberate)</span>
+            <h3>system.HealthCheck exists; pbx-lens hand-rolls a deliberately stricter readiness</h3>
+            <div class="where">
+              internal/cli/system.go:146-174 &middot; library: system/v4@v4.18.0 introspection.go:164-190</div>
+            <p>
+              <code>System.HealthCheck</code> covers stopped-ness, engine pings,
+              and <code>WorkerFailed</code> &mdash; the documented
+              Kubernetes-probe entry point. pbx-lens instead composes
+              <code>ProjectionWorkersReady</code> over
+              <code>host.Status()</code>, treating <em>WorkerBackoff as broken
+              too</em> (the read model is behind until the restart lands). The
+              divergence is documented in the code (system.go:131-145: the
+              deliberate inverse of the drain predicate). Impact of adopting the
+              library call: it would <em>loosen</em> readiness (backoff &rarr;
+              healthy), so the hand-rolled predicate stays until upstream grows
+              backoff sensitivity &mdash; worth an upstream filing.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="finding-reset">
+            <span class="severity severity-nice">Partially Used &middot; Low impact (owner-gated execution)</span>
+            <h3>Reset adopted as a tested path; the production rebuild run is still pending</h3>
+            <div class="where">internal/cli/system.go:91-97 &middot; docs/runbooks/reset-rebuild.md</div>
+            <p>
+              Same stance as the fleet report's delta appendix:
+              <code>sys.ResetProjection</code> + the adapter's
+              <code>Resettable</code> are wired behind
+              <code>cli.ResetReadModel</code> and proven by
+              TestHostResetRebuildsReadModel, but the one-shot production run
+              (retiring the legacy marker-prefixed keys) is owner-gated. The
+              row stays Partially Used by the same reasoning &mdash; re-score
+              to Full when the prod run lands.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="finding-schema">
+            <span class="severity severity-nice">Partially Used &middot; Low impact (planned)</span>
+            <h3>Schema declarations and the record envelope: both v1-deliberate</h3>
+            <div class="where">internal/calls/decider.go:118,133,175 &middot; internal/calls/projection.go:99,106,113</div>
+            <p>
+              Events are stamped <code>WithSchemaVersion(1)</code> but no
+              <code>schema.EventSchema</code> declarations or upcasters exist
+              (F005: mandatory at the first payload change &mdash; distinct
+              from the domain-level ObservationSchemaVersion refresh in
+              events.go:24-43). The <code>record/v4</code> envelope is touched
+              only as the ignored first fold parameter; nothing reads Record
+              metadata today. Both flip triggers are recorded; nothing to do
+              now.
+            </p>
+          </div>
+        </section>
+
+        <section id="versions">
+          <h2><span class="num">02</span>Version currency</h2>
+          <p>
+            Proxy truth per module (<code>go list -m -versions</code>, run
+            2026-11-20 &mdash; never versions.json alone, per the upstream
+            watchlist rule). Ten of fourteen direct pins are at their module's
+            latest; the four laggards and what each gap actually contains,
+            verified from tag-range diffs in the local upstream checkout
+            (fetched tags; HEAD lags the tags, so ranges are authoritative):
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Module (pin &rarr; latest)</th>
+                <th>Gap</th>
+                <th>What the gap contains</th>
+                <th>Relevance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>metaengine/v4 (v4.23.0 &rarr; v4.26.0)</td>
+                <td>3 minors</td>
+                <td>v4.24: /v4 module-move republish; v4.25: PlannedTableSweeper + Store.TrimPlannedBefore (planned-table maintenance); v4.26: Typed fold family (AutoInsertTyped et al.)</td>
+                <td class="no">Additive-only for pbx-lens' surface; nothing used changes</td>
+              </tr>
+              <tr>
+                <td>metaengine/sqliteengine/v4 (v4.8.0 &rarr; v4.9.1)</td>
+                <td>2</td>
+                <td>/v4 module-move republishes; no engine-code delta in the tag range</td>
+                <td class="no">Repoint only</td>
+              </tr>
+              <tr>
+                <td>system/v4 (v4.18.0 &rarr; v4.19.0)</td>
+                <td>1 minor</td>
+                <td>M45: RawQuery declarations contribute decoder entries &mdash; fixes a crash-loop in domains mixing RawQuery with ProjectionSpec under the AUTO decoder</td>
+                <td class="no">Cannot bite pbx-lens (explicit TypeDecoder, RawQuery-only domain); still take it with the wave</td>
+              </tr>
+              <tr>
+                <td>catalog/v4 (v4.14.0 &rarr; v4.15.0)</td>
+                <td>1 minor</td>
+                <td>/v4 module-move republish; the eventcatalog core-pin bump (^5.1.0 &rarr; ^5.9.1) remains upstream [Unreleased]</td>
+                <td class="no">Repoint only</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            At latest: projectionadapter v4.6.2, command v4.14.1, decider
+            v4.8.0, event v4.15.2, id v4.7.5, record v4.6.2, scenario v4.4.3,
+            storage v4.11.1, systemscenario v4.3.0, projectionhost v4.7.1.
+            Upstream [Unreleased] (read at HEAD 8828ea837, 2026-11-20) holds
+            the json/v2 determinism wave (M52), projectionhost WithClock, and
+            SSEDroppedEvents &mdash; none tag-pinnable yet. The v5 rename
+            watchlist stands: pbx-lens has exactly one system.New call site
+            (app.go:112) to fix when it fires.
+          </p>
+        </section>
+
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities (ranked by impact &times; ease)</h2>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Take the four-module pin wave (system, metaengine, sqliteengine, catalog) &mdash; one go get cycle + vendorHash repair</td>
+                <td class="yes">3</td>
+                <td class="yes">5</td>
+                <td><strong>15</strong></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Prototype ScanPage + compound cursor for streamViews; retire the seen-map/stall machinery if semantics hold</td>
+                <td>3</td>
+                <td>4</td>
+                <td><strong>12</strong></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Declare schema.EventSchema + upcasters at the first payload change (F005 flip trigger)</td>
+                <td>3</td>
+                <td>3</td>
+                <td><strong>9</strong></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>File upstream: WorkerBackoff-should-flip-readiness (system.HealthCheck divergence)</td>
+                <td>2</td>
+                <td>4</td>
+                <td><strong>8</strong></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Run the owner-gated production Reset (legacy-key retirement) &mdash; flips the Reset row to Full</td>
+                <td>2</td>
+                <td>3</td>
+                <td><strong>6</strong></td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Expose LagPerProjection/HealthCheckDetailed as an /api/ops dimension</td>
+                <td>1</td>
+                <td>4</td>
+                <td><strong>4</strong></td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>EngineConfig.Pragmas/MaxOpenConns tuning when serve + identity contend on one file (documented trigger)</td>
+                <td>2</td>
+                <td>2</td>
+                <td><strong>4</strong></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Risk assessment</strong>
+            Low. No deprecated APIs in use (the v5-removal list &mdash; On/OnTyped,
+            RecordAwareFold, Infer, EncodeStreamValue &mdash; has zero pbx-lens
+            references); the D6 sqlite time-binding divergence is fenced by the
+            RFC3339Nano binding convention (queries.go:439-448) with the upstream
+            issue pending &mdash; re-verify on every pin bump; the unused
+            EnforceCap is not drift (retention is domain-owned by ADR and a
+            cap-trim-before-replay would resurrect rows); pre-1.0-style v4
+            minor churn is insured by the fence tests (bare keys, one-shot
+            drain, create-fold pairing, reset rebuild) &mdash; keep them green
+            on every bump.
+          </div>
+        </section>
+
+        <section id="inventory">
+          <h2><span class="num">04</span>Capability inventory &amp; score derivation</h2>
+          <p>
+            The inventory counts <strong>N = 49</strong> capability rows
+            (capability = a documented library feature verified in the pinned
+            module-cache source). Rows graded <em>Not Applicable</em> are
+            excluded from the denominator: <strong>A = 27</strong> applicable
+            (22 Fully Leveraged + 5 Partially Used). Rubric: Full = 1,
+            Partial = 0.5, Missed/Misused = 0 &mdash;
+            <code>score = round(100 &times; (22 + 5&times;0.5) / 27) =
+            round(90.74) = <strong>91</strong></code>, band <strong>very
+            high</strong> (&ge;85). Fleet precedent: 92/100 (23 of 25) on
+            2026-11-12 &mdash; the same posture; this census adds two rows the
+            fleet did not grade (ScanPage, health surface) and re-verifies the
+            four 2026-11-05 closures at today's HEAD.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>Status</th>
+                <th>Evidence (this repo / pinned source)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>system.New composition root (ADR-0123)</td><td class="yes">Full</td><td>app.go:112, sole call site; zero hand-wired low-level modules (appendix v6)</td></tr>
+              <tr><td>2</td><td>DomainConfig.Events coeffect gate</td><td class="yes">Full</td><td>app.go:37 declares all four event types</td></tr>
+              <tr><td>3</td><td>DomainConfig.Commands (RegisterDecider/RegisterCommand/Execute/Op)</td><td class="yes">Full</td><td>app.go:38-73; commands.go:30,55,95</td></tr>
+              <tr><td>4</td><td>Projections + RawQuery sealed declarations</td><td class="yes">Full</td><td>projection.go:135; app.go:74</td></tr>
+              <tr><td>5</td><td>ProjectionTypeDecoder (recommended decoder, top priority)</td><td class="yes">Full</td><td>projection.go:128-133; config_types.go:83-90</td></tr>
+              <tr><td>6</td><td>ProjectionHostOptions: WithOnFailed</td><td class="yes">Full</td><td>app.go:80-82; TestDomainConfigWiresProjectionFailureAlert</td></tr>
+              <tr><td>7</td><td>CheckpointStore default (persistent Map on declared engine)</td><td class="yes">Full</td><td>nil in app.go &rarr; system_checkpoints Map via sqlite engine (ADR-0142)</td></tr>
+              <tr><td>8</td><td>DeploymentConfig engines + instance roles</td><td class="yes">Full</td><td>app.go:96-108 (memory/sqlite switch, 2 instances)</td></tr>
+              <tr><td>9</td><td>System accessors (MetaEngine/CommandDispatcher/ProjectionHost/EventStore)</td><td class="yes">Full</td><td>system.go:42; ops.go:69-73 (smoke's idempotent double dispatch); EventStore in systemscenario tests</td></tr>
+              <tr><td>10</td><td>Canonical folds (OnRecordTyped &times;4 + Remove tombstone)</td><td class="yes">Full</td><td>projection.go:94-126; zero On/OnTyped/Delta/Infer (appendix v2)</td></tr>
+              <tr><td>11</td><td>Query ADT + Volume declaration</td><td class="yes">Full</td><td>projection.go:94-95 (Volume(100_000))</td></tr>
+              <tr><td>12</td><td>Reader path (NewReader/Get/Scan/Count + filter/sort/limit/or options)</td><td class="yes">Full</td><td>queries.go:99-712; freshness.go:25-38; retention.go:84-121; ops.go:81-85</td></tr>
+              <tr><td>13</td><td>sqliteengine driver registration + DSN switch</td><td class="yes">Full</td><td>app.go:9 (blank import); app.go:97-100</td></tr>
+              <tr><td>14</td><td>projectionadapter (EventWithID/Register/NewTypeDecoder/Resettable)</td><td class="yes">Full</td><td>projection.go:98-133; Resettable via cli.ResetReadModel</td></tr>
+              <tr><td>15</td><td>projectionhost lifecycle (Start/Stop/Status + WorkerState machine)</td><td class="yes">Full</td><td>system.go:41-174 (drain + readiness predicates)</td></tr>
+              <tr><td>16</td><td>event module (New/WithSchemaVersion/DecodePayloadAuto/ErrVersionConflict)</td><td class="yes">Full</td><td>decider.go:22-183; depth_trio_test.go:80-162</td></tr>
+              <tr><td>17</td><td>command module (New/BasicCommand &times;3)</td><td class="yes">Full</td><td>commands.go:30,55,95</td></tr>
+              <tr><td>18</td><td>decider module (Decider[CallState]/DecideFunc)</td><td class="yes">Full</td><td>app.go:39-42; decider.go:84-203</td></tr>
+              <tr><td>19</td><td>id module (StreamID/ParseStreamID/Get + bare-key fence)</td><td class="yes">Full</td><td>events.go:113; viewkey.go:16-40</td></tr>
+              <tr><td>20</td><td>storage (SQLiteCheckpointSchema/NewSQLiteCheckpointStore)</td><td class="yes">Full</td><td>userauth.go:330,337 (identity DB)</td></tr>
+              <tr><td>21</td><td>scenario/systemscenario harness</td><td class="yes">Full</td><td>all tests boot via app.DomainConfig/DeploymentConfig (test-only modules)</td></tr>
+              <tr><td>22</td><td>catalog renderers (eventcatalog + architecture)</td><td class="yes">Full</td><td>cli/catalog.go:24,40-45</td></tr>
+              <tr><td>23</td><td>ResetProjection + Resettable</td><td>Partial</td><td>tested path system.go:91-97; production run owner-gated</td></tr>
+              <tr><td>24</td><td>System health surface (HealthCheck/WorkerStatus)</td><td>Partial</td><td>deliberately stricter hand-rolled readiness (system.go:146-174); see finding</td></tr>
+              <tr><td>25</td><td>ScanPage + compound Cursor (keyset pagination)</td><td>Partial</td><td>hand-rolled walk queries.go:214-410; engine issues compound cursors</td></tr>
+              <tr><td>26</td><td>record envelope</td><td>Partial</td><td>type-only use (ignored fold param, projection.go:99,106,113)</td></tr>
+              <tr><td>27</td><td>Schema declarations/upcasters</td><td>Partial</td><td>v1 stamps only (F005 flip at first payload change)</td></tr>
+            </tbody>
+          </table>
+          <p>
+            The <strong>22 Not-Applicable rows</strong> (each with its reason;
+            count excluded from A):
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Why it cannot apply here</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>DomainConfig.Timers (ADR-0142)</td><td>F009 decision: stateless poll loop (docs/cqrs-lint-policy.md)</td></tr>
+              <tr><td>DomainConfig.Queries / DispatchQuery</td><td>reads go through the sanctioned metaengine.NewReader path</td></tr>
+              <tr><td>DomainConfig.Evolutions</td><td>RawQuery declarations carry their own folds</td></tr>
+              <tr><td>DomainConfig.Middleware</td><td>single-writer CLI; no cross-cutting command policy to inject</td></tr>
+              <tr><td>DomainConfig.StampSchemaFingerprints</td><td>observability aid for Schema declarations, which are absent at v1</td></tr>
+              <tr><td>DomainConfig.ShutdownDependencies</td><td>single engine; projection host already closes first unconditionally</td></tr>
+              <tr><td>system.Standard (ADR-0165)</td><td>fills a 3-instance topology incl. a queries audit instance &mdash; pbx-lens' 2-instance single-engine shape is deliberate</td></tr>
+              <tr><td>DeploymentConfig.Buses</td><td>in-process synchronous dispatch is the architecture; no distributed bus</td></tr>
+              <tr><td>DeploymentConfig.ManifestPath (plan pinning)</td><td>index DB is disposable; an unsafe plan change costs a one-call rebuild, not data loss</td></tr>
+              <tr><td>DeploymentConfig.Priority / EngineConfig.Priority</td><td>Balanced default; no measured scan cost to optimize (poll ceiling &asymp;82&nbsp;&micro;s/op)</td></tr>
+              <tr><td>DeploymentConfig.AcknowledgeWarnings</td><td>no durability downgrades declared</td></tr>
+              <tr><td>EngineConfig.Pragmas / MaxOpenConns / MaterializedViews</td><td>serialized MaxOpenConns(1) default is the deliberate single-writer stance; tuning deferred to the documented contention/backup triggers</td></tr>
+              <tr><td>System.Drain / RegisterDrainer / RegisterCloser / GracefulClose</td><td>defer-based closeAll owns the ordering contract (FTS index closes BEFORE the system; RegisterCloser would close it after engines &mdash; the wrong side)</td></tr>
+              <tr><td>System.TrimStream / TrimJournalBefore</td><td>ADR-0114: deletion stays domain-level (retention Retire)</td></tr>
+              <tr><td>System.Dedup facade</td><td>ContentHash idempotency is domain-level (F007)</td></tr>
+              <tr><td>Snapshots (WithSnapshotStrategy / RoleSnapshots)</td><td>streams are a handful of events; the projection row IS the read snapshot</td></tr>
+              <tr><td>projectionhost DLQ (WithDeadLetterStore)</td><td>single projection; failures are transient-class and retry on the next drain</td></tr>
+              <tr><td>projectionhost.WithMetrics</td><td>no consumer for projection counters; /api/ops serves source counters</td></tr>
+              <tr><td>projectionhost tuning knobs (logger/batch/restarts/backoff/checkpoint cadence)</td><td>defaults verified correct for a batch drainer; checkpoints persist via the Map default</td></tr>
+              <tr><td>projectionhost.CheckStaleness / LastProcessedAt / Lag*</td><td>pbx-lens staleness is SOURCE age (freshness.go), not projection lag</td></tr>
+              <tr><td>metaengine aggregate pushdown (Sum/Min/Max/Avg/GroupBy/Distinct/MultiAggregate)</td><td>operator figures need the representative collapse; SQL over raw rows would double-count sibling sources (dashboard.go:279)</td></tr>
+              <tr><td>metaengine Exists / GetBatch / PrefetchCache / SSE-Watch / vector-graph-temporal ADTs / Infer / WithIn-WithRange-WithExact</td><td>Exists is the documented paid-for trap (docs/gotchas.md); no bulk-key, multi-page-request, live-tail, or ADT call sites; R9 chose polling; search is the repo-owned FTS5 index</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="verify">
+          <h2><span class="num">05</span>How to verify</h2>
+          <p>
+            Every command below was replayed literally from this appendix on
+            2026-11-20 before shipping; the observed output is noted after each.
+            Baseline build/test: run by the parent session ( relied on it; the
+            audit claims hold on the tree at HEAD 8ac47dd).
+          </p>
+          <pre><code>cd /home/lars/projects/pbx-lens
+
+# v1 &mdash; one composition root
+rg -n "system\.New\(" internal cmd --type go
+# internal/app/app.go:112: return system.New(ctx, DomainConfig(), DeploymentConfig(dsn))
+
+# v2 &mdash; zero deprecated fold constructors (exit 1 = no matches)
+rg -n "metaengine\.(On|OnTyped|Infer)\b" --glob '**/*.go' .
+# (no matches; rc=1). Calibration: the same glob set matches
+# "metaengine\.OnRecordTyped" 4&times; in internal/calls/projection.go
+
+# v3 &mdash; canonical fold count
+rg -c "metaengine\.OnRecordTyped" internal/calls/projection.go
+# 4
+
+# v4 &mdash; unused maintenance/health APIs stay unused (rc=1)
+rg -n "EnforceCap|TrimJournal|sys\.HealthCheck|HealthCheckDetailed" --glob '**/*.go' .
+# (no matches; rc=1)
+
+# v5 &mdash; ADR-0123: no hand-wired low-level modules (rc=1)
+rg -n "command\.NewDispatcher|decider\.NewRepository|go-cqrs-lite/stack|go-cqrs-lite/kv" --glob '**/*.go' .
+# (no matches; rc=1). Calibration: rg -l go-cqrs-lite --glob '**/*.go' | wc -l = 47
+
+# v6 &mdash; proxy truth per module (latest vs go.mod pins)
+go list -m -versions github.com/larsartmann/go-cqrs-lite/system/v4 \
+  github.com/larsartmann/go-cqrs-lite/metaengine/v4 \
+  github.com/larsartmann/go-cqrs-lite/metaengine/projectionadapter/v4 \
+  github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4 \
+  github.com/larsartmann/go-cqrs-lite/catalog/v4 | awk '{print $1, $NF}'
+# system/v4 v4.19.0 | metaengine/v4 v4.26.0 | projectionadapter/v4 v4.6.2 |
+# sqliteengine/v4 v4.9.1 | catalog/v4 v4.15.0  (pins: v4.18.0/v4.23.0/v4.6.2/v4.8.0/v4.14.0)
+
+# v7 &mdash; tag-range truth for the gap contents (upstream checkout, tags fetched)
+git -C /home/lars/projects/go-cqrs-lite log --oneline --no-merges \
+  system/v4.18.0..system/v4.19.0 | grep -vE "auto-commit|docs|style|chore|plan:" | head -3
+# 3a3deaa46 fix(system): RawQuery declarations feed the auto event decoder
+# e649d0a40 feat(metaengine): Typed fold family &mdash; mechanical folds bound to explicit wire names
+# d17d29d8b fix(ci): repair `id/v4:` step keys that broke workflow parsing (0-job phantom failures)
+# (11 more repo-wide rows: ci/gates/metaengine-require fixes &mdash; the module-scoped
+#  deltas in the version table were read from per-module tag ranges)
+
+# v8 &mdash; score re-derivation: count the inventory rows
+# applicable table rows: 27 (22 Full + 5 Partial); N/A table rows: 22
+# round(100 * (22 + 5*0.5) / 27) = 91</code></pre>
+          <div class="callout callout-amber">
+            <strong>Done-bar notes</strong>
+            Gate: baseline build/test executed by the parent session &mdash;
+            this report relies on it. Index row in docs/research/README.md and
+            the AGENTS.md memory line are parent-applied (this session is
+            read-only outside its two report files). Browser screenshot:
+            parent-applied per the fleet screenshot policy. No commits made.
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-11-20 &middot; go-cqrs-lite at system/v4 v4.18.0,
+            metaengine/v4 v4.23.0, projectionadapter/v4 v4.6.2 (+11 direct
+            modules) &middot; capability ground truth read from the module cache
+            at the exact pins &middot; supersedes the runtime-core half of
+            docs/review/libs/go-cqrs-lite.md (2026-11-04/11/12)
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
