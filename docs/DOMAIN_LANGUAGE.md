@@ -226,21 +226,25 @@ New code follows this shape deliberately; the remaining
 forwarder-exempt functions are accepted as-is (the 2026-10-27 doctrine
 call: fix what `--max` flags, no repo-wide sweep).
 
-### Forwarder-exemption census (2026-10-27 evening)
+### Forwarder-exemption census (2026-10-27 evening; re-verified clean 2026-11-19)
 
 Every inline error-creation site outside tests, judged against `--max`
 (census grep `fmt\.Errorf\|errors\.New(` over `internal/` + `cmd/`:
 8 sites, 5 files; the webhook and telnyx parse paths carry ZERO inline
-creations — kept clean deliberately, not accidentally):
+creations — kept clean deliberately, not accidentally).
+Re-verified 2026-11-19 under erraudit `ee8a415`: census 8/8 named
+exemptions (line coordinates refreshed below), fix dry-run empty,
+`lint --type-aware` and `lint --max` both exit 0, enforce-* tool gap
+still silent:
 
-| Site (2026-10-27 lines)                    | Function                                | Satisfying exemption                | Verdict  |
+| Site (lines re-verified 2026-11-19)         | Function                                | Satisfying exemption                | Verdict  |
 | ------------------------------------------ | --------------------------------------- | ----------------------------------- | -------- |
-| internal/ingest/cdr/cdr.go:279             | `parseStartStamp`                       | `Parse*` constructor name           | accepted |
+| internal/ingest/cdr/cdr.go:265             | `parseStartStamp`                       | `Parse*` constructor name           | accepted |
 | internal/ingest/agent/agent.go:133,140,144 | `ParseDir` (open/read/close transcript) | `Parse*` constructor name           | accepted |
 | internal/wire/flextime.go:44               | `(*FlexTime).UnmarshalJSON`             | stdlib interface method             | accepted |
 | internal/wire/flextime.go:15               | sentinel `ErrUnparseableTimestamp`      | package-level sentinel (no fn body) | accepted |
 | internal/search/search.go:569              | sentinel `ErrNoSearchIndex`             | package-level sentinel (no fn body) | accepted |
-| cmd/pbx-lens/refresh.go:21                 | sentinel `errDBRequired`                | package-level sentinel (no fn body) | accepted |
+| cmd/pbx-lens/refresh.go:22                 | sentinel `errDBRequired`                | package-level sentinel (no fn body) | accepted |
 
 All eight ride NAMED exemptions (constructor-name, stdlib-interface,
 sentinel), so the silence under `lint --max` is known-good for the
