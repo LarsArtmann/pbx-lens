@@ -937,7 +937,8 @@
             applicable, 22 fully leveraged, 5 partially used, zero missed or
             misused. The prior fleet report scored the runtime core 92/100
             (23 of 25); this report's 91 is the same posture re-derived under a
-            narrower census that adds two rows the fleet did not grade
+            broader capability census (49 rows) that adds two rows the fleet
+            did not grade
             (engine-native cursor pagination; the system health surface).
           </p>
           <div class="callout callout-amber">
@@ -1006,7 +1007,8 @@
                 <span>metaengine.NewReader + TypedReader Get/Scan/Count with
                 WithFilter/FilterEq-Ge-Le-Gt-Lt/WithOr/WithSort/WithLimit across
                 internal/web/queries.go:99-712, freshness.go:25-38,
-                retention.go:84-121, cmd/pbx-lens/ops.go:81-85 (list, keyset walk,\n                detail joins, filters: queries.go:99-712) &mdash; always
+                retention.go:84-121, cmd/pbx-lens/ops.go:81-85 (list, keyset
+                walk, detail joins, filters) &mdash; always
                 through calls.RecordKey/LookupView for the bare-key contract
                 (internal/calls/viewkey.go:16-38).</span>
               </div>

@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"maps"
 	"os"
 	"sync"
@@ -150,7 +151,14 @@ func PollLoop(
 	cfg PollConfig,
 	log func(msg string, args ...any),
 ) {
-	if cfg.Every <= 0 || log == nil {
+	// A nil log must not silently kill the poller (a dead poller reads as a
+	// healthy serve with a stale index): fall back to the default slog
+	// sink, the same shape the serve command injects via slogLog.
+	if log == nil {
+		log = slog.Info
+	}
+
+	if cfg.Every <= 0 {
 		return
 	}
 

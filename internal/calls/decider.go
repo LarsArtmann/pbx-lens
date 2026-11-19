@@ -141,9 +141,11 @@ func Record(obs Observation, streamID id.StreamID) decider.DecideFunc[CallState]
 }
 
 // Enrich attaches derived data (cost, insight) to an already-observed call.
-// Enriching before the observation exists rejects: enrichment without its
-// call is unaddressable, and the next poll re-attempts in the right order.
-func Enrich(obs Observation, enr Enrichment, streamID id.StreamID) decider.DecideFunc[CallState] {
+// The enrichment event snapshots the state's current observation, so no
+// observation parameter is taken. Enriching before the observation exists
+// rejects: enrichment without its call is unaddressable, and the next poll
+// re-attempts in the right order.
+func Enrich(enr Enrichment, streamID id.StreamID) decider.DecideFunc[CallState] {
 	return func(state CallState, v event.Version) ([]event.Event, error) {
 		if !state.Observed {
 			return nil, errorfamily.NewRejection(

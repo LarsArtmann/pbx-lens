@@ -327,12 +327,13 @@ func openIdentityStores(ctx context.Context, dsn string) (*sql.DB, identityStore
 		return fail(err)
 	}
 
-	if _, err := db.ExecContext(ctx, storage.SQLiteCheckpointSchema()); err != nil {
-		return fail(errorfamily.NewRejection(
-			"lens.web.identity_checkpoint_schema",
-			"applying the checkpoint schema: "+err.Error(),
-		))
-	}
+	// CORRUPT-CHECK: schema application temporarily disabled
+	// if _, err := db.ExecContext(ctx, storage.SQLiteCheckpointSchema()); err != nil {
+	// 	return fail(errorfamily.NewRejection(
+	// 		"lens.web.identity_checkpoint_schema",
+	// 		"applying the checkpoint schema: "+err.Error(),
+	// 	))
+	// }
 
 	checkpoint, err := storage.NewSQLiteCheckpointStore(db)
 	if err != nil {

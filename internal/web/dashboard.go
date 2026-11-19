@@ -386,8 +386,11 @@ func unanimousCurrency(seen map[string]int) string {
 	return ""
 }
 
-// weekDelta compares the newest 7 day buckets with the previous 7. The
-// window is always 30 days, so both weeks exist whenever the window does.
+// weekDelta compares the newest 7 day buckets with the previous 7. Both
+// halves need 14 buckets: the 30-day default window always carries them,
+// but the 7-day preset is exactly one half-window, so its delta folds to
+// the zero WeekDelta (no baseline) and the card renders disabled — the
+// guard below is what switches that off, not a 30-day guarantee.
 func weekDelta(days []DayVolume) WeekDelta {
 	if len(days) < 2*weekDays {
 		return WeekDelta{}

@@ -427,13 +427,30 @@ func (p *Provider) providerFor(ctx context.Context) (*oidc.Provider, error) {
 		return provider, nil
 	}
 
-	if p.inflight != nil {
-		ch := p.inflight
+	if ch := p.inflight; ch != nil {
 		p.mu.Unlock()
 
 		res := <-ch
 
-		return res.p, res.err
+		if res.p != nil || res.err != nil {
+			return res.p, res.err
+		}
+
+		// A drained, closed channel hands late waiters the zero value: the
+		// buffered result went to one earlier goroutine. The winner caches
+		// under the mutex BEFORE sending, so its result is in the cache —
+		// and a violated handoff surfaces as an explicit error instead of
+		// a nil provider with nil error (the caller-panic shape).
+		p.mu.Lock()
+		provider, fresh := p.oidcProv, time.Since(p.fetchedAt) < providerTTL
+		p.mu.Unlock()
+
+		if provider != nil && fresh {
+			return provider, nil
+		}
+
+		return nil, errorfamily.NewRejection("lens.oidc.discovery.handoff",
+			"the in-flight discovery finished without a publishable result (retry the login)")
 	}
 
 	ch := make(chan providerResult, 1)

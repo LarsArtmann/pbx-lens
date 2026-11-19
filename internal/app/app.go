@@ -57,7 +57,7 @@ func DomainConfig() system.DomainConfig {
 						cmdCtx,
 						cmd.StreamID(),
 						calls.StreamType,
-						calls.Enrich(cmd.Observation, cmd.Enrichment, cmd.StreamID()),
+						calls.Enrich(cmd.Enrichment, cmd.StreamID()),
 					)
 				}))
 

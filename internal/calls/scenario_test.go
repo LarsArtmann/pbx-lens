@@ -55,8 +55,8 @@ func recordDecide(sid id.StreamID) scenario.DecideFunc[RecordCallCmd, CallState]
 }
 
 func enrichDecide(sid id.StreamID, enr Enrichment) scenario.DecideFunc[EnrichCallCmd, CallState] {
-	return func(state CallState, cmd EnrichCallCmd) ([]event.Event, error) {
-		return Enrich(cmd.Observation, enr, sid)(state, 0)
+	return func(state CallState, _ EnrichCallCmd) ([]event.Event, error) {
+		return Enrich(enr, sid)(state, 0)
 	}
 }
 

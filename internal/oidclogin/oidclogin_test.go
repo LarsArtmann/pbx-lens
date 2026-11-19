@@ -8,8 +8,11 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/larsartmann/pbx-lens/internal/oidclogin/oidctest"
 )
 
@@ -427,6 +430,79 @@ func TestDiscoveryFailureNotCachedAndNeverAtBoot(t *testing.T) {
 	provider.cfg.Issuer = idp.URL()
 	if _, err := provider.providerFor(context.Background()); err != nil {
 		t.Fatalf("a recovered IdP must be discovered on the next login: %v", err)
+	}
+}
+
+// Two waiters stack on one in-flight discovery; the winner sends its single
+// buffered result and closes. Exactly one waiter consumes the value — the
+// other used to receive the closed channel's zero value, a nil provider with
+// a nil error, and panic its caller. The rescue path must hand every late
+// waiter the winner's cached provider instead.
+func TestProviderForConcurrentWaitersAllReceiveTheProvider(t *testing.T) {
+	t.Parallel()
+
+	idp := newStubIdP(t, map[string]any{"email": "lars@example.org"})
+
+	provider, err := New(testConfig(t, idp))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	discovered, err := provider.providerFor(context.Background())
+	if err != nil {
+		t.Fatalf("prime discovery: %v", err)
+	}
+
+	// Stage the interleaving: stale cache (waiters pass the first check),
+	// one open flight with no result yet.
+	provider.mu.Lock()
+	provider.fetchedAt = time.Now().Add(-2 * providerTTL)
+	flight := make(chan providerResult, 1)
+	provider.inflight = flight
+	provider.mu.Unlock()
+
+	const waiters = 2
+
+	var (
+		wg      sync.WaitGroup
+		started = make(chan struct{}, waiters)
+		got     [waiters]*oidc.Provider
+		errs    [waiters]error
+	)
+
+	for i := range waiters {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			started <- struct{}{}
+			got[i], errs[i] = provider.providerFor(context.Background())
+		}(i)
+	}
+
+		<-started
+		<-started
+	time.Sleep(50 * time.Millisecond) // let both waiters block on the flight
+
+	// Complete the flight exactly as providerFor does: cache under the
+	// mutex BEFORE the single buffered send, then close.
+	provider.mu.Lock()
+	provider.oidcProv = discovered
+	provider.fetchedAt = time.Now()
+	provider.inflight = nil
+	provider.mu.Unlock()
+	flight <- providerResult{p: discovered}
+	close(flight)
+
+	wg.Wait()
+
+	for i := range waiters {
+		if errs[i] != nil {
+			t.Errorf("waiter %d: %v", i, errs[i])
+		}
+
+		if got[i] == nil {
+			t.Errorf("waiter %d received the zero-value handoff (nil provider, nil error)", i)
+		}
 	}
 }
 
