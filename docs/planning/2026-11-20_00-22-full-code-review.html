@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pbx-lens — Pareto Plan: Full-Code-Review Fix Queue (2026-11-20)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS DARK — Dashboard template
+         Design language: form follows function. Primary colors on graphite.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Dark) --- */
+        --color-graphite: #0e0e10;
+        --color-graphite-2: #18181d;
+        --color-graphite-3: #16161a;
+        --color-bone: #f4f4f0;
+        --color-red: #ff6b6b;
+        --color-blue: #6eb5ff;
+        --color-yellow: #f4d35e;
+        --color-amber: #ffb347;
+        --color-hairline: rgba(244, 244, 240, 0.12);
+        --color-hairline-strong: rgba(244, 244, 240, 0.25);
+
+        /* --- Semantic layer (shared vocabulary with editorial template) --- */
+        --surface: var(--color-graphite);
+        --surface-raised: var(--color-graphite-2);
+        --surface-sunken: var(--color-graphite-3);
+        --text: var(--color-bone);
+        --text-muted: rgba(244, 244, 240, 0.72);
+        --text-faint: rgba(244, 244, 240, 0.45);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-amber);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 15%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 20%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px; /* Bauhaus default: sharp corners */
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      /* Sticky-header offset for anchor jumps */
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 15px;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .sidebar a {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        padding: 0.45rem 0.75rem;
+        border-left: 2px solid transparent;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+        font-weight: 500;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        color: var(--accent);
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      h1 {
+        font-size: clamp(1.8rem, 4vw, 2.6rem);
+        line-height: 1.1;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.4rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--border-strong);
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h3 {
+        font-size: 1.1rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 0.98rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 1.5rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 2px solid var(--border-strong);
+      }
+      .hero-badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--surface);
+        background: var(--accent);
+        padding: 0.3rem 0.7rem;
+        margin-bottom: 0.9rem;
+      }
+      .hero-subtitle {
+        font-size: 1.05rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0;
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 80px;
+        margin-bottom: 1rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 56px;
+        height: 56px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 24px;
+        left: 72px;
+        width: 48px;
+        height: 48px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        left: 140px;
+        width: 0;
+        height: 0;
+        border-left: 28px solid transparent;
+        border-right: 28px solid transparent;
+        border-bottom: 48px solid var(--warning);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1.3rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+        background: color-mix(
+          in srgb,
+          var(--problem) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 8%,
+          var(--surface-raised)
+        );
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges (used inside issue cards) --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges (used in tables) --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.18rem 0.5rem;
+        border: 1px solid var(--border-strong);
+        color: var(--text-muted);
+      }
+      .badge-critical {
+        color: var(--problem);
+        border-color: var(--problem);
+      }
+      .badge-high {
+        color: var(--warning);
+        border-color: var(--warning);
+      }
+      .badge-medium {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .badge-low {
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        color: var(--solution);
+        border-color: var(--solution);
+      }
+
+      /* --- Callouts (used inside issues or standalone) --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.7rem 0.9rem;
+        border-left: 3px solid var(--border-strong);
+        background: color-mix(in srgb, var(--text) 5%, transparent);
+        font-size: 0.9rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(in srgb, var(--solution) 10%, transparent);
+      }
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(in srgb, var(--warning) 10%, transparent);
+      }
+
+      /* --- Stat cards / scorecards (aliased vocabulary) --- */
+      .stat-grid,
+      .scorecard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 0.75rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .stat-card,
+      .score-card {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        padding: 1.1rem 1rem;
+        position: relative;
+      }
+      .stat-card::before,
+      .score-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--border-strong);
+      }
+      .stat-bad,
+      .score-bad {
+        /* default top bar already set */
+      }
+      .stat-bad::before,
+      .score-bad::before {
+        background: var(--problem);
+      }
+      .stat-good::before,
+      .score-good::before {
+        background: var(--solution);
+      }
+      .stat-warn::before,
+      .score-warn::before {
+        background: var(--warning);
+      }
+      .stat-value,
+      .score {
+        font-family: var(--font-heading);
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .stat-bad .stat-value,
+      .score-bad .score {
+        color: var(--problem);
+      }
+      .stat-good .stat-value,
+      .score-good .score {
+        color: var(--solution);
+      }
+      .stat-warn .stat-value,
+      .score-warn .score {
+        color: var(--warning);
+      }
+      .stat-label,
+      .score-card .label {
+        font-family: var(--font-mono);
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-faint);
+        margin-top: 0.5rem;
+      }
+
+      /* --- Strengths list --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.8rem;
+        padding: 0.7rem 0;
+        border-bottom: 1px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 700;
+        color: var(--solution);
+        font-size: 1.1rem;
+        line-height: 1.4;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.9rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.9rem;
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--surface-raised);
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--border-strong);
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-bottom: 1px solid var(--border);
+      }
+      tr:hover td {
+        background: var(--surface-raised);
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--accent);
+      } /* func, type, struct, if, return */
+      .tok-type {
+        color: var(--warning);
+      } /* int, string, bool, error */
+      .tok-string {
+        color: var(--solution);
+      } /* "quoted strings" */
+      .tok-comment {
+        color: var(--text-faint);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #74a9ff;
+      } /* function names */
+      .tok-number {
+        color: var(--accent);
+      } /* 42, 3.14 */
+      .tok-generic {
+        color: var(--problem);
+      } /* T, ID in generics */
+      .tok-builtin {
+        color: #4dd9ff;
+      } /* make, len, append */
+      .tok-punct {
+        color: var(--text-muted);
+      } /* { } ( ) ; = : */
+      .tok-attr {
+        color: var(--accent);
+      } /* Nix attribute names */
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 1px solid var(--border);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.35rem 0.7rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: var(--surface-sunken);
+        border: 1px solid var(--border-strong);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+        border-color: var(--accent);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+        border-color: var(--problem);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+        border-color: var(--solution);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids (responsive) --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC (alternative to sidebar) --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text-muted);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 48px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1rem;
+        background: var(--surface-raised);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 800;
+        font-size: 1.5rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+        font-size: 0.8rem;
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .stat-grid,
+        .scorecard {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>PARETO PLAN</span>
+      <span>2026-11-20</span>
+      <span>full-code-review session &middot; crush subagent</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#tiers">Pareto Tiers</a>
+          <a href="#comprehensive">Comprehensive Plan</a>
+          <a href="#fine">Fine Breakdown</a>
+          <a href="#errata">Errata</a>
+          <a href="#graph">Execution Graph</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- Hero -->
+        <div class="hero">
+          <div class="hero-shapes">
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="hero-badge">Pareto Plan</div>
+          <h1>Full-Code-Review 2026-11-20 — Fix Queue</h1>
+          <p class="hero-subtitle">
+            Pareto breakdown of the 17 findings from docs/reviews/2026-11-20_00-22_full-code-review.html
+            plus the open actionable rows of TODO_LIST.md: the 1% that buys correctness back first.
+          </p>
+        </div>
+
+        <!-- Inline TOC -->
+        <nav class="toc">
+          <h3>Contents</h3>
+          <ul>
+            <li><a href="#summary">Summary</a></li>
+            <li><a href="#tiers">Pareto Tiers</a></li>
+            <li><a href="#comprehensive">Comprehensive Plan</a></li>
+            <li><a href="#fine">Fine Breakdown</a></li>
+            <li><a href="#errata">Errata</a></li>
+            <li><a href="#graph">Execution Graph</a></li>
+          </ul>
+        </nav>
+
+        <!-- Stats Dashboard -->
+        <h2 id="summary"><span class="num">00</span>Summary</h2>
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">17</div>
+            <div class="stat-label">Review findings routed</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">2</div>
+            <div class="stat-label">1% tier (51% of value)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">6</div>
+            <div class="stat-label">4% tier (next 64%)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">9</div>
+            <div class="stat-label">20% tier (rest of 80%)</div>
+          </div>
+        </div>
+
+        <div class="card card-problem">
+          <h4>What the 1% buys</h4>
+          <p>
+            Two findings carry almost all the correctness risk in the tree: the OIDC discovery
+            single-flight that hands concurrent waiters a zero-value <code>{nil,&nbsp;nil}</code>
+            result (nil-provider panic, masked failures), and the three read sites that bypass
+            <code>calls.LookupView</code> against the documented doctrine. Fixing exactly these two
+            removes the only crash-class bug found and closes the only split brain that changes
+            operator-visible numbers.
+          </p>
+        </div>
+
+        <div class="card card-solution">
+          <h4>Why the rest can wait a beat</h4>
+          <p>
+            The 4% and 20% tiers are silent-truncation edges (Telnyx page cap, retention scan cap),
+            a lying parameter, stale comments, and dead code — real, but none can crash a request or
+            corrupt an operator answer today. They ride the same BuildFlow gate after the two
+            correctness fixes land.
+          </p>
+        </div>
+
+        <!-- Pareto Tiers -->
+        <h2 id="tiers"><span class="num">01</span>Pareto Tiers</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">1% — 51% of result</span>
+          <h3>Correctness pair</h3>
+          <div class="where">internal/oidclogin/oidclogin.go:421-460 &middot; internal/cli/ingest.go:50 &middot; internal/cli/enrich.go:82</div>
+          <p>
+            F1 the single-flight handoff and F2 the LookupView bypass. Everything else in the queue
+            is bounded polish by comparison.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Loop waiters until the cache holds a provider or a real error; route the two cli reads
+            through calls.LookupView; add a concurrent-discovery regression test and a
+            legacy-key ingest classification test.
+          </div>
+        </div>
+
+        <div class="issue issue-important">
+          <span class="severity severity-important">4% — next 64%</span>
+          <h3>Silent truncation + lying signatures</h3>
+          <div class="where">telnyx.go:172-198 &middot; decider.go:146 &middot; webhook.go:130-132 &middot; poller.go:153</div>
+          <p>
+            fetchAll's maxPages cap returns a silently truncated list; Enrich ignores its obs
+            parameter; the webhook cause fold breaks the claimed order-independence; PollLoop dies
+            silently on a nil log func.
+          </p>
+        </div>
+
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">20% — rest of 80%</span>
+          <h3>Drift, guards, dead code</h3>
+          <div class="where">dashboard.go:389 &middot; retention.go:87 &middot; refresh.go:117 &middot; domain_test.go:213+</div>
+          <p>
+            Stale weekDelta comment, OldViews scan-cap guard, refresh -apply age gate, dead test
+            helpers, json import style split, parseFilters error-writer routing.
+          </p>
+        </div>
+
+        <!-- Comprehensive Plan -->
+        <h2 id="comprehensive"><span class="num">02</span>Comprehensive Plan (30-100 min tasks)</h2>
+        <table>
+          <thead>
+            <tr><th>#</th><th>Task</th><th>Tier</th><th>Impact</th><th>Effort</th><th>Source</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>T01</td><td>Fix providerFor single-flight: waiters loop until cache/err; concurrency regression test</td><td><span class="badge badge-critical">1%</span></td><td>High</td><td>45min</td><td>Review F1</td></tr>
+            <tr><td>T02</td><td>Route cli.Ingest + enrichPass reads through calls.LookupView; legacy-key test</td><td><span class="badge badge-critical">1%</span></td><td>High</td><td>30min</td><td>Review F2</td></tr>
+            <tr><td>T03</td><td>fetchAll: error (or Trient flag) when maxPages exhausted</td><td><span class="badge badge-high">4%</span></td><td>Medium</td><td>30min</td><td>Review F4</td></tr>
+            <tr><td>T04</td><td>Drop Enrich's dead obs param; update app.go + scenario_test</td><td><span class="badge badge-high">4%</span></td><td>Medium</td><td>30min</td><td>Review F3</td></tr>
+            <tr><td>T05</td><td>Webhook cause fold first-wins + order test with differing causes</td><td><span class="badge badge-high">4%</span></td><td>Medium</td><td>30min</td><td>Review F9</td></tr>
+            <tr><td>T06</td><td>PollLoop: refuse nil log loudly (guard or document + default)</td><td><span class="badge badge-high">4%</span></td><td>Medium</td><td>30min</td><td>Review F5</td></tr>
+            <tr><td>T07</td><td>weekDelta: fix comment AND scan floor (14d) or render-hint for 7d preset</td><td><span class="badge badge-medium">20%</span></td><td>Medium</td><td>45min</td><td>Review F6</td></tr>
+            <tr><td>T08</td><td>OldViews: count guard or paged scan past maxScan</td><td><span class="badge badge-medium">20%</span></td><td>Medium</td><td>60min</td><td>Review F7</td></tr>
+            <tr><td>T09</td><td>refresh -apply: add -max-age (default none, documented exception)</td><td><span class="badge badge-medium">20%</span></td><td>Medium</td><td>45min</td><td>Review F8</td></tr>
+            <tr><td>T10</td><td>Delete dead test helpers (mustEvents/decide/foldAll)</td><td><span class="badge badge-low">20%</span></td><td>Low</td><td>15min</td><td>Review F10</td></tr>
+            <tr><td>T11</td><td>Unify json import style (one of json / json/v2)</td><td><span class="badge badge-low">20%</span></td><td>Low</td><td>30min</td><td>Review F11</td></tr>
+            <tr><td>T12</td><td>parseFilters rejections through the family error writer (JSON twins)</td><td><span class="badge badge-low">20%</span></td><td>Low</td><td>20min</td><td>TODO_LIST row</td></tr>
+            <tr><td>T13</td><td>Golden pin for ops never-ran path (EmptyText "never")</td><td><span class="badge badge-low">20%</span></td><td>Low</td><td>20min</td><td>TODO_LIST row</td></tr>
+            <tr><td>T14</td><td>Tidy ops.templ WriteErrors &lt;dl double-space artifact + golden</td><td><span class="badge badge-low">20%</span></td><td>Low</td><td>15min</td><td>TODO_LIST row</td></tr>
+            <tr><td>T15</td><td>Harvest review findings into TODO_LIST.md; CHANGELOG Unreleased entries</td><td><span class="badge badge-low">20%</span></td><td>Low</td><td>30min</td><td>docs-health norm</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Fine Breakdown -->
+        <h2 id="fine"><span class="num">03</span>Fine Breakdown (15-min slices of the 1% + 4% tiers)</h2>
+        <table>
+          <thead><tr><th>#</th><th>Slice</th><th>Parent</th></tr></thead>
+          <tbody>
+            <tr><td>S1</td><td>providerFor: re-check cache under mutex after channel receive</td><td>T01</td></tr>
+            <tr><td>S2</td><td>providerFor: retry discovery when zero-value received (failure not cached)</td><td>T01</td></tr>
+            <tr><td>S3</td><td>Test: N goroutines providerFor against stub IdP, all get provider-or-err</td><td>T01</td></tr>
+            <tr><td>S4</td><td>cli/ingest.go:50 → calls.LookupView</td><td>T02</td></tr>
+            <tr><td>S5</td><td>enrich.go:82 → LookupView via stored StreamID (not bare StreamKey)</td><td>T02</td></tr>
+            <tr><td>S6</td><td>Test: legacy-keyed row classifies Corrected / enriches, not Missing</td><td>T02</td></tr>
+            <tr><td>S7</td><td>fetchAll: track exhausted-at-cap; return NewTransient on truncation</td><td>T03</td></tr>
+            <tr><td>S8</td><td>Test: page cap reached surfaces the error</td><td>T03</td></tr>
+            <tr><td>S9</td><td>decider.Enrich signature drop + call sites (app.go, scenario_test)</td><td>T04</td></tr>
+            <tr><td>S10</td><td>webhook: fold cause first-wins like foldPayload</td><td>T05</td></tr>
+            <tr><td>S11</td><td>Test: same call_control_id, two causes, permuted lines → one hash</td><td>T05</td></tr>
+            <tr><td>S12</td><td>PollLoop: nil-log → slog.Default fallback (one line + comment)</td><td>T06</td></tr>
+          </tbody>
+        </table>
+
+        <!-- Errata -->
+        <h2 id="errata"><span class="num">04</span>Errata — backlog corrections from Step 0</h2>
+        <div class="card card-solution">
+          <h4>Verified against CHANGELOG and code before ranking</h4>
+          <p>
+            TODO_LIST.md's Unblocked table held five DONE rows and one PARTIAL (httputil + go-etag
+            tag receipts, riding the next deps train) — the DONE rows are not re-dispatched here.
+            The Blocked table's 20 rows are owner-gated (TLS, deploys, answer sheets, upstream
+            bumps) and stay out of this plan by contract. The three open TODO rows (parseFilters
+            writer, ops golden, dl artifact) ARE ranked above (T12-T14). No plan in
+            docs/planning/ post-dates 2026-10-27; no work here re-ships.
+          </p>
+        </div>
+
+        <!-- Execution graph -->
+        <h2 id="graph"><span class="num">05</span>Execution Graph</h2>
+        <p>
+          The 1% pair gates on its own proof (concurrency + legacy-key tests); the 20% chain rides
+          one BuildFlow SOLO gate at the end. Graph rendered with d2, inlined below.
+        </p>
+        <div style="width:100%; overflow-x:auto;"><svg style="max-width:100%;height:auto" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 6669 520"><svg class="d2-2634607249 d2-svg" width="6669" height="520" viewBox="-101 -101 6669 520"><rect x="-101" y="-101" width="6669" height="520" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-2634607249 .text-bold {
+	font-family: "d2-2634607249-font-bold";
+}
+@font-face {
+	font-family: d2-2634607249-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-2634607249 .text-italic {
+	font-family: "d2-2634607249-font-italic";
+}
+@font-face {
+	font-family: d2-2634607249-font-italic;
+	src: url("data:application/font-woff;base64,d09GRgABAAAAAA3IAAoAAAAAFZQAARhRAAAAAAAAAAAAAAAAAAAAAAAAAABPUy8yAAAA9AAAAGAAAABgW1SVeGNtYXAAAAFUAAAAogAAAOIEPgTmZ2x5ZgAAAfgAAAc/AAAKDOacIgFoZWFkAAAJOAAAADYAAAA2G7Ur2mhoZWEAAAlwAAAAJAAAACQLeAjFaG10eAAACZQAAACEAAAAhDohBBpsb2NhAAAKGAAAAEQAAABEKcosdG1heHAAAApcAAAAIAAAACAAOQD2bmFtZQAACnwAAAMrAAAIMgntVzNwb3N0AAANqAAAACAAAAAg/8YAMgADAeEBkAAFAAACigJY//EASwKKAlgARAFeADIBIwAAAgsFAwMEAwkCBCAAAHcAAAADAAAAAAAAAABBREJPAAEAIP//Au7/BgAAA9gBESAAAZMAAAAAAeYClAAAACAAA3ichM3LKgYBAIbhZ/5/nMf5fGyydReSUsqC/WQhqUmyketxiAtQkoarsHcNLuATWwu926deFPoKVEof2FQr9dS2bNuxa8++A0caJ860Lly5TvhjDjWOnWqdu/wx+cxX3vOWLq95yXOe0uUxD7nPXW5z83v+r8KGnr7SgEFDho1YN2pMZdyESVOmzZg1Z96CRUuWrVi1xjcAAAD//wMAkIotCQAAeJx8ln1sG3cZx5/f7y53TeK82OeX2o198f3O58Q528md7Yvj2E5i593u25qstE3aFPq2lRLRpjDaqqNF40UwPDSBQJOGhECgSnRKERL/dBJDahiqBNIEQwwktuGiFmmdZU0wkTt0dtI4Edo/l59yue/zfD/5Ps8dNIEIgC/gl4GCZugAGzgAVM5PUaqmERelBoOEZbUgx7HiDbR24wd07sg/en74H5mnJ7/8s9l/nbiFX14/j55fuH5dP/q1U6eefvRID6E/PgIAoIAA4G5cAit4zLPKqYrTYWcYlnXWfhJKVRLxmES2DuTm7ePn+3IiUicmr+4dWlw8Mj5z9NnPL14oTl/CpZlJOS/voi2jg9MLMro8qYWV9YfjBSVt1sNmDZzAJWgGrqEaCapKYlP9S1//1tyrn5ufn7uaO/PpBC599bkv/OLUyKHvLi2cMzVQTaOzpmFyYP2syhKK3ETPtOnvhT9sezyMS6Pvj+l/2vhbqOISULVqFLm59yYurS9v6qDv4BI01e/5WXJz72Vkb8Ol9dUxwDBsVPEifgU6oRugSZDisQxWFZNLOw4qGWz2K7Rjh92J+AsrkfmViZlTscj8pVz86Ywws9e8Tlu+d3W2tDKev/LU7Esr47nhkyvJpZXUyZWhE5drPViMKtLxKxACcAlSUHM665iDQUmKxxIJVXG6WEkiAsM47E6Xy6zOMA9yyz1J75w2fCAcKIRS8WOp1AledU9EAnHvgFiIxlKnLUNDfX1KflBUnBHPtKYcVGI9EV8v379HijrDXZPa0NEYIFgAwHFcAtZkQDQ/S6ifrNxtQ79re30FF3O59TsmcwxBo4r+jSpgN6m5nrBwqZpKEY0wTFBJaJq0CeTOSEGeWVSDaSvNZZayu2hy2CbtE2WH0iXm4vyA5ejcxHPH1B5/WvdMBaIjkeifJSE0vaBkN3LCG1X0GK+Bw0y/SYawhFNZVq0h2fYfqGX1YTBtpezZF4tBJxYPhWvl42Iu7uvvFQ6QiF219PjTeO3uCW/fkXmz9EhoekHNpEOBB5IACAJGFa2iCnRtc7dFXlUSmoth3t73Gbm4FJeHnWFO8vbPJ5JD3Qmn4ClaTi/kL85FBXe/y5Ffzo1NeKyKPfCEHQ42eNli98nwhmxUp1QsbdDbG9hJL9h9/O764E58uObldVQBDwQa65nJYf2Mc9MLpdZGznT4/vy58Oyxfm3UZ2nSf9PcnQt5ky6f98D3DUzZekl80fLM0vjyQTmyX+lS27P7A26r6uBRoHV3W9cAPwcYkCGiCqoAD5HGJGsaw5BGxyrFMNQ2t7cG5onYNd6TmWl3S4ei6f1908cGpIyV4rKnuYtJckDocw50kVHVF31H8sZdQmHkrCTPz+UufUox80MdP438faHfS0LvxOH+VMpkjoAHQG/jNXCbuW7IDUsRzrRNBIal+BeL/Z1070E5E9+VKQzT9FTXVGQcrz1Kk+joIC/qbyLZvrttNhTRf2oYpiZ8jFexVDsx0D1VryUbVfgYr4HNdB6PaZxp0mHfwPzZUeZK8RpCVophUYvTkrW68bPrL7HNlA3hFE039IsqsLve7/9vdynL0r0HI9u6ReVpcWBns1sz+xdUgQ7wNuagPjym6ma439q3KM8sKvuOy7OLofABNaGYF8vZo+MX5yL168jYcn5sMrecH5swtY2PDBU9RpV6ptmGjtsxqU0ry22bz5ZvZBkqMBepDaYiDXPYxv+4cT7v4zsjfHgj2PzZVxHaGFDpnwH/FqOrqAKdDYxcrLTJppX2FsJux55Oj1jg06i8IKeb87uyKf0+IOO/RhVdQxUI7tyzO9esuWXrS/ZHAwvufteIFEr3DkaS8rQcmemKcKpfGkh0Z2L9By2xHonviRBPkPdkevtGA6Kvx+4J8z7JJgzL4XzA7HnYqKLD+PyTvZLQOJLFau2V1bBXfjUSo1FysrUgju65YrmWpLqEdk+rtTNqyYY7PG3Ilmx64YWM/tBm8/lamjS2w9QeNKroA1QG95b2VvK4jdVyK52g6UwxTdNT3kl5vGAu455DljHNynMoob/Fuc3IoMO6Z4aodc4pAPR3VIY2AJVSOafTpSZMQXRjsiDSDE1bRe7bRX0dlfUHZJaI0yJy6576sxMA+B4qg3/Hs1snilCSFCQMw1LnSKETIUR37Ol8ftaKMaLbPZ3Xp/56vL32W2/HZVTW3xXygpAXkK/h5EEtZEoUp4j+ESDj10YUvYfK4AFga+9Q07+2rfN2zLR0t7tttsCo2/ZUQWraRdHWgO2bBf1dd2rqDyybbE4rBD3QP/AXCSkIyLr+YbQo1zwZ7xhfQa8ZvzS/IVjNz4qt6LctVxXFvAf9cAa9iUPQCqDFSVyNqw7VQRx/+/nt4duvnbmXfOON5L2N7MJ9VN78DuGXiidRuQYNwSSehVW8ampw5q6sjz7zRc5HXHYvwbMup9u/2+nu/h8AAAD//wMApZUTMwAAAQAAAAEYUe8xP5tfDzz1AAED6AAAAADYXaDMAAAAAN1mLzf+vf7dCB0DyQACAAMAAgAAAAAAAAABAAAD2P7vAAAIQP69/bwIHQPoAML/0QAAAAAAAAAAAAAAIQJ0ACQAyAAAAkcAIwJQACMB2QAjAPwAIwHOACMCeQA8AfoADAH+AF0CGQAnAhgAHwGzACUCFwAnAeEAJQITAAECCwAfAO0AHwD4ACwCDQAfAgMAJwIX//YBVgAfAZL//AFFADwCEAA4AcAAOwLDAEYBwP/CAeP/3AHgADAA7QAfAAAARwAAAC4ALgBmAIgAngCsALwA7gEuAUIBegGyAeACGAJSApoCxALQAvIDHANKA4QDogPeBAwEOARWBJAEwATOBOIE8AUGAAEAAAAhAIwADABmAAcAAQAAAAAAAAAAAAAAAAAEAAN4nJyU3W4aVxSFP2KgTf8uKitybqxzmUrO4EZxlMRX4zpWRkWQMqQ/UlVpgDEgYGbEDDjOE/S6b9G3yFUfo09R9bramw1hIqtWUBRrDWf/rLP22gfY51/2qFTvAn/Vl4YrHNZ/NnyHL+pNw3uc1T8zXOWo9rfhGoPaW8N1HtQ6hj/hXfUPw5/yuPqb4bscVC8Mf86j6r7hL/cc/xj+ise8W+EKPOV3wxUOyAzfYZ9fDe9xD6tZqXKPY8M1vubQcJ1DoMuYgiljEoY4LhkzZMGcmJyQmDljLokZ4AjwmVLorwmRIsfwxl8jQgrmRFpxRIFjSsiUiJyRVXyrWSmvtKP0mSuSbj4FIyJ6mjEhIsGRMiQlIWaidQoKMp7ToEFOX/lmFOR45IyZ4pEyZ0iDNhc06TJiTI7jQisJs5CUSwquiLS/swhRpk9MQm6sFiQMlKdTfrFmBzRxtMk0drtys1ThCMePmi3cJMbxLZ7+d1vMyn3XbCKWqqdo2GOqPK90giNVXPr6/KC44DluJ33KTG7XaKDsZNZjeix0/jI/yRMmCc4d4BOqg0J3H8eZfgeEqshPBHR5SZvXdPXbp0MHnxZdAl5obpsOju9o0+JcMwLFq7MLdUyLX3B8T6AxUjs2fURz+XpDZu4W7uIMuceMTLdAZiz3F+fHO01YdigtuSNXV/R1jyRS9kBUkT2LGJorMnXFTLVceyM3/QbmCDktdLbvz2UblrZ76y2+JtUddiyMk0xuxei2qXofeOZK/3lEDEjpaUSflBkNCq71bq+IWDDFca4+fqlbUuBvcqTPtbokZqYMAhKtMyfTv5H5JjTu/ZLvnb0lsnkz3dHJ5la7dJHKydaMXqt667PQVI63JtCwqaaWIxOWyqubivcl2ivxD9X9ub5uKQ8JtK5Msn/jK3DMM044ZaRdpHrCcnMmr4REnKoCE2KNkjfzjWr1CI8TPJ5wwgnPePKBlms2zvi4Ep/t/j7nnNHm9NbbrGLbnPGiVO3/O/+pbI/1Po6Hm6+nO0/zwUe49huOSu9mR18D2aClVXu/HS0iZsLFHWxr4e7j/QcAAP//AwByoVFAAAADAAD/9QAA/84AMgAAAAAAAAAAAAAAAAAAAAAAAAAA");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-2634607249 .fill-N1{fill:#0A0F25;}
+		.d2-2634607249 .fill-N2{fill:#676C7E;}
+		.d2-2634607249 .fill-N7{fill:#FFFFFF;}
+		.d2-2634607249 .fill-B1{fill:#0D32B2;}
+		.d2-2634607249 .fill-B6{fill:#F7F8FE;}
+		.d2-2634607249 .stroke-B1{stroke:#0D32B2;}
+		.d2-2634607249 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="UDE="><g class="shape" ><rect x="4558" y="0" width="191" height="66" stroke="#0D32B2" fill="#ff6b6b" class=" stroke-B1" style="stroke-width:2;" /></g><text x="4653.5" y="38.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">OIDC single-flight fix</text></g><g class="UDI="><g class="shape" ><rect x="4550" y="126" width="207" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="4653.5" y="164.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">LookupView routing x3</text></g><g class="UDM="><g class="shape" ><rect x="0" y="252" width="177" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="88.5" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">Enrich dead param</text></g><g class="VkVSSUZZMQ=="><g class="shape" ><rect x="5265" y="63" width="104" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="5317" y="101.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">VERIFY1</text></g><g class="VkVSSUZZMg=="><g class="shape" ><rect x="518" y="252" width="104" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="570" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">VERIFY2</text></g><g class="VDE="><g class="shape" ><rect x="883" y="252" width="224" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="995" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">weekDelta 7-day window</text></g><g class="VDI="><g class="shape" ><rect x="1506" y="252" width="219" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="1615.5" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">fetchAll truncation error</text></g><g class="VDM="><g class="shape" ><rect x="2124" y="252" width="191" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="2219.5" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">OldViews scan guard</text></g><g class="VDQ="><g class="shape" ><rect x="2714" y="252" width="199" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="2813.5" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">refresh -max-age gate</text></g><g class="VDU="><g class="shape" ><rect x="3312" y="252" width="186" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="3405" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">webhook cause fold</text></g><g class="VDY="><g class="shape" ><rect x="3897" y="252" width="201" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="3997.5" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">PollLoop nil-log guard</text></g><g class="VDc="><g class="shape" ><rect x="4497" y="252" width="313" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="4653.5" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">dead helpers + json import unification</text></g><g class="VDg="><g class="shape" ><rect x="5209" y="252" width="216" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="5317" y="290.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">parseFilters error writer</text></g><g class="R0FURQ=="><g class="shape" ><rect x="5824" y="126" width="82" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="5865" y="164.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">GATE</text></g><g class="U0hJUA=="><g class="shape" ><rect x="6388" y="126" width="79" height="66" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="6427.5" y="164.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px">SHIP</text></g><g class="KFAxIC0mZ3Q7IFZFUklGWTEpWzBd"><marker id="mk-d2-2634607249-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 4750.5 33 C 4957.299805 33 5060.700195 43.400002 5261.580051 84.20376" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="5009.5" y="44" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">concurrency test</text></g><g class="KFAyIC0mZ3Q7IFZFUklGWTEpWzBd"><path d="M 4758.5 159 C 4958.899902 159 5060.700195 148.600006 5261.580051 107.796241" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /></g><g class="KFAzIC0mZ3Q7IFZFUklGWTIpWzBd"><path d="M 178.5 285 C 313.299988 285 381.700012 285 514.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="348" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">build + suite</text></g><g class="KFZFUklGWTIgLSZndDsgVDEpWzBd"><path d="M 623.5 285 C 726.299988 285 778.700012 285 879.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /></g><g class="KFQxIC0mZ3Q7IFQyKVswXQ=="><path d="M 1108.5 285 C 1266.5 285 1346.5 285 1502.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="1307" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFQyIC0mZ3Q7IFQzKVswXQ=="><path d="M 1726.5 285 C 1884.5 285 1964.5 285 2120.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="1925" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFQzIC0mZ3Q7IFQ0KVswXQ=="><path d="M 2316.5 285 C 2474.5 285 2554.5 285 2710.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="2515" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFQ0IC0mZ3Q7IFQ1KVswXQ=="><path d="M 2914.5 285 C 3072.5 285 3152.5 285 3308.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="3113" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFQ1IC0mZ3Q7IFQ2KVswXQ=="><path d="M 3499.5 285 C 3657.5 285 3737.5 285 3893.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="3698" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFQ2IC0mZ3Q7IFQ3KVswXQ=="><path d="M 4099.5 285 C 4257.5 285 4337.5 285 4493.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="4298" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFQ3IC0mZ3Q7IFQ4KVswXQ=="><path d="M 4811.5 285 C 4969.5 285 5049.5 285 5205.5 285" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="5010" y="291" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFQ4IC0mZ3Q7IEdBVEUpWzBd"><path d="M 5426.5 285 C 5584.5 285 5664.5 264 5820.958408 181.859336" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="5635" y="277" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">BuildFlow SOLO gate</text></g><g class="KFZFUklGWTEgLSZndDsgR0FURSlbMF0="><path d="M 5370.5 96 C 5573.299805 96 5664.5 106.400002 5820.62871 146.993465" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /></g><g class="KEdBVEUgLSZndDsgU0hJUClbMF0="><path d="M 5908 159 C 6098.799805 159 6195.200195 159 6384 159" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-2634607249-3488378134)" mask="url(#d2-2634607249)" /><text x="6147.5" y="165" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">docs harvest + TODO_LIST update</text></g><mask id="d2-2634607249" maskUnits="userSpaceOnUse" x="-101" y="-101" width="6669" height="520">
+<rect x="-101" y="-101" width="6669" height="520" fill="white"></rect>
+<rect x="4953" y="28" width="113" height="21" fill="black"></rect>
+<rect x="306" y="275" width="84" height="21" fill="black"></rect>
+<rect x="1236" y="275" width="142" height="21" fill="black"></rect>
+<rect x="1854" y="275" width="142" height="21" fill="black"></rect>
+<rect x="2444" y="275" width="142" height="21" fill="black"></rect>
+<rect x="3042" y="275" width="142" height="21" fill="black"></rect>
+<rect x="3627" y="275" width="142" height="21" fill="black"></rect>
+<rect x="4227" y="275" width="142" height="21" fill="black"></rect>
+<rect x="4939" y="275" width="142" height="21" fill="black"></rect>
+<rect x="5564" y="261" width="142" height="21" fill="black"></rect>
+<rect x="6035" y="149" width="225" height="21" fill="black"></rect>
+</mask></svg></svg>
+</div>
+
+        <!-- Migration steps -->
+        <h2 id="plan"><span class="num">06</span>Execution Order</h2>
+        <div class="migration-step">
+          <div class="migration-num">1</div>
+          <div class="migration-content">
+            <h4>T01+T02 — the correctness pair, one branch</h4>
+            <p>Land the single-flight fix and the LookupView routing together; both are small,
+              independently testable, and carry the whole crash/split-brain risk.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">2</div>
+          <div class="migration-content">
+            <h4>T03-T06 — lying surfaces start telling the truth</h4>
+            <p>Truncation errors, honest signatures, order-independent folds, loud mis-wiring.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>T07-T14 — guards, drift, debt</h4>
+            <p>Window fixes, scan guards, dead code, the two TODO_LIST rows that survived
+              verification, golden pins.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">4</div>
+          <div class="migration-content">
+            <h4>T15 — harvest + gate</h4>
+            <p>TODO_LIST.md harvest of this plan's survivors, BuildFlow SOLO gate receipt,
+              CHANGELOG Unreleased batch. The parent agent's auto-git daemon owns the commit.</p>
+          </div>
+        </div>
+
+        <footer class="footer">
+          Generated 2026-11-20 00:22 &middot; Pareto plan for review
+          docs/reviews/2026-11-20_00-22_full-code-review.html &middot; Findings verified against
+          source; build and full test suite green at review time
+        </footer>
+      </main>
+
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

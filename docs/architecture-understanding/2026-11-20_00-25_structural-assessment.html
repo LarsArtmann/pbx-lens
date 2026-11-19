@@ -1097,115 +1097,814 @@
           </div>
         </section>
 
+        <!-- Structure map -->
+        <section id="structure">
+          <h2><span class="num">01</span>Structure map</h2>
+          <p>
+            Sixteen Go packages in one module (the 2026-10-11 single-go.mod
+            HOLD, with its revisit triggers unfired). Sizes are production
+            lines; test lines are counted separately. The layering:
+          </p>
+
+          <div class="dep-tree"><span class="root">cmd/pbx-lens</span> (binary: flag shells + serve/ops wiring)
+├─ internal/cli ────────── app, calls, ingest/{cdr,webhook,agent,telnyx}, retention, search
+│    └─ internal/app ───── calls        <span class="ok">(composition root: system.New, ADR-0123)</span>
+├─ internal/web ────────── calls, search, retention, oidclogin,
+│    │                     <span class="unwanted">ingest/telnyx  ⚠ the only presentation→ingest edge</span>
+│    └─ internal/oidclogin             (OIDC login helper, standalone)
+└─ internal/backup ─────── (none: DSN-agnostic VACUUM INTO + verify)
+
+base: internal/calls ───── <span class="ok">(imports nothing internal — pure domain)</span>
+      internal/wire ─────── (FlexTime only, shared by webhook + telnyx)</div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Role (one-paragraph test)</th>
+                  <th>Prod files / LOC</th>
+                  <th>Test LOC</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>internal/calls</code></td>
+                  <td>Domain: Observation, decider, events, projection, catalog</td>
+                  <td>7 / 1,173</td>
+                  <td>889</td>
+                </tr>
+                <tr>
+                  <td><code>internal/web</code></td>
+                  <td>UI: serving + identity + queries + analytics + export + recording proxy + ops + caching</td>
+                  <td>19 Go + 7 templ / 4,928 + 2,513</td>
+                  <td>8,447</td>
+                </tr>
+                <tr>
+                  <td><code>internal/cli</code></td>
+                  <td>Command layer: ingest ops, poller, enrich, refresh, search rebuild</td>
+                  <td>10 / 1,540</td>
+                  <td>1,573</td>
+                </tr>
+                <tr>
+                  <td><code>cmd/pbx-lens</code></td>
+                  <td>Binary: flag shells + serve/ops composition + e2e probes</td>
+                  <td>7 / 1,572</td>
+                  <td>1,812</td>
+                </tr>
+                <tr>
+                  <td><code>internal/ingest/telnyx</code></td>
+                  <td>Telnyx mapper: DTOs, enrichment, recording correlation</td>
+                  <td>4 / 672</td>
+                  <td>1,319</td>
+                </tr>
+                <tr>
+                  <td><code>internal/search</code></td>
+                  <td>FTS5 index + ranking behind Searcher</td>
+                  <td>1 / 569</td>
+                  <td>685</td>
+                </tr>
+                <tr>
+                  <td><code>internal/oidclogin</code></td>
+                  <td>OIDC code + PKCE login helper</td>
+                  <td>1 / 510</td>
+                  <td>523</td>
+                </tr>
+                <tr>
+                  <td><code>internal/ingest/cdr</code></td>
+                  <td>Master.csv parser (13- and 18-column templates)</td>
+                  <td>1 / 370</td>
+                  <td>408</td>
+                </tr>
+                <tr>
+                  <td><code>internal/backup</code></td>
+                  <td>VACUUM INTO snapshot + verify (DSN-agnostic)</td>
+                  <td>1 / 171</td>
+                  <td>262</td>
+                </tr>
+                <tr>
+                  <td><code>internal/retention</code></td>
+                  <td>Policy, OldViews, Retire (tombstone dispatch)</td>
+                  <td>1 / 173</td>
+                  <td>238</td>
+                </tr>
+                <tr>
+                  <td><code>internal/ingest/agent</code></td>
+                  <td>Agent-transcript mapper</td>
+                  <td>1 / 195</td>
+                  <td>199</td>
+                </tr>
+                <tr>
+                  <td><code>internal/ingest/webhook</code></td>
+                  <td>Receiver webhook JSONL mapper</td>
+                  <td>1 / 182</td>
+                  <td>221</td>
+                </tr>
+                <tr>
+                  <td><code>internal/ingest</code></td>
+                  <td>Shared parser scaffolding: Result, NewScanner/EachLine</td>
+                  <td>1 / 64</td>
+                  <td>121</td>
+                </tr>
+                <tr>
+                  <td><code>internal/wire</code></td>
+                  <td>FlexTime: precision-unstable Telnyx timestamps</td>
+                  <td>1 / 45</td>
+                  <td>97</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            Rubric flag for god-modules is &gt;1,000 LOC or &gt;20 files:
+            <code>internal/web</code> trips both in production code alone
+            (19 hand-written Go files + 7 templ, 7.4k LOC) and holds 41 of the
+            codebase's ~180 exported declarations. Every other package sits
+            comfortably under the flag.
+          </p>
+        </section>
+
+        <!-- Dependency analysis -->
+        <section id="dependencies">
+          <h2><span class="num">02</span>Dependency analysis</h2>
+          <p>
+            The import graph (production code, internal edges only) is a clean
+            DAG — Go forbids package cycles, and none of the measured efferent
+            sets close a loop. Coupling metrics per package:
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Ca (fan-in)</th>
+                  <th>Ce (fan-out)</th>
+                  <th>Instability I = Ce/(Ca+Ce)</th>
+                  <th>Reading</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>calls</code></td>
+                  <td>11</td>
+                  <td>0</td>
+                  <td>0.00</td>
+                  <td class="yes">Maximally stable, correctly at the base</td>
+                </tr>
+                <tr>
+                  <td><code>ingest</code></td>
+                  <td>5</td>
+                  <td>1</td>
+                  <td>0.17</td>
+                  <td>Stable spine for the mappers</td>
+                </tr>
+                <tr>
+                  <td><code>search</code> / <code>retention</code> / <code>ingest/telnyx</code></td>
+                  <td>3 each</td>
+                  <td>1–2</td>
+                  <td>0.33–0.40</td>
+                  <td>Balanced mid-stack</td>
+                </tr>
+                <tr>
+                  <td><code>wire</code>, <code>app</code>, <code>oidclogin</code>, <code>backup</code>, <code>ingest/cdr</code>, <code>ingest/webhook</code>, <code>ingest/agent</code></td>
+                  <td>1–2</td>
+                  <td>0–3</td>
+                  <td>0.33–0.50</td>
+                  <td>Leaf utilities and mappers</td>
+                </tr>
+                <tr>
+                  <td><code>web</code></td>
+                  <td>1</td>
+                  <td>5</td>
+                  <td>0.83</td>
+                  <td>Composition leaf — correct position</td>
+                </tr>
+                <tr>
+                  <td><code>cli</code></td>
+                  <td>1</td>
+                  <td>8</td>
+                  <td>0.89</td>
+                  <td>Highest efferent count (orchestrator)</td>
+                </tr>
+                <tr>
+                  <td><code>cmd/pbx-lens</code></td>
+                  <td>0</td>
+                  <td>10</td>
+                  <td>1.00</td>
+                  <td>Binary edge — correct position</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>Direction check (the highlight test):</strong> the domain
+            package passes perfectly — no database, net/http, crypto, or
+            framework-runtime imports reach <code>internal/calls</code>; the
+            sqlite engine registers via blank import in the composition root
+            (<code>internal/app</code>), which is exactly where ADR-0123 puts
+            it. Two edges miss the ideal:
+          </p>
+          <ul>
+            <li>
+              <code>internal/web</code> → <code>internal/ingest/telnyx</code>:
+              the read side reaches into a write-side mapper package for
+              recording correlation (<code>RecordingByCallControl</code>) and
+              WAV-stem resolution — shared vocabulary that belongs at a
+              read-side seam.
+            </li>
+            <li>
+              <code>web.Register</code> takes the concrete
+              <code>*system.System</code>, and <code>queries.go</code> folds
+              reads through <code>metaengine</code> directly. Framework types
+              are woven through the presentation layer rather than isolated
+              behind a read-model interface (mitigated: the read path is pure
+              query, and calls.LookupView centralizes record-key handling).
+            </li>
+          </ul>
+
+          <p>
+            <strong>Change ripple (last 100 commits):</strong> docs lead
+            (96 — an auto-commit artifact), but among Go paths
+            <code>internal/web</code> absorbed 69 file-touches versus 18 for
+            <code>cmd/pbx-lens</code> and 16 for
+            <code>internal/oidclogin</code>; every other Go package took ≤6.
+            The hot spot and the god package are the same object — the
+            strongest possible signal for where a split pays off.
+          </p>
+        </section>
+
+        <!-- Domain alignment -->
+        <section id="alignment">
+          <h2><span class="num">03</span>Domain alignment</h2>
+          <p>
+            docs/DOMAIN_LANGUAGE.md carries a "where used in code" column, so
+            alignment is checkable rather than vibes. Spot-check of the core
+            vocabulary:
+          </p>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Domain term</th>
+                  <th>Code home</th>
+                  <th>Aligned?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Observation, StreamID, ContentHash, Excerpt, TurnRole, MOS</td>
+                  <td><code>calls/domain.go</code></td>
+                  <td class="yes">One home, one concept</td>
+                </tr>
+                <tr>
+                  <td>CallView / read model</td>
+                  <td><code>calls/projection.go</code> + <code>call_views</code></td>
+                  <td class="yes">Fold owns the row; UI renders it</td>
+                </tr>
+                <tr>
+                  <td>FlexTime</td>
+                  <td><code>wire/flextime.go</code></td>
+                  <td class="yes">Named exactly</td>
+                </tr>
+                <tr>
+                  <td>Tombstone (call.retired)</td>
+                  <td><code>retention/retention.go</code> + decider guards</td>
+                  <td class="yes">Single dispatch path</td>
+                </tr>
+                <tr>
+                  <td>Age gate</td>
+                  <td><code>cli.AgeGate</code>, policy in <code>retention.Policy.Admits</code></td>
+                  <td class="yes">Concept spans two packages, number lives once</td>
+                </tr>
+                <tr>
+                  <td>Representative row / read-time join</td>
+                  <td><code>web/representative.go</code>, <code>detail</code> handlers</td>
+                  <td class="yes">Single file owns the collapse</td>
+                </tr>
+                <tr>
+                  <td>Recording correlation</td>
+                  <td><code>ingest/telnyx/map.go</code></td>
+                  <td class="no">Domain concept living in a mapper package</td>
+                </tr>
+                <tr>
+                  <td>Identity context (gate, session, identity DB)</td>
+                  <td><code>web/userauth.go</code> (534 LOC) + <code>oidclogin</code></td>
+                  <td class="no">Bounded context embedded in the UI package</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>
+            <strong>Split-brain scan:</strong> no duplicated concept
+            definitions found. The apparent duplicates are deliberate and
+            documented: <code>catalog</code> exists in both cmd and cli as the
+            DB-free exception (AGENTS.md), and the retention concept's two
+            halves (ingest-side AgeGate, purge-side Retire) share one Policy
+            type so the numbers cannot drift. The genuine misalignments are
+            the two "no" rows above — not split brains but concepts whose code
+            homes under-weight their domain importance.
+          </p>
+        </section>
+
         <!-- Findings -->
         <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <h2><span class="num">04</span>Findings</h2>
+          <p>
+            Ordered by impact. Each follows the finding → impact →
+            recommendation → effort format; no P0 exists — that absence is
+            itself a finding.
+          </p>
 
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
+          <!-- Finding 1 -->
+          <div class="card card-problem" id="issue-1">
+            <span class="severity severity-critical">P1 &middot; God package</span>
+            <h3>internal/web is four packages wearing one name</h3>
             <div class="where">
-              path/to/file.go:42-58 &middot; short context
+              internal/web/* &middot; 19 prod Go files + 7 templ &middot; 7.4k
+              prod LOC &middot; 41 exported decls &middot; 69/100-commit churn
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              <strong>Finding:</strong> one package contains the HTTP serving
+              and routing (<code>server.go</code>, 846), the entire identity
+              bounded context (<code>userauth.go</code>, 534 — its own sqlite
+              database, session gate, CSRF, WebAuthn/RPID derivation, even
+              <code>*sql.DB</code> PRAGMA tuning), the query/view-model layer
+              (<code>queries.go</code>, 712), the analytics suite
+              (<code>dashboard.go</code> 560, quality, segments, anomaly,
+              coverage, freshness ≈ 1.3k), the streaming CSV export, the
+              recording proxy, ops telemetry, and the caching/ETag policy.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
+            <p>
+              <strong>Impact:</strong> every concern is a merge-conflict
+              neighbor of every other — measured as 69% of recent Go churn in
+              one package; the 8.4k-loc test suite re-runs for any of them;
+              and the documented identity bounded context
+              (DOMAIN_LANGUAGE § 2026-11-12) has no code boundary to point
+              at, so its durability guarantees (backup, purge-untouchability)
+              rest on convention inside a package whose other half changes
+              daily.
+            </p>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Fix: three mechanical extractions (roadmap P1)</strong>
+              (1) <code>userauth.go</code> + its five test files →
+              <code>internal/identity</code> — it is already a
+              self-contained constructor pair
+              (<code>OpenIdentity</code>/<code>Identity.Register</code>);
+              (2) the read side (queries, dashboard, quality, segments,
+              anomaly, coverage, freshness ≈ 2.9k LOC) → a query package with
+              exported view models; (3) what remains (serving, templ,
+              export, recording, ops, caching) is a coherent ~3k package.
+              Effort S+M total; ordering: identity first (smallest,
+              independently landable), query second.
             </div>
           </div>
 
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+          <!-- Finding 2 -->
+          <div class="card card-problem" id="issue-2">
+            <span class="severity severity-important">P1 &middot; Layering drift</span>
+            <h3>Serve composition lives in the binary, not the command layer</h3>
+            <div class="where">
+              cmd/pbx-lens/serve.go (590 LOC) &middot; cmd/pbx-lens/ops.go (284)
+            </div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              <strong>Finding:</strong> the documented convention (AGENTS.md
+              § Structure) puts the CLI command layer in
+              <code>internal/cli</code> with cmd as thin flag shells — and 8
+              of 10 subcommands follow it. But <code>serve</code> and
+              <code>ops</code> carry real composition in package main: the
+              appkit middleware chain, security headers, systemd install,
+              poller boot, and the backup/retention orchestration.
             </p>
+            <p>
+              <strong>Impact:</strong> the serve wiring — whose ordering/ETag/
+              no-cache doctrine docs/http-stack.md calls load-bearing — is
+              untestable without the binary and invisible to the internal-
+              package conventions; the inconsistency also doubles the mental
+              model of "where does a command live".
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong> move the composition body of serve.go/ops.go
+              into internal (cli or a new internal/serve), leaving flag
+              parsing in cmd exactly like ingest-cdr does today. Effort S–M;
+              independently landable; pairs naturally with finding 1 but has
+              no hard ordering dependency.
+            </div>
           </div>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+          <!-- Finding 3 -->
+          <div class="card card-warning" id="issue-3">
+            <span class="severity severity-important">P2 &middot; Direction smell</span>
+            <h3>Read side reaches into a write-side mapper</h3>
+            <div class="where">
+              internal/web → internal/ingest/telnyx &middot; RecordingByCallControl in ingest/telnyx/map.go</div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              <strong>Finding:</strong> the web layer imports the Telnyx
+              ingest mapper for recording correlation
+              (<code>RecordingByCallControl</code>, DOMAIN_LANGUAGE's own
+              term) and the WAV-stem resolution rules — the only
+              presentation→ingest edge in the graph.
+            </p>
+            <p>
+              <strong>Impact:</strong> the ingest subpackages stop being purely
+              write-side, and a domain concept's canonical home is a file
+              named after wire parsing. Today the cost is cognitive; the risk
+              is future drift between what the mapper correlates at ingest
+              time and what the detail page correlates at read time.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong> relocate the correlation vocabulary
+              (call_control_id matching, WAV stems, {uuid}_* sweep) to a
+              read-side home — <code>calls</code> or a small
+              <code>internal/recording</code> — and let both sides import it.
+              Effort S; after finding 1 only to avoid double-churning web.
+            </div>
+          </div>
+
+          <!-- Finding 4 -->
+          <div class="card card-warning" id="issue-4">
+            <span class="severity severity-nice">P2 &middot; Reuse ceiling</span>
+            <h3>Query models are package-private inside the UI</h3>
+            <div class="where">internal/web/queries.go &middot; ListCallsQuery, DashboardStats et al.</div>
+            <p>
+              <strong>Finding:</strong> the read-side vocabulary — list
+              filters, dashboard stats, denominators — is lowercase and
+              unexported inside <code>internal/web</code>. The export path
+              reuses it in-package, but no future consumer (an API lane, an
+              automation, the ROADMAP's "any question answerable" north
+              star) can compose these queries without importing all of web or
+              copying the logic.
+            </p>
+            <p>
+              <strong>Impact:</strong> composability, not correctness — the
+              single-operator UI is fine today; the ceiling bites the day a
+              second consumer arrives and the cheapest path becomes
+              copy-paste (the thing the art-dupl gate exists to police).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong> this is finding 1 step (2): moving the read
+              side to its own package with exported models solves it as a
+              side effect — no separate work item unless step (2) is
+              declined.
+            </div>
+          </div>
+
+          <!-- Finding 5 -->
+          <div class="card card-solution" id="issue-5">
+            <span class="severity severity-nice">P3 &middot; Hygiene</span>
+            <h3>Dead test helpers and diagnostic noise</h3>
+            <div class="where">
+              internal/calls/domain_test.go (mustEvents, decide unused) &middot; internal/app/app.go (gopls infertypeargs ×3)
+            </div>
+            <p>
+              <strong>Finding/Impact/Recommendation:</strong> gopls flags two
+              unused test helpers in the domain package and three unnecessary
+              type-argument hints in the composition root. Zero runtime cost;
+              pure signal-to-noise for the next reader. Effort S — one
+              dead-code sweep, no ordering.
             </p>
           </div>
         </section>
 
         <!-- Proposal -->
         <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+          <h2><span class="num">05</span>What the solution could look like</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            The target is not a rewrite and not a go.mod split — the
+            2026-10-11 HOLD stands (single domain, zero external Go
+            consumers, revisit triggers unfired). It is three package moves
+            that give each existing concern its own name:
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
+
+          <div class="compare-header">
+            <div class="compare-before">Current — one web, wiring in cmd</div>
+            <div class="compare-after">Proposed — seams with names</div>
+          </div>
+          <div class="compare-row">
+            <pre><code>cmd/pbx-lens ─┬─ cli ── app, calls, ingest/*,
+              │          retention, search
+              ├─ web ── calls, search, retention,
+              │         oidclogin,
+              │         ingest/telnyx   ⚠
+              └─ backup
+
+internal/web =
+  serving + identity(534) + queries(712)
+  + analytics(~1.3k) + export
+  + recording proxy + ops + caching
+  = 7.4k LOC, 69% of churn</code></pre>
+            <pre><code>cmd/pbx-lens ─┬─ cli (+ serve/ops composition)
+              ├─ web ── query, calls, search,
+              │         retention
+              ├─ identity ── oidclogin
+              │           [own sqlite DB]
+              └─ backup
+
+web      = HTTP serving + templ (~3k)
+query    = exported read models:
+           ListCallsQuery, DashboardStats,
+           segments, quality
+identity = OpenIdentity/Identity.Register
+recording correlation → read-side home
+           (calls or internal/recording)</code></pre>
+          </div>
+
+          <div class="diagram">
+            <span class="node">cmd (flags)</span>
+            <span class="arrow">→</span>
+            <span class="node">cli + serve wiring</span>
+            <span class="arrow">→</span>
+            <span class="node node-good">identity</span>
+            <span class="arrow">+</span>
+            <span class="node node-good">query</span>
+            <span class="arrow">+</span>
+            <span class="node node-good">web (serving)</span>
+            <span class="arrow">→</span>
+            <span class="node node-core">calls (I = 0.00)</span>
+          </div>
+
           <div class="callout callout-teal">
             <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            Every arrow keeps pointing toward stability; nothing new is
+            invented — identity, query, and serve wiring already exist as
+            coherent files, they merely lack a package boundary. After the
+            moves, web churn localizes to serving+templ, identity gains a
+            code boundary matching its documented durability guarantees, and
+            the read models become importable by any future consumer.
+          </div>
+        </section>
+
+        <!-- Roadmap -->
+        <section id="roadmap">
+          <h2><span class="num">06</span>Action roadmap</h2>
+          <p>
+            <strong>P0 — none.</strong> No cycles, no domain→infrastructure
+            violations, no structure-caused incidents. That is the finding,
+            not an omission. P1 and P2 in landing order:
+          </p>
+
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>Extract identity → internal/identity <span class="badge badge-high">P1</span> <span class="badge">Effort S–M</span></h4>
+              <p>
+                Move userauth.go and its test cluster (auth_test, userauth_*_test,
+                auth_oidc_test) to a new internal/identity; cmd/serve.go and
+                web's Options are the only callers. Impact: code boundary for
+                the documented bounded context; removes *sql.DB wiring from
+                the presentation layer; first shrink of the churn king.
+                No ordering dependency.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>Split web's read side → internal/query <span class="badge badge-high">P1</span> <span class="badge">Effort M</span></h4>
+              <p>
+                Move queries.go, dashboard.go, quality.go, segments.go,
+                anomaly.go, coverage.go, freshness.go (~2.9k LOC) with exported
+                view models; web imports query and keeps serving + templ.
+                Impact: reusable read vocabulary (finding 4 resolved as a side
+                effect); the 8.4k-loc test suite splits along the same seam.
+                Land after step 1 — smaller web first means smaller diffs.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>Move serve composition out of cmd <span class="badge badge-high">P1</span> <span class="badge">Effort S–M</span></h4>
+              <p>
+                serve.go (590) and ops.go (284): composition body → internal
+                (cli or internal/serve), flag shells stay in cmd — exactly the
+                shape ingest-cdr already has. Impact: the middleware chain and
+                systemd wiring become testable and convention-compliant.
+                Independent; convenient to land beside steps 1–2.
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>Recording correlation to a read-side home <span class="badge badge-medium">P2</span> <span class="badge">Effort S</span></h4>
+              <p>
+                RecordingByCallControl + WAV-stem rules out of
+                ingest/telnyx/map.go into calls or internal/recording; both
+                sides import it. Impact: removes the only
+                presentation→ingest edge; ingest subpackages become purely
+                write-side. After step 1 (avoid double-churning web).
+              </p>
+            </div>
+          </div>
+
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>Dead-code sweep + re-score <span class="badge badge-low">P3</span> <span class="badge">Effort S</span></h4>
+              <p>
+                Delete unused test helpers (calls/domain_test.go: mustEvents,
+                decide), accept gopls infertypeargs hints in app.go. After
+                steps 1–3 land, re-run this review's measurement set (five
+                commands) and re-check the go.mod HOLD triggers — an external
+                Go consumer of the new query package would be exactly the
+                trigger the 2026-10-11 decision names.
+              </p>
+            </div>
           </div>
         </section>
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+          <h2><span class="num">07</span>Appendix</h2>
+
+          <h3>Score justifications (rubric 1–5)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Score</th>
+                  <th>Justification</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Coupling</td>
+                  <td>4</td>
+                  <td>
+                    Consumer-side interfaces at both volatile edges
+                    (web.Searcher for FTS5, web.RecordingFetcher for Telnyx
+                    HTTP); commands/events are the only write path; measured
+                    import DAG with zero cycles. Held from 5 by: concrete
+                    *system.System wired into web.Register, metaengine folds
+                    in queries.go, and cli's Ce=8 concrete fan-out.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Cohesion</td>
+                  <td>4</td>
+                  <td>
+                    14 of 16 packages pass the one-paragraph test; no
+                    utils/common/helpers anywhere. The two failures are
+                    internal/web (≥8 concerns) and cmd/pbx-lens (thin shells
+                    + 590-line serve composition mixed).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Modularity</td>
+                  <td>4</td>
+                  <td>
+                    internal/ enforces privacy; the structure is documented
+                    (AGENTS.md § Structure) and the docs match the tree;
+                    every package boots in isolation via dsn=="" (memory
+                    engine). Porous edges: web→ingest/telnyx, identity inside
+                    web.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Composability</td>
+                  <td>3</td>
+                  <td>
+                    One shared composition root (prod and tests boot the same
+                    DomainConfig) is excellent; but read-side query models
+                    are package-private inside web, and a new ingest source
+                    costs 4 touch points (mapper pkg, cli file, cmd shell,
+                    main.go map) — mechanical, yet every consumer-side
+                    recombination currently requires importing the whole UI
+                    package.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Scalability</td>
+                  <td>4</td>
+                  <td>
+                    Bounding is architectural: keyset pagination, 5k-row
+                    memory-bounded streaming, FTS5, bounded tables, measured
+                    poll ceiling (~82 µs/op, docs/http-stack.md), single-writer
+                    command path. Friction points are known and documented —
+                    one sqlite engine for source-of-truth + projections
+                    (deliberate single-process doctrine) and web as the merge
+                    hot spot (69/100 commits).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Service orientation</td>
+                  <td>3</td>
+                  <td>
+                    Rubric-3 verbatim: monolith with clear internal module
+                    boundaries, ready for extraction — which is the
+                    documented target state (go.mod HOLD 2026-10-11; identity
+                    verdict NO TRIP 2026-11-12). The one true second bounded
+                    context (identity: own DB, own upstream lib) is 80%
+                    extracted — its code home just sits inside web. Scored at
+                    the anchor, not as debt.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Dependency direction</td>
+                  <td>4</td>
+                  <td>
+                    Domain imports zero internal packages and zero
+                    infrastructure (verified import set); sqlite registers via
+                    blank import in the composition root; instability
+                    decreases strictly downward (calls 0.00 → cli 0.89 → cmd
+                    1.00). Held from 5 by: *sql.DB tuning in
+                    web/userauth.go, the web→ingest/telnyx lateral edge, and
+                    framework types through the presentation layer.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            <strong>Overall 3.71 — Good:</strong> address the
+            lowest-scoring dimensions (composability, service orientation);
+            no urgent restructuring needed. Both low scores resolve through
+            the same three package moves in the roadmap.
           </p>
+
+          <h3>Priority matrix</h3>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
+                <th>Roadmap item</th>
+                <th>Priority</th>
                 <th>Effort</th>
-                <th>Status</th>
+                <th>Resolves finding</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>Extract identity → internal/identity</td>
+                <td class="no">P1</td>
+                <td>S–M</td>
+                <td>#1 (part), domain alignment</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>Split web read side → internal/query</td>
+                <td class="no">P1</td>
+                <td>M</td>
+                <td>#1 (part), #4</td>
+              </tr>
+              <tr>
+                <td>Move serve composition out of cmd</td>
+                <td class="no">P1</td>
+                <td>S–M</td>
+                <td>#2</td>
+              </tr>
+              <tr>
+                <td>Recording correlation → read-side home</td>
+                <td>P2</td>
+                <td>S</td>
+                <td>#3</td>
+              </tr>
+              <tr>
+                <td>Dead-code sweep + re-score + HOLD trigger check</td>
+                <td>P3</td>
+                <td>S</td>
+                <td>#5, series continuity</td>
               </tr>
             </tbody>
           </table>
+
+          <h3>Method &amp; receipts</h3>
+          <p>
+            Structure: <code>rg --files</code> + per-file <code>wc -l</code>
+            (prod vs test split), exported-decl counts per package.
+            Dependencies: internal import graph via ripgrep over
+            <code>-g '!*_test.go'</code>, afferent/efferent/instability
+            computed from it; cycles impossible in Go and none attempted by
+            the efferent sets. Churn: <code>git log --oneline -n 100
+            --name-only</code> ranked by path prefix (auto-commit daemon
+            inflates docs; Go paths compared among themselves). Alignment:
+            docs/DOMAIN_LANGUAGE.md "where used in code" column checked
+            file-by-file. First report in the series — no prior roadmaps to
+            cross-reference; next review should diff against this file's
+            measurement set.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Harvest note for the parent</strong>
+            Roadmap items 1–5 are not yet in TODO_LIST.md/ROADMAP.md — run
+            docs-health HARVEST with the five rows listed in the final
+            session message so they land in the living backlog.
+          </div>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
+            Generated 2026-11-20 &middot; Reviewed against tree @ 8ac47dd
             &middot; All claims verified against source code where noted
+            &middot; Read-only assessment: no source files were modified
           </p>
         </footer>
       </main>

@@ -848,24 +848,27 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <!-- Full-bleed top bar -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>LIBRARY DEEP DIVE</span>
+      <span>2026-11-19</span>
+      <span>crush subagent &middot; single-library run</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <!-- Sidebar TOC (hidden below 1024px) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
           <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
+          <a href="#usage">Current usage</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#appendix">Appendix</a>
+          <a href="#version">Version currency</a>
+          <a href="#opportunities">Opportunities</a>
+          <a href="#inventory">Capability inventory</a>
+          <a href="#risks">Risks</a>
+          <a href="#verify">How to verify</a>
         </nav>
       </aside>
 
@@ -873,43 +876,49 @@
       <main class="main">
         <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-11-19</div>
+          <h1>templ-components v1.27.0 &mdash; Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            The UI foundation of every pbx-lens page, re-audited at the v1.27.0
+            pin against the full module family. Adoption remains excellent &mdash;
+            and the workaround-retirement wave the fleet report queued up shipped
+            upstream the day before this audit: v1.27.1 (2026-11-19) carries the
+            fixes for all six tracked filings.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Pin: v1.27.0 (+ htmx/icons/utils)</span>
+            <span class="tag">Latest: v1.27.1 (2026-11-19)</span>
+            <span class="tag teal">Adoption score: 89/100 (very high)</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+            <div class="score">89</div>
+            <div class="label">Adoption score / 100</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">30/38</div>
+            <div class="label">Fully leveraged (of applicable)</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">8</div>
+            <div class="label">Partially used</div>
           </div>
-          <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Missed / misused</div>
           </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+          <div class="score-card score-warn">
+            <div class="score">1 patch</div>
+            <div class="label">Version gap (v1.27.1 out)</div>
           </div>
         </section>
 
@@ -917,40 +926,114 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            templ-components is the fleet&rsquo;s best-adopted dependency and this
+            audit confirms it: all 8 importable packages are in use, all 7
+            <code>.templ</code> pages are built on the library with zero
+            hand-rolled parallel components, and the disciplined adoption map
+            (<code>docs/templ-components-adoption.md</code>) held through the
+            2026-11-12 coordinated bump. Of the 8 partially-used rows, 7 are
+            upstream-blocked workarounds for filings #48/#49/#51/#55/#63 whose
+            fixes merged 2026-11-06/07 &mdash; after the v1.27.0 tag &mdash; and
+            the 8th is version currency itself. The score moved from the fleet
+            report&rsquo;s 95 to 89 for one honest reason: the denominator grew
+            (38 applicable rows vs the fleet&rsquo;s 28) and a version-currency
+            row now exists because a newer release exists.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            Bump to v1.27.1 (released 2026-11-19, one patch) and retire the
+            workaround queue in the same act: the hand-rolled
+            <code>transcriptMatchLog</code> (~40 lines), the
+            <code>!items-stretch</code> class args &times;3, the hand-rolled
+            <code>tr[role=link]:focus-visible</code> CSS, the pinned nav id, and
+            the CopyButton-in-fragment prohibition all dissolve. This is the
+            adoption-map watchlist&rsquo;s &ldquo;next release&rdquo; &mdash; it
+            shipped yesterday.
           </div>
+          <p>
+            <strong>Prior reports this supersedes</strong> (newer + narrower
+            wins): the <a href="2026-10-24_templ-components-deep-dive.html">2026-10-24 deep-dive</a>
+            (91/100 at the v1.23.0 pin, 38 capabilities) and the fleet report
+            <code>docs/review/libs/templ-components.md</code> (95/100, refreshed
+            2026-11-12 at v1.27.0). Superseded claims: (a) &ldquo;v1.27.0 is the
+            latest release&rdquo; &mdash; v1.27.1 tagged 2026-11-19; (b) &ldquo;the
+            retirement wave rides the next release&rdquo; &mdash; it now has a
+            concrete version. The fleet&rsquo;s 95 is not contradicted: it scored
+            26.5 of 28 applicable rows with version currency treated as current;
+            this audit re-counts at a wider denominator (38) and adds the
+            now-stale currency row.
+          </p>
         </section>
 
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+        <!-- Current usage -->
+        <section id="usage">
+          <h2><span class="num">&#9670;</span>Current usage (the baseline)</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            Seven <code>.templ</code> pages import the library &mdash;
+            <code>page.templ</code> (Base, SimpleNav, Footer, ThemeToggle,
+            ToastContainer, GlobalErrorHandling), <code>calls.templ</code>
+            (Table, forms, Alert, self-hosted htmx at
+            <code>/static/htmx.min.js</code>), <code>detail.templ</code>
+            (Breadcrumbs, CopyButton &times;2, DefinitionList, Scrollback,
+            PolledRegion), <code>dashboard.templ</code> (PolledRegion 30s,
+            Card &times;9+, BarChart &times;4, Heatmap, Sparkline &times;2,
+            StatCard &times;4, PieChart Donut, CircularProgress MOS gauge),
+            <code>ops.templ</code>, <code>search.templ</code>,
+            <code>segment.templ</code> (reuses the dashboard&rsquo;s shared
+            cards). Go-side: <code>utils/format</code> (ops.go:15),
+            <code>utils/golden</code> in the golden tests
+            (golden_pages_test.go:11), <code>display</code> in the
+            RelativeTime contract test (relative_time_test.go:11) and the
+            dashboard window test (dashboard_window_test.go:8).
           </p>
-
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>Nonce discipline is total</strong>
+                <span>Every CSP-sensitive call site threads the nonce: 10
+                <code>Nonce:</code> assignments across calls.templ (24, 44, 256,
+                357), dashboard.templ (27, 101, 308), search.templ (29) &mdash;
+                forms.Form validity bridge, Table row-click JS, CopyButton
+                scripts. The v1.27.0 un-nonced
+                <code>tcValidityAttached</code> trap was absorbed on day one.</span>
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
+                <strong>utils/format is the single formatting dialect</strong>
+                <span>50 call sites across the pages &mdash;
+                <code>StringOrDash</code> &times;14,
+                <code>CompactDuration</code> &times;13,
+                <code>ClockDuration</code> &times;12,
+                <code>Percent</code> &times;11. The AGENTS.md rule
+                (&ldquo;never hand-roll duration/percent/dash&rdquo;) holds;
+                <code>mosGaugePercent</code> stays a domain mapping, correctly
+                outside the library.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The off-token Heatmap bridge is guarded, not rotting</strong>
+                <span>app.css:97&ndash;111 re-bridges
+                <code>--ds-brand-rgb</code>/<code>--ds-brand</code> to teal;
+                <code>TestCSSGateBridgesHeatmapBrandToTeal</code> and the
+                pixel probe re-verify on every bump. The library still offers no
+                token path at v1.27.1 &mdash; the bridge remains the sanctioned
+                shape.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Freshness machinery is self-policing</strong>
+                <span>The class corpus resolves the module cache through the go
+                toolchain (corpus_freshness_test.go pins go.mod version &ne;
+                corpus stamp), the goldens pin markup, and the nav-id and
+                RelativeTime contracts have dedicated tests
+                (nav_id_test.go, relative_time_test.go).</span>
               </div>
             </div>
           </div>
@@ -959,112 +1042,507 @@
         <!-- Findings -->
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
-
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
-            <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
-            </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
-            <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
-            </div>
-          </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
-            <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
-            </p>
-          </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
-            <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
-            </p>
-          </div>
-        </section>
-
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            Ordered by impact. Seven of the eight partial rows share one root
+            cause and one fix (the v1.27.1 bump); they are listed separately
+            because each retires a distinct workaround with its own guard test.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+
+          <!-- F1 -->
+          <div class="issue issue-critical" id="f1-version">
+            <span class="severity severity-critical">Partially used &middot; the unlock for findings 2&ndash;8</span>
+            <h3>Version currency: v1.27.1 shipped 2026-11-19 &mdash; the pin is one patch behind the retirement wave</h3>
+            <div class="where">go.mod:31-34 (pin v1.27.0 &times;4 modules) &middot; latest v1.27.1 via <code>go list -m -versions</code></div>
+            <p>
+              The fleet report&rsquo;s 2026-11-12 refresh verified v1.27.0 as
+              latest; that claim is now stale. v1.27.1 (tagged 2026-11-19) contains,
+              verified in its CHANGELOG and module cache: the #48 BarChart
+              zero-px collapse fix (Height defaults to 12rem, container
+              stretches), the #51 <code>ScrollbackLine</code> ID/Class hook,
+              built-in focus-visible outline on clickable rows (#49) with the
+              ARIA-invalid <code>role="link"</code> removed, deterministic nav
+              mobile-menu ids (#55 &mdash; also an ETag/304 win),
+              <code>CopyButtonScript</code> + <code>NoScript</code> for
+              fragment-mounted copy buttons (#63), responsive + zero-aware
+              Sparkline (#60), custom <code>ListNote.Message</code>,
+              <code>feedback.LoadingProgress</code>, form-field
+              <code>Stacked</code> (#53), and the ToastContainer duplicate
+              <code>&lt;/script&gt;</code> fix that the pin&rsquo;s goldens
+              carry in all 9 page goldens.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              One coordinated act: bump all four templ-components modules to
+              v1.27.1 (templ stays at v0.3.1100 &mdash; v1.27.1&rsquo;s own pin
+              guard still pairs it; a-h/templ v0.3.1118 exists but upstream has
+              not moved, and the repo&rsquo;s doctrine is to ride
+              upstream&rsquo;s pairing), regenerate corpus + goldens, then run
+              adoption-map watchlist steps 1&ndash;8 as the retirement batch.
+            </div>
+            <pre><code>// go.mod: the coordinated bump, one act, all four modules
+github.com/larsartmann/templ-components v1.27.1
+github.com/larsartmann/templ-components/htmx v1.27.1
+github.com/larsartmann/templ-components/icons v1.27.1
+github.com/larsartmann/templ-components/utils v1.27.1
+// a-h/templ stays v0.3.1100 (upstream pairing; manual-only, dependabot banned)</code></pre>
+          </div>
+
+          <!-- F2 -->
+          <div class="issue issue-important" id="f2-scrollback">
+            <span class="severity severity-important">Partially used &middot; ~40 hand-rolled lines retire</span>
+            <h3>Scrollback &ldquo;?q=&rdquo; match path hand-rolls the render loop &mdash; v1.27.1&rsquo;s ScrollbackLine ID/Class retires it</h3>
+            <div class="where">internal/web/detail.templ:419-460 (transcriptMatchLog) &middot; chosen over display.Scrollback because the pin&rsquo;s ScrollbackLine has no id/class hook (#51)</div>
+            <p>
+              The plain transcript path uses <code>display.Scrollback</code>
+              correctly (AriaLabel, Stagger:false &mdash; detail.templ:258-262).
+              The search-match view re-rolls the loop by hand to give each turn
+              an anchor id and a visible <code>&lt;mark&gt;</code>. v1.27.1 adds
+              <code>ScrollbackLine.ID</code> and <code>.Class</code> with
+              default rendering byte-identical &mdash; exactly the hook this
+              hand-roll waits for (adoption map row, 2026-11-12 re-audit:
+              &ldquo;pin&rsquo;s struct still lacks the fields (verified in
+              module cache)&rdquo;).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              On the v1.27.1 bump, delete <code>transcriptMatchLog</code> and
+              feed Scrollback per-line IDs
+              (<code>fmt.Sprintf("turn-%d", i)</code>) plus a match class; keep
+              the golden as the parity pin.
+            </div>
+            <pre><code>// After (v1.27.1): the match view becomes Scrollback + per-line hooks
+@display.Scrollback(display.ScrollbackProps{
+    AriaLabel: "Call transcript",
+    Stagger:   false,
+    Lines:     transcriptMatchLines(turns, query), // ID: "turn-N", Class: "lens-match" on hits
+})</code></pre>
+          </div>
+
+          <!-- F3 -->
+          <div class="issue issue-important" id="f3-barchart">
+            <span class="severity severity-important">Partially used &middot; 3 workaround sites</span>
+            <h3>BarChart vertical: <code>!items-stretch</code> class args work around the 0px-collapse bug fixed in v1.27.1</h3>
+            <div class="where">internal/web/dashboard.templ:542, 559, 723 &middot; #48 closed upstream 2026-11-07, fix rides v1.27.1</div>
+            <p>
+              Three BarChart call sites carry <code>Class: "!items-stretch"</code>
+              because the pin resolves percentage bar heights against an
+              indefinite chain. v1.27.1 stretches the container, makes columns
+              full-height, defaults an omitted Height to 12rem, and adds a
+              real-browser contract test so the collapse cannot return silently.
+              MaxBarWidth now also caps and centers small series.
+            </p>
+            <pre><code>// Before (pin workaround)
+Class: "!items-stretch",
+// After (v1.27.1): delete the Class arg; optionally drop Height (12rem default)</code></pre>
+          </div>
+
+          <!-- F4 -->
+          <div class="issue issue-important" id="f4-table">
+            <span class="severity severity-important">Partially used &middot; hand-rolled a11y CSS</span>
+            <h3>Clickable-row focus ring is hand-rolled CSS; v1.27.1 builds it in &mdash; and removes the ARIA-invalid role=&ldquo;link&rdquo;</h3>
+            <div class="where">internal/web/static/app.css:124 (tr[role="link"]:focus-visible) &middot; #49 closed 2026-11-07, rides v1.27.1</div>
+            <p>
+              The pin renders <code>role="link"</code> on <code>&lt;tr&gt;</code>
+              (forbidden by ARIA in HTML) and draws no focus ring; pbx-lens
+              patches both locally. v1.27.1 deletes the role, keeps
+              tabindex + Enter/Space activation, and ships the focus-visible
+              outline itself. The local CSS rule and its assumptions retire with
+              the bump; the row-href goldens re-pin.
+            </p>
+          </div>
+
+          <!-- F5 -->
+          <div class="issue issue-important" id="f5-nav">
+            <span class="severity severity-important">Partially used &middot; pinned id + guard test</span>
+            <h3>SimpleNav id is pinned to keep renders byte-identical &mdash; v1.27.1 makes library ids deterministic</h3>
+            <div class="where">internal/web/calls.templ:44-46 (props.ID pin) &middot; internal/web/nav_id_test.go (guard) &middot; #55 closed 2026-11-07, rides v1.27.1</div>
+            <p>
+              The pin&rsquo;s <code>utils.EnsureID</code> mints a random
+              mobile-menu id per render, which would defeat the ETag
+              revalidation the HTTP stack leans on, so pbx-lens pins the id and
+              guards it with a test. v1.27.1 derives
+              <code>&lt;id&gt;-mobile-menu</code> deterministically from content
+              &mdash; the pinned-id workaround and its guard can be evaluated
+              for retirement (keep the golden; the pinned id may still be
+              desirable for readability, now without being load-bearing).
+            </p>
+          </div>
+
+          <!-- F6 -->
+          <div class="issue issue-nice" id="f6-copybutton">
+            <span class="severity severity-nice">Partially used &middot; a rule, not code, today</span>
+            <h3>CopyButton is barred from htmx-swapped fragments by policy &mdash; v1.27.1 lifts the bar</h3>
+            <div class="where">internal/web/detail.templ:85, 99 (full-page CopyButtons only) &middot; #63 closed 2026-11-07, rides v1.27.1</div>
+            <p>
+              The pin&rsquo;s per-render singleton script never fires in
+              innerHTML-swapped content, so the adoption map bans CopyButton
+              inside swapped fragments. pbx-lens currently has no
+              fragment-mounted copy button, so nothing is broken &mdash; the
+              finding is an unlock: v1.27.1&rsquo;s
+              <code>CopyButtonScript(nonce)</code> page-level mount plus
+              <code>NoScript</code> prop make fragment placement legal. Revisit
+              if a polled region ever wants a copy affordance.
+            </p>
+          </div>
+
+          <!-- F7 -->
+          <div class="issue issue-nice" id="f7-sparkline">
+            <span class="severity severity-nice">Partially used &middot; fixed-size attrs</span>
+            <h3>Sparkline stays fixed-pixel in fluid cards &mdash; v1.27.1&rsquo;s Responsive mode fills the card</h3>
+            <div class="where">internal/web/dashboard.templ (Sparkline &times;2) &middot; #60 fix rides v1.27.1</div>
+            <p>
+              The dashboard&rsquo;s two Sparklines render at fixed size inside
+              fluid cards. v1.27.1 adds <code>Responsive</code> (viewBox +
+              <code>w-full h-auto</code>, crisp stroke via vector-effect),
+              <code>ZeroAware</code>/<code>ShowZeroLine</code> for signed
+              series. Volume/trend series are all-positive today, so
+              <code>Responsive</code> is the relevant adoption;
+              <code>ShowZeroLine</code> matters only if a delta series lands.
+            </p>
+          </div>
+
+          <!-- F8 -->
+          <div class="issue issue-nice" id="f8-listnote">
+            <span class="severity severity-nice">Partially used &middot; copy precision</span>
+            <h3>ListNote synthesizes count sentences that fit filters, not keyset truncation &mdash; v1.27.1 accepts a caller-written Message</h3>
+            <div class="where">internal/web/calls.templ:127 (ListNoteCount variant on the keyset list)</div>
+            <p>
+              The calls list is keyset-truncated (&ldquo;latest N&rdquo;), but
+              <code>ListNote</code>&rsquo;s variants synthesize
+              search-flavored advice (&ldquo;Narrow your search&rdquo;) that is
+              false on a searchless list. v1.27.1 adds
+              <code>ListNoteProps.Message</code>: the shared shell stays, the
+              sentence becomes the caller&rsquo;s (&ldquo;Showing the latest
+              N&rdquo;). Small copy win on the bump.
+            </p>
+          </div>
+
+          <!-- fully-leveraged highlight -->
+          <div class="issue issue-nice" id="f9-fully">
+            <span class="severity severity-nice">Fully leveraged &middot; for confidence</span>
+            <h3>What is already at the library&rsquo;s best path (30 of 38 rows)</h3>
+            <div class="where">inventory rows 2-4, 6-8, 10, 12-14, 17-18, 23-26, 28-29, 31-33, 37-38, 40-41, 43-46, 50 &middot; full table below</div>
+            <p>
+              RelativeTime is prop-driven end to end (EmptyText &ldquo;never&rdquo;
+              folded, ops.templ:265); Card TitleTag h2 discipline is guarded by
+              the UI contract probe; Table/DatePicker/Form/FormGet/FormLayoutInline
+              replaced every hand-rolled wrapper; PolledRegion carries the R9
+              polling doctrine; icons/format/golden are the only icon/format/golden
+              dialects in the repo; and the @theme teal override after the
+              theme-css import is the sanctioned re-skin path with the heatmap
+              bridge as its one guarded exception.
+            </p>
           </div>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+        <!-- Version currency -->
+        <section id="version">
+          <h2><span class="num">02</span>Version currency</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            Pin: v1.27.0 (2026-11-04) across all four modules (go.mod:31-34),
+            paired with a-h/templ v0.3.1100 (go.mod:6). Latest release:
+            <strong>v1.27.1, tagged 2026-11-19</strong> &mdash; one patch ahead.
+            Verified via <code>go list -m -versions</code> and the downloaded
+            module cache. Note: a-h/templ v0.3.1118 also exists, but
+            v1.27.1&rsquo;s own pin guard still pairs v0.3.1100 &mdash; hold the
+            pairing until upstream moves (the repo&rsquo;s coordinated-bump
+            doctrine).
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Version</th>
+                <th>Type</th>
+                <th>Notable change</th>
+                <th>Relevance to pbx-lens</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>v1.27.1</td>
+                <td>Fix</td>
+                <td>#48 BarChart 0px collapse; Height defaults 12rem</td>
+                <td class="yes">High &mdash; retires !items-stretch &times;3 (F3)</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>v1.27.1</td>
+                <td>Fix</td>
+                <td>Clickable rows: role=&rdquo;link&rdquo; removed, focus-visible outline built in (#49)</td>
+                <td class="yes">High &mdash; retires app.css:124 (F4)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1</td>
+                <td>Added</td>
+                <td>ScrollbackLine.ID / .Class (#51)</td>
+                <td class="yes">High &mdash; retires transcriptMatchLog (F2)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1</td>
+                <td>Fix</td>
+                <td>Nav: deterministic mobile-menu id, no duplicate id (#55)</td>
+                <td class="yes">Medium &mdash; unpins nav id, keeps ETag honest (F5)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1</td>
+                <td>Added</td>
+                <td>CopyButtonScript + NoScript for swapped fragments (#63)</td>
+                <td class="yes">Medium unlock (F6)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1</td>
+                <td>Added</td>
+                <td>Sparkline Responsive / ZeroAware / ShowZeroLine (#60)</td>
+                <td class="yes">Medium (F7)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1</td>
+                <td>Added</td>
+                <td>ListNote.Message; feedback.LoadingProgress; form-field Stacked (#53)</td>
+                <td class="yes">Low&ndash;medium (F8; others N/A)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1</td>
+                <td>Fix</td>
+                <td>ToastContainer duplicate &lt;/script&gt;; Badge leading space; Grid auto-fit; StatusDot sizing</td>
+                <td class="yes">Rides the bump free (goldens re-pin)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1</td>
+                <td>Added</td>
+                <td>Datastar CSP mode, wire.Action options, typed reactive builders</td>
+                <td class="no">N/A &mdash; R9 htmx-polling doctrine, no Datastar</td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Opportunities -->
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities (impact &times; ease)</h2>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Bump v1.27.0 &rarr; v1.27.1 and retire the #51 match-log hand-roll (~40 lines, transcriptMatchLog &rarr; ScrollbackLine ID/Class)</td>
+                <td class="yes">5</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">20</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Same bump retires !items-stretch &times;3 (#48) and the hand-rolled focus-visible CSS + role=link patch (#49)</td>
+                <td class="yes">4</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">20</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Same bump: Sparkline Responsive on the two dashboard trend cards (#60)</td>
+                <td class="yes">3</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">15</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Same bump: re-evaluate the pinned nav id + nav_id_test guard (#55); ListNote.Message for the keyset list</td>
+                <td class="yes">3</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">15</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>After the bump: allow CopyButton in polled fragments via CopyButtonScript (#63) when a need appears</td>
+                <td>3</td>
+                <td>4</td>
+                <td><span class="highlight">12</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Opportunities 1&ndash;4 are one coordinated act (the bump + the
+            watchlist steps 1&ndash;8 in docs/templ-components-adoption.md:
+            corpus regen, goldens re-pin with <code>-run 'TestGolden'</code>
+            covering TestGoldenOpsPage, art-dupl baseline review, filings-ledger
+            state check). Combined priority is not 70 points of work &mdash; it
+            is one bump-plus-closeout, sequenced by the existing checklist.
+          </p>
+        </section>
+
+        <!-- Inventory -->
+        <section id="inventory">
+          <h2><span class="num">04</span>Capability inventory (N=51, applicable A=38)</h2>
+          <p>
+            Ground truth read from the pinned module cache
+            (<code>go env GOMODCACHE</code>, templ-components@v1.27.0 +
+            utils/htmx/icons@v1.27.0): 59 display, 27 forms, 13 feedback, 10
+            layout, 15 navigation components; 9 htmx components; 150 icon
+            names; 6 format functions. Status per the Phase-3 rubric; every
+            N/A carries its reason.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>Status</th>
+                <th>Evidence / reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>display.Table + TableRow.Href + TableCell</td><td class="warn">Partially</td><td>app.css:124 focus ring hand-rolled; role=link ARIA-invalid at pin (#49; v1.27.1 built-in)</td></tr>
+              <tr><td>2</td><td>display.Badge (6 tones)</td><td class="yes">Fully</td><td>calls/detail/segment rows; amber re-skin absorbed via goldens</td></tr>
+              <tr><td>3</td><td>display.PageHeader (+Action)</td><td class="yes">Fully</td><td>Export CSV action on calls</td></tr>
+              <tr><td>4</td><td>display.EmptyState / SimpleEmptyState</td><td class="yes">Fully</td><td>7 sites across pages</td></tr>
+              <tr><td>5</td><td>display.ListNote</td><td class="warn">Partially</td><td>calls.templ:127; v1.27.1 Message fits keyset truncation copy</td></tr>
+              <tr><td>6</td><td>display.Card (+TitleTag h2)</td><td class="yes">Fully</td><td>12+ page-level Cards; heading order probe-guarded</td></tr>
+              <tr><td>7</td><td>display.DefinitionList (+DetailComponent)</td><td class="yes">Fully</td><td>detail page; CopyButton as DetailComponent</td></tr>
+              <tr><td>8</td><td>display.Button (ghost/secondary/primary/SM/submit)</td><td class="yes">Fully</td><td>filter Apply/Reset, pager links</td></tr>
+              <tr><td>9</td><td>display.CopyButton</td><td class="warn">Partially</td><td>detail.templ:85,99 full-page only; #63 fragment bar rides v1.27.1</td></tr>
+              <tr><td>10</td><td>display.Scrollback (plain transcript)</td><td class="yes">Fully</td><td>detail.templ:258-262 AriaLabel + Stagger:false</td></tr>
+              <tr><td>11</td><td>display.Scrollback (?q= match path)</td><td class="warn">Partially</td><td>detail.templ:419-460 hand-roll; #51 ID/Class rides v1.27.1</td></tr>
+              <tr><td>12</td><td>display.RelativeTime</td><td class="yes">Fully</td><td>ops.templ:265 EmptyText fold; contract test pins 3 windows</td></tr>
+              <tr><td>13</td><td>display.Heatmap</td><td class="yes">Fully</td><td>app.css:97-111 bridge is sanctioned (no token path at v1.27.1); guarded by CSS gate + pixel probe</td></tr>
+              <tr><td>14</td><td>display.Grid + StatCard (+Tones/icons)</td><td class="yes">Fully</td><td>dashboard stat row &times;4</td></tr>
+              <tr><td>15</td><td>display.BarChart vertical</td><td class="warn">Partially</td><td>!items-stretch &times;3 (#48; v1.27.1 fixed + browser-tested)</td></tr>
+              <tr><td>16</td><td>display.Sparkline</td><td class="warn">Partially</td><td>fixed-size attrs (#60; v1.27.1 Responsive)</td></tr>
+              <tr><td>17</td><td>display.PieChart (Donut/CenterLabel/legend)</td><td class="yes">Fully</td><td>AI/human mix</td></tr>
+              <tr><td>18</td><td>feedback.CircularProgress</td><td class="yes">Fully</td><td>MOS gauge; aria-valuenow asserted</td></tr>
+              <tr><td>19</td><td>display.LineChart</td><td class="na">N/A</td><td>rejected 2026-10-12: fixed-pixel SVG, no tooltips; one-spike series renders worse than BarChart (adoption map)</td></tr>
+              <tr><td>20</td><td>display.DataTable</td><td class="na">N/A</td><td>sort URLs need server-side sort; ListCallsQuery is keyset date-desc by design (adoption map)</td></tr>
+              <tr><td>21</td><td>display.SegmentBar / forms.FilterBar / SegmentedControl</td><td class="na">N/A</td><td>standing decision: adopt on real need; filter row is 2 selects + 2 dates and fits (adoption map row)</td></tr>
+              <tr><td>22</td><td>overlay/menu family (Modal, Drawer, Tabs, Dropdown, CommandPalette, ContextMenu, Popover, Tooltip, HoverCard, Carousel, Kanban, Lightbox, Accordion, Avatar, CodeBlock, Prose, &hellip;)</td><td class="na">N/A</td><td>read-only analytics dashboard; no overlays, no destructive flows, no rich-text surfaces</td></tr>
+              <tr><td>23</td><td>forms.Form (+FormGet, FormLayoutInline, Nonce)</td><td class="yes">Fully</td><td>nonce threaded at every call site (v1.27 validity-bridge rule)</td></tr>
+              <tr><td>24</td><td>forms.Input (+InputSearch)</td><td class="yes">Fully</td><td>search.templ:29 area</td></tr>
+              <tr><td>25</td><td>forms.Select (+SelectOption)</td><td class="yes">Fully</td><td>filter rows calls/dashboard</td></tr>
+              <tr><td>26</td><td>forms.DatePicker</td><td class="yes">Fully</td><td>range filters &times;4</td></tr>
+              <tr><td>27</td><td>remaining form fields (Checkbox, Toggle, Radio, Slider, Combobox, TagsInput, FileInput, Textarea, Calendar, Rating, FilterChips/FilterDropdown, ValidationSummary, FieldError, Label, InputGroup, FormFieldWrapper)</td><td class="na">N/A</td><td>no data-entry surface: every UI route is a query (AGENTS.md); no accounts, no writes outside identity</td></tr>
+              <tr><td>28</td><td>feedback.Alert</td><td class="yes">Fully</td><td>7 sites; staleness + MOS placeholder; warning amber absorbed</td></tr>
+              <tr><td>29</td><td>feedback.Toast + ToastContainer</td><td class="yes">Fully</td><td>page.templ:4-5; pin&rsquo;s duplicate &lt;/script&gt; wart rides goldens, fixed in v1.27.1</td></tr>
+              <tr><td>30</td><td>feedback loading family (Spinner, Skeleton*, ProgressBar, LoadingOverlay, InlineLoading, StepIndicator, LoadingDialog; v1.27.1 LoadingProgress)</td><td class="na">N/A</td><td>no blocking operations; PolledRegion&rsquo;s busy cue covers the two poll regions</td></tr>
+              <tr><td>31</td><td>layout.Base + DefaultPageProps</td><td class="yes">Fully</td><td>page.templ:6; single &lt;main&gt; landmark respected</td></tr>
+              <tr><td>32</td><td>layout.Container / Split / Stack</td><td class="yes">Fully</td><td>dashboard + detail layouts</td></tr>
+              <tr><td>33</td><td>layout.ThemeToggle</td><td class="yes">Fully</td><td>nonce threaded (calls.templ navRight)</td></tr>
+              <tr><td>34</td><td>layout.ThemeScript / Stylesheet / MetaRefresh / Minimal / Script</td><td class="na">N/A</td><td>Base composes these; app.css + self-hosted htmx cover the shell</td></tr>
+              <tr><td>35</td><td>layout.AppShell</td><td class="na">N/A</td><td>sidebar grid pays at &ge;6 destinations; 4-item SimpleNav covers it (adoption map)</td></tr>
+              <tr><td>36</td><td>navigation.SimpleNav + NavLink</td><td class="warn">Partially</td><td>calls.templ:44-46 pinned id + nav_id_test.go guard (#55; v1.27.1 deterministic)</td></tr>
+              <tr><td>37</td><td>navigation.Footer</td><td class="yes">Fully</td><td>Base Footer slot, BrandText</td></tr>
+              <tr><td>38</td><td>navigation.Breadcrumbs</td><td class="yes">Fully</td><td>detail page</td></tr>
+              <tr><td>39</td><td>navigation.Pagination / MobileMenu / SidebarNav / LoadMore / EndOfList</td><td class="na">N/A</td><td>keyset pager hand-built by design (calls.templ:205 comment); SimpleNav ships its own mobile menu</td></tr>
+              <tr><td>40</td><td>htmx.PolledRegion</td><td class="yes">Fully</td><td>dashboard 30s + staleness 60s (R9)</td></tr>
+              <tr><td>41</td><td>htmx.GlobalErrorHandling</td><td class="yes">Fully</td><td>page.templ:5 + ErrorHandlingConfig</td></tr>
+              <tr><td>42</td><td>htmx rest (ConfirmDelete, CSRFToken, SwapOOB, ViewTransitions, LoadingButton/Indicator, InlineLoadingOverlay)</td><td class="na">N/A</td><td>read-only UI: no POST surface outside auth ceremonies (nosurf handles those), no deletes, no view transitions demand</td></tr>
+              <tr><td>43</td><td>icons (150 names)</td><td class="yes">Fully</td><td>10 names used (Phone, Search, Microphone, Calendar, Clock, Inbox, Question, Server, &hellip;); corpus keeps classes fresh</td></tr>
+              <tr><td>44</td><td>utils/format (6 funcs)</td><td class="yes">Fully</td><td>50 sites over 4 funcs; Bytes/CompactCount unused &mdash; no byte/count-heavy surface</td></tr>
+              <tr><td>45</td><td>utils core (BaseProps, Ternary, ScriptComponent)</td><td class="yes">Fully</td><td>ScriptComponent wraps the logout script (calls.templ:76)</td></tr>
+              <tr><td>46</td><td>utils/golden test kit</td><td class="yes">Fully</td><td>golden_pages_test.go:11; golden suite pins all 9 page renders</td></tr>
+              <tr><td>47</td><td>errorpage module</td><td class="na">N/A</td><td>not imported; appkit shell + hand-rolled error responses cover it (adoption map)</td></tr>
+              <tr><td>48</td><td>charts/echarts module</td><td class="na">N/A</td><td>not imported; SVG charts suffice at this data volume</td></tr>
+              <tr><td>49</td><td>datastar module (+ v1.27.1 CSP mode, wire builders)</td><td class="na">N/A</td><td>R9 htmx-polling doctrine; no Datastar runtime</td></tr>
+              <tr><td>50</td><td>theme/token system (@theme override after theme css)</td><td class="yes">Fully</td><td>teal trio override; later-@theme-wins rule respected (AGENTS.md)</td></tr>
+              <tr><td>51</td><td>Version currency</td><td class="warn">Partially</td><td>v1.27.0 pinned; v1.27.1 (2026-11-19) available &mdash; the retirement wave</td></tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Score derivation:</strong> N=51 rows, 13 N/A &rarr; A=38
+            applicable. Fully = 30 &times; 1.0, Partially = 8 &times; 0.5
+            &rarr; &Sigma; = 34.0. Score = round(100 &times; 34.0 / 38) =
+            <strong>89/100 &mdash; band: very high (&ge;85)</strong>. Missed = 0,
+            Misused = 0.
+          </p>
+        </section>
+
+        <!-- Risks -->
+        <section id="risks">
+          <h2><span class="num">05</span>Risks</h2>
+          <table class="compare">
+            <thead>
+              <tr><th>Risk</th><th>Severity</th><th>Notes</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Coordinated-bump discipline on the v1.27.1 move</td>
+                <td class="no">Watch</td>
+                <td>All four modules move in ONE act, templ stays v0.3.1100 (upstream pairing), manual only &mdash; a dependabot templ PR mangles this go.mod (AGENTS.md)</td>
+              </tr>
+              <tr>
+                <td>v1.27.1 removes role=&rdquo;link&rdquo; from clickable rows</td>
+                <td class="no">Behavior</td>
+                <td>Row activation (tabindex + Enter/Space) stays; the app.css:124 selector targets <code>tr[role=link]</code> and must be deleted WITH the bump or it dead-styles</td>
+              </tr>
+              <tr>
+                <td>Goldens + art-dupl baseline churn on the bump</td>
+                <td>Yes</td>
+                <td>Expected and covered by watchlist steps 5&ndash;6; the plain suite must go green without <code>-update</code> after refresh</td>
+              </tr>
+              <tr>
+                <td>No misused or deprecated API surface found</td>
+                <td class="yes">None</td>
+                <td>Zero deprecated symbol usage; zero hand-rolled formatting dialects; heatmap bridge is the only off-token path and it is test-guarded</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Verify -->
+        <section id="verify">
+          <h2><span class="num">06</span>How to verify (commands replayed on 2026-11-19)</h2>
+          <p>
+            Every command below was executed literally during this audit, from
+            the repo root unless a path is given.
+          </p>
+          <pre><code># Pins + version currency
+rg -n "larsartmann/templ-components" go.mod
+go list -m -versions github.com/larsartmann/templ-components | tr ' ' '\n' | tail -2
+go list -m -versions github.com/a-h/templ | tr ' ' '\n' | tail -3
+
+# The v1.27.1 retirement wave (changelog, module cache)
+go mod download github.com/larsartmann/templ-components@v1.27.1
+sed -n '1,120p' "$(go env GOMODCACHE)/github.com/larsartmann/templ-components@v1.27.1/CHANGELOG.md"
+
+# Usage census (templ files import the library; count format call sites)
+rg -c "templ-components" --glob '*.templ' internal/web
+rg -o '\bformat\.[A-Z][A-Za-z]*' --glob '*.templ' internal/web | sed 's/.*://' | sort | uniq -c | sort -rn
+
+# The workaround sites this report grades as Partially
+rg -n "items-stretch" internal/web/dashboard.templ
+rg -n "transcriptMatchLog" internal/web/detail.templ
+rg -n 'tr\[role="link"\]:focus-visible' internal/web/static/app.css
+rg -n "EnsureID|mobile-menu" internal/web/calls.templ internal/web/nav_id_test.go
+rg -n "Nonce" internal/web/calls.templ internal/web/dashboard.templ internal/web/search.templ
+
+# The pin still lacks the #51 hook (the reason the hand-roll stays until the bump)
+sed -n "/type ScrollbackLine/,/^}/p" "$(go env GOMODCACHE)/github.com/larsartmann/templ-components@v1.27.0/display/scrollback.templ"
+
+# Freshness machinery green at HEAD (run during this audit, package-scoped)
+GOEXPERIMENT=jsonv2 go build ./...
+GOEXPERIMENT=jsonv2 go test ./internal/web/ -count=1</code></pre>
+          <p>
+            Gate note: the full BuildFlow gate was not run in this read-only
+            session; the audit&rsquo;s HEAD-verified proxies are the build plus
+            the complete <code>internal/web</code> package suite (goldens,
+            corpus freshness, nav-id and RelativeTime contracts included).
+          </p>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-11-19 &middot; Audited against
+            github.com/larsartmann/templ-components v1.27.0 (modules: root,
+            htmx, icons, utils) &middot; capability ground truth read from the
+            module cache at the exact pin &middot; supersedes the version-currency
+            and workaround-queue claims of the 2026-10-24 deep-dive and the
+            2026-11-12 fleet refresh &middot; per-component truth remains
+            docs/templ-components-adoption.md
           </p>
         </footer>
       </main>
@@ -1093,13 +1571,13 @@ type BetterAPI struct {
                 links.forEach(function (link) {
                   link.classList.toggle(
                     "active",
-                    link.getAttribute("href") === "#" + entry.target.id,
+                    link.getAttribute("href") === "#" + entry.target.id
                   );
                 });
               }
             });
           },
-          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
         );
         sections.forEach(function (s) {
           observer.observe(s);
