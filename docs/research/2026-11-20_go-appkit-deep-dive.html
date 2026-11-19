@@ -1040,9 +1040,10 @@
                 <strong>testkit, the fast-stack path</strong>
                 <span>testkit.NewService + testkit.Serve at serve_test.go:59-63,
                 188-199, 300-311 and the poll benchmark at 1020-1023 &mdash;
-                test-safe defaults (incl. NoDrainDelay) keep stack tests fast;
-                the regression note at serve_test.go:53-55 records the 5s-drain
-                &rarr; 0.81s fix. TestBuildServiceConfigWiring (serve_test.go:588+)
+                test-safe defaults (ephemeral loopback addr + NoDrainDelay)
+                keep stack tests fast; the regression note at serve_test.go:53-58
+                records the production 5&nbsp;s drain-delay trap (appkit#26) and
+                its 2026-10-25 fix. TestBuildServiceConfigWiring (serve_test.go:587+)
                 pins NoTimeout/Version/Middleware-count composition.</span>
               </div>
             </div>
@@ -1052,112 +1053,319 @@
         <!-- Findings -->
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
-
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
-            <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
-            </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
-            <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
-            </div>
-          </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
-            <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
-            </p>
-          </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
-            <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
-            </p>
-          </div>
-        </section>
-
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            No Misused and no applicable Missed findings. The named trap
+            classes were checked explicitly: Health/version/metrics routes are
+            appkit-canonical (auto-registered, no hand-rolled equivalents);
+            the Server-Timing mount is the v0.12 default with zero duplicated
+            wiring; no explicit timing middleware remains anywhere in serve
+            composition. What is left is one pin lag and three documented
+            non-adoptions worth restating with their reasons.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
-          <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+
+          <div class="issue issue-nice" id="finding-systemd">
+            <span class="severity severity-nice">Version currency &middot; Low impact</span>
+            <h3>systemd pin v0.1.0 is one minor behind &mdash; v0.2.0's Hooks return is source-compatible and deliberately unwired</h3>
+            <div class="where">go.mod:12 &middot; library: go-appkit/systemd CHANGELOG (v0.1.1 2026-11-07, v0.2.0 2026-11-08)</div>
+            <p>
+              v0.1.1 is docs-only (runnable Examples, README truth). v0.2.0
+              changes <code>Install</code> to return the wired
+              <code>Hooks</code> value so a start path that fails AFTER
+              StartHooks can stop the watchdog keepalive. pbx-lens' failed-start
+              path is <code>fatal()</code> &mdash; process death stops the
+              keepalive &mdash; so the return value is deliberately ignored;
+              existing <code>Install(&amp;cfg)</code> call sites compile
+              unchanged. Root module v0.12.0 is the latest tag; upstream root
+              [Unreleased] carries only repo-CI lint changes (consumer-
+              irrelevant).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Ride systemd v0.1.0 &rarr; v0.2.0 on the next deps train (tidy
+              may pick it up automatically alongside any appkit move). No code
+              change needed; the Hooks return stays unwired unless a
+              non-fatal start-failure path ever appears.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="finding-secheaders">
+            <span class="severity severity-nice">Fully used, with a nuance worth knowing &middot; Low impact</span>
+            <h3>Two SecurityHeaders middlewares run in the chain &mdash; by design, and it is the only sanctioned path</h3>
+            <div class="where">cmd/pbx-lens/serve.go:386-398 &middot; appkit@v0.12.0 config.go:61-65, middleware.go:29-64</div>
+            <p>
+              The default stack ends with appkit's SecurityHeaders; pbx-lens
+              appends its own <code>httputil.SecurityHeaders</code> as an extra
+              to set nosniff, no-referrer and X-Robots-Tag &mdash; headers the
+              default does not carry and whose values ServiceConfig cannot
+              configure. The inner Set calls win; the default's
+              X-Frame-Options: DENY survives. Replacing the stack via
+              <code>Middlewares</code> would drop ServerTiming/Recovery/
+              RequestID/Logging &mdash; strictly worse. This is the library's
+              intended extension shape, recorded here so a future reader does
+              not &ldquo;deduplicate&rdquo; it into a regression.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="finding-hooks">
+            <span class="severity severity-nice">Not applicable, reason recorded &middot; Low impact</span>
+            <h3>Lifecycle hooks (Start/Drain/Shutdown) have exactly one consumer: systemd.Install</h3>
+            <div class="where">serve.go:380 (Install) &middot; openServeIndex closeAll at serve.go:478-484</div>
+            <p>
+              The remaining hook families stay unwired for recorded reasons:
+              dependencies open before the listener binds (nothing to announce
+              in StartHooks beyond what systemd already does), and teardown
+              rides <code>defer closeAll()</code> because the FTS index must
+              close BEFORE the CQRS system releases the journal &mdash;
+              a ShutdownHook runs after server connections release but the
+              defer ordering is the load-bearing contract, and
+              <code>appkit</code> hooks cannot express index-before-system
+              ordering against resources appkit does not own. Revisit only if
+              a hook-shaped need (telemetry flush, external readiness signal)
+              actually appears.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="finding-testkit">
+            <span class="severity severity-nice">Not applicable (no-op verdict) &middot; Low impact</span>
+            <h3>testkit helper family (WaitForRunning/FreeAddr/HTTPGetURL/DrainWindowProbe): adopted as a no-op</h3>
+            <div class="where">cmd/pbx-lens/serve_test.go:59-63,188-199,300-311 &middot; testkit/httptest.go:22-96</div>
+            <p>
+              The 2026-11-12 refresh verdict stands: pbx-lens' boots already
+              use the modern NewService+Serve pattern with ephemeral addresses
+              and auto-wait; swapping in FreeAddr/WaitForRunning would be
+              cosmetic churn with no behavioral claim to pin.
+              DrainWindowProbe would matter only if a drain-window regression
+              test is ever wanted.
+            </p>
           </div>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+        <section id="versions">
+          <h2><span class="num">02</span>Version currency</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            Proxy truth (<code>go list -m -versions</code>, 2026-11-20). The
+            root pin is current &mdash; it already carries the three-minor wave
+            the fleet report once watched for:
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Module (pin)</th>
+                <th>Latest</th>
+                <th>What the pin already contains / the gap</th>
+                <th>Relevance</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>go-appkit (v0.12.0)</td>
+                <td>v0.12.0 &mdash; current</td>
+                <td>v0.10: Server-Timing default outermost + testkit helpers + RegisterClassifications; v0.11: go floor 1.27.3 + WrapOnce hook classification; v0.12: Service composed on httputil.Server (fresh server per Start; config contract now fails Start synchronously)</td>
+                <td class="yes">All adopted or deliberately absorbed; the pbx-lens config contract check was green on the bump</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>go-appkit/systemd (v0.1.0)</td>
+                <td>v0.2.0 &mdash; one minor behind</td>
+                <td>v0.1.1: docs only; v0.2.0: Install returns the wired Hooks (source-compatible return-value addition)</td>
+                <td class="no">Ride the next deps train; return value deliberately unwired (failed starts are fatal())</td>
               </tr>
             </tbody>
           </table>
+          <div class="callout callout-teal">
+            <strong>What the v0.12 delegation means here</strong>
+            Restart-after-shutdown semantics changed (a fresh httputil.Server
+            per Start) &mdash; irrelevant to pbx-lens (single Run, no restart
+            path), and the delegated config contract rejects nothing in
+            pbx-lens' ServiceConfig (NoTimeout on WriteTimeout only; Read/
+            ReadHeader/Idle stay positive defaults).
+          </div>
+        </section>
+
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities (ranked by impact &times; ease)</h2>
+          <p>
+            An honest table: the shell is fully adopted, so the Pareto set is
+            short. Ranked descending by priority.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Bump systemd v0.1.0 &rarr; v0.2.0 on the next deps train (tidy likely riders it)</td>
+                <td>1</td>
+                <td class="yes">5</td>
+                <td><strong>5</strong></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>If a drain-window regression test is ever wanted: testkit.DrainWindowProbe over /health/ready (flip-trigger: first observed drain regression)</td>
+                <td>1</td>
+                <td>3</td>
+                <td><strong>3</strong></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Flip-trigger only: if internal/web ever adopts appkit, route error mapping through appkit.HTTPStatus/LogError instead of new hand-rolled mapping (doctrine today keeps web appkit-free)</td>
+                <td>1</td>
+                <td>1</td>
+                <td><strong>1</strong></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>Risk assessment</strong>
+            Low. No deprecated APIs in the used surface (NoTimeout, ReadyCheck,
+            Metrics, ExtraMiddlewares, Install, RegisterClassifications are all
+            current-generation v0.12 APIs). The one contract worth remembering:
+            WriteTimeout=NoTimeout means no write deadline by design &mdash;
+            unbounded exports and recording streams are the documented product
+            contract (docs/http-stack.md), not an oversight. Metrics runs
+            unauthenticated by explicit opt-in on a LAN-scrape deployment
+            posture; revisit if the bind address ever becomes public.
+          </div>
+        </section>
+
+        <section id="inventory">
+          <h2><span class="num">04</span>Capability inventory &amp; score derivation</h2>
+          <p>
+            The inventory counts <strong>N = 21</strong> capability rows
+            (capability = a documented library feature verified in the pinned
+            v0.12.0 module-cache source, config.go / service.go / health.go /
+            metrics.go / middleware.go / errors.go / logger.go / shutdown.go /
+            testkit / systemd@v0.1.0). Nine rows are Not Applicable with
+            recorded reasons &mdash; excluded from the denominator per the
+            rubric &mdash; leaving <strong>A = 12</strong> applicable, all
+            Fully Leveraged: <code>score = round(100 &times; 12 / 12) =
+            <strong>100</strong></code>, band <strong>very high</strong>.
+            Fleet precedent: 73/100 (11 of 15) under the stricter convention
+            that counted deliberately-unwired hooks as applicable-but-unused;
+            the convention note in the Summary reconciles the two, and one of
+            those rows (ReadyCheck) has since been wired for real (plan T17).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>Status</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>Service shell (NewService &rarr; Mux &rarr; Run)</td><td class="yes">Full</td><td>serve.go:216, 222, 231-240, 263</td></tr>
+              <tr><td>2</td><td>Default middleware stack + ExtraMiddlewares append</td><td class="yes">Full</td><td>serve.go:382-438; ordering doctrine docs/http-stack.md</td></tr>
+              <tr><td>3</td><td>Server-Timing default mount (ServerTiming nil &rarr; true)</td><td class="yes">Full</td><td>no wiring in serve.go since the v0.12 bump (serve.go:184-189); used surface = 11 MeasureServerTiming sites</td></tr>
+              <tr><td>4</td><td>Health endpoints (/health, /live, /ready auto-registered)</td><td class="yes">Full</td><td>RegisterHealth nil &rarr; true; Contract F probes (scripts/verify-ui-contract.js)</td></tr>
+              <tr><td>5</td><td>ReadyCheck composition</td><td class="yes">Full</td><td>serve.go:208-214 (projection workers + identity; plan T17)</td></tr>
+              <tr><td>6</td><td>/version (Version field)</td><td class="yes">Full</td><td>serve.go:372; parity guarded by scripts/cut-release.sh</td></tr>
+              <tr><td>7</td><td>/metrics opt-in (MetricsConfig + auth posture)</td><td class="yes">Full</td><td>serve.go:377 (AllowUnauthenticated, explicit LAN posture)</td></tr>
+              <tr><td>8</td><td>NoTimeout semantics (Timeout middleware dropout)</td><td class="yes">Full</td><td>serve.go:376; pinned by serve_test.go:587+ (TestBuildServiceConfigWiring)</td></tr>
+              <tr><td>9</td><td>Timeout/drain defaults (Read/Idle/ShutdownTimeout/DrainDelay)</td><td class="yes">Full</td><td>defaults deliberate; testkit flips drain for tests (serve_test.go:53-58)</td></tr>
+              <tr><td>10</td><td>systemd.Install (sd_notify lifecycle)</td><td class="yes">Full</td><td>serve.go:380; no-op without NOTIFY_SOCKET</td></tr>
+              <tr><td>11</td><td>RegisterClassifications boot recipe</td><td class="yes">Full</td><td>serve.go:158 (once at boot, idempotent)</td></tr>
+              <tr><td>12</td><td>testkit.NewService/Serve</td><td class="yes">Full</td><td>serve_test.go:59-63, 188-199, 300-311, 1020-1023</td></tr>
+            </tbody>
+          </table>
+          <p>
+            The <strong>9 Not-Applicable rows</strong> (each with its reason;
+            count excluded from A):
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Capability</th>
+                <th>Why it cannot apply here</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>StartHooks / DrainHooks / ShutdownHooks (direct wiring)</td><td>systemd.Install is the one consumer; deps open pre-bind, teardown rides defers with the index-before-system ordering contract (see finding)</td></tr>
+              <tr><td>InitLogger / LogLevel / LogFormat</td><td>deliberate non-adoption, documented: slog defaults + own wiring</td></tr>
+              <tr><td>appkit.HTTPStatus / LogError</td><td>internal/web stays appkit-free by doctrine (verified: zero go-appkit imports under internal/); error mapping is web's writeIndexError family</td></tr>
+              <tr><td>Middlewares full replacement</td><td>would drop ServerTiming/Recovery/RequestID/Logging from the stack; default+extras is the sanctioned shape</td></tr>
+              <tr><td>OuterMiddlewares</td><td>no full-lifetime instrumentation need (no OTel; R9 polling, no SSE)</td></tr>
+              <tr><td>testkit.WaitForRunning / FreeAddr / HTTPGetURL / DrainWindowProbe</td><td>no-op verdict 2026-11-12: boots already use ephemeral addr + auto-wait; cosmetic churn</td></tr>
+              <tr><td>Manual lifecycle (Start/Shutdown/Addr/Running/Close) + WaitForSignal</td><td>Run owns the single serve lifetime; no restart path exists</td></tr>
+              <tr><td>systemd v0.2.0 Hooks-return consumption</td><td>failed starts are fatal() &mdash; process death stops the watchdog; nothing to call Shutdown on</td></tr>
+              <tr><td>Sibling modules (errorpages, security, realtime, cqrs, docs, otel, flightrecorder, health, preset)</td><td>rejected with recorded dispositions (2026-10-12 audit + R9); re-affirmed, not re-litigated</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="verify">
+          <h2><span class="num">05</span>How to verify</h2>
+          <p>
+            Every command below was replayed literally from this appendix on
+            2026-11-20 before shipping; the observed output is noted after each.
+            Baseline build/test: run by the parent session (relied on it; the
+            audit claims hold on the tree at HEAD 8ac47dd).
+          </p>
+          <pre><code>cd /home/lars/projects/pbx-lens
+
+# a1 &mdash; the used surface in serve.go
+rg -n "appkit\.[A-Z][A-Za-z]*|systemd\.Install|svc\.(Mux|Run)" cmd/pbx-lens/serve.go
+# 158: appkit.RegisterClassifications()
+# 216: svc, err := appkit.NewService(serviceConfig)
+# 222: identity.Register(svc.Mux) | 232: svc.Mux,
+# 263: if err := svc.Run(context.Background()); err != nil {
+# 369/370: appkit.ServiceConfig | 376: appkit.NoTimeout
+# 377: MetricsConfig{AllowUnauthenticated: true} | 380: systemd.Install(&serviceConfig)
+
+# a2 &mdash; testkit sites
+rg -n "testkit\.(NewService|Serve)|appkit\.NoTimeout" cmd/pbx-lens/serve_test.go
+# 53 (comment), 59, 63, 188, 199, 300, 311, 590, 1020, 1023
+# (590 = the NoTimeout assertion inside TestBuildServiceConfigWiring, declared at 587)
+
+# a3 &mdash; the web layer is appkit-free (exit 1 = no matches)
+rg -n "go-appkit" internal --glob '**/*.go'
+# (no matches; rc=1). Calibration: rg -l "go-appkit" --glob '**/*.go' .
+# lists exactly cmd/pbx-lens/serve.go + cmd/pbx-lens/serve_test.go
+
+# a4 &mdash; the Server-Timing used surface (production sites, tests excluded)
+rg -n "MeasureServerTiming" internal/web --glob '*.go' | grep -v _test | wc -l
+# 11  (server.go:243,404,550; recording.go:121,169; segment_page.go:24;
+#      freshness.go:25,36; search.go:75; timing.go:22; ops.go:185)
+
+# a5 &mdash; no explicit timing middleware remains in the serve composition
+rg -n "ServerTimingMiddleware" cmd/pbx-lens/serve.go
+# (no matches; rc=1 &mdash; deleted on the v0.12 bump. The only remaining uses are
+#  test wrappers in internal/web/*_test.go, which boot without appkit)
+
+# a6 &mdash; proxy truth
+go list -m -versions github.com/larsartmann/go-appkit \
+  github.com/larsartmann/go-appkit/systemd | awk '{print $1, $NF}'
+# github.com/larsartmann/go-appkit v0.12.0
+# github.com/larsartmann/go-appkit/systemd v0.2.0
+
+# a7 &mdash; score re-derivation: count the inventory rows
+# applicable table rows: 12 (all Full); N/A table rows: 9
+# round(100 * 12 / 12) = 100</code></pre>
+          <div class="callout callout-amber">
+            <strong>Done-bar notes</strong>
+            Gate: baseline build/test executed by the parent session &mdash;
+            this report relies on it. Index row in docs/research/README.md and
+            the AGENTS.md memory line are parent-applied (this session is
+            read-only outside its two report files). Browser screenshot:
+            parent-applied per the fleet screenshot policy. No commits made.
+          </div>
         </section>
 
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-11-20 &middot; go-appkit v0.12.0 + systemd v0.1.0
+            &middot; capability ground truth read from the module cache at the
+            exact pins &middot; supersedes the appkit census of
+            docs/review/libs/go-appkit.md (2026-11-04/11/12) and the go-appkit
+            half of 2026-10-25_go-appkit-templ-deep-dive.html
           </p>
         </footer>
       </main>

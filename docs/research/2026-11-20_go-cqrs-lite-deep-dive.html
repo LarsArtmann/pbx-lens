@@ -1005,10 +1005,10 @@
                 <strong>Sanctioned read path</strong>
                 <span>metaengine.NewReader + TypedReader Get/Scan/Count with
                 WithFilter/FilterEq-Ge-Le-Gt-Lt/WithOr/WithSort/WithLimit across
-                internal/web/queries.go:99-530, freshness.go:25-38,
+                internal/web/queries.go:99-712, freshness.go:25-38,
                 retention.go:84-121, cmd/pbx-lens/ops.go:81-85 (list, keyset walk,\n                detail joins, filters: queries.go:99-712) &mdash; always
                 through calls.RecordKey/LookupView for the bare-key contract
-                (internal/calls/viewkey.go:16-40).</span>
+                (internal/calls/viewkey.go:16-38).</span>
               </div>
             </div>
             <div class="strength">
@@ -1402,7 +1402,7 @@ views, next, err := reader.ScanPage(ctx,
               <tr><td>16</td><td>event module (New/WithSchemaVersion/DecodePayloadAuto/ErrVersionConflict)</td><td class="yes">Full</td><td>decider.go:22-183; depth_trio_test.go:80-162</td></tr>
               <tr><td>17</td><td>command module (New/BasicCommand &times;3)</td><td class="yes">Full</td><td>commands.go:30,55,95</td></tr>
               <tr><td>18</td><td>decider module (Decider[CallState]/DecideFunc)</td><td class="yes">Full</td><td>app.go:39-42; decider.go:84-203</td></tr>
-              <tr><td>19</td><td>id module (StreamID/ParseStreamID/Get + bare-key fence)</td><td class="yes">Full</td><td>events.go:113; viewkey.go:16-40</td></tr>
+              <tr><td>19</td><td>id module (StreamID/ParseStreamID/Get + bare-key fence)</td><td class="yes">Full</td><td>events.go:113; viewkey.go:16-38</td></tr>
               <tr><td>20</td><td>storage (SQLiteCheckpointSchema/NewSQLiteCheckpointStore)</td><td class="yes">Full</td><td>userauth.go:330,337 (identity DB)</td></tr>
               <tr><td>21</td><td>scenario/systemscenario harness</td><td class="yes">Full</td><td>all tests boot via app.DomainConfig/DeploymentConfig (test-only modules)</td></tr>
               <tr><td>22</td><td>catalog renderers (eventcatalog + architecture)</td><td class="yes">Full</td><td>cli/catalog.go:24,40-45</td></tr>
