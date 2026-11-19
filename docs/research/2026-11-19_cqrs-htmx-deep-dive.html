@@ -848,24 +848,27 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <!-- Full-bleed top bar -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>LIBRARY DEEP DIVE</span>
+      <span>2026-11-19</span>
+      <span>crush subagent &middot; single-library run</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <!-- Sidebar TOC (hidden below 1024px) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
           <a href="#scorecard">Scorecard</a>
-          <a href="#strengths">Strengths</a>
+          <a href="#usage">Current usage</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#appendix">Appendix</a>
+          <a href="#adr0062">ADR-0062 hygiene</a>
+          <a href="#opportunities">Opportunities</a>
+          <a href="#inventory">Capability inventory</a>
+          <a href="#v5">v5 exposure</a>
+          <a href="#verify">How to verify</a>
         </nav>
       </aside>
 
@@ -873,43 +876,50 @@
       <main class="main">
         <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-11-19</div>
+          <h1>cqrs-htmx usermgmt/v4 + loginpage/v4 &mdash; Adoption &amp; Utilization Audit</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            The identity bounded context of pbx-lens (PATH B manual wiring, no
+            setup bundle), re-audited at the exact pins eight days after the
+            fleet refresh. Adoption deepened again &mdash; the OIDC lane, the
+            OAuth rate limits, the audit snapshot, and the logout affordance all
+            landed since the fleet&rsquo;s 78/100 &mdash; and the import
+            hygiene is spotless under the library&rsquo;s own ADR-0062 rule.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Pins: usermgmt v4.20.0 &middot; loginpage v4.18.0 &middot; webauthn v4.13.0</span>
+            <span class="tag">All three == latest (2026-11-19)</span>
+            <span class="tag teal">Adoption score: 83/100 (high)</span>
           </div>
         </header>
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
+            <div class="score">83</div>
+            <div class="label">Adoption score / 100</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">13/18</div>
+            <div class="label">Fully leveraged (of applicable)</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+            <div class="score">4</div>
+            <div class="label">Partially used</div>
           </div>
-          <div class="score-card score-bad">
+          <div class="score-card score-warn">
             <div class="score">1</div>
-            <div class="label">Blockers</div>
+            <div class="label">Missed opportunity</div>
           </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Deprecated re-exports in use</div>
           </div>
         </section>
 
@@ -917,40 +927,127 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            The 2026-11-11 operator order adopted cqrs-htmx&rsquo;s identity
+            leaf modules exactly as the 2026-11-04 guardrails demanded, and the
+            wiring has since grown more capable without breaking the posture:
+            <code>internal/web/userauth.go</code> (535 lines now, from 376 at
+            the fleet refresh) composes four stores over one SQLite handle, a
+            WebAuthn provider, a hand-rolled-but-contract-clean OIDC adapter,
+            the loginpage panel, three per-IP rate limits, and a session gate
+            that redirects browsers and 401s APIs. Version currency is perfect:
+            all three direct pins equal their latest tags (verified via
+            <code>go list -m -versions</code> on 2026-11-19), and the indirect
+            root module (v4.18.1) is current too.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            This is a well-run PATH B adoption with zero deprecated surface and
+            zero misuse. The highest-leverage next step is not more wiring but
+            loginpage polish: three unset <code>Config</code> options
+            (NoRegistration after bootstrap, AccentColor, ThemeFromRequest)
+            leave a closed registration form on the page and a default-blue
+            favicon on a teal app &mdash; one config block fixes all three.
           </div>
+          <p>
+            <strong>Prior reports this supersedes</strong> (newer + narrower
+            wins): the fleet report <code>docs/review/libs/cqrs-htmx.md</code>
+            (78/100 adopted surface, refreshed 2026-11-12). Superseded claims:
+            its census line &ldquo;376 lines&rdquo;, its recommendation #1
+            (&ldquo;logout affordance &hellip; no UI link&rdquo; &mdash;
+            landed, calls.templ:62-79), and its pre-OIDC route inventory
+            (<code>/auth/oauth/*</code> now mounts via
+            <code>RegisterRoutes</code> when the service carries an OAuth2
+            provider). The 78&rarr;83 rise is real adoption, not rubric drift:
+            the OIDC lane, OAuth rate limits, audit-log snapshot
+            (<code>OpsSnapshot</code>), and the v4.20 session-audit journal
+            (inherited free) all landed or activated since.
+          </p>
         </section>
 
-        <!-- Strengths -->
-        <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+        <!-- Current usage -->
+        <section id="usage">
+          <h2><span class="num">&#9670;</span>Current usage (the baseline)</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            One file owns the integration (<code>internal/web/userauth.go</code>,
+            535 lines), wired from <code>cmd/pbx-lens/serve.go</code> behind
+            the <code>-auth-db</code> opt-in. The usermgmt surface in use:
+            <code>NewService</code> + <code>ServiceConfig</code> (EventStore,
+            SessionStore, CheckpointStore, ReadModelDB, ReadModelDialect,
+            WebAuthn, OAuth2, Lockout, AuditLog, MaxUsers, Logger &mdash;
+            205-216), <code>NewSQLEventStore</code>/:345,
+            <code>NewSQLSessionStore</code>/:353,
+            <code>OptimizeSQLiteDB</code>/:284,
+            <code>NewAccountLockout</code>/:212, <code>NewAuditLog</code>/:213,
+            <code>NewSessionMiddleware</code>/:259,
+            <code>UserFromContext</code>/:379, <code>NewAuthHandler</code> +
+            <code>HandlerConfig</code>/:417-436, and the service accessors
+            <code>ReadModel().Count()</code>, <code>AuditLog()</code>,
+            <code>ProjectionStatuses()</code>, <code>Close()</code>. The
+            loginpage surface: <code>loginpage.New(Config{Service, Title,
+            Brand, Redirect, CSSPath, NonceFromRequest, OAuth2Buttons})</code>
+            + <code>panel.Mount(mux, "GET /login")</code>/:415. The webauthn
+            surface: <code>webauthn.New(Config{RPID, RPDisplayName,
+            RPOrigins})</code>/:175-179 &mdash; the module&rsquo;s entire
+            exported config. Go-side consumers elsewhere:
+            <code>identity.Middleware()</code> heads the appkit
+            ExtraMiddlewares chain (serve.go:194-195),
+            <code>identity.Ready()</code> ANDs into the readiness gate
+            (serve.go:213), <code>identity.Register</code> mounts routes
+            (serve.go:222), and <code>OpsSnapshot</code> feeds
+            <code>/api/ops</code>&rsquo;s identity section.
           </p>
-
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>PATH B manual wiring follows the upstream SQL recipe</strong>
+                <span>Four stores over ONE handle with
+                <code>SetMaxOpenConns(1)</code> (userauth.go:318, journal
+                serialization), WAL pragmas via
+                <code>OptimizeSQLiteDB</code>, checkpoint schema applied by
+                hand because the store does not self-migrate (userauth.go:330,
+                documented in the doc comment at :151-156). The setup bundle
+                stays rejected &mdash; it collides with /dashboard and drags
+                adminui in (AGENTS.md).</span>
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
+                <strong>The OIDC lane implements the library&rsquo;s own seam contract</strong>
+                <span><code>internal/oidclogin</code> implements
+                <code>identitymodel.OAuth2Provider</code> (structural typing,
+                no usermgmt import) including the nonce-capable pair, with
+                userInfo JSON tags kept identical to usermgmt&rsquo;s
+                <code>OAuth2UserInfo</code> &mdash; the documented
+                &ldquo;Sollbruchstelle&rdquo; seam (oidclogin.go:1-24,
+                :90-110). <code>OAuth2SuccessURL</code>/&ldquo;ErrorURL&rdquo;
+                keep the dance browser-facing (userauth.go:434-435).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Auth-surface hardening uses the library&rsquo;s knobs, not reimplementations</strong>
+                <span>Three per-IP rate limits (register 10/min, WebAuthn
+                30/min, OAuth 30/min &mdash; userauth.go:420-428),
+                account lockout 5/15min via <code>NewAccountLockout</code>,
+                <code>Secure: &amp;i.secureCookie</code> following the
+                origins&rsquo; scheme (LAN-http aware), and the ADR-0055-aware
+                public-path list + browser/API gate split
+                (userauth.go:73-93).</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The audit story is consumed, not just configured</strong>
+                <span><code>OpsSnapshot</code> surfaces the ring&rsquo;s
+                Count/Dropped/per-action counts (userauth.go:513-521) &mdash;
+                the v4.17 bounded-window accessors are in use &mdash; and the
+                v4.20 session lifecycle journal (SessionStarted/Ended on Auth
+                streams, best-effort, token never journaled) rides the pin
+                for free.</span>
               </div>
             </div>
           </div>
@@ -959,112 +1056,394 @@
         <!-- Findings -->
         <section id="findings">
           <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <p>Ordered by impact &times; ease. One Missed, four Partially, zero Misused.</p>
 
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
+          <!-- M1 loginpage options -->
+          <div class="issue issue-important" id="m1-loginpage">
+            <span class="severity severity-important">Partially used &middot; 3 unset options with visible effect</span>
+            <h3>loginpage.Config: NoRegistration, AccentColor, ThemeFromRequest all unset</h3>
+            <div class="where">internal/web/userauth.go:231-240 (pageCfg) &middot; loginpage/v4@v4.18.0 config.go + handler.go:285</div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              Three options matter for this deployment. (a)
+              <strong>NoRegistration</strong>: the page shows its registration
+              section whenever WebAuthn is configured
+              (<code>showReg := !config.NoRegistration &amp;&amp; hasWebAuthn</code>,
+              handler.go:285) &mdash; it cannot know that
+              <code>MaxUsers: 1</code> closed the door after the operator
+              registered, so the page offers a form that always fails with
+              &ldquo;registration closed&rdquo;. The count is available at
+              startup (synchronous drain, <code>ReadModel().Count()</code>).
+              (b) <strong>AccentColor</strong>: the generated SVG favicon
+              defaults to the library color on an app whose brand is teal
+              (app.css overrides the whole tc palette). (c)
+              <strong>ThemeFromRequest</strong>: unset means the login page
+              follows <code>prefers-color-scheme</code>, while the app&rsquo;s
+              ThemeToggle persists to <code>localStorage</code> &mdash; which
+              the server cannot read; bridging needs a cookie mirror, so an
+              operator with a localStorage dark choice sees a light login page
+              (and vice versa).
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Recommendation</strong>
+              Set all three in the existing config block; the theme bridge
+              additionally needs the ThemeToggle&rsquo;s script to mirror its
+              choice into a cookie (a two-line script change beside the
+              toggle), or accept the mismatch and document it.
+            </div>
+            <pre><code>pageCfg := loginpage.Config{
+    Service:     service,
+    Title:       "Sign in \u2014 pbx-lens",
+    Brand:       "pbx-lens",
+    Redirect:    "/",
+    CSSPath:     "/app.css",
+    NonceFromRequest: httputil.NonceFromRequest,
+    AccentColor: "#0f766e",                                  // teal-700, the app brand
+    NoRegistration: service.ReadModel().Count() > 0,         // door already closed
+    // ThemeFromRequest: themeFromCookie,                    // + cookie mirror in ThemeToggle
+}</code></pre>
+          </div>
+
+          <!-- M2 import/export -->
+          <div class="issue issue-important" id="m2-export">
+            <span class="severity severity-critical">Missed opportunity &middot; low urgency</span>
+            <h3>Identity import/export surface unused &mdash; no logical backup beside the file backup</h3>
+            <div class="where">not used anywhere &middot; usermgmt/v4@v4.20.0 import_export.go:86-206 + admin-gated /auth/export (HandlerConfig default RequireAdminRole)</div>
+            <p>
+              The service ships <code>ExportUsersToJSON/CSV</code> and the
+              AuthHandler exposes them behind the admin role. pbx-lens backs
+              up identity.db at the FILE level (NixOS module, beside the
+              index). A logical export is the restore path that survives a
+              SQLite version jump or a corrupted journal &mdash; relevant
+              because identity.db is the one non-disposable database. The
+              capability also covers rebuilds: a fresh host can import the
+              operator instead of re-running first-deploy.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Recommendation</strong>
+              Add one operator step to
+              docs/runbooks/identity-first-deploy.md (curl the admin-gated
+              <code>/auth/export</code> after bootstrap, store beside the file
+              backup) &mdash; or a small CLI subcommand calling
+              <code>ExportUsersToJSON</code> directly. No wiring change needed;
+              the operator&rsquo;s first-user account carries the admin role
+              the default authorizer requires.
             </div>
           </div>
 
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+          <!-- M3 projection ops -->
+          <div class="issue issue-important" id="m3-rebuild">
+            <span class="severity severity-important">Partially used &middot; recovery path unexposed</span>
+            <h3>Projection operations: statuses consumed, RebuildProjection unreachable</h3>
+            <div class="where">internal/web/userauth.go:461-471 (Ready/ProjectionStatuses) &middot; RebuildProjection: not referenced in pbx-lens</div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              <code>Ready()</code> folds <code>ProjectionStatuses()</code> into
+              the readiness gate (statuses live/stopped only) &mdash; good. But
+              the library&rsquo;s recovery primitive,
+              <code>svc.RebuildProjection(ctx, name)</code> (stop host, reset
+              checkpoint + read model, replay), has no operator surface: a
+              corrupted read model on the identity context currently means
+              hand-written SQL or a redeploy. The journal is tiny, so a
+              rebuild replays in seconds &mdash; the cost of exposing it is one
+              CLI flag.
             </p>
           </div>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+          <!-- M4 session TTL -->
+          <div class="issue issue-nice" id="m4-ttl">
+            <span class="severity severity-nice">Partially used &middot; defaults unexamined</span>
+            <h3>SessionTTL / SessionMaxAge left at the 24-hour defaults</h3>
+            <div class="where">userauth.go:205-216 (ServiceConfig without SessionTTL) + :417-436 (HandlerConfig without SessionMaxAge)</div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              The single operator re-authenticates every 24h. That may be the
+              intended posture &mdash; but it is a default, not a decision:
+              neither config site sets it and no doc records a choice. A
+              single-operator homelab lens might deliberately choose longer
+              (7d) with passkey-only login, or keep 24h and write it down.
+              Either way it should stop being an accident.
+            </p>
+          </div>
+
+          <!-- M5 graceful close -->
+          <div class="issue issue-nice" id="m5-close">
+            <span class="severity severity-nice">Partially used &middot; low impact</span>
+            <h3>Close() chosen over GracefulClose(ctx) in the shutdown path</h3>
+            <div class="where">cmd/pbx-lens/serve.go:182 (deferred identity.Close) &middot; usermgmt service_lifecycle.go:56 vs :64</div>
+            <p>
+              <code>Service.Close()</code> stops projections and returns;
+              <code>GracefulClose(ctx)</code> additionally waits out in-flight
+              work within a budget. appkit&rsquo;s <code>svc.Run</code> owns
+              signals + connection drain, and the deferred Close runs after
+              it &mdash; in-flight auth requests have typically finished. The
+              exposure is a narrow race (an auth ceremony mid-dispatch at
+              shutdown). Low priority; note for the next touch of the serve
+              wiring.
+            </p>
+          </div>
+
+          <!-- Fully leveraged highlight -->
+          <div class="issue issue-nice" id="m6-fully">
+            <span class="severity severity-nice">Fully leveraged &middot; for confidence</span>
+            <h3>What is already at the library&rsquo;s best path (13 of 18 rows)</h3>
+            <div class="where">inventory rows 1-11, 28, 30 &middot; full table below</div>
+            <p>
+              The SQL composition, pragmas, checkpoint replay, session store,
+              WebAuthn provider, MaxUsers gate, lockout, audit ring, session
+              middleware + gate, AuthHandler hardening, and the OIDC seam are
+              all on the library&rsquo;s own recommended shapes; version
+              currency is perfect across all pins; and the ADR-0062 import
+              hygiene is clean (next section).
             </p>
           </div>
         </section>
 
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+        <!-- ADR-0062 -->
+        <section id="adr0062">
+          <h2><span class="num">02</span>ADR-0062 import hygiene (the deprecated-re-export check)</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            ADR-0062 (2026-11-06): the subpackage is the surface; root-module
+            re-export aliases are <code>// Deprecated:</code> and deleted in
+            v5. The rule extends to usermgmt&rsquo;s own
+            <code>identity-model</code> re-exports (auth_interfaces.go:30-61,
+            authz_types.go:15+ at v4.20.0 &mdash; TOTPProvider,
+            WebAuthnProvider, OAuth2Provider, OAuth2UserInfo, Action, Role,
+            Policy, &hellip; all <code>// Deprecated: Import
+            identity-model/v4 directly</code>).
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>pbx-lens is clean on both axes &mdash; verified, not assumed</strong>
+            <span>
+              (1) Root module: zero imports of
+              <code>cqrs-htmx/v4</code> anywhere in the repo and zero
+              <code>cqrshtmx.*</code> symbol references (it rides indirect at
+              v4.18.1 via loginpage). (2) usermgmt deprecated aliases: the
+              widest- sane grep for all 15 deprecated names returns nothing,
+              calibrated against a positive control that finds the 14
+              non-deprecated usermgmt symbols the repo does use.
+            </span>
           </div>
+          <pre><code># Negative claim, re-derivable (exit 1 = zero hits):
+rg -n "usermgmt\.(UserID|Role|Policy|Action|Effect|GroupPolicy|EnforceResult|PolicyUpdate|EnforcerConfig|TOTPProvider|WebAuthnProvider|OAuth2UserInfo)" \
+  --glob '**/*.go' .
+# Positive control (same shape, must hit):
+rg -no "usermgmt\.[A-Z][A-Za-z]*" internal/web/userauth.go | sed 's/.*://' | sort -u
+# &rarr; HandlerConfig NewAccountLockout NewAuditLog NewAuthHandler NewService NewSessionMiddleware
+#   NewSQLEventStore NewSQLSessionStore OptimizeSQLiteDB RateLimitConfig Service
+#   ServiceConfig SessionStore UserFromContext   (14 symbols, none deprecated)</code></pre>
         </section>
 
-        <!-- Appendix -->
-        <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
-          <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
-          </p>
+        <!-- Opportunities -->
+        <section id="opportunities">
+          <h2><span class="num">03</span>Top opportunities (impact &times; ease)</h2>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>1</td>
+                <td>loginpage config block: NoRegistration-after-bootstrap + AccentColor (theme cookie mirror optional)</td>
+                <td class="yes">3</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">12</span></td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>2</td>
+                <td>Make the 24h session TTL a recorded decision (set SessionTTL/SessionMaxAge or document the default)</td>
+                <td>2</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">10</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Logical identity backup: runbook step or CLI subcommand over ExportUsersToJSON / admin-gated /auth/export</td>
+                <td>3</td>
+                <td>3</td>
+                <td><span class="highlight">9</span></td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>GracefulClose in the serve shutdown path (narrow in-flight race)</td>
+                <td>2</td>
+                <td>4</td>
+                <td><span class="highlight">8</span></td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>Expose RebuildProjection behind a CLI flag (identity read-model recovery)</td>
+                <td>2</td>
+                <td>3</td>
+                <td><span class="highlight">6</span></td>
               </tr>
             </tbody>
           </table>
         </section>
 
+        <!-- Inventory -->
+        <section id="inventory">
+          <h2><span class="num">04</span>Capability inventory (N=30, applicable A=18)</h2>
+          <p>
+            Ground truth read from the pinned module caches
+            (<code>cqrs-htmx/usermgmt/v4@v4.20.0</code>,
+            <code>loginpage/v4@v4.18.0</code>,
+            <code>usermgmt/webauthn/v4@v4.13.0</code>): full ServiceConfig
+            (service_core.go:74+), HandlerConfig (http.go:64-115), Service
+            methods (30 exported), loginpage Config (config.go), webauthn
+            Config (provider.go).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Capability</th>
+                <th>Status</th>
+                <th>Evidence / reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>SQL composition: stores over one handle + MaxOpenConns(1)</td><td class="yes">Fully</td><td>userauth.go:306-366; upstream recipe; deliberate single-writer</td></tr>
+              <tr><td>2</td><td>SQLite pragmas (OptimizeSQLiteDB)</td><td class="yes">Fully</td><td>userauth.go:283-292 (WAL, NORMAL, busy_timeout)</td></tr>
+              <tr><td>3</td><td>Checkpoint-based projection replay</td><td class="yes">Fully</td><td>CheckpointStore + storage.SQLiteCheckpointSchema() applied by hand (:330-343)</td></tr>
+              <tr><td>4</td><td>SQL session store</td><td class="yes">Fully</td><td>NewSQLSessionStore (:353); sessions survive restarts</td></tr>
+              <tr><td>5</td><td>WebAuthn provider injection</td><td class="yes">Fully</td><td>webauthn.New with all 3 Config fields (:175-179); deriveAuthDefaults maps IP&rarr;localhost (serve.go:523)</td></tr>
+              <tr><td>6</td><td>MaxUsers single-operator gate</td><td class="yes">Fully</td><td>MaxUsers: 1 (:214); registration-closes-after-first test-pinned</td></tr>
+              <tr><td>7</td><td>Account lockout</td><td class="yes">Fully</td><td>NewAccountLockout() (:212); 5 fails / 15 min</td></tr>
+              <tr><td>8</td><td>AuditLog (bounded ring + accessors)</td><td class="yes">Fully</td><td>NewAuditLog (:213); Count/Dropped/Entries consumed by OpsSnapshot (:513-521); v4.20 session journal rides free</td></tr>
+              <tr><td>9</td><td>Session middleware + browser/API gate</td><td class="yes">Fully</td><td>NewSessionMiddleware (:259); buildGate 303/401 (:370-400); publicAuthPath per ADR-0055 (:73-81)</td></tr>
+              <tr><td>10</td><td>AuthHandler hardening (rate limits + cookie posture)</td><td class="yes">Fully</td><td>3 RateLimitConfigs + Secure ptr (:417-436); per-IP via library limiter</td></tr>
+              <tr><td>11</td><td>OAuth2 lane via custom provider (the seam)</td><td class="yes">Fully</td><td>oidclogin implements identitymodel.OAuth2Provider incl. nonce pair; OAuth2SuccessURL/ErrorURL browser-facing</td></tr>
+              <tr><td>12</td><td>loginpage panel configuration</td><td class="warn">Partially</td><td>NoRegistration / AccentColor / ThemeFromRequest unset (:231-240) &mdash; finding M1</td></tr>
+              <tr><td>13</td><td>SessionTTL / SessionMaxAge</td><td class="warn">Partially</td><td>24h/86400s defaults, unset and undocumented &mdash; finding M4</td></tr>
+              <tr><td>14</td><td>Service lifecycle (Close vs GracefulClose)</td><td class="warn">Partially</td><td>Close() deferred (serve.go:182); GracefulClose unexposed &mdash; finding M5</td></tr>
+              <tr><td>15</td><td>Projection operations (statuses + rebuild)</td><td class="warn">Partially</td><td>ProjectionStatuses consumed via Ready() (:461-471); RebuildProjection unreachable &mdash; finding M3</td></tr>
+              <tr><td>16</td><td>User import/export (logical backup)</td><td class="no">Missed</td><td>ExportUsersToJSON/CSV + admin-gated routes unused; identity.db is the one non-disposable DB &mdash; finding M2</td></tr>
+              <tr><td>17</td><td>AsyncStartup</td><td class="na">N/A</td><td>single-operator journal drains in ms at sync startup; readiness already ANDs Ready() &mdash; no multi-minute outage to avoid</td></tr>
+              <tr><td>18</td><td>OnProjectionFailed callback</td><td class="na">N/A</td><td>alerting target does not exist in this deployment; /health/ready + logs are the accepted signals</td></tr>
+              <tr><td>19</td><td>SecurityHooks (event signing/encryption)</td><td class="na">N/A</td><td>at-rest threat model is filesystem/backup on a single trusted host; flip trigger: identity.db leaves host control or a compliance requirement lands</td></tr>
+              <tr><td>20</td><td>CommandMiddleware / CommandLifecycle</td><td class="na">N/A</td><td>dispatcher seam for retry/breaker/metrics; no metrics infra, single-writer SQLite, audit chain already auto-wired by NewService</td></tr>
+              <tr><td>21</td><td>Roles / tenants / membership / bots / impersonation</td><td class="na">N/A</td><td>single operator (MaxUsers:1); the 2026-11-12 identity verdict NO TRIP (docs/cqrs-lint-policy.md)</td></tr>
+              <tr><td>22</td><td>TOTP module</td><td class="na">N/A</td><td>passkey + OIDC lanes cover authentication; no authenticator-app demand</td></tr>
+              <tr><td>23</td><td>Email verification</td><td class="na">N/A</td><td>no email infra; the IdP (Pocket ID) owns email identity</td></tr>
+              <tr><td>24</td><td>UserViewCache (TinyLFU)</td><td class="na">N/A</td><td>one user; SQL COUNT/FindByID already cheap on the shared handle</td></tr>
+              <tr><td>25</td><td>TokenPepper / bot tokens / API-token middleware</td><td class="na">N/A</td><td>no bot or API-token consumers; TokenPepper nil correctly disables registration</td></tr>
+              <tr><td>26</td><td>DefaultEventCatalog / ArchitectureCatalog</td><td class="na">N/A</td><td>no external consumer of identity event schemas; serving the catalog would widen the public surface</td></tr>
+              <tr><td>27</td><td>usermgmt/oauth2 bundled provider</td><td class="na">N/A</td><td>justified no: bundled provider discovers at startup (boot-fail), takes a static secret string, has no group allowlist &mdash; the webphone SSO doctrine requires lazy discovery, per-exchange secret-file reads, fail-closed group admission (oidclogin.go:5-23). Pins match (go-oidc v3.21.0 / x/oauth2 v0.37.0), so the choice is doctrinal, not a version conflict. Flip trigger: a second IdP arrives, or the bundled provider grows lazy discovery + secret-file + allowlist</td></tr>
+              <tr><td>28</td><td>ADR-0062 hygiene (root re-exports + usermgmt identity-model aliases)</td><td class="yes">Fully</td><td>zero root imports; zero deprecated-alias usage (calibrated negative, section 02)</td></tr>
+              <tr><td>29</td><td>loginpage misc (ExtraSection, NoWebAuthn, AutoRedirect, AuthPrefix, CredentialName, RegisterFirst, Theme)</td><td class="na">N/A</td><td>native lanes cover the page&rsquo;s needs; defaults correct (AuthPrefix "" = /auth/*, matches the gate&rsquo;s public list)</td></tr>
+              <tr><td>30</td><td>Version currency</td><td class="yes">Fully</td><td>usermgmt v4.20.0 == latest, loginpage v4.18.0 == latest, webauthn v4.13.0 == latest, root v4.18.1 == latest (go list -m -versions, 2026-11-19)</td></tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Score derivation:</strong> N=30 rows, 12 N/A &rarr; A=18
+            applicable. Fully = 13 &times; 1.0, Partially = 4 &times; 0.5,
+            Missed = 1 &times; 0 &rarr; &Sigma; = 15.0. Score =
+            round(100 &times; 15.0 / 18) = <strong>83/100 &mdash; band: high
+            (70&ndash;84)</strong>. Misused = 0.
+          </p>
+        </section>
+
+        <!-- v5 -->
+        <section id="v5">
+          <h2><span class="num">05</span>v5 exposure (the rename watchlist)</h2>
+          <p>
+            cqrs-htmx v5 deletes the deprecated aliases (ADR-0062) and removed
+            the WebSocket transport (ADR-0046). pbx-lens&rsquo;s exposure to
+            the v5 train:
+          </p>
+          <table class="compare">
+            <thead>
+              <tr><th>Exposure</th><th>Status</th><th>Detail</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Root-module deprecated aliases</td>
+                <td class="yes">None</td>
+                <td>Root not imported anywhere (rides indirect via loginpage); zero cqrshtmx.* references</td>
+              </tr>
+              <tr>
+                <td>usermgmt identity-model aliases</td>
+                <td class="yes">None</td>
+                <td>0 of 15 deprecated names referenced (calibrated grep, section 02); identity-model/v4 stays an indirect rider</td>
+              </tr>
+              <tr>
+                <td>httputil re-exports (CSRF, rate-limit, Server-Timing)</td>
+                <td class="yes">None</td>
+                <td>pbx-lens imports github.com/larsartmann/httputil directly (userauth.go:19, :260) &mdash; the ADR-0062-compliant form</td>
+              </tr>
+              <tr>
+                <td>WebSocket/SSE transport removal</td>
+                <td class="yes">None</td>
+                <td>No SSE/WS usage; htmx polling is the R9 doctrine, self-hosted</td>
+              </tr>
+              <tr>
+                <td>/v4 &rarr; /v5 import-path renumber</td>
+                <td class="no">Inevitable</td>
+                <td>3 direct imports (userauth.go:13-15) + 1 test pin regex (corpus_freshness_test.go:24,63) renumber on the train; the go-cqrs-lite v5 rename sweep is already budgeted in docs/gotchas.md &mdash; fold cqrs-htmx into that same sweep</td>
+              </tr>
+              <tr>
+                <td>loginpage&rsquo;s own root dependency</td>
+                <td class="no">Upstream&rsquo;s</td>
+                <td>loginpage Handler.Routes() returns cqrshtmx.RoutePosture types; migration is the library&rsquo;s train to run, not pbx-lens&rsquo;s</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Verify -->
+        <section id="verify">
+          <h2><span class="num">06</span>How to verify (commands replayed on 2026-11-19)</h2>
+          <pre><code># Pins + version currency (all == latest at audit time)
+rg -n "larsartmann/cqrs-htmx" go.mod
+go list -m -versions github.com/larsartmann/cqrs-htmx/usermgmt/v4 | tr ' ' '\n' | tail -2
+go list -m -versions github.com/larsartmann/cqrs-htmx/loginpage/v4 | tr ' ' '\n' | tail -2
+go list -m -versions github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 | tr ' ' '\n' | tail -2
+go list -m -versions github.com/larsartmann/cqrs-htmx/v4 | tr ' ' '\n' | tail -2
+
+# Usage census: the leaf-module surface in use
+rg -n "larsartmann/cqrs-htmx" --glob '**/*.go' --glob '**/*.templ' .
+rg -no "usermgmt\.[A-Z][A-Za-z]*" internal/web/userauth.go | sed 's/.*://' | sort -u
+
+# ADR-0062 hygiene (negative + positive control; negative exits 1)
+rg -n "usermgmt\.(UserID|Role|Policy|Action|Effect|GroupPolicy|EnforceResult|PolicyUpdate|EnforcerConfig|TOTPProvider|WebAuthnProvider|OAuth2UserInfo)" --glob '**/*.go' .
+rg -n "cqrshtmx\." --glob '**/*.go' .
+
+# The unset options (finding M1) + the closed-registration render rule
+rg -n "pageCfg := loginpage.Config" -A 9 internal/web/userauth.go
+rg -n "showReg" "$(go env GOMODCACHE)/github.com/larsartmann/cqrs-htmx/loginpage/v4@v4.18.0/handler.go"
+
+# The justified-no on the bundled oauth2 provider (compare both sides)
+sed -n '1,30p' internal/oidclogin/oidclogin.go
+sed -n '/type ProviderConfig struct/,/^}/p' \
+  "$(go env GOMODCACHE)/github.com/larsartmann/cqrs-htmx/usermgmt/oauth2/v4@v4.13.0/provider.go"
+
+# Serve wiring (identity context)
+rg -n "auth-db|deriveAuthDefaults|identity\.Ready|identity\.Register|identity\.Middleware" cmd/pbx-lens/serve.go | head -8
+
+# HEAD-verified proxies (run during this audit, package-scoped)
+GOEXPERIMENT=jsonv2 go build ./...
+GOEXPERIMENT=jsonv2 go test ./internal/web/ -count=1</code></pre>
+          <p>
+            Gate note: the full BuildFlow gate was not run in this read-only
+            session; HEAD is verified by the build plus the complete
+            <code>internal/web</code> package suite (the identity gate tests
+            live there and in cmd/pbx-lens).
+          </p>
+        </section>
+
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-11-19 &middot; Audited against
+            cqrs-htmx/usermgmt/v4 v4.20.0, loginpage/v4 v4.18.0,
+            usermgmt/webauthn/v4 v4.13.0 (root v4.18.1 indirect) &middot;
+            capability ground truth read from the module caches at the exact
+            pins &middot; supersedes the census, recommendation #1, and score
+            of the 2026-11-12 fleet refresh (docs/review/libs/cqrs-htmx.md)
           </p>
         </footer>
       </main>
@@ -1093,13 +1472,13 @@ type BetterAPI struct {
                 links.forEach(function (link) {
                   link.classList.toggle(
                     "active",
-                    link.getAttribute("href") === "#" + entry.target.id,
+                    link.getAttribute("href") === "#" + entry.target.id
                   );
                 });
               }
             });
           },
-          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 }
         );
         sections.forEach(function (s) {
           observer.observe(s);

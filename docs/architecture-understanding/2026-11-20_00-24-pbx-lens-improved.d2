@@ -1,0 +1,187 @@
+direction: down
+
+operator: "Operator (one human)" {
+  shape: person
+}
+
+tls: "TLS front (reverse proxy, TLS-first doctrine)" {
+  style.stroke-dash: 4
+}
+
+timers: "NixOS host timers (lens.nix)" {
+  backup-timer: "nightly backup timer"
+  purge-timer: "retention purge timer"
+}
+
+cli: "pbx-lens CLI (cmd/pbx-lens)" {
+  ingest: "one-shot ingest verbs (cdr, telnyx, webhook, agent)"
+  refresh: "refresh (stays operator-commanded, API budget)"
+  serve: "serve (thin verb)"
+  backup: "backup"
+  purge: "purge"
+}
+
+sources: "Read-only sources" {
+  freeswitch: "FreeSWITCH Master.csv" {
+    shape: cloud
+  }
+  telnyx-api: "Telnyx API" {
+    shape: cloud
+  }
+  webhook-log: "Receiver webhook JSONL" {
+    shape: cloud
+  }
+  agent-dir: "Agent transcript files" {
+    shape: cloud
+  }
+  wav-dir: "Local recordings WAV dir" {
+    shape: cloud
+  }
+}
+
+ingest: "Ingest layer (extracted from internal/cli)" {
+  poller: "poller (PollLoop)"
+  parsers: "parsers (cdr, webhook, agent)"
+  telnyx-fetch: "Telnyx fetch + mapper"
+  age-gate: "AgeGate"
+  dispatcher: "ingest dispatcher (call.record)"
+  enrich: "enrich pass (call.enrich)"
+  health: "poller-health snapshot module (SourceCounters, staleness verdict)" {
+    style.stroke-dash: 4
+  }
+}
+
+system: "Composition root (app.New, upgrade seam to system/v5)" {
+  dispatch: "Command dispatcher"
+  decider: "Call decider (Record / Enrich / Retire)"
+  store: "Event store (index.db, disposable)" {
+    shape: cylinder
+  }
+  host: "Projection host (batch drain)"
+  call_views: "call_views read model" {
+    shape: cylinder
+  }
+}
+
+search: "FTS5 shadow index (wholesale rebuild)" {
+  shape: cylinder
+}
+
+retention: "Retention (Policy, OldViews, Retire)"
+
+backup: "Backup (VACUUM INTO + Verify)"
+
+snapshots: "Snapshot staging (index.db + identity.db)" {
+  shape: cylinder
+}
+
+identity: "Identity bounded context (internal/identity, extracted from web)" {
+  style.stroke-dash: 4
+  db: "identity.db (NOT disposable)" {
+    shape: cylinder
+  }
+  migrate: "boot-time self-migration (checkpoint schema)" {
+    style.stroke-dash: 4
+  }
+  login: "/login panel"
+  auth: "/auth/* WebAuthn ceremonies"
+  oidc: "OIDC lane (Pocket ID)"
+  gate: "Session gate middleware"
+}
+
+serveboot: "Serve composition module (extracted boot wiring: sources, identity, middlewares)" {
+  style.stroke-dash: 4
+}
+
+webui: "Web UI packages (internal/web split by concern)" {
+  read: "read package (queries, keyset walk, representative collapse, read-time join)" {
+    style.stroke-dash: 4
+  }
+  analytics: "analytics package (dashboard, segments, quality, denominators)" {
+    style.stroke-dash: 4
+  }
+  export: "export package (JSONL/CSV stream, PII modes)" {
+    style.stroke-dash: 4
+  }
+  mediaproxy: "recording proxy package (Telnyx signed URL, local WAV)" {
+    style.stroke-dash: 4
+  }
+  chrome: "page chrome package (layout, nav, palette, shared templ)" {
+    style.stroke-dash: 4
+  }
+  pii: "enforced PII policy (E164 + ParticipantHash in reads and exports)" {
+    style.stroke-dash: 4
+  }
+  planned-analytics: "planned analytics (MOS trend per DID, AI-vs-human cost split, source-mix segments)" {
+    style.stroke-dash: 4
+  }
+}
+
+asr-variant: "Owner-gated ASR enrichment variant (never overwrites source transcript)" {
+  style.stroke-dash: 4
+}
+
+operator -> tls: "browses"
+tls -> cli.serve: "terminates TLS (WebAuthn secure context)"
+operator -> cli: "runs verbs"
+timers.backup-timer -> cli.backup: "triggers nightly"
+timers.purge-timer -> cli.purge: "triggers on cadence"
+
+sources.freeswitch -> ingest.parsers: "parses"
+sources.webhook-log -> ingest.parsers: "parses"
+sources.agent-dir -> ingest.parsers: "scans"
+sources.telnyx-api -> ingest.telnyx-fetch: "lists"
+
+ingest.parsers -> ingest.age-gate: "Observations"
+ingest.telnyx-fetch -> ingest.age-gate: "Observation + seed"
+ingest.telnyx-fetch -> ingest.enrich: "EnrichmentSeeds"
+sources.telnyx-api -> ingest.enrich: "Detail Records + insights"
+asr-variant -> ingest.enrich: "optional labelled layer"
+ingest.age-gate -> ingest.dispatcher: "admitted"
+
+ingest.dispatcher -> system.dispatch: "dispatches call.record"
+ingest.enrich -> system.dispatch: "dispatches call.enrich"
+ingest.enrich -> system.call_views: "reads CallView by RecordKey"
+
+system.dispatch -> system.decider: "decides"
+system.decider -> system.store: "emits observed / corrected / enriched / retired"
+system.store -> system.host: "drains"
+system.host -> system.call_views: "folds (full-recompute, Remove on tombstone)"
+system.call_views -> search: "Rebuild(views)"
+system.call_views -> retention: "OldViews"
+retention -> system.dispatch: "dispatches call.retire"
+system.call_views -> webui.read: "typed reads"
+system.call_views -> webui.analytics: "aggregates"
+search -> webui.read: "FTS queries"
+
+cli.serve -> serveboot: "delegates wiring"
+serveboot -> webui: "mounts packages"
+serveboot -> identity: "composes gate"
+serveboot -> ingest.poller: "starts"
+ingest.poller -> ingest.parsers: "re-parses local files"
+ingest.poller -> ingest.telnyx-fetch: "polls"
+ingest.poller -> system.host: "drain after ingest"
+ingest.poller -> search: "rebuild after drain"
+ingest.poller -> ingest.health: "records per-source stats"
+ingest.health -> webui.read: "feeds ops counters (snapshot injection)"
+
+identity.migrate -> identity.db: "applies schema at boot"
+identity.login -> identity.db: "events + sessions"
+identity.auth -> identity.db: "ceremonies"
+identity.oidc -> identity.db: "claims"
+identity.gate -> webui: "wraps every route"
+operator -> identity.login: "sign-in"
+
+webui.mediaproxy -> sources.telnyx-api: "streams signed audio"
+webui.mediaproxy -> sources.wav-dir: "serves local WAV"
+webui.read -> webui.chrome: "renders through shared chrome"
+webui.analytics -> webui.chrome: "renders through shared chrome"
+webui.export -> system.call_views: "streaming keyset export"
+webui.pii -> webui.export: "hash mode default-able"
+webui.pii -> webui.read: "hash participants on read"
+webui.planned-analytics -> system.call_views: "future read-only queries"
+
+cli.backup -> backup: "snapshot + verify"
+backup -> system.store: "VACUUM INTO index.db"
+backup -> identity.db: "snapshots identity.db"
+backup -> snapshots: "stages both files"

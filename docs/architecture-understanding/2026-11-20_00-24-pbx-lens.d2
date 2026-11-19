@@ -1,0 +1,192 @@
+direction: down
+
+operator: "Operator (pbx.artmann.tech, one human)" {
+  shape: person
+}
+
+timers: "NixOS host timers (deploy/, lens.nix)" {
+  backup-timer: "nightly backup timer 02:15"
+  purge-timer: "retention purge timer"
+}
+
+cli: "pbx-lens CLI (cmd/pbx-lens -> internal/cli)" {
+  ingest-cdr: "ingest-cdr"
+  ingest-telnyx: "ingest-telnyx"
+  ingest-webhook: "ingest-webhook"
+  ingest-agent: "ingest-agent"
+  refresh: "refresh (additive-field backfill)"
+  serve: "serve (appkit svc.Run)"
+  backup: "backup"
+  purge: "purge"
+  catalog: "catalog (DB-free)"
+}
+
+sources: "Read-only sources (never written back)" {
+  freeswitch: "FreeSWITCH Master.csv" {
+    shape: cloud
+  }
+  telnyx-api: "Telnyx API" {
+    shape: cloud
+  }
+  webhook-log: "Receiver webhook JSONL" {
+    shape: cloud
+  }
+  agent-dir: "Agent transcript files" {
+    shape: cloud
+  }
+  wav-dir: "Local recordings WAV dir" {
+    shape: cloud
+  }
+}
+
+ingest: "Ingest layer (internal/cli + internal/ingest)" {
+  poller: "serve poller (PollLoop 15 min, PollOnce)"
+  parsers: "Local file parsers (internal/ingest)" {
+    cdr: "cdr.Parse (13/18-col CSV)"
+    webhook: "webhook.Parse (JSONL)"
+    agent: "agent.ParseDir (transcripts)"
+  }
+  telnyx-fetch: "FetchTelnyxObservations"
+  telnyx-mapper: "telnyx mapper + wire.FlexTime"
+  age-gate: "AgeGate (retention:age-cutoff)"
+  dispatcher: "cli.Ingest"
+  enrich: "EnrichTelnyxCalls"
+}
+
+system: "Composition root (internal/app app.New -> go-cqrs-lite system/v4)" {
+  dispatch: "Command dispatcher"
+  decider: "Call decider (Record / Enrich / Retire)"
+  store: "Event store (index.db, disposable) streams per StreamID kind:native-id" {
+    shape: cylinder
+  }
+  host: "Projection host (batch drain)"
+  call_views: "call_views read model (CallView per stream)" {
+    shape: cylinder
+  }
+}
+
+search: "FTS5 shadow index lens_search + lens_turns + lens_digits (same sqlite file, wholesale rebuild)" {
+  shape: cylinder
+}
+
+retention: "Retention (internal/retention) Policy + OldViews + Retire"
+
+backup: "Backup (internal/backup) VACUUM INTO + Verify"
+
+snapshots: "Snapshot staging /var/lib/pbx-lens/backups (index.db + identity.db)" {
+  shape: cylinder
+}
+
+identity: "Identity context (cqrs-htmx usermgmt, internal/web/userauth.go)" {
+  db: "identity.db sqlite (NOT disposable)" {
+    shape: cylinder
+  }
+  login: "/login panel (loginpage)"
+  auth: "/auth/* WebAuthn ceremonies (passkey-only)"
+  oidc: "OIDC lane (Pocket ID, code + PKCE)"
+  gate: "Session gate middleware"
+}
+
+web: "Web UI (internal/web, web.Register on appkit svc.Mux)" {
+  pages: "Pages" {
+    list: "/ call list"
+    dashboard: "/dashboard"
+    detail: "/calls/{kind}/{id}"
+    search: "/search"
+    segments: "/segments/{number}"
+    ops: "/ops"
+  }
+  frags: "htmx fragments (/frag/dashboard 30s, /frag/staleness 60s)"
+  api: "APIs" {
+    export: "/api/export.jsonl + .csv (streaming, ?pii=hash)"
+    freshness: "/api/freshness"
+    ops-api: "/api/ops (503 on scan_failures)"
+  }
+  recording: "Recording proxy (read-only stream)"
+  queries: "Queries (ListCalls keyset, representative collapse, read-time join, analytics, export)"
+  health: "/health/ready (projections AND identity)"
+}
+
+catalog-export: "EventCatalog tree + -architecture HTML (federation hub)" {
+  shape: document
+}
+
+operator -> cli: "runs one-shot verbs"
+operator -> identity.login: "passkey / OIDC sign-in"
+operator -> web: "browses (session-gated)"
+
+timers.backup-timer -> cli.backup: "triggers nightly"
+timers.purge-timer -> cli.purge: "triggers on cadence"
+
+sources.freeswitch -> ingest.parsers.cdr: "Master.csv CSV"
+sources.webhook-log -> ingest.parsers.webhook: "JSONL lines"
+sources.agent-dir -> ingest.parsers.agent: "transcript files"
+sources.telnyx-api -> ingest.telnyx-fetch: "lists conversations, messages, recordings"
+
+ingest.telnyx-fetch -> ingest.telnyx-mapper: "conversation + messages + recording"
+ingest.telnyx-mapper -> ingest.age-gate: "Observation + EnrichmentSeed"
+ingest.parsers.cdr -> ingest.age-gate: "Observations"
+ingest.parsers.webhook -> ingest.age-gate: "Observations"
+ingest.parsers.agent -> ingest.age-gate: "Observations"
+ingest.age-gate -> ingest.dispatcher: "admitted observations"
+
+ingest.dispatcher -> system.dispatch: "dispatches call.record"
+ingest.enrich -> system.dispatch: "dispatches call.enrich (hash-idempotent)"
+ingest.telnyx-mapper -> ingest.enrich: "EnrichmentSeeds"
+sources.telnyx-api -> ingest.enrich: "Detail Records + insights"
+ingest.enrich -> system.call_views: "reads CallView by RecordKey"
+
+cli.ingest-cdr -> ingest.parsers.cdr: "one-shot"
+cli.ingest-webhook -> ingest.parsers.webhook: "one-shot"
+cli.ingest-agent -> ingest.parsers.agent: "one-shot"
+cli.ingest-telnyx -> ingest.telnyx-fetch: "one-shot 48h look-back"
+cli.ingest-telnyx -> ingest.enrich: "runs after drain"
+cli.refresh -> ingest.telnyx-fetch: "unbounded look-back, -apply re-ingests"
+cli.refresh -> system.call_views: "classifies stored views (additive-only alarm)"
+
+cli.serve -> web: "registers routes + poller"
+cli.serve -> ingest.poller: "starts PollLoop"
+cli.serve -> identity: "opens -auth-db (opt-in)"
+ingest.poller -> ingest.parsers: "re-parses local files each pass"
+ingest.poller -> ingest.telnyx-fetch: "polls configured sources"
+ingest.poller -> system.host: "drain after ingest"
+ingest.poller -> search: "rebuild FTS after drain (order contract)"
+
+system.dispatch -> system.decider: "loads CallState, decides"
+system.decider -> system.store: "emits call.observed (new stream)"
+system.decider -> system.store: "emits call.corrected (changed hash)"
+system.decider -> system.store: "emits call.enriched (cost, insight)"
+system.decider -> system.store: "emits call.retired (tombstone)"
+system.store -> system.host: "drains new events"
+system.host -> system.call_views: "folds (full-recompute create, Remove on tombstone)"
+
+system.call_views -> search: "Rebuild(views)"
+system.call_views -> retention: "OldViews over max-age"
+system.call_views -> web.queries: "metaengine typed reads"
+
+retention -> system.dispatch: "dispatches call.retire"
+cli.purge -> retention: "runs Retire, then drain + rebuild"
+retention -> system.host: "drain after tombstones"
+
+web.pages -> web.queries: "render"
+web.frags -> web.queries: "poll dashboard + staleness"
+web.api.export -> web.queries: "StreamExportCalls 5k pages"
+web.api.freshness -> ingest.poller: "reads SourceCounters staleness"
+web.api.ops-api -> ingest.poller: "per-source counters"
+web.pages.search -> search: "queries FTS + turns + digits"
+web.recording -> sources.telnyx-api: "fetches signed audio URL (unbounded stream)"
+web.recording -> sources.wav-dir: "serves local WAV (stems + uuid sweep)"
+web.pages.detail -> web.recording: "links audio"
+web.health -> system.host: "ProjectionWorkersReady"
+web.health -> identity: "identity.Ready"
+identity.gate -> web: "wraps every route (303 /login, APIs 401)"
+identity.login -> identity.db: "user events + sessions"
+identity.auth -> identity.db: "WebAuthn ceremonies"
+identity.oidc -> identity.db: "token claims"
+
+cli.backup -> backup: "snapshot + verify"
+backup -> system.store: "VACUUM INTO index.db"
+backup -> identity.db: "snapshots identity.db too"
+backup -> snapshots: "stages both files"
+
+cli.catalog -> catalog-export: "calls.BuildCatalog (reflection)"

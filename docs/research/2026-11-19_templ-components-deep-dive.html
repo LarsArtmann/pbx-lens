@@ -1052,7 +1052,7 @@
           <div class="issue issue-critical" id="f1-version">
             <span class="severity severity-critical">Partially used &middot; the unlock for findings 2&ndash;8</span>
             <h3>Version currency: v1.27.1 shipped 2026-11-19 &mdash; the pin is one patch behind the retirement wave</h3>
-            <div class="where">go.mod:31-34 (pin v1.27.0 &times;4 modules) &middot; latest v1.27.1 via <code>go list -m -versions</code></div>
+            <div class="where">go.mod:32-35 (pin v1.27.0 &times;4 modules) &middot; latest v1.27.1 via <code>go list -m -versions</code></div>
             <p>
               The fleet report&rsquo;s 2026-11-12 refresh verified v1.27.0 as
               latest; that claim is now stale. v1.27.1 (tagged 2026-11-19) contains,
@@ -1239,7 +1239,7 @@ Class: "!items-stretch",
         <section id="version">
           <h2><span class="num">02</span>Version currency</h2>
           <p>
-            Pin: v1.27.0 (2026-11-04) across all four modules (go.mod:31-34),
+            Pin: v1.27.0 (2026-11-04) across all four modules (go.mod:32-35),
             paired with a-h/templ v0.3.1100 (go.mod:6). Latest release:
             <strong>v1.27.1, tagged 2026-11-19</strong> &mdash; one patch ahead.
             Verified via <code>go list -m -versions</code> and the downloaded
@@ -1426,7 +1426,7 @@ Class: "!items-stretch",
               <tr><td>26</td><td>forms.DatePicker</td><td class="yes">Fully</td><td>range filters &times;4</td></tr>
               <tr><td>27</td><td>remaining form fields (Checkbox, Toggle, Radio, Slider, Combobox, TagsInput, FileInput, Textarea, Calendar, Rating, FilterChips/FilterDropdown, ValidationSummary, FieldError, Label, InputGroup, FormFieldWrapper)</td><td class="na">N/A</td><td>no data-entry surface: every UI route is a query (AGENTS.md); no accounts, no writes outside identity</td></tr>
               <tr><td>28</td><td>feedback.Alert</td><td class="yes">Fully</td><td>7 sites; staleness + MOS placeholder; warning amber absorbed</td></tr>
-              <tr><td>29</td><td>feedback.Toast + ToastContainer</td><td class="yes">Fully</td><td>page.templ:4-5; pin&rsquo;s duplicate &lt;/script&gt; wart rides goldens, fixed in v1.27.1</td></tr>
+              <tr><td>29</td><td>feedback.Toast + ToastContainer</td><td class="yes">Fully</td><td>page.templ:20, :26; pin&rsquo;s duplicate &lt;/script&gt; wart rides goldens, fixed in v1.27.1</td></tr>
               <tr><td>30</td><td>feedback loading family (Spinner, Skeleton*, ProgressBar, LoadingOverlay, InlineLoading, StepIndicator, LoadingDialog; v1.27.1 LoadingProgress)</td><td class="na">N/A</td><td>no blocking operations; PolledRegion&rsquo;s busy cue covers the two poll regions</td></tr>
               <tr><td>31</td><td>layout.Base + DefaultPageProps</td><td class="yes">Fully</td><td>page.templ:6; single &lt;main&gt; landmark respected</td></tr>
               <tr><td>32</td><td>layout.Container / Split / Stack</td><td class="yes">Fully</td><td>dashboard + detail layouts</td></tr>

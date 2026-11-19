@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>pbx-lens — Full Code Review 2026-11-20 (read-only)</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -850,9 +850,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>FULL CODE REVIEW</span>
+      <span>2026-11-20</span>
+      <span>full-code-review session &middot; crush subagent</span>
     </div>
 
     <div class="layout">
@@ -863,8 +863,11 @@
           <a href="#summary">Summary</a>
           <a href="#scorecard">Scorecard</a>
           <a href="#strengths">Strengths</a>
+          <a href="#typesafety">Type Safety</a>
+          <a href="#splitbrains">Split Brains</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#minor">Minor</a>
+          <a href="#queue">Fix Queue</a>
           <a href="#appendix">Appendix</a>
         </nav>
       </aside>
@@ -873,189 +876,521 @@
       <main class="main">
         <!-- Hero -->
         <header class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="bar"></div>
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="eyebrow">REPORT TYPE &middot; YYYY-MM-DD</div>
-          <h1>Report Title</h1>
+          <div class="eyebrow">FULL CODE REVIEW &middot; 2026-11-20 00:22</div>
+          <h1>pbx-lens full-code-review — every file, read-only pass</h1>
           <p class="subtitle">
-            One or two sentences that set the frame: who this is for, what was
-            reviewed, and what the reader will take away.
+            A Senior-Architect pass over all 155 hand-written source files (58 non-test Go files
+            deep-read, 7 templ sources, 90 test files verified green and spot-read). Read-only by
+            parent instruction: no source edits, no inline TODOs — every fix-worthy finding is
+            documented here with file:line and the concrete fix for the parent to execute.
           </p>
           <div class="meta">
-            <span class="tag amber">Scope: example</span>
-            <span class="tag">Version: 1.0.0</span>
-            <span class="tag teal">Status: draft</span>
+            <span class="tag amber">Scope: cmd/ internal/ *.templ</span>
+            <span class="tag">Go 1.27.3 &middot; GOEXPERIMENT=jsonv2</span>
+            <span class="tag teal">Build + full test suite green</span>
           </div>
         </header>
 
-        <!-- Scorecard -->
+        <!-- Scorecard / stat cards -->
         <section id="scorecard" class="scorecard">
-          <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
-          </div>
-          <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
+          <div class="score-card">
+            <div class="score">155</div>
+            <div class="label">Files reviewed</div>
           </div>
           <div class="score-card score-bad">
-            <div class="score">1</div>
-            <div class="label">Blockers</div>
+            <div class="score">2</div>
+            <div class="label">Critical + High</div>
           </div>
-          <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+          <div class="score-card score-warn">
+            <div class="score">15</div>
+            <div class="label">Medium + Minor</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">3</div>
+            <div class="label">Split brains</div>
           </div>
         </section>
+
+        <div class="stat-grid">
+          <div class="stat-card">
+            <div class="stat-value">17</div>
+            <div class="stat-label">Findings (1 crit / 1 high / 6 med / 9 minor)</div>
+          </div>
+          <div class="stat-card stat-bad">
+            <div class="stat-value">1</div>
+            <div class="stat-label">Crash-class bug (OIDC single-flight)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Fixed on the spot (read-only pass)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">testify / raw bg-blue violations</div>
+          </div>
+        </div>
 
         <!-- Summary -->
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            pbx-lens is in strong shape: the domain core (calls) is exemplary type-safe DDD, the
+            error-family doctrine is applied almost everywhere, and the honest-denominator
+            discipline in analytics is consistently enforced. The suite (90 test files) passes
+            green under <code>GOEXPERIMENT=jsonv2 go test ./...</code> after
+            <code>go tool templ generate</code>. This pass found exactly one crash-class defect
+            (the OIDC discovery single-flight can hand concurrent waiters a zero-value result and
+            panic), one genuine doctrine split brain (three read sites bypass
+            <code>calls.LookupView</code>), and fifteen smaller findings — lying signatures,
+            silent truncations, stale comments, dead code — each with a concrete fix below.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            Not blocking, but fix F1 before the next deploy that enables the OIDC lane: two
+            concurrent sign-ins during a cold discovery can panic the serve goroutine. F2 should
+            land beside it — it is the only finding that changes operator-visible numbers
+            (correction/enrichment counters against legacy-keyed rows). Everything else is
+            scheduled polish.
           </div>
+          <p>
+            <strong>Series continuity.</strong> This is the first full-code-review since
+            2026-10-26 (docs/reviews/2026-10-26_11-25_full-code-review.html) and follows the
+            2026-11-12 brutal-self-review (docs/reviews/2026-11-12_15-30_brutal-self-review.html).
+            Cross-referenced, not re-discovered: the 11-12 report's finding 10 (scanCode
+            "unclassified" fallback untested through the full middleware chain) is STILL OPEN —
+            the fallback exists at internal/web/ops.go:160-166 with no test naming it; finding 6
+            (~20 standing golangci warnings) was NOT re-measured here (the BuildFlow/nix gates are
+            outside this read-only session's reach). The 11-12 report's /api/ops 503-honest row is
+            landed and now guarded (F-none; verified in server.go:714-719). No STACK.md exists in
+            the repo — noted per the skill's declared-architecture rule; no stack-drift check was
+            run (that is the stack-selection skill's call to make).
+          </p>
         </section>
 
         <!-- Strengths -->
         <section id="strengths">
           <h2><span class="num">&#9670;</span>What's already excellent</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            Preserve these patterns — they are the reason most of this review is polish.
           </p>
-
-          <div class="strengths">
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
-              </div>
-            </div>
-            <div class="strength">
-              <div class="check">+</div>
-              <div class="text">
-                <strong>Specific strength two</strong>
-                <span
-                  >Reference files, metrics, or patterns where possible.</span
-                >
-              </div>
-            </div>
+          <div class="card card-solution">
+            <h4>Length-prefixed, schema-versioned ContentHash</h4>
+            <p>
+              internal/calls/events.go:41-103 — every hashed field is written
+              <code>name=len:value</code> through one helper, killing the delimiter-ambiguity
+              collision class, and <code>ObservationSchemaVersion</code> rides the pre-image so
+              additive fields reach history through ONE deliberate bump. This is textbook
+              unrepresentable-invalid-state design.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>Honest denominators everywhere</h4>
+            <p>
+              quality.go, segments.go, dashboard.go — every rate carries its own denominator
+              (<code>Rate(count, den) (float64, bool)</code>, <code>HasBaseline</code>,
+              <code>MOSKnown</code>, unanimous-currency spend). A zero denominator renders an em
+              dash, never a fabricated 0%. Matches DOMAIN_LANGUAGE § Analytics denominators 1:1.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>Two-generation record-key fallback</h4>
+            <p>
+              internal/calls/viewkey.go — RecordKey/LegacyRecordKey/LookupView give the bare vs
+              marker-prefixed key generations exactly one home, and the doctrine
+              (docs/gotchas.md) explains why Exists lies. The refresh path and the agent join use
+              it correctly (F2 is about the sites that don't).
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>Family-mapped HTTP errors that never leak</h4>
+            <p>
+              internal/web/errors.go writeIndexError: classified errors take the family status
+              (Transient → 503, not a lying 500), bodies carry only crafted safe text, raw errors
+              ride the structured log. The typed-carrier doctrine (DOMAIN_LANGUAGE § Typed error
+              carriers) is applied at every new site I checked.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>Durability-correct backup chain</h4>
+            <p>
+              internal/backup/backup.go — VACUUM INTO a uniquely-named staging file, fsync file,
+              atomic rename, fsync dir. A crashed run cannot destroy the previous good snapshot.
+              Small, correct, and documented against the go-atomic-write alternative.
+            </p>
+          </div>
+          <div class="card card-solution">
+            <h4>Injection-proof FTS query compiler + honest export truncation</h4>
+            <p>
+              search.go MatchExpression double-quotes every term (no user syntax reaches sqlite);
+              the exports append an <code>EXPORT_INCOMPLETE</code> terminal marker row/object so a
+              truncated stream announces itself (export.go:151-172).
+            </p>
           </div>
         </section>
 
-        <!-- Findings -->
-        <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
-
-          <!-- Issue 1 -->
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
-            >
-            <h3>Critical issue title</h3>
-            <div class="where">
-              path/to/file.go:42-58 &middot; short context
-            </div>
+        <!-- Type safety -->
+        <section id="typesafety">
+          <h2><span class="num">01</span>Type-safety concerns</h2>
+          <div class="card card-problem">
+            <h4>F1 — Single-flight hands concurrent waiters a zero-value result (crash)</h4>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              <code>internal/oidclogin/oidclogin.go:421-460</code>. <code>providerFor</code>'s
+              handoff channel is buffered 1: the discoverer sends one <code>providerResult</code>
+              then closes. Go semantics: the FIRST waiter receives the real result; every
+              additional waiter blocked on <code>&lt;-ch</code> receives the CLOSED-channel zero
+              value <code>{p: nil, err: nil}</code>. That is a nil provider reported as success —
+              <code>begin()</code> (line 204) immediately calls
+              <code>provider.Endpoint()</code> on it → nil-pointer panic in the serve goroutine.
+              Worse: when discovery FAILED, extra waiters get <code>{nil, nil}</code> — the
+              failure is masked as success for everyone but the first caller. The Provider doc
+              (line 112) claims "Safe for concurrent use", and oidclogin_test.go has no
+              concurrent-discovery test, which is why this survived.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
+            <pre><code>// current shape (oidclogin.go:430-437)
+if p.inflight != nil {
+    ch := p.inflight
+    p.mu.Unlock()
+    res := &lt;-ch          // 2nd waiter: closed channel → {nil, nil}
+    return res.p, res.err // nil, nil — "success"</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Fix</strong>
+              Make waiters loop: after <code>&lt;-ch</code>, re-lock and re-check
+              <code>p.oidcProv</code>/<code>err</code> state; if still empty (failed discovery),
+              retry the discovery yourself (failures are deliberately not cached). Alternative:
+              replace the channel with a <code>sync.WaitGroup</code> + result fields guarded by
+              the existing mutex. Add a regression test: stub IdP, 8 goroutines calling
+              <code>providerFor</code> concurrently against a cold cache — all must get the
+              provider or the SAME error, none a nil-nil pair.
             </div>
           </div>
-
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
-            >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+          <div class="card card-problem">
+            <h4>F3 — Enrich's observation parameter is dead: a lying signature</h4>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              <code>internal/calls/decider.go:146</code> takes
+              <code>Enrich(obs Observation, enr Enrichment, streamID)</code>, but the body
+              (line 174) emits <code>CallEnriched{Observation: state.Current, ...}</code> — the
+              parameter is silently discarded. The one production caller
+              (internal/app/app.go:60) passes <code>cmd.Observation</code>, and
+              <code>EnrichCallCmd</code> (commands.go:38-43) carries an Observation field whose
+              only real job is addressing. Today state.Current and cmd.Observation coincide by
+              construction (the enrich pass rebuilds the observation from the view), so this is
+              latent, not live — but any future caller passing a fresher snapshot gets the stale
+              one with no signal. Type-safety rule: a parameter the callee ignores should not
+              compile into the contract.
             </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Drop the <code>obs</code> parameter from <code>calls.Enrich</code> (the state owns
+              the observation), update app.go and scenario_test.go call sites. If the pairing
+              must stay, validate it (<code>state.Current.ContentHash() != obs.ContentHash()</code>
+              → Corruption rejection) so the lie becomes a guarded invariant.
+            </div>
           </div>
-
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
-            >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+          <div class="card card-warning">
+            <h4>F13 — Redundant explicit type arguments</h4>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              internal/app/app.go:44, 54, 64 — <code>system.RegisterCommand[calls.X, calls.CallState]</code>
+              infers both parameters; gopls infertypeargs flags all three. Cosmetic, but it
+              suggests the call is more ambiguous than it is.
             </p>
           </div>
         </section>
 
-        <!-- Proposal -->
-        <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+        <!-- Split brains -->
+        <section id="splitbrains">
+          <h2><span class="num">02</span>Split brains</h2>
+          <div class="card card-problem">
+            <h4>F2 — Three read sites bypass calls.LookupView against the stated doctrine</h4>
+            <p>
+              AGENTS.md: "Projection record keys are BARE … read through <code>calls.LookupView</code>
+              (its marker-prefixed fallback keeps pre-flip rows reachable)". refresh.go and
+              agent.go honor it; these don't:
+            </p>
+            <table>
+              <thead><tr><th>Site</th><th>Effect on legacy-keyed rows</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><code>internal/cli/ingest.go:50</code></td>
+                  <td>supersedes stays false → a correction reports as "recorded" in IngestStats</td>
+                </tr>
+                <tr>
+                  <td><code>internal/cli/enrich.go:82</code></td>
+                  <td>found=false → the stream counts Missing EVERY pass; enrichment never lands</td>
+                </tr>
+                <tr>
+                  <td><code>cmd/pbx-lens/ops.go:85</code> (smoke)</td>
+                  <td>benign today (fresh bare keys), same shape — align while touching the file</td>
+                </tr>
+              </tbody>
+            </table>
+            <p>
+              The enrich site is the meaningful one: until the one-time rebuild (blocked TODO row)
+              runs, every pre-2026-10-23 Telnyx stream retries Missing forever and its cost/insight
+              never arrives. refresh.go:107's comment explicitly calls out this exact trap — the
+              doctrine and the code disagree inside one package.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              ingest.go: replace the bare <code>reader.Get(ctx, calls.RecordKey(...))</code> with
+              <code>calls.LookupView(ctx, reader, cmd.StreamID())</code>. enrich.go: keep
+              <code>EnrichmentSeed.StreamKey</code> for the SeedsFor set-intersection but resolve
+              the read through LookupView (store the StreamID, or parse it from the seed). Add a
+              test: write a legacy-keyed row (via <code>LegacyRecordKey</code>), run Ingest with a
+              changed hash → Corrected (not Recorded); run the enrich pass → enriches (not
+              Missing).
+            </div>
+          </div>
+          <div class="card card-warning">
+            <h4>F6 — weekDelta comment vs the 7-day preset (doc drift with UI impact)</h4>
+            <p>
+              internal/web/dashboard.go:389-390 says "The window is always 30 days" — but
+              <code>?window=7</code> (server.go:485-500) feeds DashboardStatsQuery a 7-day ByDay,
+              so <code>weekDelta</code>, <code>costWeekDelta</code>, and <code>qualityTrend</code>
+              all need <code>len(days) &ge; 14</code> and silently render HasBaseline=false on the
+              7-day preset. The comment and the code disagree; the operator sees deltas vanish
+              with no explanation.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Either scan a floor-14-day window for the delta inputs regardless of chart window,
+              or fix the comment and have the 7-day preset hide the delta cards explicitly
+              ("needs a 30-day window"). Pick one truth.
+            </div>
+          </div>
+          <div class="card card-warning">
+            <h4>F9 — Webhook hangup-cause fold breaks the claimed order-independence</h4>
+            <p>
+              internal/ingest/webhook/webhook.go:130-132: <code>foldPayload</code> is
+              first-non-empty-wins (line 137), but the cause assignment directly above it is
+              LAST-non-empty-wins. The Parse doc (line 57-58) promises "the aggregation is
+              order-independent so the ContentHash is stable". Two DIFFERENT non-empty hangup
+              causes sharing one call_control_id (a-leg/b-leg split) would produce different
+              hashes under different line orders — the exact correction-churn class the invariant
+              exists to prevent. Today's traffic has one cause per call_control_id, so it's
+              latent.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Move the cause into <code>foldPayload</code> with the same first-wins guard; extend
+              TestParseOrderIndependent with a fixture carrying two distinct causes in both
+              orders asserting one hash.
+            </div>
+          </div>
+        </section>
+
+        <!-- Findings table -->
+        <section id="findings">
+          <h2><span class="num">03</span>Findings</h2>
+          <p>All findings, ordered by severity. Line numbers verified 2026-11-20.</p>
+          <table>
+            <thead>
+              <tr><th>#</th><th>Severity</th><th>File</th><th>Line</th><th>Issue</th><th>Fix</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td><td><span class="badge badge-critical">Critical</span></td>
+                <td>internal/oidclogin/oidclogin.go</td><td>421-460</td>
+                <td>Single-flight discovery hands the 2nd+ concurrent waiter a closed-channel zero value {nil,nil} → nil-provider panic; failed discovery masked as success</td>
+                <td>Waiters loop + re-check cache under mutex (or WaitGroup); add concurrent-discovery regression test</td>
+              </tr>
+              <tr>
+                <td>2</td><td><span class="badge badge-critical">High</span></td>
+                <td>internal/cli/ingest.go, internal/cli/enrich.go</td><td>50, 82</td>
+                <td>Split brain: reads bypass calls.LookupView → legacy-keyed rows misclassified Recorded and retried Missing forever</td>
+                <td>Route both (and cmd/ops.go:85) through calls.LookupView; legacy-key test</td>
+              </tr>
+              <tr>
+                <td>3</td><td><span class="badge badge-high">Medium</span></td>
+                <td>internal/calls/decider.go</td><td>146</td>
+                <td>Enrich ignores its obs parameter (event carries state.Current) — lying signature, latent staleness</td>
+                <td>Drop the param (update app.go:60, scenario_test.go) or hash-validate the pairing</td>
+              </tr>
+              <tr>
+                <td>4</td><td><span class="badge badge-high">Medium</span></td>
+                <td>internal/ingest/telnyx/telnyx.go</td><td>172-198</td>
+                <td>fetchAll's maxPages=500 cap ends the loop silently — &gt;50k rows (&gt;25k detail records) vanish with no error</td>
+                <td>Return Transient error (or truncated flag) when the loop exhausts maxPages with a full last page</td>
+              </tr>
+              <tr>
+                <td>5</td><td><span class="badge badge-high">Medium</span></td>
+                <td>internal/cli/poller.go</td><td>153-155</td>
+                <td>PollLoop returns silently when log == nil — a mis-wired caller gets a dead poller, no signal</td>
+                <td>Default nil log to slog-default (or panic at construction); keep Every&lt;=0 = documented opt-out</td>
+              </tr>
+              <tr>
+                <td>6</td><td><span class="badge badge-medium">Medium</span></td>
+                <td>internal/web/dashboard.go</td><td>389-390</td>
+                <td>Stale comment "window is always 30 days"; 7-day preset silently disables Week/CostWeek/QualityTrend</td>
+                <td>Floor the delta window at 14d, or hide the cards explicitly + fix comment</td>
+              </tr>
+              <tr>
+                <td>7</td><td><span class="badge badge-medium">Medium</span></td>
+                <td>internal/retention/retention.go</td><td>87-90</td>
+                <td>OldViews scans DESC with maxScan=100k: an index past the cap truncates exactly the OLDEST rows — the ones the purge must retire</td>
+                <td>Count-guard (fail loud past maxScan) or page the scan; viewVolumeCap is advisory, not enforcement</td>
+              </tr>
+              <tr>
+                <td>8</td><td><span class="badge badge-medium">Medium</span></td>
+                <td>cmd/pbx-lens/refresh.go</td><td>117</td>
+                <td>refresh -apply ingests with NO age gate while every one-shot verb gates — re-imports over-age rows the poller refuses (doctrine wording conflict)</td>
+                <td>Add -max-age (default unbounded, documented as the deliberate backfill exception)</td>
+              </tr>
+              <tr>
+                <td>9</td><td><span class="badge badge-medium">Medium</span></td>
+                <td>internal/ingest/webhook/webhook.go</td><td>130-132</td>
+                <td>Cause fold is last-wins in a first-wins file — order-dependent hash contradicts the order-independence invariant</td>
+                <td>First-wins inside foldPayload; two-cause permuted-order test</td>
+              </tr>
+              <tr>
+                <td>10</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/calls/domain_test.go</td><td>213, 223, 239</td>
+                <td>Dead test helpers mustEvents/decide/foldAll (gopls unusedfunc)</td>
+                <td>Delete</td>
+              </tr>
+              <tr>
+                <td>11</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/ingest/*, cmd/pbx-lens/ops.go vs internal/web/*, agent.go</td><td>—</td>
+                <td>JSON import style split: encoding/json vs encoding/json/v2 across packages (identical runtime under the experiment; reader can't tell it's deliberate)</td>
+                <td>Pick one (json/v2 matches the GOEXPERIMENT house style); one mechanical sweep</td>
+              </tr>
+              <tr>
+                <td>12</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/web/server.go, queries.go, cmd/pbx-lens/serve.go, internal/web/dashboard.go, userauth.go, internal/search/search.go</td><td>846/712/590/560/534/569 lines</td>
+                <td>Six code files exceed the 350-line checklist bar; server.go mixes routing + ops-payload composition + static assets; serve_test.go is 1186 lines</td>
+                <td>Split along the existing section comments when next touched (ops payload → ops_payload.go; serve_test → per-route files); no urgent action</td>
+              </tr>
+              <tr>
+                <td>13</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/app/app.go</td><td>44, 54, 64</td>
+                <td>Redundant explicit type args on RegisterCommand</td>
+                <td>Drop them</td>
+              </tr>
+              <tr>
+                <td>14</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/web/dashboard.templ, calls.templ</td><td>887; 43, 268-299</td>
+                <td>Linter hints: if/else chain could be a tagged switch (QF1003); 7 templ embedlit "unnecessary embedded field type" sites</td>
+                <td>Ride the next templ regen/format pass</td>
+              </tr>
+              <tr>
+                <td>15</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/cli/enrich.go</td><td>42-63</td>
+                <td>EnrichTelnyxCalls' error return is always nil (all failures ride Rejected strings) — dead error path</td>
+                <td>Drop the return or route class-level failures (e.g. reader construction) through it</td>
+              </tr>
+              <tr>
+                <td>16</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/cli/poller.go</td><td>131-140, 439-455</td>
+                <td>Snapshot and SnapshotAny duplicate the locked map copy</td>
+                <td>One private copy() helper both call</td>
+              </tr>
+              <tr>
+                <td>17</td><td><span class="badge badge-low">Minor</span></td>
+                <td>internal/calls/decider.go</td><td>22-35</td>
+                <td>Apply on EventObserved clears CurrentEnrichment but not EnrichHash — unreachable today (Observed never resets), latent if a re-observe ever lands</td>
+                <td>Also reset EnrichHash in that branch, or comment why it is unreachable</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Minor cards -->
+        <section id="minor">
+          <h2><span class="num">04</span>Minor observations (no card needed)</h2>
+          <ul>
+            <li>
+              <strong>Fetch-telnyx flow duplicated</strong> between cmd/pbx-lens/ingest.go:158-210
+              and cli/poller.go:308-366 (fetch → gate → ingest → drain → enrich). The shapes
+              differ honestly (one-shot reporting vs counters); a shared core would have to
+              parameterize five outputs. Acceptable duplication — revisit only if a third caller
+              appears. The art-dupl gate stays green.
+            </li>
+            <li>
+              <strong>recordings lookback bound</strong> (cli/telnyx.go:16-25): the 300-recording
+              window's silent miss is documented as a CONTRACT with its remedy — good lying-
+              surface hygiene, no action.
+            </li>
+            <li>
+              <strong>OldViews/IngestCoverageQuery walk the full collection per ops poll</strong>
+              (30s cadence). At personal-PBX volume this is fine and measured
+              (BenchmarkConcurrentPoll); revisit if the index ever crosses ~10k rows.
+            </li>
+            <li>
+              <strong>Prior-series open item</strong>: 2026-11-12 brutal-self-review #10 —
+              scanCode's "unclassified" fallback (web/ops.go:160-166) still has no test through
+              the full middleware chain. Cheap to pin alongside F2's test.
+            </li>
+          </ul>
+        </section>
+
+        <!-- Proposal / fix queue -->
+        <section id="queue">
+          <h2><span class="num">05</span>Prioritized fix queue (parent executes)</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            Order = risk removed per minute. Items 1-2 are the Pareto 1%; the rest ride the same
+            BuildFlow SOLO gate after. Full task breakdown and D2 graph live in the companion
+            plan: docs/planning/2026-11-20_00-22-full-code-review.html.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
-}</code></pre>
+          <table class="compare">
+            <thead><tr><th>Prio</th><th>Finding</th><th>File:Line</th><th>Effort</th></tr></thead>
+            <tbody>
+              <tr><td class="no">1</td><td>F1 OIDC single-flight zero-value handoff + concurrency test</td><td>internal/oidclogin/oidclogin.go:421</td><td>45min</td></tr>
+              <tr><td class="no">2</td><td>F2 LookupView routing (ingest + enrich) + legacy-key tests</td><td>internal/cli/ingest.go:50, internal/cli/enrich.go:82</td><td>30min</td></tr>
+              <tr><td class="no">3</td><td>F3 Enrich dead obs parameter</td><td>internal/calls/decider.go:146</td><td>30min</td></tr>
+              <tr><td class="no">4</td><td>F4 fetchAll maxPages silent truncation → Transient error</td><td>internal/ingest/telnyx/telnyx.go:172</td><td>30min</td></tr>
+              <tr><td class="no">5</td><td>F9 webhook cause fold first-wins + order test</td><td>internal/ingest/webhook/webhook.go:130</td><td>30min</td></tr>
+              <tr><td class="no">6</td><td>F5 PollLoop nil-log loud default</td><td>internal/cli/poller.go:153</td><td>15min</td></tr>
+              <tr><td class="no">7</td><td>F6 weekDelta 7-day window truth</td><td>internal/web/dashboard.go:389</td><td>45min</td></tr>
+              <tr><td class="no">8</td><td>F7 OldViews scan-cap guard</td><td>internal/retention/retention.go:87</td><td>60min</td></tr>
+              <tr><td class="no">9</td><td>F8 refresh -max-age gate</td><td>cmd/pbx-lens/refresh.go:117</td><td>45min</td></tr>
+              <tr><td class="no">10</td><td>F10 dead helpers + F11 json import unification</td><td>internal/calls/domain_test.go:213+; repo-wide</td><td>45min</td></tr>
+            </tbody>
+          </table>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>Forward-looking work, not entombed here</strong>
+            Per the skill's harvest doctrine these survivors belong in TODO_LIST.md after the
+            parent lands what it lands: F12 file splits, F13-F17 polish, the prior-series
+            scanCode test. This snapshot deliberately adds no inline TODOs (read-only pass).
           </div>
         </section>
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+          <h2><span class="num">06</span>Appendix — method and coverage</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            <strong>Method.</strong> Listed all 148 Go files (30,776 lines, excluding gitignored
+            *_templ.go and vendor) plus 7 .templ sources by lines and bytes; deep-read every
+            non-test file in cmd/, internal/app, internal/calls, internal/cli, internal/ingest
+            (cdr/telnyx/webhook/agent), internal/wire, internal/search, internal/retention,
+            internal/backup, internal/oidclogin, and internal/web (Go + templ); test files were
+            verified by running the full suite (green, exit 0) and spot-read for the contracts
+            this review cites (scenario, order-independence, caching gate). Build verified after
+            <code>GOEXPERIMENT=jsonv2 go tool templ generate</code>.
+          </p>
+          <p>
+            <strong>Gates honored by inspection:</strong> no testify anywhere; no raw
+            <code>bg-blue-*</code> in .templ sources (TestNoRawPaletteClasses surface checked by
+            grep); projection keys bare StreamID everywhere except the documented fallback.
+            <strong>Not re-verified (out of read-only scope):</strong> golangci-lint pin behavior,
+            BuildFlow gate, art-dupl zero-group gate, browser probe lanes.
+            <strong>STACK.md:</strong> does not exist — recorded per the skill's declared-
+            architecture rule; no stack-drift check run.
           </p>
           <table class="compare">
-            <thead>
-              <tr>
-                <th>Issue</th>
-                <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Package</th><th>Files (non-test)</th><th>Findings</th></tr></thead>
             <tbody>
-              <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
-              </tr>
-              <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
-              </tr>
+              <tr><td>internal/calls</td><td>7</td><td class="no">F3, F10, F17</td></tr>
+              <tr><td>internal/cli</td><td>10</td><td class="no">F2, F5, F15, F16</td></tr>
+              <tr><td>internal/oidclogin</td><td>1</td><td class="no">F1</td></tr>
+              <tr><td>internal/ingest</td><td>8</td><td class="no">F4, F9, F11</td></tr>
+              <tr><td>internal/web</td><td>26 (+7 templ)</td><td class="no">F6, F12, F14</td></tr>
+              <tr><td>cmd/pbx-lens</td><td>7</td><td class="no">F2 (smoke), F8</td></tr>
+              <tr><td>app / wire / search / retention / backup</td><td>6</td><td class="no">F7, F13</td></tr>
             </tbody>
           </table>
         </section>
@@ -1063,11 +1398,14 @@ type BetterAPI struct {
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-11-20 00:22 &middot; Reviewed at v0.3.0 (working tree) &middot;
+            Read-only pass: zero source edits, zero commits &middot; Companion plan:
+            docs/planning/2026-11-20_00-22-full-code-review.html &middot; All file:line claims
+            verified against source at review time
           </p>
         </footer>
       </main>
+
     </div>
 
     <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
