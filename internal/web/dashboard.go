@@ -21,7 +21,6 @@ const dashboardWindowDays = 30
 const dayFormat = "2006-01-02"
 
 const (
-	weekDays     = 7   // one WeekDelta half-window
 	percentScale = 100 // ratio to percent
 
 	secondsPerMinute = 60 // cost rate denominator
@@ -36,7 +35,8 @@ const (
 //nolint:gochecknoglobals // injectable so tests can pin the zone (save/restore)
 var dashboardLocation = mustZone("Europe/Berlin")
 
-// daysPerWeek keeps the Mon-first weekday arithmetic self-describing.
+// daysPerWeek keeps the weekday arithmetic (the Mon-first heatmap buckets)
+// and the WeekDelta half-window self-describing: one name for one week.
 const daysPerWeek = 7
 
 func mustZone(name string) *time.Location {
@@ -317,7 +317,7 @@ type QualityTrend struct {
 // qualityTrend derives the no-user-turn share movement from the per-day
 // quality buckets, mirroring weekDelta's two-half-window shape.
 func qualityTrend(days []DayVolume) QualityTrend {
-	if len(days) < 2*weekDays {
+	if len(days) < 2*daysPerWeek {
 		return QualityTrend{}
 	}
 
@@ -331,8 +331,8 @@ func qualityTrend(days []DayVolume) QualityTrend {
 		return transcripts, noUser
 	}
 
-	thisTranscripts, thisNoUser := sum(days[len(days)-weekDays:])
-	lastTranscripts, lastNoUser := sum(days[len(days)-2*weekDays : len(days)-weekDays])
+	thisTranscripts, thisNoUser := sum(days[len(days)-daysPerWeek:])
+	lastTranscripts, lastNoUser := sum(days[len(days)-2*daysPerWeek : len(days)-daysPerWeek])
 
 	if thisTranscripts == 0 || lastTranscripts == 0 {
 		return QualityTrend{}
@@ -355,17 +355,17 @@ func qualityTrend(days []DayVolume) QualityTrend {
 // same shape the volume delta uses. A currency that only exists in the newer
 // week has no baseline to compare against, exactly like a quiet first week.
 func costWeekDelta(days []DayVolume) WeekDelta {
-	if len(days) < 2*weekDays {
+	if len(days) < 2*daysPerWeek {
 		return WeekDelta{}
 	}
 
 	var thisWeek, lastWeek int64
 
-	for _, day := range days[len(days)-weekDays:] {
+	for _, day := range days[len(days)-daysPerWeek:] {
 		thisWeek += day.CostMicros
 	}
 
-	for _, day := range days[len(days)-2*weekDays : len(days)-weekDays] {
+	for _, day := range days[len(days)-2*daysPerWeek : len(days)-daysPerWeek] {
 		lastWeek += day.CostMicros
 	}
 
@@ -392,17 +392,17 @@ func unanimousCurrency(seen map[string]int) string {
 // the zero WeekDelta (no baseline) and the card renders disabled — the
 // guard below is what switches that off, not a 30-day guarantee.
 func weekDelta(days []DayVolume) WeekDelta {
-	if len(days) < 2*weekDays {
+	if len(days) < 2*daysPerWeek {
 		return WeekDelta{}
 	}
 
 	var thisWeek, lastWeek int64
 
-	for _, day := range days[len(days)-weekDays:] {
+	for _, day := range days[len(days)-daysPerWeek:] {
 		thisWeek += int64(day.Calls)
 	}
 
-	for _, day := range days[len(days)-2*weekDays : len(days)-weekDays] {
+	for _, day := range days[len(days)-2*daysPerWeek : len(days)-daysPerWeek] {
 		lastWeek += int64(day.Calls)
 	}
 

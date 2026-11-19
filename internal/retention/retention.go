@@ -11,6 +11,7 @@ package retention
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
@@ -95,6 +96,19 @@ func OldViews(ctx context.Context, sys *system.System, policy Policy, now time.T
 		return nil, errorfamily.WrapTransient(
 			err, "lens.retention.overage_scan_failed", "over-age scan failed",
 		).WithContext("scan", "retention-over-age")
+	}
+
+	// TRUNCATION GUARD: the DESC scan returns the NEWEST maxScan rows, so an
+	// index larger than the cap silently drops its oldest tail — exactly the
+	// rows this purge targets. The scan behavior stays as-is (the pass still
+	// retires what it saw); this warning is the only witness that the cap
+	// was hit and the over-age set is incomplete.
+	if len(views) == maxScan {
+		slog.Warn("retention over-age scan truncated at its cap: oldest rows are invisible to this pass",
+			"scan", "retention-over-age",
+			"cap", maxScan,
+			"sort", "started_at DESC",
+		)
 	}
 
 	overAge := make([]calls.CallView, 0)

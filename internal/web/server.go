@@ -696,7 +696,7 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 		identity = &snapshot
 	}
 
-	coverage, coverageFailures := s.coverageWire(r.Context())
+	coverage, coverageFailures := s.coverageWireView(r.Context())
 
 	failures := make([]opsScanFailure, 0, len(coverageFailures)+len(retentionFailures))
 	failures = append(failures, coverageFailures...)
@@ -733,11 +733,11 @@ type coverageWire struct {
 	Stale            bool      `json:"stale"`
 }
 
-// coverageWire computes the JSON coverage section; nil when the walk fails
+// coverageWireView computes the JSON coverage section; nil when the walk fails
 // (the key is simply absent — consumers treat absence as unknown, never as
 // an empty index). The failure itself rides out as an opsScanFailure so
 // the 503-honest contract can name what is missing.
-func (s *server) coverageWire(ctx context.Context) ([]coverageWire, []opsScanFailure) {
+func (s *server) coverageWireView(ctx context.Context) ([]coverageWire, []opsScanFailure) {
 	rows, err := IngestCoverageQuery(ctx, s.sys, s.now())
 	if err != nil {
 		s.logf("ingest coverage walk failed: %v", err)

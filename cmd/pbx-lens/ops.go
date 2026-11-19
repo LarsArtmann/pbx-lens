@@ -93,6 +93,7 @@ func smoke(args []string) {
 			// jsontext's encoder newline-terminates and indents, matching the
 			// v1 MarshalIndent+Println output this used to print.
 			var buf bytes.Buffer
+
 			enc := jsontext.NewEncoder(&buf, jsontext.WithIndent("  "))
 
 			if err := json.MarshalEncode(enc, view); err != nil {
