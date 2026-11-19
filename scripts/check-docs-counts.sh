@@ -68,6 +68,7 @@ run_checks() {
 	# must exist, and every live report must be listed (an unlisted report is
 	# how a harvest source gets forgotten).
 	local listed=0
+	# shellcheck disable=SC2016  # the sed's backticks match the table's literal `name.md` cells
 	while IFS= read -r name; do
 		[ -n "$name" ] || continue
 		listed=$((listed + 1))

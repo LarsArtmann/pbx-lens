@@ -34,6 +34,7 @@ living_docs() {
 # Test and continue with identifier characters — prose like "Testing" alone
 # does not match, a backticked `TestFoo_bar` does.
 claims_of() {
+	# shellcheck disable=SC2016  # the backticks are the literal markdown delimiters being matched
 	awk '
 		/^[[:space:]]*```/ { fence = !fence; next }
 		fence { next }
@@ -79,6 +80,7 @@ self_test() {
 	echo "PASS: current tree is green"
 
 	# Red: a doc claiming a test that does not exist.
+	# shellcheck disable=SC2016  # the backticks are literal markdown in the fixture
 	printf 'pinned by `TestRecordingProxyNoSuchThing` (never written)\n' >"$dir/phantom.md"
 	if claims_of "$dir/phantom.md" | grep -q 'TestRecordingProxyNoSuchThing'; then
 		echo "PASS: extraction finds the seeded phantom claim"
@@ -95,6 +97,7 @@ self_test() {
 	fi
 
 	# Fenced code blocks are scratch, not claims.
+	# shellcheck disable=SC2016  # the backticks are literal markdown fences in the fixture
 	printf '```\n`TestAlsoNoSuchThing`(scratch)\n```\n' >"$dir/fenced.md"
 	if [ -n "$(claims_of "$dir/fenced.md")" ]; then
 		echo "FAIL: extraction leaked a fenced claim" >&2

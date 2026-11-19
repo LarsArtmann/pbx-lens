@@ -100,10 +100,11 @@ self_test() {
 	fi
 
 	# Extraction must ignore fenced code blocks and absolute/URL links.
+	# shellcheck disable=SC2016  # the backticks are literal markdown fences in the fixture
 	printf '```\n[example](./nope.md)\n```\n[u](https://example.com) [a](#anchor) [r](/abs)\n' >"$dir/fenced.md"
 	local extracted
 	extracted=$(links_of "$dir/fenced.md")
-	if [ -n "$(printf '%s\n' "$extracted" | sed -n 's/^\.\///p' | grep -v '^http' | grep -v '^#' | grep -v '^/')" ]; then
+	if printf '%s\n' "$extracted" | sed -n 's/^\.\///p' | grep -v '^http' | grep -v '^#' | grep -v '^/' | grep -q .; then
 		echo "FAIL: extraction leaked a fenced/absolute link: $extracted" >&2
 		failures=$((failures + 1))
 	else

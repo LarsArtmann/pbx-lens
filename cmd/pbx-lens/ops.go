@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"flag"
 	"fmt"
 	"io"
@@ -88,12 +90,16 @@ func smoke(args []string) {
 		}
 
 		if found {
-			out, err := json.MarshalIndent(view, "", "  ")
-			if err != nil {
+			// jsontext's encoder newline-terminates and indents, matching the
+			// v1 MarshalIndent+Println output this used to print.
+			var buf bytes.Buffer
+			enc := jsontext.NewEncoder(&buf, jsontext.WithIndent("  "))
+
+			if err := json.MarshalEncode(enc, view); err != nil {
 				fatal(err)
 			}
 
-			fmt.Println(string(out))
+			fmt.Print(&buf)
 
 			return
 		}
@@ -208,7 +214,7 @@ func runPurge(
 				})
 			}
 
-			return json.NewEncoder(out).Encode(map[string]any{
+			return json.MarshalEncode(jsontext.NewEncoder(out), map[string]any{
 				"dry_run":      true,
 				"max_age":      maxAgeLabel,
 				"over_age":     len(views),
@@ -233,7 +239,7 @@ func runPurge(
 	}
 
 	if asJSON {
-		return json.NewEncoder(out).Encode(map[string]any{
+		return json.MarshalEncode(jsontext.NewEncoder(out), map[string]any{
 			"dry_run":    false,
 			"max_age":    maxAgeLabel,
 			"retired":    report.Retired,

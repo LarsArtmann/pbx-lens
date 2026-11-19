@@ -41,7 +41,7 @@ func DomainConfig() system.DomainConfig {
 				Apply:   calls.Apply,
 			}))
 
-			mustRegister(system.RegisterCommand[calls.RecordCallCmd, calls.CallState](sys, calls.CommandRecord,
+			mustRegister(system.RegisterCommand(sys, calls.CommandRecord,
 				func(cmdCtx context.Context, cmd calls.RecordCallCmd) system.Op[calls.CallState] {
 					return system.Execute(
 						cmdCtx,
@@ -51,7 +51,7 @@ func DomainConfig() system.DomainConfig {
 					)
 				}))
 
-			mustRegister(system.RegisterCommand[calls.EnrichCallCmd, calls.CallState](sys, calls.CommandEnrich,
+			mustRegister(system.RegisterCommand(sys, calls.CommandEnrich,
 				func(cmdCtx context.Context, cmd calls.EnrichCallCmd) system.Op[calls.CallState] {
 					return system.Execute(
 						cmdCtx,
@@ -61,7 +61,7 @@ func DomainConfig() system.DomainConfig {
 					)
 				}))
 
-			mustRegister(system.RegisterCommand[calls.RetireCallCmd, calls.CallState](sys, calls.CommandRetire,
+			mustRegister(system.RegisterCommand(sys, calls.CommandRetire,
 				func(cmdCtx context.Context, cmd calls.RetireCallCmd) system.Op[calls.CallState] {
 					return system.Execute(
 						cmdCtx,

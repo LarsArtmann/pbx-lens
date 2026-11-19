@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/larsartmann/go-cqrs-lite/decider/v4"
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
 )
@@ -208,47 +207,4 @@ func mustSID(t *testing.T, obs Observation) id.StreamID {
 	}
 
 	return sid
-}
-
-func mustEvents(t *testing.T, events []event.Event, err error) []event.Event {
-	t.Helper()
-
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return events
-}
-
-func decide(
-	t *testing.T,
-	fn decider.DecideFunc[CallState],
-	s CallState,
-	v event.Version,
-) []event.Event {
-	t.Helper()
-
-	events, err := fn(s, v)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return events
-}
-
-func foldAll(t *testing.T, events []event.Event) CallState {
-	t.Helper()
-
-	state := CallState{}
-
-	for _, evt := range events {
-		var err error
-
-		state, err = Apply(state, evt)
-		if err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	return state
 }
