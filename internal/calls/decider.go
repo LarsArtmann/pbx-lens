@@ -12,7 +12,7 @@ import (
 type CallState struct {
 	Observed          bool
 	Retired           bool
-	RetireReason      string
+	RetentionReason   RetentionReason
 	ContentHash       string
 	EnrichHash        string
 	Current           Observation
@@ -69,7 +69,7 @@ func Apply(state CallState, evt event.Event) (CallState, error) {
 		}
 
 		state.Retired = true
-		state.RetireReason = p.Reason
+		state.RetentionReason = p.Reason
 
 		return state, nil
 
@@ -206,7 +206,7 @@ func Retire(reason RetentionReason, streamID id.StreamID) decider.DecideFunc[Cal
 			streamID,
 			StreamType,
 			v.Increment(),
-			CallRetired{Reason: string(reason)},
+			CallRetired{Reason: reason},
 			event.WithSchemaVersion(1),
 		)
 		if err != nil {

@@ -151,7 +151,7 @@ func TestScenarioRecordPaths(t *testing.T) {
 
 	retired := []event.Event{
 		seedEvent(t, EventObserved, sid, 1, CallObserved{Observation: obs}),
-		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: string(reasonRetentionTest)}),
+		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: reasonRetentionTest}),
 	}
 
 	scenario.Given[RecordCallCmd](t, Apply, CallState{}, retired...).
@@ -188,7 +188,7 @@ func TestScenarioEnrichPaths(t *testing.T) {
 
 	scenario.Given[EnrichCallCmd](t, Apply, CallState{},
 		seedEvent(t, EventObserved, sid, 1, CallObserved{Observation: obs}),
-		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: string(reasonRetentionTest)}),
+		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: reasonRetentionTest}),
 	).When(mustEnrich(t, obs, enr), enrichDecide(sid, enr)).
 		ThenError(errEnrichAfterRetired)
 }
@@ -212,7 +212,7 @@ func TestScenarioRetirePaths(t *testing.T) {
 
 	scenario.Given[RetireCallCmd](t, Apply, CallState{},
 		seedEvent(t, EventObserved, sid, 1, CallObserved{Observation: obs}),
-		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: string(reasonRetentionTest)}),
+		seedEvent(t, EventRetired, sid, 2, CallRetired{Reason: reasonRetentionTest}),
 	).When(retire, retireDecide(sid, reasonRetentionTest)).
 		Then()
 }

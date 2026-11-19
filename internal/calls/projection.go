@@ -118,9 +118,13 @@ func Projection() ([]system.ProjectionDeclaration, *projectionadapter.TypeDecode
 		// events stay in the store, but the create folds only run on replay of
 		// those older events, after which the tombstone (last in the stream)
 		// removes the row again. Replays converge to the same purged state.
+		// The sample is the EventWithID envelope (not the bare payload)
+		// because metaengine infers the remove key from the fold sample's
+		// string field — the envelope's ID is that record key; the payload
+		// itself carries only the RetentionReason, no string.
 		metaengine.OnRecordTyped(
 			string(EventRetired),
-			CallRetired{},
+			projectionadapter.EventWithID[CallRetired]{},
 			metaengine.Remove[CallView](),
 		),
 	)

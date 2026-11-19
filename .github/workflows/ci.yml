@@ -132,6 +132,36 @@ jobs:
           go install golang.org/x/vuln/cmd/govulncheck@latest
           govulncheck ./...
 
+  gitleaks:
+    name: Secret Scan (gitleaks)
+    runs-on: ubuntu-latest
+    env:
+      # The skill-mandated scanner this CI was missing (adopt-item from the
+      # 2026-11-20 policy audit). Latest verified via
+      # `go list -m -versions github.com/gitleaks/gitleaks/v8`; pinned like
+      # every tool here — bump deliberately.
+      GITLEAKS_VERSION: "v8.30.1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history is fetched for completeness, but the scan itself is
+          # --no-git (the working tree): the auto-commit daemon lands every
+          # change, so the tree IS the audit surface — no history walk.
+          fetch-depth: 0
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          # One-off tool build; nothing worth caching.
+          cache: false
+
+      - name: Install gitleaks
+        run: go install github.com/gitleaks/gitleaks/v8@${GITLEAKS_VERSION}
+
+      - name: Scan the tree for secrets
+        # --redact: a finding must never print the secret itself in the log.
+        run: gitleaks detect --no-git --redact -v
+
   cqrs-lint:
     name: cqrs-lint
     runs-on: ubuntu-latest
