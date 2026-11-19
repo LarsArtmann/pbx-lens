@@ -154,6 +154,19 @@ DECISION.
   engine-tier store, and routing it through metaengine would fork the
   upstream wiring this repo deliberately copies. The rule's own
   suggestion text dismisses non-CQRS tables. Non-fix.
+- **E023-adjacent FTS5 search index (A-gate pass, B-gate owner-gated,
+  2026-11-20)**: `internal/search` writes its own SQL — the FTS5 shadow
+  tables `lens_search`/`lens_turns` plus the `lens_digits` LIKE-substring
+  table (R6) — through its own `*sql.DB` handle into the disposable index
+  file. A-gate justification: the index is wholesale-rebuilt derived state
+  (`Rebuild` drops and recreates every table), squarely under the
+  disposable-index doctrine — owning the SQL there buys no correctness.
+  B-gate remainder: `lens_digits` (a plain LIKE table, not FTS) and FTS
+  coverage generally — upstream exposes an FTS ADT (metaengine's
+  `ReadFullTextSearch` read pattern, already present at this repo's own
+  metaengine v4.23.0 pin, executed by sqliteengine), so the B-gate ask
+  "move search under metaengine" is recorded as an OWNER-GATED follow-up
+  at the next pin bump, not a violation.
 - **Census 2026-11-12, two binaries**: the devShell gate (`nix develop -c
   cqrs-lint .`, source-pinned, version "dev") reports 27 findings
   (16 WARNING / 11 INFO, 0 ERROR) — everything dispositioned above plus

@@ -36,3 +36,26 @@ func LookupView(
 
 	return reader.Get(ctx, LegacyRecordKey(sid))
 }
+
+// LookupViewKey is LookupView for callers that hold the bare record key
+// (EnrichmentSeed, refresh classification) rather than the stream id. A key
+// that is not a bare stream value cannot have a legacy twin; it answers a
+// clean not-found instead of an error, exactly like LookupView on an absent
+// stream.
+func LookupViewKey(
+	ctx context.Context,
+	reader *metaengine.TypedReader[CallView],
+	key string,
+) (CallView, bool, error) {
+	view, found, err := reader.Get(ctx, key)
+	if err != nil || found {
+		return view, found, err
+	}
+
+	sid, err := id.ParseStreamID(key)
+	if err != nil {
+		return CallView{}, false, nil
+	}
+
+	return reader.Get(ctx, LegacyRecordKey(sid))
+}

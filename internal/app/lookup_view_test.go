@@ -145,4 +145,23 @@ func TestLookupViewServesBothKeyGenerations(t *testing.T) {
 	if view.ContentHash != live.ContentHash() {
 		t.Fatalf("LookupView(both rows) ContentHash = %q, want the bare row's", view.ContentHash)
 	}
+
+	// 5. The key-string variant serves the same contract for callers that
+	// hold the bare record key (enrichment seeds, refresh classification).
+	if _, found, err := calls.LookupViewKey(ctx, reader, calls.RecordKey(ghostSid)); found || err != nil {
+		t.Fatalf("LookupViewKey(absent) = found %v err %v, want clean not-found", found, err)
+	}
+
+	view, found, err = calls.LookupViewKey(ctx, reader, calls.RecordKey(legacySid))
+	if err != nil || !found {
+		t.Fatalf("LookupViewKey(legacy row) = found %v err %v, want found via fallback", found, err)
+	}
+
+	if view.DurationSecs != 321 {
+		t.Fatalf("LookupViewKey legacy row DurationSecs = %d, want the seeded 321", view.DurationSecs)
+	}
+
+	if _, found, err := calls.LookupViewKey(ctx, reader, "not-a-stream-key"); found || err != nil {
+		t.Fatalf("LookupViewKey(unparseable) = found %v err %v, want clean not-found", found, err)
+	}
 }
