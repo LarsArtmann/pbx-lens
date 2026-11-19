@@ -1,0 +1,1508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pbx-lens Naming Review — 2026-11-20</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>NAMING REVIEW &middot; REPORT-ONLY</span>
+      <span>2026-11-20</span>
+      <span>pbx-lens &middot; Crush</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#method">Method</a>
+          <a href="#honesty">Honesty</a>
+          <a href="#clarity">Clarity</a>
+          <a href="#domain">Domain Alignment</a>
+          <a href="#leakage">Leakage &amp; Booleans</a>
+          <a href="#consistency">Consistency</a>
+          <a href="#strengths">Strengths</a>
+          <a href="#renameplan">Rename Plan</a>
+          <a href="#appendix">Glossary</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">NAMING REVIEW &middot; 2026-11-20</div>
+          <h1>pbx-lens identifier audit — third pass</h1>
+          <p class="subtitle">
+            Honesty, clarity, domain alignment, and consistency of every exported
+            identifier (plus high-traffic unexported ones) across all 58 non-test Go
+            files and 7 templ sources, checked against docs/DOMAIN_LANGUAGE.md as the
+            authoritative glossary. Report-only: nothing was renamed.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: cmd/ internal/ *.templ</span>
+            <span class="tag">Go 1.27.3 &middot; golangci-lint 0 issues</span>
+            <span class="tag teal">Status: report-only</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card">
+            <div class="score">~930</div>
+            <div class="label">Identifiers reviewed</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Honesty issues</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Impl leakage / bad booleans</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">2</div>
+            <div class="label">Clarity issues</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">3</div>
+            <div class="label">Domain alignment</div>
+          </div>
+          <div class="score-card">
+            <div class="score">3</div>
+            <div class="label">Consistency (low)</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            The vocabulary is in the best shape of the three naming passes: zero lying
+            names, zero Manager/Handler/Impl/Util trash cans, zero negative or
+            noun-shaped booleans, and a verb grammar (Fetch&thinsp;/&thinsp;List&thinsp;/&thinsp;Lookup&thinsp;/&thinsp;Map&thinsp;/&thinsp;Parse&thinsp;/&thinsp;*Query) that a repo-wide
+            grep survey confirms has no synonym drift. All eight findings sit at the
+            seams the codebase grew since 2026-10-11 — the enrichment seed's row key,
+            the retention reason's type boundary, and the web analytics vocabulary the
+            DOMAIN_LANGUAGE.md core table never absorbed.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Nothing blocks anything. The one finding worth acting on first is
+            <code>EnrichmentSeed.StreamKey</code>: the field name says &ldquo;stream
+            key&rdquo; but the value it holds is a
+            <code>calls.RecordKey()</code> string — the name hides which string it is
+            in exactly the place a zero value is silently dropped. Renaming it (or
+            adopting the branded <code>StreamKey</code> type today's data-model review
+            proposes) is a compile-checked, hash-safe Go-identifier move.
+          </div>
+        </section>
+
+        <!-- Method -->
+        <section id="method">
+          <h2><span class="num">01</span>Method &amp; series continuity</h2>
+          <p>
+            Step 0: <code>golangci-lint run ./...</code> (v2.15.0, the repo's CI pin)
+            reports <strong>0 issues</strong>; the skill's grep triad (vague nouns,
+            Manager/Handler/Processor/Helper/Util/Utility types, Impl suffixes)
+            surfaced three raw hits, all judged non-findings below. Step 1: all 148
+            Go files discovered, *_templ.go and vendor excluded; the 58 non-test
+            files plus 7 templ sources were read in full. Step 2: a glossary by
+            domain was built (Appendix) with a split-brain column. Steps 3&ndash;4:
+            every exported identifier and the high-traffic unexported ones were
+            checked against the full checklist, with
+            docs/DOMAIN_LANGUAGE.md as the authority — a glossary term misused in
+            code is a finding, and a load-bearing code term missing from the
+            glossary is a finding too. Step 5: this report; Step 6 (fixes) was not
+            requested.
+          </p>
+          <p>
+            <strong>ContentHash constraint honored throughout:</strong> several
+            names in this repo are VALUE strings that ride hashes, event types, or
+            wire contracts (<code>call.observed</code>, <code>retention:age</code>,
+            <code>telnyx-conversation</code>, JSON tags, sqlite columns). Renaming
+            those values is forbidden; every recommendation below renames only Go
+            identifiers, which the compiler checks end-to-end. No source file was
+            modified.
+          </p>
+          <p>
+            <strong>Prior reports, cross-referenced not re-discovered.</strong> The
+            2026-10-11 primary pass (468 identifiers, 9 renames) and companion pass
+            (5 more) are re-verified: all fourteen renames still hold
+            (<code>RebuildOpenIndex</code>, <code>EnrichmentSeed</code>,
+            <code>enrichConversation</code>, <code>recordsFetched</code>,
+            <code>hasStart</code>, <code>agent.MapTranscript</code>,
+            <code>ListMessages</code>/<code>ListDetailRecords</code>/<code>ListConversationInsights</code>,
+            <code>AvgMOS</code>, <code>streamLabel</code>, <code>dialplanContext</code>'s
+            successor, <code>callUUID</code>). Two of its report-only items were
+            since fixed upstream of this pass (<code>Client.Recording</code> is now
+            <code>FetchRecording</code>; the <code>CostEnrichment</code> tuple is now
+            <code>RecordCost</code>/<code>CostOf</code>); one —
+            <code>ReasonRetention</code> — is re-opened here with a corrected
+            cost estimate. Siblings from today are cross-referenced inline: the
+            full-code-review (00-22) and the data-model review (00-28, whose PC-3
+            &ldquo;branded StreamKey&rdquo; proposal interacts with finding D1).
+          </p>
+        </section>
+
+        <!-- Honesty -->
+        <section id="honesty">
+          <h2><span class="num">02</span>Honesty — 0 issues</h2>
+          <p>
+            No lying names found. Spot-checks that would have caught the classics:
+            <code>Observation.Validate()</code> and <code>ContentHash()</code> are
+            pure queries; <code>(v CallView) Observation()</code> reconstructs
+            without mutating; <code>SourceCounters.Snapshot()</code> copies under
+            lock rather than leaking state; <code>Retire</code> tombstones and its
+            doc comment says so (no euphemism); <code>AgeGate.Apply</code> splits a
+            batch rather than silently filtering (refusals are returned, named);
+            <code>ExportCalls</code> documents its tests-only role in its own
+            comment; <code>DrainProjections</code> really awaits completion;
+            <code>backup.Snapshot</code> stages&thinsp;+&thinsp;fsyncs&thinsp;+&thinsp;renames exactly as named.
+          </p>
+          <p>
+            The grep triad's three raw hits, each cleared:
+            <code>logFuncHandler</code> (web/server.go:193) implements
+            <code>slog.Handler</code> — the stdlib interface idiom, not a
+            trash-can Handler; <code>oidclogin.userInfo</code> mirrors usermgmt's
+            wire contract field-for-field by design (the documented
+            &ldquo;Sollbruchstelle&rdquo; seam); <code>telnyx.DetailRecord</code>
+            is Telnyx's own API noun, correctly kept at the adapter (the
+            companion-pass foreign-vocabulary rule).
+            <code>ingest.Result</code>/<code>agent.Result</code> are the
+            documented parser shapes (AGENTS.md), and <code>calls.RecordKey</code>
+            is glossary-canonical.
+          </p>
+        </section>
+
+        <!-- Clarity -->
+        <section id="clarity">
+          <h2><span class="num">03</span>Clarity — 2 issues</h2>
+          <div class="card card-warning">
+            <p><span class="badge badge-high">Should fix</span></p>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>File</th><th>Line</th><th>Identifier</th><th>Issue</th><th>Better Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>C1</td>
+                  <td><code>internal/web/server.go</code></td>
+                  <td>727, 740</td>
+                  <td><code>coverageWire</code> (type) + <code>(s *server) coverageWire()</code> (method)</td>
+                  <td>
+                    One name, two namespaces: the wire DTO and the method that
+                    builds it share <code>coverageWire</code> in the same package
+                    (legal Go, confusing to grep and to read). The retention
+                    sibling already solved this — type
+                    <code>retentionWire</code>, method
+                    <code>retentionWireView</code>.
+                  </td>
+                  <td>method &rarr; <code>coverageWireView</code> (parallel to the retention pair)</td>
+                </tr>
+                <tr>
+                  <td>C2</td>
+                  <td><code>internal/web/userauth.go</code></td>
+                  <td>46, 491</td>
+                  <td><code>Identity.rpidValue</code> + <code>Identity.rpid()</code></td>
+                  <td>
+                    The field/method collision workaround leaves a stuttering
+                    field name (<code>…Value</code> encodes nothing) and an
+                    accessor that only strips the suffix — two names for one
+                    string on the newest bounded context.
+                  </td>
+                  <td>field <code>webauthnRPID</code>; drop the accessor or name it <code>webauthnRPID()</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Domain alignment -->
+        <section id="domain">
+          <h2><span class="num">04</span>Domain alignment — 3 issues</h2>
+          <p>Checked against docs/DOMAIN_LANGUAGE.md as the authority.</p>
+          <div class="card card-warning">
+            <p><span class="badge badge-medium">Domain drift</span></p>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>File</th><th>Line</th><th>Identifier</th><th>Issue</th><th>Better Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>D1</td>
+                  <td><code>internal/cli/telnyx.go</code></td>
+                  <td>52</td>
+                  <td><code>EnrichmentSeed.StreamKey</code></td>
+                  <td>
+                    The name says stream key; the value is
+                    <code>calls.RecordKey(sid)</code> — the projection's bare row
+                    key, built by <code>RecordKey</code> ten lines below and
+                    matched against <code>RecordKey</code> keys in
+                    <code>SeedsFor</code>. That is a <em>third</em> name for one
+                    concept the glossary pins to two (<code>StreamID</code> =
+                    &lt;kind&gt;:&lt;native-id&gt;; <code>RecordKey</code> =
+                    <code>StreamID.Get()</code>), and &ldquo;StreamKey&rdquo;
+                    collides verbally with StreamID while its zero value is
+                    silently dropped by <code>SeedsFor</code>. Cross-ref: today's
+                    data-model review PC-3 proposes a branded
+                    <code>calls.StreamKey</code> type owning build/parse/render —
+                    that fix makes the current <em>name</em> honest; until then
+                    the name misstates the value.
+                  </td>
+                  <td><code>RecordKey</code> now, or the PC-3 branded type (either is a hash-safe Go-identifier change; no JSON/db string rides this field)</td>
+                </tr>
+                <tr>
+                  <td>D2</td>
+                  <td><code>internal/calls/events.go</code>, <code>decider.go</code>, <code>commands.go</code></td>
+                  <td>145; 15; 68</td>
+                  <td><code>CallRetired.Reason string</code>, <code>CallState.RetireReason string</code> vs <code>RetireCallCmd.Reason RetentionReason</code></td>
+                  <td>
+                    One domain concept carries two field names
+                    (<code>Reason</code> / <code>RetireReason</code>) and two
+                    types. The typed form exists precisely because &ldquo;a
+                    free-form string would let a typo'd reason corrupt the
+                    event-log grouping&rdquo; (its own doc comment) — but the
+                    guarantee stops at the command boundary: the event payload
+                    that <em>persists</em> the reason, and the fold state that
+                    replays it, loosen back to plain <code>string</code>.
+                  </td>
+                  <td>type both as <code>RetentionReason</code> (identical JSON bytes — same underlying string); aligning <code>RetireReason</code> &rarr; <code>Reason</code> optional</td>
+                </tr>
+                <tr>
+                  <td>D3</td>
+                  <td><code>docs/DOMAIN_LANGUAGE.md</code> vs <code>internal/web/segments.go</code>, <code>coverage.go</code>, <code>queries.go</code>, <code>freshness.go</code></td>
+                  <td>&mdash;</td>
+                  <td><code>Segment</code>, <code>CoverageRow</code>/<code>IngestCoverageQuery</code>, <code>CounterpartHistory</code>, <code>Freshness</code></td>
+                  <td>
+                    Load-bearing read-model names missing from the glossary. The
+                    doc's own mission statement says &ldquo;every term used in
+                    code&hellip; is defined here&rdquo;; the analytics table
+                    documents these figures' <em>denominators</em> (AIRatio,
+                    CostPerMinute, Quality.*, VolumeNote) but never the type
+                    names themselves, and Segment/CounterpartHistory/CoverageRow/
+                    Freshness appear nowhere in the table.
+                  </td>
+                  <td>add glossary rows (doc-only; no code change)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Leakage & booleans -->
+        <section id="leakage">
+          <h2><span class="num">05</span>Implementation leakage &amp; booleans — 0 issues</h2>
+          <p>
+            No <code>Impl</code>/<code>Concrete</code>/<code>Default</code>-suffix
+            types, no <code>Base</code>/<code>Abstract</code> prefixes, no
+            <code>I</code>-prefixed interfaces anywhere (grep-verified across all
+            non-test files). Booleans are question-form throughout —
+            <code>Valid()</code>, <code>Admits()</code>, <code>IsAI</code>,
+            <code>hasStart</code>, <code>wantsBrowser()</code>,
+            <code>allOriginsHTTPS()</code>, <code>Stale()</code>,
+            <code>HasRate()</code>, <code>HasBaseline</code> — with zero negative
+            booleans. The ops surface goes further than required:
+            <code>AgeKnown</code>/<code>StaleKnown</code>/<code>CountKnown</code>/<code>OldestKnown</code>/<code>OldestEmpty</code>
+            separate &ldquo;unknown&rdquo; from &ldquo;false&rdquo; by name, which
+            is exactly the distinction a 503-honest endpoint needs.
+          </p>
+        </section>
+
+        <!-- Consistency -->
+        <section id="consistency">
+          <h2><span class="num">06</span>Consistency — 3 issues</h2>
+          <p>
+            Verb-tense drift (get/fetch/list/find): a repo-wide survey found
+            <em>none</em> — <code>Fetch*</code> means network pull,
+            <code>List*</code> means an API list endpoint,
+            <code>Lookup*</code>/<code>*ByCallControl</code> means local match,
+            <code>Map*</code> means source&rarr;domain, <code>Parse*</code> means
+            wire&rarr;DTO, <code>*Query</code> means read-model query, with no
+            operation class served by two verbs. The three findings below are
+            noun-side drift.
+          </p>
+          <div class="card card-warning">
+            <p><span class="badge badge-low">Low</span></p>
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th><th>File</th><th>Line</th><th>Identifier</th><th>Issue</th><th>Better Name</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>S1</td>
+                  <td><code>internal/web/dashboard.go</code></td>
+                  <td>24, 40</td>
+                  <td><code>weekDays</code> vs <code>daysPerWeek</code></td>
+                  <td>
+                    Two unexported constants, both <code>= 7</code>, both meaning
+                    &ldquo;days in a week&rdquo;, in the same file —
+                    <code>weekDays</code> sizes the WeekDelta half-windows,
+                    <code>daysPerWeek</code> does the Mon-first weekday modulus.
+                    A split-brain twin in miniature.
+                  </td>
+                  <td>keep <code>daysPerWeek</code>, delete <code>weekDays</code> (10 prod + 6 test uses, all compile-checked)</td>
+                </tr>
+                <tr>
+                  <td>S2</td>
+                  <td><code>internal/retention/retention.go</code></td>
+                  <td>24, 30</td>
+                  <td><code>ReasonRetention</code> vs <code>ReasonAgeCutoff</code></td>
+                  <td>
+                    The const pair is shape-inconsistent (policy noun vs action
+                    noun) for the two audit labels
+                    <code>retention:age</code>/<code>retention:age-cutoff</code>.
+                    Re-opens 2026-10-11 report-only #11 with a corrected cost:
+                    that pass declined the rename believing it would
+                    &ldquo;touch event audit strings&rdquo; — it conflated the Go
+                    identifier with its wire VALUE; the value never moves in an
+                    identifier rename.
+                  </td>
+                  <td><code>ReasonAge</code>, making the pair mirror the two wire labels 1:1 (8 refs, compile-checked; <code>"retention:age"</code> byte-identical)</td>
+                </tr>
+                <tr>
+                  <td>S3</td>
+                  <td><code>internal/ingest/cdr/cdr.go</code>, <code>internal/ingest/webhook/webhook.go</code></td>
+                  <td>271; 153</td>
+                  <td><code>observation()</code> &times; 2</td>
+                  <td>
+                    The source&rarr;domain conversion verb is
+                    <code>Map*</code> (<code>telnyx.MapConversation</code>,
+                    <code>agent.MapTranscript</code> — the latter renamed to it by
+                    the 2026-10-11 pass), but the two unexported constructors
+                    still wear the bare type noun. At their call sites
+                    <code>observation(byColumn, &hellip;)</code> reads like
+                    constructing <code>calls.Observation</code> — the exact
+                    reading the earlier pass fixed for the exported twin.
+                  </td>
+                  <td><code>observationFromRow</code> / <code>observationFromState</code> (or accept as local constructors — they are pure folds)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Strengths -->
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>Strengths worth preserving</h2>
+          <div class="card card-solution">
+            <div class="strengths">
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Layered view vocabulary, held for three passes</strong>
+                  <span>Observation (source row) &rarr; CallView (read model) &rarr; CallRow (list view model) &rarr; DetailPage (read-time join), each with a doc comment; the UI never touches domain types.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Command/event family discipline</strong>
+                  <span>Record/Enrich/Retire carry consistently through Cmd structs, decider funcs, command constants, and event payloads (observed/corrected/enriched/retired); every payload's ride-along semantics are documented at the type.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Denominator-honest analytics names</strong>
+                  <span>QualityRollup fields name their own denominators (DurationReported, Answered, Transcripts, PartiesKnown, TailEligible); Segment states PricedSecs as &ldquo;the honest denominator&rdquo; in its own comment; Rate() refuses a zero denominator by returning an em-dash flag.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Verb grammar without drift</strong>
+                  <span>Fetch/List/Lookup/Map/Parse/*Query each own one operation class repo-wide (grep-surveyed this pass) — the synonym drift the checklist hunts for simply does not exist here.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Foreign-vocabulary discipline at adapters</strong>
+                  <span>Telnyx's own nouns (DetailRecord, Conversation, call_control_id, DetailRecordByCallControl) stay at the telnyx package; the domain speaks only ubiquitous language. Documented in the companion pass, still held everywhere.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>The identity context matches its glossary section term-for-term</strong>
+                  <span>Identity, IdentityConfig, OpenIdentity, publicAuthPath, wantsBrowser, allOriginsHTTPS, IdentityOps — the 2026-11-12 bounded context (the newest code in the tree) implements DOMAIN_LANGUAGE.md &sect; &ldquo;Identity and access&rdquo; without a single synonym.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Doc comments carry the why, not the what</strong>
+                  <span>writeHashedField explains the length-prefix collision class; ReportsDuration explains why agent rows leave the answer-rate denominator; SpokeAt carries the measured created_at-vs-sent_at correction. A naming review barely has to infer intent anywhere.</span>
+                </div>
+              </div>
+              <div class="strength">
+                <div class="check">+</div>
+                <div class="text">
+                  <strong>Deprecated-term hygiene enforced</strong>
+                  <span>The plan-era CallRecord&rarr;Observation rename is recorded in the glossary's deprecated table; no stragglers found in this pass either.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Rename plan -->
+        <section id="renameplan">
+          <h2><span class="num">07</span>Top-5 rename recommendations</h2>
+          <p>
+            Ranked by honesty impact &times; rename safety. Safety rule applied:
+            VALUE strings (event types, audit reasons, JSON tags, sqlite columns,
+            anything riding ContentHash) are never touched — every item below is a
+            Go-identifier rename the compiler checks end-to-end. None was executed
+            (report-only pass; the auto-git daemon owns commits).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th><th>Rename</th><th>Honesty payoff</th><th>Safety</th><th>Refs</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><code>EnrichmentSeed.StreamKey</code> &rarr; <code>RecordKey</code> (D1)</td>
+                <td class="no">High — the name currently misstates which string the field holds, at the one place a zero value is silently dropped</td>
+                <td class="yes">Field on a non-serialized struct; no JSON/db/reflection refs (grep-verified; only today's data-model HTML mentions the name)</td>
+                <td>4 uses</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><code>ReasonRetention</code> &rarr; <code>ReasonAge</code> (S2)</td>
+                <td class="no">Medium — the const pair then mirrors its two wire labels 1:1; corrects a mis-priced 2026-10-11 verdict</td>
+                <td class="yes">Identifier only; <code>"retention:age"</code> byte-identical; all refs compile-checked</td>
+                <td>8 (3 prod + 5 tests)</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Type <code>CallRetired.Reason</code> and <code>CallState.RetireReason</code> as <code>RetentionReason</code> (D2)</td>
+                <td class="no">Medium — the typo-proofing the type exists for finally covers the values that persist and replay</td>
+                <td class="yes">Same underlying string; JSON bytes identical; fold state never persisted. Borderline data-model change — coordinate with the data-model review</td>
+                <td>2 type sites</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>method <code>coverageWire()</code> &rarr; <code>coverageWireView()</code> (C1)</td>
+                <td>Low-medium — removes a type/method name collision in one package; restores symmetry with the retention pair</td>
+                <td class="yes">Single call site, compile-checked</td>
+                <td>2 uses</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><code>weekDays</code> &rarr; <code>daysPerWeek</code> (merge) (S1)</td>
+                <td>Low — zero honesty impact, pure split-brain removal in one file</td>
+                <td class="yes">Unexported constants; all uses compile-checked</td>
+                <td>16 (10 prod + 6 tests)</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Deliberately not recommended</strong>
+            Renaming the <code>observation()</code> constructors (S3) is optional
+            at best; <code>web.Rate</code>, <code>retention.Report</code>, and
+            <code>web.Options</code> read fine package-qualified; and every wire
+            VALUE (event types, source-kind strings, audit labels, JSON tags) is
+            off-limits by the ContentHash constraint regardless of how the
+            identifier is spelled.
+          </div>
+        </section>
+
+        <!-- Appendix: glossary -->
+        <section id="appendix">
+          <h2><span class="num">08</span>Appendix — naming glossary by domain</h2>
+          <p>
+            Step-2 glossary of load-bearing names (exported, plus the unexported
+            ones this pass judged). Split-brain column marks the findings; the
+            layering Observation &rarr; CallView &rarr; CallRow &rarr; DetailPage
+            stays distinct through every call site re-checked this pass.
+          </p>
+
+          <h3>Calls domain (<code>internal/calls</code>)</h3>
+          <table>
+            <thead><tr><th>Code name</th><th>Role</th><th>Split-brain / status</th></tr></thead>
+            <tbody>
+              <tr><td><code>Observation</code>, <code>SourceKind</code>, <code>Direction</code>, <code>NativeID</code>, <code>StreamID()</code>, <code>ContentHash()</code>, <code>Excerpt</code>, <code>TurnRole</code>, <code>TranscriptTurn</code>, <code>SourceEvent</code>, <code>Enrichment</code>, <code>MOS</code>, <code>E164</code>/<code>ParticipantHash</code></td><td>Types/methods</td><td>Glossary-canonical, one-to-one with DOMAIN_LANGUAGE.md core table</td></tr>
+              <tr><td><code>CallObserved/Corrected/Enriched/Retired</code></td><td>Event payloads</td><td>&mdash;</td></tr>
+              <tr><td><code>RecordCallCmd</code>/<code>EnrichCallCmd</code>/<code>RetireCallCmd</code>, <code>Record/Enrich/Retire</code>, <code>CallState</code></td><td>Commands + decider</td><td><code>CallState.RetireReason</code>: D2 (string where command says <code>RetentionReason</code>)</td></tr>
+              <tr><td><code>CallView</code>, <code>ViewFrom</code>, <code>Projection</code>, <code>RecordKey</code>/<code>LegacyRecordKey</code>/<code>LookupView</code></td><td>Read model</td><td>&mdash; (RecordKey glossary-pinned via AGENTS)</td></tr>
+              <tr><td><code>RetentionReason</code></td><td>Type</td><td>D2: enforced on the command, dropped on the event that persists it</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Ingest adapters (<code>internal/ingest/*</code>) + wire</h3>
+          <table>
+            <thead><tr><th>Code name</th><th>Role</th><th>Split-brain / status</th></tr></thead>
+            <tbody>
+              <tr><td><code>ingest.Result</code>, <code>NewScanner</code>, <code>EachLine</code>, <code>ParseCommaSet</code></td><td>Shared scaffolding</td><td>Documented shape (AGENTS)</td></tr>
+              <tr><td><code>cdr.Parse/ParseWithOptions</code>, <code>webhook.Parse</code> (Envelope/Event/Payload), <code>agent.Parse/ParseDir/MapTranscript</code>, <code>agent.Result</code></td><td>Parsers</td><td>&mdash;</td></tr>
+              <tr><td><code>observation()</code> (cdr, webhook)</td><td>Source&rarr;domain constructors</td><td>S3: Map* verb drift</td></tr>
+              <tr><td><code>telnyx.Client</code> + <code>List*</code>/<code>FetchRecording</code>/<code>fetchAll</code>, <code>Conversation</code>, <code>Message.SpokeAt</code>, <code>DetailRecord</code>, <code>RecordingByCallControl</code>/<code>DetailRecordByCallControl</code>, <code>MapConversation</code>, <code>DIDDirectionResolver</code>, <code>MicrosFromCost</code>/<code>RecordCost</code>/<code>CostOf</code>/<code>InsightSummary</code></td><td>Adapter</td><td>Foreign vocabulary kept deliberately (Telnyx's own nouns)</td></tr>
+              <tr><td><code>wire.FlexTime</code>, <code>ErrUnparseableTimestamp</code></td><td>Wire decoding</td><td>Glossary-canonical</td></tr>
+            </tbody>
+          </table>
+
+          <h3>CLI / poller / retention / backup / search</h3>
+          <table>
+            <thead><tr><th>Code name</th><th>Role</th><th>Split-brain / status</th></tr></thead>
+            <tbody>
+              <tr><td><code>AgeGate</code>, <code>GateIngest</code>, <code>IngestStats</code>, <code>streamLabel</code></td><td>Ingest</td><td>Glossary-canonical (Age gate)</td></tr>
+              <tr><td><code>EnrichmentSeed</code>, <code>SeedsFor</code>, <code>FetchTelnyxObservations</code>, <code>EnrichTelnyxCalls</code>, <code>EnrichStats</code></td><td>Enrichment</td><td><code>EnrichmentSeed.StreamKey</code>: D1 (holds a RecordKey)</td></tr>
+              <tr><td><code>RefreshOutcome</code>/<code>Finding</code>/<code>Report</code>/<code>ReadError</code>, <code>ClassifyRefresh</code>, <code>additiveDrift</code></td><td>Backfill classification</td><td>&mdash; (outcomes match the glossary's refresh section verbatim)</td></tr>
+              <tr><td><code>PollConfig</code>, <code>PollLoop</code>/<code>PollOnce</code>, <code>SourceCounters</code>/<code>SourceStat</code>, <code>pollFileError</code></td><td>Poller</td><td>&mdash;</td></tr>
+              <tr><td><code>retention.Policy</code>, <code>OldViews</code>, <code>OldestView</code>, <code>Retire</code>, <code>ReasonAgeCutoff</code></td><td>Retention</td><td><code>ReasonRetention</code>: S2 (pair shape)</td></tr>
+              <tr><td><code>backup.Snapshot</code>/<code>Verify</code></td><td>Backup</td><td>&mdash;</td></tr>
+              <tr><td><code>search.Hit</code>/<code>TurnHit</code>/<code>Part</code>, <code>Index</code>, <code>MatchExpression</code>, <code>DefaultLimit</code>/<code>MaxLimit</code></td><td>FTS</td><td>&mdash; (own clear dialect, zero FTS5 jargon leaks)</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Web UI (<code>internal/web</code>) + templ</h3>
+          <table>
+            <thead><tr><th>Code name</th><th>Role</th><th>Split-brain / status</th></tr></thead>
+            <tbody>
+              <tr><td><code>ListCallsQuery</code>, <code>CallListPage</code>, <code>StreamExportCalls</code>/<code>ExportCalls</code>, <code>CallDetail</code>/<code>CallDetailPage</code>, <code>DetailPage.JoinedFrom</code></td><td>Queries</td><td>&mdash; (read-time join vocabulary matches glossary)</td></tr>
+              <tr><td><code>representativeOf</code>, <code>supersededBySibling</code>, <code>listRepresentative</code>, <code>mergeSibling</code></td><td>Representative row</td><td>Glossary-canonical</td></tr>
+              <tr><td><code>DashboardStats</code>, <code>DayVolume</code>, <code>WeekDelta</code>, <code>QualityTrend</code>, <code>VolumeNote</code>, <code>DurationBucket</code></td><td>Dashboard</td><td><code>weekDays</code>/<code>daysPerWeek</code>: S1</td></tr>
+              <tr><td><code>Segment</code>, <code>QualityRollup</code>, <code>CoverageRow</code>, <code>CounterpartHistory</code>, <code>Freshness</code></td><td>Analytics/ops read models</td><td>D3: absent from DOMAIN_LANGUAGE.md core table</td></tr>
+              <tr><td><code>opsSnapshot</code>, <code>opsPoller</code>, <code>retentionWire</code>/<code>retentionWireView</code>, <code>coverageWire</code>, <code>opsScanFailure</code></td><td>Ops surface</td><td><code>coverageWire</code> type+method collision: C1</td></tr>
+              <tr><td><code>PIIMode</code>/<code>applyPII</code>, <code>exportJSONL</code>/<code>exportCSV</code>, <code>exportErrorMarker</code></td><td>Export</td><td>&mdash;</td></tr>
+              <tr><td><code>transcriptPane</code>, <code>sourceEventPane</code>, <code>diagnosticDetail</code>, <code>transcriptTail</code> (templ)</td><td>Voice log</td><td>Glossary-canonical</td></tr>
+            </tbody>
+          </table>
+
+          <h3>Identity &amp; OIDC (<code>internal/web/userauth.go</code>, <code>internal/oidclogin</code>)</h3>
+          <table>
+            <thead><tr><th>Code name</th><th>Role</th><th>Split-brain / status</th></tr></thead>
+            <tbody>
+              <tr><td><code>Identity</code>, <code>IdentityConfig</code>, <code>OpenIdentity</code>, <code>publicAuthPath</code>, <code>wantsBrowser</code>, <code>IdentityOps</code></td><td>Session gate</td><td>Matches glossary &sect; Identity term-for-term</td></tr>
+              <tr><td><code>Identity.rpidValue</code>/<code>rpid()</code></td><td>WebAuthn RPID</td><td>C2: collision-workaround stutter</td></tr>
+              <tr><td><code>oidclogin.Config</code>, <code>Provider</code>, <code>BeginLoginWithNonce</code>/<code>FinishLoginWithNonce</code>, <code>userInfo</code></td><td>OIDC lane</td><td><code>userInfo</code> mirrors the upstream wire contract by design</td></tr>
+            </tbody>
+          </table>
+
+          <h3>cmd / app</h3>
+          <table>
+            <thead><tr><th>Code name</th><th>Role</th><th>Split-brain / status</th></tr></thead>
+            <tbody>
+              <tr><td><code>ingest-cdr/-telnyx/-webhook/-agent</code>, <code>refresh</code>, <code>serve</code>, <code>purge</code>, <code>backup</code>, <code>smoke</code>, <code>catalog</code></td><td>Subcommands</td><td>purge/retire layering documented in glossary tombstone entry (2026-10-11 companion)</td></tr>
+              <tr><td><code>requireDB</code>, <code>requireOneArg</code>, <code>parseAndRequireDB</code>, <code>fatalCode</code>, <code>openIndexSession</code>, <code>deriveAuthDefaults</code></td><td>CLI plumbing</td><td>&mdash;</td></tr>
+              <tr><td><code>app.DomainConfig</code>/<code>DeploymentConfig</code>/<code>ProjectionName</code></td><td>Composition root</td><td>&mdash;</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-11-20 &middot; naming-review skill, report-only pass
+            (Step 6 fixes not requested) &middot; series: 2026-10-11 primary +
+            companion, 2026-11-20 full-code-review (00-22) &amp; data-model review
+            (00-28) cross-referenced &middot; golangci-lint 2.15.0: 0 issues
+            &middot; all claims verified against source
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

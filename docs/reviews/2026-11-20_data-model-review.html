@@ -1179,7 +1179,6 @@
               the "shared by serve poller and one-shot commands" guarantee
               rests on convention, not on the type.
             </p>
-          </div>
             <div class="callout callout-teal">
               <strong>Fix: keep Policy, delete AgeGate <span class="badge badge-fixed">hash-safe</span></strong>
               The CLI already imports retention; GateIngest takes a
@@ -1227,7 +1226,6 @@
               observation that <code>normalizeTurn</code> already closes the
               vocabulary that matters (caller/agent &rarr; user/assistant).
             </p>
-          </div>
             <div class="callout callout-amber">
               <strong>Verdict: accept, with a note</strong>
               A tagged-union decode (three structs behind a small interface)

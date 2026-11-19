@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Report Title</title>
+    <title>pbx-lens code-quality-scan — 2026-11-20</title>
     <style>
       /* =========================================================================
          BAUHAUS DARK — Dashboard template
@@ -828,9 +828,9 @@
   <body>
     <!-- Full-bleed top bar (optional — remove for quieter reports) -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>CODE QUALITY SCAN + DUPLICATION GATE</span>
+      <span>2026-11-20 00:28 +0100</span>
+      <span>crush / code-quality-scan + deduplicate-code</span>
     </div>
 
     <div class="layout">
@@ -839,10 +839,10 @@
         <nav>
           <div class="label">Contents</div>
           <a href="#summary">Summary</a>
+          <a href="#receipts">Gate Receipts</a>
+          <a href="#dedup">Deduplication Analysis</a>
           <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#context">Context</a>
         </nav>
       </aside>
 
@@ -855,10 +855,12 @@
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Code Quality Scan</div>
+          <h1>pbx-lens quality scan — fresh gates, zero clones, one reachable CVE</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Build, vet, tests, lint (warm and cold cache), the art-dupl zero-group
+            gate, and govulncheck re-run on 2026-11-20 — every green verdict quotes
+            its exit code and cache age.
           </p>
         </div>
 
@@ -867,10 +869,10 @@
           <h3>Contents</h3>
           <ul>
             <li><a href="#summary">Summary</a></li>
+            <li><a href="#receipts">Gate Receipts</a></li>
+            <li><a href="#dedup">Deduplication Analysis</a></li>
             <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#context">Context</a></li>
           </ul>
         </nav>
 
@@ -878,155 +880,433 @@
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
+            <div class="stat-value">13</div>
+            <div class="stat-label">Total Issues</div>
           </div>
           <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
+            <div class="stat-value">1</div>
             <div class="stat-label">Critical</div>
           </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">High</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">Medium</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">12</div>
+            <div class="stat-label">Low</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Clone Groups (gate)</div>
           </div>
         </div>
 
         <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
+        <h2 id="receipts"><span class="num">01</span>Gate Receipts — exit codes and cache age</h2>
 
         <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
+          <h4>govulncheck is the only red gate — exit 3</h4>
+          <p>
+            One reachable vulnerability in the Go standard library
+            (<code>GO-2026-6859</code>, details in Findings). Every other gate —
+            codegen, build, vet, tests, lint (warm and cold), duplication — is
+            green with a quoted, freshness-annotated exit code below.
+          </p>
         </div>
 
-        <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Gate</th>
+              <th>Command</th>
+              <th>Exit</th>
+              <th>Verdict freshness</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>templ codegen</td>
+              <td><code>GOEXPERIMENT=jsonv2 go tool templ generate</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>fresh — updates=0 (tree already in sync; *_templ.go stays gitignored)</td>
+            </tr>
+            <tr>
+              <td>Build</td>
+              <td><code>GOEXPERIMENT=jsonv2 go build ./...</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>fresh — uncached compile</td>
+            </tr>
+            <tr>
+              <td>Vet</td>
+              <td><code>GOEXPERIMENT=jsonv2 go vet ./...</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>fresh</td>
+            </tr>
+            <tr>
+              <td>Tests</td>
+              <td><code>GOEXPERIMENT=jsonv2 go test -count=1 ./...</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>fresh — first pass came back all-<em>cached</em> and was distrusted per the skill's cached-green rule; the -count=1 re-run executed all 16 packages (0.003–2.751 s/pkg), all ok</td>
+            </tr>
+            <tr>
+              <td>Lint (warm)</td>
+              <td><code>nix develop -c golangci-lint run ./...</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>“0 issues.” — warm cache (~/.cache/golangci-lint, 420 MiB) could have served it; therefore re-run cold ↓</td>
+            </tr>
+            <tr>
+              <td>Lint (cold)</td>
+              <td><code>XDG_CACHE_HOME=/tmp/… nix develop -c golangci-lint run ./...</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>“0 issues.” — forced-cold re-run via <code>XDG_CACHE_HOME</code> redirect (user's warm cache untouched); green in both directions, so the 2026-11-12 “~20 standing golangci warnings” debt is confirmed cleared</td>
+            </tr>
+            <tr>
+              <td>Dedup gate</td>
+              <td><code>bash scripts/check-dedup-gate.sh</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>fresh — “Found total 0 clone groups”, baseline 0 groups; binary verified as CI pin <code>v0.9.1-…-93432fd</code>; <code>--self-test</code> PASS (clean tree green, seeded 12-statement clone red). One transient anomaly: the first self-test invocation exited 141 (SIGPIPE under the mvdan/sh harness) with no output; two subsequent runs exited 0 — same race class the script header documents, not a script defect</td>
+            </tr>
+            <tr>
+              <td>Dedup gate (<code>--show-suppressed</code>)</td>
+              <td><code>bash scripts/check-dedup-gate.sh --show-suppressed</code></td>
+              <td><span class="badge badge-fixed">0</span></td>
+              <td>flag is NOT implemented by the script (only <code>--self-test</code> is handled; the argument is ignored) — output verified byte-identical to the default run; see Deduplication Analysis for the suppressed-bucket status</td>
+            </tr>
+            <tr>
+              <td>Vulnerabilities</td>
+              <td><code>nix develop -c govulncheck ./...</code></td>
+              <td><span class="badge badge-critical">3</span></td>
+              <td>fresh — vuln DB fetched this run; 1 reachable stdlib vuln + 1 unreached module advisory</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Deliberately not run here</strong> (parent agent's lane / AGENTS.md
+          conventions): BuildFlow local gate, <code>nix build</code>,
+          <code>nix flake check</code>, <code>cqrs-lint</code>, and any dedup
+          extraction edits. art-dupl was invoked only via
+          <code>scripts/check-dedup-gate.sh</code> — the script exposes no raw mode.
         </div>
 
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
+        <h2 id="dedup"><span class="num">02</span>Deduplication Analysis — judgment, not just counts</h2>
 
         <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
+          <span class="severity severity-critical">Gate verdict</span>
+          <h3>0 clone groups at -t 4 --min-lines 2 — nothing to extract, nothing suppressed</h3>
+          <div class="where">scripts/check-dedup-gate.sh · scripts/art-dupl-baseline.json</div>
           <p>
-            Describe the problem and cite the code or behavior that proves it.
+            The gate run scanned 155 files and reported <strong>zero clone
+            groups</strong> against a baseline holding <strong>zero entries</strong>
+            (threshold 4, recordedAt 2026-10-24). Note the gate threshold
+            (<code>-t 4</code>) is <em>more sensitive</em> than the
+            deduplicate-code skill's default (<code>-t 5</code>), so a green at
+            -t 4 subsumes the default. There are no
+            <code>//art-dupl:accept</code> directives anywhere in the tree
+            (grep: 0 hits), so the directive-suppressed bucket is empty too.
+          </p>
+          <div class="callout callout-solution">
+            <strong>EXTRACT-eligible groups: none.</strong> With zero reported
+            groups there is no proposed shared helper this round — the zero state
+            is maintained by extraction, not suppression (verified in place
+            today: <code>ingest.ParseCommaSet</code> at
+            internal/ingest/ingest.go:54, <code>parseAndRequireDB</code> at
+            cmd/pbx-lens/main.go:78, <code>eachTypedFilter</code> /
+            <code>hasFilters</code> at internal/web/calls.templ:151/333 over
+            <code>hasTypedFilters</code> at internal/web/server.go:388).
+          </div>
+        </div>
+
+        <h3>Clone-group classification (every group art-dupl reports, incl. baseline)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Group / class</th>
+              <th>Verdict</th>
+              <th>One-line rationale (code read 2026-11-20)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Groups reported by this gate run</td>
+              <td><span class="badge badge-fixed">—</span></td>
+              <td>None existed — 0 groups at -t 4 --min-lines 2; no EXTRACT/ACCEPT/EXCLUDE call was needed</td>
+            </tr>
+            <tr>
+              <td>Baseline entries (suppressed-by-baseline bucket)</td>
+              <td><span class="badge badge-fixed">—</span></td>
+              <td>None — baseline is empty by design: the zero-group contract since 2026-10-24 (“any new multi-line clone group goes red”); there is no accepted group that could have rotted</td>
+            </tr>
+            <tr>
+              <td><code>mosGaugePercent</code> (internal/web/dashboard.templ:831)</td>
+              <td><span class="badge badge-low">ACCEPT</span></td>
+              <td>Domain math — maps MOS onto the gauge scale with clamping; the formatting twins were deleted when utils/format was adopted; verified still present and still the only local formatter</td>
+            </tr>
+            <tr>
+              <td>~21 one-line signature/type matches (invisible at --min-lines 2)</td>
+              <td><span class="badge badge-low">ACCEPT</span></td>
+              <td>Shape coincidence between functions with different documented business rules; body-by-body reviewed 2026-11-05 and again at -t 2 on 2026-11-14; an abstraction would take more parameters than each duplicated line count</td>
+            </tr>
+            <tr>
+              <td>Test scaffolding in *_test.go (auto-excluded bucket)</td>
+              <td><span class="badge badge-low">ACCEPT</span></td>
+              <td>Self-contained tests are the design; the real full-stack repetitions were already extracted (<code>serveTestStack</code> internal/web, <code>openPollHarness</code> internal/cli) when they appeared</td>
+            </tr>
+            <tr>
+              <td>-t 2 remainder classes (2026-11-14 audit): loop-control idioms, cleanup-on-error ladders, guard-return pairs, alert/definition card shapes, empty-state-else-table idiom, secret-file readers, keyset-walker inits</td>
+              <td><span class="badge badge-low">ACCEPT</span></td>
+              <td>Each documented in docs/art-dupl-baseline.md § History 2026-11-14: a <code>continue</code> cannot be extracted, each ladder branch releases a different handle, templ-components already carries the reusable pieces — re-verified classes still match the code shapes seen this scan</td>
+            </tr>
+            <tr>
+              <td>Two pre-image hashes behind <code>writeHashedField</code> (internal/calls/events.go:86)</td>
+              <td><span class="badge badge-low">ACCEPT</span></td>
+              <td>The shared mechanism IS extracted; the two remaining hashes protect different identities (caller vs counterpart) on purpose</td>
+            </tr>
+            <tr>
+              <td>Smoke command double-dispatch (cmd/pbx-lens/ops.go:66)</td>
+              <td><span class="badge badge-low">ACCEPT</span></td>
+              <td>The duplication is the idempotency exercise itself — verified the explanatory comment is still in place so nobody “fixes” it</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout callout-warning">
+          <strong>Suppressed-bucket audit — status and gap.</strong> The script's
+          only flag is <code>--self-test</code>; <code>--show-suppressed</code> is
+          silently ignored (verified byte-identical output), and current art-dupl
+          <code>check</code> has no such flag either (it offers
+          <code>--no-accept-directives</code> / <code>--no-actionability</code>).
+          Per AGENTS.md, art-dupl runs only via the script, so the direct audit
+          command documented in docs/art-dupl-baseline.md
+          (<code>art-dupl --type-aware -t 4 --show-suppressed .</code>, due after
+          any pin bump or suspicious green) was NOT run — last recorded audits:
+          2026-11-05 (t-10 sweep, only the two accepted signature pairs remained)
+          and 2026-11-14 (-t 2, 27 actionable groups → 9 real clones extracted).
+          Recommend wiring the audit into the script at the next pin bump.
+        </div>
+
+        <h2 id="findings"><span class="num">03</span>Findings</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">Critical</span>
+          <h3>GO-2026-6859 — reachable net/http server crash (MaxBytesReader header race)</h3>
+          <div class="where">go.mod:3 (go 1.27.3) · net/http@go1.27.3 → fixed in go1.27.4</div>
+          <p>
+            govulncheck exit 3: “Your code is affected by 1 vulnerability from
+            the Go standard library.” HTTP/1 servers can be crashed by a race
+            involving MaxBytesReader and header handling. This module ships a
+            long-lived HTTP server (appkit <code>svc.Run</code> in
+            cmd/pbx-lens/serve.go, plus the Telnyx ingester client and OIDC
+            login) — the scan surfaced 49 symbol-level call traces into
+            net/http, so reachability is not in doubt. Classified Critical per
+            the scan rubric (security vulnerability); nuance for triage: it is
+            DoS-class (crash, no RCE/data loss) and the service is
+            LAN-facing per the NixOS deploy module, with the fix already
+            published.
           </p>
           <div class="callout callout-solution">
             <strong>Fix</strong>
-            State the concrete recommended action.
+            Bump the module's Go level to 1.27.4 (<code>go 1.27.4</code> in
+            go.mod — or add a <code>toolchain</code> directive), align the
+            devShell's pinned toolchain (GOTOOLCHAIN=local), rebuild, and re-run
+            <code>govulncheck ./...</code> expecting exit 0. The
+            GOEXPERIMENT=jsonv2 pin is unaffected. Everything else in this fix
+            is mechanical — no code changes required.
           </div>
         </div>
 
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
-          </p>
-        </div>
-
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
-        </div>
-
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h3>Issue table (sorted severity, then file)</h3>
         <table>
           <thead>
             <tr>
               <th>#</th>
               <th>Severity</th>
+              <th>File</th>
+              <th>Line</th>
               <th>Issue</th>
-              <th>Status</th>
+              <th>Suggested Fix</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>1</td>
               <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>go.mod</td>
+              <td>3</td>
+              <td>GO-2026-6859: net/http MaxBytesReader header race crashes HTTP/1 servers; stdlib go1.27.3 in use, fix is go1.27.4; reachable (49 traces, incl. serve.go:263 and the Telnyx/OIDC HTTP paths)</td>
+              <td>Bump go directive/toolchain to 1.27.4 + devShell pin; re-run govulncheck (expect exit 0)</td>
             </tr>
             <tr>
               <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
-              <td><span class="badge badge-low">Open</span></td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>go.mod</td>
+              <td>162</td>
+              <td>GO-2026-5932: x/crypto/openpgp “unmaintained, unsafe by design” advisory; golang.org/x/crypto v0.58.0 (indirect), fixed v0.58.1-0.20261009… — govulncheck finds no call path from this code</td>
+              <td>No urgency (unreached); ride the next fleet x/crypto pin bump, then re-scan</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/app/app.go</td>
+              <td>44</td>
+              <td>gopls infertypeargs: redundant explicit type args on <code>system.RegisterCommand[calls.RecordCallCmd, calls.CallState]</code> (known — 2026-11-20_00-22 full-code-review)</td>
+              <td>Drop the explicit type arguments; inference covers them</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/app/app.go</td>
+              <td>54</td>
+              <td>Same infertypeargs hint on <code>RegisterCommand[calls.EnrichCallCmd, calls.CallState]</code></td>
+              <td>Same mechanical fix</td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/app/app.go</td>
+              <td>64</td>
+              <td>Same infertypeargs hint on <code>RegisterCommand[calls.RetireCallCmd, calls.CallState]</code></td>
+              <td>Same mechanical fix</td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/calls.templ</td>
+              <td>43</td>
+              <td>templ embedlit hint: unnecessary embedded field type in struct literal (known — 2026-11-20_00-22 full-code-review)</td>
+              <td>Ride the next templ regen/format pass</td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/calls.templ</td>
+              <td>268</td>
+              <td>templ embedlit hint (same class)</td>
+              <td>Ride the next templ regen/format pass</td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/calls.templ</td>
+              <td>278</td>
+              <td>templ embedlit hint (same class)</td>
+              <td>Ride the next templ regen/format pass</td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/calls.templ</td>
+              <td>287</td>
+              <td>templ embedlit hint (same class)</td>
+              <td>Ride the next templ regen/format pass</td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/calls.templ</td>
+              <td>293</td>
+              <td>templ embedlit hint (same class)</td>
+              <td>Ride the next templ regen/format pass</td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/calls.templ</td>
+              <td>299</td>
+              <td>templ embedlit hint (same class)</td>
+              <td>Ride the next templ regen/format pass</td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/dashboard.templ</td>
+              <td>107</td>
+              <td>templ embedlit hint (same class)</td>
+              <td>Ride the next templ regen/format pass</td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td><span class="badge badge-low">Low</span></td>
+              <td>internal/web/dashboard.templ</td>
+              <td>113</td>
+              <td>templ embedlit hint (same class)</td>
+              <td>Ride the next templ regen/format pass</td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
+        <div class="callout">
+          <strong>Tool provenance note.</strong> Rows 3–13 come from gopls/templ
+          LSP diagnostics — the project's authoritative lint gate
+          (golangci-lint, 100+ linters incl. mnd) reports zero issues, warm and
+          cold. They are listed for completeness and cross-referenced to the
+          sibling review rather than re-reported as new.
         </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
+
+        <h2 id="context"><span class="num">04</span>Context — series continuity and scope</h2>
+
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Duplication is gated, not discussed</strong>
+              <span>Zero clone groups against a zero-entry baseline, binary verified against the CI pin, self-test proving both directions (clean green / seeded red). The 2026-11-12 brutal-self-review's “~20 standing golangci warnings, ownership unclear” debt is now verifiably cleared (0 issues warm and cold).</span>
+            </div>
           </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Greens were proven fresh, not trusted</strong>
+              <span>Cached test verdicts were re-run with -count=1; the lint green was re-established from a cold cache; each verdict above carries its exit code and cache age.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Past dedup extractions verified still in place</strong>
+              <span>ingest.ParseCommaSet, parseAndRequireDB, eachTypedFilter/hasFilters over hasTypedFilters, writeHashedField — the zero-group state is maintained by refactoring, matching docs/art-dupl-baseline.md's history.</span>
+            </div>
           </div>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <div class="card card-solution">
+          <h4>Not re-reported here (cross-references)</h4>
+          <p>
+            Manual review findings live in the sibling report written minutes
+            earlier —
+            <code>docs/reviews/2026-11-20_00-22_full-code-review.html</code>
+            (ingest <code>supersedes</code> Critical, poller/enrichment High,
+            webhook fold first-wins, dead test helpers, json/v2 sweep, file
+            lengths). The gopls-derived Low rows above overlap its Minor items
+            and are cross-referenced, not claimed as new. Earlier series
+            context:
+            <code>2026-11-12_15-30_brutal-self-review.html</code> (process debt
+            census — lint debt now cleared, see receipts) and
+            <code>2026-10-26_11-25_full-code-review.html</code>.
+          </p>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
-        <div class="migration-step">
-          <div class="migration-num">1</div>
-          <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
-          </div>
-        </div>
-        <div class="migration-step">
-          <div class="migration-num">2</div>
-          <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
-          </div>
+        <div class="card card-problem">
+          <h4>Open follow-ups owned by this scan</h4>
+          <p>
+            (1) The go1.27.4 bump for GO-2026-6859 — the only red gate.
+            (2) At the next art-dupl pin bump, wire the suppressed-bucket audit
+            into <code>scripts/check-dedup-gate.sh</code> —
+            <code>--show-suppressed</code> is currently documented in AGENTS.md
+            but implemented nowhere in the script or in art-dupl v0.9.1-93432fd
+            <code>check</code>, a docs/tooling mismatch that will confuse the
+            next auditor. (3) GO-2026-5932 rides the next x/crypto pin bump.
+          </p>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-11-20 00:28 +0100 &middot; All exit codes quoted from
+          live runs; greens annotated fresh vs cached &middot; Read-only scan —
+          no source files modified
         </footer>
       </main>
     </div>
