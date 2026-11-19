@@ -66,7 +66,7 @@ func TestGoldenRetireScenarioPayloadTrail(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	retireCmd, err := calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonRetention)
+	retireCmd, err := calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonAge)
 	if err != nil {
 		t.Fatal(err)
 	}

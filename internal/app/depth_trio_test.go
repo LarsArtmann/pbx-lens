@@ -360,7 +360,7 @@ func driveLifecycleTail(rt *rapid.T, sc *systemscenario.Scenario, streamIdx int,
 	}
 
 	if rapid.Bool().Draw(rt, "retire") {
-		retireCmd, err := calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonRetention)
+		retireCmd, err := calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonAge)
 		if err != nil {
 			rt.Fatalf("NewRetireCommand: %v", err)
 		}

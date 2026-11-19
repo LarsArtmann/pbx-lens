@@ -169,7 +169,7 @@ func fetchAll[T any](
 
 	var all []T
 
-	for page := 1; page <= maxPages; page++ {
+	for page := 1; ; page++ {
 		q := url.Values{}
 		maps.Copy(q, base)
 
@@ -194,6 +194,11 @@ func fetchAll[T any](
 			all = all[:limit]
 
 			break
+		}
+
+		if page == maxPages {
+			return nil, errorfamily.NewTransient("telnyx.page_cap",
+				fmt.Sprintf("pagination cap reached (%d pages of %d) with the last page full — the endpoint holds more data; refusing a silently truncated result", maxPages, pageSize))
 		}
 	}
 

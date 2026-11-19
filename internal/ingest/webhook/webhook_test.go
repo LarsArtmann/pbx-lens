@@ -139,3 +139,28 @@ func TestParseMissingPartiesRejected(t *testing.T) {
 		t.Fatalf("partyless call = %+v skipped=%d, want rejected", res.Observations, res.Skipped)
 	}
 }
+
+// Two hangup deliveries for one call with different causes must fold to the
+// FIRST cause: foldPayload's first-wins contract covers hangup_cause like
+// every other field, so a redelivery with a mutated payload cannot change
+// the aggregation (the TestParseOrderIndependent class — before the fold
+// moved into foldPayload, the cause was last-wins while the file's contract
+// promised first-value folds).
+func TestHangupCauseFoldsFirstWins(t *testing.T) {
+	t.Parallel()
+
+	input := strings.Join([]string{
+		`{"received_at":"2026-10-09T19:52:00Z","remote":"192.0.2.10","body":{"data":{"event_type":"call.initiated","occurred_at":"2026-10-09T19:52:00Z","payload":{"call_control_id":"ccid-fw","direction":"incoming","from":"+17287289311","to":"+15551230001"}}}}`,
+		`{"received_at":"2026-10-09T19:52:04Z","remote":"192.0.2.10","body":{"data":{"event_type":"call.hangup","occurred_at":"2026-10-09T19:52:03.789Z","payload":{"call_control_id":"ccid-fw","hangup_cause":"normal_clearing"}}}}`,
+		`{"received_at":"2026-10-09T19:52:05Z","remote":"192.0.2.10","body":{"data":{"event_type":"call.hangup","occurred_at":"2026-10-09T19:52:04Z","payload":{"call_control_id":"ccid-fw","hangup_cause":"busy"}}}}`,
+	}, "\n")
+
+	res := mustParse(t, input)
+	if len(res.Observations) != 1 {
+		t.Fatalf("observations = %d, want 1", len(res.Observations))
+	}
+
+	if got := res.Observations[0].HangupCause; got != "normal_clearing" {
+		t.Fatalf("HangupCause = %q, want the FIRST hangup's normal_clearing", got)
+	}
+}

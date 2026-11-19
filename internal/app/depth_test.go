@@ -19,7 +19,7 @@ import (
 // semantics through the real wiring.
 
 func retireCmdFor(obs calls.Observation) (calls.RetireCallCmd, error) {
-	return calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonRetention)
+	return calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonAge)
 }
 
 // streamRefOf is the Given-seed address of a command's stream.

@@ -30,7 +30,7 @@ var (
 	errCorrectedAfterRetired error = errorfamily.NewRejection("call.corrected.after_retired", "target")
 )
 
-// reasonRetentionTest mirrors retention.ReasonRetention without importing the
+// reasonRetentionTest mirrors retention.ReasonAge without importing the
 // retention package (it imports calls; a test-level cycle would result).
 const reasonRetentionTest = RetentionReason("retention:age")
 

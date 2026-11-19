@@ -98,9 +98,10 @@ read-only deep link, never a data dependency.
   drift (docs/gotchas.md).
 - **CI:** GitHub Actions (go-output's pattern): build+test(-race)+coverage+
   tidy, golangci-lint, govulncheck, and the art-dupl ZERO-GROUP GATE
-  (`--min-lines 2` vs `scripts/art-dupl-baseline.json`; the default report
-  hides a suppressed bucket — audit with `--show-suppressed` after pin
-  bumps; invoke only via `scripts/check-dedup-gate.sh`). Every Go-compiling
+  (`--min-lines 2` vs `scripts/art-dupl-baseline.json`; the suppressed-bucket
+  audit needs a direct `art-dupl --type-aware -t 4 --show-suppressed .`
+  (docs/art-dupl-baseline.md) after pin bumps — the script only knows
+  `--self-test`; a pass-through is a known gap for the next pin bump). Every Go-compiling
   job runs `go tool templ generate` first (`go run .../cmd/templ` FAILS —
   the CLI is a go.mod `tool`). The golangci-lint pin must be BUILT with go ≥
   the module's level; `.golangci.yml` enables `mnd` — run

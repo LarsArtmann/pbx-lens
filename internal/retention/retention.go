@@ -19,13 +19,13 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// ReasonRetention is the audit reason stamped onto every age-policy
+// ReasonAge is the audit reason stamped onto every age-policy
 // tombstone; the string is stable so exports of the event log group them.
-const ReasonRetention = calls.RetentionReason("retention:age")
+const ReasonAge = calls.RetentionReason("retention:age")
 
 // ReasonAgeCutoff is the audit label for an observation refused at ingest
 // because it predates the policy window (the serve poller's -max-age gate).
-// Distinct from ReasonRetention so the purge (tombstone) and ingest-gate
+// Distinct from ReasonAge so the purge (tombstone) and ingest-gate
 // rejections group separately in event-log exports and poll summaries.
 const ReasonAgeCutoff = calls.RetentionReason("retention:age-cutoff")
 
@@ -149,7 +149,7 @@ func Retire(ctx context.Context, sys *system.System, policy Policy, now time.Tim
 	for _, view := range views {
 		report.OverAge++
 
-		cmd, err := calls.NewRetireCommand(view.Kind, view.NativeID, ReasonRetention)
+		cmd, err := calls.NewRetireCommand(view.Kind, view.NativeID, ReasonAge)
 		if err != nil {
 			report.Rejections = append(report.Rejections, streamLabel(view)+": "+err.Error())
 

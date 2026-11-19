@@ -827,3 +827,34 @@ func TestConversationInsightsRejectsEmptyID(t *testing.T) {
 		t.Fatal("empty conversation id must reject")
 	}
 }
+
+// A pagination that never shortens must end in an explicit Transient error
+// at the page cap, not a silently truncated slice: fetchAll used to exit the
+// bounded loop quietly, handing callers a full-looking result that was
+// missing everything past the cap.
+func TestFetchAllRefusesSilentTruncationAtPageCap(t *testing.T) {
+	c, _ := testServer(t, func(w http.ResponseWriter, r *http.Request) {
+		size, err := strconv.Atoi(r.URL.Query().Get("page[size]"))
+		if err != nil {
+			t.Errorf("page[size]: %v", err)
+		}
+
+		data := make([]Conversation, size)
+		for i := range data {
+			data[i] = Conversation{ID: "conv-" + r.URL.Query().Get("page[number]") + "-" + strconv.Itoa(i)}
+		}
+
+		writeJSON(t, w, map[string]any{"data": data})
+	})
+
+	_, err := fetchAll[Conversation](context.Background(), c, "/ai/conversations", url.Values{}, 0, 1)
+	if err == nil {
+		t.Fatal("a never-shortening pagination must fail at the page cap, not return a truncated slice")
+	}
+
+	if _, ok := errors.AsType[*errorfamily.Error](err); !ok {
+		t.Fatalf("not an errorfamily error: %v", err)
+	}
+
+	errorfamilytest.AssertFamily(t, err, errorfamily.Transient)
+}

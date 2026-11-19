@@ -96,7 +96,7 @@ func TestMemoryAndSqliteDeploymentsStayEquivalent(t *testing.T) {
 				return nil
 			})
 
-		retireCmd, err := calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonRetention)
+		retireCmd, err := calls.NewRetireCommand(obs.Kind, obs.NativeID, retention.ReasonAge)
 		if err != nil {
 			t.Fatal(err)
 		}

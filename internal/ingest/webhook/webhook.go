@@ -127,10 +127,6 @@ func applyEvent(callsByID map[string]*call, evt Event) bool {
 
 	foldPayload(state, evt.Payload)
 
-	if evt.Payload.HangupCause != "" {
-		state.cause = evt.Payload.HangupCause
-	}
-
 	return true
 }
 
@@ -147,6 +143,10 @@ func foldPayload(state *call, payload Payload) {
 
 	if state.to == "" {
 		state.to = payload.To
+	}
+
+	if state.cause == "" {
+		state.cause = payload.HangupCause
 	}
 }
 
