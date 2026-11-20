@@ -224,7 +224,7 @@ func TestPollOnceRecordsPerSourceCounters(t *testing.T) {
 	counters := NewSourceCounters(DefaultPollEvery)
 	PollOnce(ctx, sys, nil, PollConfig{WebhookLog: webhookLog, Counters: counters}, func(string, ...any) {})
 
-	sources, lastPass := counters.Snapshot()
+	sources, lastPass := counters.snapshotRaw()
 
 	webhook := sources["webhook-log"]
 	if webhook.Offered != 1 || webhook.Recorded != 1 {
@@ -306,41 +306,41 @@ func TestStalePass(t *testing.T) {
 	}
 }
 
-func TestSnapshotAnyReportsStaleVerdict(t *testing.T) {
-	// The payload answers "is the poller alive" directly, so a monitor
+func TestSnapshotReportsStaleVerdict(t *testing.T) {
+	// The snapshot answers "is the poller alive" directly, so a monitor
 	// never re-derives staleness from the timestamp and a cadence it has
 	// to know out of band. The clock is injected — no sleeps.
 	counters := NewSourceCounters(15 * time.Minute)
 	freeze := time.Date(2026, 10, 15, 5, 0, 0, 0, time.UTC)
 	counters.now = func() time.Time { return freeze }
 
-	payload := counters.SnapshotAny().(map[string]any)
+	health := counters.Snapshot()
 
-	if stale, ok := payload["stale"].(bool); !ok || !stale {
-		t.Errorf("stale = %v (%T), want true before the first pass", payload["stale"], payload["stale"])
+	if !health.Stale {
+		t.Error("stale = false, want true before the first pass")
 	}
 
-	if age, ok := payload["last_pass_age_seconds"].(float64); !ok || age != -1 {
-		t.Errorf("last_pass_age_seconds = %v, want -1 before the first pass", payload["last_pass_age_seconds"])
+	if health.AgeSeconds != -1 {
+		t.Errorf("age seconds = %v, want -1 before the first pass", health.AgeSeconds)
 	}
 
 	counters.Record("webhook-log", IngestStats{Total: 1, Recorded: 1})
 
-	payload = counters.SnapshotAny().(map[string]any)
+	health = counters.Snapshot()
 
-	if stale, ok := payload["stale"].(bool); !ok || stale {
-		t.Errorf("stale = %v, want false right after a pass", payload["stale"])
+	if health.Stale {
+		t.Error("stale = true, want false right after a pass")
 	}
 
-	if _, ok := payload["last_pass"].(time.Time); !ok {
-		t.Errorf("last_pass = %T, want time.Time", payload["last_pass"])
+	if health.LastPass.IsZero() {
+		t.Error("last_pass = zero, want the pass timestamp")
 	}
 
 	counters.lastPass = freeze.Add(-45 * time.Minute)
-	payload = counters.SnapshotAny().(map[string]any)
+	health = counters.Snapshot()
 
-	if stale, ok := payload["stale"].(bool); !ok || !stale {
-		t.Errorf("stale = %v, want true at three missed cadences", payload["stale"])
+	if !health.Stale {
+		t.Error("stale = false, want true at three missed cadences")
 	}
 }
 

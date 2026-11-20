@@ -303,7 +303,9 @@ func wireServeSources(
 	recTimeout time.Duration,
 	keyFile string,
 ) (func() any, web.RecordingOptions, *telnyx.Client) {
-	opsProvider := counters.SnapshotAny
+	// The typed snapshot crosses the seam; the any boundary stays at the
+	// web Options (fixtures and older producers must keep decoding).
+	opsProvider := func() any { return counters.Snapshot() }
 	if wiredOps {
 		opsProvider = cannedStaleOps
 	}
@@ -325,32 +327,18 @@ func wireServeSources(
 	return opsProvider, recordings, telnyxClient
 }
 
-// cannedStaleOps is the -wired-ops fixture payload: the wire shape /api/ops
-// serves, carrying an unambiguous stale verdict (age 2h, stale=true).
+// cannedStaleOps is the -wired-ops fixture payload: the typed shape
+// cli.PollerHealth (the same value the live poller produces), carrying an
+// unambiguous stale verdict (age 2h, stale=true).
 func cannedStaleOps() any {
-	const (
-		fixtureOfferedCDR     = 12
-		fixtureRecordedCDR    = 12
-		fixtureOfferedTelnyx  = 8
-		fixtureRecordedTelnyx = 8
-		fixturePassAgeSecs    = 7200.0
-	)
-
-	return map[string]any{
-		"sources": map[string]any{
-			"freeswitch-cdr": map[string]any{
-				"offered": fixtureOfferedCDR, "recorded": fixtureRecordedCDR, "corrected": 0, "rejected": []string{},
-			},
-			"telnyx-conversation": map[string]any{
-				"offered":   fixtureOfferedTelnyx,
-				"recorded":  fixtureRecordedTelnyx,
-				"corrected": 0,
-				"rejected":  []string{},
-			},
+	return cli.PollerHealth{
+		Sources: map[string]cli.SourceStat{
+			"freeswitch-cdr":      {Offered: 12, Recorded: 12},
+			"telnyx-conversation": {Offered: 8, Recorded: 8},
 		},
-		"last_pass":             time.Now().Add(-2 * time.Hour).UTC(),
-		"last_pass_age_seconds": fixturePassAgeSecs,
-		"stale":                 true,
+		LastPass:   time.Now().Add(-2 * time.Hour).UTC(),
+		AgeSeconds: 7200.0,
+		Stale:      true,
 	}
 }
 

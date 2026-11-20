@@ -75,10 +75,10 @@ type SourceCounters struct {
 
 // SourceStat is one source's latest-pass ingest counters.
 type SourceStat struct {
-	Offered   int
-	Recorded  int
-	Corrected int
-	Rejected  []string
+	Offered   int      `json:"offered"`
+	Recorded  int      `json:"recorded"`
+	Corrected int      `json:"corrected"`
+	Rejected  []string `json:"rejected"`
 }
 
 // NewSourceCounters builds an empty counter set. every is the poll cadence
@@ -128,8 +128,10 @@ func (c *SourceCounters) Record(source string, stats IngestStats) {
 	c.lastPass = c.now().UTC()
 }
 
-// Snapshot copies the counters for serving.
-func (c *SourceCounters) Snapshot() (map[string]SourceStat, time.Time) {
+// snapshotRaw copies the counters and the last-pass timestamp under the
+// lock — the shared read both the tuple form and the typed snapshot build
+// on.
+func (c *SourceCounters) snapshotRaw() (map[string]SourceStat, time.Time) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -439,25 +441,30 @@ func mergeStats(into, from IngestStats) IngestStats {
 	return into
 }
 
-// SnapshotAny exposes the counters as the untyped payload the web layer
-// serves at /api/ops (cli stays decoupled from the web package). The age
-// and stale keys carry the pass-health verdict so consumers get an honest
-// answer instead of deriving one from the timestamp: age is -1 when no
-// pass has ever been recorded (and stale is then true by definition).
-func (c *SourceCounters) SnapshotAny() any {
-	c.mu.Lock()
+// PollerHealth is the typed pass-health snapshot that crosses the ops seam
+// (deepening #1, 2026-11-20): one shape produced by the poller, consumed by
+// the web ops surface and the serve fixture, instead of five hand-maintained
+// map copies. The json tags ARE the /api/ops wire keys — JSON survives only
+// where a network actually is.
+type PollerHealth struct {
+	Sources   map[string]SourceStat `json:"sources"`
+	LastPass  time.Time             `json:"last_pass"`
+	// AgeSeconds carries the pass-health verdict so consumers get an honest
+	// answer instead of deriving one from the timestamp: -1 when no pass has
+	// ever been recorded (and Stale is then true by definition).
+	AgeSeconds float64 `json:"last_pass_age_seconds"`
+	Stale      bool    `json:"stale"`
+}
 
-	sources := make(map[string]SourceStat, len(c.sources))
-	maps.Copy(sources, c.sources)
-	lastPass, every, now := c.lastPass, c.every, c.now
-	c.mu.Unlock()
+// Snapshot exposes the counters as the typed poller-health snapshot.
+func (c *SourceCounters) Snapshot() PollerHealth {
+	sources, lastPass := c.snapshotRaw()
+	age, stale := stalePass(lastPass, c.every, c.now())
 
-	age, stale := stalePass(lastPass, every, now())
-
-	return map[string]any{
-		"sources":               sources,
-		"last_pass":             lastPass,
-		"last_pass_age_seconds": age.Seconds(),
-		"stale":                 stale,
+	return PollerHealth{
+		Sources:    sources,
+		LastPass:   lastPass,
+		AgeSeconds: age.Seconds(),
+		Stale:      stale,
 	}
 }
