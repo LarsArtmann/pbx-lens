@@ -92,7 +92,7 @@ func (p *enrichPass) enrichConversation(
 		return
 	}
 
-	current := enrichmentOf(view)
+	current := view.Enrichment
 
 	enr, reject := p.targetEnrichment(ctx, seed, view, current)
 	if reject != "" {
@@ -180,7 +180,7 @@ func dispatchEnrich(
 	view calls.CallView,
 	enr calls.Enrichment,
 ) string {
-	cmd, err := calls.NewEnrichCommand(view.Observation(), enr)
+	cmd, err := calls.NewEnrichCommand(view.Observation, enr)
 	if err != nil {
 		return seed.ConversationID + ": " + err.Error()
 	}
@@ -190,13 +190,4 @@ func dispatchEnrich(
 	}
 
 	return ""
-}
-
-// enrichmentOf reads the view's current enrichment payload.
-func enrichmentOf(view calls.CallView) calls.Enrichment {
-	return calls.Enrichment{
-		CostMicros:     view.CostMicros,
-		CostCurrency:   view.CostCurrency,
-		InsightSummary: view.InsightSummary,
-	}
 }

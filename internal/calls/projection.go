@@ -1,8 +1,6 @@
 package calls
 
 import (
-	"time"
-
 	"github.com/larsartmann/go-cqrs-lite/metaengine/projectionadapter/v4"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/record/v4"
@@ -18,70 +16,30 @@ const viewVolumeCap = 100_000
 type callLookup struct{}
 
 type CallView struct {
-	NativeID          NativeID         `json:"native_id"`
-	Kind              SourceKind       `json:"kind"`
-	Direction         Direction        `json:"direction"`
-	StartedAt         time.Time        `json:"started_at"`
-	DurationSecs      int              `json:"duration_secs"`
-	FromNumber        string           `json:"from_number"`
-	ToNumber          string           `json:"to_number"`
-	HangupCause       string           `json:"hangup_cause"`
-	IsAI              bool             `json:"is_ai"`
-	TranscriptExcerpt string           `json:"transcript_excerpt"`
-	Transcript        []TranscriptTurn `json:"transcript,omitempty"`
-	SourceEvents      []SourceEvent    `json:"source_events,omitempty"`
-	RecordingRef      string           `json:"recording_ref"`
-	CostMicros        int64            `json:"cost_micros,omitempty"`
-	CostCurrency      string           `json:"cost_currency,omitempty"`
-	InsightSummary    string           `json:"insight_summary,omitempty"`
-	MOS               float64          `json:"mos,omitempty"`
-	ContentHash       string           `json:"content_hash"`
+	// The read model IS a composition, not a mirror (PC-1, 2026-11-20):
+	// Observation and Enrichment embed whole, so adding a domain field can
+	// never desynchronize the view — the JSON keys flatten identically
+	// (field tags are byte-identical to the pre-embed view's), decode is
+	// key-based so pre-embed rows read fine, and promoted field access
+	// (view.FromNumber, view.CostMicros) keeps every call site shape.
+	Observation
+	Enrichment
+
+	ContentHash string `json:"content_hash"`
 }
 
+// ViewFrom is the one canonical observation→view projection (the fold's
+// defensive UTC normalization lives here and nowhere else). The observation
+// is embedded losslessly, so the stored view's ContentHash equals the
+// observation's — the invariant the enrich pass relies on when it needs the
+// current observation to address a call.enrich command.
 func ViewFrom(obs Observation, enr Enrichment) CallView {
-	return CallView{
-		NativeID:          obs.NativeID,
-		Kind:              obs.Kind,
-		Direction:         obs.Direction,
-		StartedAt:         obs.StartedAt.UTC(),
-		DurationSecs:      obs.DurationSecs,
-		FromNumber:        obs.FromNumber,
-		ToNumber:          obs.ToNumber,
-		HangupCause:       obs.HangupCause,
-		IsAI:              obs.IsAI,
-		TranscriptExcerpt: obs.TranscriptExcerpt,
-		Transcript:        obs.Transcript,
-		SourceEvents:      obs.SourceEvents,
-		RecordingRef:      obs.RecordingRef,
-		CostMicros:        enr.CostMicros,
-		CostCurrency:      enr.CostCurrency,
-		InsightSummary:    enr.InsightSummary,
-		MOS:               obs.MOS,
-		ContentHash:       obs.ContentHash(),
-	}
-}
+	obs.StartedAt = obs.StartedAt.UTC()
 
-// Observation rebuilds the stored observation snapshot from the view.
-// ViewFrom is a lossless projection of the observation (enrichment aside),
-// so the rebuild's ContentHash equals the view's stored ContentHash — the
-// invariant the enrich pass relies on when it needs the current observation
-// to address a call.enrich command.
-func (v CallView) Observation() Observation {
-	return Observation{
-		NativeID:          v.NativeID,
-		Kind:              v.Kind,
-		Direction:         v.Direction,
-		StartedAt:         v.StartedAt,
-		DurationSecs:      v.DurationSecs,
-		FromNumber:        v.FromNumber,
-		ToNumber:          v.ToNumber,
-		HangupCause:       v.HangupCause,
-		IsAI:              v.IsAI,
-		TranscriptExcerpt: v.TranscriptExcerpt,
-		Transcript:        v.Transcript,
-		SourceEvents:      v.SourceEvents,
-		RecordingRef:      v.RecordingRef,
-		MOS:               v.MOS,
+	return CallView{
+		Observation: obs,
+		Enrichment:  enr,
+		ContentHash: obs.ContentHash(),
 	}
 }
 

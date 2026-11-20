@@ -26,7 +26,7 @@ func TestViewObservationRoundTripHashesIdentically(t *testing.T) {
 	}
 
 	view := ViewFrom(obs, Enrichment{CostMicros: 2000, CostCurrency: "USD", InsightSummary: "eggs"})
-	rebuilt := view.Observation()
+	rebuilt := view.Observation
 
 	if rebuilt.ContentHash() != obs.ContentHash() {
 		t.Fatalf(
@@ -81,7 +81,7 @@ func TestViewRoundTripPreservesSourceEventsWithTheSameHash(t *testing.T) {
 	}
 
 	view := ViewFrom(obs, Enrichment{})
-	rebuilt := view.Observation()
+	rebuilt := view.Observation
 
 	if len(rebuilt.SourceEvents) != 2 {
 		t.Fatalf("round trip lost the markers: %+v", rebuilt.SourceEvents)

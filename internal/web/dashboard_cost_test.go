@@ -29,7 +29,7 @@ func enrichCall(
 		t.Fatalf("read call %q for enrichment: found=%v err=%v", nativeID, found, err)
 	}
 
-	cmd, err := calls.NewEnrichCommand(view.Observation(), enr)
+	cmd, err := calls.NewEnrichCommand(view.Observation, enr)
 	if err != nil {
 		t.Fatalf("build enrich command: %v", err)
 	}
