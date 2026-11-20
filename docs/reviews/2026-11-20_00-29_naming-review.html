@@ -547,6 +547,14 @@
       th {
         overflow-wrap: anywhere;
       }
+      /* Round two (same QA pass): auto-fit still squeezed the LAST column
+         of the six-column tables to ~48-70px. A minimum track width on the
+         final column forces the squeeze into the prose-heavy columns,
+         which wrap gracefully at this width. */
+      th:last-child,
+      td:last-child {
+        min-width: 8.5rem;
+      }
       th {
         text-align: left;
         padding: 0.6rem 0.9rem;
