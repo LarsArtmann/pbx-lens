@@ -519,7 +519,7 @@ func TestRegistrationSectionFollowsTheSeat(t *testing.T) {
 			t.Fatalf("GET /login status = %d, want 200", recorder.Code)
 		}
 
-		if !strings.Contains(recorder.Body.String(), "lp-register-section") {
+		if !strings.Contains(recorder.Body.String(), `<section id="lp-register-section"`) {
 			t.Error("fresh identity DB hides the register section — the operator could never sign up")
 		}
 
@@ -555,7 +555,7 @@ func TestRegistrationSectionFollowsTheSeat(t *testing.T) {
 			t.Fatalf("GET /login status = %d, want 200", recorder.Code)
 		}
 
-		if strings.Contains(recorder.Body.String(), "lp-register-section") {
+		if strings.Contains(recorder.Body.String(), `<section id="lp-register-section"`) {
 			t.Error("taken seat still renders the register section — a form that always fails")
 		}
 	}
