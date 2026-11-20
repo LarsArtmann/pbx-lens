@@ -134,3 +134,4 @@ htmlcov/
 target/
 *.pdb
 # <<< buildflow-managed (.gitignore) <<<
+/cmd/pbx-lens/pbx-lens
