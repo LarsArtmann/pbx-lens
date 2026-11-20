@@ -44,10 +44,13 @@ const fail = probe.fail;
   try {
     // --- Contract D: keyboard walk (plan M5/F16) --------------------------
     // A keyboard user must reach the clickable table rows by tabbing, and
-    // the row must show the app.css focus ring (inset teal outline) when
-    // focused via keyboard — the library markup has NO visible focus style
-    // of its own (upstream filing candidate #49). The copy affordances live
-    // on the DETAIL page, so the copy reachability leg walks there.
+    // the row must show a teal focus ring when focused via keyboard. Since
+    // templ-components v1.27.2 the library draws the ring itself
+    // (outline-accent-* utilities; #49 retired) and rows carry
+    // data-tc-row-href instead of the invalid role="link" — the probe
+    // accepts both spellings so a library roll-back stays visible. The copy
+    // affordances live on the DETAIL page, so the copy reachability leg
+    // walks there.
     async function tabState(page) {
       await page.keyboard.press("Tab");
       return page.evaluate(() => {
@@ -55,7 +58,7 @@ const fail = probe.fail;
         if (!el) return { isRow: false, isCopy: false };
         const cs = getComputedStyle(el);
         return {
-          isRow: el.matches('tr[role="link"]'),
+          isRow: el.matches('tr[data-tc-row-href], tr[role="link"]'),
           isCopy: el.matches("[data-tc-copy]"),
           outline: `${cs.outlineStyle} ${cs.outlineColor}`,
         };
