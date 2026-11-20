@@ -52,7 +52,11 @@ func serve(args []string) {
 	fs := flag.NewFlagSet("serve", flag.ExitOnError)
 	db := fs.String("db", "", "sqlite DSN (required)")
 	addr := fs.String("addr", defaultAddr, "listen address")
-	keyFile := fs.String("telnyx-key-file", "", "Telnyx API key file for the recording proxy (default: disabled)")
+	keyFile := fs.String(
+		"telnyx-key-file",
+		"",
+		"Telnyx API key file for the recording proxy (default: disabled)",
+	)
 	recordingsDir := fs.String(
 		"recordings-dir",
 		"/var/lib/telephony/recordings",
@@ -135,9 +139,21 @@ func serve(args []string) {
 		0,
 		"refuse polled observations older than this (0 = keep everything)",
 	)
-	cdrFile := fs.String("cdr-file", "", "FreeSWITCH Master.csv re-ingested every poll (empty = skip)")
-	webhookLog := fs.String("webhook-log", "", "receiver webhook JSONL re-ingested every poll (empty = skip)")
-	transcriptsDir := fs.String("transcripts-dir", "", "agent transcripts dir re-scanned every poll (empty = skip)")
+	cdrFile := fs.String(
+		"cdr-file",
+		"",
+		"FreeSWITCH Master.csv re-ingested every poll (empty = skip)",
+	)
+	webhookLog := fs.String(
+		"webhook-log",
+		"",
+		"receiver webhook JSONL re-ingested every poll (empty = skip)",
+	)
+	transcriptsDir := fs.String(
+		"transcripts-dir",
+		"",
+		"agent transcripts dir re-scanned every poll (empty = skip)",
+	)
 	wiredOps := fs.Bool(
 		"wired-ops",
 		false,
@@ -172,7 +188,11 @@ func serve(args []string) {
 
 	if *authDB != "" {
 		oidcCfg := oidcConfigFromFlags(
-			*authOIDCIssuer, *authOIDCClientID, *authOIDCSecretFile, *authOIDCRedirect, *authOIDCGroup,
+			*authOIDCIssuer,
+			*authOIDCClientID,
+			*authOIDCSecretFile,
+			*authOIDCRedirect,
+			*authOIDCGroup,
 		)
 
 		identity, err = openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin, oidcCfg)
@@ -269,7 +289,9 @@ func serve(args []string) {
 // oidcConfigFromFlags folds the five -auth-oidc-* flags into the identity
 // lane's provider config: empty issuer = passkey-only (nil), and the
 // comma-separated group allowlist is trimmed with blanks dropped.
-func oidcConfigFromFlags(issuer, clientID, secretFile, redirect, group string) *identity.OIDCConfig {
+func oidcConfigFromFlags(
+	issuer, clientID, secretFile, redirect, group string,
+) *identity.OIDCConfig {
 	if issuer == "" {
 		return nil
 	}
@@ -331,13 +353,21 @@ func wireServeSources(
 // cli.PollerHealth (the same value the live poller produces), carrying an
 // unambiguous stale verdict (age 2h, stale=true).
 func cannedStaleOps() any {
+	const (
+		fixtureOfferedCDR     = 12
+		fixtureRecordedCDR    = 12
+		fixtureOfferedTelnyx  = 8
+		fixtureRecordedTelnyx = 8
+		fixturePassAgeSecs    = 7200.0
+	)
+
 	return cli.PollerHealth{
 		Sources: map[string]cli.SourceStat{
-			"freeswitch-cdr":      {Offered: 12, Recorded: 12},
-			"telnyx-conversation": {Offered: 8, Recorded: 8},
+			"freeswitch-cdr":      {Offered: fixtureOfferedCDR, Recorded: fixtureRecordedCDR},
+			"telnyx-conversation": {Offered: fixtureOfferedTelnyx, Recorded: fixtureRecordedTelnyx},
 		},
 		LastPass:   time.Now().Add(-2 * time.Hour).UTC(),
-		AgeSeconds: 7200.0,
+		AgeSeconds: fixturePassAgeSecs,
 		Stale:      true,
 	}
 }
@@ -415,7 +445,8 @@ func buildServiceConfig(
 		serviceConfig.ExtraMiddlewares = append(serviceConfig.ExtraMiddlewares,
 			func(next http.Handler) http.Handler {
 				return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					w.Header().Set("Content-Security-Policy-Report-Only", nonceCSP(httputil.NonceFromRequest(r)))
+					w.Header().
+						Set("Content-Security-Policy-Report-Only", nonceCSP(httputil.NonceFromRequest(r)))
 					next.ServeHTTP(w, r)
 				})
 			})
@@ -538,7 +569,10 @@ func deriveRPID(originFlag, host string) string {
 	if originFlag != "" {
 		origins := strings.Split(originFlag, ",")
 
-		if u, parseErr := url.Parse(strings.TrimSpace(origins[0])); parseErr == nil && u.Hostname() != "" {
+		if u, parseErr := url.Parse(
+			strings.TrimSpace(origins[0]),
+		); parseErr == nil &&
+			u.Hostname() != "" {
 			return u.Hostname()
 		}
 	}

@@ -447,8 +447,8 @@ func mergeStats(into, from IngestStats) IngestStats {
 // map copies. The json tags ARE the /api/ops wire keys — JSON survives only
 // where a network actually is.
 type PollerHealth struct {
-	Sources   map[string]SourceStat `json:"sources"`
-	LastPass  time.Time             `json:"last_pass"`
+	Sources  map[string]SourceStat `json:"sources"`
+	LastPass time.Time             `json:"last_pass"`
 	// AgeSeconds carries the pass-health verdict so consumers get an honest
 	// answer instead of deriving one from the timestamp: -1 when no pass has
 	// ever been recorded (and Stale is then true by definition).

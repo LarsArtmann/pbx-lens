@@ -23,9 +23,14 @@ func opsCounters(t *testing.T) *CacheCounters {
 
 	stats := NewCacheCounters()
 
-	generate := ETagMiddleware(stats, nil)(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		_, _ = w.Write([]byte("stable body"))
-	}))
+	generate := ETagMiddleware(
+		stats,
+		nil,
+	)(
+		http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			_, _ = w.Write([]byte("stable body"))
+		}),
+	)
 
 	first := httptest.NewRecorder()
 	generate.ServeHTTP(first, httptest.NewRequest(http.MethodGet, "/", nil))
@@ -43,31 +48,23 @@ func opsCounters(t *testing.T) *CacheCounters {
 }
 
 func opsPollerPayload() func() any {
-	age := 90.0
-	stale := false
-
-	return func() any {
-		return map[string]any{
-			"sources": map[string]any{
-				"webhook-log": map[string]any{
-					"offered": 2, "recorded": 2, "corrected": 0, "rejected": []string{},
-				},
-				"agent-transcript": map[string]any{
-					"offered": 3, "recorded": 2, "corrected": 1,
-					"rejected": []string{"age-cutoff", "parse-error"},
-				},
-				"freeswitch-cdr": map[string]any{
-					"offered": 7, "recorded": 7, "corrected": 0, "rejected": []string{},
-				},
-				"telnyx-conversation": map[string]any{
-					"offered": 4, "recorded": 4, "corrected": 0, "rejected": []string{},
-				},
+	health := cli.PollerHealth{
+		Sources: map[string]cli.SourceStat{
+			"webhook-log": {Offered: 2, Recorded: 2},
+			"agent-transcript": {
+				Offered:   3,
+				Recorded:  2,
+				Corrected: 1,
+				Rejected:  []string{"age-cutoff", "parse-error"},
 			},
-			"last_pass":             "2026-10-12T04:00:00Z",
-			"last_pass_age_seconds": age,
-			"stale":                 stale,
-		}
+			"freeswitch-cdr":      {Offered: 7, Recorded: 7},
+			"telnyx-conversation": {Offered: 4, Recorded: 4},
+		},
+		LastPass:   time.Date(2026, 10, 12, 4, 0, 0, 0, time.UTC),
+		AgeSeconds: 90.0,
 	}
+
+	return func() any { return health }
 }
 
 func TestOpsPageRendersCounters(t *testing.T) {
@@ -97,7 +94,11 @@ func TestOpsPageRendersCounters(t *testing.T) {
 	}
 
 	// Sorted sources: agent-transcript must precede webhook-log.
-	if before := strings.Index(body, "agent-transcript"); before == -1 || before > strings.Index(body, "webhook-log") {
+	if before := strings.Index(
+		body,
+		"agent-transcript",
+	); before == -1 ||
+		before > strings.Index(body, "webhook-log") {
 		t.Error("/ops sources must render in sorted order")
 	}
 
@@ -123,10 +124,9 @@ func TestOpsPageStaleVerdictAlerts(t *testing.T) {
 	age := 3 * 15 * 60.0
 
 	payload = func() any {
-		p := opsPollerPayload()()
-		p.(map[string]any)["last_pass_age_seconds"] = age
-
-		p.(map[string]any)["stale"] = true
+		p := opsPollerPayload()().(cli.PollerHealth)
+		p.AgeSeconds = age
+		p.Stale = true
 
 		return p
 	}
@@ -161,7 +161,11 @@ func TestOpsPageUnknownVerdictNeverLies(t *testing.T) {
 	}
 
 	if got := strings.Count(body, "unknown"); got < 2 {
-		t.Errorf("/ops should render unknown verdict and age (got %d occurrences, body: %s)", got, body)
+		t.Errorf(
+			"/ops should render unknown verdict and age (got %d occurrences, body: %s)",
+			got,
+			body,
+		)
 	}
 
 	if strings.Contains(body, "Poller pass is stale") {
@@ -311,7 +315,9 @@ func TestOpsPageEmptyActiveRetentionSaysNothingDue(t *testing.T) {
 	}
 
 	if strings.Contains(body, "unknown — the oldest-view scan failed") {
-		t.Error("empty index + active window must not borrow the scan-failure wording (the scan is known-good)")
+		t.Error(
+			"empty index + active window must not borrow the scan-failure wording (the scan is known-good)",
+		)
 	}
 
 	if !strings.Contains(body, "no rows indexed yet") {
