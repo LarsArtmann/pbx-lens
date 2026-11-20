@@ -16,16 +16,16 @@ import (
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"golang.org/x/time/rate"
-	)
+)
 
-	// RecordingFetcher is the consumer-side view of a recording source the
-	// proxy needs: fetch one recording's playback payload (fresh signed
-	// download URLs) by recording id. It lives on the calls.RecordingMedia
-	// shape (T10, 2026-11-20) so this package imports NO ingest client —
-	// telnyx.Client satisfies it as-is via its FetchRecordingMedia adapter.
-	type RecordingFetcher interface {
-		FetchRecordingMedia(ctx context.Context, recordingID string) (calls.RecordingMedia, error)
-	}
+// RecordingFetcher is the consumer-side view of a recording source the
+// proxy needs: fetch one recording's playback payload (fresh signed
+// download URLs) by recording id. It lives on the calls.RecordingMedia
+// shape (T10, 2026-11-20) so this package imports NO ingest client —
+// telnyx.Client satisfies it as-is via its FetchRecordingMedia adapter.
+type RecordingFetcher interface {
+	FetchRecordingMedia(ctx context.Context, recordingID string) (calls.RecordingMedia, error)
+}
 
 // DefaultUpstreamTimeout bounds each upstream hop of the recording proxy
 // when RecordingOptions.UpstreamTimeout is unset: the metadata fetch runs
