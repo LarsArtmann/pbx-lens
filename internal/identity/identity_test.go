@@ -2,13 +2,13 @@ package identity
 
 import (
 	"context"
-	"encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
 
 // The identity session gate (2026-11-11 usermgmt adoption): an event-sourced
@@ -60,115 +60,6 @@ func identityHandler(t *testing.T, identity *Identity) http.Handler {
 	identity.Register(mux)
 
 	return identity.Middleware()(mux)
-}
-
-// loginChallenge walks the CSRF half of the browser flow: fetch /login (the
-// middleware issues its token cookie, the page embeds the token in its meta
-// tag) and return both — the pair every auth ceremony POST must present.
-func loginChallenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
-	t.Helper()
-
-	request := httptest.NewRequest(http.MethodGet, "/login", nil)
-	request.Header.Set("Accept", "text/html")
-
-	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, request)
-
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("GET /login status = %d, want 200", recorder.Code)
-	}
-
-	var csrfCookie *http.Cookie
-
-	for _, cookie := range recorder.Result().Cookies() {
-		if cookie.Name == "csrf_token" {
-			csrfCookie = cookie
-		}
-	}
-
-	if csrfCookie == nil {
-		t.Fatal("GET /login issued no csrf_token cookie — the CSRF middleware is not wired")
-	}
-
-	return csrfCookie, extractCSRFToken(t, recorder.Body.String())
-}
-
-// postAuthJSON drives an auth ceremony POST the way a real browser does:
-// same-origin attestation (Host + Origin + Referer — nosurf requires them on
-// secure-classified requests), the CSRF cookie/token pair, and the cookie
-// jar. Returns the recorder for status/cookie assertions.
-func postAuthJSON(
-	t *testing.T,
-	handler http.Handler,
-	path string,
-	payload map[string]string,
-	cookie *http.Cookie,
-	token string,
-) *httptest.ResponseRecorder {
-	t.Helper()
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		t.Fatalf("marshal %s request: %v", path, err)
-	}
-
-	request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(string(body)))
-	request.Host = "localhost:8300"
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Origin", "http://localhost:8300")
-	request.Header.Set("Referer", "http://localhost:8300/login")
-	request.Header.Set("X-Csrf-Token", token)
-
-	if cookie != nil {
-		request.AddCookie(cookie)
-	}
-
-	recorder := httptest.NewRecorder()
-	handler.ServeHTTP(recorder, request)
-
-	return recorder
-}
-
-// loginSession walks the browser flow headlessly: fetch /login (the CSRF
-// middleware issues its token cookie and the page embeds the token in its
-// meta tag), then POST /auth/register with both. The response carries the
-// session cookie the gate accepts. Registration on a fresh identity always
-// succeeds — the MaxUsers=1 door is still open.
-func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie {
-	t.Helper()
-
-	csrfCookie, token := loginChallenge(t, handler)
-
-	recorder := postAuthJSON(t, handler, "/auth/register", map[string]string{
-		"email": email, "display_name": "Operator",
-	}, csrfCookie, token)
-
-	if recorder.Code != http.StatusCreated {
-		t.Fatalf("POST /auth/register status = %d, want 201 (body: %s)", recorder.Code, recorder.Body.String())
-	}
-
-	for _, cookie := range recorder.Result().Cookies() {
-		if cookie.Name == "session_token" {
-			return cookie
-		}
-	}
-
-	t.Fatal("registration set no session_token cookie")
-
-	return nil
-}
-
-// extractCSRFToken reads the login page's <meta name="csrf-token"> value —
-// the same token the login page's own JavaScript sends on every ceremony.
-func extractCSRFToken(t *testing.T, html string) string {
-	t.Helper()
-
-	match := regexp.MustCompile(`name="csrf-token" content="([^"]+)"`).FindStringSubmatch(html)
-	if match == nil {
-		t.Fatal("login page carries no csrf-token meta — the token bridge is broken")
-	}
-
-	return match[1]
 }
 
 func TestIdentityGateRedirectsBrowsersAndChallengesAPIs(t *testing.T) {
@@ -569,4 +460,32 @@ func TestRegistrationSectionFollowsTheSeat(t *testing.T) {
 			t.Error("taken seat still renders the register section — a form that always fails")
 		}
 	}
+}
+
+// The ceremony walkers live in internal/identity/identitytest — one copy
+// shared with the web package's flow tests (the 2026-11-20 dedup gate
+// flagged the duplicated walk). Thin delegates keep the in-package call
+// sites short; identitytest deliberately does not import this package, so
+// the in-package tests may import it.
+func loginChallenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
+	return identitytest.Challenge(t, handler)
+}
+
+func postAuthJSON(
+	t *testing.T,
+	handler http.Handler,
+	path string,
+	payload map[string]string,
+	cookie *http.Cookie,
+	token string,
+) *httptest.ResponseRecorder {
+	return identitytest.PostAuth(t, handler, path, payload, cookie, token)
+}
+
+func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie {
+	return identitytest.Session(t, handler, email)
+}
+
+func extractCSRFToken(t *testing.T, html string) string {
+	return identitytest.CSRFToken(t, html)
 }
