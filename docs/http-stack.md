@@ -25,7 +25,7 @@ appkit v0.12 bump — it is the default stack's outermost entry, ABOVE these):
 1. **auth** — the identity session gate when `-auth-db` is set (2026-11-11
    usermgmt adoption; the htpasswd middleware it replaced is gone from the
    tree): session enrichment → CSRF → public-path bypass + session
-   requirement, composed ONCE in `internal/web/userauth.go`. `/login`,
+   requirement, composed ONCE in `internal/identity/identity.go`. `/login`,
    `/auth/*`, `/app.css`, and `/robots.txt` stay public; browsers (Accept:
    text/html or HX-Request) get 303 to `/login`, API clients 401. Sessions
    are SQL-backed (`session_token` cookie, SameSite=Strict; the `Secure` flag

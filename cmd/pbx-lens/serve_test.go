@@ -18,6 +18,7 @@ import (
 	"github.com/larsartmann/go-appkit/testkit"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/web"
 )
@@ -1014,7 +1015,7 @@ func BenchmarkConcurrentPoll(b *testing.B) {
 func BenchmarkConcurrentPollIdentity(b *testing.B) {
 	dsn := filepath.Join(b.TempDir(), "identity-bench.db")
 
-	identity, err := web.OpenIdentity(context.Background(), web.IdentityConfig{
+	identity, err := identity.OpenIdentity(context.Background(), identity.IdentityConfig{
 		DSN: dsn, RPID: "localhost", RPOrigins: []string{"http://localhost:8300"},
 	})
 	if err != nil {

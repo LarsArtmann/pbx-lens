@@ -18,6 +18,7 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -72,7 +73,7 @@ type Options struct {
 	// Identity is the live identity surface (serve passes it when -auth-db
 	// is set). The ops page/api read their native-login section from it;
 	// nil leaves the section out (auth-free boots show no identity card).
-	Identity *Identity
+	Identity *identity.Identity
 }
 
 // Searcher is the content-query surface the web UI needs: the call view
@@ -165,7 +166,7 @@ type server struct {
 	now               func() time.Time
 	recordingThrottle recordingThrottle
 	authEnabled       bool
-	identity          *Identity
+	identity          *identity.Identity
 }
 
 // logf reports a failure that surfaces after the response body started —
@@ -689,7 +690,7 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 
 	retention, retentionFailures := s.retentionWireView(r.Context())
 
-	var identity *IdentityOps
+	var identity *identity.IdentityOps
 
 	if s.identity != nil {
 		snapshot := s.identity.OpsSnapshot(r.Context())
@@ -780,7 +781,7 @@ func composeOpsPayload(
 	cache *CacheStats,
 	coverage []coverageWire,
 	retention *retentionWire,
-	identity *IdentityOps,
+	identity *identity.IdentityOps,
 	failures []opsScanFailure,
 ) any {
 	if cache == nil && len(coverage) == 0 && retention == nil && identity == nil && len(failures) == 0 {
@@ -821,7 +822,7 @@ func mergeOpsSections(
 	cache *CacheStats,
 	coverage []coverageWire,
 	retention *retentionWire,
-	identity *IdentityOps,
+	identity *identity.IdentityOps,
 	failures []opsScanFailure,
 ) {
 	if cache != nil {

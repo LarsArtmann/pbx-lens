@@ -16,6 +16,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/httputil"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/ingest"
 	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"github.com/larsartmann/pbx-lens/internal/search"
@@ -167,7 +168,7 @@ func serve(args []string) {
 	// The identity context (passkey login) is opt-in via -auth-db: without
 	// it the serve runs unauthenticated — the localhost dev posture the
 	// probes rely on.
-	var identity *web.Identity
+	var identity *identity.Identity
 
 	if *authDB != "" {
 		oidcCfg := oidcConfigFromFlags(
@@ -268,12 +269,12 @@ func serve(args []string) {
 // oidcConfigFromFlags folds the five -auth-oidc-* flags into the identity
 // lane's provider config: empty issuer = passkey-only (nil), and the
 // comma-separated group allowlist is trimmed with blanks dropped.
-func oidcConfigFromFlags(issuer, clientID, secretFile, redirect, group string) *web.OIDCConfig {
+func oidcConfigFromFlags(issuer, clientID, secretFile, redirect, group string) *identity.OIDCConfig {
 	if issuer == "" {
 		return nil
 	}
 
-	cfg := &web.OIDCConfig{
+	cfg := &identity.OIDCConfig{
 		Issuer:           issuer,
 		ClientID:         clientID,
 		ClientSecretFile: secretFile,
@@ -491,11 +492,11 @@ func openServeIndex(
 func openServeIdentity(
 	ctx context.Context,
 	addr, authDB, authRPID, authOrigin string,
-	oidc *web.OIDCConfig,
-) (*web.Identity, error) {
+	oidc *identity.OIDCConfig,
+) (*identity.Identity, error) {
 	rpid, origins := deriveAuthDefaults(addr, authRPID, authOrigin)
 
-	identity, err := web.OpenIdentity(ctx, web.IdentityConfig{
+	identity, err := identity.OpenIdentity(ctx, identity.IdentityConfig{
 		DSN: authDB, RPID: rpid, RPOrigins: origins, OIDC: oidc,
 	})
 	if err != nil {

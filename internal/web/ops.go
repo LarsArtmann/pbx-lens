@@ -11,6 +11,7 @@ import (
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	servertiming "github.com/larsartmann/httputil/server_timing"
+	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/retention"
 	"github.com/larsartmann/templ-components/utils/format"
 )
@@ -28,7 +29,7 @@ type opsSnapshot struct {
 	// Identity is the native-login card (plan P08): enabled/RPID/users/
 	// sessions + the audit action ring. Nil on an auth-free boot — the
 	// card is absent, not zeroed.
-	Identity *IdentityOps
+	Identity *identity.IdentityOps
 	// Retention is the age-posture card: always present — "off" is a fact
 	// the operator should see, not an absence to guess at.
 	Retention retentionSnapshot

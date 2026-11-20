@@ -111,3 +111,43 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 		t.Fatalf("authenticated detail status = %d, want 200", recorder.Code)
 	}
 }
+
+// The nav's Sign out form is the ONLY logout affordance (T16 split,
+// 2026-11-20): the identity package owns the session death; this package
+// owns the markup that drives it — the form must render on an authed page
+// and carry the CSRF token the ceremony posts.
+func TestNavRendersTheLogoutFormWhenAuthed(t *testing.T) {
+	identity := openTestIdentity(t)
+
+	// The FULL web composition (Options.Identity wired): the nav renders
+	// the Sign out form only when the server knows the identity surface is
+	// live — a bare mux would render an auth-free shell.
+	mux := newTestServerWith(t, Options{Identity: identity, AuthEnabled: true})
+	identity.Register(mux)
+	gated := identity.Middleware()(mux)
+
+	session := loginSession(t, gated, "operator@pbx.lans")
+	csrf, _ := loginChallenge(t, gated)
+
+	request := httptest.NewRequest(http.MethodGet, "/", nil)
+	request.Host = "localhost:8300"
+	request.Header.Set("Accept", "text/html")
+	request.Header.Set("Origin", "http://localhost:8300")
+	request.AddCookie(csrf)
+	request.AddCookie(session)
+
+	recorder := httptest.NewRecorder()
+	gated.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("authed GET / status = %d, want 200", recorder.Code)
+	}
+
+	if !strings.Contains(recorder.Body.String(), `id="logout-form"`) {
+		t.Error("authed page renders no logout form — the nav cannot end a session")
+	}
+
+	if !strings.Contains(recorder.Body.String(), `name="csrf_token"`) {
+		t.Error("logout form carries no CSRF token — the ceremony would 403")
+	}
+}

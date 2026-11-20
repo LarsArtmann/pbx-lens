@@ -36,7 +36,7 @@ DECISION.
   no recovery path and the event log is already durable. The serve process
   owns a stricter shutdown.
 - **C023 identity boot-failure cleanup (deliberate, 2026-11-12)**: the six
-  `_ = db.Close()` / `_ = service.Close()` sites in `internal/web/userauth.go`
+  `_ = db.Close()` / `_ = service.Close()` sites in `internal/identity/identity.go`
   (`OpenIdentity` + `openIdentityStores`) are all construction-failure
   paths: a later wiring step failed, so the partially-opened handle closes
   before returning the specific `lens.web.*` rejection that names the root

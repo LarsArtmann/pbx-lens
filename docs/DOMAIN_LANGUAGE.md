@@ -149,7 +149,7 @@ source row is completed from its sibling row that observed the same call.
 ## Identity and access (2026-11-12)
 
 The lens serves ONE human — the pbx.artmann.tech operator. The identity
-bounded context (cqrs-htmx usermgmt, `internal/web/userauth.go`) replaced
+bounded context (cqrs-htmx usermgmt, `internal/identity/identity.go`) replaced
 the htpasswd file; every term here is code truth:
 
 - **Identity DB** (`-auth-db`, default `<state>/identity.db`) — the SQLite

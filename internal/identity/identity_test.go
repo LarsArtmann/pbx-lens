@@ -1,4 +1,4 @@
-package web
+package identity
 
 import (
 	"context"
@@ -44,12 +44,19 @@ func openTestIdentity(t *testing.T) *Identity {
 	return identity
 }
 
-// identityHandler wires the full composition: the app routes, the public
-// login surface, and the gate middleware — the same shape serve builds.
+// identityHandler wires the composition the gate tests walk: the public
+// login surface registered on a bare mux (plus a stub "/" so an authed
+// request has a destination — the gate answers before any route matters),
+// wrapped in the gate middleware. The same shape serve builds, minus the
+// app routes (they are the web package's tests).
 func identityHandler(t *testing.T, identity *Identity) http.Handler {
 	t.Helper()
 
-	mux := newTestServer(t)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	identity.Register(mux)
 
 	return identity.Middleware()(mux)
@@ -379,7 +386,14 @@ func TestIdentityCookieSecureFollowsOriginScheme(t *testing.T) {
 func TestIdentityLogoutEndsTheSessionEverywhere(t *testing.T) {
 	identity := openTestIdentity(t)
 
-	mux := newTestServerWith(t, Options{AuthEnabled: true})
+	// A bare mux with the stub "/" route: the logout contract is the
+	// session's server-side death, not any app route's content — authed
+	// GET / must reach A route (200), logged-out GET / must 303.
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	})
+
 	identity.Register(mux)
 	handler := identity.Middleware()(mux)
 
@@ -406,13 +420,9 @@ func TestIdentityLogoutEndsTheSessionEverywhere(t *testing.T) {
 		t.Fatalf("authed GET / status = %d, want 200 (body: %.200s)", first.Code, first.Body.String())
 	}
 
-	if !strings.Contains(first.Body.String(), `id="logout-form"`) {
-		t.Error("authed page renders no logout form — the nav cannot end a session")
-	}
-
-	if !strings.Contains(first.Body.String(), `name="csrf_token"`) {
-		t.Error("logout form carries no CSRF token — the ceremony would 403")
-	}
+	// The NAV's logout FORM (id="logout-form" + its CSRF token) is the web
+	// package's render — flow_test.go pins that markup; this test owns the
+	// session's server-side death.
 
 	// POST /auth/logout with the browser ceremony posture.
 	logout := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)

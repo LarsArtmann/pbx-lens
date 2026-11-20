@@ -45,7 +45,7 @@ read-only deep link, never a data dependency.
   seeds are regression pins (docs/gotchas.md).
 - **cqrs-htmx (ADOPTED 2026-11-11):** usermgmt + loginpage + webauthn own the
   identity context, PATH B manual wiring (NO setup bundle — it collides with
-  /dashboard and drags adminui in). `internal/web/userauth.go` composes
+  /dashboard and drags adminui in). `internal/identity/identity.go` composes
   session → CSRF → gate; `/login` `/auth/*` `/app.css` `/robots.txt` public;
   browsers 303 to /login, APIs 401. Identity persistence = ONE sqlite file
   (its checkpoint schema SQL is applied BY HAND — no self-migration).

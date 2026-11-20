@@ -13,6 +13,7 @@ import (
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/identity"
 )
 
 // opsCounters exercises the ETag middleware once per outcome (tag, 304) so
@@ -497,7 +498,7 @@ func TestOpsPageAndAPICarryCoverage(t *testing.T) {
 func TestIdentityOpsSnapshot(t *testing.T) {
 	identity := openTestIdentity(t)
 
-	handler := identityHandler(t, identity)
+	handler := identityOnlyHandler(t, identity)
 	loginSession(t, handler, "operator@pbx.lens")
 
 	snapshot := identity.OpsSnapshot(context.Background())
@@ -533,7 +534,7 @@ func TestIdentityOpsSnapshot(t *testing.T) {
 // (no empty card on auth-free boots).
 func TestOpsPayloadIdentitySection(t *testing.T) {
 	sessions := 2
-	identity := IdentityOps{
+	identity := identity.IdentityOps{
 		Enabled:      true,
 		RPID:         "lens.example.com",
 		Users:        1,
