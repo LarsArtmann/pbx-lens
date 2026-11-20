@@ -15,18 +15,17 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
-	"github.com/larsartmann/pbx-lens/internal/ingest/telnyx"
 	"golang.org/x/time/rate"
-)
+	)
 
-// RecordingFetcher is the consumer-side view of a Telnyx client the
-// recording proxy needs: fetch one recording's metadata (including its
-// fresh signed download URL) by recording id. Declared here instead of
-// importing the concrete *telnyx.Client so tests and future sources can
-// stand in with a fake — telnyx.Client satisfies it as-is.
-type RecordingFetcher interface {
-	FetchRecording(ctx context.Context, recordingID string) (telnyx.Recording, error)
-}
+	// RecordingFetcher is the consumer-side view of a recording source the
+	// proxy needs: fetch one recording's playback payload (fresh signed
+	// download URLs) by recording id. It lives on the calls.RecordingMedia
+	// shape (T10, 2026-11-20) so this package imports NO ingest client —
+	// telnyx.Client satisfies it as-is via its FetchRecordingMedia adapter.
+	type RecordingFetcher interface {
+		FetchRecordingMedia(ctx context.Context, recordingID string) (calls.RecordingMedia, error)
+	}
 
 // DefaultUpstreamTimeout bounds each upstream hop of the recording proxy
 // when RecordingOptions.UpstreamTimeout is unset: the metadata fetch runs
@@ -119,7 +118,7 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 	defer cancel()
 
 	metaStop := servertiming.MeasureServerTiming(r.Context(), "metadata")
-	recording, err := s.recordings.Telnyx.FetchRecording(metaCtx, recordingID)
+	media, err := s.recordings.Telnyx.FetchRecordingMedia(metaCtx, recordingID)
 
 	metaStop()
 
@@ -142,9 +141,9 @@ func (s *server) proxyTelnyxRecording(w http.ResponseWriter, r *http.Request, re
 		return
 	}
 
-	audio, audioType := recording.DownloadURLs.WAV, "audio/wav"
+	audio, audioType := media.WAVURL, "audio/wav"
 	if audio == "" {
-		audio, audioType = recording.DownloadURLs.MP3, "audio/mpeg"
+		audio, audioType = media.MP3URL, "audio/mpeg"
 	}
 
 	if audio == "" {

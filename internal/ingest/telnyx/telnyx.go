@@ -12,6 +12,7 @@ import (
 	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
 const (
@@ -117,6 +118,21 @@ func (c *Client) FetchRecording(ctx context.Context, recordingID string) (Record
 
 func (c *Client) ListRecordings(ctx context.Context, limit int) ([]Recording, error) {
 	return fetchAll[Recording](ctx, c, "/recordings", url.Values{}, limit, 0)
+}
+
+// FetchRecordingMedia is the read-side recording fetch (T10, 2026-11-20):
+// the proxy-facing shape carries only what playback needs, so the web
+// package consumes calls.RecordingMedia and never this client's wire DTO.
+func (c *Client) FetchRecordingMedia(ctx context.Context, recordingID string) (calls.RecordingMedia, error) {
+	recording, err := c.FetchRecording(ctx, recordingID)
+	if err != nil {
+		return calls.RecordingMedia{}, err
+	}
+
+	return calls.RecordingMedia{
+		WAVURL: recording.DownloadURLs.WAV,
+		MP3URL: recording.DownloadURLs.MP3,
+	}, nil
 }
 
 // ListDetailRecords lists call-control detail records since the given lower
