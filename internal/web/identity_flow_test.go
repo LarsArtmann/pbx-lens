@@ -57,6 +57,8 @@ func identityOnlyHandler(t *testing.T, id *identity.Identity) http.Handler {
 // shared with the identity package's own gate tests); these delegates keep
 // the web flow call sites short.
 func loginChallenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
+	t.Helper()
+
 	return identitytest.Challenge(t, handler)
 }
 
@@ -68,9 +70,13 @@ func postAuthJSON(
 	cookie *http.Cookie,
 	token string,
 ) *httptest.ResponseRecorder {
+	t.Helper()
+
 	return identitytest.PostAuth(t, handler, path, payload, cookie, token)
 }
 
 func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie {
+	t.Helper()
+
 	return identitytest.Session(t, handler, email)
 }

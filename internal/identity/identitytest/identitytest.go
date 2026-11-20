@@ -12,6 +12,7 @@
 package identitytest
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +27,7 @@ import (
 func Challenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
 	t.Helper()
 
-	request := httptest.NewRequest(http.MethodGet, "/login", nil)
+	request := httptest.NewRequestWithContext(context.Background(), http.MethodGet, "/login", nil)
 	request.Header.Set("Accept", "text/html")
 
 	recorder := httptest.NewRecorder()
@@ -70,7 +71,12 @@ func PostAuth(
 		t.Fatalf("marshal %s request: %v", path, err)
 	}
 
-	request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(string(body)))
+	request := httptest.NewRequestWithContext(
+		context.Background(),
+		http.MethodPost,
+		path,
+		strings.NewReader(string(body)),
+	)
 	request.Host = "localhost:8300"
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Origin", "http://localhost:8300")
@@ -101,7 +107,11 @@ func Session(t *testing.T, handler http.Handler, email string) *http.Cookie {
 	}, csrfCookie, token)
 
 	if recorder.Code != http.StatusCreated {
-		t.Fatalf("POST /auth/register status = %d, want 201 (body: %s)", recorder.Code, recorder.Body.String())
+		t.Fatalf(
+			"POST /auth/register status = %d, want 201 (body: %s)",
+			recorder.Code,
+			recorder.Body.String(),
+		)
 	}
 
 	for _, cookie := range recorder.Result().Cookies() {

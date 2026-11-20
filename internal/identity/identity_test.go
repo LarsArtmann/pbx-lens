@@ -468,6 +468,8 @@ func TestRegistrationSectionFollowsTheSeat(t *testing.T) {
 // sites short; identitytest deliberately does not import this package, so
 // the in-package tests may import it.
 func loginChallenge(t *testing.T, handler http.Handler) (*http.Cookie, string) {
+	t.Helper()
+
 	return identitytest.Challenge(t, handler)
 }
 
@@ -479,13 +481,19 @@ func postAuthJSON(
 	cookie *http.Cookie,
 	token string,
 ) *httptest.ResponseRecorder {
+	t.Helper()
+
 	return identitytest.PostAuth(t, handler, path, payload, cookie, token)
 }
 
 func loginSession(t *testing.T, handler http.Handler, email string) *http.Cookie {
+	t.Helper()
+
 	return identitytest.Session(t, handler, email)
 }
 
 func extractCSRFToken(t *testing.T, html string) string {
+	t.Helper()
+
 	return identitytest.CSRFToken(t, html)
 }
