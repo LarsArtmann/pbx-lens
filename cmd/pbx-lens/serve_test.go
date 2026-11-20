@@ -893,10 +893,19 @@ func TestCacheSemanticsHardening(t *testing.T) {
 // assertConditionalHEAD pins the HEAD-revalidation leg: a conditional HEAD
 // answers 304 with no body, so a HEAD-based monitor gets the same
 // revalidation economy. The caller supplies a FRESH tag (minted by
-// conditionalReplay against a stable representation); one retry rides out
-// a stamp-boundary tick between the minting and the HEAD.
+// conditionalReplay against a stable representation); a miss re-mints the
+// tag from a fresh GET and retries once — the polled region embeds a
+// minute-truncated updated stamp, so the document can legitimately change
+// between the minting and the HEAD (the 2026-11-20 race-suite flake), and
+// reusing the stale tag across the retry would turn one honest tick into
+// two misses.
 func assertConditionalHEAD(t *testing.T, client *http.Client, base, path, etag string) {
 	t.Helper()
+
+	var (
+		status  int
+		bodyLen int
+	)
 
 	for range 2 {
 		req, err := http.NewRequestWithContext(t.Context(), http.MethodHead, base+path, nil)
@@ -914,16 +923,21 @@ func assertConditionalHEAD(t *testing.T, client *http.Client, base, path, etag s
 		headBody, _ := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
 
-		if resp.StatusCode == http.StatusNotModified && len(headBody) == 0 {
+		status, bodyLen = resp.StatusCode, len(headBody)
+
+		if status == http.StatusNotModified && bodyLen == 0 {
 			return
 		}
 
-		t.Errorf(
-			"conditional HEAD = %d with %d body bytes, want 304 with none",
-			resp.StatusCode,
-			len(headBody),
-		)
+		_, headers, _ := get(t, client, base, path, nil)
+		etag = headers.Get("ETag")
 	}
+
+	t.Errorf(
+		"conditional HEAD = %d with %d body bytes even after a re-mint, want 304 with none",
+		status,
+		bodyLen,
+	)
 }
 
 // benchRoundTrip issues one GET through the served chain and drains the
