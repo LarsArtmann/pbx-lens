@@ -29,11 +29,11 @@ read-only deep link, never a data dependency.
 - **Language level:** go 1.27.3 in go.mod + `GOEXPERIMENT=jsonv2` (fleet
   house style; becomes load-bearing when a surface needs it).
 - **Dependencies:** stdlib + go-cqrs-lite + go-error-family + the UI trio
-  - `templ-components/htmx`. No testify (banned; stdlib table-driven tests),
-    no cobra, no ORM. Promotion precedent: a module ALREADY in the graph rides
-    free. server_timing's mount is appkit's default since v0.12 (pbx-lens wires
-    no explicit timing middleware; `MeasureServerTiming` call sites are the
-    used surface); `entitytag` stays indirect (`go-etag/server` re-exports).
+  - `templ-components/htmx`. No testify (banned; stdlib table-driven tests;
+    BDD framework-less too: Ginkgo rejected 2026-11-19, scenario DSLs = the
+    spec idiom), no cobra, no ORM. Promotion precedent: a module ALREADY in
+    the graph rides free. server_timing rides appkit's v0.12 default mount
+    (`MeasureServerTiming` = used surface); `entitytag` indirect (go-etag/server).
   - `coreos/go-oidc/v3` v3.21.0 + `golang.org/x/oauth2` v0.37.0 (2026-11-12,
     the OIDC lane — fleet pins, x/oauth2 held below v0.38.0): code + PKCE-S256,
     lazy discovery, RS256 verify + nonce, userinfo fallback for claim-less
@@ -55,7 +55,7 @@ read-only deep link, never a data dependency.
   127.0.0.1 → `localhost`); passkeys need HTTPS or localhost; the gate's CSRF
   dance in tests needs Host+Origin+Referer like a browser.
 - **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
-  sweep budgeted; versions.json lies — verify with `git tag --contains`).
+  sweep budgeted; versions.json lies — verify with `git tag --contains`). Lib deep-dives 2026-11-19/20 (docs/research/): cqrs-lite 91 · appkit 100 · tc 89 (v1.27.1 = retirement wave; templ stays v0.3.1100) · cqrs-htmx 83.
 - **UI trio (coordinated bump 2026-11-11 → tc v1.27.0 + templ v0.3.1100 —
   ONE bump, manual templ only: a dependabot templ PR mangles this go.mod;
   v1.27's tcValidity bridge needs `Nonce` on EVERY forms.Form):**
