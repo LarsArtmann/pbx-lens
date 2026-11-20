@@ -7,6 +7,48 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-11-20 b (the execution wave: identity boundary, honest login, typed seams)
+
+- **The identity bounded context has a code boundary.** `userauth.go` and
+  its five test files moved to `internal/identity` (with the ceremony
+  walkers shared through `internal/identity/identitytest` after the dedup
+  gate caught the duplication) — the seam the DOMAIN_LANGUAGE named on
+  2026-11-12 now exists in the tree, and the web read side imports it in
+  the allowed direction only.
+- **The login register form follows the operator seat**: a populated
+  identity DB (MaxUsers: 1) hides the section instead of showing every
+  later visitor a form that always fails, and the favicon square carries
+  the signal teal. ThemeFromRequest was deliberately NOT adopted — the
+  app's theme source is the library's localStorage toggle, not a cookie.
+- **The poller-health snapshot is typed** (`cli.PollerHealth`): one value
+  crosses the ops seam for the page, the fixture, and /api/ops (whose
+  source keys are now uniformly lowercase), replacing five hand-maintained
+  map copies; the serve verb's flag mechanics moved to a typed set.
+- The four-question owner decision pack (PII boundary, CSP enforce flip,
+  catalog push, divergence dossier), the dependency-hygiene filing drafts
+  with their module-graph evidence chains, and the identity logical-backup
+  runbook section (plus the re-affirmed 24h session-TTL line).
+
+### Changed — 2026-11-20 b (the read model composes; the edges tighten)
+
+- **CallView embeds Observation and Enrichment whole** (PC-1): adding a
+  domain field can no longer desynchronize the view; the JSON key set is
+  pinned identical by a regression test, the enrich pass addresses its
+  command through the embedded snapshot, and the hand-mirrored
+  `Observation()`/`enrichmentOf` are gone.
+- **The web read side imports no ingest client** (the recording proxy
+  speaks `calls.RecordingMedia` through its fetcher; telnyx.Client adapts
+  via `FetchRecordingMedia`) — an import-graph guard test fails the build
+  if the edge reopens.
+- CI pins govulncheck (v1.9.0, the devShell's pin — @latest was the only
+  unpinned tool) and fixes the nix-installer input spelling that warned on
+  every run; httputil v1.9.0 + go-appkit/systemd v0.2.0 land with the
+  middleware test lanes green.
+- GO-2026-6859 posture recorded (HOLD until nixpkgs ships go 1.27.4 —
+  CI's setup-go lane already runs the patched toolchain; flake override
+  rejected on hermeticity doctrine); the three go-jose Dependabot alerts
+  cleared at v4.1.6.
+
 ## [v0.4.0] — 2026-11-20
 
 ### Fixed — 2026-11-20 (the twenty-skill mega-review's red-proofed code fixes)
