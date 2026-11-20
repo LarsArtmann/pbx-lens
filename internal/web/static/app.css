@@ -90,6 +90,22 @@
   --color-blue-800: #115e59;
   --color-blue-900: #134e4a;
   --color-blue-950: #042f2e;
+
+  /* ADR-0044 accent axis (v1.27.2: the library's brand slot moved from
+     blue-* classes to accent-* tokens). Same teal ramp as the tc-* bridge
+     above — accent-600 = teal-700 (5.47:1 on white), accent-700 = teal-800
+     (7.59:1), so buttons/links/progress keep the signal palette. */
+  --color-accent-50: #f0fdfa;
+  --color-accent-100: #ccfbf1;
+  --color-accent-200: #99f6e4;
+  --color-accent-300: #5eead4;
+  --color-accent-400: #2dd4bf;
+  --color-accent-500: #14b8a6;
+  --color-accent-600: #0f766e;
+  --color-accent-700: #115e59;
+  --color-accent-800: #115e59;
+  --color-accent-900: #134e4a;
+  --color-accent-950: #042f2e;
 }
 
 /*
@@ -116,37 +132,6 @@
  * chrome (nav, footer, buttons) drops, the shell widens, and charts don't
  * print. scoped by @media print only.
  */
-/*
- * Clickable table rows are tabindex=0 role=link rows with NO visible focus
- * style in the library markup (plan T18 finding; upstream filing candidate).
- * Give keyboard users the standard focus ring, inset so it hugs the row.
- */
-tr[role="link"]:focus-visible {
-  outline: 2px solid var(--color-tc-primary);
-  outline-offset: -2px;
-}
-
-/*
- * Match-log role tags (T21): the hand-rolled ?q= transcript loop mirrors
- * the library Scrollback tone mapping through the same bridged vars, so
- * the one-block re-skin keeps holding (raw palette classes are banned in
- * .templ sources by the palette gate).
- */
-.tc-tag-user {
-  color: var(--color-blue-600);
-}
-
-.dark .tc-tag-user {
-  color: var(--color-blue-400);
-}
-
-.tc-tag-assistant {
-  color: var(--color-green-700);
-}
-
-.dark .tc-tag-assistant {
-  color: var(--color-green-400);
-}
 
 @media print {
   nav,

@@ -535,11 +535,7 @@ templ volumeCard(stats DashboardStats) {
 		@display.BarChart(display.BarChartProps{
 			Bars:   volumeBars(stats.ByDay),
 			Orient: display.BarVertical,
-			// Height + !items-stretch: without them the bar wrapper has no
-			// definite height and every vertical bar collapses to 0 px
-			// (verified in-browser; upstream file candidate).
 			Height:       "10rem",
-			Class:        "!items-stretch",
 			MinBarWidth:  "min-w-1",
 			Gap:          "gap-px",
 			ShowValues:   false,
@@ -556,7 +552,6 @@ templ durationCard(stats DashboardStats) {
 			Bars:   durationBars(stats.Durations),
 			Orient: display.BarVertical,
 			Height: "10rem",
-			Class:  "!items-stretch",
 			// No printed values: five "0"s over empty buckets drown the one
 			// number that matters, and the volume chart next to it reads
 			// shape without values too — the tooltip carries the exact count.
@@ -720,7 +715,6 @@ templ mosCard(stats DashboardStats) {
 						Bars:         mosBars(stats.ByDay),
 						Orient:       display.BarVertical,
 						Height:       "6rem",
-						Class:        "!items-stretch",
 						MinBarWidth:  "min-w-1",
 						Gap:          "gap-px",
 						ShowValues:   false,

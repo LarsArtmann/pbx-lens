@@ -42,11 +42,10 @@ func nav(nonce string, csrf string, authed bool, currentPath string) templ.Compo
 	return navigation.SimpleNav(navigation.SimpleNavProps{
 		BaseProps: utils.BaseProps{
 			Nonce: nonce,
-			// Deterministic nav id (M8/F28 finding): with it empty, the
-			// library's EnsureID mints a RANDOM id per render, every page
-			// body is unique, and the ETag/no-cache revalidation contract
-			// can never 304 — every poll and navigation is a full 200.
-			ID: "pbx-lens-nav",
+			// No ID pin: the library derives a CONTENT-HASHED mobile-menu id
+			// since v1.27.x (the random per-render EnsureID id that forced
+			// the M8/F28 pin is gone), so the nav renders deterministically
+			// and the ETag contract holds. TestNavIDIsDeterministic guards.
 		},
 		BrandText:   "pbx-lens",
 		Links:       navLinks(),

@@ -1,4 +1,4 @@
-# github.com/larsartmann/templ-components@v1.27.0
+# github.com/larsartmann/templ-components@v1.27.2
 # github.com/larsartmann/cqrs-htmx/loginpage/v4@v4.18.0
 #283a:
 #bar-results
@@ -58,6 +58,7 @@
 %d:
 %opts.length:
 %q:
+%q:%q
 %s-%d
 %s-%s
 %s-rgb
@@ -89,6 +90,47 @@
 --blur-xs:4px
 --brand-accent
 --build-mode
+--color-accent-100
+--color-accent-100:
+--color-accent-100:#e0e7ff
+--color-accent-100:oklch
+--color-accent-200
+--color-accent-200:
+--color-accent-200:#c7d2fe
+--color-accent-200:oklch
+--color-accent-300
+--color-accent-300:
+--color-accent-300:#a5b4fc
+--color-accent-300:oklch
+--color-accent-400
+--color-accent-400:
+--color-accent-400:#818cf8
+--color-accent-400:oklch
+--color-accent-50
+--color-accent-500
+--color-accent-500:
+--color-accent-500:#6366f1
+--color-accent-500:oklch
+--color-accent-50:
+--color-accent-50:#eef2ff
+--color-accent-50:oklch
+--color-accent-600
+--color-accent-600:
+--color-accent-600:#4f46e5
+--color-accent-600:oklch
+--color-accent-700
+--color-accent-700:
+--color-accent-700:#4338ca
+--color-accent-700:oklch
+--color-accent-800
+--color-accent-800:
+--color-accent-800:#3730a3
+--color-accent-800:oklch
+--color-accent-900
+--color-accent-900:
+--color-accent-900:#312e81
+--color-accent-900:oklch
+--color-accent-950:
 --color-amber-100
 --color-amber-100:
 --color-amber-100:oklch
@@ -716,6 +758,11 @@
 --spacing:.25rem
 --surface
 --tc-accent
+--tc-grid-min
+--tc-grid-min:
+--tc-grid-min:12rem
+--tc-grid-min:190px
+--tc-grid-min:240px
 --tc-header-bg
 --tc-header-bg:
 --tc-header-bg:var
@@ -1059,6 +1106,7 @@
 -dialog
 -end
 -end-1
+-equivalent
 -error
 -f
 -h
@@ -1077,6 +1125,7 @@
 -mb-px
 -me-1
 -menu
+-mobile-menu
 -moz-orient:inline
 -moz-osx-font-smoothing:grayscale
 -mx-1.5
@@ -1166,6 +1215,10 @@
 .backdrop-blur-xl
 .backdrop-blur-xs
 .basis-full
+.bg-accent-100
+.bg-accent-50
+.bg-accent-500
+.bg-accent-600
 .bg-amber-100
 .bg-amber-400
 .bg-amber-50
@@ -1219,6 +1272,7 @@
 .bg-rose-50
 .bg-rose-500
 .bg-rose-600
+.bg-rose-700
 .bg-transparent
 .bg-violet-50
 .bg-violet-500
@@ -1231,6 +1285,9 @@
 .border-0
 .border-2
 .border-4
+.border-accent-200
+.border-accent-500
+.border-accent-600
 .border-amber-200
 .border-amber-300
 .border-b
@@ -1353,6 +1410,7 @@
 .h-3
 .h-32
 .h-4
+.h-40
 .h-48
 .h-5
 .h-56
@@ -1363,6 +1421,7 @@
 .h-auto
 .h-fit
 .h-full
+.h-px
 .htmx-indicator
 .htmx-request
 .htmx-request.
@@ -1398,6 +1457,8 @@
 .max-h-48
 .max-h-60
 .max-h-80
+.max-w-16
+.max-w-24
 .max-w-2xl
 .max-w-3xl
 .max-w-4xl
@@ -1561,6 +1622,7 @@
 .ring-white
 .rotate-180
 .rounded-2xl
+.rounded-b
 .rounded-e-md
 .rounded-full
 .rounded-lg
@@ -1658,6 +1720,9 @@
 .text-3xl
 .text-4xl
 .text-5xl
+.text-accent-200
+.text-accent-600
+.text-accent-800
 .text-amber-400
 .text-amber-500
 .text-amber-600
@@ -1796,6 +1861,7 @@
 /api/wire/nav-fragment
 /api/wire/remove-region
 /api/wire/swap-line
+/aria-controls
 /avatar-placeholder.png
 /color-mix
 /definitely-not-a-demo-page
@@ -2061,6 +2127,7 @@
 6.087c0-.355.186-.676.401-.959.221-.29.349-.634.349-1.003
 6.625v-1.875a3.375
 60%_50%_at_50%_0%
+600/dark:400
 7-digit
 7.125v-1.5a3.375
 7.244l-4.5
@@ -2180,12 +2247,16 @@
 @sm:ms-6
 @sm:p-6
 @sm:px-6
+@source-carrying
+@source-entry
+@source-scans
 @starting-style
 @view-transition
 @xl:grid-cols-5
 @xl:grid-cols-6
 [%s]:
 [--all]
+[--css
 [--dark]
 [--icons]
 [--list-deps]
@@ -2221,6 +2292,7 @@
 [data-tc-dir-icon]
 [data-tc-dirty-guard]
 [data-tc-go-back]
+[data-tc-hx-activate]
 [data-tc-kanban-alert]
 [data-tc-kanban-card
 [data-tc-kanban-card]
@@ -2272,6 +2344,7 @@
 [data-tc-tooltip]
 [data-tc-tooltip][data-tc-tooltip-dismissed]
 [data-theme-toggle]
+[grid-template-columns:...minmax
 [grid-template-columns:repeat
 [hidden]:where
 [hx-indicator]
@@ -2287,6 +2360,7 @@
 ][data-tc-align
 ][data-tc-slider]
 ][data-tc-slider]::-webkit-slider-runnable-track
+_-local
 _-prefixed
 __debounce
 __debounce.%dms
@@ -2334,10 +2408,13 @@ academic-cap:
 acc-1
 acc-2
 acc-3
+accent-
+accent-600
 accent-blue-600
 accent-color
 accent-color:
 accent-color:var
+accent:
 accepted-duplication
 accessibility-only
 accessible-error-announcement
@@ -2384,12 +2461,16 @@ align-items:stretch
 align-middle
 align-self:center
 all-lowercase
+all-negative
+all-positive
+all-zero
 all:
 all:_sources
 allow-discrete
 allow-keywords
 allow-list
 allow:
+alone:
 already-authenticated
 already-sanitized
 always-below-trigger
@@ -2465,6 +2546,7 @@ aria-busy
 aria-busy:
 aria-checked
 aria-controls
+aria-controls/
 aria-current
 aria-describedby
 aria-describedby.
@@ -2522,9 +2604,11 @@ artifacts:
 as-is
 as-is.
 ascending-sort
+aside:
 aspect-ratio
 assignment:
 association:
+asymmetry:
 attr-modal
 attribute-boundary
 attribute-free
@@ -2666,6 +2750,7 @@ background-color:#733e0a4d
 background-color:#78716c99
 background-color:#7b330633
 background-color:#7b33064d
+background-color:#7b330666
 background-color:#7e2a0c33
 background-color:#7e2a0c4d
 background-color:#82181a33
@@ -2707,15 +2792,22 @@ bar_chart_custom_color
 bar_chart_empty
 bar_chart_horizontal
 bar_chart_vertical
+bar_chart_vertical_baseline
+bar_chart_vertical_capped
+bar_chart_vertical_signed
 bar_chart_with_href
 bare-relative
+bare-sibling
 bars-3
 bars-3:
+bars[:2]
+bars[:3]
 base-path
 base-path-prefixed
 base-select
 base-uri
 base[8:]
+base_datastar_nonce_set
 base_templ.go
 batch:
 battle-tested
@@ -2733,17 +2825,21 @@ bell:
 below-lg
 below-min
 belt-and-braces
+bfcache/form-history
 bg-
 bg-%d
 bg-[radial-gradient
 bg-[var
+bg-accent-100
+bg-accent-50
+bg-accent-500
+bg-accent-600
 bg-amber-100
 bg-amber-50
 bg-amber-500
 bg-amber-600
 bg-black/50
 bg-black/90
-bg-blue-100
 bg-blue-50
 bg-blue-500
 bg-blue-600
@@ -2793,6 +2889,7 @@ bg-red-600
 bg-rose-50
 bg-rose-500
 bg-rose-600
+bg-rose-700
 bg-tc-primary
 bg-transparent
 bg-violet-50
@@ -2811,6 +2908,7 @@ binary-pin
 binding:
 blank-line
 block
+block-form
 block-size
 block-size:
 block-size:0
@@ -2820,6 +2918,7 @@ block:
 blocklist:
 blockquote:where
 blocks:
+blue-
 blue-500
 blue-600
 blue-tinted
@@ -2842,6 +2941,9 @@ border-0
 border-2
 border-4
 border-[var
+border-accent-200
+border-accent-500
+border-accent-600
 border-amber-200
 border-amber-300
 border-b
@@ -2862,6 +2964,8 @@ border-blue-200
 border-blue-500
 border-blue-600
 border-bottom-color:var
+border-bottom-left-radius:.25rem
+border-bottom-right-radius:.25rem
 border-bottom-style:var
 border-bottom-width:1px
 border-bottom-width:2px
@@ -2918,7 +3022,7 @@ border-radius:.25rem
 border-radius:.375rem
 border-radius:.5rem
 border-radius:0
-border-radius:3.40282e38px
+border-radius:2147483647px
 border-radius:9999px
 border-radius:inherit
 border-radius:var
@@ -2970,7 +3074,9 @@ bottom:
 bottom:-.25em
 bottom:-.25rem
 bottom:0
+bottom:0.0%
 bottom:100%
+bottom:30.0%
 bottom:calc
 bottom][data-tc-align
 bound-signal
@@ -2984,11 +3090,13 @@ box-shadow:var
 box-sizing:border-box
 branch-heavy
 branch:
+brand-axis
 brand-initial
 brand:
 break-after-avoid
 break-after:avoid
 break-all
+break-out
 break-words
 breakpoint-gated
 breakpoint-keyed
@@ -3017,6 +3125,7 @@ bump/re-audit
 bundle-decoded
 bundle-decoded:
 bundle-verified
+bundle-verified:
 bundle:
 burst:
 busy-cue
@@ -3045,6 +3154,7 @@ button_wired_link_href
 buttons:
 by-design
 byte-compares
+byte-comparison
 byte-diffs.
 byte-equality
 byte-equivalence
@@ -3054,6 +3164,7 @@ byte-identical
 byte-identical.
 byte-identically
 byte-identically.
+byte-pinned
 byte-slicing
 byte-stable.
 bytes:
@@ -3068,10 +3179,12 @@ calendar_basic
 calendar_month_nav_datastar
 calendar_month_nav_htmx
 calendar_nav.go
+caller-error
 caller-owned
 caller-provided
 caller-supplied
 camera:
+canvas-edge
 capture-phase
 card-1
 card-anatomy
@@ -3160,11 +3273,13 @@ clamp:
 class-lookup
 class-merging
 class-shaped
+class-yielding
 class:
 classes:
 cleared-register
 clearing:
 click-delegation
+click-only
 click-outside
 click-toggle
 click:
@@ -3180,6 +3295,7 @@ client:
 clip-path:inset
 clip-path:none
 clip-rule
+clipboard-copy
 clipboard:
 clock:
 clone-gate
@@ -3187,6 +3303,7 @@ closed-drawer
 closed-modal
 closed-set
 closedby-modal
+closure:
 cloud:
 cmd/tc/_sources
 cmd/tc/_sources/ignored.go
@@ -3218,6 +3335,7 @@ col-span-2
 col-span-full
 col-start-2
 col:
+collapse:
 collapsible_section.go
 collapsible_section_closed
 collapsible_section_custom_class
@@ -3266,6 +3384,7 @@ common-subset
 compact-id
 compact_format
 compile-time
+complete-pair
 complete:
 completely-unknown-status
 compliance-scanner
@@ -3281,6 +3400,7 @@ component_props_test.go
 components:
 composition:
 compositions:
+computed-value
 condition:
 config:
 confirm-delete
@@ -3288,6 +3408,7 @@ confirm-modal
 confirm_delete
 confirm_delete_no_confirm
 connect-src
+consequence:
 constants:
 construction:
 constructors:
@@ -3314,11 +3435,13 @@ container-query
 container-query-based
 container-type:
 container-type:inline-size
-container-width-responsive
+container:
 container_types.go
 contains:
 content-based
+content-derived
 content-heavy
+content-scoped:
 content-type
 content-visibility
 content-visibility:
@@ -3341,6 +3464,7 @@ contracts:
 contradictory:
 control-button
 control-level
+control:
 controls-bio
 controls-email
 controls-password
@@ -3410,6 +3534,7 @@ cross-package
 cross-reference
 cross-references
 crush-daily
+csp-nonce-1
 csp_nonce_test.go
 csrf-abc-123
 csrf-token
@@ -3429,7 +3554,6 @@ cursor-grab
 cursor-not-allowed
 cursor-paginated
 cursor-pointer
-cursor-pointer.
 cursor-zoom-in
 cursor-zoom-out
 cursor:
@@ -3466,10 +3590,15 @@ dark:800
 dark:900/30
 dark:accent-blue-400
 dark:bg-[radial-gradient
+dark:bg-accent-400
+dark:bg-accent-500
+dark:bg-accent-900/20
+dark:bg-accent-900/30
 dark:bg-amber-400
 dark:bg-amber-500
 dark:bg-amber-900/20
 dark:bg-amber-900/30
+dark:bg-amber-900/40
 dark:bg-amber-950/40
 dark:bg-black/90
 dark:bg-blue-400
@@ -3517,12 +3646,15 @@ dark:bg-red-500
 dark:bg-red-900/20
 dark:bg-red-900/30
 dark:bg-rose-400
+dark:bg-rose-500
 dark:bg-rose-900/30
 dark:bg-violet-400
 dark:bg-violet-900/30
 dark:bg-yellow-400
 dark:bg-yellow-900/30
 dark:block
+dark:border-accent-400
+dark:border-accent-800
 dark:border-amber-800
 dark:border-b-gray-700
 dark:border-blue-400
@@ -3558,12 +3690,15 @@ dark:fill-gray-300
 dark:fill-gray-400
 dark:fill-gray-500
 dark:focus-visible:
+dark:focus-visible:outline-accent-400
+dark:focus-visible:outline-accent-500
 dark:focus-visible:outline-amber-400
 dark:focus-visible:outline-blue-400
 dark:focus-visible:outline-blue-500
 dark:focus-visible:outline-green-400
 dark:focus-visible:outline-red-400
 dark:focus-visible:outline-red-500
+dark:focus-visible:ring-accent-400
 dark:focus-visible:ring-blue-400
 dark:focus-visible:ring-blue-500
 dark:focus-visible:ring-gray-500
@@ -3573,6 +3708,7 @@ dark:focus-within:ring-red-500
 dark:focus:
 dark:focus:bg-blue-500
 dark:focus:border-blue-400
+dark:focus:ring-accent-400
 dark:focus:ring-blue-400
 dark:focus:ring-blue-500
 dark:focus:ring-offset-gray-900
@@ -3583,6 +3719,7 @@ dark:group-hover:
 dark:group-hover:text-blue-400
 dark:hidden
 dark:hover:
+dark:hover:bg-accent-400
 dark:hover:bg-amber-900/20
 dark:hover:bg-blue-400
 dark:hover:bg-blue-600
@@ -3594,12 +3731,14 @@ dark:hover:bg-gray-800
 dark:hover:bg-green-900/20
 dark:hover:bg-red-400
 dark:hover:bg-red-900/20
+dark:hover:border-accent-600
 dark:hover:border-blue-500
-dark:hover:border-blue-600
 dark:hover:border-blue-700
 dark:hover:border-gray-600
 dark:hover:file:bg-blue-400
 dark:hover:shadow-black/20
+dark:hover:text-accent-300
+dark:hover:text-accent-400
 dark:hover:text-amber-300
 dark:hover:text-blue-200
 dark:hover:text-blue-300
@@ -3636,14 +3775,15 @@ dark:shadow-gray-700
 dark:stroke-gray-600
 dark:stroke-gray-700
 dark:stroke-gray-800
+dark:text-accent-300
+dark:text-accent-400
+dark:text-accent-500
 dark:text-amber-200
 dark:text-amber-300
 dark:text-amber-400
 dark:text-blue-200
 dark:text-blue-300
 dark:text-blue-400
-dark:text-blue-500
-dark:text-blue-500.
 dark:text-blue-700
 dark:text-cyan-200
 dark:text-cyan-400
@@ -3728,6 +3868,7 @@ data-max-tags
 data-mobile-menu-id
 data-mobile-menu-toggle
 data-nonce
+data-nonce.
 data-on
 data-on-intersect
 data-on-intersect__half__exit
@@ -3753,6 +3894,7 @@ data-point
 data-selected
 data-show
 data-side
+data-signals
 data-slider-value
 data-star-target
 data-state
@@ -3777,6 +3919,7 @@ data-tc-dir-icon
 data-tc-dirty-guard
 data-tc-go-back
 data-tc-hotkey
+data-tc-hx-activate
 data-tc-img-fallback
 data-tc-kanban
 data-tc-kanban-alert
@@ -3839,6 +3982,7 @@ data-tc-value
 data-test
 data-test-root
 data-testid
+data-text
 data-theme-toggle
 data-track
 data-x
@@ -3852,6 +3996,7 @@ data_state_empty
 data_state_unavailable
 datastar-action-result
 datastar-actions
+datastar-builders
 datastar-fetch
 datastar-indicator
 datastar-live-content
@@ -3859,6 +4004,7 @@ datastar-live-region
 datastar-loading-button
 datastar-merge-fragments
 datastar-mode
+datastar-only
 datastar-patch-elements
 datastar-patch-signals
 datastar-polled-region
@@ -3866,12 +4012,15 @@ datastar-polled-stats
 datastar-sdk-script
 datastar-selector
 datastar-selector/datastar-mode
+datastar-signals
 datastar-slow-action-result
 datastar-sse-errors
 datastar:
+datastar_nonce.go
 datatable_basic
 datatable_sortable
 date-range
+date_picker
 date_picker_basic
 date_picker_with_range
 date_range_
@@ -3898,6 +4047,7 @@ debounced-filter
 decoration:
 deep-dive
 deep-link
+deep-merge
 def-grid
 def-list
 default-application
@@ -3951,6 +4101,7 @@ demo_counts_test.go
 demos:
 dep:
 dependency-free
+depth-bounded
 depth:
 desc:
 design:
@@ -4001,6 +4152,7 @@ disabled:
 disabled:cursor-not-allowed
 disabled:opacity-50
 disabled_cb
+discovery:
 dismiss:
 dismisses:
 dismissible-warning
@@ -4103,11 +4255,13 @@ dns-prefetch
 dns-sync
 do:
 doc-count
+doc-sync
 doc:
 doc[:start]
 docs-count
 docs-site
 docs/adr/0019-recipes-package.md
+docs/adr/0049-design-token-axes.md
 docs/aria-live-politeness.md
 docs/count-definitions.md
 docs/dark-mode-research.md
@@ -4116,6 +4270,7 @@ docs/datastar-runtime-facts.md.
 docs/nonce-consumers.md
 docs/nonce-consumers.md:
 docs/recipes/datastar-integration.md
+docs/recipes/datastar-signals-live-data.md
 docs/recipes/horizontal-filter-bar.md
 docs/recipes/hybrid-strings-builder-rendering.md
 docs/recipes/hybrid-strings-builder-rendering.md.
@@ -4169,11 +4324,13 @@ ds-row-hover
 dual-mount
 dual-mounts
 dual-transport
+duplicate-id
 duplicate-name
 duration-150
 duration-200
 duration-300
 duration-500
+duration-700
 dynamic:
 e2e-verified
 eager-fetch
@@ -4201,6 +4358,7 @@ email:
 email_address
 embed-driven
 emerald-green
+emission:
 emitted:
 empty-1
 empty-but-loaded
@@ -4234,6 +4392,7 @@ endpoints:
 enhancement:
 entirely:
 entrance:
+entry:
 enum:
 enums_go.go
 envelope:
@@ -4342,6 +4501,7 @@ family-aware
 family-name
 family:
 faq-group
+fast-path
 feature-off
 feedback-alerts
 feedback-circular-progress
@@ -4358,6 +4518,7 @@ feedback-toast
 feedback/circular_progress.templ
 feedback/step_indicator.templ
 feedback_test
+fetch-options
 fi-1
 field-level
 field-sizing-content
@@ -4381,6 +4542,7 @@ file:py-2
 file:rounded-md
 file:text-sm
 file:text-white
+file_input
 file_input_basic
 file_input_multiple
 filename:
@@ -4462,8 +4624,11 @@ focus-first
 focus-first-on-open
 focus-ring
 focus-visible
+focus-visible:
+focus-visible:-outline-offset-2
 focus-visible:outline
 focus-visible:outline-2
+focus-visible:outline-accent-600
 focus-visible:outline-amber-600
 focus-visible:outline-blue-600
 focus-visible:outline-green-600
@@ -4472,6 +4637,7 @@ focus-visible:outline-red-600
 focus-visible:ring
 focus-visible:ring-2
 focus-visible:ring-[var
+focus-visible:ring-accent-500
 focus-visible:ring-blue-500
 focus-visible:ring-blue-600
 focus-visible:ring-gray-400
@@ -4492,6 +4658,7 @@ focus:outline-offset-0
 focus:px-4
 focus:py-2
 focus:ring-2
+focus:ring-accent-500
 focus:ring-blue-500
 focus:ring-blue-500/20
 focus:ring-blue-600
@@ -4607,11 +4774,15 @@ forms/input_group.templ
 forms/segmented_control.templ
 forms/tags_input.templ
 forms_test
+forward-slash
 found:
 four-project
 four-rung
 fragment:
+fragments:
 frame-ancestors
+frame:
+free-form
 from-blue-600
 from:body
 from:find
@@ -4619,6 +4790,7 @@ full-bleed
 full-featured
 full-height
 full-page
+full-range
 full-screen
 full-size
 full-width
@@ -4750,6 +4922,7 @@ grid-column:span
 grid-rows
 grid-template-columns
 grid-template-columns:
+grid-template-columns:...minmax
 grid-template-columns:16rem
 grid-template-columns:auto
 grid-template-columns:repeat
@@ -4794,6 +4967,7 @@ h-3
 h-3.5
 h-32
 h-4
+h-40
 h-48
 h-5
 h-56
@@ -4810,11 +4984,14 @@ h1-h6
 h2_center
 h3_left_subtitle
 half-circle
+half-filled
 hamburger-breakpoint
 hand-built
+hand-compose
 hand-copied
 hand-edit
 hand-edited
+hand-editing
 hand-maintained
 hand-maintained.
 hand-off
@@ -4842,6 +5019,7 @@ hash-fallback
 hash[:]
 hashtag:
 hatch:
+hazard:
 hc-1
 hc-trigger
 head-only
@@ -4870,12 +5048,15 @@ height:0
 height:1.25rem
 height:100%
 height:100dvh
+height:12rem
 height:1px
 height:22px
 height:280px
+height:30.0%
 height:50%
 height:500px
 height:50px
+height:70.0%
 height:auto
 height:calc
 height:fit-content
@@ -4896,6 +5077,7 @@ holds:
 home-card
 home-page
 home:
+honest-but-not-count
 honest:
 host-component
 host-default
@@ -4906,11 +5088,14 @@ hover-revealed
 hover-triggered
 hover/focus-activated
 hover:bg-[var
+hover:bg-accent-500
+hover:bg-accent-700
 hover:bg-amber-50
 hover:bg-blue-50
 hover:bg-blue-500
 hover:bg-blue-700
 hover:bg-gray-100
+hover:bg-gray-200
 hover:bg-gray-50
 hover:bg-gray-800
 hover:bg-green-50
@@ -4918,6 +5103,7 @@ hover:bg-red-50
 hover:bg-red-500
 hover:bg-white
 hover:bg-white/20
+hover:border-accent-300
 hover:border-blue-300
 hover:border-blue-400
 hover:border-gray-300
@@ -4927,6 +5113,8 @@ hover:opacity-80
 hover:shadow-md
 hover:shadow-xl
 hover:text-[var
+hover:text-accent-500
+hover:text-accent-600
 hover:text-amber-300
 hover:text-blue-500
 hover:text-blue-600
@@ -4946,10 +5134,12 @@ hr:where
 href-only
 href:
 html:
+html[start:]
 htmx-compatible
 htmx-confirm-delete
 htmx-csrf
 htmx-dialect
+htmx-driven
 htmx-error-handling
 htmx-ext-response-targets
 htmx-ext-response-targets@2.0.4
@@ -4959,6 +5149,7 @@ htmx-indicator
 htmx-inline-overlay
 htmx-loading-button
 htmx-loading-indicator
+htmx-managed
 htmx-off
 htmx-on
 htmx-polled-region
@@ -4966,6 +5157,7 @@ htmx-powered
 htmx-request
 htmx-runtime
 htmx-swap-oob
+htmx-swapped
 htmx-view-transitions
 htmx:
 htmx_test
@@ -4982,6 +5174,7 @@ hx-fetch
 hx-get
 hx-get.
 hx-get/hx-post/...
+hx-headers
 hx-include
 hx-indicator
 hx-patch
@@ -4995,6 +5188,7 @@ hx-target.
 hx-trigger
 hx-trigger.
 hx-validate
+hx-vals
 hybrid-path
 i--
 i-1
@@ -5048,6 +5242,7 @@ in:
 in_progress
 inbox:
 incident:
+include:
 independent:
 indicator-driven
 indices:
@@ -5075,6 +5270,9 @@ initial:
 initials-avatar
 injection-safe
 injection:
+ink-1
+ink-2
+ink-3
 inline-block
 inline-code
 inline-documented
@@ -5102,6 +5300,7 @@ input_basic
 input_classes.go
 input_error
 input_group_both
+input_stacked_full
 inset-0
 inset-block:0
 inset-e-0
@@ -5137,6 +5336,7 @@ integration/nonce_omit_empty_test.go
 integration:
 integration_test
 intentionally:
+interact:
 interactive:
 interpolate-size
 interpolate-size:
@@ -5215,18 +5415,22 @@ kb-ro
 kbd-menu
 kebab-cased
 keep-alive
+key-sorted
 key-value
 key:
 keyboard-focus
 keyboard-focusable
 keyboard-nav
 keyboard-operable
+keyboard-operable.
 keyboard-reachable
 keyboard-scrollable
+keyboard:
 keys:
 kind:
 kit:
 know:
+known-good
 label-above-input
 label-for
 label:
@@ -5299,7 +5503,7 @@ library-side
 library:
 light-dismiss
 light-mode
-light-on-blue
+light-on-accent
 light-only
 light:
 lightbox_no_trigger
@@ -5325,6 +5529,7 @@ line-height:1.75
 line-height:calc
 line-height:var
 line-level
+line-prefix
 line:
 line[start:end]
 line_chart.go
@@ -5390,7 +5595,6 @@ loading-dialog
 loading_button
 loading_button.go
 loading_dialog
-loading_dialog.templ
 loading_indicator
 loading_overlay
 loadmore_wired_datastar
@@ -5452,12 +5656,14 @@ main-script
 main-wrap
 major.minor-normalized
 major.minor:
+makes:
 malformed-value
 manifest:
 manual-toast
 map-pin
 map-pin:
 mapper:
+maps:
 margin-block
 margin-block-end
 margin-block-end:
@@ -5496,7 +5702,7 @@ margin-top:12vh
 margin-top:auto
 margin-top:calc
 margin-top:var
-margin-trim:inline
+margin-trim:block
 margin:
 margin:-1px
 margin:0
@@ -5522,6 +5728,8 @@ max-height:60vh
 max-height:70vh
 max-height:calc
 max-w
+max-w-16
+max-w-24
 max-w-2xl
 max-w-3xl
 max-w-4xl
@@ -5547,6 +5755,7 @@ max-width:65ch
 max-width:80rem
 max-width:90rem
 max-width:96rem
+max-width:calc
 max-width:var
 max:
 max_price
@@ -5580,6 +5789,7 @@ medium-density
 memory-only
 menu-keyboard
 menu:
+merge-patch
 meta_refresh_redirect
 meta_refresh_reload
 method-promotion
@@ -5702,6 +5912,7 @@ motion-reduce:transform-none
 motion-reduce:transition-none
 motion-reduce:translate-x-0
 motion:
+mount:
 move-contract
 move:
 mr-
@@ -5779,6 +5990,7 @@ my-mobile-link
 my-modal
 my-nonce
 my-nonce-123
+my-note
 my-overlay
 my-package
 my-pager
@@ -5799,11 +6011,13 @@ myfield-help
 n-1
 n-a11y
 n-instant
+n0nce-value
 name-help
 name-with-
 name:
 names:
 native-dialog
+native-first/htmx-first
 native-pop
 native-pop-content
 native-region
@@ -5822,6 +6036,7 @@ nav-simplenav
 nav_basic
 nav_link_wire_datastar
 nav_link_wire_htmx
+nav_menu_id.go
 navigation/end_of_list.templ
 navigation/mobile_menu.templ
 navigation/nav_link.templ
@@ -5871,9 +6086,11 @@ no-title-modal-title
 no-underline
 node_modules
 node_modules/playwright-core
+node_modules/vendor/.git
 non-.templ
 non-200
 non-breaking
+non-breaking:
 non-bubbling
 non-capturing
 non-click
@@ -5898,8 +6115,8 @@ non-focusable
 non-generated
 non-global
 non-gray
-non-hardcoded
 non-hex
+non-interactive
 non-landmark
 non-matches.
 non-matching
@@ -5912,6 +6129,7 @@ non-page
 non-path
 non-per-path
 non-positive
+non-scaling-stroke
 non-secure
 non-sortable
 non-sticky
@@ -5955,10 +6173,12 @@ not-a-hue
 not-a-number
 not-a-real-token
 not-a-real-value
+not-a-surface
 not-a-tone
 not-allowed
 not-an-email
 not-an-icon
+not-an-ink
 note:
 notfound404_types.go
 nothing:
@@ -6031,6 +6251,7 @@ open-modal-a11y
 open-redirect
 open-restore
 open:
+operator-controlled
 opt-
 opt-1
 opt-in
@@ -6041,6 +6262,7 @@ optimistic-pending
 optimistically:
 optimize-image-priority
 option-building
+option:
 option:checked
 option:checked:where
 option:focus
@@ -6065,6 +6287,7 @@ outline-none
 outline-offset:
 outline-offset:0px
 outline-offset:2px
+outline-offset:calc
 outline-style:none
 outline-style:var
 outline-success
@@ -6078,6 +6301,7 @@ outline:none
 output-identical
 output:
 output[:min
+outright:
 over-exclude
 over-produces
 overflow-auto
@@ -6109,6 +6333,7 @@ overscroll-behavior:contain
 overscroll-contain
 ovl-1
 own:
+owner-gated
 p-0
 p-0.5
 p-1
@@ -6162,8 +6387,10 @@ page-head
 page-header-test
 page-integrated
 page-level
+page-load
 page-range
 page-scoped
+page-shell
 page-wide
 page.templ:
 page:
@@ -6182,6 +6409,8 @@ panel:
 panic-free
 paper-airplane
 paper-airplane:
+parallel:
+paralleltest-clean
 parent:src
 parity:
 parseable:
@@ -6195,6 +6424,7 @@ patch-scoped
 patched-in
 patches:
 path-data
+path-injected
 path-map
 path/to/templ-components/templates/safelist.css
 path:
@@ -6203,6 +6433,7 @@ path:nth-child
 path[:2]
 paths:
 pattern:
+payload:
 pb-1
 pb-2
 pb-3
@@ -6244,6 +6475,7 @@ per-component
 per-connection
 per-element
 per-field
+per-file
 per-form
 per-group
 per-hue
@@ -6251,6 +6483,7 @@ per-icon
 per-instance
 per-item
 per-line
+per-method
 per-module
 per-package
 per-path
@@ -6272,6 +6505,7 @@ per-visitor
 percent-encoded
 percent:
 percentage-based
+percentage-height
 percentages:
 permanently-dark
 persist-nonce
@@ -6307,6 +6541,7 @@ pipeline:
 pitch:
 pixel-8
 pixel-identical
+pixel-stable
 pixels:
 pkg:
 pkgs:
@@ -6374,6 +6609,7 @@ pre-commit
 pre-compiled
 pre-computed
 pre-configured
+pre-field
 pre-filled
 pre-fills
 pre-fix
@@ -6530,6 +6766,7 @@ re-authenticate
 re-baseline
 re-bind-window
 re-binding
+re-branding
 re-breaking
 re-bucket
 re-color
@@ -6538,7 +6775,10 @@ re-coloring
 re-copy
 re-cut
 re-declares
+re-defined
 re-derives
+re-dispatch
+re-downloads
 re-enable
 re-enablement.
 re-enables
@@ -6556,6 +6796,7 @@ re-initializes
 re-injecting
 re-injects
 re-opening
+re-ported
 re-read
 re-recording
 re-render
@@ -6564,13 +6805,16 @@ re-rendering
 re-renders
 re-renders.
 re-requests
+re-rolling
 re-round
 re-run
 re-runs
 re-runs.
+re-sending
 re-shade
 re-skin
 re-skinning
+re-skins
 re-submit
 re-submits
 re-targets
@@ -6578,6 +6822,8 @@ re-theme.
 re-verify.
 re-wire
 re:
+read-modify-
+read-modify-write
 read-only
 read:
 readable:
@@ -6587,6 +6833,7 @@ real-time
 real:
 receiver:
 recent-rows
+recipe-first
 recipe:
 recipes/auth_layout.templ
 recipes/login_card.templ
@@ -6597,6 +6844,7 @@ recorded_commit
 red-400
 redirect:
 reduced-motion
+regex-literal
 region-merge
 region:
 registry-driven
@@ -6618,6 +6866,7 @@ remove-tag
 render-blocking
 render-determinism
 render-level
+render-random
 render-side
 render-table
 render-time
@@ -6635,11 +6884,13 @@ repo-wide
 repo:
 reported:
 req_8fk2m1
+request-body
 request-response
 request-scoped
 request-state
 request:
 request_id
+require-shaped
 required-ish
 required:
 requirement:
@@ -6721,6 +6972,7 @@ round-trips.
 round-up
 rounded-
 rounded-2xl
+rounded-b
 rounded-e-md
 rounded-full
 rounded-l-
@@ -6741,6 +6993,7 @@ row-level
 row-nonce
 row:
 rows:
+rps:
 rtl-drawer
 rtl-inset-alias
 rtl-inset-alias:
@@ -6754,6 +7007,8 @@ run:
 rune-safe
 runs:
 runtime-assembled
+runtime-composed
+runtime-facts
 runtime-internal
 runtime:
 s[1:]
@@ -6797,6 +7052,7 @@ scoping:
 screen-level
 screen-reader
 screen:
+script-content
 script-context
 script-driven
 script-emitting
@@ -6885,11 +7141,14 @@ select:autofill
 select:is
 select:user-invalid
 select:user-valid
+select_stacked
 selection:bg-blue-100
 selection:text-blue-900
 selector:
 self-center
 self-contained
+self-corrects
+self-dark-aware
 self-draw
 self-drawing
 self-healing
@@ -6951,6 +7210,8 @@ sha384-
 sha384-...
 sha384-abc
 shade-complete
+shade-indexed
+shade:
 shadow-black/20
 shadow-gray-500
 shadow-lg
@@ -6990,6 +7251,7 @@ sign-in.
 sign-in:
 sign-up
 signal:
+signals-patch
 signed-in
 silent-failure
 silently-missing
@@ -7000,6 +7262,8 @@ simple_nav
 simple_nav_wired_links
 single-
 single-column
+single-container
+single-dialect.
 single-file
 single-instance.
 single-line
@@ -7012,6 +7276,7 @@ single-quoted
 single-row
 single-row.
 single-select
+single-signed
 single-source
 single-source-of-truth
 single-sourced
@@ -7022,6 +7287,8 @@ single-type
 single-value
 singleton-guarded
 site-footer
+site-nav
+site-nav-mobile-menu
 site-root
 site:
 size-
@@ -7105,14 +7372,19 @@ space-y-8
 spacing:
 span-1
 span-3
-span-inline-end
-span-inline-start
+span-inline-start/span-inline-end
+span-x-end
+span-x-start
+span-x-start/span-x-end
 span:
 sparkline_aria_label
 sparkline_basic
 sparkline_custom_dims
 sparkline_empty
 sparkline_filled
+sparkline_responsive
+sparkline_responsive_zero_line
+sparkline_zero_line
 spec:
 special-casing
 specifically:
@@ -7141,6 +7413,7 @@ start-aligned
 stat-
 stat-1
 stat-card
+stat-nonce
 stat-users-value
 stat_card_href
 stat_card_href_htmx
@@ -7201,6 +7474,7 @@ stroke-gray-200
 stroke-gray-300
 stroke-linecap
 stroke-linejoin
+stroke-opacity
 stroke-width
 stroke-width.
 stroke:var
@@ -7236,12 +7510,16 @@ submit-family
 subset:
 subtree-scoped
 suffixes:
+sum[:8]
 summary:
 summary::-webkit-details-marker
 summary_large_image
 sun:
 supply-chain
 support:
+surface-0
+surface-1
+surface-2
 surface-drift
 surface:
 svg_templ.go
@@ -7290,10 +7568,12 @@ tabs_wired_htmx
 tabular-nums
 tag-to-commit
 tag:
+tag[:end]
 tags-1
 tags-input
 tags[tags.length-1]
 tags_input_basic
+tail:
 tailwind-build
 tailwind-merge
 tailwind-merge-go
@@ -7370,6 +7650,7 @@ tc-menu-close
 tc-menu-open
 tc-mobile-menu-
 tc-mobile-menu-614dd71ca7a5c84c
+tc-mobile-menu-[a-f0-9]
 tc-mobile-menu-my-menu-id
 tc-mobile-menu-tc-mobile-menu-
 tc-modal
@@ -7409,6 +7690,7 @@ templ-components-theme.out.css
 templ-components.
 templ-function
 templ-generate
+templ-less
 templ-side
 templ:
 templates/custom.css:
@@ -7456,6 +7738,9 @@ text-[0.8125rem]
 text-[10px]
 text-[8rem]
 text-[var
+text-accent-200
+text-accent-600
+text-accent-800
 text-align:
 text-align:center
 text-align:end
@@ -7480,6 +7765,7 @@ text-blue-600
 text-blue-700
 text-blue-800
 text-center
+text-content
 text-cyan-500
 text-cyan-600
 text-cyan-700
@@ -7513,6 +7799,7 @@ text-green-700
 text-green-800
 text-indent:0
 text-indigo-600
+text-ink
 text-left
 text-lg
 text-orange-500
@@ -7604,6 +7891,7 @@ time-only
 time-range
 time-series
 time[data-tc-relative]
+timeline-cap
 timestamp:
 tip-
 tip-1
@@ -7632,9 +7920,11 @@ toggle_on
 tok-1
 tok-123
 token-abc
+token-axis
 token-bucket
 token-driven
 token-exact
+token-family
 token-value-12345
 token:
 tokens:
@@ -7668,6 +7958,7 @@ top:0
 top:100%
 top:25%
 top:50%
+top:70.0%
 top:calc
 top][data-tc-align
 total:
@@ -7759,13 +8050,16 @@ trigger-modal
 trigger-position
 trigger:
 trip:
-true]:bg-blue-50
+true-get
+true:
+true]:bg-accent-50
 true]:bg-gray-800
 true]:hidden
 truncate
 truth:
 tt-1
 tt-2
+turn-2
 twitter:card
 twitter:description
 twitter:image
@@ -7788,6 +8082,7 @@ uncacheable:
 unchanged:
 underline
 underline-offset-2
+unescaped:
 unexpected:
 unfiltered/cap-exceeding
 unit-0
@@ -7801,6 +8096,7 @@ unknown-value
 unsafe-eval
 unsafe-inline
 unsaved-changes
+unsorted:
 unstyled:
 until-found]
 untouched:
@@ -7847,17 +8143,22 @@ valid:
 validation:
 validation_summary
 validity-bridge
+value-borne
 value-receiver
 value:
 values:
 var-chained
 var-preserving
+variable-flip
 variant:
 variants:
 vars:
 vbscript:
+vector-effect
 vendor/node_modules
+verbatim-wrap
 verdict:
+version-shaped.
 version:
 vertical-align:baseline
 vertical-align:middle
@@ -7947,6 +8248,7 @@ website/internal/pages/base_templ.go
 website:
 weight:
 well-formed
+well-known
 white-space:normal
 white-space:nowrap
 whitespace-
@@ -8049,6 +8351,7 @@ xl:grid-cols-6
 xl:grid-cols-[var
 xl:hidden
 y-axis
+y-domain
 y:
 you-have-seen-it-all
 z-10
@@ -8060,6 +8363,7 @@ z-index:10
 z-index:20
 z-index:40
 z-index:50
+zero-aware
 zero-config
 zero-config.
 zero-date
@@ -8072,3 +8376,4 @@ zero-value
 zero-value-compatible
 zero-value-equals-documented-default
 zero-valued
+zero-width
