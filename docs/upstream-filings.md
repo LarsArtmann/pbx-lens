@@ -287,3 +287,12 @@ upstream, execute the local fold-in and delete the workaround + TODO row.
 | go-appkit#26                                                  | CLOSED 2026-10-17 — bump; adopt the no-drain-delay testkit constructor for tests                                                                                                                                                                                                                                                                                                                                                     |
 | templ-components#48/#49/#51/#55                               | bump → run the adoption-map watchlist (docs/templ-components-adoption.md); retire `!items-stretch`, the focus ring CSS, hand-rolled match-log classes, and the pinned nav id + TestNavIDIsDeterministic as each lands                                                                                                                                                                                                                |
 | go-cqrs-lite versions.json (evaluated NON-filing, 2026-10-25) | own repo — regenerate versions.json in the go-cqrs-lite checkout instead. DONE 2026-10-25: `check-versions-manifest.sh --update` ran idempotent (the manifest already said systemscenario v4.2.1 — the drift was repaired between the gotcha's verification and this run) and the gate answers "fresh (112 module trains, local tags)"; the gotcha's doctrine stands: git tags are the truth, versions.json is just their projection |
+
+## Staged 2026-11-20 (dependency-hygiene wave, Pareto plan T22)
+
+Four drafts in `docs/drafts/2026-11-20_dependency-hygiene-filings.md`:
+fsnotify (a-h/templ watch mode), pkg/errors (watermill), charm-v1 →
+charm.land v2 (go-appkit — OWNER ACTION, not upstream), and the erraudit
+enforce-* gap refresh (the 2026-10-27 draft re-verified against current
+main before filing). Evidence chains (module-graph parents) are in the
+draft; file only after re-verifying the parents' current main.
