@@ -539,6 +539,14 @@
         font-size: 0.92rem;
         border: 2px solid var(--text);
       }
+      /* Vision-QA fix 2026-11-20: long unbreakable identifiers pushed the
+         wide issue tables past the page margin, squeezing the last column
+         to ~75px. Cells may now break anywhere, so auto layout can shrink
+         every column and width:100% actually holds. */
+      td,
+      th {
+        overflow-wrap: anywhere;
+      }
       th {
         text-align: left;
         padding: 0.6rem 0.9rem;
