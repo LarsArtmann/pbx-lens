@@ -7,6 +7,8 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+## [v0.4.0] — 2026-11-20
+
 ### Fixed — 2026-11-20 (the twenty-skill mega-review's red-proofed code fixes)
 
 - **OIDC single-flight handoff (Critical).** A goroutine joining a drained
