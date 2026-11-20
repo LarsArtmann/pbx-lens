@@ -49,7 +49,7 @@ type TelnyxOptions struct {
 type EnrichmentSeed struct {
 	ConversationID string
 	CallControlID  string
-	StreamKey      string
+	RecordKey      string
 }
 
 // SeedsFor keeps only the enrichment seeds whose stream survived the age
@@ -66,7 +66,7 @@ func SeedsFor(admitted []calls.Observation, seeds []EnrichmentSeed) []Enrichment
 
 	kept := make([]EnrichmentSeed, 0, len(seeds))
 	for _, seed := range seeds {
-		if _, ok := admittedKeys[seed.StreamKey]; ok {
+		if _, ok := admittedKeys[seed.RecordKey]; ok {
 			kept = append(kept, seed)
 		}
 	}
@@ -133,7 +133,7 @@ func FetchTelnyxObservations(
 
 		seed := EnrichmentSeed{ConversationID: conv.ID, CallControlID: conv.MetadataString("call_control_id")}
 		if sid, sidErr := obs.StreamID(); sidErr == nil {
-			seed.StreamKey = calls.RecordKey(sid)
+			seed.RecordKey = calls.RecordKey(sid)
 		}
 
 		observations = append(observations, obs)

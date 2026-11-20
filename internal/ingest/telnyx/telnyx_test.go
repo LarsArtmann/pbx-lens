@@ -839,9 +839,11 @@ func TestFetchAllRefusesSilentTruncationAtPageCap(t *testing.T) {
 			t.Errorf("page[size]: %v", err)
 		}
 
-		data := make([]Conversation, size)
-		for i := range data {
-			data[i] = Conversation{ID: "conv-" + r.URL.Query().Get("page[number]") + "-" + strconv.Itoa(i)}
+		data := make([]Conversation, 0, size)
+		for i := range size {
+			data = append(data, Conversation{
+				ID: "conv-" + r.URL.Query().Get("page[number]") + "-" + strconv.Itoa(i),
+			})
 		}
 
 		writeJSON(t, w, map[string]any{"data": data})

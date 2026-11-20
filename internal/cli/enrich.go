@@ -79,7 +79,7 @@ func (p *enrichPass) enrichConversation(
 	seed EnrichmentSeed,
 	stats *EnrichStats,
 ) {
-	view, found, err := calls.LookupViewKey(ctx, p.reader, seed.StreamKey)
+	view, found, err := calls.LookupViewKey(ctx, p.reader, seed.RecordKey)
 	if err != nil {
 		stats.Rejected = append(stats.Rejected, seed.ConversationID+": "+err.Error())
 

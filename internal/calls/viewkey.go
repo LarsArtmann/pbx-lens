@@ -54,7 +54,7 @@ func LookupViewKey(
 
 	sid, err := id.ParseStreamID(key)
 	if err != nil {
-		return CallView{}, false, nil
+		return CallView{}, false, nil //nolint:nilerr // an unparseable key has no legacy twin; clean not-found is the honest answer
 	}
 
 	return reader.Get(ctx, LegacyRecordKey(sid))

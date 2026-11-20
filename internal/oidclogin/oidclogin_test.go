@@ -472,15 +472,19 @@ func TestProviderForConcurrentWaitersAllReceiveTheProvider(t *testing.T) {
 
 	for i := range waiters {
 		wg.Add(1)
+
 		go func(i int) {
 			defer wg.Done()
+
 			started <- struct{}{}
+
 			got[i], errs[i] = provider.providerFor(context.Background())
 		}(i)
 	}
 
-		<-started
-		<-started
+	<-started
+	<-started
+
 	time.Sleep(50 * time.Millisecond) // let both waiters block on the flight
 
 	// Complete the flight exactly as providerFor does: cache under the
@@ -490,7 +494,9 @@ func TestProviderForConcurrentWaitersAllReceiveTheProvider(t *testing.T) {
 	provider.fetchedAt = time.Now()
 	provider.inflight = nil
 	provider.mu.Unlock()
+
 	flight <- providerResult{p: discovered}
+
 	close(flight)
 
 	wg.Wait()

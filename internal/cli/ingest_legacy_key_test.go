@@ -30,8 +30,12 @@ func TestIngestClassifiesCorrectionOnLegacyKeyedRow(t *testing.T) {
 		t.Fatalf("boot memory system: %v", err)
 	}
 
-	res, err := cdr.Parse(strings.NewReader(
-		`"John Doe","17287289311","2000","public","2026-10-09 19:51:25","2026-10-09 19:51:26","2026-10-09 19:51:51","26","25","NORMAL_CLEARING","conv-legacy-correct","b0a9-2222","","4.4"` + "\n"))
+	res, err := cdr.Parse(strings.NewReader(strings.Join([]string{
+		`"John Doe","17287289311","2000","public","2026-10-09 19:51:25",`,
+		`"2026-10-09 19:51:26","2026-10-09 19:51:51","26","25",`,
+		`"NORMAL_CLEARING","conv-legacy-correct","b0a9-2222","","4.4"`,
+		"\n",
+	}, "")))
 	if err != nil || len(res.Observations) != 1 {
 		t.Fatalf("parse fixture row: err %v observations %d", err, len(res.Observations))
 	}

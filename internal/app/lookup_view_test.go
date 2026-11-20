@@ -145,14 +145,50 @@ func TestLookupViewServesBothKeyGenerations(t *testing.T) {
 	if view.ContentHash != live.ContentHash() {
 		t.Fatalf("LookupView(both rows) ContentHash = %q, want the bare row's", view.ContentHash)
 	}
+}
 
-	// 5. The key-string variant serves the same contract for callers that
-	// hold the bare record key (enrichment seeds, refresh classification).
-	if _, found, err := calls.LookupViewKey(ctx, reader, calls.RecordKey(ghostSid)); found || err != nil {
-		t.Fatalf("LookupViewKey(absent) = found %v err %v, want clean not-found", found, err)
+// TestLookupViewKeyServesBothKeyGenerations pins the key-string variant the
+// enrichment pass and refresh classification use: callers that hold the bare
+// record key, not the stream id, get the same two-generation fallback.
+func TestLookupViewKeyServesBothKeyGenerations(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	sys, err := app.New(ctx, "")
+	if err != nil {
+		t.Fatalf("boot memory system: %v", err)
 	}
 
-	view, found, err = calls.LookupViewKey(ctx, reader, calls.RecordKey(legacySid))
+	store := sys.MetaEngine()
+	reader := metaengine.NewReader[calls.CallView](store, calls.Collection)
+
+	// Legacy row only: seeded through ApplyRecord with an EventWithID whose
+	// ID is the pre-v4.6.0 marker form — no live write path produces it.
+	legacy := sampleObservation()
+	legacy.NativeID = "conv-legacy-keyed"
+	legacy.DurationSecs = 321
+
+	legacySid, err := legacy.StreamID()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = store.ApplyRecord(ctx, record.Record{
+		Type:       string(calls.EventObserved),
+		StreamID:   record.NewStreamRef(calls.StreamType, legacySid.Get()),
+		StreamType: calls.StreamType,
+		Version:    1,
+	}, projectionadapter.EventWithID[calls.CallObserved]{
+		ID:         calls.LegacyRecordKey(legacySid),
+		Payload:    calls.CallObserved{Observation: legacy},
+		OccurredAt: time.Now(),
+	})
+	if err != nil {
+		t.Fatalf("seed legacy row: %v", err)
+	}
+
+	// The legacy row is reachable through the bare key + fallback.
+	view, found, err := calls.LookupViewKey(ctx, reader, calls.RecordKey(legacySid))
 	if err != nil || !found {
 		t.Fatalf("LookupViewKey(legacy row) = found %v err %v, want found via fallback", found, err)
 	}
@@ -161,6 +197,20 @@ func TestLookupViewServesBothKeyGenerations(t *testing.T) {
 		t.Fatalf("LookupViewKey legacy row DurationSecs = %d, want the seeded 321", view.DurationSecs)
 	}
 
+	// An absent stream answers a clean not-found.
+	ghost := sampleObservation()
+	ghost.NativeID = "conv-never-keyed"
+
+	ghostSid, err := ghost.StreamID()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, found, err := calls.LookupViewKey(ctx, reader, calls.RecordKey(ghostSid)); found || err != nil {
+		t.Fatalf("LookupViewKey(absent) = found %v err %v, want clean not-found", found, err)
+	}
+
+	// A key that is not a bare stream value cannot have a legacy twin.
 	if _, found, err := calls.LookupViewKey(ctx, reader, "not-a-stream-key"); found || err != nil {
 		t.Fatalf("LookupViewKey(unparseable) = found %v err %v, want clean not-found", found, err)
 	}

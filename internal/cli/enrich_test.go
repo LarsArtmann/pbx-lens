@@ -246,7 +246,7 @@ func TestEnrichTelnyxCallsCountsMissingAndRejects(t *testing.T) {
 
 	missing := EnrichmentSeed{
 		ConversationID: "ghost",
-		StreamKey:      calls.RecordKey(ghostKey),
+		RecordKey:      calls.RecordKey(ghostKey),
 	}
 
 	stats, err := EnrichTelnyxCalls(ctx, sys, client, []EnrichmentSeed{missing}, time.Now().UTC())

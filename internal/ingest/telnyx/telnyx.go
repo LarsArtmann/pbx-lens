@@ -198,7 +198,9 @@ func fetchAll[T any](
 
 		if page == maxPages {
 			return nil, errorfamily.NewTransient("telnyx.page_cap",
-				fmt.Sprintf("pagination cap reached (%d pages of %d) with the last page full — the endpoint holds more data; refusing a silently truncated result", maxPages, pageSize))
+				fmt.Sprintf("pagination cap reached (%d pages of %d) with the last page full — "+
+					"the endpoint holds more data; refusing a silently truncated result",
+					maxPages, pageSize))
 		}
 	}
 
