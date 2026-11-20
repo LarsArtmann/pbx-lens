@@ -491,3 +491,72 @@ func TestAllOriginsHTTPS(t *testing.T) {
 		})
 	}
 }
+
+// The register form is honest only while the operator seat is open
+// (MaxUsers: 1 — T08, 2026-11-20): a fresh identity DB shows it (the first
+// visitor IS the operator), and a reopened DB whose seat is taken hides it
+// — a form that always fails is the worst visible UX wart. NoRegistration
+// is a boot-time read of the drained read model, so the reopen leg proves
+// the drain landed before the login page rendered.
+func TestRegistrationSectionFollowsTheSeat(t *testing.T) {
+	dsn := filepath.Join(t.TempDir(), "identity.db")
+
+	{
+		identity, err := OpenIdentity(context.Background(), IdentityConfig{
+			DSN:       dsn,
+			RPID:      "localhost",
+			RPOrigins: []string{"http://localhost:8300"},
+		})
+		if err != nil {
+			t.Fatalf("OpenIdentity (fresh): %v", err)
+		}
+
+		handler := identityHandler(t, identity)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/login", nil))
+
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("GET /login status = %d, want 200", recorder.Code)
+		}
+
+		if !strings.Contains(recorder.Body.String(), "lp-register-section") {
+			t.Error("fresh identity DB hides the register section — the operator could never sign up")
+		}
+
+		// Take the seat (loginSession asserts the 201).
+		loginSession(t, handler, "operator@example.org")
+
+		if cerr := identity.Close(); cerr != nil {
+			t.Fatalf("identity close: %v", cerr)
+		}
+	}
+
+	{
+		reopened, err := OpenIdentity(context.Background(), IdentityConfig{
+			DSN:       dsn,
+			RPID:      "localhost",
+			RPOrigins: []string{"http://localhost:8300"},
+		})
+		if err != nil {
+			t.Fatalf("OpenIdentity (reopen): %v", err)
+		}
+
+		t.Cleanup(func() {
+			if cerr := reopened.Close(); cerr != nil {
+				t.Errorf("identity close: %v", cerr)
+			}
+		})
+
+		handler := identityHandler(t, reopened)
+		recorder := httptest.NewRecorder()
+		handler.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/login", nil))
+
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("GET /login status = %d, want 200", recorder.Code)
+		}
+
+		if strings.Contains(recorder.Body.String(), "lp-register-section") {
+			t.Error("taken seat still renders the register section — a form that always fails")
+		}
+	}
+}
