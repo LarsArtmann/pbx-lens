@@ -5,27 +5,28 @@
 # Status — the 20-skill mega-review (2026-11-19 evening → 2026-11-20)
 
 Session shape: 21 skill contracts loaded, 17 subagents dispatched (16 review
-+ 1 vision QA + 2 write-subagents for the fix batch), everything coordinated
-from one session. Baseline was green before any work started; every gate is
-green at the end. This report is the honest ledger, including the misses.
+
+- 1 vision QA + 2 write-subagents for the fix batch), everything coordinated
+  from one session. Baseline was green before any work started; every gate is
+  green at the end. This report is the honest ledger, including the misses.
 
 ## A. Fully done
 
 **Reviews (12 HTML reports + 4 D2/SVG artifacts, all on disk):**
 
-| Deliverable | Verdict |
-| --- | --- |
-| docs/reviews/2026-11-20_00-22_full-code-review.html (+ pareto plan in docs/planning/) | 155 files, 17 findings: 1 Critical, 1 High, 6 Medium, 9 Minor, 3 split brains |
-| docs/architecture-understanding/2026-11-20_00-25_structural-assessment.html | 3.7/5 avg; zero P0; P1 = identity extract, web read-side split, serve composition move |
-| docs/architecture-understanding/2026-11-20_00-24-pbx-lens{,-improved}.d2/.svg | current vs target (web split, identity context, serve boot, TLS front, PII layer) |
-| docs/architecture-understanding/2026-11-20_00-13-deepening.html | 4 candidates; top = typed poller-health snapshot (STRONG) |
-| docs/reviews/2026-11-20_data-model-review.html | 1 High (CallView hand-mirror); PC-1/2/3 redesigns, all hash-safe |
-| docs/reviews/2026-11-20_00-29_naming-review.html | 0 honesty issues; 5 safe renames |
-| docs/reviews/2026-11-20_00-28_code-quality-scan.html | all gates exit-0 fresh; 0 harmful clones; 0-group dedup gate |
-| docs/research/2026-11-19_templ-components-deep-dive.html | 89/100; v1.27.1 IS the retirement wave |
-| docs/research/2026-11-19_cqrs-htmx-deep-dive.html | 83/100; ADR-0062 spotless; v5 = renumber only |
-| docs/research/2026-11-20_go-cqrs-lite-deep-dive.html | 91/100; 4 pins behind (verified zero used-surface change) |
-| docs/research/2026-11-20_go-appkit-deep-dive.html | 100/100 |
+| Deliverable                                                                           | Verdict                                                                                |
+| ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| docs/reviews/2026-11-20_00-22_full-code-review.html (+ pareto plan in docs/planning/) | 155 files, 17 findings: 1 Critical, 1 High, 6 Medium, 9 Minor, 3 split brains          |
+| docs/architecture-understanding/2026-11-20_00-25_structural-assessment.html           | 3.7/5 avg; zero P0; P1 = identity extract, web read-side split, serve composition move |
+| docs/architecture-understanding/2026-11-20_00-24-pbx-lens{,-improved}.d2/.svg         | current vs target (web split, identity context, serve boot, TLS front, PII layer)      |
+| docs/architecture-understanding/2026-11-20_00-13-deepening.html                       | 4 candidates; top = typed poller-health snapshot (STRONG)                              |
+| docs/reviews/2026-11-20_data-model-review.html                                        | 1 High (CallView hand-mirror); PC-1/2/3 redesigns, all hash-safe                       |
+| docs/reviews/2026-11-20_00-29_naming-review.html                                      | 0 honesty issues; 5 safe renames                                                       |
+| docs/reviews/2026-11-20_00-28_code-quality-scan.html                                  | all gates exit-0 fresh; 0 harmful clones; 0-group dedup gate                           |
+| docs/research/2026-11-19_templ-components-deep-dive.html                              | 89/100; v1.27.1 IS the retirement wave                                                 |
+| docs/research/2026-11-19_cqrs-htmx-deep-dive.html                                     | 83/100; ADR-0062 spotless; v5 = renumber only                                          |
+| docs/research/2026-11-20_go-cqrs-lite-deep-dive.html                                  | 91/100; 4 pins behind (verified zero used-surface change)                              |
+| docs/research/2026-11-20_go-appkit-deep-dive.html                                     | 100/100                                                                                |
 
 **Verdict-only skills (findings harvested, no artifact needed):**
 go-modularize (HOLD re-affirmed, all 3 triggers unfired, suite 3.6 s;
@@ -148,7 +149,7 @@ PNGs) · AGENTS budget 219/219.
   your set.
 - Every `//nolint` → ledger row, same commit.
 - The `date`-based filename convention should pin ONE timezone (Berlin)
-   per series.
+  per series.
 
 ## F. Next 50 (ranked; 1–12 are small and unblocked)
 

@@ -43,8 +43,8 @@ landed; the login page scripts are the newest unreviewed surface.
 **Options:**
 
 - **A — flip now.** Requires one browser-lane pass over login + register
-  + OIDC callback with the report-uri quiet; any third-party inline
-  script (none known) would break loudly.
+  - OIDC callback with the report-uri quiet; any third-party inline
+    script (none known) would break loudly.
 - **B — hold report-only** until the first real deploy receipts show a
   quiet report stream, then flip. Cost: the door stays open for an
   injected inline script the whole time.
@@ -93,5 +93,5 @@ the only live watch on such drift.
 
 ---
 
-*(Answered choices get their outcome recorded inline and the matching
-TODO_LIST rows flipped — same ritual as the 2026-11-12 identity sheet.)*
+_(Answered choices get their outcome recorded inline and the matching
+TODO_LIST rows flipped — same ritual as the 2026-11-12 identity sheet.)_

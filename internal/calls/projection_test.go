@@ -1,7 +1,8 @@
 package calls
 
 import (
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"testing"
 	"time"
 )
@@ -167,7 +168,7 @@ func TestCallViewJSONIdentityAcrossTheEmbed(t *testing.T) {
 		t.Fatalf("marshal view: %v", err)
 	}
 
-	var keys map[string]json.RawMessage
+	var keys map[string]jsontext.Value
 	if err := json.Unmarshal(encoded, &keys); err != nil {
 		t.Fatalf("re-marshal decode: %v", err)
 	}
