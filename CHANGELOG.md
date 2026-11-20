@@ -7,6 +7,63 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-11-20 (the twenty-skill mega-review's red-proofed code fixes)
+
+- **OIDC single-flight handoff (Critical).** A goroutine joining a drained
+  `inflight` channel could receive the zero value — a `nil` provider with a
+  `nil` error, the caller-panic shape — when the discovery winner's send
+  raced the channel drain. Late waiters now rescue the winner's cached
+  provider from the cache (the winner caches BEFORE sending) and surface an
+  explicit error when the handoff was violated; a concurrent-waiter
+  regression test pins the contract (`internal/oidclogin`).
+- **Legacy-keyed record keys resolve again (High).** Rows stored under the
+  pre-flip marker-prefixed record keys were invisible to `ingest`'s
+  re-record path and `enrich`'s seed lookup. Both now route through
+  `calls.LookupView` / the new `calls.LookupViewKey`, whose marker-fallback
+  keeps both key generations reachable (docs/gotchas.md doctrine, now
+  enforced by the helpers themselves); regression tests cover both
+  generations on plain `app.New` harnesses (`internal/app`,
+  `internal/cli`).
+- **The Telnyx page cap tells the truth.** `fetchAll` stopping at `maxPages`
+  returned a silently truncated list — indistinguishable from a complete
+  pull; it now returns `errorfamily.NewTransient` so the poller retries
+  instead of indexing a partial window.
+- **Webhook hangup-cause folds first-wins.** The hangup-cause extraction
+  moved into `foldPayload`, so a retry delivery of `call.initiated` (empty
+  cause) can no longer overwrite the cause a `call.hangup` delivery already
+  captured.
+- **A nil poller log falls back to slog, not silence.** `cli.PollLoop` with
+  a nil log func used to return immediately — a dead poller reading as a
+  healthy serve with a stale index; it now logs to the default slog sink.
+
+### Changed — 2026-11-20 (review-wave naming and signature cleanup)
+
+- `retention.ReasonRetention` renamed to `ReasonAge`, stamped through a new
+  typed `calls.RetentionReason` on the retire command; the ingest age-gate
+  label stays a distinct `ReasonAgeCutoff`.
+- `EnrichmentSeed.StreamKey` renamed to `RecordKey` — the field IS the bare
+  record key; the old name smuggled a stream id.
+- The unused parameter on `EnrichTelnyxCalls`'s decider seam is gone;
+  `daysPerWeek` helpers merged; dead dashboard helpers deleted;
+  `internal/web/ops.go` moves to `encoding/json/v2`.
+
+### Added — 2026-11-20 (trust currency: CI lanes, guard rails, regression pins)
+
+- **gitleaks secret-scan lane** joins CI, pinned to v8.30.1 installed via
+  the DECLARED module path `github.com/zricethezav/gitleaks/v8` (the
+  gitleaks-org install path fails with a version-constraints conflict —
+  proven red on run 44713670130, fixed same day).
+- **The cqrs-lint CI lane pin is aligned** to the flake's source-pinned
+  revision, closing the two-binary version drift between local gate and CI.
+- **`update-vendor-hash` refuses a dirty tree** (flake.nix guard) — the
+  BuildFlow#55 class of hash-fix-against-moving-tree is now unrepresentable.
+- **Identity snapshot checkpoint test**: a live identity DB snapshot
+  round-trip carries its session rows (`internal/web`).
+- The 2026-11-19/20 review corpus (twenty skills: reports under
+  `docs/reviews/`, `docs/architecture-understanding/`, `docs/research/`)
+  and the consolidated Pareto execution plan
+  (`docs/planning/2026-11-20_10-44_SUPERB-pareto-execution-plan.md`).
+
 ### Added — 2026-11-12 (native identity: login replaces the htpasswd file; cqrs-htmx flips to ADOPTED)
 
 - **The lens has a real login.** `internal/web/userauth.go` brings up the
