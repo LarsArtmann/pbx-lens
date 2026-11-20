@@ -58,7 +58,11 @@ bound the wait with POLL_GATE_MAX_WAIT, default waits with printed progress)"
 TMPDIR="${TMPDIR:-/tmp}" nix develop -c bash scripts/poll-gate.sh -- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev
 
 step "browser probe lane (all four suites)"
-bash scripts/verify-all.sh
+# Through the devShell, not bare bash: the dedup gate refuses an art-dupl
+# that is not the CI pin, and a host-PATH `art-dupl version dev` (paid
+# 2026-11-20, first v0.4.0 attempt) shadows the pinned tool the moment the
+# runbook leaves the devShell. Inside it, PATH carries the verified pins.
+nix develop -c bash scripts/verify-all.sh
 
 step "remote CI on HEAD"
 if command -v gh >/dev/null 2>&1; then
