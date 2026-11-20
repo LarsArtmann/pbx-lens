@@ -136,4 +136,6 @@ target/
 # <<< buildflow-managed (.gitignore) <<<
 /cmd/pbx-lens/pbx-lens
 /tmp-render-pngs doctrine: report PNGs are regenerable via scripts/render-report.js; keep them machine-local (pixel-diff baseline doctrine)
-docs/**/*.png
+# rendered report previews (regenerable); docs/assets screenshots stay tracked
+docs/reviews/*.png
+docs/architecture-understanding/*.png
