@@ -128,8 +128,10 @@ jobs:
         run: go tool templ generate
 
       - name: Run govulncheck
+        # Pinned like every tool here (T13, 2026-11-20): @latest let a tool
+        # release change a verdict mid-green. v1.9.0 is the devShell's pin.
         run: |
-          go install golang.org/x/vuln/cmd/govulncheck@latest
+          go install golang.org/x/vuln/cmd/govulncheck@v1.9.0
           govulncheck ./...
 
   gitleaks:
@@ -314,7 +316,7 @@ jobs:
       - name: Install Nix
         uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Resolve the flake's locked nixpkgs
         # Every nix run below goes through the SAME nixpkgs rev the flake
