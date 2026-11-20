@@ -222,6 +222,22 @@
 | Legacy-keyed rebuild runbook slot: the LookupView/LookupViewKey helpers now serve both key generations; the next DEPLOY window should run one ResetReadModel rebuild so pre-flip rows physically re-key (runbook: docs/runbooks/reset-rebuild.md) | ⏳ `WATCH` | next deploy   | T27/F75 |
 | ops surfacing of OIDC handoff errors: /api/ops notes should name the oidclogin drained-handoff error code so an operator sees WHY discovery failed (the typed error exists; only the surfacing is missing)                                        | ⏳ `WATCH` | next ops pass | T27/F76 |
 
+## Report QA verdict (2026-11-20, T15 — DONE)
+
+The sanctioned renderer (`scripts/render-report.js`, NixOS chromium via
+the probe's discovery; the cached chrome-headless-shell exits 127 on
+NixOS for lack of libnss3 — that exit-127 is now documented in the
+script header) rendered all six 2026-11-20 reports. A vision pass over
+the renders (band-sliced, measurements not thumbnails) returned
+ALL-SIX-PASS with one real defect: the naming-review's wide tables
+overflowed the page margin and squeezed their last column to ~48-70px.
+Fixed with two CSS rounds (`overflow-wrap: anywhere` + a last-column
+`min-width`), re-rendered, and re-verified by direct inspection: every
+table inside the margin, every last column readable. The second vision
+note (a cosmetic white gap beside the structural-assessment scorecard)
+is left as-is in the dated report. Report PNGs stay machine-local —
+regenerable in seconds via the script.
+
 ## Type-design dispositions (2026-11-20, T20/T21/T23/T25)
 
 | Item                                                                                                                                                                                                                                                                            | State        | Note                                     |
