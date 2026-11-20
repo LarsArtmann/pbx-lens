@@ -42,7 +42,8 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 - `retention.ReasonRetention` renamed to `ReasonAge`, stamped through a new
   typed `calls.RetentionReason` on the retire command; the ingest age-gate
-  label stays a distinct `ReasonAgeCutoff`.
+  label stays a distinct `ReasonAgeCutoff`. (naming-review findings applied
+  the same day they were filed, 2026-11-20.)
 - `EnrichmentSeed.StreamKey` renamed to `RecordKey` — the field IS the bare
   record key; the old name smuggled a stream id.
 - The unused parameter on `EnrichTelnyxCalls`'s decider seam is gone;

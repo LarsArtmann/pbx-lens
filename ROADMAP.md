@@ -335,3 +335,23 @@ versions):
   repo-weight cost) or keep baselines machine-local in /tmp (repo lean;
   baseline dies with the machine). Tooling itself is live and verified;
   only the storage trade is open. (same report §g.3)
+
+## Harvested 2026-11-20 (Pareto plan T14/F39 — raw ideas, not yet tasks)
+
+- **PII boundary layer** (from the DOMAIN_LANGUAGE PII primitives):
+  `E164`/`ParticipantHash` exist and `?pii=hash` works in the export, but
+  raw numbers remain the default everywhere. The end state worth thinking
+  about: a hash-first presentation layer with a reveal-on-demand
+  affordance, so a screen-share or exported CSV is never a phone-book.
+  Owner decision pack 2026-11-20 question 1 carries the option set.
+- **Analytics consumers** (from the denominators doctrine): every
+  dashboard rate names its denominator; the next step up is machine
+  consumers of the same figures — a weekly digest (email/JSON) built on
+  the same query package the pages use, so pages and digests can never
+  disagree about a rate.
+- **Owner-gated second ASR layer** (from Transcript truth): a clearly
+  labelled variant transcript that never overwrites the source's own
+  turns — the shapes already exist (`SourceEvents` outside the hash,
+  additive-field discipline), the missing piece is the operator's call on
+  whether a second recognizer's output is ever worth the storage and the
+  ambiguity.
