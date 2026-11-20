@@ -9,7 +9,7 @@ require (
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.20.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
 	github.com/larsartmann/go-appkit v0.12.0
-	github.com/larsartmann/go-appkit/systemd v0.1.0
+	github.com/larsartmann/go-appkit/systemd v0.2.0
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.15.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0
@@ -27,7 +27,7 @@ require (
 	github.com/larsartmann/go-error-family v0.12.0
 	github.com/larsartmann/go-etag/metrics v0.6.2
 	github.com/larsartmann/go-etag/server v0.6.2
-	github.com/larsartmann/httputil v1.8.0
+	github.com/larsartmann/httputil v1.9.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
 	github.com/larsartmann/templ-components v1.27.2
 	github.com/larsartmann/templ-components/htmx v1.27.2
