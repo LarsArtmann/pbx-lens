@@ -79,3 +79,22 @@ registrations/min). The honest recovery path for a LOST operator identity
 restart, and re-register — the identity DB holds nothing else, and the
 index DB is untouched. This is also why the identity DB rides the nightly
 backup (step 7): restoring it beats re-registering on a shared host.
+
+## Logical backup of the operator account (2026-11-20, T24)
+
+The nightly VACUUM INTO snapshot covers disaster recovery, but a LOGICAL
+export — the operator's user record as plain JSON — is the portable
+artifact for migrating to a fresh host without restoring a whole SQLite
+file. The identity service exposes `usermgmt.Service.ExportUsersToJSON`
+(all users as a JSON array; email + WebAuthn credential metadata, NO
+secret keys). Today the export is reachable through the same boot path
+the serve verb uses; wiring it as a standalone `pbx-lens identity-export`
+verb is a recorded follow-up (TODO_LIST), not a gap in recovery: the
+file-level backup restores everything, the JSON export is convenience.
+
+Session lifetime is usermgmt's upstream default and stays so (decision
+recorded 2026-11-12, re-affirmed 2026-11-20): a FIXED 24h from issuance,
+no sliding refresh, no idle timeout — the cookie Max-Age and the
+server-side row expire on the same clock, and logout kills the row
+immediately. A shorter operator window is one `HandlerConfig` field away
+if the deploy ever wants it.
