@@ -235,6 +235,16 @@ func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
 		Redirect:         "/",
 		CSSPath:          "/app.css",
 		NonceFromRequest: httputil.NonceFromRequest,
+		// The register form is honest only while the operator seat is open:
+		// MaxUsers is 1, so a populated identity DB has already closed
+		// registration for good — hiding the section spares every later
+		// visitor a form that always fails. Boot-time decision: the
+		// operator's own mid-run signup keeps the section visible until the
+		// next restart (acceptable; the submit still refuses server-side).
+		NoRegistration: service.ReadModel().Count() >= serviceCfg.MaxUsers,
+		// ADR: the favicon square carries the signal palette's teal, not the
+		// library's indigo default (app.css bridges the whole UI to teal).
+		AccentColor: "#0f766e",
 	}
 
 	pageCfg.OAuth2Buttons = oauthButtons(cfg.OIDC)
