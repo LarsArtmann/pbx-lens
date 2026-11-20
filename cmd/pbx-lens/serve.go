@@ -48,120 +48,159 @@ func slogLog(msg string, args ...any) {
 // serve runs the read-only web UI until SIGINT/SIGTERM (appkit Run owns the
 // signal handling and the graceful drain). One drain at startup catches the
 // read model up with whatever the ingest commands left unprojected.
-func serve(args []string) {
-	fs := flag.NewFlagSet("serve", flag.ExitOnError)
-	db := fs.String("db", "", "sqlite DSN (required)")
-	addr := fs.String("addr", defaultAddr, "listen address")
-	keyFile := fs.String(
+// serveFlags carries the serve verb's flag surface, extracted so the
+// verb reads as orchestration and the flag mechanics stay testable
+// (and T18's composition move starts from a clean seam).
+type serveFlags struct {
+	Db                 *string
+	Addr               *string
+	KeyFile            *string
+	RecordingsDir      *string
+	RecTimeout         *time.Duration
+	AuthDB             *string
+	AuthRPID           *string
+	AuthOrigin         *string
+	AuthOIDCIssuer     *string
+	AuthOIDCClientID   *string
+	AuthOIDCSecretFile *string
+	AuthOIDCRedirect   *string
+	AuthOIDCGroup      *string
+	PollEvery          *time.Duration
+	PollSince          *time.Duration
+	PollDirection      *string
+	AiDID              *string
+	MaxAge             *time.Duration
+	CdrFile            *string
+	WebhookLog         *string
+	TranscriptsDir     *string
+	WiredOps           *bool
+}
+
+// registerServeFlags declares every serve flag on fs and returns the
+// parsed-value handles.
+func registerServeFlags(fs *flag.FlagSet) *serveFlags {
+	flags := new(serveFlags)
+
+	flags.Db = fs.String("db", "", "sqlite DSN (required)")
+	flags.Addr = fs.String("addr", defaultAddr, "listen address")
+	flags.KeyFile = fs.String(
 		"telnyx-key-file",
 		"",
 		"Telnyx API key file for the recording proxy (default: disabled)",
 	)
-	recordingsDir := fs.String(
+	flags.RecordingsDir = fs.String(
 		"recordings-dir",
 		"/var/lib/telephony/recordings",
 		"local FreeSWITCH recordings directory (stems tried: indexed ref, "+
 			"{uuid}_{dest}.wav, bare uuid; empty = local playback disabled)",
 	)
-	recTimeout := fs.Duration(
+	flags.RecTimeout = fs.Duration(
 		"recording-timeout",
 		web.DefaultUpstreamTimeout,
 		"upstream bound for the recording proxy: metadata deadline + WAV response headers "+
 			"(0 = default; the audio body itself streams unbounded)",
 	)
-	authDB := fs.String(
+	flags.AuthDB = fs.String(
 		"auth-db",
 		"",
 		"sqlite identity database enabling passkey login (empty = no auth for localhost dev)",
 	)
-	authRPID := fs.String(
+	flags.AuthRPID = fs.String(
 		"auth-rpid",
 		"",
 		"WebAuthn Relying Party ID — the registrable domain the browser sees "+
 			"(default: the host part of -addr)",
 	)
-	authOrigin := fs.String(
+	flags.AuthOrigin = fs.String(
 		"auth-origin",
 		"",
 		"comma-separated WebAuthn origins that must byte-match the browser address bar, "+
 			"scheme included (default: http://<addr>)",
 	)
-	authOIDCIssuer := fs.String(
+	flags.AuthOIDCIssuer = fs.String(
 		"auth-oidc-issuer",
 		"",
 		"OIDC issuer base URL enabling the Pocket ID sign-in lane beside passkeys "+
 			"(empty = passkey-only; discovery is lazy — an IdP outage costs a login, never the boot)",
 	)
-	authOIDCClientID := fs.String(
+	flags.AuthOIDCClientID = fs.String(
 		"auth-oidc-client-id",
 		"",
 		"OIDC client id registered in the IdP (required with -auth-oidc-issuer)",
 	)
-	authOIDCSecretFile := fs.String(
+	flags.AuthOIDCSecretFile = fs.String(
 		"auth-oidc-secret-file",
 		"",
 		"OIDC client secret file, read per login (required with -auth-oidc-issuer; "+
 			"rotation takes effect on the next sign-in)",
 	)
-	authOIDCRedirect := fs.String(
+	flags.AuthOIDCRedirect = fs.String(
 		"auth-oidc-redirect",
 		"",
 		"registered OIDC callback URL: https://<public-host>/auth/oauth/pocketid/callback",
 	)
-	authOIDCGroup := fs.String(
+	flags.AuthOIDCGroup = fs.String(
 		"auth-oidc-group",
 		"",
 		"comma-separated IdP groups allowed to sign in (fail-closed: a token claiming "+
 			"none of them is denied before any user matching)",
 	)
-	pollEvery := fs.Duration(
+	flags.PollEvery = fs.Duration(
 		"poll-every",
 		cli.DefaultPollEvery,
 		"poll cadence for keeping the index fresh (0 = disabled)",
 	)
-	pollSince := fs.Duration(
+	flags.PollSince = fs.Duration(
 		"poll-since",
 		cli.DefaultPollSince,
 		"Telnyx look-back window per poll",
 	)
-	pollDirection := fs.String(
+	flags.PollDirection = fs.String(
 		"poll-direction",
 		"outbound",
 		"caller-declared direction for polled Telnyx conversations",
 	)
-	aiDID := fs.String(
+	flags.AiDID = fs.String(
 		"ai-did",
 		"",
 		"comma-separated AI-facing DIDs: polled conversations touching one are inbound (empty = keep declared direction)",
 	)
-	maxAge := fs.Duration(
+	flags.MaxAge = fs.Duration(
 		"max-age",
 		0,
 		"refuse polled observations older than this (0 = keep everything)",
 	)
-	cdrFile := fs.String(
+	flags.CdrFile = fs.String(
 		"cdr-file",
 		"",
 		"FreeSWITCH Master.csv re-ingested every poll (empty = skip)",
 	)
-	webhookLog := fs.String(
+	flags.WebhookLog = fs.String(
 		"webhook-log",
 		"",
 		"receiver webhook JSONL re-ingested every poll (empty = skip)",
 	)
-	transcriptsDir := fs.String(
+	flags.TranscriptsDir = fs.String(
 		"transcripts-dir",
 		"",
 		"agent transcripts dir re-scanned every poll (empty = skip)",
 	)
-	wiredOps := fs.Bool(
+	flags.WiredOps = fs.Bool(
 		"wired-ops",
 		false,
 		"dev probe fixture: serve a canned STALE poller snapshot on /ops and /api/ops instead of the live counters",
 	)
-	parseAndRequireDB(fs, db, args)
 
-	pollDir, err := cli.ParseDirection(*pollDirection)
+	return flags
+}
+
+func serve(args []string) {
+	fs := flag.NewFlagSet("serve", flag.ExitOnError)
+	flags := registerServeFlags(fs)
+
+	parseAndRequireDB(fs, flags.Db, args)
+
+	pollDir, err := cli.ParseDirection(*flags.PollDirection)
 	if err != nil {
 		fatal(err)
 	}
@@ -174,7 +213,7 @@ func serve(args []string) {
 	// re-registration is idempotent).
 	appkit.RegisterClassifications()
 
-	sys, index, closeAll, err := openServeIndex(setupCtx, *db)
+	sys, index, closeAll, err := openServeIndex(setupCtx, *flags.Db)
 	if err != nil {
 		fatal(err)
 	}
@@ -186,16 +225,23 @@ func serve(args []string) {
 	// probes rely on.
 	var identity *identity.Identity
 
-	if *authDB != "" {
+	if *flags.AuthDB != "" {
 		oidcCfg := oidcConfigFromFlags(
-			*authOIDCIssuer,
-			*authOIDCClientID,
-			*authOIDCSecretFile,
-			*authOIDCRedirect,
-			*authOIDCGroup,
+			*flags.AuthOIDCIssuer,
+			*flags.AuthOIDCClientID,
+			*flags.AuthOIDCSecretFile,
+			*flags.AuthOIDCRedirect,
+			*flags.AuthOIDCGroup,
 		)
 
-		identity, err = openServeIdentity(setupCtx, *addr, *authDB, *authRPID, *authOrigin, oidcCfg)
+		identity, err = openServeIdentity(
+			setupCtx,
+			*flags.Addr,
+			*flags.AuthDB,
+			*flags.AuthRPID,
+			*flags.AuthOrigin,
+			oidcCfg,
+		)
 		if err != nil {
 			fatal(err)
 		}
@@ -216,7 +262,7 @@ func serve(args []string) {
 		authMW = identity.Middleware()
 	}
 
-	serviceConfig := buildServiceConfig(*addr, authMW, cacheStats, slogLog)
+	serviceConfig := buildServiceConfig(*flags.Addr, authMW, cacheStats, slogLog)
 
 	// Readiness is the read model's honesty (plan T17): /health/ready
 	// answers 503 while any projection worker is failed (restart budget
@@ -243,10 +289,10 @@ func serve(args []string) {
 		identity.Register(svc.Mux)
 	}
 
-	counters := cli.NewSourceCounters(*pollEvery)
+	counters := cli.NewSourceCounters(*flags.PollEvery)
 
 	opsProvider, recordings, telnyxClient := wireServeSources(
-		counters, *wiredOps, *recordingsDir, *recTimeout, *keyFile,
+		counters, *flags.WiredOps, *flags.RecordingsDir, *flags.RecTimeout, *flags.KeyFile,
 	)
 
 	web.Register(
@@ -255,7 +301,7 @@ func serve(args []string) {
 		web.Options{
 			Recordings: recordings, Search: index, Log: slogLog,
 			Ops: opsProvider, Cache: cacheStats,
-			RetentionMaxAge: *maxAge, AuthEnabled: identity != nil,
+			RetentionMaxAge: *flags.MaxAge, AuthEnabled: identity != nil,
 			Identity: identity,
 		},
 	)
@@ -267,15 +313,15 @@ func serve(args []string) {
 	defer stopPoller()
 
 	go cli.PollLoop(pollCtx, sys, index, cli.PollConfig{
-		Every:          *pollEvery,
+		Every:          *flags.PollEvery,
 		Telnyx:         telnyxClient,
-		SinceAgo:       *pollSince,
+		SinceAgo:       *flags.PollSince,
 		Direction:      pollDir,
-		AIDIDs:         ingest.ParseCommaSet(*aiDID),
-		CDRFile:        *cdrFile,
-		WebhookLog:     *webhookLog,
-		TranscriptsDir: *transcriptsDir,
-		MaxAge:         *maxAge,
+		AIDIDs:         ingest.ParseCommaSet(*flags.AiDID),
+		CDRFile:        *flags.CdrFile,
+		WebhookLog:     *flags.WebhookLog,
+		TranscriptsDir: *flags.TranscriptsDir,
+		MaxAge:         *flags.MaxAge,
 		Counters:       counters,
 	}, slogLog)
 
@@ -325,8 +371,7 @@ func wireServeSources(
 	recTimeout time.Duration,
 	keyFile string,
 ) (func() any, web.RecordingOptions, *telnyx.Client) {
-	// The typed snapshot crosses the seam; the any boundary stays at the
-	// web Options (fixtures and older producers must keep decoding).
+	// Typed snapshot inside; the any boundary stays at web Options.
 	opsProvider := func() any { return counters.Snapshot() }
 	if wiredOps {
 		opsProvider = cannedStaleOps
