@@ -7,6 +7,20 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-11-21 d (update-vendor-hash refuses an already-poisoned pin)
+
+- **`nix run .#update-vendor-hash` now refuses at entry when
+  vendorHash.nix already holds a sentinel placeholder**
+  (`sha256-AAAA…`/`sha256-0000…`): previously the EXIT trap would
+  "restore" the poison on any probe failure, leaving the pin broken
+  with a confusing log (the 2026-11-02 class, twice since). The
+  deliberate-repair override `UPDATE_VENDOR_HASH_ALLOW_SENTINEL=1`
+  skips backup/restore entirely — the committed pin is already broken,
+  nothing is worth restoring — and always keeps the probed hash. The
+  refusal is pinned end-to-end by `scripts/check-vendor-hash-refusal.sh`
+  (the REAL app against a poisoned fixture repo), wired into
+  `verify-all` beside the doc gates.
+
 ### Added — 2026-11-21 c (the identity-export verb)
 
 - **`pbx-lens identity-export`** writes the identity DB's users as a

@@ -119,6 +119,15 @@ echo "=== check-doc-test-claims ==="
 bash scripts/check-doc-test-claims.sh
 pass check-doc-test-claims
 
+# update-vendor-hash entry-refusal pin (2026-11-21): proves the app's
+# poisoned-pin refusal still bites by running the REAL app against a
+# fixture repo — the 07-44 §e-3 class (EXIT trap restoring the sentinel
+# poison on a failed probe). Needs nix; subsecond once the tiny app
+# wrapper is built.
+echo "=== check-vendor-hash-refusal ==="
+bash scripts/check-vendor-hash-refusal.sh
+pass check-vendor-hash-refusal
+
 # Report-command replay (plan A21, opt-in): every ```console block in the
 # review reports re-derives live — a doc command that no longer runs is a
 # FAIL. Opt-in because it shells out ~80 commands (subsecond each, but it
