@@ -76,7 +76,7 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 		t.Error("search must deep-link the matching call")
 	}
 
-	// 5. Freshness endpoint agrees with what the list page just showed.
+	// 5. query.Freshness endpoint agrees with what the list page just showed.
 	status, body = getBody(t, mux, "/api/freshness")
 	if status != http.StatusOK || !strings.Contains(body, "age_seconds") {
 		t.Fatalf("GET /api/freshness = %d (%s), want 200 with age", status, body)

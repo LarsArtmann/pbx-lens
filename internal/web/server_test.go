@@ -11,14 +11,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query/querytest"
 )
 
 // testCallStarted is the shared seeded call time (plan T11.1): one fixed
 // instant every test derives from, so changing the corpus seed is one line
-// instead of 28 scattered literals.
+// instead of 28 scattered literals. The fixture itself lives in
+// internal/query/querytest so the query suite derives from the same seam.
 func testCallStarted() time.Time {
-	return time.Date(2026, 10, 9, 19, 51, 25, 0, time.UTC)
+	return querytest.CallStarted()
+}
+
+// newTestSystem delegates to the shared querytest fixture (it moved with
+// representative_test.go into internal/query).
+func newTestSystem(t *testing.T, observations ...calls.Observation) *system.System {
+	t.Helper()
+
+	return querytest.System(t, observations...)
 }
 
 func webObservation(nativeID string, started time.Time) calls.Observation {

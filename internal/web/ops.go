@@ -12,6 +12,7 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/identity"
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/pbx-lens/internal/retention"
 	"github.com/larsartmann/templ-components/utils/format"
 )
@@ -38,7 +39,7 @@ type opsSnapshot struct {
 	// failed — the card then says so instead of showing a fake empty table.
 	// CoverageNow is the clock the ages were computed against (frozen in
 	// tests, so the card stays deterministic).
-	Coverage    []CoverageRow
+	Coverage    []query.CoverageRow
 	CoverageNow time.Time
 	Wired       bool
 }
@@ -145,7 +146,7 @@ func (s *server) collectOps(ctx context.Context) opsSnapshot {
 		snap.Cache = &cache
 	}
 
-	coverage, err := IngestCoverageQuery(ctx, s.sys, s.now())
+	coverage, err := query.IngestCoverageQuery(ctx, s.sys, s.now())
 	if err != nil {
 		s.logf("ingest coverage walk failed: %v", err)
 	} else {

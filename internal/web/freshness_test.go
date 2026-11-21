@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 func TestFreshnessReportsIndexState(t *testing.T) {
@@ -19,7 +21,7 @@ func TestFreshnessReportsIndexState(t *testing.T) {
 		t.Fatalf("GET /api/freshness status = %d, want 200", status)
 	}
 
-	var fresh Freshness
+	var fresh query.Freshness
 	if err := json.Unmarshal([]byte(body), &fresh); err != nil {
 		t.Fatalf("parse freshness JSON: %v (body: %s)", err, body)
 	}
@@ -47,7 +49,7 @@ func TestFreshnessOnEmptyIndexIsNotStale(t *testing.T) {
 		t.Fatalf("GET /api/freshness status = %d, want 200", status)
 	}
 
-	var fresh Freshness
+	var fresh query.Freshness
 	if err := json.Unmarshal([]byte(body), &fresh); err != nil {
 		t.Fatalf("parse freshness JSON: %v", err)
 	}

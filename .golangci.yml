@@ -177,6 +177,7 @@ linters:
     mnd:
       ignored-files:
         - _test\.go
+        - querytest\.go
     nestif:
       min-complexity: 6
     revive:

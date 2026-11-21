@@ -8,22 +8,13 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
-
-// Freshness is the /api/freshness payload: one honest glance at how
-// current the index is (C2). The machine-readable twin of the staleness
-// banner — monitors and the dashboard read this, humans read the banner.
-type Freshness struct {
-	NewestStartedAt time.Time `json:"newest_started_at"`
-	AgeSeconds      float64   `json:"age_seconds"`
-	Stale           bool      `json:"stale"`
-	CallsIndexed    int       `json:"calls_indexed"`
-}
 
 // freshness serves the freshness probe as JSON.
 func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
-	page, err := ListCalls(r.Context(), s.sys, ListCallsQuery{})
+	page, err := query.ListCalls(r.Context(), s.sys, query.ListCallsQuery{})
 
 	stop()
 
@@ -46,7 +37,7 @@ func (s *server) freshness(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fresh := Freshness{CallsIndexed: total}
+	fresh := query.Freshness{CallsIndexed: total}
 
 	if len(page.Rows) > 0 {
 		fresh.NewestStartedAt = page.Rows[0].When.UTC()

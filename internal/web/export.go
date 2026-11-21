@@ -11,6 +11,7 @@ import (
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // exportHeader is the CSV header in emission order. The column names reuse
@@ -33,24 +34,24 @@ func (s *server) beginExportResponse(
 	r *http.Request,
 	contentType string,
 	disposition string,
-) (ListCallsQuery, PIIMode, bool) {
-	query, pii, ok := s.beginExport(w, r)
+) (query.ListCallsQuery, PIIMode, bool) {
+	filters, pii, ok := s.beginExport(w, r)
 	if !ok {
-		return query, pii, false
+		return filters, pii, false
 	}
 
 	w.Header().Set("X-Pii-Mode", piiHeaderValue(pii))
 	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("Content-Disposition", disposition)
 
-	return query, pii, true
+	return filters, pii, true
 }
 
 // exportJSONL streams the filtered call index as newline-delimited JSON
 // (D5). One JSON object per line, newest first, so any consumer can tail or
 // pipe it.
 func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
-	query, pii, ok := s.beginExportResponse(
+	filters, pii, ok := s.beginExportResponse(
 		w,
 		r,
 		"application/x-ndjson; charset=utf-8",
@@ -64,7 +65,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 	var rowsWritten bool
 
-	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+	err := query.StreamExportCalls(r.Context(), s.sys, filters, func(view calls.CallView) error {
 		rowsWritten = true
 
 		markFirstPage.mark()
@@ -75,7 +76,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 			return err
 		}
 
-		_, err = w.Write(append(line, '\n')) //nolint:gosec // JSON-encoded ndjson attachment; never rendered as HTML
+		_, err = w.Write(append(line, '\n'))
 
 		return err
 	})
@@ -101,7 +102,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 // exportCSV streams the filtered call index as CSV (D5).
 func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
-	query, pii, ok := s.beginExportResponse(
+	filters, pii, ok := s.beginExportResponse(
 		w,
 		r,
 		"text/csv; charset=utf-8",
@@ -121,7 +122,7 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 
 	var rowsWritten bool
 
-	err := StreamExportCalls(r.Context(), s.sys, query, func(view calls.CallView) error {
+	err := query.StreamExportCalls(r.Context(), s.sys, filters, func(view calls.CallView) error {
 		rowsWritten = true
 
 		markFirstPage.mark()
@@ -180,12 +181,12 @@ type exportError struct {
 
 // beginExport parses the shared filters and the pii mode; it writes the
 // error response itself and reports whether the caller may proceed.
-func (s *server) beginExport(w http.ResponseWriter, r *http.Request) (ListCallsQuery, PIIMode, bool) {
-	query, err := parseFilters(r)
+func (s *server) beginExport(w http.ResponseWriter, r *http.Request) (query.ListCallsQuery, PIIMode, bool) {
+	filters, err := parseFilters(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
-		return ListCallsQuery{}, PIIModePlain, false
+		return query.ListCallsQuery{}, PIIModePlain, false
 	}
 
 	pii := PIIMode(r.URL.Query().Get("pii"))
@@ -202,10 +203,10 @@ func (s *server) beginExport(w http.ResponseWriter, r *http.Request) (ListCallsQ
 			http.StatusBadRequest,
 		)
 
-		return ListCallsQuery{}, PIIModePlain, false
+		return query.ListCallsQuery{}, PIIModePlain, false
 	}
 
-	return query, pii, true
+	return filters, pii, true
 }
 
 // PIIMode selects how participant numbers leave the server in an export.

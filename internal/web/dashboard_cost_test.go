@@ -10,6 +10,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // enrichCall dispatches the enrichment command the poller's Detail-Records
@@ -24,7 +25,12 @@ func enrichCall(
 
 	ctx := t.Context()
 
-	view, found, err := CallDetail(ctx, sys, string(calls.SourceTelnyxConversation), string(nativeID))
+	view, found, err := query.CallDetail(
+		ctx,
+		sys,
+		string(calls.SourceTelnyxConversation),
+		string(nativeID),
+	)
 	if err != nil || !found {
 		t.Fatalf("read call %q for enrichment: found=%v err=%v", nativeID, found, err)
 	}
@@ -55,13 +61,23 @@ func TestDashboardSpendCountsOnlyPricedCalls(t *testing.T) {
 	enrichCall(t, sys, "conv-cost-a", calls.Enrichment{CostMicros: 500_000, CostCurrency: "USD"})
 	enrichCall(t, sys, "conv-cost-b", calls.Enrichment{CostMicros: 120_000, CostCurrency: "USD"})
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, started.Add(3*time.Hour), ListCallsQuery{}, dashboardWindowDays)
+	stats, err := query.DashboardStatsQuery(
+		t.Context(),
+		sys,
+		started.Add(3*time.Hour),
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
+	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
 
 	if stats.Total != 3 || stats.CostKnown != 2 {
-		t.Fatalf("total/priced = %d/%d, want 3/2 (the unpriced call is not a zero)", stats.Total, stats.CostKnown)
+		t.Fatalf(
+			"total/priced = %d/%d, want 3/2 (the unpriced call is not a zero)",
+			stats.Total,
+			stats.CostKnown,
+		)
 	}
 
 	if stats.CostMicros != 620_000 {
@@ -98,7 +114,13 @@ func TestDashboardSpendRefusesMixedCurrencies(t *testing.T) {
 	enrichCall(t, sys, "conv-usd", calls.Enrichment{CostMicros: 300_000, CostCurrency: "USD"})
 	enrichCall(t, sys, "conv-eur", calls.Enrichment{CostMicros: 200_000, CostCurrency: "EUR"})
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, started.Add(2*time.Hour), ListCallsQuery{}, dashboardWindowDays)
+	stats, err := query.DashboardStatsQuery(
+		t.Context(),
+		sys,
+		started.Add(2*time.Hour),
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
+	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}

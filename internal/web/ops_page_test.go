@@ -14,6 +14,7 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/identity"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // opsCounters exercises the ETag middleware once per outcome (tag, 304) so
@@ -432,7 +433,7 @@ func TestIngestCoverageQueryFoldsPerKind(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	rows, err := IngestCoverageQuery(ctx, sys, now)
+	rows, err := query.IngestCoverageQuery(ctx, sys, now)
 	if err != nil {
 		t.Fatalf("IngestCoverageQuery: %v", err)
 	}
@@ -441,7 +442,7 @@ func TestIngestCoverageQueryFoldsPerKind(t *testing.T) {
 		t.Fatalf("coverage rows = %d, want 2 kinds", len(rows))
 	}
 
-	byKind := map[calls.SourceKind]CoverageRow{}
+	byKind := map[calls.SourceKind]query.CoverageRow{}
 	for _, row := range rows {
 		byKind[row.Kind] = row
 	}

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/feedback"
 	"github.com/larsartmann/templ-components/forms"
@@ -31,19 +32,19 @@ func copyLinkAction(nonce string, ariaLabel string, path string) templ.Component
 // canonicalDashboardPath is the shareable address of the current dashboard
 // view (plan P14): the window preset and/or the active date range — the
 // exact inputs the page reads back — and nothing else.
-func canonicalDashboardPath(stats DashboardStats) string {
+func canonicalDashboardPath(stats query.DashboardStats) string {
 	query := make(url.Values)
 
 	if stats.WindowDays == 7 || stats.WindowDays == 30 {
 		query.Set("window", strconv.Itoa(stats.WindowDays))
 	}
 
-	if !stats.rangeFrom.IsZero() {
-		query.Set("from", dateValue(stats.rangeFrom))
+	if !stats.RangeFrom.IsZero() {
+		query.Set("from", dateValue(stats.RangeFrom))
 	}
 
-	if !stats.rangeTo.IsZero() {
-		query.Set("to", dateValue(stats.rangeTo))
+	if !stats.RangeTo.IsZero() {
+		query.Set("to", dateValue(stats.RangeTo))
 	}
 
 	if len(query) == 0 {
@@ -56,7 +57,7 @@ func canonicalDashboardPath(stats DashboardStats) string {
 // dashboardRoute is the quality-dashboard page (T25): a date-range picker,
 // then the live cards region (stat cards, volume, AI/human split, trend,
 // durations, MOS).
-templ dashboardRoute(nonce string, csrf string, authed bool, stats DashboardStats, now time.Time, fragURL string) {
+templ dashboardRoute(nonce string, csrf string, authed bool, stats query.DashboardStats, now time.Time, fragURL string) {
 	@shell(nonce, csrf, authed, "Dashboard — pbx-lens", "/dashboard") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    "Dashboard",
@@ -72,7 +73,7 @@ templ dashboardRoute(nonce string, csrf string, authed bool, stats DashboardStat
 // windowPresets is the 7/30-day quick pick (plan T12): links re-query the
 // dashboard with the preset window; the active one renders filled so the
 // chart span is never ambiguous.
-templ windowPresets(stats DashboardStats) {
+templ windowPresets(stats query.DashboardStats) {
 	<div class="mb-3 flex items-center gap-2">
 		@display.Button(display.ButtonProps{
 			Text:    "Last 7 days",
@@ -92,7 +93,7 @@ templ windowPresets(stats DashboardStats) {
 // rangeForm narrows the whole dashboard to a date range (R8/M20.1).
 // Library Form in inline layout: GET submits server-side; the noscript
 // world submits it like the list filters.
-templ rangeForm(nonce string, stats DashboardStats) {
+templ rangeForm(nonce string, stats query.DashboardStats) {
 	@forms.Form(forms.FormProps{
 		Action: "/dashboard",
 		Method: forms.FormGet,
@@ -103,13 +104,13 @@ templ rangeForm(nonce string, stats DashboardStats) {
 		@forms.DatePicker(forms.DatePickerProps{
 			Name:      "from",
 			Label:     "From",
-			Value:     dateValue(stats.rangeFrom),
+			Value:     dateValue(stats.RangeFrom),
 			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@forms.DatePicker(forms.DatePickerProps{
 			Name:      "to",
 			Label:     "To",
-			Value:     dateValue(stats.rangeTo),
+			Value:     dateValue(stats.RangeTo),
 			BaseProps: utils.BaseProps{Class: "w-40"},
 		})
 		@display.Button(display.ButtonProps{Text: "Apply", Type: display.ButtonHTMLSubmit})
@@ -129,7 +130,7 @@ templ rangeForm(nonce string, stats DashboardStats) {
 // was silently defeating the route's revalidation economy
 // (docs/http-stack.md). Truncated to the minute it still visibly ticks,
 // and the body stays byte-stable between minute boundaries.
-templ dashboardLive(nonce string, stats DashboardStats, now time.Time, fragURL string) {
+templ dashboardLive(nonce string, stats query.DashboardStats, now time.Time, fragURL string) {
 	@htmx.PolledRegion(htmx.PolledRegionProps{
 		URL:           fragURL,
 		Every:         "30s",
@@ -146,7 +147,7 @@ templ dashboardLive(nonce string, stats DashboardStats, now time.Time, fragURL s
 
 // dashboardMain is the Split's wide column: volume, durations, then the
 // hour-by-weekday density heatmap.
-templ dashboardMain(nonce string, stats DashboardStats) {
+templ dashboardMain(nonce string, stats query.DashboardStats) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@volumeCard(stats)
 		@durationCard(stats)
@@ -160,7 +161,7 @@ templ dashboardMain(nonce string, stats DashboardStats) {
 // plus the truth signals the detail page shows one call at a time. Every rate
 // names its own denominator in the "Of" column — a rate over the wrong
 // population is worse than no rate at all.
-templ qualityCard(stats DashboardStats) {
+templ qualityCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "How calls end", TitleTag: display.HeadingTagH2}) {
 		if stats.Total == 0 {
 			@display.SimpleEmptyState("No calls in the window yet.")
@@ -210,12 +211,12 @@ templ qualityCard(stats DashboardStats) {
 
 // hangupBars maps the ordered causes onto chart bars; the tooltip carries the
 // exact count and share, so the bar length never has to be read precisely.
-func hangupBars(causes []HangupCauseCount, total int) []display.BarChartBar {
+func hangupBars(causes []query.HangupCauseCount, total int) []display.BarChartBar {
 	bars := make([]display.BarChartBar, 0, len(causes))
 
 	for _, cause := range causes {
 		tooltip := strconv.Itoa(cause.Calls) + " calls"
-		if ratio, ok := Rate(cause.Calls, total); ok {
+		if ratio, ok := query.Rate(cause.Calls, total); ok {
 			tooltip += " (" + format.Percent(ratio) + ")"
 		}
 
@@ -233,7 +234,7 @@ func hangupBars(causes []HangupCauseCount, total int) []display.BarChartBar {
 // out: "Calls" over "Of". A zero denominator renders an em dash, never 0%.
 // The answer-rate pair (P11) divides billed-seconds truth: the rate over
 // duration-reporting calls only, the short-call share over ANSWERED calls.
-func signalRows(rollup QualityRollup) []display.TableRow {
+func signalRows(rollup query.QualityRollup) []display.TableRow {
 	return []display.TableRow{
 		signalRow("Answered", rollup.Answered, rollup.DurationReported, "call with a reported billsec", "calls with a reported billsec"),
 		signalRow("Short (< 10 s billed)", rollup.ShortCalls, rollup.Answered, "answered call", "answered calls"),
@@ -247,7 +248,7 @@ func signalRows(rollup QualityRollup) []display.TableRow {
 // be read without knowing what it is one OF.
 func signalRow(label string, count, denominator int, singular, plural string) display.TableRow {
 	share := "—"
-	if ratio, ok := Rate(count, denominator); ok {
+	if ratio, ok := query.Rate(count, denominator); ok {
 		share = format.Percent(ratio)
 	}
 
@@ -270,7 +271,7 @@ func signalRow(label string, count, denominator int, singular, plural string) di
 // OUR numbers and by the outside party, each row a drill-through into the
 // filtered call list. It answers "who calls what", the question the operator
 // asks first and the UI could not answer at all.
-templ segmentsCard(nonce string, stats DashboardStats) {
+templ segmentsCard(nonce string, stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "Who calls what", TitleTag: display.HeadingTagH2}) {
 		if len(stats.TopNumbers) == 0 && len(stats.TopPeers) == 0 {
 			@display.SimpleEmptyState("No numbers in the window yet.")
@@ -283,7 +284,7 @@ templ segmentsCard(nonce string, stats DashboardStats) {
 
 // segmentSection is one breakdown: heading + table. spaced adds the mt-6
 // beat for sections after the card's first.
-templ segmentSection(title string, spaced bool, nonce string, segments []Segment) {
+templ segmentSection(title string, spaced bool, nonce string, segments []query.Segment) {
 	<h3 class={ "break-after-avoid dark:text-white font-medium leading-6 text-gray-900 text-sm", templ.KV("mt-6", spaced) }>
 		{ title }
 	</h3>
@@ -295,7 +296,7 @@ templ segmentSection(title string, spaced bool, nonce string, segments []Segment
 // segmentTable renders one breakdown. Rows carry the number filter as their
 // href, so a click narrows the list instead of leaving the operator to retype
 // the number.
-templ segmentTable(nonce string, segments []Segment) {
+templ segmentTable(nonce string, segments []query.Segment) {
 	if len(segments) == 0 {
 		<p class="dark:text-gray-400 text-gray-500 text-sm">No calls in this window.</p>
 	} else {
@@ -311,11 +312,11 @@ templ segmentTable(nonce string, segments []Segment) {
 	}
 }
 
-// segmentRows maps the typed segments onto display rows. Spend and Rate
+// segmentRows maps the typed segments onto display rows. Spend and query.Rate
 // render only when the segment actually carried prices (never a confident
 // zero); the rate divides by the priced calls' own seconds, matching the
 // window rate's denominator discipline.
-func segmentRows(segments []Segment) []display.TableRow {
+func segmentRows(segments []query.Segment) []display.TableRow {
 	rows := make([]display.TableRow, 0, len(segments))
 
 	for _, segment := range segments {
@@ -349,7 +350,7 @@ func segmentRows(segments []Segment) []display.TableRow {
 // weekday rows x hour columns in the dashboard zone. A quiet window renders
 // the honest empty message instead of a wall of near-invisible cells, and
 // the weekday baseline note (plan P12) sits quietly under the grid.
-templ heatmapCard(stats DashboardStats) {
+templ heatmapCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call density (weekday × hour)", TitleTag: display.HeadingTagH2}) {
 		if stats.Total == 0 {
 			<p class="text-sm text-gray-500 dark:text-gray-400">
@@ -370,20 +371,20 @@ templ heatmapCard(stats DashboardStats) {
 
 // volumeNoteLine renders the anomaly-baseline verdict as one quiet line —
 // prose, not a chart: the number is already on the grid above.
-templ volumeNoteLine(note VolumeNote) {
-	if note.Kind == VolumeNoHistory {
+templ volumeNoteLine(note query.VolumeNote) {
+	if note.Kind == query.VolumeNoHistory {
 		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
 			Not enough history yet for a usual-range note (needs two full weeks).
 		</p>
-	} else if note.Kind == VolumeUsual {
+	} else if note.Kind == query.VolumeUsual {
 		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
 			Today so far: { strconv.Itoa(note.Today) } call(s), usual for a { note.Weekday } (typically { strconv.Itoa(note.Low) }-{ strconv.Itoa(note.High) }).
 		</p>
-	} else if note.Kind == VolumeQuiet {
+	} else if note.Kind == query.VolumeQuiet {
 		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
 			Today so far: { strconv.Itoa(note.Today) } call(s), unusually quiet for a { note.Weekday } (typically { strconv.Itoa(note.Low) }-{ strconv.Itoa(note.High) }).
 		</p>
-	} else if note.Kind == VolumeBusy {
+	} else if note.Kind == query.VolumeBusy {
 		<p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
 			Today so far: { strconv.Itoa(note.Today) } call(s), unusually busy for a { note.Weekday } (typically { strconv.Itoa(note.Low) }-{ strconv.Itoa(note.High) }).
 		</p>
@@ -391,7 +392,7 @@ templ volumeNoteLine(note VolumeNote) {
 }
 
 // heatmapRows maps the accumulator buckets onto Heatmap rows, Mon-first.
-func heatmapRows(stats DashboardStats) []display.HeatmapRow {
+func heatmapRows(stats query.DashboardStats) []display.HeatmapRow {
 	weekdays := []string{"Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"}
 	rows := make([]display.HeatmapRow, 0, len(weekdays))
 
@@ -428,7 +429,7 @@ func heatmapColumnLabels() []string {
 }
 
 // dashboardAside is the Split's narrow column: mix, spend, trend, quality.
-templ dashboardAside(stats DashboardStats) {
+templ dashboardAside(stats query.DashboardStats) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@aiHumanCard(stats)
 		@spendCard(stats)
@@ -441,7 +442,7 @@ templ dashboardAside(stats DashboardStats) {
 // rate, and how that moved against the previous week. Every figure carries its
 // own denominator, so a window with no priced calls renders the honest empty
 // state instead of a 0-spend claim (Verschlimmbesserung guard 3).
-templ spendCard(stats DashboardStats) {
+templ spendCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "Spend", TitleTag: display.HeadingTagH2}) {
 		if !stats.HasCostData() {
 			@display.SimpleEmptyState("No cost data yet — prices arrive with the Telnyx Detail Records.")
@@ -473,13 +474,13 @@ templ spendCard(stats DashboardStats) {
 
 // pricedCallsText states the denominator: how many of the window's calls
 // actually carried a price. A rate over an unknown subset is not a rate.
-func pricedCallsText(stats DashboardStats) string {
+func pricedCallsText(stats query.DashboardStats) string {
 	return strconv.Itoa(stats.CostKnown) + " of " + strconv.Itoa(stats.Total) + " calls priced"
 }
 
 // costPerMinuteText renders the mean spend per billed minute. Three decimals
 // keep sub-cent rates legible without faking precision.
-func costPerMinuteText(stats DashboardStats) string {
+func costPerMinuteText(stats query.DashboardStats) string {
 	return strconv.FormatFloat(stats.CostPerMinute(), 'f', 3, 64) + " " + currencyLabel(stats.CostCurrency) + "/min"
 }
 
@@ -495,7 +496,7 @@ func currencyLabel(currency string) string {
 
 // statCards is the headline row: total, today, AI share, average duration.
 // Empty-index honesty: zero calls render 0 / "—", never a fake percentage.
-templ statCards(stats DashboardStats, now time.Time) {
+templ statCards(stats query.DashboardStats, now time.Time) {
 	@display.Grid(display.GridProps{Cols: display.GridCols4}) {
 		@display.StatCard(display.StatCardProps{
 			Value:  strconv.Itoa(stats.Total),
@@ -508,7 +509,7 @@ templ statCards(stats DashboardStats, now time.Time) {
 		@display.StatCard(display.StatCardProps{
 			Value: strconv.Itoa(stats.Today),
 			Label: "Calls today",
-			Href:  stats.todayHref(now),
+			Href:  stats.TodayHref(now),
 			Icon:  icons.Calendar,
 			Tone:  display.StatToneGreen,
 		})
@@ -530,7 +531,7 @@ templ statCards(stats DashboardStats, now time.Time) {
 
 // volumeCard is the calls-per-day bar chart over the dashboard window,
 // with the week-over-week delta underneath (R27).
-templ volumeCard(stats DashboardStats) {
+templ volumeCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: volumeTitle(stats.WindowDays), TitleTag: display.HeadingTagH2}) {
 		@display.BarChart(display.BarChartProps{
 			Bars:   volumeBars(stats.ByDay),
@@ -546,7 +547,7 @@ templ volumeCard(stats DashboardStats) {
 
 // durationCard buckets call durations (R8/M20.2): how long calls actually
 // run, independent of when they happened.
-templ durationCard(stats DashboardStats) {
+templ durationCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call durations", TitleTag: display.HeadingTagH2}) {
 		@display.BarChart(display.BarChartProps{
 			Bars:   durationBars(stats.Durations),
@@ -564,7 +565,7 @@ templ durationCard(stats DashboardStats) {
 // durationBars maps the histogram buckets onto chart bars. An all-zero
 // bucket set yields nil so the chart's EmptyMessage shows (the empty box of
 // collapsed 0-px bars was an M3 eyeball finding, not an honest ladder).
-func durationBars(buckets []DurationBucket) []display.BarChartBar {
+func durationBars(buckets []query.DurationBucket) []display.BarChartBar {
 	if len(buckets) == 0 || seriesAllZero(bucketValues(buckets)) {
 		return nil
 	}
@@ -581,7 +582,7 @@ func durationBars(buckets []DurationBucket) []display.BarChartBar {
 	return bars
 }
 
-func bucketValues(buckets []DurationBucket) []float64 {
+func bucketValues(buckets []query.DurationBucket) []float64 {
 	values := make([]float64, 0, len(buckets))
 	for _, bucket := range buckets {
 		values = append(values, float64(bucket.Calls))
@@ -593,8 +594,8 @@ func bucketValues(buckets []DurationBucket) []float64 {
 // qualityTrendLabel states the no-user-turn share and its week-over-week
 // move in points; the direction is spelled out because for this signal
 // DOWN is the good direction, and an arrow alone would not say so.
-func qualityTrendLabel(stats DashboardStats) string {
-	ratio, ok := Rate(stats.Quality.NoUserTurn, stats.Quality.Transcripts)
+func qualityTrendLabel(stats query.DashboardStats) string {
+	ratio, ok := query.Rate(stats.Quality.NoUserTurn, stats.Quality.Transcripts)
 	if !ok {
 		return ""
 	}
@@ -613,7 +614,7 @@ func qualityTrendLabel(stats DashboardStats) string {
 
 // weekChangeLabel renders the week-over-week movement as a StatCard Change
 // line (plan T13); the library renders the trend arrow.
-func weekChangeLabel(delta WeekDelta) string {
+func weekChangeLabel(delta query.WeekDelta) string {
 	sign := "+"
 	if delta.Pct < 0 {
 		sign = ""
@@ -623,7 +624,7 @@ func weekChangeLabel(delta WeekDelta) string {
 }
 
 // weekTrend maps the delta onto the library's trend arrow.
-func weekTrend(delta WeekDelta) display.TrendDirection {
+func weekTrend(delta query.WeekDelta) display.TrendDirection {
 	switch {
 	case !delta.HasBaseline || delta.Pct == 0:
 		return display.TrendNone
@@ -638,7 +639,7 @@ func weekTrend(delta WeekDelta) display.TrendDirection {
 // aiHumanCard is the AI-vs-human proportion: a donut chart (library
 // PieChart, Donut mode) with the AI share in the center and an exact-count
 // legend. Empty indexes get the chart's own honest empty message.
-templ aiHumanCard(stats DashboardStats) {
+templ aiHumanCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "AI vs human", TitleTag: display.HeadingTagH2}) {
 		@display.PieChart(display.PieChartProps{
 			Slices: []display.PieChartSlice{
@@ -656,7 +657,7 @@ templ aiHumanCard(stats DashboardStats) {
 // trendCard is the 30-day sparkline over the same series as the bar chart.
 // Empty-index honesty (M3 finding): a flat zero sparkline reads as a broken
 // chart, not as "quiet index" — the all-zero window explains itself instead.
-templ trendCard(stats DashboardStats) {
+templ trendCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "30-day trend", TitleTag: display.HeadingTagH2}) {
 		if seriesAllZero(volumeValues(stats.ByDay)) {
 			@display.SimpleEmptyState("No calls in the window yet.")
@@ -687,7 +688,7 @@ func seriesAllZero(values []float64) bool {
 // mosCard renders the mean MOS and per-day trend once any call reports a
 // score; before the first MOS arrives it stays the honest placeholder so a
 // quiet index never fakes a measurement.
-templ mosCard(stats DashboardStats) {
+templ mosCard(stats query.DashboardStats) {
 	@display.Card(display.CardProps{Title: "Call quality (MOS)", TitleTag: display.HeadingTagH2}) {
 		if stats.MOSKnown == 0 {
 			@feedback.Alert(feedback.AlertProps{
@@ -733,7 +734,7 @@ templ mosCard(stats DashboardStats) {
 // mosBars maps per-day mean MOS onto chart bars. A day without scores keeps
 // its slot as an empty bar whose tooltip says so: a missing measurement must
 // never render as a 0.0 dip in quality.
-func mosBars(days []DayVolume) []display.BarChartBar {
+func mosBars(days []query.DayVolume) []display.BarChartBar {
 	bars := make([]display.BarChartBar, 0, len(days))
 	for _, day := range days {
 		bar := display.BarChartBar{Value: day.AvgMOS()}
@@ -750,14 +751,14 @@ func mosBars(days []DayVolume) []display.BarChartBar {
 	return bars
 }
 
-func avgMOSLabel(stats DashboardStats) string {
+func avgMOSLabel(stats query.DashboardStats) string {
 	return strconv.FormatFloat(stats.AvgMOS(), 'f', 1, 64)
 }
 
 // hasWindowMOS reports whether any day inside the chart window carries a
 // score; without it the chart shows nothing at all, so the card explains
 // itself in text instead.
-func hasWindowMOS(days []DayVolume) bool {
+func hasWindowMOS(days []query.DayVolume) bool {
 	for _, day := range days {
 		if day.MOSKnown > 0 {
 			return true
@@ -780,7 +781,7 @@ func scoredCallsLabel(known int) string {
 // volumeBars maps the day series onto chart bars (oldest → newest).
 // Labels stay empty on this dense 30-bar axis — a date clipped to a 4 px
 // column reads as litter; the tooltip carries the full date instead.
-func volumeBars(days []DayVolume) []display.BarChartBar {
+func volumeBars(days []query.DayVolume) []display.BarChartBar {
 	if len(days) == 0 || seriesAllZero(volumeValues(days)) {
 		return nil
 	}
@@ -797,7 +798,7 @@ func volumeBars(days []DayVolume) []display.BarChartBar {
 }
 
 // volumeValues is the same series as plain numbers for the sparkline.
-func volumeValues(days []DayVolume) []float64 {
+func volumeValues(days []query.DayVolume) []float64 {
 	values := make([]float64, 0, len(days))
 	for _, day := range days {
 		values = append(values, float64(day.Calls))
@@ -812,7 +813,7 @@ func volumeTitle(windowDays int) string {
 
 // aiShare renders the AI percentage, or an em dash when nothing is indexed
 // (0 calls → "0.0%" would imply measurement, not absence).
-func aiShare(stats DashboardStats) string {
+func aiShare(stats query.DashboardStats) string {
 	if stats.Total == 0 {
 		return "—"
 	}
@@ -830,5 +831,5 @@ func mosGaugePercent(mos float64) int {
 
 	clamped := min(max(mos, mosFloor), mosCeil)
 
-	return int((clamped - mosFloor) / (mosCeil - mosFloor) * percentScale)
+	return int((clamped - mosFloor) / (mosCeil - mosFloor) * query.PercentScale)
 }

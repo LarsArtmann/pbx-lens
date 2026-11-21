@@ -1,7 +1,8 @@
-// Package web serves the pbx-lens UI: a read-only surface over the
-// call_views read model. Every route is a query; the index DB stays
-// disposable and no source ever sees a write from here.
-package web
+// Package query is the read-model query layer: view models and the
+// queries that fold call_views into them. HTTP request parsing stays in
+// internal/web (the ratified 2026-11-20 split) — handlers there parse and
+// then call these queries; nothing here knows net/http.
+package query
 
 import (
 	"context"
@@ -17,14 +18,14 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// maxNumberFilterLen bounds the list's number filter. An E.164 number is 16
+// MaxNumberFilterLen bounds the list's number filter. An E.164 number is 16
 // characters; the cap leaves room for the source's own separators and still
 // rejects a paste of somebody's whole contact card.
-const maxNumberFilterLen = 32
+const MaxNumberFilterLen = 32
 
-// pageSize caps one rendered page (bounding-tables doctrine: no unbounded
+// PageSize caps one rendered page (bounding-tables doctrine: no unbounded
 // table ever ships; older calls walk via the keyset cursor).
-const pageSize = 50
+const PageSize = 50
 
 // ListCallsQuery is the fully-parsed list-page request. Zero fields mean
 // unfiltered; Before is the exclusive keyset cursor for the older walk,
@@ -91,7 +92,7 @@ type CallListPage struct {
 // walk the batch seams deterministically.
 //
 //nolint:gochecknoglobals // test-shrinkable batch size (keyset seam tests)
-var listScanBatch = 4 * pageSize
+var listScanBatch = 4 * PageSize
 
 // ListCalls runs the query against the read model, newest first, collapsing a
 // call's duplicate source rows into its representative row (see
@@ -100,7 +101,7 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
 	// Collect one extra row to detect whether an older page exists.
-	rows := make([]CallRow, 0, pageSize+1)
+	rows := make([]CallRow, 0, PageSize+1)
 
 	var cursor time.Time
 
@@ -151,9 +152,9 @@ func ListCalls(ctx context.Context, sys *system.System, query ListCallsQuery) (C
 
 	page := CallListPage{}
 
-	if len(rows) > pageSize {
-		page.Rows = rows[:pageSize]
-		page.NextOlder = page.Rows[pageSize-1].When.UTC().Format(time.RFC3339)
+	if len(rows) > PageSize {
+		page.Rows = rows[:PageSize]
+		page.NextOlder = page.Rows[PageSize-1].When.UTC().Format(time.RFC3339)
 	} else {
 		page.Rows = rows
 	}
@@ -199,7 +200,7 @@ func fillListPage(
 
 		*rows = append(*rows, callRow(representative))
 
-		if len(*rows) > pageSize {
+		if len(*rows) > PageSize {
 			return true, nil
 		}
 	}
@@ -240,13 +241,13 @@ func newerPageCursor(
 	return top.UTC().Format(time.RFC3339), nil
 }
 
-// exportBatchSize is one keyset page of a streaming export (R7): memory
+// ExportBatchSize is one keyset page of a streaming export (R7): memory
 // stays at one batch however large the index grows, and dumps past the old
 // maxExportRows cap stream fully instead of truncating. A var so tests can
 // shrink the page and walk the loop's seams deterministically.
 //
 //nolint:gochecknoglobals // test-shrinkable page size (keyset seam tests)
-var exportBatchSize = 5_000
+var ExportBatchSize = 5_000
 
 // StreamExportCalls walks every view matching the same filters as the list
 // page, newest first, calling fn per view (D5). Pagination is a started_at
@@ -328,7 +329,7 @@ func streamViews(
 			emitted++
 		}
 
-		if len(views) < exportBatchSize {
+		if len(views) < ExportBatchSize {
 			return nil
 		}
 
@@ -351,7 +352,7 @@ func streamViews(
 func streamPageOptions(cursor time.Time, query ListCallsQuery) []metaengine.ScanOption {
 	opts := append([]metaengine.ScanOption{
 		metaengine.WithSort("started_at", true),
-		metaengine.WithLimit(exportBatchSize),
+		metaengine.WithLimit(ExportBatchSize),
 	}, scanFilters(query)...)
 
 	switch {

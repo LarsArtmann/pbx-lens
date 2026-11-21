@@ -14,6 +14,7 @@ import (
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // Performance sanity rails (plan 05-40 M16/F49-F50): not gates, but the
@@ -128,7 +129,7 @@ func BenchmarkListCalls10k(b *testing.B) {
 	b.ResetTimer()
 
 	for range b.N {
-		if _, err := ListCalls(ctx, sys, ListCallsQuery{}); err != nil {
+		if _, err := query.ListCalls(ctx, sys, query.ListCallsQuery{}); err != nil {
 			b.Fatalf("ListCalls: %v", err)
 		}
 	}

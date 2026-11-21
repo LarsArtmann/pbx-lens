@@ -1,4 +1,4 @@
-package web
+package query
 
 import (
 	"sort"
@@ -6,10 +6,10 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// hangupCauseLimit caps the cause table. A PBX produces a handful of causes;
+// HangupCauseLimit caps the cause table. A PBX produces a handful of causes;
 // anything beyond the cap is folded into an "other" bar so the card never
 // grows a scrollbar on a pathological source.
-const hangupCauseLimit = 6
+const HangupCauseLimit = 6
 
 // shortCallMaxSecs bounds the short-call signal (P11): an ANSWERED call with
 // fewer billed seconds than this hung up right after connect — the "did
@@ -122,10 +122,10 @@ func (a qualityAccumulator) view(view calls.CallView) {
 		}
 	}
 
-	if tail, ok := transcriptTail(view); ok {
+	if tail, ok := TranscriptTail(view); ok {
 		a.rollup.TailEligible++
 
-		if tail >= transcriptTailThreshold {
+		if tail >= TranscriptTailThreshold {
 			a.rollup.RecordingTail++
 		}
 	}
@@ -133,7 +133,7 @@ func (a qualityAccumulator) view(view calls.CallView) {
 
 // finish resolves the accumulated causes into the ordered tables.
 func (a qualityAccumulator) finish() {
-	a.rollup.HangupCauses = topHangupCauses(a.causes, hangupCauseLimit)
+	a.rollup.HangupCauses = topHangupCauses(a.causes, HangupCauseLimit)
 	if top := topHangupCauses(a.unansweredCauses, 1); len(top) > 0 {
 		a.rollup.UnansweredTop = top[0]
 	}

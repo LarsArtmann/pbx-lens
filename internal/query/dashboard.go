@@ -1,4 +1,4 @@
-package web
+package query
 
 import (
 	"context"
@@ -10,36 +10,36 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// dashboardWindowDays is the chart window: the volume charts cover the last
+// DashboardWindowDays is the chart window: the volume charts cover the last
 // N days ending today, zero days included — a quiet stretch must show as a
 // gap, not vanish.
-const dashboardWindowDays = 30
+const DashboardWindowDays = 30
 
-// dayFormat is the dashboard's day key: the exact "2006-01-02" string is
-// load-bearing — it keys ByDay buckets, matches the URL filters todayHref
+// DayFormat is the dashboard's day key: the exact "2006-01-02" string is
+// load-bearing — it keys ByDay buckets, matches the URL filters TodayHref
 // builds, and renders directly in the chart tooltip.
-const dayFormat = "2006-01-02"
+const DayFormat = "2006-01-02"
 
 const (
-	percentScale = 100 // ratio to percent
+	PercentScale = 100 // ratio to percent
 
 	secondsPerMinute = 60 // cost rate denominator
 )
 
-// dashboardLocation buckets dashboard days (R2, owner decision 2026-10-12):
+// DashboardLocation buckets dashboard days (R2, owner decision 2026-10-12):
 // the operator's wall clock, Europe/Berlin — a German PBX's "Calls today"
 // must agree with its own day, not drift an hour behind after 22:00 UTC.
 // The embedded tzdata database keeps the zone resolvable in the hermetic
 // nix binary with no system zoneinfo dependency.
 //
 //nolint:gochecknoglobals // injectable so tests can pin the zone (save/restore)
-var dashboardLocation = mustZone("Europe/Berlin")
+var DashboardLocation = MustZone("Europe/Berlin")
 
 // daysPerWeek keeps the weekday arithmetic (the Mon-first heatmap buckets)
 // and the WeekDelta half-window self-describing: one name for one week.
 const daysPerWeek = 7
 
-func mustZone(name string) *time.Location {
+func MustZone(name string) *time.Location {
 	loc, err := time.LoadLocation(name)
 	if err != nil {
 		panic(fmt.Sprintf("dashboard zone %q unavailable: %v", name, err))
@@ -50,16 +50,16 @@ func mustZone(name string) *time.Location {
 
 // dayKey buckets a timestamp into its dashboard-zone day (YYYY-MM-DD).
 func dayKey(t time.Time) string {
-	return t.In(dashboardLocation).Format(dayFormat)
+	return t.In(DashboardLocation).Format(DayFormat)
 }
 
 // startOfDay returns midnight of t's dashboard-zone day. DST-safe: time.Date
 // normalizes through zone transitions instead of misadding fixed hours.
 func startOfDay(t time.Time) time.Time {
-	local := t.In(dashboardLocation)
+	local := t.In(DashboardLocation)
 	year, month, day := local.Date()
 
-	return time.Date(year, month, day, 0, 0, 0, 0, dashboardLocation)
+	return time.Date(year, month, day, 0, 0, 0, 0, DashboardLocation)
 }
 
 // DayVolume is one day's call count in the dashboard window. MOSKnown is
@@ -167,10 +167,10 @@ type DashboardStats struct {
 	Durations  []DurationBucket
 	Week       WeekDelta
 
-	// rangeFrom/rangeTo echo the picker's active range back into the form
+	// RangeFrom/RangeTo echo the picker's active range back into the form
 	// (zero when unset).
-	rangeFrom time.Time
-	rangeTo   time.Time
+	RangeFrom time.Time
+	RangeTo   time.Time
 }
 
 // AvgMOS is the mean MOS across every scored call in the index, or 0 when
@@ -240,14 +240,14 @@ func DashboardStatsQuery(
 	windowDays int,
 ) (DashboardStats, error) {
 	if windowDays <= 0 {
-		windowDays = dashboardWindowDays
+		windowDays = DashboardWindowDays
 	}
 
 	stats := DashboardStats{
 		WindowDays: windowDays,
 		Durations:  make([]DurationBucket, len(durationBuckets)),
-		rangeFrom:  filters.From,
-		rangeTo:    filters.To,
+		RangeFrom:  filters.From,
+		RangeTo:    filters.To,
 	}
 
 	today := dayKey(now)
@@ -255,7 +255,7 @@ func DashboardStatsQuery(
 	dayIndex := make(map[string]int, windowDays)
 
 	for offset := range windowDays {
-		day := windowStart.AddDate(0, 0, offset).Format(dayFormat)
+		day := windowStart.AddDate(0, 0, offset).Format(DayFormat)
 		dayIndex[day] = len(stats.ByDay)
 		stats.ByDay = append(stats.ByDay, DayVolume{Day: day})
 	}
@@ -295,8 +295,8 @@ func DashboardStatsQuery(
 	stats.QualityTrend = qualityTrend(stats.ByDay)
 	stats.VolumeNote = volumeNote(stats, now)
 	stats.CostCurrency = unanimousCurrency(acc.costCurrencies)
-	stats.TopNumbers = topSegments(acc.numberSegments, segmentLimit)
-	stats.TopPeers = topSegments(acc.peerSegments, segmentLimit)
+	stats.TopNumbers = topSegments(acc.numberSegments, SegmentLimit)
+	stats.TopPeers = topSegments(acc.peerSegments, SegmentLimit)
 	acc.quality.finish()
 
 	return stats, nil
@@ -346,7 +346,7 @@ func qualityTrend(days []DayVolume) QualityTrend {
 	}
 
 	return QualityTrend{
-		Points:      (thisShare - lastShare) * percentScale,
+		Points:      (thisShare - lastShare) * PercentScale,
 		HasBaseline: true,
 	}
 }
@@ -418,13 +418,13 @@ func newWeekDelta(thisWeek, lastWeek int64) WeekDelta {
 	}
 
 	return WeekDelta{
-		Pct:         float64(thisWeek-lastWeek) / float64(lastWeek) * percentScale,
+		Pct:         float64(thisWeek-lastWeek) / float64(lastWeek) * PercentScale,
 		HasBaseline: true,
 	}
 }
 
-// todayHref deep-links the "Calls today" stat card into the filtered list.
-func (s DashboardStats) todayHref(now time.Time) string {
+// TodayHref deep-links the "Calls today" stat card into the filtered list.
+func (s DashboardStats) TodayHref(now time.Time) string {
 	today := dayKey(now)
 
 	return fmt.Sprintf("/?from=%s&to=%s", today, today)
@@ -467,7 +467,7 @@ func (a statsAccumulator) view(view calls.CallView) {
 	// Heatmap bucket: weekday x hour in the dashboard zone (plan T19). The
 	// zone conversion is the DST story — Go's zone logic maps each instant
 	// to the local wall clock that was in effect.
-	local := view.StartedAt.In(dashboardLocation)
+	local := view.StartedAt.In(DashboardLocation)
 	weekday := (int(local.Weekday()) + daysPerWeek - int(time.Monday)) % daysPerWeek
 	stats.HourDay[weekday][local.Hour()]++
 

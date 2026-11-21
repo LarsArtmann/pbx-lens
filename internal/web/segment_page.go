@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	servertiming "github.com/larsartmann/httputil/server_timing"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // segmentPage serves one number's trend card (/segments/{number}, plan P16):
@@ -15,7 +16,7 @@ import (
 // the calls ended.
 func (s *server) segmentPage(w http.ResponseWriter, r *http.Request) {
 	number := r.PathValue("number")
-	if number == "" || len(number) > maxNumberFilterLen {
+	if number == "" || len(number) > query.MaxNumberFilterLen {
 		http.Error(w, "no such segment: the number is missing or implausible", http.StatusNotFound)
 
 		return
@@ -23,7 +24,13 @@ func (s *server) segmentPage(w http.ResponseWriter, r *http.Request) {
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
 
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, s.now(), ListCallsQuery{Number: number}, dashboardWindowDays)
+	stats, err := query.DashboardStatsQuery(
+		r.Context(),
+		s.sys,
+		s.now(),
+		query.ListCallsQuery{Number: number},
+		query.DashboardWindowDays,
+	)
 
 	stop()
 

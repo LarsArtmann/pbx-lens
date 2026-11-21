@@ -1,4 +1,4 @@
-package web
+package query
 
 import (
 	"net/url"
@@ -8,9 +8,9 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// segmentLimit caps each breakdown table. The operator scans the top few
+// SegmentLimit caps each breakdown table. The operator scans the top few
 // numbers; the complete per-number set belongs to an export, not a card.
-const segmentLimit = 5
+const SegmentLimit = 5
 
 // Segment is one grouped slice of the window: a number with the aggregates an
 // operator actually asks about (how many calls, how many of them AI, how long

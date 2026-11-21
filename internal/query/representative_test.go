@@ -1,78 +1,13 @@
-package web
+package query
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
-	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
-	"github.com/larsartmann/pbx-lens/internal/cli"
 )
-
-// newTestSystem opens a fresh sqlite index and ingests the observations,
-// drained so the read model is queryable. Query-level tests need the system
-// itself; the HTTP tests build their own through newTestServer.
-func newTestSystem(t *testing.T, observations ...calls.Observation) *system.System {
-	t.Helper()
-
-	ctx := t.Context()
-
-	sys, cleanup, err := cli.OpenSystem(ctx, filepath.Join(t.TempDir(), "representative.db"))
-	if err != nil {
-		t.Fatalf("OpenSystem: %v", err)
-	}
-
-	t.Cleanup(cleanup)
-
-	if len(observations) > 0 {
-		if stats := cli.Ingest(ctx, sys, observations); len(stats.Rejected) > 0 {
-			t.Fatalf("ingest rejected: %v", stats.Rejected)
-		}
-
-		if err := cli.DrainProjections(ctx, sys); err != nil {
-			t.Fatalf("drain: %v", err)
-		}
-	}
-
-	return sys
-}
-
-// aiCallFixture is one real call as the index sees it: a FreeSWITCH CDR and
-// the voice agent's transcript, both keyed by the same call uuid.
-func aiCallFixture(nativeID string, started time.Time) (calls.Observation, calls.Observation) {
-	cdr := calls.Observation{
-		NativeID:     calls.NativeID(nativeID),
-		Kind:         calls.SourceFreeSwitchCDR,
-		Direction:    calls.DirectionInbound,
-		StartedAt:    started,
-		DurationSecs: 63,
-		FromNumber:   "+4930123456",
-		ToNumber:     "9100",
-		HangupCause:  "normal_clearing",
-		IsAI:         true,
-	}
-
-	transcript := calls.Observation{
-		NativeID:          calls.NativeID(nativeID),
-		Kind:              calls.SourceAgentTranscript,
-		Direction:         calls.DirectionInbound,
-		StartedAt:         started.Add(time.Second),
-		DurationSecs:      63,
-		FromNumber:        "+4930123456",
-		ToNumber:          "9100",
-		IsAI:              true,
-		TranscriptExcerpt: "hello there",
-		Transcript: []calls.TranscriptTurn{
-			{Role: calls.TurnRoleUser, Text: "hello there"},
-			{Role: calls.TurnRoleAssistant, Text: "how can I help"},
-		},
-	}
-
-	return cdr, transcript
-}
 
 func TestListCollapsesSiblingSourceRows(t *testing.T) {
 	t.Parallel()
@@ -135,12 +70,12 @@ func TestListKeepsTranscriptWithoutCDR(t *testing.T) {
 }
 
 func TestListCollapseSurvivesPageBoundary(t *testing.T) {
-	// The page seam must land inside a call's source pair: pageSize calls,
+	// The page seam must land inside a call's source pair: PageSize calls,
 	// each contributing two rows, gives exactly one duplicate per page.
-	seeded := make([]calls.Observation, 0, 2*(pageSize+1))
+	seeded := make([]calls.Observation, 0, 2*(PageSize+1))
 	base := time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC)
 
-	for i := range pageSize + 1 {
+	for i := range PageSize + 1 {
 		cdr, transcript := aiCallFixture(fmt.Sprintf("uuid-%03d", i), base.Add(time.Duration(i)*time.Hour))
 		seeded = append(seeded, cdr, transcript)
 	}
@@ -150,8 +85,8 @@ func TestListCollapseSurvivesPageBoundary(t *testing.T) {
 		t.Fatalf("ListCalls: %v", err)
 	}
 
-	if len(page.Rows) != pageSize {
-		t.Fatalf("page rows = %d, want a full page of %d distinct calls", len(page.Rows), pageSize)
+	if len(page.Rows) != PageSize {
+		t.Fatalf("page rows = %d, want a full page of %d distinct calls", len(page.Rows), PageSize)
 	}
 
 	if page.NextOlder == "" {
@@ -257,7 +192,7 @@ func TestDashboardStatsCollapseSiblingRows(t *testing.T) {
 		newTestSystem(t, cdr, transcript),
 		started,
 		ListCallsQuery{},
-		dashboardWindowDays,
+		DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -298,28 +233,6 @@ func TestExportKeepsEverySourceRow(t *testing.T) {
 
 	if len(views) != 2 {
 		t.Fatalf("export is a per-source dump: views = %d, want 2", len(views))
-	}
-}
-
-func TestListRendersCollapsedRowOnce(t *testing.T) {
-	t.Parallel()
-
-	started := testCallStarted()
-	cdr, transcript := aiCallFixture("uuid-ai-1", started)
-
-	mux := newTestServer(t, cdr, transcript)
-
-	_, body := getBody(t, mux, "/")
-	if got := strings.Count(body, "/calls/freeswitch-cdr/uuid-ai-1"); got != 1 {
-		t.Errorf("CDR detail links = %d, want 1", got)
-	}
-
-	if strings.Contains(body, "/calls/agent-transcript/uuid-ai-1") {
-		t.Error("superseded transcript row must not render")
-	}
-
-	if !strings.Contains(body, "hello there") {
-		t.Error("collapsed row should carry the transcript's opening line")
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/templ-components/display"
 )
 
@@ -81,22 +82,22 @@ func TestSearchHintProse(t *testing.T) {
 // T13): the delta renders library-native with an explicit sign and the
 // trend arrow follows the percentage, not the baseline flag alone.
 func TestWeekChangeRendering(t *testing.T) {
-	if got := weekChangeLabel(WeekDelta{Pct: 12.4, HasBaseline: true}); got != "+12% vs last week" {
+	if got := weekChangeLabel(query.WeekDelta{Pct: 12.4, HasBaseline: true}); got != "+12% vs last week" {
 		t.Errorf("weekChangeLabel(up) = %q", got)
 	}
 
-	if got := weekChangeLabel(WeekDelta{Pct: -3.6, HasBaseline: true}); got != "-4% vs last week" {
+	if got := weekChangeLabel(query.WeekDelta{Pct: -3.6, HasBaseline: true}); got != "-4% vs last week" {
 		t.Errorf("weekChangeLabel(down) = %q", got)
 	}
 
 	cases := []struct {
-		delta WeekDelta
+		delta query.WeekDelta
 		want  display.TrendDirection
 	}{
-		{WeekDelta{Pct: 5, HasBaseline: true}, display.TrendUp},
-		{WeekDelta{Pct: -5, HasBaseline: true}, display.TrendDown},
-		{WeekDelta{Pct: 0, HasBaseline: true}, display.TrendNone},
-		{WeekDelta{Pct: 5, HasBaseline: false}, display.TrendNone},
+		{query.WeekDelta{Pct: 5, HasBaseline: true}, display.TrendUp},
+		{query.WeekDelta{Pct: -5, HasBaseline: true}, display.TrendDown},
+		{query.WeekDelta{Pct: 0, HasBaseline: true}, display.TrendNone},
+		{query.WeekDelta{Pct: 5, HasBaseline: false}, display.TrendNone},
 	}
 
 	for _, tc := range cases {

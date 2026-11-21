@@ -1,4 +1,4 @@
-package web
+package query
 
 import (
 	"context"

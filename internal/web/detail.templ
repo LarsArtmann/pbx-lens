@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/htmx"
 	"github.com/larsartmann/templ-components/icons"
@@ -20,7 +21,7 @@ import (
 // calls table. The banner lives in a polled region (R9): with htmx running
 // it re-checks itself every minute and disappears on recovery; without JS
 // the server-rendered fallback stands unchanged.
-templ listRoute(nonce string, csrf string, authed bool, page CallListPage, filters ListCallsQuery, staleFor time.Duration, stale bool) {
+templ listRoute(nonce string, csrf string, authed bool, page query.CallListPage, filters query.ListCallsQuery, staleFor time.Duration, stale bool) {
 	@shell(nonce, csrf, authed, "Calls — pbx-lens", "/") {
 		@staleLive(filters, staleFor, stale)
 		@listPage(nonce, page, filters)
@@ -29,10 +30,10 @@ templ listRoute(nonce string, csrf string, authed bool, page CallListPage, filte
 
 // staleLive is the self-polling staleness-banner wrapper. The poll URL
 // carries the page's own query (plan T9): the fragment re-runs the same
-// ListCalls so its banner state always describes the view on screen —
+// query.ListCalls so its banner state always describes the view on screen —
 // typed filters and walk cursors alike — instead of silently re-checking
 // an unfiltered head page.
-templ staleLive(filters ListCallsQuery, staleFor time.Duration, stale bool) {
+templ staleLive(filters query.ListCallsQuery, staleFor time.Duration, stale bool) {
 	@htmx.PolledRegion(htmx.PolledRegionProps{
 		URL:   "/frag/staleness" + filtersQueryString(filters),
 		Every: "60s",
@@ -49,7 +50,7 @@ templ staleLive(filters ListCallsQuery, staleFor time.Duration, stale bool) {
 // operator opened the page tells the whole story. query carries the search
 // deep link (?q=, plan T21): it turns the transcript into a match-marked log
 // with per-turn anchors.
-templ detailRoute(nonce string, csrf string, authed bool, page DetailPage, query string) {
+templ detailRoute(nonce string, csrf string, authed bool, page query.DetailPage, query string) {
 	@shell(nonce, csrf, authed, callTitle(page.CallView), "/") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:             callTitle(page.CallView),
@@ -115,7 +116,7 @@ func sourceBadge(kind calls.SourceKind) templ.Component {
 // no spoken turn, and said so in its own log" are different facts, and the
 // 2026-10-23 forensic call was misread precisely because the page rendered
 // both as "the caller did not respond".
-templ detailMain(nonce string, page DetailPage, query string) {
+templ detailMain(nonce string, page query.DetailPage, query string) {
 	@layout.Stack(layout.StackProps{Gap: layout.StackGapLG}) {
 		@detailFacts(nonce, page)
 		if len(page.Transcript) > 0 {
@@ -133,7 +134,7 @@ templ detailMain(nonce string, page DetailPage, query string) {
 	}
 }
 
-templ detailFacts(nonce string, page DetailPage) {
+templ detailFacts(nonce string, page query.DetailPage) {
 	@display.Card(display.CardProps{Title: "Call facts", TitleTag: display.HeadingTagH2}) {
 		@display.DefinitionList(display.DefinitionListProps{Items: detailItems(nonce, page)})
 	}
@@ -142,7 +143,7 @@ templ detailFacts(nonce string, page DetailPage) {
 // detailItems builds the term/detail pairs in display order. Conditional
 // facts (cost, insight, joined sources) append only when the page actually
 // carries them.
-func detailItems(nonce string, page DetailPage) []display.DefinitionItem {
+func detailItems(nonce string, page query.DetailPage) []display.DefinitionItem {
 	view := page.CallView
 
 	items := []display.DefinitionItem{
@@ -195,7 +196,7 @@ func detailItems(nonce string, page DetailPage) []display.DefinitionItem {
 // counterpartHistoryText names the population and the newest call — the
 // plain-text twin of the drill-through link, and the honest fallback when
 // the component does not render.
-func counterpartHistoryText(history *CounterpartHistory) string {
+func counterpartHistoryText(history *query.CounterpartHistory) string {
 	calls := strconv.Itoa(history.Calls) + " calls"
 	if history.Calls == 1 {
 		calls = "1 call"
@@ -204,7 +205,7 @@ func counterpartHistoryText(history *CounterpartHistory) string {
 	return calls + " with " + history.Number + ", latest " + history.LastSeen.Local().Format("Jan 2, 2006 15:04")
 }
 
-templ counterpartHistoryLink(history *CounterpartHistory) {
+templ counterpartHistoryLink(history *query.CounterpartHistory) {
 	<a
 		href={ "/?number=" + url.QueryEscape(history.Number) }
 		class="font-medium text-tc-primary hover:underline dark:text-tc-info"
@@ -296,7 +297,7 @@ templ sourceEventPane(events []calls.SourceEvent) {
 
 // noTranscriptTitle separates "nothing was recorded" from "the source
 // recorded markers but no speech" — the second is a finding, not a gap.
-func noTranscriptTitle(page DetailPage) string {
+func noTranscriptTitle(page query.DetailPage) string {
 	if len(page.SourceEvents) > 0 {
 		return "No spoken turns recorded"
 	}
@@ -307,7 +308,7 @@ func noTranscriptTitle(page DetailPage) string {
 // noTranscriptDescription states what the SOURCE did, never a guess about
 // the call. When markers exist they are the source's own record that no user
 // turn arrived, so the copy points at the log instead of shrugging.
-func noTranscriptDescription(page DetailPage) string {
+func noTranscriptDescription(page query.DetailPage) string {
 	if len(page.SourceEvents) == 0 {
 		return "No source recorded a transcript for this call yet " +
 			"(human calls, or the agent transcript file is not ingested)."
@@ -318,14 +319,6 @@ func noTranscriptDescription(page DetailPage) string {
 		"That is the source's own record, not a UI filter — usually a greeting collision, " +
 		"a hangup mid-sentence, or audio that never reached the recognizer."
 }
-
-// transcriptTailThreshold is the "the source stopped writing long before the
-// line dropped" bar. The 2026-10-23 forensic call ended 29.2 s after its last
-// recorded turn start (45.06 s recording, last turn at 15.83 s) while the far
-// end was still speaking at 44.3 s, so a 30 s bar would have missed the very
-// case this signal exists for; 20 s catches it without flagging a call that
-// ends on a normal goodbye.
-const transcriptTailThreshold = 20 * time.Second
 
 // diagnosticDetail renders a signal badge WITH its explanation. The library's
 // DefinitionItem shows DetailComponent INSTEAD of Detail, so a badge-only entry
@@ -379,7 +372,7 @@ func diagnosticItems(view calls.CallView) []display.DefinitionItem {
 		})
 	}
 
-	if tail, ok := transcriptTail(view); ok && tail >= transcriptTailThreshold {
+	if tail, ok := query.TranscriptTail(view); ok && tail >= query.TranscriptTailThreshold {
 		note := format.ClockDuration(tail) + " elapsed after the last recorded turn started"
 		items = append(items, display.DefinitionItem{
 			Term:            "Recording tail",
@@ -389,31 +382,6 @@ func diagnosticItems(view calls.CallView) []display.DefinitionItem {
 	}
 
 	return items
-}
-
-// transcriptTail reports how long the call ran past the last turn's start.
-// Turn times are truncated to whole seconds and sources without per-turn
-// stamps leave At zero, so a transcript with no usable stamp yields false and
-// the signal stays off rather than guessing.
-func transcriptTail(view calls.CallView) (time.Duration, bool) {
-	var last time.Time
-
-	for _, turn := range view.Transcript {
-		if turn.At.After(last) {
-			last = turn.At
-		}
-	}
-
-	if last.IsZero() || view.DurationSecs <= 0 || view.StartedAt.IsZero() {
-		return 0, false
-	}
-
-	tail := time.Duration(view.DurationSecs)*time.Second - last.Sub(view.StartedAt)
-	if tail < 0 {
-		return 0, false
-	}
-
-	return tail, true
 }
 
 // transcriptMatchLog renders the ?q= path through the library Scrollback
@@ -515,7 +483,7 @@ func turnMatches(turn calls.TranscriptTurn, query string) bool {
 // independent: a FreeSWITCH call indexes no RecordingRef at all (its audio is
 // a local WAV named after the call uuid), so the card keys on what the server
 // actually resolved, never on one field's emptiness.
-templ recordingCard(page DetailPage) {
+templ recordingCard(page query.DetailPage) {
 	@display.Card(display.CardProps{Title: "Recording", TitleTag: display.HeadingTagH2}) {
 		if page.RecordingRef != "" || page.LocalRecording != "" {
 			<audio controls preload="none" class="w-full" src={ recordingHref(page.CallView) }></audio>

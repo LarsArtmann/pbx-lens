@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // seedCalls fans out n observations, one per hour ending at base, so the
@@ -69,7 +70,7 @@ func TestPagerSinglePageRendersNothing(t *testing.T) {
 // walk: page 1 offers only Older, the walked page offers Newer back to the
 // same content, and the last page offers only Newer.
 func TestPagerWalksBothDirections(t *testing.T) {
-	seeded := seedCalls(pageSize+5, time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
+	seeded := seedCalls(query.PageSize+5, time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
 	mux := newTestServerWithSearch(t, seeded...)
 
 	status, body := getBody(t, mux, "/")
@@ -127,7 +128,7 @@ func TestPagerWalksBothDirections(t *testing.T) {
 // TestPagerPreservesFilters pins the filter contract: a filtered page's
 // Older/Newer hrefs carry the same filters so the walk stays filtered.
 func TestPagerPreservesFilters(t *testing.T) {
-	seeded := seedCalls(2*(pageSize+5), time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
+	seeded := seedCalls(2*(query.PageSize+5), time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
 
 	for i := range seeded {
 		if i%2 == 0 {
@@ -180,7 +181,7 @@ func TestDetailBreadcrumbs(t *testing.T) {
 // reproduces the page's own query, and walk cursors no longer suppress the
 // banner (pagination is not filtering) while typed filters still do.
 func TestStalenessFragmentCarriesQuery(t *testing.T) {
-	seeded := seedCalls(pageSize+5, time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
+	seeded := seedCalls(query.PageSize+5, time.Date(2026, 10, 1, 9, 0, 0, 0, time.UTC))
 	mux := newTestServerWithSearch(t, seeded...)
 
 	// Head page: stale (old seed), plain poll URL.

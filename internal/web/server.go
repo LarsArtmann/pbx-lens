@@ -19,6 +19,7 @@ import (
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/identity"
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/pbx-lens/internal/search"
 )
 
@@ -222,8 +223,8 @@ func (h *logFuncHandler) WithGroup(string) slog.Handler { return h }
 // listStaleness is the list page plus its staleness-banner inputs — the
 // shared read behind the list page and its polled region.
 type listStaleness struct {
-	filters  ListCallsQuery
-	page     CallListPage
+	filters  query.ListCallsQuery
+	page     query.CallListPage
 	staleFor time.Duration
 	stale    bool
 }
@@ -242,7 +243,7 @@ func (s *server) queryListStaleness(w http.ResponseWriter, r *http.Request) (lis
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
-	page, err := ListCalls(r.Context(), s.sys, filters)
+	page, err := query.ListCalls(r.Context(), s.sys, filters)
 
 	stop()
 
@@ -263,49 +264,63 @@ func (s *server) list(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render(w, r, listRoute(nonce(r), csrfToken(r), s.authEnabled, view.page, view.filters, view.staleFor, view.stale))
+	render(
+		w,
+		r,
+		listRoute(
+			nonce(r),
+			csrfToken(r),
+			s.authEnabled,
+			view.page,
+			view.filters,
+			view.staleFor,
+			view.stale,
+		),
+	)
 }
 
 // parseFilters turns query parameters into the typed query; garbage values
 // reject with a 400-class error instead of silently ignoring.
-func parseFilters(r *http.Request) (ListCallsQuery, error) {
-	query := ListCallsQuery{}
+func parseFilters(r *http.Request) (query.ListCallsQuery, error) {
+	filters := query.ListCallsQuery{}
 
 	if v := r.URL.Query().Get("direction"); v != "" {
 		dir := calls.Direction(v)
 		if !dir.Valid() {
-			return ListCallsQuery{}, errorfamily.NewRejection(
+			return query.ListCallsQuery{}, errorfamily.NewRejection(
 				"lens.web.bad_direction",
 				"direction must be inbound or outbound, got "+strconv.Quote(v),
 			)
 		}
 
-		query.Direction = dir
+		filters.Direction = dir
 	}
 
-	if err := parseAIFilter(r.URL.Query().Get("ai"), &query); err != nil {
-		return ListCallsQuery{}, err
+	if err := parseAIFilter(r.URL.Query().Get("ai"), &filters); err != nil {
+		return query.ListCallsQuery{}, err
 	}
 
 	if number := strings.TrimSpace(r.URL.Query().Get("number")); number != "" {
-		if len(number) > maxNumberFilterLen {
-			return ListCallsQuery{}, errorfamily.NewRejection(
+		if len(number) > query.MaxNumberFilterLen {
+			return query.ListCallsQuery{}, errorfamily.NewRejection(
 				"lens.web.bad_number",
-				"number is longer than "+strconv.Itoa(maxNumberFilterLen)+" characters; paste one number at a time",
+				"number is longer than "+strconv.Itoa(
+					query.MaxNumberFilterLen,
+				)+" characters; paste one number at a time",
 			)
 		}
 
-		query.Number = number
+		filters.Number = number
 	}
 
 	for _, field := range []struct {
 		name   string
 		target *time.Time
 	}{
-		{name: "from", target: &query.From},
-		{name: "to", target: &query.To},
-		{name: "before", target: &query.Before},
-		{name: "after", target: &query.After},
+		{name: "from", target: &filters.From},
+		{name: "to", target: &filters.To},
+		{name: "before", target: &filters.Before},
+		{name: "after", target: &filters.After},
 	} {
 		v := r.URL.Query().Get(field.name)
 		if v == "" {
@@ -314,7 +329,7 @@ func parseFilters(r *http.Request) (ListCallsQuery, error) {
 
 		parsed, dateOnly, err := parseDateParam(v)
 		if err != nil {
-			return ListCallsQuery{}, errorfamily.NewRejection(
+			return query.ListCallsQuery{}, errorfamily.NewRejection(
 				"lens.web.bad_date",
 				field.name+" must be YYYY-MM-DD or RFC3339, got "+strconv.Quote(v),
 			)
@@ -329,19 +344,19 @@ func parseFilters(r *http.Request) (ListCallsQuery, error) {
 		*field.target = parsed
 	}
 
-	return query, nil
+	return filters, nil
 }
 
-func parseAIFilter(v string, query *ListCallsQuery) error {
+func parseAIFilter(v string, filters *query.ListCallsQuery) error {
 	switch v {
 	case "":
 		return nil
 	case "yes":
 		yes := true
-		query.AI = &yes
+		filters.AI = &yes
 	case "no":
 		no := false
-		query.AI = &no
+		filters.AI = &no
 	default:
 		return errorfamily.NewRejection(
 			"lens.web.bad_ai",
@@ -357,7 +372,7 @@ func parseAIFilter(v string, query *ListCallsQuery) error {
 // timestamp in whatever zone it carries. Bare dates mean the operator's
 // own day (R2): ?from=2026-10-12 is the Berlin day, not UTC midnight.
 func parseDateParam(v string) (time.Time, bool, error) {
-	if t, err := time.ParseInLocation("2006-01-02", v, dashboardLocation); err == nil {
+	if t, err := time.ParseInLocation("2006-01-02", v, query.DashboardLocation); err == nil {
 		return t, true, nil
 	}
 
@@ -373,7 +388,7 @@ func parseDateParam(v string) (time.Time, bool, error) {
 // warning. Walk cursors are pagination, not filtering: a walked page is
 // still the unfiltered view, so its banner survives (plan T9). An empty
 // index is never stale (the empty state explains itself).
-func staleness(filters ListCallsQuery, page CallListPage) (time.Duration, bool) {
+func staleness(filters query.ListCallsQuery, page query.CallListPage) (time.Duration, bool) {
 	if hasTypedFilters(filters) || len(page.Rows) == 0 {
 		return 0, false
 	}
@@ -386,7 +401,7 @@ func staleness(filters ListCallsQuery, page CallListPage) (time.Duration, bool) 
 // hasTypedFilters reports whether the query narrows the SLICE (as opposed
 // to walking it): direction/ai/from/to change what the list means;
 // before/after only change where in the same list you stand.
-func hasTypedFilters(filters ListCallsQuery) bool {
+func hasTypedFilters(filters query.ListCallsQuery) bool {
 	return filters.Direction != "" || filters.AI != nil || filters.Number != "" ||
 		!filters.From.IsZero() || !filters.To.IsZero()
 }
@@ -396,21 +411,24 @@ func hasTypedFilters(filters ListCallsQuery) bool {
 // "stats" Server-Timing span. Bad ranges and index failures already wrote
 // their error response; callers that get ok only render. The fragment URL
 // rides along so the polled region re-requests the same range and window.
-func (s *server) queryDashboardStats(w http.ResponseWriter, r *http.Request) (DashboardStats, string, bool) {
+func (s *server) queryDashboardStats(
+	w http.ResponseWriter,
+	r *http.Request,
+) (query.DashboardStats, string, bool) {
 	filters, fragURL, window, ok := parseRange(w, r)
 	if !ok {
-		return DashboardStats{}, "", false
+		return query.DashboardStats{}, "", false
 	}
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "stats")
-	stats, err := DashboardStatsQuery(r.Context(), s.sys, s.now(), filters, window)
+	stats, err := query.DashboardStatsQuery(r.Context(), s.sys, s.now(), filters, window)
 
 	stop()
 
 	if err != nil {
 		s.writeIndexError(w, r, err, http.StatusInternalServerError, indexReadFailureMsg, false)
 
-		return DashboardStats{}, "", false
+		return query.DashboardStats{}, "", false
 	}
 
 	return stats, fragURL, true
@@ -444,38 +462,38 @@ func (s *server) dashboardFragment(w http.ResponseWriter, r *http.Request) {
 // window preset (?window=7|30), which rides the fragment URL so the polled
 // region re-renders the same chart span the page chose. Garbage dates or
 // windows reject with a 400, house style.
-func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string, int, bool) {
-	var filters ListCallsQuery
+func parseRange(w http.ResponseWriter, r *http.Request) (query.ListCallsQuery, string, int, bool) {
+	var filters query.ListCallsQuery
 
 	window, ok := parseWindowParam(w, r)
 	if !ok {
-		return ListCallsQuery{}, "", 0, false
+		return query.ListCallsQuery{}, "", 0, false
 	}
 
 	if !parseRangeDates(w, r, &filters) {
-		return ListCallsQuery{}, "", 0, false
+		return query.ListCallsQuery{}, "", 0, false
 	}
 
 	fragURL := "/frag/dashboard"
 
-	query := url.Values{}
+	vals := url.Values{}
 
-	if window != dashboardWindowDays {
-		query.Set("window", strconv.Itoa(window))
+	if window != query.DashboardWindowDays {
+		vals.Set("window", strconv.Itoa(window))
 	}
 
 	if !filters.From.IsZero() {
-		query.Set("from", filters.From.Format(dayFormat))
+		vals.Set("from", filters.From.Format(query.DayFormat))
 	}
 
 	if !filters.To.IsZero() {
 		// To was widened to end-of-day; the date format drops the time,
 		// so the picker echo shows the day the operator picked.
-		query.Set("to", filters.To.Format(dayFormat))
+		vals.Set("to", filters.To.Format(query.DayFormat))
 	}
 
-	if len(query) > 0 {
-		fragURL += "?" + query.Encode()
+	if len(vals) > 0 {
+		fragURL += "?" + vals.Encode()
 	}
 
 	return filters, fragURL, window, true
@@ -484,7 +502,7 @@ func parseRange(w http.ResponseWriter, r *http.Request) (ListCallsQuery, string,
 // parseWindowParam reads the chart-window preset (?window=7|30); anything
 // else rejects with a 400 and reports false.
 func parseWindowParam(w http.ResponseWriter, r *http.Request) (int, bool) {
-	window := dashboardWindowDays
+	window := query.DashboardWindowDays
 
 	if v := r.URL.Query().Get("window"); v != "" {
 		parsed, err := strconv.Atoi(v)
@@ -502,7 +520,7 @@ func parseWindowParam(w http.ResponseWriter, r *http.Request) (int, bool) {
 
 // parseRangeDates fills from/to from the picker params; garbage rejects
 // with a 400 and reports false.
-func parseRangeDates(w http.ResponseWriter, r *http.Request, filters *ListCallsQuery) bool {
+func parseRangeDates(w http.ResponseWriter, r *http.Request, filters *query.ListCallsQuery) bool {
 	for _, field := range []struct {
 		name   string
 		target *time.Time
@@ -517,7 +535,11 @@ func parseRangeDates(w http.ResponseWriter, r *http.Request, filters *ListCallsQ
 
 		parsed, dateOnly, err := parseDateParam(v)
 		if err != nil || !dateOnly {
-			http.Error(w, field.name+" must be YYYY-MM-DD, got "+strconv.Quote(v), http.StatusBadRequest)
+			http.Error(
+				w,
+				field.name+" must be YYYY-MM-DD, got "+strconv.Quote(v),
+				http.StatusBadRequest,
+			)
 
 			return false
 		}
@@ -546,10 +568,15 @@ func (s *server) stalenessFragment(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) detail(w http.ResponseWriter, r *http.Request) {
-	query := strings.TrimSpace(r.URL.Query().Get("q"))
+	searchTerm := strings.TrimSpace(r.URL.Query().Get("q"))
 
 	stop := servertiming.MeasureServerTiming(r.Context(), "query")
-	page, found, err := CallDetailPage(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
+	page, found, err := query.CallDetailPage(
+		r.Context(),
+		s.sys,
+		r.PathValue("kind"),
+		r.PathValue("id"),
+	)
 
 	stop()
 
@@ -563,7 +590,11 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.WriteHeader(http.StatusNotFound)
 
-		render(w, r, notFoundPage(nonce(r), csrfToken(r), s.authEnabled, "No indexed call with that id."))
+		render(
+			w,
+			r,
+			notFoundPage(nonce(r), csrfToken(r), s.authEnabled, "No indexed call with that id."),
+		)
 
 		return
 	}
@@ -584,16 +615,21 @@ func (s *server) detail(w http.ResponseWriter, r *http.Request) {
 	// turns, one redirect lands the browser on the first match's anchor.
 	// The URL fragment never reaches the server, so the at param breaks
 	// the would-be redirect loop — its presence means "already jumped".
-	if query != "" && !r.URL.Query().Has("at") {
-		if first, ok := firstMatchedTurn(page.Transcript, query); ok {
+	if searchTerm != "" && !r.URL.Query().Has("at") {
+		if first, ok := firstMatchedTurn(page.Transcript, searchTerm); ok {
 			//nolint:gosec // same-origin by construction, pinned by TestSearchJumpTargetSameOrigin
-			http.Redirect(w, r, searchJumpTarget(page.CallView, query, first), http.StatusFound)
+			http.Redirect(
+				w,
+				r,
+				searchJumpTarget(page.CallView, searchTerm, first),
+				http.StatusFound,
+			)
 
 			return
 		}
 	}
 
-	render(w, r, detailRoute(nonce(r), csrfToken(r), s.authEnabled, page, query))
+	render(w, r, detailRoute(nonce(r), csrfToken(r), s.authEnabled, page, searchTerm))
 }
 
 // staticAsset is one embedded build artifact served verbatim: a missing
@@ -703,9 +739,18 @@ func (s *server) opsHandler(w http.ResponseWriter, r *http.Request) {
 	failures = append(failures, coverageFailures...)
 	failures = append(failures, retentionFailures...)
 
-	payload, err := json.Marshal(composeOpsPayload(poller, cache, coverage, retention, identity, failures))
+	payload, err := json.Marshal(
+		composeOpsPayload(poller, cache, coverage, retention, identity, failures),
+	)
 	if err != nil {
-		s.writeIndexError(w, r, err, http.StatusInternalServerError, "encoding ops counters failed", true)
+		s.writeIndexError(
+			w,
+			r,
+			err,
+			http.StatusInternalServerError,
+			"encoding ops counters failed",
+			true,
+		)
 
 		return
 	}
@@ -739,7 +784,7 @@ type coverageWire struct {
 // an empty index). The failure itself rides out as an opsScanFailure so
 // the 503-honest contract can name what is missing.
 func (s *server) coverageWireView(ctx context.Context) ([]coverageWire, []opsScanFailure) {
-	rows, err := IngestCoverageQuery(ctx, s.sys, s.now())
+	rows, err := query.IngestCoverageQuery(ctx, s.sys, s.now())
 	if err != nil {
 		s.logf("ingest coverage walk failed: %v", err)
 
@@ -784,7 +829,8 @@ func composeOpsPayload(
 	identity *identity.IdentityOps,
 	failures []opsScanFailure,
 ) any {
-	if cache == nil && len(coverage) == 0 && retention == nil && identity == nil && len(failures) == 0 {
+	if cache == nil && len(coverage) == 0 && retention == nil && identity == nil &&
+		len(failures) == 0 {
 		return poller
 	}
 

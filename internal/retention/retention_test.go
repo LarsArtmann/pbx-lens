@@ -9,8 +9,8 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/pbx-lens/internal/retention"
-	"github.com/larsartmann/pbx-lens/internal/web"
 )
 
 func TestPolicyAdmitsBoundaryInclusive(t *testing.T) {
@@ -87,7 +87,7 @@ func TestRetireTombstonesOnlyOverAgeViews(t *testing.T) {
 		t.Fatalf("drain after retire: %v", err)
 	}
 
-	views, err := web.ExportCalls(ctx, sys, web.ListCallsQuery{})
+	views, err := query.ExportCalls(ctx, sys, query.ListCallsQuery{})
 	if err != nil {
 		t.Fatalf("ExportCalls: %v", err)
 	}
@@ -116,7 +116,7 @@ func TestRetireTombstonesOnlyOverAgeViews(t *testing.T) {
 		t.Fatalf("drain after re-ingest: %v", err)
 	}
 
-	views, err = web.ExportCalls(ctx, sys, web.ListCallsQuery{})
+	views, err = query.ExportCalls(ctx, sys, query.ListCallsQuery{})
 	if err != nil {
 		t.Fatalf("ExportCalls after re-ingest: %v", err)
 	}

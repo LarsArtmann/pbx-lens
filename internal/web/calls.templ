@@ -3,6 +3,7 @@ package web
 import (
 	"encoding/json"
 	"net/url"
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"runtime/debug"
 	"time"
 
@@ -106,7 +107,7 @@ func navLinks() []navigation.NavLinkProps {
 
 // listPage renders the calls table with its filter form. Data honesty: the
 // empty state explains HOW to fill the index, not just that it is empty.
-templ listPage(nonce string, page CallListPage, filters ListCallsQuery) {
+templ listPage(nonce string, page query.CallListPage, filters query.ListCallsQuery) {
 	@display.PageHeader(display.PageHeaderProps{
 		Title:    "Calls",
 		Subtitle: "Every call the PBX ever saw",
@@ -137,7 +138,7 @@ templ listPage(nonce string, page CallListPage, filters ListCallsQuery) {
 // recent as one-click links. The server renders only the stable container —
 // the page body stays byte-stable for the ETag contract, and no-JS visitors
 // lose nothing they had before.
-templ recentViewsCard(filters ListCallsQuery) {
+templ recentViewsCard(filters query.ListCallsQuery) {
 	<div id="recent-views" data-filters={ recentViewFiltersJSON(filters) } class="mb-6"></div>
 	<script src="/static/recent-views.js" defer></script>
 }
@@ -147,7 +148,7 @@ templ recentViewsCard(filters ListCallsQuery) {
 // every list URL and the recent-views payload share one filter vocabulary.
 // Walk cursors are transport, not filtering: callers that need them add the
 // pair themselves.
-func eachTypedFilter(filters ListCallsQuery, set func(key string, value string)) {
+func eachTypedFilter(filters query.ListCallsQuery, set func(key string, value string)) {
 	if filters.Direction != "" {
 		set("direction", string(filters.Direction))
 	}
@@ -174,7 +175,7 @@ func eachTypedFilter(filters ListCallsQuery, set func(key string, value string))
 // they never ride along. Unfiltered views record nothing — the head page
 // is one click away anyway. encoding/json over a string map emits sorted
 // keys, so the attribute is deterministic for the ETag.
-func recentViewFiltersJSON(filters ListCallsQuery) string {
+func recentViewFiltersJSON(filters query.ListCallsQuery) string {
 	payload := map[string]string{}
 	eachTypedFilter(filters, func(key string, value string) { payload[key] = value })
 
@@ -207,7 +208,7 @@ templ exportHonestyNote() {
 // Buttons in a Pagination-shaped nav, disabled at each end of the walk.
 // Filters ride both hrefs (listHref/listNewerHref) so a filtered walk stays
 // filtered.
-templ pagerRow(filters ListCallsQuery, page CallListPage) {
+templ pagerRow(filters query.ListCallsQuery, page query.CallListPage) {
 	<nav aria-label="Pagination" class="mt-4 flex items-center justify-between">
 		<div>
 			@display.Button(display.ButtonProps{
@@ -246,7 +247,7 @@ templ exportAction() {
 
 // filterForm is the shared filter row (library Form, inline layout): GET
 // submits server-side; the noscript world gets the Apply button.
-templ filterForm(nonce string, filters ListCallsQuery, action string) {
+templ filterForm(nonce string, filters query.ListCallsQuery, action string) {
 	@forms.Form(forms.FormProps{
 		Action: action,
 		Method: forms.FormGet,
@@ -282,7 +283,7 @@ templ filterForm(nonce string, filters ListCallsQuery, action string) {
 			Label:       "Number",
 			Value:       filters.Number,
 			Placeholder: "+49…",
-			MaxLength:   maxNumberFilterLen,
+			MaxLength:   query.MaxNumberFilterLen,
 			BaseProps:   utils.BaseProps{Class: "w-40"},
 		})
 		@forms.DatePicker(forms.DatePickerProps{
@@ -329,7 +330,7 @@ func aiValue(ai *bool) string {
 // hasFilters reports whether the URL differs from the head view at all:
 // any typed filter, or a walk cursor — a walked page deserves the Reset
 // button as much as a filtered one (hasTypedFilters holds the typing).
-func hasFilters(filters ListCallsQuery) bool {
+func hasFilters(filters query.ListCallsQuery) bool {
 	return hasTypedFilters(filters) || !filters.Before.IsZero() || !filters.After.IsZero()
 }
 
@@ -346,7 +347,7 @@ func dateValue(t time.Time) string {
 // rides along so the row-href singleton script carries the CSP nonce —
 // without it the script violates script-src under the nonce policy (found
 // live by scripts/csp-sweep.js, 2026-10-17).
-func tableProps(nonce string, rows []CallRow) display.TableProps {
+func tableProps(nonce string, rows []query.CallRow) display.TableProps {
 	out := display.TableProps{
 		Headers:     []string{"When", "From", "To", "Direction", "Who", "Duration", "Opening line"},
 		Striped:     true,
@@ -392,52 +393,52 @@ func whoBadge(isAI bool) templ.Component {
 }
 
 // listHref preserves active filters across the older-keyset walk.
-func listHref(filters ListCallsQuery, before string) string {
+func listHref(filters query.ListCallsQuery, before string) string {
 	return listPageHref(filters, "before", before)
 }
 
 // listNewerHref preserves active filters across the newer-keyset walk.
-func listNewerHref(filters ListCallsQuery, after string) string {
+func listNewerHref(filters query.ListCallsQuery, after string) string {
 	return listPageHref(filters, "after", after)
 }
 
 // listPageHref renders one list URL: the typed filters plus a single walk
 // cursor under the given parameter name.
-func listPageHref(filters ListCallsQuery, param string, value string) string {
-	query := make(url.Values)
-	eachTypedFilter(filters, query.Set)
+func listPageHref(filters query.ListCallsQuery, param string, value string) string {
+	vals := make(url.Values)
+	eachTypedFilter(filters, vals.Set)
 
 	if value != "" {
-		query.Set(param, value)
+		vals.Set(param, value)
 	}
 
-	if len(query) == 0 {
+	if len(vals) == 0 {
 		return "/"
 	}
 
-	return "/?" + query.Encode()
+	return "/?" + vals.Encode()
 }
 
 // filtersQueryString serializes the full typed query (filters + walk
 // cursors) as a fragment-URL suffix: "" or "?…". Used by the staleness
 // poll region so the fragment re-checks the view actually on screen.
-func filtersQueryString(filters ListCallsQuery) string {
-	query := make(url.Values)
-	eachTypedFilter(filters, query.Set)
+func filtersQueryString(filters query.ListCallsQuery) string {
+	vals := make(url.Values)
+	eachTypedFilter(filters, vals.Set)
 
 	if !filters.Before.IsZero() {
-		query.Set("before", filters.Before.UTC().Format(time.RFC3339))
+		vals.Set("before", filters.Before.UTC().Format(time.RFC3339))
 	}
 
 	if !filters.After.IsZero() {
-		query.Set("after", filters.After.UTC().Format(time.RFC3339))
+		vals.Set("after", filters.After.UTC().Format(time.RFC3339))
 	}
 
-	if len(query) == 0 {
+	if len(vals) == 0 {
 		return ""
 	}
 
-	return "?" + query.Encode()
+	return "?" + vals.Encode()
 }
 
 // buildVersion extracts an honest short version from Go build info: the

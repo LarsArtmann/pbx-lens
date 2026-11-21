@@ -10,6 +10,7 @@ import (
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 func TestDashboardRendersStatsAndCharts(t *testing.T) {
@@ -153,12 +154,12 @@ func TestDashboardStatsQueryMOSAggregation(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		sys,
 		time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -230,12 +231,12 @@ func TestDashboardStatsQueryWindowMath(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		sys,
 		time.Date(2026, 10, 11, 15, 0, 0, 0, time.UTC),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -298,12 +299,12 @@ func TestDashboardBerlinDayBoundary(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		sys,
 		time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -321,10 +322,10 @@ func TestDashboardBerlinDayBoundary(t *testing.T) {
 func TestDashboardStatsQueryZoneIsInjectable(t *testing.T) {
 	// UTC coverage (m2.2): pointing the zone at UTC puts the same call back
 	// on the 9th — the zone decides the bucket, not the data.
-	saved := dashboardLocation
-	dashboardLocation = time.UTC
+	saved := query.DashboardLocation
+	query.DashboardLocation = time.UTC
 
-	t.Cleanup(func() { dashboardLocation = saved })
+	t.Cleanup(func() { query.DashboardLocation = saved })
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	t.Cleanup(cancel)
@@ -345,12 +346,12 @@ func TestDashboardStatsQueryZoneIsInjectable(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		sys,
 		time.Date(2026, 10, 10, 10, 0, 0, 0, time.UTC),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -406,7 +407,7 @@ func TestDashboardDurationHistogramAndWeekDelta(t *testing.T) {
 		t.Fatalf("drain: %v", err)
 	}
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, now, ListCallsQuery{}, dashboardWindowDays)
+	stats, err := query.DashboardStatsQuery(t.Context(), sys, now, query.ListCallsQuery{}, query.DashboardWindowDays)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}

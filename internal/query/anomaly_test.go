@@ -1,4 +1,4 @@
-package web
+package query
 
 import (
 	"testing"
@@ -16,10 +16,10 @@ func volumeMatrix(t *testing.T, now time.Time, days int, counts [7]int, todayCal
 
 	for offset := days; offset >= 1; offset-- {
 		day := now.AddDate(0, 0, -offset)
-		local := day.In(dashboardLocation)
+		local := day.In(DashboardLocation)
 		calls := counts[int(local.Weekday())]
 
-		stats.ByDay = append(stats.ByDay, DayVolume{Day: local.Format(dayFormat), Calls: calls})
+		stats.ByDay = append(stats.ByDay, DayVolume{Day: local.Format(DayFormat), Calls: calls})
 		stats.HourDay[int(local.Weekday())%daysPerWeek][local.Hour()] += calls
 	}
 
@@ -31,7 +31,7 @@ func volumeMatrix(t *testing.T, now time.Time, days int, counts [7]int, todayCal
 // 10 with a ±2√10 band ([4, 16] after rounding) — 10 is usual, 2 is quiet,
 // 17 is busy. The partial today never enters its own baseline.
 func TestVolumeNoteUsualQuietBusy(t *testing.T) {
-	now := time.Date(2026, 10, 25, 13, 0, 0, 0, dashboardLocation) // a Sunday
+	now := time.Date(2026, 10, 25, 13, 0, 0, 0, DashboardLocation) // a Sunday
 	counts := [7]int{10, 5, 5, 5, 5, 5, 5}                         // Sunday = 10, rest = 5 (time.Weekday: Sun=0)
 
 	for _, tc := range []struct {
@@ -75,7 +75,7 @@ func TestVolumeNoteUsualQuietBusy(t *testing.T) {
 // weekday is a guess, not a baseline — the note stays silent (NoHistory),
 // including on an all-zero window.
 func TestVolumeNoteNotEnoughHistory(t *testing.T) {
-	now := time.Date(2026, 10, 25, 13, 0, 0, 0, dashboardLocation) // a Sunday
+	now := time.Date(2026, 10, 25, 13, 0, 0, 0, DashboardLocation) // a Sunday
 	oneSunday := volumeMatrix(t, now, 7, [7]int{3, 0, 0, 0, 0, 0, 0}, 1)
 
 	if note := volumeNote(oneSunday, now); note.Kind != VolumeNoHistory {
@@ -99,7 +99,7 @@ func TestVolumeNoteNotEnoughHistory(t *testing.T) {
 // call in four weeks has a [0, 0] band — the first call on such a day IS
 // unusual, and the note says so instead of hiding behind an empty average.
 func TestVolumeNoteZeroBaselineFlagsAnyCall(t *testing.T) {
-	now := time.Date(2026, 10, 25, 13, 0, 0, 0, dashboardLocation) // a Sunday
+	now := time.Date(2026, 10, 25, 13, 0, 0, 0, DashboardLocation) // a Sunday
 	stats := volumeMatrix(t, now, 28, [7]int{0, 5, 5, 5, 5, 5, 5}, 1)
 
 	note := volumeNote(stats, now)
@@ -126,14 +126,14 @@ func TestVolumeNoteDashboardGoldenFreeze(t *testing.T) {
 
 	for offset := 29; offset >= 0; offset-- {
 		day := now.AddDate(0, 0, -offset)
-		local := day.In(dashboardLocation)
+		local := day.In(DashboardLocation)
 		calls := 0
 
-		if local.Format(dayFormat) == "2026-10-12" {
+		if local.Format(DayFormat) == "2026-10-12" {
 			calls = 2 // the two seeded calls
 		}
 
-		stats.ByDay = append(stats.ByDay, DayVolume{Day: local.Format(dayFormat), Calls: calls})
+		stats.ByDay = append(stats.ByDay, DayVolume{Day: local.Format(DayFormat), Calls: calls})
 	}
 
 	note := volumeNote(stats, now)
@@ -151,7 +151,7 @@ func TestVolumeNoteDashboardGoldenFreeze(t *testing.T) {
 // prior Mondays, never from the whole window — a mixed-weekday average
 // would flatten the weekly rhythm the heatmap exists to show.
 func TestVolumeNoteWeekdayOrdering(t *testing.T) {
-	now := time.Date(2026, 10, 26, 9, 0, 0, 0, dashboardLocation) // a Monday
+	now := time.Date(2026, 10, 26, 9, 0, 0, 0, DashboardLocation) // a Monday
 	counts := [7]int{4, 40, 4, 4, 4, 4, 4}                        // Monday = 40, rest = 4 (Sun=0, Mon=1)
 	stats := volumeMatrix(t, now, 28, counts, 41)
 

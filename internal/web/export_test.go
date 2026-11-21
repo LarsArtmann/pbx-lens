@@ -11,6 +11,7 @@ import (
 
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 func TestExportJSONLStreamsOneObjectPerCall(t *testing.T) {
@@ -171,10 +172,10 @@ func TestExportStreamsAcrossKeysetPages(t *testing.T) {
 	// A shrunken keyset page forces the loop through its seams: five calls
 	// at page size 2 arrive complete, newest first, without duplicates —
 	// and filters plus pii=hash hold on every page (R7).
-	saved := exportBatchSize
-	exportBatchSize = 2
+	saved := query.ExportBatchSize
+	query.ExportBatchSize = 2
 
-	t.Cleanup(func() { exportBatchSize = saved })
+	t.Cleanup(func() { query.ExportBatchSize = saved })
 
 	started := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
 	mixed := make([]calls.Observation, 0, 5)
@@ -228,10 +229,10 @@ func TestExportKeysetStallFailsLoudly(t *testing.T) {
 	// More calls inside one nanosecond than a keyset page can carry cannot
 	// make progress: the loop must fail with an explanation, never truncate
 	// silently.
-	saved := exportBatchSize
-	exportBatchSize = 2
+	saved := query.ExportBatchSize
+	query.ExportBatchSize = 2
 
-	t.Cleanup(func() { exportBatchSize = saved })
+	t.Cleanup(func() { query.ExportBatchSize = saved })
 
 	sameInstant := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
 	mux := newTestServer(t,

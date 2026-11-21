@@ -15,8 +15,8 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/backup"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/pbx-lens/internal/search"
-	"github.com/larsartmann/pbx-lens/internal/web"
 )
 
 func TestRestoreDrillSnapshotToFreshIndex(t *testing.T) {
@@ -85,7 +85,7 @@ func TestRestoreDrillSnapshotToFreshIndex(t *testing.T) {
 
 	t.Cleanup(cleanupRestored)
 
-	views, err := web.ExportCalls(ctx, restored, web.ListCallsQuery{})
+	views, err := query.ExportCalls(ctx, restored, query.ListCallsQuery{})
 	if err != nil {
 		t.Fatalf("ExportCalls(restored): %v", err)
 	}

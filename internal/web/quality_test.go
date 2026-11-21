@@ -1,12 +1,12 @@
 package web
 
 import (
-	"strconv"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 func TestDashboardQualityRollupUsesItsOwnDenominators(t *testing.T) {
@@ -38,12 +38,12 @@ func TestDashboardQualityRollupUsesItsOwnDenominators(t *testing.T) {
 	selfDial.DurationSecs = 3
 	selfDial.HangupCause = "CALL_REJECTED"
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		newTestSystem(t, withUser, noUser, selfDial),
 		started.Add(3*time.Hour),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -86,9 +86,9 @@ func TestDashboardQualityRollupFoldsTheLongTail(t *testing.T) {
 	t.Parallel()
 
 	started := testCallStarted()
-	seeded := make([]calls.Observation, 0, hangupCauseLimit+3)
+	seeded := make([]calls.Observation, 0, query.HangupCauseLimit+3)
 
-	for i := range hangupCauseLimit + 3 {
+	for i := range query.HangupCauseLimit + 3 {
 		obs := webObservation(
 			"conv-cause-"+string(rune('a'+i)),
 			started.Add(time.Duration(i)*time.Minute),
@@ -97,22 +97,22 @@ func TestDashboardQualityRollupFoldsTheLongTail(t *testing.T) {
 		seeded = append(seeded, obs)
 	}
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		newTestSystem(t, seeded...),
 		started.Add(time.Hour),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
 
-	if len(stats.Quality.HangupCauses) != hangupCauseLimit+1 {
+	if len(stats.Quality.HangupCauses) != query.HangupCauseLimit+1 {
 		t.Fatalf(
 			"causes = %d rows, want %d + one folded entry",
 			len(stats.Quality.HangupCauses),
-			hangupCauseLimit,
+			query.HangupCauseLimit,
 		)
 	}
 
@@ -151,12 +151,12 @@ func TestDashboardAnswerRateUsesReportedDenominators(t *testing.T) {
 	agent.Transcript = nil
 	agent.HangupCause = "NORMAL_CLEARING"
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		newTestSystem(t, unanswered, short, normal, agent),
 		started.Add(4*time.Hour),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -234,54 +234,5 @@ func TestQualityEmptyWindowIsHonest(t *testing.T) {
 
 	if strings.Contains(body, `self-dial`) {
 		t.Error("empty window must not render signal rows")
-	}
-}
-
-func TestQualityTrendMovesInPoints(t *testing.T) {
-	t.Parallel()
-
-	// 14 days: prior week 10 transcripts, 5 without a user turn (50%);
-	// this week 10 transcripts, 2 without (20%) → −30 points.
-	days := make([]DayVolume, 0, 2*daysPerWeek)
-	for i := range 2 * daysPerWeek {
-		day := DayVolume{Day: "2026-10-" + strconv.Itoa(i+1), Transcripts: 10}
-		if i < daysPerWeek {
-			day.NoUserTurn = 5
-		} else {
-			day.NoUserTurn = 2
-		}
-
-		days = append(days, day)
-	}
-
-	trend := qualityTrend(days)
-	if !trend.HasBaseline || trend.Points != -30 {
-		t.Errorf("qualityTrend = %+v, want HasBaseline with -30 points", trend)
-	}
-
-	// No transcripts in the prior week → no baseline, never a fabricated move.
-	for i := range days[:daysPerWeek] {
-		days[i].Transcripts = 0
-		days[i].NoUserTurn = 0
-	}
-
-	if trend := qualityTrend(days); trend.HasBaseline {
-		t.Errorf("qualityTrend = %+v, want no baseline without prior transcripts", trend)
-	}
-
-	// A prior week with a zero share has no meaningful move either (a
-	// percentage from zero is drama, not signal).
-	for i := range days[:daysPerWeek] {
-		days[i].Transcripts = 10
-		days[i].NoUserTurn = 0
-	}
-
-	if trend := qualityTrend(days); trend.HasBaseline {
-		t.Errorf("qualityTrend = %+v, want no baseline from a zero prior share", trend)
-	}
-
-	// Short windows cannot compare weeks at all.
-	if trend := qualityTrend(days[:daysPerWeek]); trend.HasBaseline {
-		t.Errorf("qualityTrend = %+v, want no baseline from a short window", trend)
 	}
 }

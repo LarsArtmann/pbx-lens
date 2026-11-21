@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // TestHeatmapBucketsDashboardZone pins the bucketing contract (plan T19):
@@ -14,7 +16,7 @@ func TestHeatmapBucketsDashboardZone(t *testing.T) {
 	// 2026-01-15 23:30 UTC = 2026-01-16 00:30 CET (UTC+1, Thursday).
 	utc := time.Date(2026, 1, 15, 23, 30, 0, 0, time.UTC)
 
-	local := utc.In(dashboardLocation)
+	local := utc.In(query.DashboardLocation)
 	weekday := (int(local.Weekday()) + 6) % 7
 
 	if got := time.Thursday; weekday != int(got)-1 {
@@ -35,7 +37,7 @@ func TestHeatmapBucketsDashboardZone(t *testing.T) {
 func TestHeatmapDSTBoundary(t *testing.T) {
 	utc := time.Date(2026, 3, 29, 1, 30, 0, 0, time.UTC)
 
-	local := utc.In(dashboardLocation)
+	local := utc.In(query.DashboardLocation)
 	if local.Hour() != 3 {
 		t.Errorf("DST-switch local hour = %d, want 3 (CEST)", local.Hour())
 	}

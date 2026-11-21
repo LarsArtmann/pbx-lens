@@ -7,6 +7,22 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-11-21 b (the read-model queries leave the web package)
+
+- **`internal/query` owns the query layer.** The read-model queries and
+  their view models (call list, dashboard snapshot, segments, quality
+  rollups, anomaly notes, coverage, freshness, the merge/representative
+  rules) moved out of `internal/web` behind the `query.` seam; HTTP
+  request parsing (filters, ranges, date/window params) stays in the web
+  layer and the templ pages render identically (view models unchanged).
+  The seam exposes the query layer's own contract constants
+  (`PageSize`, `ExportBatchSize`, `HangupCauseLimit`, `SegmentLimit`,
+  `DashboardLocation`) and the shared fixtures live in
+  `internal/query/querytest`, so the query, web, and serve suites derive
+  from one corpus instead of scattered literals. The T17 move from the
+  ratified web-package policy (P1 move two) — the god-package trilogy
+  fully landed; the structural re-measure is the remaining payoff row.
+
 ### Changed — 2026-11-21 (the serve composition leaves the binary)
 
 - **`internal/serve` owns the serve stack.** The composition (flag

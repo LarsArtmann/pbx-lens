@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 func TestDashboardSegmentsSplitOursAndTheirs(t *testing.T) {
@@ -26,12 +27,12 @@ func TestDashboardSegmentsSplitOursAndTheirs(t *testing.T) {
 	inbound.ToNumber = "+4930123456"
 	inbound.IsAI = true
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		newTestSystem(t, outbound, inbound),
 		started.Add(2*time.Hour),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
@@ -63,26 +64,29 @@ func TestDashboardSegmentsRankByVolumeAndCap(t *testing.T) {
 	// Number i gets (i+1) calls; seven numbers means the cap must bite.
 	for i := range 7 {
 		for repeat := range i + 1 {
-			obs := webObservation(fmt.Sprintf("conv-%d-%d", i, repeat), started.Add(time.Duration(repeat)*time.Minute))
+			obs := webObservation(
+				fmt.Sprintf("conv-%d-%d", i, repeat),
+				started.Add(time.Duration(repeat)*time.Minute),
+			)
 			obs.FromNumber = "+4930123456"
 			obs.ToNumber = fmt.Sprintf("+1555000%04d", i)
 			seeded = append(seeded, obs)
 		}
 	}
 
-	stats, err := DashboardStatsQuery(
+	stats, err := query.DashboardStatsQuery(
 		t.Context(),
 		newTestSystem(t, seeded...),
 		started.Add(time.Hour),
-		ListCallsQuery{},
-		dashboardWindowDays,
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
 	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
 
-	if len(stats.TopPeers) != segmentLimit {
-		t.Fatalf("segments = %d rows, want the cap of %d", len(stats.TopPeers), segmentLimit)
+	if len(stats.TopPeers) != query.SegmentLimit {
+		t.Fatalf("segments = %d rows, want the cap of %d", len(stats.TopPeers), query.SegmentLimit)
 	}
 
 	for i, segment := range stats.TopPeers {
@@ -109,7 +113,13 @@ func TestDashboardSegmentsCarryDrillThroughAndSpend(t *testing.T) {
 	sys := newTestSystem(t, priced, unpriced)
 	enrichCall(t, sys, "conv-priced", calls.Enrichment{CostMicros: 250_000, CostCurrency: "USD"})
 
-	stats, err := DashboardStatsQuery(t.Context(), sys, started.Add(time.Hour), ListCallsQuery{}, dashboardWindowDays)
+	stats, err := query.DashboardStatsQuery(
+		t.Context(),
+		sys,
+		started.Add(time.Hour),
+		query.ListCallsQuery{},
+		query.DashboardWindowDays,
+	)
 	if err != nil {
 		t.Fatalf("DashboardStatsQuery: %v", err)
 	}
@@ -150,7 +160,7 @@ func TestSegmentCostPerMinuteUsesPricedSecondsOnly(t *testing.T) {
 
 	// Two unpriced minutes must not dilute one minute priced at 0.25: the
 	// rate names its denominator, exactly like the window-level rate.
-	segment := Segment{
+	segment := query.Segment{
 		Number:       "+49",
 		Calls:        2,
 		DurationSecs: 180,
@@ -167,7 +177,7 @@ func TestSegmentCostPerMinuteUsesPricedSecondsOnly(t *testing.T) {
 		t.Errorf("CostPerMinute = %v, want %v", got, want)
 	}
 
-	unpriced := Segment{Number: "+49", Calls: 1, DurationSecs: 60}
+	unpriced := query.Segment{Number: "+49", Calls: 1, DurationSecs: 60}
 	if unpriced.HasRate() || unpriced.CostPerMinute() != 0 {
 		t.Errorf("unpriced segment = %+v, want no rate, never a confident zero", unpriced)
 	}
@@ -211,7 +221,7 @@ func TestListFiltersByEitherSideNumber(t *testing.T) {
 func TestListRejectsOverlongNumberFilter(t *testing.T) {
 	t.Parallel()
 
-	tooLong := strings.Repeat("9", maxNumberFilterLen+1)
+	tooLong := strings.Repeat("9", query.MaxNumberFilterLen+1)
 
 	status, body := getBody(t, newTestServer(t), "/?number="+tooLong)
 	if status != 400 {
@@ -224,7 +234,7 @@ func TestListRejectsOverlongNumberFilter(t *testing.T) {
 }
 
 func TestSegmentHrefPointsAtTrendPage(t *testing.T) {
-	segment := Segment{Number: "+17287289311"}
+	segment := query.Segment{Number: "+17287289311"}
 
 	// PathEscape leaves a literal "+" alone: in a PATH segment it is a plus
 	// (only query strings read it as a space), and the mux hands the
@@ -303,14 +313,14 @@ func TestCanonicalShareLinksOnCards(t *testing.T) {
 }
 
 func TestCanonicalDashboardPathOmitsVolatileParams(t *testing.T) {
-	stats := DashboardStats{WindowDays: 30}
+	stats := query.DashboardStats{WindowDays: 30}
 
 	if got := canonicalDashboardPath(stats); got != "/dashboard?window=30" {
 		t.Errorf("canonicalDashboardPath() = %q, want the window preset only", got)
 	}
 
-	stats.rangeFrom = time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
-	stats.rangeTo = time.Date(2026, 10, 20, 0, 0, 0, 0, time.UTC)
+	stats.RangeFrom = time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
+	stats.RangeTo = time.Date(2026, 10, 20, 0, 0, 0, 0, time.UTC)
 
 	got := canonicalDashboardPath(stats)
 	for _, want := range []string{"window=30", "from=2026-10-01", "to=2026-10-20"} {

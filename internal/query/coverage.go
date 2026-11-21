@@ -1,4 +1,4 @@
-package web
+package query
 
 import (
 	"context"
@@ -10,12 +10,12 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
-// coverageStaleAfter is the ingest-coverage SLO default (plan P17): a
+// CoverageStaleAfter is the ingest-coverage SLO default (plan P17): a
 // source whose newest indexed row is older than this is flagged as a gap.
 // One uniform ceiling keeps the flag explainable; per-source intervals are
 // deployment knowledge the poller already expresses through its pass
 // cadence — this flag answers the coarser "is the index drying up".
-const coverageStaleAfter = 48 * time.Hour
+const CoverageStaleAfter = 48 * time.Hour
 
 // CoverageRow is one source kind's indexed coverage: how many rows it
 // contributed and the span they cover. The counts come from the RAW walk —
@@ -35,7 +35,7 @@ func (r CoverageRow) NewestAge(now time.Time) time.Duration { return now.Sub(r.N
 // past the SLO ceiling. A kind with zero rows is absent from the coverage
 // table entirely — "never seen" is a different fact from "went quiet",
 // and the page says so.
-func (r CoverageRow) Stale(now time.Time) bool { return r.NewestAge(now) > coverageStaleAfter }
+func (r CoverageRow) Stale(now time.Time) bool { return r.NewestAge(now) > CoverageStaleAfter }
 
 // IngestCoverageQuery folds the raw per-source walk into per-kind coverage
 // rows, ordered by volume then kind — the same total-order discipline the

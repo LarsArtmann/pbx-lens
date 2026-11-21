@@ -39,16 +39,17 @@ handoff, then execute the unblocked openers. Starting tree: HEAD `a82a283`
 
 ## c) THE OPENERS THIS SESSION EXECUTES (in order)
 
-1. **T18 serve composition move** — serve.go 590 + ops.go 284 out of cmd
-   into internal/serve behind the extracted `serveFlags`; dedupe the ~8
-   test-assembly sites via the new constructor (F51).
-2. **T17 query split** — internal/query with exported view models;
-   request parsing stays HTTP-layer in web (the ratified interface
-   surgery).
-3. **identity-export CLI verb** — ExportUsersToJSON wired beside
-   `backup` (S effort, runbook says "runbook-only today").
-4. **ScanPage spike** — only if the three above land green; branch-only
-   by disposition.
+1. **T18 serve composition move** — LANDED 2026-11-21 (commit 46f31bf):
+   serve.go + ops.go out of cmd into internal/serve behind
+   `serve.Run(Flags)`; the ~8 test-assembly sites deduped via
+   `serveTestStack` (F51).
+2. **T17 query split** — LANDED 2026-11-21 (commit 211a302 + its untagged
+   closure): internal/query with exported view models + the querytest
+   fixtures; request parsing stayed HTTP-layer in web (the ratified
+   interface surgery).
+3. **identity-export CLI verb** — REMAINS OPEN: ExportUsersToJSON wired
+   beside `backup` (S effort, runbook says "runbook-only today").
+4. **ScanPage spike** — REMAINS OPEN; branch-only by disposition.
 
 ## d) Gates at handoff
 

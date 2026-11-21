@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // The 2026-10-23 forensic call, replayed through the real ingest -> projection
@@ -143,7 +144,7 @@ func TestTranscriptTailMeasuredFromTheSpeech(t *testing.T) {
 		},
 	}
 
-	tail, ok := transcriptTail(view)
+	tail, ok := query.TranscriptTail(view)
 	if !ok {
 		t.Fatal("a stamped transcript with a duration must yield a tail")
 	}
@@ -153,8 +154,8 @@ func TestTranscriptTailMeasuredFromTheSpeech(t *testing.T) {
 		t.Fatalf("tail = %s, want 29s (45s recording - the 16s offset of the last turn)", tail)
 	}
 
-	if tail < transcriptTailThreshold {
-		t.Fatalf("the forensic call must cross the %s bar, got %s", transcriptTailThreshold, tail)
+	if tail < query.TranscriptTailThreshold {
+		t.Fatalf("the forensic call must cross the %s bar, got %s", query.TranscriptTailThreshold, tail)
 	}
 
 	// An unstamped transcript (agent JSONL) yields no signal rather than a
@@ -162,7 +163,7 @@ func TestTranscriptTailMeasuredFromTheSpeech(t *testing.T) {
 	view.Transcript[0].At = time.Time{}
 	view.Transcript[1].At = time.Time{}
 
-	if _, ok := transcriptTail(view); ok {
+	if _, ok := query.TranscriptTail(view); ok {
 		t.Fatal("an unstamped transcript must not produce a tail")
 	}
 }

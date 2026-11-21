@@ -15,6 +15,7 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"golang.org/x/time/rate"
 )
 
@@ -64,7 +65,7 @@ func (s *server) recording(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	view, found, err := CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
+	view, found, err := query.CallDetail(r.Context(), s.sys, r.PathValue("kind"), r.PathValue("id"))
 	if err != nil {
 		s.writeIndexError(w, r, err, http.StatusInternalServerError, indexReadFailureMsg, false)
 

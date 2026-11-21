@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/larsartmann/pbx-lens/internal/query"
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 )
@@ -13,7 +14,7 @@ import (
 // to every call involving the number on either side. Reusing the dashboard
 // components keeps one rendering of each aggregate, so the segment page can
 // never drift from the dashboard table that linked here.
-templ segmentRoute(nonce string, csrf string, authed bool, number string, stats DashboardStats, now time.Time) {
+templ segmentRoute(nonce string, csrf string, authed bool, number string, stats query.DashboardStats, now time.Time) {
 	@shell(nonce, csrf, authed, "Segment "+number+" — pbx-lens", "/segments") {
 		@display.PageHeader(display.PageHeaderProps{
 			Title:    number,

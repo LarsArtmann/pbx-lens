@@ -1,4 +1,4 @@
-package web
+package query
 
 import (
 	"fmt"
@@ -55,8 +55,8 @@ type VolumeNote struct {
 // the ±2σ band around that mean. Fewer than two prior same-weekdays renders
 // the honest no-history state instead of a band built on one observation.
 func volumeNote(stats DashboardStats, now time.Time) VolumeNote {
-	local := now.In(dashboardLocation)
-	todayKey := local.Format(dayFormat)
+	local := now.In(DashboardLocation)
+	todayKey := local.Format(DayFormat)
 	weekday := local.Weekday()
 
 	var (
@@ -69,7 +69,7 @@ func volumeNote(stats DashboardStats, now time.Time) VolumeNote {
 			continue
 		}
 
-		parsed, err := time.ParseInLocation(dayFormat, day.Day, dashboardLocation)
+		parsed, err := time.ParseInLocation(DayFormat, day.Day, DashboardLocation)
 		if err != nil {
 			continue
 		}
