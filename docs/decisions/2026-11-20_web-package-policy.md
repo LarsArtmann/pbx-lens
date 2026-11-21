@@ -1,5 +1,13 @@
 # Owner Decision — internal/web package policy (2026-11-20, FM#11/T11)
 
+**STATUS (2026-11-21): ALL THREE P1 MOVES LANDED** — identity →
+`internal/identity` (2026-11-20), serve composition → `internal/serve`
+(2026-11-21, T18), query split → `internal/query` (2026-11-21, T17), each
+with a CHANGELOG receipt. Measured (re-verified at `80349b3`, physical
+lines): web production Go 4398 → 2529, tests 7591 → 7042, T17-only
+attribution. Remaining payoff: the structural-assessment re-run
+(TODO_LIST FM#11 row).
+
 **Decision: RATIFIED — execute the structural assessment's P1 moves.**
 `internal/web` is four packages wearing one name (7.4k prod LOC, 69% of
 recent Go churn, the identity bounded context with no code boundary).

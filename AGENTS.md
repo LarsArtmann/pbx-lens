@@ -50,8 +50,10 @@ read-only deep link, never a data dependency.
   browsers 303 to /login, APIs 401. Identity persistence = ONE sqlite file
   (its checkpoint schema SQL is applied BY HAND — no self-migration).
   `MaxUsers: 1` = the first /login visitor becomes the operator, registration
-  closes after. identity.db is NOT disposable — the NixOS module backs it up
-  beside the index. WebAuthn refuses an IP RPID (`deriveAuthDefaults` maps
+  closes after. identity.db is NOT disposable — backed up beside the index;
+  `pbx-lens identity-export` JSON = an audit RECORD, never a restore path
+  (upstream import closes the seat; snapshot-restore migrates);
+  WebAuthn refuses an IP RPID (`deriveAuthDefaults` maps
   127.0.0.1 → `localhost`); passkeys need HTTPS or localhost; the gate's CSRF
   dance in tests needs Host+Origin+Referer like a browser.
 - **Upstream watchlist:** docs/gotchas.md owns it (go-cqrs-lite v5 rename
@@ -93,9 +95,8 @@ read-only deep link, never a data dependency.
   hardening contract (unfree license, lock guards, one goAttr):
   docs/gotchas.md § "The flake hardening contract".
   `scripts/cut-release.sh` guards version-const parity (v0.3.0 shipped
-  printing 0.2.0). KNOWN: checks.pre-commit false-positives on
-  import-dependent templ alignment — the CI lane is truth, NEVER commit its
-  drift (docs/gotchas.md).
+  printing 0.2.0). KNOWN: checks.pre-commit templ false-positives — the CI
+  lane is truth, NEVER commit its drift (docs/gotchas.md has the remedy).
 - **CI:** GitHub Actions (go-output's pattern): build+test(-race)+coverage+
   tidy, golangci-lint, govulncheck, and the art-dupl ZERO-GROUP GATE
   (`--min-lines 2` vs `scripts/art-dupl-baseline.json`; the suppressed-bucket
@@ -108,15 +109,16 @@ read-only deep link, never a data dependency.
   `golangci-lint run ./...` before pushing. BuildFlow stays the LOCAL gate;
   Dependabot watches github-actions + gomod.
 - **Structure:** the CLI command layer (smoke/ingest-cdr/ingest-telnyx/
-  version) lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog` is
-  the DB-free exception: renders the eventcatalog tree + `-architecture`
-  HTML for the hub). Flag validation is shared (`requireDB`/`requireOneArg`).
+  version) lives in `internal/cli`, wired from `cmd/pbx-lens` (`catalog` =
+  the DB-free eventcatalog render). Flag validation: `requireDB`/`requireOneArg`.
   The `internal/ingest` ROOT package hosts the shared parser scaffolding —
   `Result` and `NewScanner`/`EachLine`; `cdr.Parse`/`webhook.Parse` return
   `ingest.Result` directly, `agent.Result` keeps its own shape. Support:
   `internal/wire` (FlexTime), `internal/backup` (VACUUM INTO + verify),
   `internal/retention` (Policy/OldViews/Retire behind `purge`;
-  `Policy.Admits` also gates serve-poller `-max-age`). Read-model rebuilds
+  `Policy.Admits` also gates serve-poller `-max-age`); `internal/query` (the
+  pure read-model queries + `querytest` fixtures; HTTP parsing stays in web).
+  Read-model rebuilds
   go through `cli.ResetReadModel` (runbook: docs/runbooks/reset-rebuild.md;
   proof: `TestHostResetRebuildsReadModel`), never a hand-picked projection
   name. Projection record keys are BARE (`calls.RecordKey` = `StreamID.Get()`)
@@ -145,7 +147,7 @@ read-only deep link, never a data dependency.
     partial 200). Detail page = READ-TIME join (rules in
     docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List + dashboard
     collapse duplicate source rows onto the representative row (CDR first;
-    `internal/web/representative.go`), export stays per-source. Analytics:
+    `internal/query/representative.go`), export stays per-source. Analytics:
     spend, "who calls what" segments (`?number=` drill-through), "how calls
     end" rates — every figure carries its own denominator.
 
@@ -168,16 +170,14 @@ read-only deep link, never a data dependency.
 
 ```console
 GOEXPERIMENT=jsonv2 go build ./...
-GOEXPERIMENT=jsonv2 go test ./...
+GOEXPERIMENT=jsonv2 go test -race ./...
 nix develop -c bash scripts/poll-gate.sh -- env BUILDFLOW_NO_RESULT_CACHE=1 buildflow --build-mode dev
                                       # THE gate entry: run SOLO (parallel jobs starve test-coverage → exit 75); polls 15-min load<40, execs in-process (docs/buildflow-dev-gate.md)
 nix build                             # ships result/bin/pbx-lens; nix run . -- version runs it
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens refresh -db /tmp/lens.db [-apply]  # additive-field backfill: classify, then -apply; see docs/DOMAIN_LANGUAGE.md
 GOEXPERIMENT=jsonv2 go run ./cmd/pbx-lens serve -db /tmp/lens.db -addr 127.0.0.1:8300
-                                      # UI e2e via a Go http probe (curl banned); app.css rebuilds ONLY
-                                      # via `nix run .#update-styles` (docs/gotchas.md: MIME trap)
-nix develop                           # go, golangci-lint, gopls, govulncheck, dprint, templ,
-                                      # tailwindcss_4, cqrs-lint, vulnix, oxlint, prettier, shellcheck
+                                      # UI e2e via a Go http probe (curl banned); app.css rebuilds ONLY via `nix run .#update-styles` (MIME trap: docs/gotchas.md)
+nix develop                           # go, golangci-lint, gopls, govulncheck, dprint, templ, tailwindcss_4, cqrs-lint, vulnix, oxlint, prettier, shellcheck
 bash scripts/verify-all.sh            # THE browser lane: five probe suites, sequential, first-red-wins;
                                       # every gate prints `verify-all: PASS <gate>` (greppable receipts)
 bash scripts/check-docs-counts.sh && bash scripts/check-doc-links.sh
@@ -188,11 +188,12 @@ GOEXPERIMENT=jsonv2 go test -bench BenchmarkIngestCDR -benchmem ./internal/cli/ 
 node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd   # alert-only pixel diff (scripts/README.md)
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md
 nix run .#update-vendor-hash          # after go.mod/go.sum; CLEAN tree only — never nix-hash-fix (BuildFlow#55)
+nix develop -c templ fmt internal/web/ && nix build .#checks.x86_64-linux.treefmt && GOEXPERIMENT=jsonv2 go mod tidy -diff
+                                      # run BEFORE push: templ fmt after ANY .templ edit (golangci cannot see .templ imports); the CI-equivalent lanes (docs/gotchas.md)
 ```
 
 Receipt-grade commits: `git add … && git commit …` in ONE call; amend only
-UNPUSHED; a guard proof asserts the guard's MESSAGE, not its exit code.
-Concurrent sessions + daemon: docs/concurrency.md.
+UNPUSHED; guard proofs assert the guard's MESSAGE; concurrency: docs/concurrency.md.
 
 ## Deep context (docs/) — read the full doc BEFORE touching its area
 
@@ -200,8 +201,7 @@ Concurrent sessions + daemon: docs/concurrency.md.
   full-recompute folds, FTS5, tombstones, drain-before-enrich, `Exists`,
   the flake hardening contract.
 - **docs/status/archived/** (69 reports) + **docs/planning/archived/** (10
-  plans) — closed history, every executed plan (manifests in each README):
-  never re-opened.
+  plans) — closed history (manifests in each README): never re-opened.
 - **docs/telnyx-live-api.md** — live-verified API truths; re-verify quarterly (recordings 2026-10-12: MP3-ONLY; enrichment spec-verified only; window 2027-01, m27.9).
 - **docs/cqrs-lint-policy.md** — every cqrs-lint finding as a decision
   (incl. the E003 hold + the 2026-11-12 identity verdict); the census there

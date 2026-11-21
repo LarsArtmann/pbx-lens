@@ -71,26 +71,26 @@ pushed).
 
 ## b) PARTIALLY DONE
 
-1. **T17's test lane** — the in-flight half. Three hybrid/pure test files
-   moved to `internal/query` (anomaly_test, the query half of quality,
-   representative_test minus its page test), a pure trend test extracted
-   (`quality_trend_test.go`), the mergeCall + siblingKinds unit tests
-   moved out of detail_join_test.go into `query/merge_call_test.go`, and
-   the page-collapse render test moved back to
-   `web/collapse_render_test.go`. The shared fixtures consolidated into
-   **`internal/query/querytest`** (CallStarted, Observation, System,
-   AICallPair — the identitytest pattern) with thin delegates in both
-   suites. REMAINING (enumerated, ~30–60min): give `query/merge_call_test.go`
-   its fixture delegates (`aiAgentTranscript`/`aiAgentCDR` → querytest),
-   and `web/export_consumer_test.go` needs `exportBatchSize` (export it
-   as `ExportBatchSize` or shrink the test through the public seam) —
-   then vet, the full `go test ./...`, and the [red] tag can come off.
-2. The identity-export verb and the ScanPage spike: NOT STARTED (the
-   openers queue in TODO_LIST).
+1. ~~**T17's test lane** — the in-flight half. Three hybrid/pure test files~~ done — closed at 3f8098a + f92f7a4 (querytest delegates, WithBatchSize DI, suites green, the [red] tag off)
+   ~~moved to `internal/query` (anomaly_test, the query half of quality,~~
+   ~~representative_test minus its page test), a pure trend test extracted~~
+   ~~(`quality_trend_test.go`), the mergeCall + siblingKinds unit tests~~
+   ~~moved out of detail_join_test.go into `query/merge_call_test.go`, and~~
+   ~~the page-collapse render test moved back to~~
+   ~~`web/collapse_render_test.go`. The shared fixtures consolidated into~~
+   ~~**`internal/query/querytest`** (CallStarted, Observation, System,~~
+   ~~AICallPair — the identitytest pattern) with thin delegates in both~~
+   ~~suites. REMAINING (enumerated, ~30–60min): give `query/merge_call_test.go`~~
+   ~~its fixture delegates (`aiAgentTranscript`/`aiAgentCDR` → querytest),~~
+   ~~and `web/export_consumer_test.go` needs `exportBatchSize` (export it~~
+   ~~as `ExportBatchSize` or shrink the test through the public seam) —~~
+   ~~then vet, the full `go test ./...`, and the [red] tag can come off.~~
+2. ~~The identity-export verb and the ScanPage spike: NOT STARTED (the~~ done — both executed 2026-11-21 (verb d6fa6ab, hardened bf03d25; spike branch 251a4ad, parked for owner)
+   ~~openers queue in TODO_LIST).~~
 
 ## c) NOT STARTED
 
-1. Post-move structural re-measure (the FM#11 close-out proof).
+1. Post-move structural re-measure (the FM#11 close-out proof). **→ LOC delta measured 2026-11-21 (web production 4398→2529, tests 7591→7042, T17-only attribution); the full assessment re-run is the FM#11 row in TODO_LIST**
 2. Everything behind owner gates (decision pack, TLS, coverage call) —
    untouched, as gated.
 
@@ -140,34 +140,34 @@ pushed).
 
 ## f) UP TO 15 THINGS TO DO NEXT (ranked)
 
-1. Close the T17 test lane: querytest fixture delegates for
-   merge_call_test; exportBatchSize decision (export vs seam test);
-   full `go test ./...` + `go vet`; THEN re-commit untagged (green) and
-   push.
-2. golangci-lint + cqrs-lint + dedup gate + docs gates on the T17 tree;
-   dprint fmt.
-3. CHANGELOG: T17 entry (the current one covers T18 + flake repair).
-4. TODO_LIST: delete the T17 row as landed, update FM#11 to "moves
-   landed, re-measure open".
-5. `pbx-lens identity-export` CLI verb (the S-effort opener).
-6. Push the four commits (batched, CI-watch).
-7. Post-move structural re-measure (FM#11 payoff proof) — needs both
+1. ~~Close the T17 test lane: querytest fixture delegates for~~ done — at 3f8098a + f92f7a4
+   ~~merge_call_test; exportBatchSize decision (export vs seam test);~~
+   ~~full `go test ./...` + `go vet`; THEN re-commit untagged (green) and~~
+   ~~push.~~
+2. ~~golangci-lint + cqrs-lint + dedup gate + docs gates on the T17 tree;~~ done — 0 golangci issues, 0 dedup groups, docs gates green on the T17 tree (2026-11-21)
+   ~~dprint fmt.~~
+3. ~~CHANGELOG: T17 entry (the current one covers T18 + flake repair).~~ done — landed (CHANGELOG 2026-11-21 b)
+4. ~~TODO_LIST: delete the T17 row as landed, update FM#11 to "moves~~ done — row deleted; FM#11 corrected and re-routed (Unblocked) 2026-11-21
+   ~~landed, re-measure open".~~
+5. ~~`pbx-lens identity-export` CLI verb (the S-effort opener).~~ done — landed d6fa6ab, hardened bf03d25
+6. ~~Push the four commits (batched, CI-watch).~~ done — pushed by the concurrent train (origin/main 80349b3, CI 44887663843)
+7. Post-move structural re-measure (FM#11 payoff proof) — needs both **→ LOC delta measured (2529/7042, T17-only); the assessment re-run is the FM#11 TODO row**
    moves in one tree.
-8. ScanPage spike (branch-only, by disposition).
-9. Refresh the 02-28 handoff report's opener list to match reality.
-10. Watch for the concurrent sessions' next sweep on internal/query
-    (now tracked — sweeps become harmless).
+8. ~~ScanPage spike (branch-only, by disposition).~~ done — RAN branch-only (251a4ad), parked for owner merge (TODO_LIST Blocked)
+9. Refresh the 02-28 handoff report's opener list to match reality. **→ 02-28 §c annotated 2026-11-21**
+10. ~~Watch for the concurrent sessions' next sweep on internal/query~~ **NOT-DO — session-scoped watch; the session ended (sweeps absorbed via the claims ritual).**
+    ~~(now tracked — sweeps become harmless).~~
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 
-1. **Push cadence for the [red]-tagged head**: push `211a302`+the green
+1. **Push cadence for the [red]-tagged head**: push `211a302`+the green **→ moot — the train pushed green (80349b3, CI 44887663843); the next-batch cadence question is 13-05 §g3**
    closure as one train once tests pass (my default), or do you want
    the T17 test-lane commit reviewed first?
-2. **exportBatchSize**: export the 5k-row export batch const as
+2. **exportBatchSize**: export the 5k-row export batch const as **→ DECIDED 2026-11-21 — injected per server via Options.ExportBatchSize + WithBatchSize (f92f7a4); neither an exported var nor a package move**
    `query.ExportBatchSize` (the stall-boundary tests shrink it), or keep
    it unexported and move its two test consumers into internal/query?
    I lean export — it is a documented contract surface (5k-row pages).
-3. **The remaining opener order**: identity-export verb before or after
+3. **The remaining opener order**: identity-export verb before or after **→ moot — both executed same day (the verb first, the spike branch-only)**
    the ScanPage spike (both unblocked; the verb is S-effort and shippable,
    the spike is branch-only exploration).
 

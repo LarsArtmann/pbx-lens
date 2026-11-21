@@ -43,10 +43,10 @@ handoff, then execute the unblocked openers. Starting tree: HEAD `a82a283`
    serve.go + ops.go out of cmd into internal/serve behind
    `serve.Run(Flags)`; the ~8 test-assembly sites deduped via
    `serveTestStack` (F51).
-2. **T17 query split** — LANDED 2026-11-21 (commit 211a302 + its untagged
-   closure): internal/query with exported view models + the querytest
-   fixtures; request parsing stayed HTTP-layer in web (the ratified
-   interface surgery).
+2. ~~**T17 query split** — LANDED 2026-11-21 (commit 211a302 + its untagged~~ done — commit 3f8098a (the 211a302 amend — pushed, CI green)
+   ~~closure): internal/query with exported view models + the querytest~~
+   ~~fixtures; request parsing stayed HTTP-layer in web (the ratified~~
+   ~~interface surgery).~~
 3. **identity-export CLI verb** — REMAINS OPEN: ExportUsersToJSON wired
    beside `backup` (S effort, runbook says "runbook-only today").
 4. **ScanPage spike** — REMAINS OPEN; branch-only by disposition.

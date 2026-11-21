@@ -40,12 +40,18 @@ from it and supported until the next tag supersedes them.
 
 ## Identity and access (2026-11-12)
 
-The UI is gated by a native identity stack (`internal/web/userauth.go`,
+The UI is gated by a native identity stack (`internal/identity`,
 cqrs-htmx usermgmt) over its own SQLite database (`-auth-db`; the INDEX
 db is disposable, the identity DB is NOT — it holds the operator account,
 passkeys, and sessions). Every route behind the gate needs a session;
 browsers get 303 → /login, API callers a plain 401. `/login`, `/auth/*`,
 `/app.css`, and `/robots.txt` are the only public paths.
+
+`pbx-lens identity-export` writes the operator accounts as an AUDIT JSON
+RECORD: it carries NO credentials, and importing it upstream would create
+a credential-less user and close the single seat (`MaxUsers: 1`) — a
+lockout. The only supported operator-seat migration is the `pbx-lens
+backup` snapshot-restore.
 
 - **Login is PASSKEY-ONLY.** Registration is email-only; login is a
   WebAuthn ceremony (`-auth-rpid`/`-auth-origin`; with an origin set, the
