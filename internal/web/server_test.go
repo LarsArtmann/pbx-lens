@@ -449,6 +449,7 @@ func TestOpsEndpointServesCounters(t *testing.T) {
 		t.Error("the 503 should name the poller as the fix")
 	}
 }
+
 func TestOpsEndpointFlattensTypedPollerPayload(t *testing.T) {
 	// The wire contract: the poller's json tags ARE the top-level keys
 	// (cli.PollerHealth doctrine). The 2026-11-20 deepening swapped the
@@ -491,7 +492,6 @@ func TestOpsEndpointFlattensTypedPollerPayload(t *testing.T) {
 		t.Errorf(`/api/ops nested the poller payload under "poller" (body: %.200s)`, body)
 	}
 }
-
 
 func TestOpsEndpointServesCacheSection(t *testing.T) {
 	// R26: the cache counters answer /api/ops on their own (the etag

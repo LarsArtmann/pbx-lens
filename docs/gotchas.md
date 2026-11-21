@@ -671,3 +671,23 @@ creates the account WITHOUT a passkey and (MaxUsers=1) closes
 registration → a guaranteed lockout. The JSON is a RECORD for audit, not
 a migration path; snapshot-restore (`pbx-lens backup` + VACUUM INTO) is
 the only supported operator-seat migration.
+
+## A typed struct swapped for a hand-built map silently moves the wire keys through a defensive wrap branch (paid for, 2026-11-21)
+
+`composeOpsPayload` merged sections into the poller payload when it was a
+`map[string]any` (flat, the R15 contract: "the R15 keys stay where they
+always were, so existing consumers parse unchanged") but WRAPPED unknown
+payload types under a `"poller"` key — a defensive branch for hypothetical
+custom embeds. The 2026-11-20 deepening replaced the five hand-maintained
+map copies with the typed `cli.PollerHealth`, whose doctrine comment says
+its json tags ARE the wire keys — and the typed struct fell into the wrap
+branch, nesting every key under `"poller"`. All Go tests stayed green (the
+assertions were `strings.Contains` on leaf keys, level-blind); the
+`verify-ops-verdict` browser probe caught it because it parses `body.stale`
+at the top level — and it only ran after the deepening once a session
+executed the full lane again. Two lessons: (1) a wire contract stated in a
+comment needs a LEVEL-pinned assertion (the flatness pin now exists:
+`TestOpsEndpointFlattensTypedPollerPayload`); (2) "defensive" branches for
+shapes nothing produces are latent shape changes waiting for the first
+caller that legitimately produces one. Fix: typed payloads flatten through
+their json tags in `ensureOpsPayloadMap`.

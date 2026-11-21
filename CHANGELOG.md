@@ -7,6 +7,21 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Fixed — 2026-11-21 e (/api/ops wire keys restored to the top level)
+
+- **`/api/ops` serves the poller keys FLAT again** (`sources`,
+  `last_pass`, `last_pass_age_seconds`, `stale` at the top level, beside
+  the retention/cache/coverage/identity/scan_failures sections). The
+  2026-11-20 PollerHealth deepening accidentally flipped the shape: the
+  typed struct hit `composeOpsPayload`'s defensive non-map wrap branch and
+  nested the poller payload under a `"poller"` key, silently moving every
+  consumer's keys — caught by `verify-ops-verdict` the first time the full
+  browser lane ran after the deepening. Fixed at the root in
+  `ensureOpsPayloadMap` (typed payloads flatten through their json tags,
+  per the PollerHealth wire doctrine); pinned flat by
+  `TestOpsEndpointFlattensTypedPollerPayload`. The `/ops` PAGE was
+  unaffected (it decodes the poller payload directly).
+
 ### Fixed — 2026-11-21 d (update-vendor-hash refuses an already-poisoned pin)
 
 - **`nix run .#update-vendor-hash` now refuses at entry when
