@@ -243,6 +243,7 @@ linters:
       ignore-package-globs:
         - github.com/larsartmann/pbx-lens
         - github.com/larsartmann/pbx-lens/*
+        - github.com/larsartmann/go-appkit*
         - github.com/larsartmann/go-cqrs-lite/*
         - github.com/larsartmann/go-error-family*
       ignore-sig-regexps:

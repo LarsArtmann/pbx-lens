@@ -7,6 +7,24 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Changed — 2026-11-21 (the serve composition leaves the binary)
+
+- **`internal/serve` owns the serve stack.** The composition (flag
+  surface, identity gate, middleware chain, poller wiring, signal-owned
+  shutdown) moved out of `cmd/pbx-lens` behind `serve.Run`; the verb is a
+  thin shell (parse, require the DSN, fatal on error) and the eight serve
+  suites drive the exact same composition through one tuned constructor
+  (`serveTestStack`) instead of four bespoke assemblies — the T18/F51
+  move from the ratified web-package policy (P1 move three; T17 query
+  split remains the last one).
+- cqrs-lint's flake FODs repaired with their surfaced `got` values (the
+  source hash sat at the all-zeros placeholder and its own vendorHash had
+  drifted — the devShell died at the FOD; `nix develop -c cqrs-lint .`
+  is green again alongside the concurrent vendorHash.nix restore).
+- wrapcheck's ignore globs admit go-appkit (fleet first-party, same
+  family-classified errors as go-cqrs-lite), so `serve.Run` forwards
+  appkit boot errors without wrapping ceremony.
+
 ### Added — 2026-11-20 b (the execution wave: identity boundary, honest login, typed seams)
 
 - **The identity bounded context has a code boundary.** `userauth.go` and

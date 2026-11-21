@@ -1,4 +1,4 @@
-package main
+package serve
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 
 	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-appkit/testkit"
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/identity"
@@ -30,12 +31,28 @@ func noAutoGzip() *http.Client {
 	return &http.Client{Transport: &http.Transport{DisableCompression: true}}
 }
 
+// testVersion is the build stamp the test stacks serve; the /version and
+// build_info assertions read it instead of the binary's version const.
+const testVersion = "test-build"
+
+// stackTune adjusts the shared test stack. The zero value serves the bare
+// production posture: no auth gate, no recordings upstream, empty web
+// options, the test build stamp.
+type stackTune struct {
+	version  string
+	authMW   func(http.Handler) http.Handler
+	identity *identity.Identity
+	options  func(*web.Options)
+	seed     func(sys *system.System)
+}
+
 // serveTestStack boots the exact composition serve builds, over a fresh
 // in-memory index, on an ephemeral listener: every stack-level contract test
-// shares it so the stack under test cannot drift between suites. The client
+// shares it so the stack under test cannot drift between suites (F51 — the
+// one assembly the suites share instead of four bespoke ones). The client
 // is the gzip-transparent-off one (see noAutoGzip); base is the full-chain
 // URL (https through to the app handler).
-func serveTestStack(tb testing.TB) (string, *http.Client) {
+func serveTestStack(tb testing.TB, tune stackTune) (string, *http.Client) {
 	tb.Helper()
 
 	sys, cleanup, err := cli.OpenSystem(tb.Context(), "")
@@ -43,12 +60,12 @@ func serveTestStack(tb testing.TB) (string, *http.Client) {
 		tb.Fatalf("open memory index: %v", err)
 	}
 
-	tb.Cleanup(cleanup)
+	if tune.seed != nil {
+		tune.seed(sys)
+	}
 
-	serviceConfig := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
-
-	if err != nil {
-		tb.Fatalf("build service config: %v", err)
+	if tune.version == "" {
+		tune.version = testVersion
 	}
 
 	// testkit.NewService (appkit v0.9.0) applies test-safe defaults —
@@ -57,13 +74,61 @@ func serveTestStack(tb testing.TB) (string, *http.Client) {
 	// 5 s drain delay at teardown (appkit#26's trap, re-paid here until
 	// 2026-10-25: TestServeStackEndToEnd was 5.04 s of which 5.005 s was
 	// drain).
-	svc := testkit.NewService(tb, serviceConfig)
+	svc := testkit.NewService(tb, buildServiceConfig("127.0.0.1:0", tune.version, tune.authMW, nil, nil))
 
-	web.Register(svc.Mux, sys, web.Options{})
+	if tune.identity != nil {
+		tune.identity.Register(svc.Mux)
+	}
+
+	options := web.Options{}
+	if tune.options != nil {
+		tune.options(&options)
+	}
+
+	web.Register(svc.Mux, sys, options)
 
 	ts := testkit.Serve(tb, svc)
 
+	// Registered AFTER testkit's cleanup so LIFO closes the index system
+	// BEFORE testkit's stop sequence runs its goroutine-baseline assert —
+	// the projection workers are not leaks.
+	tb.Cleanup(cleanup)
+
 	return ts.FullChainURL, noAutoGzip()
+}
+
+// recordingStackTune boots the shared stack for the recording-proxy tests:
+// the recording proxy pointed at the test Telnyx API with the given hop
+// budget, and the conv-rec seed observation ingested and drained. The two
+// recording tests differ ONLY in the budget, so the tune lives here.
+func recordingStackTune(tb testing.TB, apiBase string, hopBudget time.Duration) (string, *http.Client) {
+	tb.Helper()
+
+	return serveTestStack(tb, stackTune{
+		options: func(o *web.Options) {
+			o.Recordings = web.RecordingOptions{
+				Telnyx:          telnyx.NewClient("test-key", apiBase),
+				UpstreamTimeout: hopBudget,
+			}
+		},
+		seed: func(sys *system.System) {
+			obs := calls.Observation{
+				NativeID: "conv-rec", Kind: calls.SourceTelnyxConversation,
+				Direction:  calls.DirectionOutbound,
+				StartedAt:  time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
+				FromNumber: "+17287289311", ToNumber: "+15555550123",
+				RecordingRef: "rec-1",
+			}
+
+			if stats := cli.Ingest(tb.Context(), sys, []calls.Observation{obs}); len(stats.Rejected) > 0 {
+				tb.Fatalf("ingest rejected: %v", stats.Rejected)
+			}
+
+			if err := cli.DrainProjections(tb.Context(), sys); err != nil {
+				tb.Fatalf("drain: %v", err)
+			}
+		},
+	})
 }
 
 // get issues a GET against the served chain and returns status plus the
@@ -157,50 +222,11 @@ func TestRecordingProxyTimingHopBudget(t *testing.T) {
 	}))
 	t.Cleanup(api.Close)
 
-	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
-	if err != nil {
-		t.Fatalf("open memory index: %v", err)
-	}
-
-	defer cleanup()
-
-	obs := calls.Observation{
-		NativeID: "conv-rec", Kind: calls.SourceTelnyxConversation,
-		Direction:  calls.DirectionOutbound,
-		StartedAt:  time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
-		FromNumber: "+17287289311", ToNumber: "+15555550123",
-		RecordingRef: "rec-1",
-	}
-
-	if stats := cli.Ingest(t.Context(), sys, []calls.Observation{obs}); len(stats.Rejected) > 0 {
-		t.Fatalf("ingest rejected: %v", stats.Rejected)
-	}
-
-	if err := cli.DrainProjections(t.Context(), sys); err != nil {
-		t.Fatalf("drain: %v", err)
-	}
-
-	serviceConfig := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
-
-	if err != nil {
-		t.Fatalf("build service config: %v", err)
-	}
-
-	svc := testkit.NewService(t, serviceConfig)
-
 	const hopBudget = 5 * time.Second
 
-	web.Register(svc.Mux, sys, web.Options{
-		Recordings: web.RecordingOptions{
-			Telnyx:          telnyx.NewClient("test-key", api.URL+"/v2"),
-			UpstreamTimeout: hopBudget,
-		},
-	})
+	base, client := recordingStackTune(t, api.URL+"/v2", 5*time.Second)
 
-	ts := testkit.Serve(t, svc)
-	client := noAutoGzip()
-
-	resp, err := client.Get(ts.FullChainURL + "/calls/telnyx-conversation/conv-rec/recording")
+	resp, err := client.Get(base + "/calls/telnyx-conversation/conv-rec/recording")
 	if err != nil {
 		t.Fatalf("recording GET: %v", err)
 	}
@@ -269,50 +295,11 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 	}))
 	t.Cleanup(api.Close)
 
-	sys, cleanup, err := cli.OpenSystem(t.Context(), "")
-	if err != nil {
-		t.Fatalf("open memory index: %v", err)
-	}
-
-	defer cleanup()
-
-	obs := calls.Observation{
-		NativeID: "conv-rec", Kind: calls.SourceTelnyxConversation,
-		Direction:  calls.DirectionOutbound,
-		StartedAt:  time.Date(2026, 10, 10, 9, 0, 0, 0, time.UTC),
-		FromNumber: "+17287289311", ToNumber: "+15555550123",
-		RecordingRef: "rec-1",
-	}
-
-	if stats := cli.Ingest(t.Context(), sys, []calls.Observation{obs}); len(stats.Rejected) > 0 {
-		t.Fatalf("ingest rejected: %v", stats.Rejected)
-	}
-
-	if err := cli.DrainProjections(t.Context(), sys); err != nil {
-		t.Fatalf("drain: %v", err)
-	}
-
-	serviceConfig := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
-
-	if err != nil {
-		t.Fatalf("build service config: %v", err)
-	}
-
-	svc := testkit.NewService(t, serviceConfig)
-
 	const hopBudget = 60 * time.Millisecond
 
-	web.Register(svc.Mux, sys, web.Options{
-		Recordings: web.RecordingOptions{
-			Telnyx:          telnyx.NewClient("test-key", api.URL+"/v2"),
-			UpstreamTimeout: hopBudget,
-		},
-	})
+	base, client := recordingStackTune(t, api.URL+"/v2", 60*time.Millisecond)
 
-	ts := testkit.Serve(t, svc)
-	client := noAutoGzip()
-
-	resp, err := client.Get(ts.FullChainURL + "/calls/telnyx-conversation/conv-rec/recording")
+	resp, err := client.Get(base + "/calls/telnyx-conversation/conv-rec/recording")
 	if err != nil {
 		t.Fatalf("recording GET: %v", err)
 	}
@@ -344,7 +331,7 @@ func TestRecordingProxySlowUpstreamStaysBounded(t *testing.T) {
 }
 
 func TestServeStackEndToEnd(t *testing.T) {
-	base, client := serveTestStack(t)
+	base, client := serveTestStack(t, stackTune{})
 
 	// The cacheable surfaces: revalidation (200 → ETag → 304) and gzip on
 	// both the embedded asset and the hot 30s poll fragment. Fragment routes
@@ -388,8 +375,8 @@ func TestServeStackEndToEnd(t *testing.T) {
 		t.Fatalf("GET /version status = %d, want 200", status)
 	}
 
-	if !strings.Contains(body, version) {
-		t.Errorf("/version body %q does not carry the build version %q", body, version)
+	if !strings.Contains(body, testVersion) {
+		t.Errorf("/version body %q does not carry the build version %q", body, testVersion)
 	}
 
 	status, _, metricsBody := get(t, client, base, "/metrics", nil)
@@ -586,7 +573,7 @@ func assertGzip(t *testing.T, client *http.Client, base, path string) {
 // unauthenticated mode (auth is the identity session gate or loopback-only
 // dev), and the middleware stack grows by auth + the three web middlewares.
 func TestBuildServiceConfigWiring(t *testing.T) {
-	plain := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+	plain := buildServiceConfig("127.0.0.1:0", testVersion, nil, nil, nil)
 
 	if plain.WriteTimeout != appkit.NoTimeout {
 		t.Errorf(
@@ -595,8 +582,8 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		)
 	}
 
-	if plain.Version != version {
-		t.Errorf("Version = %q, want %q", plain.Version, version)
+	if plain.Version != testVersion {
+		t.Errorf("Version = %q, want %q", plain.Version, testVersion)
 	}
 
 	if plain.Metrics == nil || !plain.Metrics.AllowUnauthenticated {
@@ -610,7 +597,7 @@ func TestBuildServiceConfigWiring(t *testing.T) {
 		)
 	}
 
-	authed := buildServiceConfig("127.0.0.1:0", func(next http.Handler) http.Handler {
+	authed := buildServiceConfig("127.0.0.1:0", testVersion, func(next http.Handler) http.Handler {
 		return next
 	}, nil, nil)
 
@@ -715,7 +702,7 @@ func TestDeriveAuthDefaults(t *testing.T) {
 func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 	t.Setenv("CSP_NONCE", "1")
 
-	nonced := buildServiceConfig("127.0.0.1:0", nil, nil, nil)
+	nonced := buildServiceConfig("127.0.0.1:0", testVersion, nil, nil, nil)
 
 	if got := len(nonced.ExtraMiddlewares); got != 4 {
 		t.Errorf(
@@ -740,7 +727,7 @@ func TestBuildServiceConfigCSPNonceWiring(t *testing.T) {
 // The appkit default's X-Frame-Options: DENY must survive the inner
 // overwrite, so the composition keeps its framing lockout.
 func TestSecurityHeadersContract(t *testing.T) {
-	base, client := serveTestStack(t)
+	base, client := serveTestStack(t, stackTune{})
 
 	wantHeaders := map[string]string{
 		"Referrer-Policy":        securityReferrerPolicy,
@@ -798,7 +785,7 @@ func TestSecurityHeadersContract(t *testing.T) {
 // the representation is stable. The 5s startTimeout hypothesis in the
 // first triage was wrong; the draft was retracted (never filed).
 func TestCacheSemanticsHardening(t *testing.T) {
-	base, client := serveTestStack(t)
+	base, client := serveTestStack(t, stackTune{})
 
 	// Vary: the compression layer sits OUTER of the ETag layer, so tags
 	// hash identity bodies — but any cache between here and the browser
@@ -976,9 +963,9 @@ func benchRoundTrip(b *testing.B, client *http.Client, url, etag string) int {
 // conditional GETs through the real middleware chain, steady state being a
 // 304 re-hash-and-compare per poll. Run with:
 //
-//	GOEXPERIMENT=jsonv2 go test ./cmd/pbx-lens -bench BenchmarkConcurrentPoll -benchmem
+//	GOEXPERIMENT=jsonv2 go test ./internal/serve -bench BenchmarkConcurrentPoll -benchmem
 func BenchmarkConcurrentPoll(b *testing.B) {
-	base, client := serveTestStack(b)
+	base, client := serveTestStack(b, stackTune{})
 
 	_, headers, _ := get(b, client, base, "/frag/dashboard", nil)
 
@@ -1024,22 +1011,18 @@ func BenchmarkConcurrentPollIdentity(b *testing.B) {
 
 	defer func() { _ = identity.Close() }()
 
-	sys, cleanup, err := cli.OpenSystem(b.Context(), "")
-	if err != nil {
-		b.Fatalf("open memory index: %v", err)
-	}
-
-	defer cleanup()
-
-	serviceConfig := buildServiceConfig("127.0.0.1:0", identity.Middleware(), nil, nil)
-	svc := testkit.NewService(b, serviceConfig)
-	identity.Register(svc.Mux)
-	web.Register(svc.Mux, sys, web.Options{AuthEnabled: true, Identity: identity})
-	ts := testkit.Serve(b, svc)
+	base, _ := serveTestStack(b, stackTune{
+		authMW:   identity.Middleware(),
+		identity: identity,
+		options: func(o *web.Options) {
+			o.AuthEnabled = true
+			o.Identity = identity
+		},
+	})
 
 	// The ceremony setup (mint the operator, keep ONE nosurf session) and
 	// the warm-up live in identityBenchSession.
-	base, authedClient, sessionCookie := identityBenchSession(b, ts.FullChainURL)
+	_, authedClient, sessionCookie := identityBenchSession(b, base)
 
 	warm, err := http.NewRequestWithContext(b.Context(), http.MethodGet, base+"/frag/dashboard", nil)
 	if err != nil {

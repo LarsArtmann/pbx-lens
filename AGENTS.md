@@ -183,7 +183,7 @@ bash scripts/verify-all.sh            # THE browser lane: five probe suites, seq
 bash scripts/check-docs-counts.sh && bash scripts/check-doc-links.sh
                                       # docs gates IN THE WRITING LOOP (2026-11-12 convention): run after
                                       # EVERY docs batch, not only pre-push (scripts/README.md)
-GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./cmd/pbx-lens/  # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
+GOEXPERIMENT=jsonv2 go test -bench BenchmarkConcurrentPoll -benchmem ./internal/serve/  # poll ceiling ≈82 µs/op 304 / ≈101 µs full-200 (docs/http-stack.md)
 GOEXPERIMENT=jsonv2 go test -bench BenchmarkIngestCDR -benchmem ./internal/cli/  # ingest per-row (docs/http-stack.md has both generations)
 node scripts/screenshot-probe.js --only dashboard --diff /tmp/pd   # alert-only pixel diff (scripts/README.md)
 nix develop -c cqrs-lint .            # findings policy: docs/cqrs-lint-policy.md

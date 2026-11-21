@@ -24,7 +24,7 @@ func main() {
 		"refresh":        refresh,
 		"ingest-webhook": ingestWebhook,
 		"ingest-agent":   ingestAgent,
-		"serve":          serve,
+		"serve":          serveCmd,
 		"backup":         backupCmd,
 		"purge":          purgeCmd,
 		"catalog":        catalogCmd,
