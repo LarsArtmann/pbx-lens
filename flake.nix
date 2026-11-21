@@ -279,23 +279,42 @@
                     echo "ERROR: uncommitted go.mod/go.sum/vendorHash.nix — commit or stash first (AGENTS.md: CLEAN tree only)" >&2
                     exit 1
                   fi
-                  cp "$hash_file" "$hash_file.bak"
-                  # Restore on ANY exit, signals included. A probe interrupted
-                  # by Ctrl-C, a session/desktop logout (SIGTERM) or a killed
-                  # build used to leave the placeholder in the TRACKED file,
-                  # and the auto-commit daemon then committed it — the
-                  # 2026-10-25 and 2026-11-01 incidents that shipped a broken
-                  # pin and redded every downstream build.
-                  restore() {
-                    if [ -f "$hash_file.bak" ]; then
-                      mv "$hash_file.bak" "$hash_file"
+                  # Entry-refusal on an already-poisoned pin (2026-11-21,
+                  # webphone 07-44 report §e-3): when vendorHash.nix already
+                  # holds a sentinel placeholder, the EXIT trap below would
+                  # restore the POISON on any probe failure — a failed run
+                  # leaves the pin broken with a confusing log. Refuse
+                  # instead; the deliberate-repair override skips
+                  # backup/restore entirely (the committed pin is already
+                  # broken, nothing is worth restoring) and always keeps the
+                  # probed hash. Pinned by scripts/check-vendor-hash-refusal.sh.
+                  sentinel=0
+                  if grep -qP '"sha256-[A0]{20,}="' "$hash_file"; then
+                    if [ -z "''${UPDATE_VENDOR_HASH_ALLOW_SENTINEL:-}" ]; then
+                      echo "ERROR: vendorHash.nix already holds a sentinel placeholder — a failed probe would restore the poison via the EXIT trap. Re-run with UPDATE_VENDOR_HASH_ALLOW_SENTINEL=1: the sentinel run skips backup/restore entirely (the committed pin is already broken) and always keeps the probed hash." >&2
+                      exit 1
                     fi
-                  }
-                  trap restore EXIT
-                  trap 'exit 130' INT
-                  trap 'exit 143' TERM HUP
-                  fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
-                  printf '"%s"\n' "$fake" > "$hash_file"
+                    sentinel=1
+                  fi
+                  if [ "$sentinel" = "0" ]; then
+                    cp "$hash_file" "$hash_file.bak"
+                    # Restore on ANY exit, signals included. A probe interrupted
+                    # by Ctrl-C, a session/desktop logout (SIGTERM) or a killed
+                    # build used to leave the placeholder in the TRACKED file,
+                    # and the auto-commit daemon then committed it — the
+                    # 2026-10-25 and 2026-11-01 incidents that shipped a broken
+                    # pin and redded every downstream build.
+                    restore() {
+                      if [ -f "$hash_file.bak" ]; then
+                        mv "$hash_file.bak" "$hash_file"
+                      fi
+                    }
+                    trap restore EXIT
+                    trap 'exit 130' INT
+                    trap 'exit 143' TERM HUP
+                    fake="sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
+                    printf '"%s"\n' "$fake" > "$hash_file"
+                  fi
                   out="$(nix build "$root#default" --no-link 2>&1 || true)"
                   got="$(printf '%s' "$out" | grep -oP 'got:\s+\Ksha256-[A-Za-z0-9+/=]+' | head -1 || true)"
                   if [ -z "$got" ]; then

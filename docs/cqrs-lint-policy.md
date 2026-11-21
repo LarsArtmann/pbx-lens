@@ -35,9 +35,11 @@ DECISION.
   one-shot CLI processes close the system at exit; a close error there has
   no recovery path and the event log is already durable. The serve process
   owns a stricter shutdown.
-- **C023 identity boot-failure cleanup (deliberate, 2026-11-12)**: the six
-  `_ = db.Close()` / `_ = service.Close()` sites in `internal/identity/identity.go`
-  (`OpenIdentity` + `openIdentityStores`) are all construction-failure
+- **C023 identity boot-failure cleanup (deliberate, 2026-11-12; coordinates
+  re-verified 2026-11-21)**: the six `_ = db.Close()` / `_ = service.Close()`
+  sites in `internal/identity/identity.go` (lines 202/220/244/275/276/442 —
+  `OpenIdentity` + `openIdentityStores` + the 2026-11-21 `OpenPolicy`/
+  `OpenExisting` openers) are all construction-failure
   paths: a later wiring step failed, so the partially-opened handle closes
   before returning the specific `lens.web.*` rejection that names the root
   cause. The Close error has no channel there — the handle was opened in
@@ -45,8 +47,9 @@ DECISION.
   could reveal (the documented contract: the caller never sees a half-open
   database). Runtime shutdown IS strict: `Identity.Close` joins and returns
   both errors and the tests assert it. Non-fix, same doctrine as P-class.
-- **C023 serve-side cleanup closures (deliberate, 2026-11-12)**: the two
-  `_ = index.Close()` sites in `cmd/pbx-lens/serve.go` (`openServeIndex`)
+- **C023 serve-side cleanup closures (deliberate, 2026-11-12; the sites
+  moved with T18 into `internal/serve/serve.go:544/552`)**: the two
+  `_ = index.Close()` sites (`openServeIndex`)
   are the rebuild-failure path (the rebuild error is the actionable one; a
   close error would only mask it) and `closeAll`, the documented one-unit
   teardown whose contract is ORDER — the FTS handle flushes before the
@@ -111,14 +114,20 @@ DECISION.
   agent-source readers (bounded result sets); prefetch would cache nothing.
   Non-fix; the rule's own suggestion text is inaccurate for filter-paged
   scans (an upstream-filing candidate, not filed).
-- **F031 (false positive at helper-built scans)**: "Scan without WithLimit"
-  fires on `internal/web/queries.go` at the list walk and the NextNewer
-  probe. Both DO bound the result: the walk passes `WithLimit(listScanBatch+1)`
-  at the call site (spelled out 2026-10-25) and the probe carries
+- **F031 (false positive at helper-built scans; relocated by T17)**: "Scan without WithLimit"
+  now fires only on `internal/query/queries.go:232`, the NextNewer
+  probe — the T17 move spelled the list walk's `WithLimit(listScanBatch+1)`
+  directly in its Scan arguments, so the rule sees it; the probe carries
   `WithLimit(1)` inside its option slice. The rule reads the Scan arguments
   literally and cannot see a limit inside a slice built by a helper. The
   absence of a limit is a real bug class, so the limit stays VISIBLE at the
-  walk call site; the probe slice keeps the helper shape. Non-fix.
+  walk call site (`queries.go:119`); the probe slice keeps the helper shape. Non-fix.
+- **C023 export staging discard (deliberate, 2026-11-21)**: the
+  `cmd/pbx-lens/ops.go:252` site is `writeExportArtifact`'s `discard`
+  closure — it closes the staging file ignoring the error on a FAILED
+  export: the actionable error is the write/rename failure already being
+  returned, the staging file is deleted either way, and the artifact is
+  re-derivable. Same exit-path doctrine as P-class.
 - **F021 (accepted: four folds are the contract)**: `call_views` needs four
   create folds (`call.observed`, `call.corrected`, `call.enriched`) plus the
   retirement remove — one per event type, each a FULL recompute of the row
@@ -146,7 +155,8 @@ DECISION.
   marker-prefixed display form, so "fixing" it to `.Get()` would orphan
   every historical call — `LookupView`'s fallback exists precisely so
   those rows stay reachable (docs/gotchas.md record-key story). Non-fix.
-- **E023 identity satellite (deliberate, 2026-11-12)**: `internal/web`
+- **E023 identity satellite (deliberate, 2026-11-12; the package moved to
+  `internal/identity` on 2026-11-20, codes kept as `lens.web.identity_*`)**: `internal/identity`
   mixes go-cqrs-lite usage with `database/sql` because the identity
   context is the upstream cqrs-htmx usermgmt SQL recipe verbatim — event,
   session, and checkpoint stores over one shared `*sql.DB`, the checkpoint
@@ -175,6 +185,13 @@ DECISION.
   (14 WARNING / 12 INFO): its newer engine adds C044 + E023 and no longer
   fires E005/F026. Both exit 0; every finding on either side carries a
   disposition in this file.
+- **Census 2026-11-21 (devShell gate, fresh at `80349b3`)**: still 27
+  findings (16 WARNING / 11 INFO, 0 ERROR). The T17/T18 moves relocated
+  two (F031 → `internal/query/queries.go:232`; the serve C023 pair →
+  `internal/serve/serve.go:544/552`), the identity C023 coordinates
+  shifted (202/220/244/275/276/442 — `bf03d25` added the `OpenPolicy`/
+  `OpenExisting` openers), and one NEW site joined:
+  `cmd/pbx-lens/ops.go:252` (export staging discard, dispositioned above).
 
 ## E003 verdict on the identity context (2026-11-12, post-adoption plan A15): NO TRIP
 

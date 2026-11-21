@@ -359,8 +359,8 @@ symptom is silent under-collapse (every AI call still rendered twice).
 
 Use `calls.LookupView` (a `Get`) for presence. It also accepts the legacy
 marker-prefixed key, so pre-flip rows answer correctly. Regression:
-`internal/web/representative_test.go` seeds a CDR + transcript pair and
-asserts ONE list row.
+`internal/query/representative_test.go` (post-T17 home) seeds a CDR +
+transcript pair and asserts ONE list row.
 
 ## versions.json lies; git tags are the truth (verified, 2026-10-25)
 
@@ -640,3 +640,34 @@ runbook and the tested code path cannot drift apart again.
   them and sandbox and devShell toolchains drift.
 - the update-vendor-hash app declares coreutils+gnugrep; cqrs-lint carries
   meta (description + unfree license).
+
+## golangci-lint cannot see `.templ` import order — `templ fmt` + the treefmt check before EVERY push (paid for, 2026-11-21)
+
+The T17 qualification sed-inserted imports into `calls.templ`; templ's own
+fmt orders them differently, and NO gate in the standing local battery
+compiles templ files — so the drift shipped and pushed a red CI run (main
+red ~40 min, fixed in `d7e8de7`). golangci-lint sees only the generated
+`_templ.go` and does not catch it either. The remedy is doctrine now:
+
+```console
+nix develop -c templ fmt internal/web/          # after ANY .templ edit
+nix build .#checks.x86_64-linux.treefmt         # the CI-equivalent lane, BEFORE push
+GOEXPERIMENT=jsonv2 go mod tidy -diff            # CI checks tidy; the local battery did not
+```
+
+## `OpenIdentity` creates its tables wherever it is pointed — never point `-db` at the identity file, and the JSON export is NOT a restore path (paid for, 2026-11-21)
+
+`identity.OpenIdentity` (and the `OpenExisting`/`OpenPolicy` pair added
+2026-11-21) bootstraps the identity schema AT THE DSN IT IS GIVEN. Two
+reproduced footguns from the identity-export verb's first version: a
+missing `-db` bootstrapped a fresh, empty identity DB and reported success
+(`[]`); an index-DB path gained eight identity tables (pollution that then
+rides the backups). `bf03d25` fixed both at the root: the verb takes
+`-auth-db`, `OpenExisting`/`checkOpenable` refuse to CREATE, and the
+refusals are pinned by tests. Corollary truths: retention/purge cannot
+reach the identity DB (they dispatch only through the index system), and
+`ExportUsersToJSON` writes NO credentials — importing that JSON upstream
+creates the account WITHOUT a passkey and (MaxUsers=1) closes
+registration → a guaranteed lockout. The JSON is a RECORD for audit, not
+a migration path; snapshot-restore (`pbx-lens backup` + VACUUM INTO) is
+the only supported operator-seat migration.
