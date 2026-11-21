@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
-	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // TestExportStallMarkerCarriesStreamContext pins plan A18: the stalled walk
@@ -16,11 +15,6 @@ import (
 // terminal marker (and the log line) say WHICH calls share the timestamp —
 // not just that a stall happened.
 func TestExportStallMarkerCarriesStreamContext(t *testing.T) {
-	saved := query.ExportBatchSize
-	query.ExportBatchSize = 2
-
-	t.Cleanup(func() { query.ExportBatchSize = saved })
-
 	same := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
 	tied := []calls.Observation{
 		webObservation("tied-a", same),
@@ -28,7 +22,7 @@ func TestExportStallMarkerCarriesStreamContext(t *testing.T) {
 		webObservation("tied-c", same),
 	}
 
-	mux := newTestServer(t, tied...)
+	mux := newTestServerWith(t, Options{ExportBatchSize: 2}, tied...)
 
 	status, body := getBody(t, mux, "/api/export.jsonl")
 	if status != http.StatusOK {

@@ -44,12 +44,20 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   request parsing (filters, ranges, date/window params) stays in the web
   layer and the templ pages render identically (view models unchanged).
   The seam exposes the query layer's own contract constants
-  (`PageSize`, `ExportBatchSize`, `HangupCauseLimit`, `SegmentLimit`,
-  `DashboardLocation`) and the shared fixtures live in
-  `internal/query/querytest`, so the query, web, and serve suites derive
-  from one corpus instead of scattered literals. The T17 move from the
-  ratified web-package policy (P1 move two) — the god-package trilogy
-  fully landed; the structural re-measure is the remaining payoff row.
+  (`PageSize`, `HangupCauseLimit`, `SegmentLimit`, `DashboardLocation`)
+  and the shared fixtures live in `internal/query/querytest`, so the
+  query, web, and serve suites derive from one corpus instead of
+  scattered literals. The T17 move from the ratified web-package policy
+  (P1 move two) — the god-package trilogy fully landed.
+- **Measured after the move:** web production Go roughly halved (4398 →
+  about 2500 lines); the read model lives in `internal/query`. The full
+  structural re-measure is the remaining payoff row.
+- **The export page size is injected, not a global.** `StreamExportCalls`
+  takes a per-call `WithBatchSize` option (default 5000), threaded from
+  `web.Options.ExportBatchSize`; the move had first exported the old
+  package-level variable so web tests could shrink it, which put a
+  mutable test seam into the production API. A per-server option keeps
+  concurrent exports independent (`TestExportBatchSizeIsPerServer`).
 
 ### Changed — 2026-11-21 (the serve composition leaves the binary)
 
@@ -59,8 +67,8 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
   thin shell (parse, require the DSN, fatal on error) and the eight serve
   suites drive the exact same composition through one tuned constructor
   (`serveTestStack`) instead of four bespoke assemblies — the T18/F51
-  move from the ratified web-package policy (P1 move three; T17 query
-  split remains the last one).
+  move from the ratified web-package policy (P1 move three; the T17 query
+  split landed next, see the block above).
 - cqrs-lint's flake FODs repaired with their surfaced `got` values (the
   source hash sat at the all-zeros placeholder and its own vendorHash had
   drifted — the devShell died at the FOD; `nix develop -c cqrs-lint .`

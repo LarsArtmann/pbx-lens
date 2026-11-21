@@ -17,19 +17,13 @@ import (
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
-	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // stalledExportMux seeds the tie fixture that forces a keyset stall: three
-// calls sharing ONE timestamp, batch shrunk to 2 — page one emits two rows,
+// calls sharing ONE timestamp, a two-row page (Options.ExportBatchSize) — page one emits two rows,
 // page two is all duplicates, the cursor stalls, the marker must follow.
 func stalledExportMux(t *testing.T) *http.ServeMux {
 	t.Helper()
-
-	saved := query.ExportBatchSize
-	query.ExportBatchSize = 2
-
-	t.Cleanup(func() { query.ExportBatchSize = saved })
 
 	same := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
 	tied := []calls.Observation{
@@ -38,7 +32,7 @@ func stalledExportMux(t *testing.T) *http.ServeMux {
 		webObservation("tied-c", same),
 	}
 
-	return newTestServer(t, tied...)
+	return newTestServerWith(t, Options{ExportBatchSize: 2}, tied...)
 }
 
 // TestExportCSVParsesAsConsumer pins the EXPORT_INCOMPLETE contract from

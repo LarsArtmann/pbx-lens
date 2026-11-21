@@ -241,13 +241,31 @@ func newerPageCursor(
 	return top.UTC().Format(time.RFC3339), nil
 }
 
-// ExportBatchSize is one keyset page of a streaming export (R7): memory
+// DefaultExportBatchSize is one keyset page of a streaming export (R7): memory
 // stays at one batch however large the index grows, and dumps past the old
-// maxExportRows cap stream fully instead of truncating. A var so tests can
-// shrink the page and walk the loop's seams deterministically.
-//
-//nolint:gochecknoglobals // test-shrinkable page size (keyset seam tests)
-var ExportBatchSize = 5_000
+// maxExportRows cap stream fully instead of truncating.
+const DefaultExportBatchSize = 5_000
+
+// StreamOption tunes one streaming read.
+type StreamOption func(*streamConfig)
+
+// streamConfig is the resolved setting of ONE stream — a value local to the
+// call, so concurrent streams never share it.
+type streamConfig struct {
+	batchSize int
+}
+
+// WithBatchSize pages the stream in batches of n rows instead of
+// DefaultExportBatchSize (n <= 0 keeps the default). A handler that wants a
+// different page passes it per call; nothing is mutated, so tests can walk a
+// tiny corpus across several pages without touching shared state.
+func WithBatchSize(n int) StreamOption {
+	return func(cfg *streamConfig) {
+		if n > 0 {
+			cfg.batchSize = n
+		}
+	}
+}
 
 // StreamExportCalls walks every view matching the same filters as the list
 // page, newest first, calling fn per view (D5). Pagination is a started_at
@@ -264,8 +282,15 @@ func StreamExportCalls(
 	sys *system.System,
 	query ListCallsQuery,
 	fn func(calls.CallView) error,
+	opts ...StreamOption,
 ) error {
-	return streamViews(ctx, sys, query, fn)
+	cfg := streamConfig{batchSize: DefaultExportBatchSize}
+
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
+	return streamViews(ctx, sys, query, cfg.batchSize, fn)
 }
 
 // streamRepresentativeCalls is streamViews with the duplicate-source collapse
@@ -280,7 +305,7 @@ func streamRepresentativeCalls(
 ) error {
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
 
-	return streamViews(ctx, sys, query, func(view calls.CallView) error {
+	return streamViews(ctx, sys, query, DefaultExportBatchSize, func(view calls.CallView) error {
 		superseded, err := supersededBySibling(ctx, reader, view)
 		if err != nil {
 			return err
@@ -294,11 +319,13 @@ func streamRepresentativeCalls(
 	})
 }
 
-// streamViews is the keyset walk every streaming reader shares.
+// streamViews is the keyset walk every streaming reader shares, paged in
+// batches of batchSize rows.
 func streamViews(
 	ctx context.Context,
 	sys *system.System,
 	query ListCallsQuery,
+	batchSize int,
 	fn func(calls.CallView) error,
 ) error {
 	reader := metaengine.NewReader[calls.CallView](sys.MetaEngine(), calls.Collection)
@@ -308,7 +335,7 @@ func streamViews(
 	seen := make(map[string]struct{})
 
 	for {
-		views, err := reader.Scan(ctx, streamPageOptions(cursor, query)...)
+		views, err := reader.Scan(ctx, streamPageOptions(cursor, query, batchSize)...)
 		if err != nil {
 			return err
 		}
@@ -329,7 +356,7 @@ func streamViews(
 			emitted++
 		}
 
-		if len(views) < ExportBatchSize {
+		if len(views) < batchSize {
 			return nil
 		}
 
@@ -349,10 +376,10 @@ func streamViews(
 // (rows sharing the cursor's timestamp reappear and get skipped by key);
 // on the first page the caller's own Before (a plain exclusive bound)
 // applies instead.
-func streamPageOptions(cursor time.Time, query ListCallsQuery) []metaengine.ScanOption {
+func streamPageOptions(cursor time.Time, query ListCallsQuery, batchSize int) []metaengine.ScanOption {
 	opts := append([]metaengine.ScanOption{
 		metaengine.WithSort("started_at", true),
-		metaengine.WithLimit(ExportBatchSize),
+		metaengine.WithLimit(batchSize),
 	}, scanFilters(query)...)
 
 	switch {

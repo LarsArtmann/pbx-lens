@@ -43,7 +43,7 @@ func (r CoverageRow) Stale(now time.Time) bool { return r.NewestAge(now) > Cover
 func IngestCoverageQuery(ctx context.Context, sys *system.System, now time.Time) ([]CoverageRow, error) {
 	byKind := map[calls.SourceKind]*CoverageRow{}
 
-	err := streamViews(ctx, sys, ListCallsQuery{}, func(view calls.CallView) error {
+	err := streamViews(ctx, sys, ListCallsQuery{}, DefaultExportBatchSize, func(view calls.CallView) error {
 		row, ok := byKind[view.Kind]
 		if !ok {
 			row = &CoverageRow{Kind: view.Kind}

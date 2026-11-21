@@ -1,6 +1,7 @@
 package web
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json/v2"
 	"errors"
@@ -65,7 +66,7 @@ func (s *server) exportJSONL(w http.ResponseWriter, r *http.Request) {
 
 	var rowsWritten bool
 
-	err := query.StreamExportCalls(r.Context(), s.sys, filters, func(view calls.CallView) error {
+	err := s.streamExport(r.Context(), filters, func(view calls.CallView) error {
 		rowsWritten = true
 
 		markFirstPage.mark()
@@ -122,7 +123,7 @@ func (s *server) exportCSV(w http.ResponseWriter, r *http.Request) {
 
 	var rowsWritten bool
 
-	err := query.StreamExportCalls(r.Context(), s.sys, filters, func(view calls.CallView) error {
+	err := s.streamExport(r.Context(), filters, func(view calls.CallView) error {
 		rowsWritten = true
 
 		markFirstPage.mark()
@@ -177,6 +178,17 @@ type exportError struct {
 	Code             string            `json:"code"`
 	Message          string            `json:"message"`
 	Context          map[string]string `json:"context,omitempty"`
+}
+
+// streamExport walks an export's rows through the query layer with THIS
+// server's page size (Options.ExportBatchSize). Both formats reach the
+// stream here, so they always page alike.
+func (s *server) streamExport(
+	ctx context.Context,
+	filters query.ListCallsQuery,
+	fn func(calls.CallView) error,
+) error {
+	return query.StreamExportCalls(ctx, s.sys, filters, fn, query.WithBatchSize(s.exportBatchSize))
 }
 
 // beginExport parses the shared filters and the pii mode; it writes the

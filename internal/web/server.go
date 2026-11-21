@@ -75,6 +75,13 @@ type Options struct {
 	// is set). The ops page/api read their native-login section from it;
 	// nil leaves the section out (auth-free boots show no identity card).
 	Identity *identity.Identity
+
+	// ExportBatchSize pages the streaming exports (JSONL and CSV) in
+	// batches of this many rows; zero is the query layer's default (5000).
+	// It is per server, never a shared global: tests walk a tiny corpus
+	// across several pages with a small value without disturbing any other
+	// server, however concurrently it runs.
+	ExportBatchSize int
 }
 
 // Searcher is the content-query surface the web UI needs: the call view
@@ -99,6 +106,7 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		retention:         opts.RetentionMaxAge,
 		authEnabled:       opts.AuthEnabled,
 		identity:          opts.Identity,
+		exportBatchSize:   opts.ExportBatchSize,
 		recTimeout:        timeout,
 		upstream:          newUpstreamClient(timeout),
 		now:               opts.Now,
@@ -168,6 +176,7 @@ type server struct {
 	recordingThrottle recordingThrottle
 	authEnabled       bool
 	identity          *identity.Identity
+	exportBatchSize   int
 }
 
 // logf reports a failure that surfaces after the response body started —

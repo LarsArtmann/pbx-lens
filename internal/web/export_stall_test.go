@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/calls"
-	"github.com/larsartmann/pbx-lens/internal/query"
 )
 
 // TestExportStallEndsWithVisibleMarker pins plan T10: when the keyset walk
@@ -16,11 +15,6 @@ import (
 // still ends honestly — a terminal EXPORT_INCOMPLETE marker inside the
 // artifact — instead of a silently truncated download.
 func TestExportStallEndsWithVisibleMarker(t *testing.T) {
-	saved := query.ExportBatchSize
-	query.ExportBatchSize = 2
-
-	t.Cleanup(func() { query.ExportBatchSize = saved })
-
 	// Three calls sharing ONE timestamp: page 1 emits two, page two is all
 	// duplicates, the cursor stalls, the stream must announce it.
 	same := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
@@ -30,7 +24,7 @@ func TestExportStallEndsWithVisibleMarker(t *testing.T) {
 		webObservation("tied-c", same),
 	}
 
-	mux := newTestServer(t, tied...)
+	mux := newTestServerWith(t, Options{ExportBatchSize: 2}, tied...)
 
 	status, body := getBody(t, mux, "/api/export.csv")
 	if status != http.StatusOK {
@@ -61,11 +55,6 @@ func TestExportStallEndsWithVisibleMarker(t *testing.T) {
 // not stop at the first page. The shrunken batch makes this a multi-page
 // walk over a tiny corpus deterministically.
 func TestExportMemoryBudgetStreamsPastOldCap(t *testing.T) {
-	saved := query.ExportBatchSize
-	query.ExportBatchSize = 2
-
-	t.Cleanup(func() { query.ExportBatchSize = saved })
-
 	base := time.Date(2026, 10, 9, 19, 0, 0, 0, time.UTC)
 
 	seeded := make([]calls.Observation, 0, 5)
@@ -74,7 +63,7 @@ func TestExportMemoryBudgetStreamsPastOldCap(t *testing.T) {
 		seeded = append(seeded, webObservation(fmt.Sprintf("row-%d", i), base.Add(time.Duration(i)*time.Minute)))
 	}
 
-	mux := newTestServer(t, seeded...)
+	mux := newTestServerWith(t, Options{ExportBatchSize: 2}, seeded...)
 
 	status, body := getBody(t, mux, "/api/export.csv")
 	if status != http.StatusOK {
