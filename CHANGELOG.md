@@ -7,6 +7,17 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-11-21 c (the identity-export verb)
+
+- **`pbx-lens identity-export`** writes the identity DB's users as the
+  runbook's portable JSON artifact (email + profile metadata, no secret
+  keys) beside `backup` — until now the export was reachable only through
+  the serve boot path. The WebAuthn flags exist only because opening the
+  identity store constructs the ceremony provider; an export never runs
+  one (the defaults are the dev values). The round-trip test registers
+  the operator through the real /auth/register walk and reads the seat
+  back out of the artifact.
+
 ### Changed — 2026-11-21 b (the read-model queries leave the web package)
 
 - **`internal/query` owns the query layer.** The read-model queries and

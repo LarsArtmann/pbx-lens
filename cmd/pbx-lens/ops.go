@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/backup"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/retention"
 )
 
@@ -137,6 +139,67 @@ func backupCmd(args []string) {
 	}
 
 	fmt.Printf("snapshot written and verified: %s\n", *out)
+}
+
+// identityExportCmd writes the identity DB's users as the runbook's
+// portable JSON artifact (email + profile metadata, no secret keys) for
+// migrating the operator seat to a fresh host without restoring the whole
+// SQLite file. The WebAuthn flags exist only because opening the identity
+// store constructs the ceremony provider; an export never runs a ceremony,
+// so the defaults are the dev values.
+func identityExportCmd(args []string) {
+	fs := flag.NewFlagSet("identity-export", flag.ExitOnError)
+	db := fs.String("db", "", "identity sqlite DSN (required)")
+	out := fs.String("out", "", "JSON output path (required)")
+	rpid := fs.String("auth-rpid", "localhost", "WebAuthn RPID (ceremony-only; an export never runs one)")
+	origin := fs.String("auth-origin", "http://localhost", "WebAuthn origin (ceremony-only; an export never runs one)")
+	parseAndRequireDB(fs, db, args)
+
+	if *out == "" {
+		fatal(errorfamily.NewRejection("lens.cli.missing_out", "identity-export needs -out <path>"))
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
+	defer cancel()
+
+	if err := runIdentityExport(ctx, *db, *out, *rpid, *origin); err != nil {
+		fatal(err)
+	}
+
+	fmt.Printf("identity users exported: %s\n", *out)
+}
+
+// runIdentityExport boots the identity store from its DSN and streams the
+// user array into out. Opening is the full identity boot (the service owns
+// the read model the export reads); there is no lighter read-only path.
+func runIdentityExport(ctx context.Context, dsn, out, rpid, origin string) error {
+	ident, err := identity.OpenIdentity(ctx, identity.IdentityConfig{
+		DSN:       dsn,
+		RPID:      rpid,
+		RPOrigins: []string{origin},
+	})
+	if err != nil {
+		return err
+	}
+
+	defer func() {
+		if cerr := ident.Close(); cerr != nil {
+			slog.Warn("identity-export: closing the identity store", "err", cerr)
+		}
+	}()
+
+	file, err := os.Create(out)
+	if err != nil {
+		return errorfamily.NewRejection("lens.identity_export.out", "creating "+out+": "+err.Error())
+	}
+
+	if err := ident.ExportUsersToJSON(ctx, file); err != nil {
+		_ = file.Close()
+
+		return err
+	}
+
+	return file.Close()
 }
 
 func purgeCmd(args []string) {

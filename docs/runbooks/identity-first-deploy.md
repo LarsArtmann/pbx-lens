@@ -87,10 +87,12 @@ export — the operator's user record as plain JSON — is the portable
 artifact for migrating to a fresh host without restoring a whole SQLite
 file. The identity service exposes `usermgmt.Service.ExportUsersToJSON`
 (all users as a JSON array; email + WebAuthn credential metadata, NO
-secret keys). Today the export is reachable through the same boot path
-the serve verb uses; wiring it as a standalone `pbx-lens identity-export`
-verb is a recorded follow-up (TODO_LIST), not a gap in recovery: the
-file-level backup restores everything, the JSON export is convenience.
+secret keys), and `pbx-lens identity-export -db <identity.db> -out
+users.json` writes it without a serve boot (landed 2026-11-21). The
+verb's -auth-rpid/-auth-origin flags exist only because opening the
+identity store constructs the ceremony provider — an export never runs
+one, so the localhost defaults are fine. The file-level backup restores
+everything; the JSON export is convenience.
 
 Session lifetime is usermgmt's upstream default and stays so (decision
 recorded 2026-11-12, re-affirmed 2026-11-20): a FIXED 24h from issuance,

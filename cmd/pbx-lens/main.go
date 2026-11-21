@@ -18,16 +18,17 @@ const (
 
 func main() {
 	subcommands := map[string]func([]string){
-		"smoke":          smoke,
-		"ingest-cdr":     ingestCDR,
-		"ingest-telnyx":  ingestTelnyx,
-		"refresh":        refresh,
-		"ingest-webhook": ingestWebhook,
-		"ingest-agent":   ingestAgent,
-		"serve":          serveCmd,
-		"backup":         backupCmd,
-		"purge":          purgeCmd,
-		"catalog":        catalogCmd,
+		"smoke":           smoke,
+		"ingest-cdr":      ingestCDR,
+		"ingest-telnyx":   ingestTelnyx,
+		"refresh":         refresh,
+		"ingest-webhook":  ingestWebhook,
+		"ingest-agent":    ingestAgent,
+		"serve":           serveCmd,
+		"backup":          backupCmd,
+		"identity-export": identityExportCmd,
+		"purge":           purgeCmd,
+		"catalog":         catalogCmd,
 	}
 
 	if len(os.Args) < minArgs {

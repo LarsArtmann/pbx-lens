@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -531,6 +532,14 @@ func (i *Identity) OpsSnapshot(ctx context.Context) IdentityOps {
 	}
 
 	return snapshot
+}
+
+// ExportUsersToJSON writes every user as the portable JSON array (email +
+// profile metadata, no secret keys) — the runbook's migration artifact for
+// moving the operator seat to a fresh host without restoring the whole
+// SQLite file.
+func (i *Identity) ExportUsersToJSON(ctx context.Context, w io.Writer) error {
+	return i.service.ExportUsersToJSON(ctx, w)
 }
 
 // Close stops the identity service (projection host, event bus, eviction
