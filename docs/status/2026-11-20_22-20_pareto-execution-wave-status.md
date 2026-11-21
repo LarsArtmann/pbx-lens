@@ -283,6 +283,7 @@ tree clean, everything pushed.
 ## f) UP TO 50 THINGS TO DO NEXT (ranked, grouped)
 
 **Structural (the ratified P1 remainder):**
+
 1. ~~T17: internal/query split — write the interface-surgery plan~~ done — landed at 3f8098a (internal/query + querytest fixtures; HTTP parsing stayed in web)
    ~~(HTTP-layer stays / read-model moves), then execute.~~
 2. ~~T18: serve composition out of cmd into internal/serve (seam exists:~~ done — landed at 46f31bf (internal/serve + the tuned constructor)
@@ -298,112 +299,112 @@ tree clean, everything pushed.
 
 **Release/deps cadence:**
 7. Cut v0.4.1 (the post-release wave: identity boundary, PC-1, honest
-   login, typed seam, bumps) when you want it shipped — CHANGELOG
-   `[Unreleased]` is already written.
+login, typed seam, bumps) when you want it shipped — CHANGELOG
+`[Unreleased]` is already written.
 8. Watch `nix eval nixpkgs#go_1_27.version` ≥ 1.27.4 → flake input +
-   go.mod floor in one change + govulncheck zero (T07 close-out).
+go.mod floor in one change + govulncheck zero (T07 close-out).
 9. Dependabot PR triage: the minor-and-patch group PR (#…94631) failed
-   CI on the same tidy lane — rebase it onto the now-green main or
-   dismiss it.
+CI on the same tidy lane — rebase it onto the now-green main or
+dismiss it.
 10. art-dupl pin bump rider → surface `--show-suppressed` in the gate
-    script + restore the AGENTS line (T23a).
+script + restore the AGENTS line (T23a).
 11. go-nix-helpers bump rider → templCliPackage adoption, mkForce
-    deletion, devShell templ removal (T23b).
+deletion, devShell templ removal (T23b).
 12. go-etag root v0.7.0 stranded at submodules v0.6.1 (#6 filed) — fold
-    in on its next bump.
+in on its next bump.
 13. cqrs v5 first tag → the 3-line StreamRef→StreamKey census behind a
-    flag note (T27/F72).
+flag note (T27/F72).
 
 **Owner decisions waiting (each unblocks a small tail):**
 14. Decision pack Q1: PII boundary — raw default vs hash-export default
-    vs full hash mode.
+vs full hash mode.
 15. Decision pack Q2: CSP enforce flip — now / after quiet reports /
-    per-page.
+per-page.
 16. Decision pack Q3: catalog push — local-only / docs site / telephony
-    hub repo.
+hub repo.
 17. Decision pack Q4: divergence dossier — fold / structured table /
-    automate in the refresh classifier.
+automate in the refresh classifier.
 18. Coverage: accept 70 (at 71.2%) or chase 80 (then pick the surface —
-    cmd wiring pilot is the cheapest).
+cmd wiring pilot is the cheapest).
 19. Session-TTL: re-affirm 24h or set a HandlerConfig window (one field).
 20. TLS-first deploy: pick the proxy (caddy vs nginx) and the window —
-    it unlocks passkey login on the LAN + the Secure cookie.
+it unlocks passkey login on the LAN + the Secure cookie.
 21. FM#11 follow-through ratification: are the post-P1 package sizes
-    acceptable, or does the read-side split get a second phase?
+acceptable, or does the read-side split get a second phase?
 
 **Identity/ops polish:**
 22. `pbx-lens identity-export` CLI verb wrapping ExportUsersToJSON
-    (runbook section exists; the verb is the convenience).
+(runbook section exists; the verb is the convenience).
 23. /api/ops: surface the oidclogin drained-handoff error code (F76 —
-    the typed error exists, the surfacing is missing).
+the typed error exists, the surfacing is missing).
 24. Legacy-keyed rebuild execution in the next deploy window (runbook +
-    dry-run tests ready).
+dry-run tests ready).
 25. Identity logical backup: decide whether the JSON export rides the
-    nightly backup job beside the VACUUM INTO snapshots.
+nightly backup job beside the VACUUM INTO snapshots.
 26. Ops never-ran golden (TODO row 207: `EmptyText: "never"` pin —
-    20min).
+20min).
 27. Report render QA for the NEXT report batch (script exists — use it
-    at authoring time, not as a later QA pass).
+at authoring time, not as a later QA pass).
 
 **Filing/outreach (after re-verifying parent mains):**
 28. File the fsnotify ask on a-h/templ (watch mode dependency).
 29. File the pkg/errors ask on watermill (mechanical stdlib replace).
 30. Execute the charm-v1 → charm.land/log/v2 move on go-appkit + systemd
-    (owner action), then bump it here.
+(owner action), then bump it here.
 31. Re-verify the erraudit enforce-* gap against current main; file or
-    close the 2026-10-27 draft.
+close the 2026-10-27 draft.
 
 **Docs hygiene:**
 32. AGENTS.md: fold the identitytest pattern + the render script into
-    the Commands/Structure lines (budget 219/219 — extend, don't add).
+the Commands/Structure lines (budget 219/219 — extend, don't add).
 33. docs/templ-components-adoption.md: add the ADR-0044 accent-axis
-    note to the theme-bridge row (the app.css now bridges TWO axes).
+note to the theme-bridge row (the app.css now bridges TWO axes).
 34. docs/http-stack.md: note the poller-health typed seam (Snapshot vs
-    the /api/ops wire).
+the /api/ops wire).
 35. Harvest the 2026-11-20 session reports (this one + the mega-review)
-    into TODO_LIST rows per the docs-health ritual (this file's §f is
-    the seed).
+into TODO_LIST rows per the docs-health ritual (this file's §f is
+the seed).
 36. Roadmap: the pixel-diff baseline strategy call is still open —
-    close it (commit baselines vs /tmp-only) with the screenshot corpus
-    as evidence.
+close it (commit baselines vs /tmp-only) with the screenshot corpus
+as evidence.
 
 **Testing/verification debt:**
 37. `go test -race` after the NEXT bump wave (today's ran pre-T05; the
-    wave's own code only got the plain suite + CI).
+wave's own code only got the plain suite + CI).
 38. A coverage-identity test for the ops wire keys (the lowercase
-    SourceStat tags changed /api/ops output — pin it so a revert can't
-    silently recase keys).
+SourceStat tags changed /api/ops output — pin it so a revert can't
+silently recase keys).
 39. Screenshot-probe baselines: today's UI changed twice (bump + accent
-    bridge) — eyeball /tmp/lens-shots against expectations once, then
-    re-baseline.
+bridge) — eyeball /tmp/lens-shots against expectations once, then
+re-baseline.
 40. cmd/pbx-lens coverage pilot IF the owner says chase (two wiring
-    surfaces, ~30min).
+surfaces, ~30min).
 41. Add the tidy-check to BuildFlow's go steps (process fix #1 made
-    durable).
+durable).
 42. Suite-time budget: the full suite is ~20s locally but CI runs it
-    twice (Build & Test + race when added) — measure and note the CI
-    ceiling before adding more lanes.
+twice (Build & Test + race when added) — measure and note the CI
+ceiling before adding more lanes.
 
 **Small cleanups:**
 43. `internal/identity` bench file has 0 test funcs (identity_bench_
-    test.go) — verify it still compiles into the suite or move its
-    benchmarks (it passed vet; confirm content is wanted).
+test.go) — verify it still compiles into the suite or move its
+benchmarks (it passed vet; confirm content is wanted).
 44. `internal/web/identity_flow_test.go` still carries
-    `identityOnlyHandler` + delegates — re-check whether flow/ops tests
-    could call identitytest directly now that the alias layer exists.
+`identityOnlyHandler` + delegates — re-check whether flow/ops tests
+could call identitytest directly now that the alias layer exists.
 45. CHANGELOG: the `[Unreleased]` section for v0.4.1 is written —
-    line-review it once before the next cut.
+line-review it once before the next cut.
 46. GitHub: close/refresh the three now-fixed Dependabot alerts (they
-    re-scan async; confirm the go-jose alerts actually closed).
+re-scan async; confirm the go-jose alerts actually closed).
 47. Remove `/tmp/lens-qa` + `/tmp/report-jpg` scratch (machine-local
-    hygiene).
+hygiene).
 48. Consider a `make receipts`-style script that runs the whole local
-    gate battery in one command (the AGENTS Commands block lists them
-    individually today).
+gate battery in one command (the AGENTS Commands block lists them
+individually today).
 49. Fleet index refresh check (T27/F73) after today's bumps.
 50. Re-read docs/concurrency.md's squash-while-unpushed rule and pick
-    ONE consistent commit ritual for the next session (improvement #6
-    made durable).
+ONE consistent commit ritual for the next session (improvement #6
+made durable).
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 
@@ -424,6 +425,6 @@ tree clean, everything pushed.
 
 ---
 
-*Session receipt: 44 commits `280a11d..d81c09d`, pushed; v0.4.0 tagged
+_Session receipt: 44 commits `280a11d..d81c09d`, pushed; v0.4.0 tagged
 and published; all local + CI gates green at HEAD; three red CI runs
-(19:02–19:08, tidy lane) resolved by HEAD's state and flagged in §d.1.*
+(19:02–19:08, tidy lane) resolved by HEAD's state and flagged in §d.1._
