@@ -14,6 +14,15 @@ import (
 	"github.com/larsartmann/pbx-lens/internal/cli"
 )
 
+// Fixture call durations, named once so no suite has to reverse-engineer a
+// corpus: the standard conversation runs 42 s, the AI call pair 63 s, and the
+// forensic join call 30 s (its live shape, 2026-10-23 12:09).
+const (
+	corpusCallSecs   = 42
+	aiPairCallSecs   = 63
+	forensicCallSecs = 30
+)
+
 // CallStarted is the shared seeded call time (plan T11.1): one fixed instant
 // every test derives from, so changing the corpus seed is one line instead
 // of 28 scattered literals.
@@ -29,7 +38,7 @@ func Observation(nativeID string, started time.Time) calls.Observation {
 		Kind:         calls.SourceTelnyxConversation,
 		Direction:    calls.DirectionOutbound,
 		StartedAt:    started,
-		DurationSecs: 42,
+		DurationSecs: corpusCallSecs,
 		FromNumber:   "+17287289311",
 		ToNumber:     "+15555550123",
 		Transcript: []calls.TranscriptTurn{
@@ -86,7 +95,7 @@ func AgentCDR() calls.Observation {
 		Kind:         calls.SourceFreeSwitchCDR,
 		Direction:    calls.DirectionOutbound,
 		StartedAt:    JoinStarted(),
-		DurationSecs: 30,
+		DurationSecs: forensicCallSecs,
 		FromNumber:   "4084757593",
 		ToNumber:     "9100",
 		HangupCause:  "NORMAL_CLEARING",
@@ -102,7 +111,7 @@ func AgentTranscript() calls.Observation {
 		Kind:         calls.SourceAgentTranscript,
 		Direction:    calls.DirectionOutbound,
 		StartedAt:    JoinStarted(),
-		DurationSecs: 30,
+		DurationSecs: forensicCallSecs,
 		FromNumber:   "4084757593",
 		ToNumber:     "9100",
 		IsAI:         true,
@@ -122,7 +131,7 @@ func AICallPair(nativeID string, started time.Time) (calls.Observation, calls.Ob
 		Kind:         calls.SourceFreeSwitchCDR,
 		Direction:    calls.DirectionInbound,
 		StartedAt:    started,
-		DurationSecs: 63,
+		DurationSecs: aiPairCallSecs,
 		FromNumber:   "+4930123456",
 		ToNumber:     "9100",
 		HangupCause:  "normal_clearing",
@@ -134,7 +143,7 @@ func AICallPair(nativeID string, started time.Time) (calls.Observation, calls.Ob
 		Kind:              calls.SourceAgentTranscript,
 		Direction:         calls.DirectionInbound,
 		StartedAt:         started.Add(time.Second),
-		DurationSecs:      63,
+		DurationSecs:      aiPairCallSecs,
 		FromNumber:        "+4930123456",
 		ToNumber:          "9100",
 		IsAI:              true,
