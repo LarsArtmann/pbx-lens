@@ -822,9 +822,9 @@ func (s *server) coverageWireView(ctx context.Context) ([]coverageWire, []opsSca
 // consumers parse unchanged. Coverage (plan P17), the retention
 // age-posture section (plan P16), and the native-login section (plan P08)
 // ride as their own keys for the same reason. scan_failures (the
-// 503-honest contract) joins the same way — absent, never empty. A
-// non-map poller payload (custom embeds) gets wrapped under "poller"
-// rather than merged.
+// 503-honest contract) joins the same way — absent, never empty. A typed
+// poller payload flattens at the top level through its json tags (the wire
+// contract); nothing nests under a "poller" key.
 // opsPayloadSections sizes the merged payload map: poller wrap + cache +
 // coverage + retention + identity + scan_failures at most beyond an
 // existing map.
@@ -852,22 +852,36 @@ func composeOpsPayload(
 // ensureOpsPayloadMap stages the merged payload's base map: a raw poller
 // payload wraps under "poller", an existing map is copied (never mutated —
 // the payload may alias the poller's own state).
+// ensureOpsPayloadMap stages the merged payload's base map. A typed poller
+// payload (cli.PollerHealth) flattens through its json tags: the tags ARE
+// the /api/ops wire keys at the TOP level (the 2026-11-20 deepening
+// accidentally nested it under "poller" through the old wrap branch and
+// silently moved every consumer's keys — paid for 2026-11-21 by
+// verify-ops-verdict). An existing map is copied, never mutated — the
+// payload may alias the poller's own state.
 func ensureOpsPayloadMap(poller any) map[string]any {
-	pollerMap, merged := poller.(map[string]any)
-	if !merged {
-		out := make(map[string]any, opsPayloadSections)
+	if pollerMap, merged := poller.(map[string]any); merged {
+		copied := make(map[string]any, len(pollerMap)+opsPayloadSections)
+		maps.Copy(copied, pollerMap)
 
-		if poller != nil {
-			out["poller"] = poller
-		}
+		return copied
+	}
 
+	out := make(map[string]any, opsPayloadSections)
+
+	if poller == nil {
 		return out
 	}
 
-	copied := make(map[string]any, len(pollerMap)+opsPayloadSections)
-	maps.Copy(copied, pollerMap)
+	raw, err := json.Marshal(poller)
+	if err == nil {
+		// A payload that does not decode into an object cannot be
+		// flattened honestly; out stays empty and the section keys
+		// still serve.
+		_ = json.Unmarshal(raw, &out)
+	}
 
-	return copied
+	return out
 }
 
 // mergeOpsSections writes each wired section into the payload map under

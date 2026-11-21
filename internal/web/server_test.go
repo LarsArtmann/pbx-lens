@@ -449,6 +449,49 @@ func TestOpsEndpointServesCounters(t *testing.T) {
 		t.Error("the 503 should name the poller as the fix")
 	}
 }
+func TestOpsEndpointFlattensTypedPollerPayload(t *testing.T) {
+	// The wire contract: the poller's json tags ARE the top-level keys
+	// (cli.PollerHealth doctrine). The 2026-11-20 deepening swapped the
+	// fixture maps for the typed snapshot and the old wrap branch nested
+	// it under "poller", silently moving every consumer's keys — pinned
+	// flat here (paid for 2026-11-21 by verify-ops-verdict).
+	type cannedSource struct {
+		Offered  int `json:"offered"`
+		Recorded int `json:"recorded"`
+	}
+
+	type cannedPoller struct {
+		Sources map[string]cannedSource `json:"sources"`
+		Stale   bool                    `json:"stale"`
+	}
+
+	mux := newTestServerWith(t, Options{
+		Ops: func() any {
+			return cannedPoller{
+				Sources: map[string]cannedSource{
+					"webhook-log": {Offered: 2, Recorded: 2},
+				},
+				Stale: true,
+			}
+		},
+	})
+
+	status, body := getBody(t, mux, "/api/ops")
+	if status != 200 {
+		t.Fatalf("GET /api/ops status = %d, want 200 (body: %s)", status, body)
+	}
+
+	for _, want := range []string{`"stale":true`, `"webhook-log"`, `"retention"`} {
+		if !strings.Contains(body, want) {
+			t.Errorf("/api/ops missing %q (body: %s)", want, body)
+		}
+	}
+
+	if strings.Contains(body, `"poller":`) {
+		t.Errorf(`/api/ops nested the poller payload under "poller" (body: %.200s)`, body)
+	}
+}
+
 
 func TestOpsEndpointServesCacheSection(t *testing.T) {
 	// R26: the cache counters answer /api/ops on their own (the etag
