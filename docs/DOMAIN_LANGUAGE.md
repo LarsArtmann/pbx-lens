@@ -166,7 +166,19 @@ the htpasswd file; every term here is code truth:
   point `-db` of ingest/refresh/purge at the identity file (those commands
   create index tables wherever `-db` points — see the lockout runbook).
   Pinned by `TestIdentityDBSnapshotRoundTripWhileLive` /
-  `TestIdentityDBSnapshotCarriesSessionRows` (internal/web).
+  `TestIdentityDBSnapshotCarriesSessionRows` (internal/identity).
+- **The JSON export is a record, not a restore path (2026-11-21)** —
+  `pbx-lens identity-export -auth-db <identity.db> -out users.json`
+  writes who the identity database holds as plain JSON (`id`, `email`,
+  `display_name`, `email_verified`, `totp_enabled` — no credential). The
+  upstream import creates a user WITHOUT a passkey and, on the one-seat
+  deployment, closes registration: an imported operator is locked out
+  (`TestImportedAccountIsLockedOut`). Moving the account means restoring
+  the snapshot. The verb opens EXISTING identity databases only
+  (`identity.OpenExisting`): the identity opener creates its tables in
+  whichever SQLite file it is handed — the mirror image of the index
+  footgun above — so it refuses a missing file or a foreign database
+  before writing anything, and takes `-auth-db`, never `-db`.
 - **Operator bootstrap** — first-visitor becomes operator: `MaxUsers: 1`
   closes registration after the first completed signup; every later
   /auth/register is refused. There is no pre-provisioned account.

@@ -9,14 +9,31 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ### Added — 2026-11-21 c (the identity-export verb)
 
-- **`pbx-lens identity-export`** writes the identity DB's users as the
-  runbook's portable JSON artifact (email + profile metadata, no secret
-  keys) beside `backup` — until now the export was reachable only through
-  the serve boot path. The WebAuthn flags exist only because opening the
-  identity store constructs the ceremony provider; an export never runs
-  one (the defaults are the dev values). The round-trip test registers
-  the operator through the real /auth/register walk and reads the seat
-  back out of the artifact.
+- **`pbx-lens identity-export`** writes the identity DB's users as a
+  plain-JSON record (email + profile metadata, no credential at all)
+  beside `backup` — until now the export was reachable only through the
+  serve boot path. It takes the serve verb's own `-auth-db` (never the
+  index's `-db`) and opens EXISTING identity databases only: the new
+  `identity.OpenExisting` policy refuses a missing file and any database
+  carrying none of the identity tables before a single table is created
+  — the identity opener would otherwise bootstrap an empty database (a
+  false "0 users" success) or write its tables into the call index. The
+  artifact is staged and renamed into place, the verb is safe while
+  `serve` runs, and it reports zero users as zero.
+- **The JSON is a record, not a restore path.** The runbook had called it
+  the portable artifact for migrating to a fresh host; verified
+  2026-11-21, the upstream import creates the account WITHOUT a passkey
+  and closes registration, which locks the operator out
+  (`TestImportedAccountIsLockedOut`, `TestExportCarriesNoCredentials`).
+  The runbook, the README and the verb's own receipt now say so; moving
+  the account means restoring the `identity.db` snapshot.
+- **The CLI boundary speaks for the export's errors.** The error library
+  renders a classified error from its CODE through What/Why/Fix
+  templates and otherwise falls back to the bare code over "Check your
+  input and try again"; the identity-export codes (and the shared `-out`
+  usage error) now carry templates that name the file, say that nothing
+  was written, and point at the fix. Every other `lens.*` code still
+  takes that fallback.
 
 ### Changed — 2026-11-21 b (the read-model queries leave the web package)
 

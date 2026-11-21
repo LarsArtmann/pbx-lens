@@ -10,6 +10,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
@@ -124,7 +125,7 @@ func backupCmd(args []string) {
 	parseAndRequireDB(fs, db, args)
 
 	if *out == "" {
-		fatal(errorfamily.NewRejection("lens.cli.missing_out", "backup needs -out <path>"))
+		fatal(errMissingOut("backup"))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
@@ -141,45 +142,73 @@ func backupCmd(args []string) {
 	fmt.Printf("snapshot written and verified: %s\n", *out)
 }
 
-// identityExportCmd writes the identity DB's users as the runbook's
-// portable JSON artifact (email + profile metadata, no secret keys) for
-// migrating the operator seat to a fresh host without restoring the whole
-// SQLite file. The WebAuthn flags exist only because opening the identity
-// store constructs the ceremony provider; an export never runs a ceremony,
-// so the defaults are the dev values.
+// identityExportCmd writes the identity DB's users as a plain-JSON record
+// (email + profile metadata, no credentials at all). It is a readable
+// record of who the identity database holds, NOT a restore path: the
+// upstream import creates an account without a passkey and closes
+// registration, which locks the operator out (verified 2026-11-21,
+// pinned by TestImportedAccountIsLockedOut; the runbook carries the
+// details), so every successful run says so.
+//
+// The identity database is passed as -auth-db — the serve verb's own name
+// for it — never as -db: -db means the index everywhere else, and the
+// identity opener creates its tables in whichever file it is handed. The
+// verb opens an EXISTING identity database only (identity.OpenExisting): a
+// missing file or a foreign database is refused before anything is written.
+// The WebAuthn flags exist only because opening the identity store
+// constructs the ceremony provider; an export never runs a ceremony, so
+// the defaults are the dev values.
 func identityExportCmd(args []string) {
 	fs := flag.NewFlagSet("identity-export", flag.ExitOnError)
-	db := fs.String("db", "", "identity sqlite DSN (required)")
+	authDB := fs.String("auth-db", "", "identity sqlite DSN — the serve verb's -auth-db file (required)")
 	out := fs.String("out", "", "JSON output path (required)")
 	rpid := fs.String("auth-rpid", "localhost", "WebAuthn RPID (ceremony-only; an export never runs one)")
 	origin := fs.String("auth-origin", "http://localhost", "WebAuthn origin (ceremony-only; an export never runs one)")
-	parseAndRequireDB(fs, db, args)
+	_ = fs.Parse(args)
+
+	requireAuthDB(fs, *authDB)
 
 	if *out == "" {
-		fatal(errorfamily.NewRejection("lens.cli.missing_out", "identity-export needs -out <path>"))
+		fatal(errMissingOut("identity-export"))
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), ingestTimeout)
 	defer cancel()
 
-	if err := runIdentityExport(ctx, *db, *out, *rpid, *origin); err != nil {
+	users, err := runIdentityExport(ctx, *authDB, *out, *rpid, *origin)
+	if err != nil {
 		fatal(err)
 	}
 
-	fmt.Printf("identity users exported: %s\n", *out)
+	fmt.Printf("identity users exported: %d → %s\n", users, *out)
+
+	fmt.Fprintln(os.Stderr,
+		"note: this JSON is a readable record, not a restore path — importing it on a fresh host locks "+
+			"the operator out; moving the account means restoring the identity.db snapshot "+
+			"(docs/runbooks/identity-first-deploy.md)")
+
+	if users == 0 {
+		fmt.Fprintln(os.Stderr,
+			"warning: the identity database holds no users — if the operator already registered, "+
+				"this is the wrong -auth-db file")
+	}
 }
 
-// runIdentityExport boots the identity store from its DSN and streams the
-// user array into out. Opening is the full identity boot (the service owns
-// the read model the export reads); there is no lighter read-only path.
-func runIdentityExport(ctx context.Context, dsn, out, rpid, origin string) error {
+// runIdentityExport opens the EXISTING identity database (never creates
+// one), streams the user array into out, and reports how many users it
+// wrote. Opening is the full identity boot — the service owns the read
+// model the export reads — so the verb is a short-lived second identity
+// instance on the file serve holds open, running the same idempotent
+// housekeeping serve runs (TestIdentityExportWhileAnotherInstanceIsLive).
+func runIdentityExport(ctx context.Context, dsn, out, rpid, origin string) (int, error) {
 	ident, err := identity.OpenIdentity(ctx, identity.IdentityConfig{
 		DSN:       dsn,
 		RPID:      rpid,
 		RPOrigins: []string{origin},
+		Policy:    identity.OpenExisting,
 	})
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	defer func() {
@@ -188,18 +217,67 @@ func runIdentityExport(ctx context.Context, dsn, out, rpid, origin string) error
 		}
 	}()
 
-	file, err := os.Create(out)
-	if err != nil {
-		return errorfamily.NewRejection("lens.identity_export.out", "creating "+out+": "+err.Error())
+	if err := writeExportArtifact(ctx, out, ident.ExportUsersToJSON); err != nil {
+		return 0, err
 	}
 
-	if err := ident.ExportUsersToJSON(ctx, file); err != nil {
-		_ = file.Close()
+	return ident.OpsSnapshot(ctx).Users, nil
+}
+
+// writeExportArtifact streams write's output into out through a private
+// staging file beside it: the artifact appears under its name only once it
+// is complete and synced, so a failed export leaves neither a truncated
+// file nor a hole where the previous artifact was. Unlike the index
+// snapshot the artifact is re-derivable (re-run the verb), so the rename's
+// directory entry is not fsynced.
+func writeExportArtifact(ctx context.Context, out string, write func(context.Context, io.Writer) error) error {
+	staging, err := os.CreateTemp(filepath.Dir(out), filepath.Base(out)+".*.tmp")
+	if err != nil {
+		return errorfamily.WrapRejection(err, "lens.identity_export.out", "staging beside "+out).
+			WithContext("out", out).
+			WithContext("cause", err.Error())
+	}
+
+	staged := staging.Name()
+
+	// artifactFailure names the step that failed and keeps the cause reachable
+	// (errors.Is) and renderable (the CLI template reads both keys).
+	artifactFailure := func(step string, err error) error {
+		return errorfamily.WrapRejection(err, "lens.identity_export.out", step+" "+out).
+			WithContext("out", out).
+			WithContext("cause", err.Error())
+	}
+
+	discard := func() {
+		_ = staging.Close()
+		_ = os.Remove(staged)
+	}
+
+	if err := write(ctx, staging); err != nil {
+		discard()
 
 		return err
 	}
 
-	return file.Close()
+	if err := staging.Sync(); err != nil {
+		discard()
+
+		return artifactFailure("syncing the staged export beside", err)
+	}
+
+	if err := staging.Close(); err != nil {
+		_ = os.Remove(staged)
+
+		return artifactFailure("writing the staged export for", err)
+	}
+
+	if err := os.Rename(staged, out); err != nil {
+		_ = os.Remove(staged)
+
+		return artifactFailure("moving the export into place at", err)
+	}
+
+	return nil
 }
 
 func purgeCmd(args []string) {

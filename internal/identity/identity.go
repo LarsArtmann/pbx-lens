@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -51,11 +52,27 @@ type Identity struct {
 // through web's vocabulary (alias, not a second type).
 type OIDCConfig = oidclogin.Config
 
+// OpenPolicy says what OpenIdentity does with a DSN that is not already an
+// identity database. The opener creates every identity table in whatever
+// file it is pointed at — right for a first deploy, wrong for a tool that
+// only reads.
+type OpenPolicy int
+
+const (
+	// OpenOrCreate is the serve posture and the zero value: a missing file
+	// is bootstrapped as a brand-new identity database.
+	OpenOrCreate OpenPolicy = iota
+	// OpenExisting refuses a missing file, and any SQLite file carrying
+	// none of the identity tables, before a single table is created.
+	OpenExisting
+)
+
 // IdentityConfig carries everything OpenIdentity needs. DSN is a SQLite
-// path (the file is created on first open); RPID/RPOrigins are the WebAuthn
-// Relying Party values and must match the browser-facing host exactly.
-// OIDC, when non-nil, enables the Pocket ID sign-in lane beside the passkey
-// panel (the group-gated SSO entrance; nil keeps passkey-only).
+// path (the file is created on first open under OpenOrCreate, never under
+// OpenExisting); RPID/RPOrigins are the WebAuthn Relying Party values and
+// must match the browser-facing host exactly. OIDC, when non-nil, enables
+// the Pocket ID sign-in lane beside the passkey panel (the group-gated
+// SSO entrance; nil keeps passkey-only).
 type IdentityConfig struct {
 	DSN        string
 	RPID       string
@@ -63,6 +80,7 @@ type IdentityConfig struct {
 	CookieName string
 	OIDC       *oidclogin.Config
 	Logger     *slog.Logger
+	Policy     OpenPolicy
 }
 
 // publicAuthPath reports whether the request path bypasses the session
@@ -139,8 +157,13 @@ func logOIDCLane(cfg *oidclogin.Config) {
 		return
 	}
 
-	slog.Info("identity oidc enabled: Pocket ID sign-in rides /auth/oauth/pocketid/* beside the passkey panel",
-		"issuer", cfg.Issuer, "redirect", cfg.RedirectURL)
+	slog.Info(
+		"identity oidc enabled: Pocket ID sign-in rides /auth/oauth/pocketid/* beside the passkey panel",
+		"issuer",
+		cfg.Issuer,
+		"redirect",
+		cfg.RedirectURL,
+	)
 }
 
 // OpenIdentity brings up the identity bounded context: one SQLite database
@@ -156,11 +179,8 @@ func logOIDCLane(cfg *oidclogin.Config) {
 // checkpoint schema is applied by hand because the store does not
 // self-migrate.
 func OpenIdentity(ctx context.Context, cfg IdentityConfig) (*Identity, error) {
-	if cfg.DSN == "" {
-		return nil, errorfamily.NewRejection(
-			"lens.web.identity_dsn",
-			"identity database DSN is empty; pass -auth-db to enable login",
-		)
+	if err := checkOpenable(ctx, cfg); err != nil {
+		return nil, err
 	}
 
 	logger := cfg.Logger
@@ -297,6 +317,96 @@ func optimizeIdentityDB(ctx context.Context, db *sql.DB) error {
 			"lens.web.identity_db_pragmas",
 			"optimizing the identity database: "+err.Error(),
 		)
+	}
+
+	return nil
+}
+
+// checkOpenable refuses an OpenIdentity call before anything is opened: an
+// empty DSN, and — under OpenExisting — a DSN that is not already an
+// identity database.
+func checkOpenable(ctx context.Context, cfg IdentityConfig) error {
+	if cfg.DSN == "" {
+		return errorfamily.NewRejection(
+			"lens.web.identity_dsn",
+			"identity database DSN is empty; pass -auth-db to enable login",
+		)
+	}
+
+	if cfg.Policy == OpenExisting {
+		return requireIdentityDB(ctx, cfg.DSN)
+	}
+
+	return nil
+}
+
+// identityTables names the tables only a usermgmt identity database
+// carries. requireIdentityDB reads the list to tell an identity database
+// from any other SQLite file BEFORE the opener would create them. The names
+// are upstream's, not ours: TestIdentityTablesExistAfterOpen pins each one
+// against a freshly opened database, so a pin bump that renames a view
+// fails there instead of quietly turning this guard into a refusal of
+// every real identity database.
+func identityTables() []string {
+	return []string{"users_view", "user_sessions", "memberships_view", "tenants_view", "bots_view"}
+}
+
+// requireIdentityDB is the OpenExisting gate: the DSN must already BE an
+// identity database. A missing file would otherwise be bootstrapped into a
+// brand-new empty one (a reader would report an empty success), and a
+// foreign SQLite file would gain the identity tables (the mirror image of
+// pointing an index verb at the identity file). Nothing is written on
+// either refusal.
+func requireIdentityDB(ctx context.Context, dsn string) error {
+	if _, err := os.Stat(dsn); err != nil {
+		return errorfamily.WrapRejection(
+			err,
+			"lens.web.identity_db_missing",
+			"identity database not found at "+dsn+"; it is never created here — pass the serve -auth-db file",
+		).WithContext("dsn", dsn)
+	}
+
+	db, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		return errorfamily.WrapRejection(
+			err,
+			"lens.web.identity_db_open",
+			"opening identity database",
+		)
+	}
+
+	defer func() { _ = db.Close() }()
+
+	tables := identityTables()
+
+	placeholders := strings.TrimSuffix(strings.Repeat("?,", len(tables)), ",")
+
+	args := make([]any, 0, len(tables))
+	for _, table := range tables {
+		args = append(args, table)
+	}
+
+	var found int
+
+	err = db.QueryRowContext(
+		ctx,
+		"SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name IN ("+placeholders+")",
+		args...,
+	).Scan(&found)
+	if err != nil {
+		return errorfamily.WrapRejection(
+			err,
+			"lens.web.identity_db_unreadable",
+			dsn+" cannot be read as a SQLite database; pass the serve -auth-db file",
+		).WithContext("dsn", dsn).WithContext("cause", err.Error())
+	}
+
+	if found == 0 {
+		return errorfamily.NewRejection(
+			"lens.web.identity_not_identity_db",
+			dsn+" is not an identity database (it carries none of the identity tables); "+
+				"pass the serve -auth-db file — nothing was written",
+		).WithContext("dsn", dsn)
 	}
 
 	return nil
@@ -517,7 +627,8 @@ func (i *Identity) OpsSnapshot(ctx context.Context) IdentityOps {
 
 	var sessions int
 
-	if err := i.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_sessions").Scan(&sessions); err == nil {
+	if err := i.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM user_sessions").
+		Scan(&sessions); err == nil {
 		snapshot.Sessions = &sessions
 	}
 
@@ -534,10 +645,12 @@ func (i *Identity) OpsSnapshot(ctx context.Context) IdentityOps {
 	return snapshot
 }
 
-// ExportUsersToJSON writes every user as the portable JSON array (email +
-// profile metadata, no secret keys) — the runbook's migration artifact for
-// moving the operator seat to a fresh host without restoring the whole
-// SQLite file.
+// ExportUsersToJSON writes every user as a plain-JSON array (email + profile
+// metadata, no credentials at all). It is a readable record of who the
+// identity database holds, NOT a restore path: the upstream import creates
+// an account without a passkey and closes registration, which locks the
+// operator out (TestImportedAccountIsLockedOut). Restoring the identity.db
+// snapshot is what moves the account.
 func (i *Identity) ExportUsersToJSON(ctx context.Context, w io.Writer) error {
 	return i.service.ExportUsersToJSON(ctx, w)
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"slices"
 	"testing"
+
+	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
 
 // The identity checkpoint table (2026-11-20 cqrs-htmx conformance audit):
@@ -35,12 +37,12 @@ func TestIdentityDBCarriesCheckpointTable(t *testing.T) {
 		t.Fatalf("identity DB lacks the `checkpoints` table (tables: %v) — "+
 			"storage.SQLiteCheckpointSchema() (userauth.go:330) is not applied at "+
 			"open time; projections would fail later and flip Ready()",
-			identityTableNames(t, dsn))
+			identitytest.TableNames(t, dsn))
 	}
 
 	// Belt-and-braces on the same listing the snapshot tests use: the table
 	// must be a real sqlite_master row, not a view or shadow name.
-	if !slices.Contains(identityTableNames(t, dsn), "checkpoints") {
+	if !slices.Contains(identitytest.TableNames(t, dsn), "checkpoints") {
 		t.Fatal("checkpoints present by count but absent from the table listing")
 	}
 }

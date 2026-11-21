@@ -17,6 +17,8 @@ const (
 )
 
 func main() {
+	registerCLITemplates()
+
 	subcommands := map[string]func([]string){
 		"smoke":           smoke,
 		"ingest-cdr":      ingestCDR,
@@ -61,6 +63,7 @@ func usage() {
 			" pbx-lens ingest-agent -db <dsn> -dir /var/lib/telephony/recordings/transcripts |"+
 			" pbx-lens serve -db <dsn> [-addr 127.0.0.1:8300] |"+
 			" pbx-lens backup -db <dsn> -out <snapshot.db> |"+
+			" pbx-lens identity-export -auth-db <identity.db> -out <users.json> |"+
 			" pbx-lens purge -db <dsn> -max-age <duration> [-dry-run] |"+
 			" pbx-lens catalog -o <dir> [-plain]",
 	)
@@ -80,6 +83,17 @@ func parseAndRequireDB(fs *flag.FlagSet, db *string, args []string) {
 	_ = fs.Parse(args)
 
 	requireDB(fs, *db)
+}
+
+// requireAuthDB enforces the mandatory -auth-db flag of the identity-reading
+// subcommand. It is deliberately not requireDB: the index's -db and the
+// identity database are different files, and the identity opener creates
+// its tables in whichever it is handed — the usage error must name the
+// right one.
+func requireAuthDB(fs *flag.FlagSet, authDB string) {
+	if authDB == "" {
+		fatal(errMissingAuthDB(fs.Name()))
+	}
 }
 
 // requireOneArg enforces the single positional argument of the file-ingesting

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/pbx-lens/internal/backup"
+	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
 
 // Identity DB durability (2026-11-12 plan A5): the identity database is the
@@ -45,42 +46,6 @@ func openFileBackedIdentity(t *testing.T) (*Identity, string) {
 	return identity, dsn
 }
 
-func identityTableNames(t *testing.T, dsn string) []string {
-	t.Helper()
-
-	db, err := sql.Open("sqlite", dsn)
-	if err != nil {
-		t.Fatalf("open %s: %v", dsn, err)
-	}
-
-	defer func() { _ = db.Close() }()
-
-	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
-	if err != nil {
-		t.Fatalf("list tables: %v", err)
-	}
-
-	defer func() { _ = rows.Close() }()
-
-	var names []string
-
-	for rows.Next() {
-		var name string
-
-		if err := rows.Scan(&name); err != nil {
-			t.Fatalf("scan table name: %v", err)
-		}
-
-		names = append(names, name)
-	}
-
-	if err := rows.Err(); err != nil {
-		t.Fatalf("iterate tables: %v", err)
-	}
-
-	return names
-}
-
 func TestIdentityDBSnapshotRoundTripWhileLive(t *testing.T) {
 	_, dsn := openFileBackedIdentity(t)
 
@@ -100,9 +65,9 @@ func TestIdentityDBSnapshotRoundTripWhileLive(t *testing.T) {
 		t.Fatalf("Verify on the identity snapshot: %v", err)
 	}
 
-	sourceTables := identityTableNames(t, dsn)
+	sourceTables := identitytest.TableNames(t, dsn)
 
-	snapshotTables := identityTableNames(t, out)
+	snapshotTables := identitytest.TableNames(t, out)
 
 	if !slices.Equal(snapshotTables, sourceTables) {
 		t.Fatalf("snapshot tables diverge from source:\n %v\n snapshot: %v", sourceTables, snapshotTables)

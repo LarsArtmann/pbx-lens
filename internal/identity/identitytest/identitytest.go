@@ -13,12 +13,15 @@ package identitytest
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"strings"
 	"testing"
+
+	_ "modernc.org/sqlite"
 )
 
 // Challenge walks the CSRF half of the browser flow: fetch /login (the
@@ -135,4 +138,46 @@ func CSRFToken(t *testing.T, html string) string {
 	}
 
 	return match[1]
+}
+
+// TableNames lists a SQLite file's tables, sorted: the witness the open-
+// policy and backup tests use to prove a refusal created nothing and an
+// open created exactly the identity schema.
+func TableNames(t *testing.T, dsn string) []string {
+	t.Helper()
+
+	db, err := sql.Open("sqlite", dsn)
+	if err != nil {
+		t.Fatalf("open %s: %v", dsn, err)
+	}
+
+	defer func() { _ = db.Close() }()
+
+	rows, err := db.QueryContext(
+		t.Context(),
+		"SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name",
+	)
+	if err != nil {
+		t.Fatalf("list tables: %v", err)
+	}
+
+	defer func() { _ = rows.Close() }()
+
+	var names []string
+
+	for rows.Next() {
+		var name string
+
+		if err := rows.Scan(&name); err != nil {
+			t.Fatalf("scan table name: %v", err)
+		}
+
+		names = append(names, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate tables: %v", err)
+	}
+
+	return names
 }

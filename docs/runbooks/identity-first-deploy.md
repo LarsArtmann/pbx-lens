@@ -80,19 +80,48 @@ restart, and re-register — the identity DB holds nothing else, and the
 index DB is untouched. This is also why the identity DB rides the nightly
 backup (step 7): restoring it beats re-registering on a shared host.
 
-## Logical backup of the operator account (2026-11-20, T24)
+## Logical export of the operator account (2026-11-20, T24; corrected 2026-11-21)
 
-The nightly VACUUM INTO snapshot covers disaster recovery, but a LOGICAL
-export — the operator's user record as plain JSON — is the portable
-artifact for migrating to a fresh host without restoring a whole SQLite
-file. The identity service exposes `usermgmt.Service.ExportUsersToJSON`
-(all users as a JSON array; email + WebAuthn credential metadata, NO
-secret keys), and `pbx-lens identity-export -db <identity.db> -out
-users.json` writes it without a serve boot (landed 2026-11-21). The
-verb's -auth-rpid/-auth-origin flags exist only because opening the
-identity store constructs the ceremony provider — an export never runs
-one, so the localhost defaults are fine. The file-level backup restores
-everything; the JSON export is convenience.
+The nightly VACUUM INTO snapshot is what actually moves or recovers the
+operator: it is the identity database itself, so restoring it brings back
+everything the file holds — the account, its passkey, live sessions
+(pinned by `TestIdentityDBSnapshotRoundTripWhileLive` and
+`TestIdentityDBSnapshotCarriesSessionRows` in `internal/identity`).
+
+Beside it, a LOGICAL export — the operator's user record as plain JSON —
+is a readable record of who the identity database holds. The identity
+service exposes `usermgmt.Service.ExportUsersToJSON`, and
+`pbx-lens identity-export -auth-db <identity.db> -out users.json` writes
+it (landed 2026-11-21).
+
+**The JSON is a record, not a restore path.** It carries exactly `id`,
+`email`, `display_name`, `email_verified` and `totp_enabled` — no
+credential at all — and the upstream import creates a user WITHOUT a
+passkey. On this single-operator deployment that is a lockout: the one
+import fills the seat, every later `POST /auth/register` answers
+`403 usermgmt.registration_closed`, and login is passkey-only, so nobody
+can get in (verified 2026-11-21; pinned by `TestExportCarriesNoCredentials`
+and `TestImportedAccountIsLockedOut`). To move the operator to a fresh
+host, restore the identity.db snapshot instead. If an import already
+happened, the exits are in `docs/runbooks/lockout-recovery.md`.
+
+How the verb behaves:
+
+- It takes `-auth-db`, the serve verb's own name for the identity database
+  — never `-db`, which is the call index everywhere else.
+- It opens an EXISTING identity database only. The identity opener creates
+  its tables in whichever SQLite file it is handed (the mirror image of
+  pointing an index verb at the identity file), so a missing file or a
+  foreign database is refused before anything is written, and the refusal
+  says what happened and why on the console (exit 1).
+- It is safe while `serve` runs: the export is a short-lived second
+  identity instance on the same file, pinned by
+  `TestIdentityExportWhileAnotherInstanceIsLive`.
+- It stages the artifact and renames it into place, so a failed export
+  never replaces the previous one; zero users is reported as zero.
+- The -auth-rpid/-auth-origin flags exist only because opening the
+  identity store constructs the ceremony provider — an export never runs
+  one, so the localhost defaults are fine.
 
 Session lifetime is usermgmt's upstream default and stays so (decision
 recorded 2026-11-12, re-affirmed 2026-11-20): a FIXED 24h from issuance,

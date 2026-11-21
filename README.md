@@ -261,6 +261,26 @@ FTS hits match the source) is a checked-in test,
 claim instead of a hope. Latest receipt: green on the current schema
 (2026-10-26, 0.02s).
 
+### Export the operator account as JSON
+
+The operator account is NOT re-derivable. What moves or recovers it is the
+`identity.db` snapshot the deploy's nightly backup stages beside the index
+(runbook step 7): restoring that file brings back the account, its passkey
+and live sessions. For a readable record of who the identity database
+holds:
+
+```console
+pbx-lens identity-export -auth-db /var/lib/pbx-lens/identity.db -out /var/backups/pbx-lens/identity-users.json
+```
+
+The JSON lists each user's id, email, display name and verification flags —
+no credential at all. It is a record, **not a restore path**: importing it
+on a fresh host creates the account without a passkey and closes
+registration, which locks everybody out. The verb reads the identity
+database `serve` was started with (`-auth-db`, never the index's `-db`),
+refuses a missing or foreign file before writing anything, and is safe to
+run while `serve` is up.
+
 ### Deep-link contract (for webphone and friends)
 
 `/calls/{kind}/{id}` is a **stable URL**: ids are deterministic stream
