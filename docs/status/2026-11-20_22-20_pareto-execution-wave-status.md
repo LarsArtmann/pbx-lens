@@ -283,16 +283,16 @@ tree clean, everything pushed.
 ## f) UP TO 50 THINGS TO DO NEXT (ranked, grouped)
 
 **Structural (the ratified P1 remainder):**
-1. T17: internal/query split — write the interface-surgery plan
-   (HTTP-layer stays / read-model moves), then execute.
-2. T18: serve composition out of cmd into internal/serve (seam exists:
-   serveFlags).
-3. Dedupe the 8 test-assembly sites via the new serve constructor (T18
-   fine-task F51).
+1. ~~T17: internal/query split — write the interface-surgery plan~~ done — landed at 3f8098a (internal/query + querytest fixtures; HTTP parsing stayed in web)
+   ~~(HTTP-layer stays / read-model moves), then execute.~~
+2. ~~T18: serve composition out of cmd into internal/serve (seam exists:~~ done — landed at 46f31bf (internal/serve + the tuned constructor)
+   ~~serveFlags).~~
+3. ~~Dedupe the 8 test-assembly sites via the new serve constructor (T18~~ done — landed with T18 (the serveTestStack helper)
+   ~~fine-task F51).~~
 4. PC-2: closed lifecycle union in the decider (CallState booleans →
    sum type; guards become type-impossible).
-5. ScanPage + compound-cursor spike on a branch (retire ~95 lines if
-   green).
+5. ~~ScanPage + compound-cursor spike on a branch (retire ~95 lines if~~ done — RAN branch-only (spike/scanpage-compound-cursor 251a4ad), parked for owner merge
+   ~~green).~~
 6. Post-move: re-run the structural assessment — measure the churn %
    delta and the package count (proves FM#11's payoff).
 

@@ -139,3 +139,5 @@ target/
 # rendered report previews (regenerable); docs/assets screenshots stay tracked
 docs/reviews/*.png
 docs/architecture-understanding/*.png
+
+.docs-gates-preflight.json
