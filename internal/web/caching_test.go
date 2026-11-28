@@ -11,8 +11,10 @@ import (
 )
 
 // routePattern extracts the literal method+path patterns from Register's
-// mount calls, the route registry seam (the drift-guard parse).
-var routePattern = regexp.MustCompile(`mount\(routes, mux, "([^"]+)"`)
+// mount calls, the route registry seam (the drift-guard parse). It tolerates
+// golines wrapping a long mount call onto several lines, so a longer summary
+// cannot silently drop a route from this guard.
+var routePattern = regexp.MustCompile(`mount\(\s*routes,\s*mux,\s*"([^"]+)"`)
 
 // TestETagMiddlewareCounters proves the hooks observe every outcome the
 // middleware can produce: a fresh tag on the first response, a 304 on the
@@ -220,9 +222,11 @@ func TestSkipBodyCachingCoversTheRouteTable(t *testing.T) {
 	}
 
 	patternMatches := routePattern.FindAllStringSubmatch(string(source), -1)
-	if len(patternMatches) < 10 {
+	// 17 literal patterns (16 app routes + robots.txt); the four static
+	// assets are map-keyed and ride the /endpoints listing test instead.
+	if len(patternMatches) != 17 {
 		t.Fatalf(
-			"route-table parse went vacuous (%d patterns) — Register no longer uses literal mount patterns; rework this guard",
+			"route-table parse found %d literal patterns, want 17: Register no longer declares them as literal mount patterns; rework this guard",
 			len(patternMatches),
 		)
 	}
