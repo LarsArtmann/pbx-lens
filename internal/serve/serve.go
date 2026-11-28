@@ -20,6 +20,7 @@ import (
 	"github.com/larsartmann/go-appkit/systemd"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/httputil"
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/ingest"
@@ -288,8 +289,13 @@ func Run(flags *Flags, version string) error {
 		return err
 	}
 
+	// The pinned appkit release predates Service.Routes, so the route registry is
+	// created here and handed to both registrars; web.Register mounts the
+	// GET /endpoints listing last, so it covers every route above it.
+	routes := endpoints.NewRegistry()
+
 	if identity != nil {
-		identity.Register(svc.Mux)
+		identity.Register(svc.Mux, routes)
 	}
 
 	counters := cli.NewSourceCounters(*flags.PollEvery)
@@ -310,6 +316,7 @@ func Run(flags *Flags, version string) error {
 			RetentionMaxAge: *flags.MaxAge, AuthEnabled: identity != nil,
 			Identity: identity,
 		},
+		routes,
 	)
 
 	// The poller keeps the index fresh until shutdown; each pass drains

@@ -11,6 +11,7 @@ import (
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/pbx-lens/internal/cli"
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
@@ -39,7 +40,7 @@ func openRegisteredIdentity(t *testing.T, dsn, email string) (*identity.Identity
 	}
 
 	mux := http.NewServeMux()
-	ident.Register(mux)
+	ident.Register(mux, endpoints.NewRegistry())
 	identitytest.Session(t, ident.Middleware()(mux), email)
 
 	return ident, mux

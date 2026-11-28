@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 )
 
@@ -86,7 +87,7 @@ func TestOneFlowFromSeedToDetail(t *testing.T) {
 	// are redirected to /login, and the session the first registration
 	// issues opens every route (the whole flow above replays 200).
 	identity := openTestIdentity(t)
-	identity.Register(mux)
+	identity.Register(mux, endpoints.NewRegistry())
 	gated := identity.Middleware()(mux)
 
 	request := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -123,7 +124,7 @@ func TestNavRendersTheLogoutFormWhenAuthed(t *testing.T) {
 	// the Sign out form only when the server knows the identity surface is
 	// live — a bare mux would render an auth-free shell.
 	mux := newTestServerWith(t, Options{Identity: identity, AuthEnabled: true})
-	identity.Register(mux)
+	identity.Register(mux, endpoints.NewRegistry())
 	gated := identity.Middleware()(mux)
 
 	session := loginSession(t, gated, "operator@pbx.lans")

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
 
@@ -24,7 +25,7 @@ func TestExportCarriesNoCredentials(t *testing.T) {
 	ident, _ := openFileBackedIdentity(t)
 
 	mux := http.NewServeMux()
-	ident.Register(mux)
+	ident.Register(mux, endpoints.NewRegistry())
 
 	identitytest.Session(t, ident.Middleware()(mux), "operator@pbx.artmann.tech")
 
@@ -79,7 +80,7 @@ func TestImportedAccountIsLockedOut(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
-	ident.Register(mux)
+	ident.Register(mux, endpoints.NewRegistry())
 
 	handler := ident.Middleware()(mux)
 

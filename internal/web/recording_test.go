@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/httputil/endpoints"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
@@ -403,7 +404,7 @@ func newTestServerWith(t *testing.T, opts Options, observations ...calls.Observa
 	}
 
 	mux := http.NewServeMux()
-	Register(mux, sys, opts)
+	Register(mux, sys, opts, endpoints.NewRegistry())
 
 	return mux
 }

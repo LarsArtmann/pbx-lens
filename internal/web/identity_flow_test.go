@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
@@ -48,7 +49,7 @@ func identityOnlyHandler(t *testing.T, id *identity.Identity) http.Handler {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	id.Register(mux)
+	id.Register(mux, endpoints.NewRegistry())
 
 	return id.Middleware()(mux)
 }

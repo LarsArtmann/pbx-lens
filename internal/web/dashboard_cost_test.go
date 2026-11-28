@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/query"
@@ -162,7 +163,7 @@ func TestDashboardRendersSpendCard(t *testing.T) {
 func muxForSystem(sys *system.System) *http.ServeMux {
 	mux := http.NewServeMux()
 
-	Register(mux, sys, Options{})
+	Register(mux, sys, Options{}, endpoints.NewRegistry())
 
 	return mux
 }

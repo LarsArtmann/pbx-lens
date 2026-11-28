@@ -28,6 +28,7 @@ require (
 	github.com/larsartmann/go-etag/metrics v0.6.2
 	github.com/larsartmann/go-etag/server v0.6.2
 	github.com/larsartmann/httputil v1.9.0
+	github.com/larsartmann/httputil/endpoints v0.1.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
 	github.com/larsartmann/templ-components v1.27.2
 	github.com/larsartmann/templ-components/htmx v1.27.2
@@ -120,7 +121,6 @@ require (
 	github.com/larsartmann/go-retry v0.9.0 // indirect
 	github.com/larsartmann/go-sqlitestore v0.1.1 // indirect
 	github.com/larsartmann/go-sse v0.7.0 // indirect
-	github.com/larsartmann/httputil/endpoints v0.1.0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/lucasb-eyer/go-colorful v1.4.1 // indirect
 	github.com/maruel/natural v1.3.0 // indirect

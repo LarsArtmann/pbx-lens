@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/identity"
@@ -607,7 +608,7 @@ func TestOpsAPISurfacesScanFailures503Honest(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
-	Register(mux, sys, Options{Ops: opsPollerPayload(), RetentionMaxAge: 24 * time.Hour})
+	Register(mux, sys, Options{Ops: opsPollerPayload(), RetentionMaxAge: 24 * time.Hour}, endpoints.NewRegistry())
 
 	cleanup()
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/storage/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/oidclogin"
 	_ "modernc.org/sqlite"
 )
@@ -529,11 +531,14 @@ func (i *Identity) Middleware() func(http.Handler) http.Handler {
 
 // Register mounts the public login surface on the mux: the loginpage panel
 // at GET /login and the usermgmt auth ceremonies under /auth/* (register,
-// WebAuthn begin/finish, logout, me, credentials). Route-level hardening:
-// registration and WebAuthn rate limits run per client IP, and account
-// lockout (5 failures / 15 min) guards the login ceremonies.
-func (i *Identity) Register(mux *http.ServeMux) {
-	i.panel.Mount(mux, "GET /login")
+// WebAuthn begin/finish, logout, me, credentials). The panel goes through
+// routes, the registry behind the GET /endpoints listing; the /auth/*
+// ceremonies stay usermgmt's own registrations (see RegisterRoutes below).
+// Route-level hardening: registration and WebAuthn rate limits run per
+// client IP, and account lockout (5 failures / 15 min) guards the login
+// ceremonies.
+func (i *Identity) Register(mux *http.ServeMux, routes *endpoints.Registry) {
+	mount(routes, mux, "GET /login", i.panel, "Login page: passkey sign-in panel, registration while the seat is open")
 
 	auth := usermgmt.NewAuthHandler(i.service, usermgmt.HandlerConfig{
 		CookieName: defaultSessionCookie,
@@ -555,7 +560,28 @@ func (i *Identity) Register(mux *http.ServeMux) {
 		OAuth2SuccessURL: "/",
 		OAuth2ErrorURL:   "/login",
 	})
+	// usermgmt registers its ceremonies (register, WebAuthn, logout, me,
+	// credentials, email/TOTP, import/export, OAuth2) straight on the mux
+	// through unexported handlers, so they cannot ride the route registry:
+	// the GET /endpoints listing does not show them.
 	auth.RegisterRoutes(mux)
+}
+
+// mount registers handler on mux under pattern and records it for the
+// GET /endpoints listing in the same declaration (httputil/endpoints): the
+// only way the login surface joins a mux, so the listing cannot drift from
+// what is served. A rejected declaration is boot-fatal, exactly as
+// ServeMux's own pattern panic was before the registry seam.
+func mount(routes *endpoints.Registry, mux *http.ServeMux, pattern string, handler http.Handler, summary string) {
+	// A nil registry would mount the route and only then die inside the
+	// registry: refuse before anything reaches the mux.
+	if routes == nil {
+		panic("identity.Register: route registry must not be nil")
+	}
+
+	if err := routes.Handle(mux, pattern, handler, summary); err != nil {
+		panic(fmt.Errorf("identity routes: %w", err))
+	}
 }
 
 // Named auth-surface constants (mnd): the session cookie the gate and the

@@ -11,8 +11,8 @@ import (
 )
 
 // routePattern extracts the literal method+path patterns from Register's
-// mux.HandleFunc calls (the drift-guard parse).
-var routePattern = regexp.MustCompile(`mux\.HandleFunc\("([^"]+)"`)
+// mount calls, the route registry seam (the drift-guard parse).
+var routePattern = regexp.MustCompile(`mount\(routes, mux, "([^"]+)"`)
 
 // TestETagMiddlewareCounters proves the hooks observe every outcome the
 // middleware can produce: a fresh tag on the first response, a 304 on the
@@ -210,7 +210,7 @@ func httptestRequest(t *testing.T, path string) *http.Request {
 // per-response age (staleness/freshness) MUST satisfy skipBodyCaching —
 // a new streaming route without a skip rule would be body-hashed by the
 // ETag middleware (buffering a stream or minting a 304 that can never
-// revalidate). The test parses the mux.HandleFunc string literals out of
+// revalidate). The test parses the mount string literals out of
 // server.go, so a refactor away from literal patterns fails loudly
 // instead of passing vacuously.
 func TestSkipBodyCachingCoversTheRouteTable(t *testing.T) {
@@ -222,7 +222,7 @@ func TestSkipBodyCachingCoversTheRouteTable(t *testing.T) {
 	patternMatches := routePattern.FindAllStringSubmatch(string(source), -1)
 	if len(patternMatches) < 10 {
 		t.Fatalf(
-			"route-table parse went vacuous (%d patterns) — Register no longer uses literal mux.HandleFunc patterns; rework this guard",
+			"route-table parse went vacuous (%d patterns) — Register no longer uses literal mount patterns; rework this guard",
 			len(patternMatches),
 		)
 	}

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
 
@@ -57,7 +58,7 @@ func identityHandler(t *testing.T, identity *Identity) http.Handler {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	identity.Register(mux)
+	identity.Register(mux, endpoints.NewRegistry())
 
 	return identity.Middleware()(mux)
 }
@@ -285,7 +286,7 @@ func TestIdentityLogoutEndsTheSessionEverywhere(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	identity.Register(mux)
+	identity.Register(mux, endpoints.NewRegistry())
 	handler := identity.Middleware()(mux)
 
 	csrfCookie, token := loginChallenge(t, handler)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"encoding/json/v2"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"maps"
@@ -16,6 +17,7 @@ import (
 
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/httputil/endpoints"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/identity"
@@ -91,9 +93,16 @@ type Searcher interface {
 	QueryTurns(ctx context.Context, query string, limit int) ([]search.TurnHit, error)
 }
 
-// Register mounts every pbx-lens route on mux. The handler surface is
-// strictly read-only over the read model.
-func Register(mux *http.ServeMux, sys *system.System, opts Options) {
+// Register mounts every pbx-lens route on mux and records each one in
+// routes, the registry behind the GET /endpoints listing it mounts last.
+// The handler surface is strictly read-only over the read model.
+func Register(mux *http.ServeMux, sys *system.System, opts Options, routes *endpoints.Registry) {
+	// A nil registry would mount the first route and only then die inside
+	// the registry: refuse before anything reaches the mux.
+	if routes == nil {
+		panic("web.Register: route registry must not be nil")
+	}
+
 	timeout := resolveUpstreamTimeout(opts.Recordings.UpstreamTimeout)
 
 	web := &server{
@@ -117,28 +126,60 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options) {
 		web.now = time.Now
 	}
 
-	mux.HandleFunc("GET /{$}", web.list)
-	mux.HandleFunc("GET /dashboard", web.dashboard)
-	mux.HandleFunc("GET /dashboard/{$}", redirectTrailingSlash("/dashboard"))
-	mux.HandleFunc("GET /ops", web.opsPage)
-	mux.HandleFunc("GET /ops/{$}", redirectTrailingSlash("/ops"))
-	mux.HandleFunc("GET /frag/dashboard", web.dashboardFragment)
-	mux.HandleFunc("GET /frag/staleness", web.stalenessFragment)
-	mux.HandleFunc("GET /search", web.searchPage)
-	mux.HandleFunc("GET /search/{$}", redirectTrailingSlash("/search"))
-	mux.HandleFunc("GET /api/freshness", web.freshness)
-	mux.HandleFunc("GET /api/ops", web.opsHandler)
-	mux.HandleFunc("GET /api/export.jsonl", web.exportJSONL)
-	mux.HandleFunc("GET /api/export.csv", web.exportCSV)
-	mux.HandleFunc("GET /calls/{kind}/{id}", web.detail)
-	mux.HandleFunc("GET /calls/{kind}/{id}/recording", web.recording)
-	mux.HandleFunc("GET /segments/{number}", web.segmentPage)
+	// The declarations below ARE the service's web route table: each one
+	// mounts its handler AND records it for the GET /endpoints listing
+	// (httputil/endpoints), so the listing cannot drift from what is served.
+	mount(routes, mux, "GET /{$}", web.list, "Call list page: paginated table with direction, AI, number and date filters")
+	mount(routes, mux, "GET /dashboard", web.dashboard, "Quality dashboard page: stat cards, volume chart, durations, AI share")
+	mount(routes, mux, "GET /dashboard/{$}", redirectTrailingSlash("/dashboard"), "Permanent redirect to /dashboard")
+	mount(routes, mux, "GET /ops", web.opsPage, "Ops page: the /api/ops counters rendered for a glance")
+	mount(routes, mux, "GET /ops/{$}", redirectTrailingSlash("/ops"), "Permanent redirect to /ops")
+	mount(routes, mux, "GET /frag/dashboard", web.dashboardFragment, "Polled dashboard region (htmx, 30 s): the live stat cards")
+	mount(routes, mux, "GET /frag/staleness", web.stalenessFragment, "Polled stale-index banner (htmx, every 60 s)")
+	mount(routes, mux, "GET /search", web.searchPage, "Search page: full-text search over calls or transcript turns")
+	mount(routes, mux, "GET /search/{$}", redirectTrailingSlash("/search"), "Permanent redirect to /search")
+	mount(routes, mux, "GET /api/freshness", web.freshness, "Index freshness JSON: call count, newest call age, stale flag")
+	mount(routes, mux, "GET /api/ops", web.opsHandler, "Ops counters JSON (poller, cache, coverage, retention, identity)")
+	mount(routes, mux, "GET /api/export.jsonl", web.exportJSONL, "Whole-index export as streamed JSONL (?pii=hash)")
+	mount(routes, mux, "GET /api/export.csv", web.exportCSV, "Whole-index export as streamed CSV (?pii=hash)")
+	mount(routes, mux, "GET /calls/{kind}/{id}", web.detail, "Call detail page: metadata, transcript, counterpart history")
+	mount(routes, mux, "GET /calls/{kind}/{id}/recording", web.recording, "Recording audio proxy: local WAV or Telnyx")
+	mount(routes, mux, "GET /segments/{number}", web.segmentPage, "Per-number segment page: dashboard aggregates over its calls")
 
 	for route, asset := range staticRoutes {
-		mux.HandleFunc(route, asset.serve)
+		mount(routes, mux, route, asset.serve, asset.summary)
 	}
 
-	mux.HandleFunc("GET /robots.txt", serveRobots)
+	mount(routes, mux, "GET /robots.txt", serveRobots, "robots.txt disallowing all crawling (public by necessity)")
+
+	// The listing sits on the same mux, so whatever wraps the mux guards it
+	// exactly like every other route: the identity session gate when
+	// -auth-db is set, nothing on an auth-free dev boot.
+	mustMount(endpoints.Register(mux, routes))
+}
+
+// mount registers handler on mux under pattern and records it for the
+// GET /endpoints listing in the same declaration (httputil/endpoints): the
+// only way a route joins this mux, so the listing cannot drift from what is
+// served. A pattern ServeMux rejects was a boot-time panic before the
+// registry seam; mustMount keeps it one.
+func mount(
+	routes *endpoints.Registry,
+	mux *http.ServeMux,
+	pattern string,
+	handler func(http.ResponseWriter, *http.Request),
+	summary string,
+) {
+	mustMount(routes.HandleFunc(mux, pattern, handler, summary))
+}
+
+// mustMount makes a rejected route declaration boot-fatal: a service that
+// cannot mount or record every route must never start serving a listing
+// that omits one.
+func mustMount(err error) {
+	if err != nil {
+		panic(fmt.Errorf("web routes: %w", err))
+	}
 }
 
 // serveRobots answers the one honest robots.txt (M15/F46): everything is
@@ -649,6 +690,8 @@ type staticAsset struct {
 	path        string
 	contentType string
 	missingMsg  string
+	// summary is the route's line in the GET /endpoints listing.
+	summary string
 }
 
 func (a staticAsset) serve(w http.ResponseWriter, _ *http.Request) {
@@ -678,21 +721,25 @@ var staticRoutes = map[string]staticAsset{ //nolint:gochecknoglobals // declarat
 		path:        "static/styles.css",
 		contentType: "text/css; charset=utf-8",
 		missingMsg:  "styles not built (run the tailwind build step)",
+		summary:     "Tailwind-built stylesheet for the app and the login page (embedded build artifact)",
 	},
 	"GET /static/htmx.min.js": {
 		path:        "static/htmx.min.js",
 		contentType: "text/javascript; charset=utf-8",
 		missingMsg:  "htmx runtime missing from the build",
+		summary:     "Self-hosted htmx runtime (embedded build artifact)",
 	},
 	"GET /static/recent-views.js": {
 		path:        "static/recent-views.js",
 		contentType: "text/javascript; charset=utf-8",
 		missingMsg:  "recent-views script missing from the build",
+		summary:     "Recent-views script for the list page's saved-view chips (embedded build artifact)",
 	},
 	"GET /favicon.svg": {
 		path:        "static/favicon.svg",
 		contentType: "image/svg+xml",
 		missingMsg:  "favicon missing from the build",
+		summary:     "Lens-mark favicon (embedded build artifact)",
 	},
 }
 

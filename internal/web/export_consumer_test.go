@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 )
@@ -169,7 +170,7 @@ func BenchmarkExportStream10k(b *testing.B) {
 	}
 
 	mux := http.NewServeMux()
-	Register(mux, sys, Options{})
+	Register(mux, sys, Options{}, endpoints.NewRegistry())
 
 	b.ResetTimer()
 

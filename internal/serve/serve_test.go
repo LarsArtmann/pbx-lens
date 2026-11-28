@@ -17,6 +17,7 @@ import (
 	appkit "github.com/larsartmann/go-appkit"
 	"github.com/larsartmann/go-appkit/testkit"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	"github.com/larsartmann/httputil/endpoints"
 	"github.com/larsartmann/pbx-lens/internal/calls"
 	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/identity"
@@ -77,7 +78,7 @@ func serveTestStack(tb testing.TB, tune stackTune) (string, *http.Client) {
 	svc := testkit.NewService(tb, buildServiceConfig("127.0.0.1:0", tune.version, tune.authMW, nil, nil))
 
 	if tune.identity != nil {
-		tune.identity.Register(svc.Mux)
+		tune.identity.Register(svc.Mux, endpoints.NewRegistry())
 	}
 
 	options := web.Options{}
@@ -85,7 +86,7 @@ func serveTestStack(tb testing.TB, tune stackTune) (string, *http.Client) {
 		tune.options(&options)
 	}
 
-	web.Register(svc.Mux, sys, options)
+	web.Register(svc.Mux, sys, options, endpoints.NewRegistry())
 
 	ts := testkit.Serve(tb, svc)
 

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/httputil/endpoints"
 )
 
 // Benchmarks for the identity gate chain (plan A19): the per-request cost
@@ -39,7 +41,7 @@ func benchIdentity(b *testing.B) (http.Handler, *http.Cookie) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
 	mux.HandleFunc("GET /app.css", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusOK) })
-	identity.Register(mux)
+	identity.Register(mux, endpoints.NewRegistry())
 
 	handler := identity.Middleware()(mux)
 
