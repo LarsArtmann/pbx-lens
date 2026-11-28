@@ -147,6 +147,7 @@ func TestEndpointsListingCoversEveryWebRoute(t *testing.T) {
 	// An auth-free boot has no identity, so its table is the web routes
 	// minus the login panel.
 	want = slices.DeleteFunc(want, func(pattern string) bool { return pattern == "GET /login" })
+	slices.Sort(want)
 
 	if !slices.Equal(want, listed) {
 		t.Errorf("GET /endpoints listing drifts from the route table\n listed: %v\n want:   %v", listed, want)
@@ -258,6 +259,8 @@ func TestEndpointsListingBehindTheSessionGate(t *testing.T) {
 
 	want := webRouteTable()
 	listed := listedPatterns(t, recorder.Body.String())
+
+	slices.Sort(want)
 
 	if !slices.Equal(want, listed) {
 		t.Errorf("authed GET /endpoints listing drifts from the route table\n listed: %v\n want:   %v", listed, want)
