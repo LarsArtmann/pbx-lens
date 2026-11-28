@@ -296,3 +296,41 @@ the serve wiring ANDs the two verdicts — /ready answers only when both
 bounded contexts' read models are servable. `/live` stays process-only by
 design: a restarting projection worker is a readiness fact, not a liveness
 one — killing the process over it would only prolong the outage.
+
+## Route table: `GET /endpoints` (2026-11-28)
+
+`http.ServeMux` cannot enumerate its patterns, so a hand-kept route list
+drifts. The seam is `github.com/larsartmann/httputil/endpoints` (v0.1.0):
+a `Registry` is the source of truth, and each route is declared through the
+package's `mount` helper (`internal/web/server.go`,
+`internal/identity/identity.go`), which mounts the handler AND records it
+for the `GET /endpoints` listing in the same declaration. A rejected
+declaration (a pattern ServeMux refuses) is boot-fatal, exactly as
+ServeMux's own panic was. `web.Register(mux, sys, opts, routes)` mounts the
+listing last; `internal/serve/serve.go` creates the registry and hands it
+to both registrars.
+
+- **Posture:** the listing sits on the service mux, so the identity session
+  gate (in front of the mux) protects it like every page when `-auth-db` is
+  set; without it the serve is the unauthenticated localhost dev posture.
+- **What it lists:** only the routes pbx-lens declares itself (the web
+  table, `GET /login`, the static assets). Library-owned routes are NOT
+  listed: appkit's `/health{,/live,/ready}`, `/version`, `/metrics`, and
+  usermgmt's `/auth/*` ceremonies (registered straight on the mux through
+  unexported handlers). Close that gap when appkit exposes `Service.Routes`
+  (pass `svc.Routes` instead of a local registry) and when usermgmt exposes
+  its route table.
+- **Adding a route:** add one `mount` row (pattern byte-identical to the
+  ServeMux form, a one-line summary a developer can scan), then add the
+  pattern to `webRouteTable` in `internal/web/endpoints_test.go`. Never
+  call `mux.Handle`/`mux.HandleFunc` on the service mux.
+- **Guards** (`internal/web/endpoints_test.go`): set equality between the
+  listing and the explicit route table (both directions), HTML negotiation,
+  HEAD through a real server, `405` on POST, the session-gate contract, and
+  `TestServiceRoutesGoThroughTheRegistry`, a static scan of the `web` and
+  `identity` packages that fails on any raw `mux.Handle*`. The ETag drift
+  guard in `caching_test.go` parses the same `mount` literals.
+- **Nix:** `endpoints` is a public module fetched from the proxy at the
+  go.mod pin; after the go.mod change repair the vendor hash with
+  `nix run .#update-vendor-hash` (CLEAN tree).
+

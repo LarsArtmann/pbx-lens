@@ -182,6 +182,12 @@ revisits cost zero body bytes while unchanged, and reports handler spans
 as `Server-Timing`; HTML responses carry `Cache-Control: no-cache` so
 browsers revalidate instead of silently serving stale pages.
 
+`GET /endpoints` is the live route table: every route the lens itself
+serves, as JSON or, for browsers, an HTML table. It sits behind the same
+auth as the pages and lists only what the lens declares: the appkit-owned
+`/health*`, `/version`, and `/metrics` and the login library's `/auth/*`
+ceremonies are not part of it.
+
 **PII disclosure (R3):** `pii=hash` bounds participant identity ONLY.
 Transcripts, excerpts, and insight summaries stay raw in every mode — see
 the field-coverage matrix in FEATURES.md. If you need free text scrubbed

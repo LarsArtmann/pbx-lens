@@ -138,18 +138,18 @@ read-only deep link, never a data dependency.
     localhost dev). The ExtraMiddlewares chain + ordering/ETag/no-cache
     doctrine lives in docs/http-stack.md — read it before touching caching,
     timing, or the recording route. Every UI route is a query or a proxy,
-    never a write. Exports and the dashboard STREAM via keyset pagination
-    (`StreamExportCalls`, 5k-row pages, memory-bounded); day buckets resolve
-    in Europe/Berlin (bare date filters too). htmx polling (R9):
-    `/frag/dashboard` 30 s, `/frag/staleness` 60 s, runtime self-hosted —
-    no CDN. `/api/ops` (R15) serves per-source + identity + age counters and
-    answers 503 with `scan_failures` when a scan fails (never a silent
-    partial 200). Detail page = READ-TIME join (rules in
-    docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List + dashboard
-    collapse duplicate source rows onto the representative row (CDR first;
-    `internal/query/representative.go`), export stays per-source. Analytics:
-    spend, "who calls what" segments (`?number=` drill-through), "how calls
-    end" rates — every figure carries its own denominator.
+    never a write. Route table = `GET /endpoints`: every route is declared through the
+    package `mount` seam, never a raw `mux.Handle*` (docs/http-stack.md § "Route table").
+    Exports and the dashboard STREAM via keyset pagination (`StreamExportCalls`, 5k-row
+    pages, memory-bounded); day buckets resolve in Europe/Berlin (bare date filters too).
+    htmx polling (R9): `/frag/dashboard` 30 s, `/frag/staleness` 60 s, runtime self-hosted
+    — no CDN. `/api/ops` (R15) serves per-source + identity + age counters and answers 503
+    with `scan_failures` when a scan fails (never a silent partial 200). Detail page =
+    READ-TIME join (rules in docs/DOMAIN_LANGUAGE.md § "Read-time call join"). List +
+    dashboard collapse duplicate source rows onto the representative row (CDR first;
+    `internal/query/representative.go`), export stays per-source. Analytics: spend, "who
+    calls what" segments (`?number=` drill-through), "how calls end" rates — every figure
+    carries its own denominator.
 
 ## Domain
 

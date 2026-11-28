@@ -7,6 +7,25 @@ v0.1.0 is the first tagged release (2026-10-12); new work lands under Unreleased
 
 ## [Unreleased]
 
+### Added — 2026-11-28 (the `GET /endpoints` route listing)
+
+- **`GET /endpoints` lists every route the lens serves**
+  (`github.com/larsartmann/httputil/endpoints` v0.1.0). ServeMux cannot
+  enumerate its patterns, so each pbx-lens route is now declared through a
+  registry seam (`mount` in `internal/web/server.go` and
+  `internal/identity/identity.go`) that mounts AND records it in one
+  declaration, and `web.Register` mounts the listing last: the table cannot
+  drift from what is served. JSON by default, an HTML table for
+  `Accept: text/html`, `405` for other methods, behind the session gate like
+  every page. It covers the routes pbx-lens declares itself; appkit's
+  `/health{,/live,/ready}`, `/version`, `/metrics` and usermgmt's `/auth/*`
+  ceremonies are library-owned and stay unlisted until those libraries
+  expose a route table. `web.Register` and `identity.Register` take the
+  registry as a new argument (`internal/serve/serve.go` creates it). Pinned
+  by `internal/web/endpoints_test.go`: set equality against an explicit
+  route table, the session-gate contract, and a static guard that fails on
+  any raw `mux.Handle*` in the routing packages.
+
 ### Fixed — 2026-11-21 e (/api/ops wire keys restored to the top level)
 
 - **`/api/ops` serves the poller keys FLAT again** (`sources`,
