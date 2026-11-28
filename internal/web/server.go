@@ -129,22 +129,64 @@ func Register(mux *http.ServeMux, sys *system.System, opts Options, routes *endp
 	// The declarations below ARE the service's web route table: each one
 	// mounts its handler AND records it for the GET /endpoints listing
 	// (httputil/endpoints), so the listing cannot drift from what is served.
-	mount(routes, mux, "GET /{$}", web.list, "Call list page: paginated table with direction, AI, number and date filters")
-	mount(routes, mux, "GET /dashboard", web.dashboard, "Quality dashboard page: stat cards, volume chart, durations, AI share")
+	mount(
+		routes,
+		mux,
+		"GET /{$}",
+		web.list,
+		"Call list page: paginated table with direction, AI, number and date filters",
+	)
+	mount(
+		routes,
+		mux,
+		"GET /dashboard",
+		web.dashboard,
+		"Quality dashboard page: stat cards, volume chart, durations, AI share",
+	)
 	mount(routes, mux, "GET /dashboard/{$}", redirectTrailingSlash("/dashboard"), "Permanent redirect to /dashboard")
 	mount(routes, mux, "GET /ops", web.opsPage, "Ops page: the /api/ops counters rendered for a glance")
 	mount(routes, mux, "GET /ops/{$}", redirectTrailingSlash("/ops"), "Permanent redirect to /ops")
-	mount(routes, mux, "GET /frag/dashboard", web.dashboardFragment, "Polled dashboard region (htmx, 30 s): the live stat cards")
+	mount(
+		routes,
+		mux,
+		"GET /frag/dashboard",
+		web.dashboardFragment,
+		"Polled dashboard region (htmx, 30 s): the live stat cards",
+	)
 	mount(routes, mux, "GET /frag/staleness", web.stalenessFragment, "Polled stale-index banner (htmx, every 60 s)")
 	mount(routes, mux, "GET /search", web.searchPage, "Search page: full-text search over calls or transcript turns")
 	mount(routes, mux, "GET /search/{$}", redirectTrailingSlash("/search"), "Permanent redirect to /search")
-	mount(routes, mux, "GET /api/freshness", web.freshness, "Index freshness JSON: call count, newest call age, stale flag")
-	mount(routes, mux, "GET /api/ops", web.opsHandler, "Ops counters JSON (poller, cache, coverage, retention, identity)")
+	mount(
+		routes,
+		mux,
+		"GET /api/freshness",
+		web.freshness,
+		"Index freshness JSON: call count, newest call age, stale flag",
+	)
+	mount(
+		routes,
+		mux,
+		"GET /api/ops",
+		web.opsHandler,
+		"Ops counters JSON (poller, cache, coverage, retention, identity)",
+	)
 	mount(routes, mux, "GET /api/export.jsonl", web.exportJSONL, "Whole-index export as streamed JSONL (?pii=hash)")
 	mount(routes, mux, "GET /api/export.csv", web.exportCSV, "Whole-index export as streamed CSV (?pii=hash)")
-	mount(routes, mux, "GET /calls/{kind}/{id}", web.detail, "Call detail page: metadata, transcript, counterpart history")
+	mount(
+		routes,
+		mux,
+		"GET /calls/{kind}/{id}",
+		web.detail,
+		"Call detail page: metadata, transcript, counterpart history",
+	)
 	mount(routes, mux, "GET /calls/{kind}/{id}/recording", web.recording, "Recording audio proxy: local WAV or Telnyx")
-	mount(routes, mux, "GET /segments/{number}", web.segmentPage, "Per-number segment page: dashboard aggregates over its calls")
+	mount(
+		routes,
+		mux,
+		"GET /segments/{number}",
+		web.segmentPage,
+		"Per-number segment page: dashboard aggregates over its calls",
+	)
 
 	for route, asset := range staticRoutes {
 		mount(routes, mux, route, asset.serve, asset.summary)

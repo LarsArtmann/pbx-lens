@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	errorfamily "github.com/larsartmann/go-error-family"
-	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/httputil/endpoints"
+	"github.com/larsartmann/pbx-lens/internal/cli"
 	"github.com/larsartmann/pbx-lens/internal/identity"
 	"github.com/larsartmann/pbx-lens/internal/identity/identitytest"
 )
