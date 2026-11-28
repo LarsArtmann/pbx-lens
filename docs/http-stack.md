@@ -333,4 +333,3 @@ to both registrars.
 - **Nix:** `endpoints` is a public module fetched from the proxy at the
   go.mod pin; after the go.mod change repair the vendor hash with
   `nix run .#update-vendor-hash` (CLEAN tree).
-
